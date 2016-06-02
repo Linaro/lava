@@ -64,6 +64,7 @@ LAVA Administrator Guide
    pipeline-admin-example.rst
    devicetypes.rst
    hiddentypes.rst
+   pipeline-debug.rst
    proxy.rst
    pdudaemon.rst
    nexus-deploy.rst
@@ -97,6 +98,7 @@ Developer guides
 .. toctree::
    :maxdepth: 2
 
+   development-intro.rst
    development.rst
    debugging.rst
    debian.rst

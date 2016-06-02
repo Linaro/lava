@@ -3,16 +3,21 @@
 {% load django_tables2 %}
 
 {% block content %}
+<h1>Test Job {{ job_link }}</h1>
+<h2>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a></h2>
 {% for testcase in test_cases %}
-    <h1>Test Job {{ job_link }}</h1>
-    <h2>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a></h2>
     {% if testcase.action_data %}
-        <h3>Results for {{ testcase.name }}, level {{ testcase.action_data.action_level }}</h3>
+        <h3>Results for {{ testcase.name }}</h3>
     {% else %}
         <h3>Results for {{ testcase.name }}</h3>
     {% endif %}
     {% if testcase.action_metadata %}
-        {{ testcase.action_metadata }}
+        <dl class="dl-horizontal">
+        {% for key, value in testcase.action_metadata.items %}
+            <dt>{{ key }}</dt>
+            <dd>{{ value }}</dd>
+        {% endfor %}
+        </dl>
     {% else %}
         {{ testcase.result_code }}
     {% endif %}

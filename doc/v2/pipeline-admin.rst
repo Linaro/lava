@@ -435,7 +435,7 @@ Using lava-tool
 
 .. note:: Ensure you update to the latest version of
    :ref:`lava_tool <lava_tool>` (>= 0.14) support to use
-   the ``device-dictionary`` ``--import`` and ``--export``
+   the ``device-dictionary`` ``--update`` and ``--export``
    functions as superuser.
 
 ::
@@ -456,14 +456,14 @@ contents of the file can be something like:
  {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
 
 Make changes within the `Jinja2 child template`_ syntax and then
-``lava-tool`` can be used to import a new device dictionary (replacing
+``lava-tool`` can be used to update a new device dictionary (replacing
 the previous device dictionary)::
 
- $ lava-tool device-dictionary SERVER HOSTNAME --import file.jinja2
+ $ lava-tool device-dictionary SERVER HOSTNAME --update file.jinja2
  Please enter password for encrypted keyring:
  Device dictionary updated for black01
 
-Any line not included in the imported device dictionary will be removed
+Any line not included in the updated device dictionary will be removed
 from the database for that device.
 
 .. _updating_device_dictionary_using_xmlrpc:
@@ -496,8 +496,7 @@ return::
 
 Superusers can also export the existing jinja2 device information using
 ``export_device_dictionary`` for a known device hostname. This output
-can then be edited and imported to update the device dictionary
-information.
+can then be edited and used to update the device dictionary information.
 
 .. _updating_device_dictionary_on_command_line:
 

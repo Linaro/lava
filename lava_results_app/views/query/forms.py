@@ -23,17 +23,14 @@ from django import forms
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.forms.models import inlineformset_factory
 from django.utils.html import escape
-
-from dashboard_app.models import NamedAttribute
 
 from lava_results_app.models import (
     Query,
     QueryCondition,
-    QueryGroup,
     TestCase,
-    TestSuite
+    TestSuite,
+    NamedTestAttribute
 )
 from lava_scheduler_app.models import TestJob
 
@@ -103,7 +100,7 @@ class QueryConditionForm(forms.ModelForm):
             "health_check", "user", "group", "priority", "is_pipeline"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
-        NamedAttribute: []
+        NamedTestAttribute: []
     }
 
     def __init__(self, *args, **kwargs):

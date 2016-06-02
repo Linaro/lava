@@ -27,6 +27,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     DeviceDictionary,
     _check_exclusivity,
+    validate_yaml,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
@@ -34,17 +35,18 @@ from lava_scheduler_app.dbutils import(
     testjob_submission, get_job_queue,
     find_device_for_job,
     get_available_devices,
-    check_device_and_job,
 )
 import simplejson
 
-logger = logging.getLogger()
-logger.level = logging.INFO  # change to DEBUG to see *all* output
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
+LOGGER = logging.getLogger()
+LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
+LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 # filter out warnings from django sub systems like httpresponse
 warnings.filterwarnings('ignore', r"Using mimetype keyword argument is deprecated")
 warnings.filterwarnings('ignore', r"StrAndUnicode is deprecated")
+
+# pylint gets confused with TestCase
+# pylint: disable=no-self-use,invalid-name,too-many-ancestors,too-many-public-methods
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -75,11 +77,11 @@ class ModelFactory(object):
     def __init__(self):
         self._int = 0
 
-    def getUniqueInteger(self):
+    def getUniqueInteger(self):  # pylint: disable=invalid-name
         self._int += 1
         return self._int
 
-    def getUniqueString(self, prefix='generic'):
+    def getUniqueString(self, prefix='generic'):  # pylint: disable=invalid-name
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
     def get_unique_user(self, prefix='generic'):  # pylint: disable=no-self-use
@@ -116,7 +118,7 @@ class ModelFactory(object):
     def ensure_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
-        logging.debug("asking for a device_type with name %s" % name)
+        logging.debug("asking for a device_type with name %s", name)
         device_type = DeviceType.objects.get_or_create(name=name)[0]
         self.make_device(device_type)
         return device_type
@@ -128,7 +130,7 @@ class ModelFactory(object):
             name=name, health_check_job=health_check_job)
         if created:
             device_type.save()
-        logging.debug("asking for a device of type %s" % device_type.name)
+        logging.debug("asking for a device of type %s", device_type.name)
         return device_type
 
     def make_hidden_device_type(self, name=None, health_check_job=None):
@@ -139,7 +141,7 @@ class ModelFactory(object):
             name=name, health_check_job=health_check_job)
         if created:
             device_type.save()
-        logging.debug("asking for a device of type %s" % device_type.name)
+        logging.debug("asking for a device of type %s", device_type.name)
         return device_type
 
     def ensure_tag(self, name):  # pylint: disable=no-self-use
@@ -155,8 +157,8 @@ class ModelFactory(object):
         # a hidden device type will override is_public
         device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
         device.tags = tags
-        logging.debug("making a device of type %s %s %s with tags '%s'"
-                      % (device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()])))
+        logging.debug("making a device of type %s %s %s with tags '%s'",
+                      device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
         device.save()
         return device
 
@@ -203,6 +205,30 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
         self.factory.cleanup()
+
+    def test_user_permission(self):
+        self.assertIn(
+            'cancel_resubmit_testjob',
+            [permission.codename for permission in Permission.objects.all() if
+             'lava_scheduler_app' in permission.content_type.app_label])
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        self.assertEqual(user.get_all_permissions(), {u'lava_scheduler_app.add_testjob'})
+        cancel_resubmit = Permission.objects.get(codename='cancel_resubmit_testjob')
+        self.assertEqual('lava_scheduler_app', cancel_resubmit.content_type.app_label)
+        self.assertIsNotNone(cancel_resubmit)
+        self.assertEqual(cancel_resubmit.name, 'Can cancel or resubmit test jobs')
+        user.user_permissions.add(cancel_resubmit)
+        user.save()
+        delattr(user, '_perm_cache')  # force a refresh of the user permissions as well as the user
+        user = User.objects.get(username=user.username)
+        self.assertEqual(
+            {u'lava_scheduler_app.cancel_resubmit_testjob', u'lava_scheduler_app.add_testjob'},
+            user.get_all_permissions())
+        self.assertTrue(user.has_perm('lava_scheduler_app.add_testjob'))
+        self.assertTrue(user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def test_from_json_and_user_sets_submitter(self):
         user = self.factory.make_user()
@@ -766,6 +792,7 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, anon_user)
 
 
+# FIXME: move class and tests into a new file
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
@@ -1019,7 +1046,6 @@ actions:
         Most of the time is spent setting up the database
         and submitting all the test jobs.
         """
-        import sys
         print >> sys.stderr, timezone.now(), "start"
         user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
@@ -1205,6 +1231,24 @@ job_name: qemu-pipeline
             self.assertIn('required key not provided', str(exc))
             self.assertIn('job', str(exc))
             self.assertIn('timeouts', str(exc))
+        bad_submission += """
+notify:
+  method: email
+        """
+        self.assertRaises(SubmissionException, validate_submission,
+                          yaml.load(bad_submission))
+        bad_submission += """
+  criteria:
+    status: complete
+        """
+        self.assertTrue(validate_submission(yaml.load(bad_submission)))
+        bad_submission += """
+  compare:
+    query:
+      entity: testrunfilter
+        """
+        self.assertRaises(SubmissionException, validate_yaml,
+                          yaml.load(bad_submission))
 
     def test_compression_change(self):
 

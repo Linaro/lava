@@ -15,47 +15,10 @@
 {% endblock %}
 
 {% block content %}
-<h2>{% if worker.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-  {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-  {% endif %}Worker: {{ worker }}
+<h2>Worker: {{ worker }}
 </h2>
 
 <div class="row">
-  <div class="col-md-6">
-    <h4 class="modal-header">Worker details</h4>
-    <dl class="dl-horizontal">
-      <dt>IP</dt>
-      <dd>{{ worker.ip_address }}</dd>
-      <dt>Uptime</dt>
-      <dd>{% if worker.too_long_since_last_heartbeat %}---{% else %}{{ worker.uptime }}{% endif %}</dd>
-      <dt>Architecture</dt>
-      <dd>{{ worker.arch }}</dd>
-      <dt>Platform</dt>
-      <dd>{{ worker.platform }}</dd>
-      <dt>Environment</dt>
-      <dd><a href="#" data-toggle="modal" id="hwinfo-modal" data-target="#hardwareModal">Hardware</a> <img src="{{ STATIC_URL }}lava_scheduler_app/images/hardware-information-icon.png" alt="Click to View">
-        <div class="modal fade" id="hardwareModal" tabindex="-1" role="dialog" aria-labelledby="hardwareModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="hardwareModalLabel">Hardware details</h4>
-              </div>
-              <div class="modal-body">
-                <div id="hwinfo-content">
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </dd>
-    </dl>
-  </div>
   <div class="col-md-6">
     <h4 class="modal-header">LAVA details</h4>
     <dl class="dl-horizontal">
@@ -72,26 +35,6 @@
       {% else %}
       <dd>{{ worker.get_description|default:"<i>empty</i>" }}</dd>
       {% endif %}
-      <dt>Environment</dt>
-      <dd><a href="#" data-toggle="modal" id="swinfo-modal" data-target="#softwareModal">Software</a> <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">
-        <div class="modal fade" id="softwareModal" tabindex="-1" role="dialog" aria-labelledby="softwareModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="softwareModalLabel">Software details</h4>
-              </div>
-              <div class="modal-body">
-                <div id="swinfo-content">
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </dd>
     </dl>
   </div>
 </div>
@@ -99,6 +42,7 @@
 <h3 class="modal-header">Devices Attached</h3>
 {% block content_columns %}
 {% render_table worker_device_table %}
+
 {% endblock %}
 
 {% endblock %}

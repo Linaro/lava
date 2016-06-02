@@ -17,22 +17,17 @@
 # along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from django.views.decorators.http import require_POST
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
 
-from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
-    BugLink,
     Image,
     ImageSet,
-    TestRun,
 )
 from dashboard_app.views import index
 import json

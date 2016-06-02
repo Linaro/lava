@@ -90,9 +90,7 @@ class manage(Command):
         group.add_argument(
             "-I", "--instance-template",
             action="store",
-            default=(
-                "/srv/lava/instances/{instance}"
-                "/etc/lava-server/{{filename}}.conf"),
+            default="/etc/lava-server/{{filename}}.conf",
             help=(
                 "Template used for constructing instance pathname."
                 " The default value is: %(default)s"))

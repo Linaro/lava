@@ -23,16 +23,42 @@
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from lava.utils.lavatable import LavaTable
-from lava_scheduler_app.tables import IDLinkColumn, pklink, DateColumn
+from lava_scheduler_app.tables import DateColumn, RestrictedIDLinkColumn
 from lava_results_app.models import TestCase
 from django.templatetags.static import static
+from markupsafe import escape
 
 
-class JobRestrictionColumn(IDLinkColumn):
+def results_pklink(record):
+    job_id = record.pk
+    complete = '<a class="btn btn-xs btn-success pull-right" title="test job results" href="%s">' % record.results_link
+    button = '<span class="glyphicon glyphicon-signal"></span></a>'
+    return mark_safe(
+        '<a href="%s" title="test job summary">%s</a>&nbsp;%s%s' % (
+            record.get_absolute_url(),
+            escape(job_id), complete, button))
+
+
+class JobRestrictionColumn(RestrictedIDLinkColumn):
 
     def render(self, record, table=None):
-        # FIXME: handle job & device visibility
-        return pklink(record.job)
+        return super(JobRestrictionColumn, self).render(record.job, table)
+
+
+class IndexResultsColumn(RestrictedIDLinkColumn):
+
+    def render(self, record, table=None):
+        user = table.context.get('request').user
+        device_type = record.job.job_device_type()
+        if not device_type:
+            return results_pklink(record.job)
+        elif device_type.owners_only:
+            if device_type.num_devices_visible_to(user) == 0:
+                return "Unavailable"
+        elif record.job.is_accessible_by(user):
+            return results_pklink(record.job)
+        else:
+            return record.job.pk
 
 
 class ResultsTable(LavaTable):
@@ -44,36 +70,63 @@ class ResultsTable(LavaTable):
         super(ResultsTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    def render_name(self, record):
+    def _check_job(self, record, table=None):  # pylint: disable=no-self-use
+        """
+        Slightly different purpose to RestrictedIDLinkColumn.render
+        """
+        user = table.context.get('request').user
+        device_type = record.job.job_device_type()
+        if not device_type:
+            return record.job.dynamic_connection
+        elif device_type.owners_only:
+            return device_type.num_devices_visible_to(user) == 0
+        elif record.job.is_accessible_by(user):
+            return True
+        else:
+            return False
+
+    def render_name(self, record, table=None):
+        if not self._check_job(record, table):
+            return 'Unavailable'
         return mark_safe(
             '<a href="%s">%s</a>' % (
                 record.get_absolute_url(),
                 record.name))
 
-    def render_submitter(self, record):
+    def render_submitter(self, record, table=None):
+        if not self._check_job(record, table):
+            return 'Unavailable'
         return record.job.submitter
 
-    def render_passes(self, record):
+    def render_passes(self, record, table=None):
+        if not self._check_job(record, table):
+            return ''
         return TestCase.objects.filter(
             suite__job=record.job,
             suite=record,
             result=TestCase.RESULT_MAP['pass']
         ).count()
 
-    def render_fails(self, record):
+    def render_fails(self, record, table=None):
+        if not self._check_job(record, table):
+            return ''
         return TestCase.objects.filter(
             suite__job=record.job,
             suite=record,
             result=TestCase.RESULT_MAP['fail']
         ).count()
 
-    def render_total(self, record):
+    def render_total(self, record, table=None):
+        if not self._check_job(record, table):
+            return ''
         return TestCase.objects.filter(
             suite__job=record.job,
             suite=record,
         ).count()
 
-    def render_logged(self, record):
+    def render_logged(self, record, table=None):
+        if not self._check_job(record, table):
+            return ''
         if not TestCase.objects.filter(
                 suite__job=record.job,
                 suite=record):
@@ -83,7 +136,7 @@ class ResultsTable(LavaTable):
             suite=record,
         )[0].logged
 
-    job_id = JobRestrictionColumn(verbose_name='Job')
+    job_id = JobRestrictionColumn(verbose_name='Test Job')
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')
@@ -91,7 +144,23 @@ class ResultsTable(LavaTable):
     total = tables.Column(accessor='job', verbose_name='Totals')
     logged = tables.Column(accessor='job', verbose_name='Logged')
 
-    class Meta(LavaTable.Meta):
+    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+        searches = {
+            'name': 'contains'
+        }
+
+
+class ResultsIndexTable(ResultsTable):
+
+    job_id = IndexResultsColumn(verbose_name='Job Results')
+    submitter = tables.Column(accessor='job.submitter')
+    name = tables.Column(verbose_name='Test Suite')
+    passes = tables.Column(accessor='job', verbose_name='Passes')
+    fails = tables.Column(accessor='job', verbose_name='Fails')
+    total = tables.Column(accessor='job', verbose_name='Totals')
+    logged = tables.Column(accessor='job', verbose_name='Logged')
+
+    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {
             'name': 'contains'
         }
@@ -112,31 +181,31 @@ class SuiteTable(LavaTable):
     unit = tables.Column()
     logged = DateColumn()
 
-    def render_name(self, record):
+    def render_name(self, record):  # pylint: disable=no-self-use
         return mark_safe(
             '<a href="%s">%s</a>' % (record.get_absolute_url(), record.name)
         )
 
-    def render_result(self, record):
+    def render_result(self, record):  # pylint: disable=no-self-use
         if record.metadata:
-            # FIXME: much more can be done here.
-            if type(record.action_metadata) == str:
-                return record.action_metadata
-            return " ".join([key for key, _ in record.action_metadata.items() if key != 'level'])
+            if 'success' in record.action_metadata:
+                code = 'pass'
+            else:
+                code = 'fail'
         else:
             code = record.result_code
-            image = static('lava_results_app/images/icon-%s.png' % code)
-            return mark_safe(
-                '<a href="%s"><img src="%s"'
-                'alt="%s" width="16" height="16" border="0"/>%s</a>' % (
-                    record.get_absolute_url(),
-                    image,
-                    code,
-                    code,
-                )
+        image = static('lava_results_app/images/icon-%s.png' % code)
+        return mark_safe(
+            '<a href="%s"><img src="%s"'
+            'alt="%s" width="16" height="16" border="0"/>%s</a>' % (
+                record.get_absolute_url(),
+                image,
+                code,
+                code,
             )
+        )
 
-    class Meta(LavaTable.Meta):
+    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {
             'name': 'contains'
         }

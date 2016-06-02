@@ -20,6 +20,9 @@
 Unit tests for dashboard_app.views.test_run_list
 """
 
+import django
+import unittest
+from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django_testscenarios.ubertest import TestCaseWithScenarios
@@ -76,7 +79,11 @@ class TestRunListViewAnonymousTest(TestCaseWithScenarios):
         if self.bundle_stream.is_accessible_by(self.user):
             self.assertEqual(response.status_code, 200)
         else:
-            self.assertEqual(response.status_code, 403)
+            if django.VERSION > (1, 8):
+                self.assertIsInstance(response, HttpResponseForbidden)
+            else:
+                self.assertIsInstance(response, HttpResponse)
+                self.assertIn('403', response.content)
 
     def test_template_used(self):
         response = self.client.get(self.url)
@@ -84,8 +91,11 @@ class TestRunListViewAnonymousTest(TestCaseWithScenarios):
             self.assertTemplateUsed(response,
                                     "dashboard_app/test_run_list.html")
         else:
-            self.assertTemplateUsed(response,
-                                    "403.html")
+            if django.VERSION > (1, 8):
+                self.assertIsInstance(response, HttpResponseForbidden)
+            else:
+                self.assertIsInstance(response, HttpResponse)
+                self.assertIn('403', response.content)
 
 
 class TestRunListViewAuthorizedTest(TestRunListViewAnonymousTest):

@@ -16,14 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ValidationError
 from django import forms
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.forms.widgets import Select
-from django.template import Template, Context
-from django.utils.safestring import mark_safe
 
 from dashboard_app.models import (
     BundleStream,

@@ -72,7 +72,6 @@ of each type are available for tests and currently running jobs.</p>
     which can alert you to changes in sets of results.</li>
     {% endif %}
 </ul>
-</p>
 
 <div class="row">
   <div class="col-md-6">
@@ -196,19 +195,5 @@ of each type are available for tests and currently running jobs.</p>
      </ul>
     </div>
   </div>
-{% endif %}
-
-{% comment %}
-Five extensions are defined as wrappers for other extensions:
-DashboardExtension, ProjectExtension, SchedulerExtension, ResultsExtension & SchedulerDaemonExtension
-{% endcomment %}
-{% if extension_list|length > 5 %}
-<h2>LAVA Extensions</h2>
-{% for extension in extension_list %}
-{% if extension.front_page_template %}
-<h3>{{ extension.description }}</h3>
-{% include extension.front_page_template %}
-{% endif %}
-{% endfor %}
 {% endif %}
 {% endblock %}

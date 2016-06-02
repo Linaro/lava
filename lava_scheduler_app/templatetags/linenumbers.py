@@ -1,5 +1,4 @@
 from django import template
-from django.db.models import fields
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 

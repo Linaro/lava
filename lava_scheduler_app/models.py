@@ -3,7 +3,6 @@
 import logging
 import os
 import uuid
-import json
 import simplejson
 import urlparse
 import smtplib
@@ -97,6 +96,52 @@ def validate_job(data):
 
         # validate against the submission schema.
         validate_submission(yaml_data)  # raises SubmissionException if invalid.
+        validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+
+
+def validate_yaml(yaml_data):
+    if "notify" in yaml_data:
+        if yaml_data["notify"]["method"] == TestJob.NOTIFY_IRC_METHOD:
+            if "compare" in yaml_data["notify"]:
+                raise SubmissionException("compare options must not be used "
+                                          "with IRC notifications")
+        elif yaml_data["notify"]["method"] == TestJob.NOTIFY_EMAIL_METHOD:
+            if "recipients" in yaml_data["notify"]:
+                for recipient in yaml_data["notify"]["recipients"]:
+                    try:
+                        User.objects.get(username=recipient)
+                    except User.DoesNotExist:
+                        try:
+                            validate_email(recipient)
+                        except ValidationError:
+                            raise SubmissionException("%r is not a valid user and not a valid email address." % recipient)
+            # Validate queries only if email, because whole compare section is
+            # not used in 'irc' mode.
+            if "compare" in yaml_data["notify"] and \
+               "query" in yaml_data["notify"]["compare"]:
+                from lava_results_app.models import Query
+                query_yaml_data = yaml_data["notify"]["compare"]["query"]
+                if "username" in query_yaml_data:
+                    try:
+                        Query.objects.get(
+                            username=query_yaml_data["username"],
+                            name=query_yaml_data["username"])
+                    except Query.DoesNotExist:
+                        raise SubmissionException(
+                            "Query ~%s/%s does not exist" % (
+                                query_yaml_data["username"],
+                                query_yaml_data["name"]))
+                else:  # Custom query.
+                    try:
+                        conditions = None
+                        if "conditions" in query_yaml_data:
+                            conditions = query_yaml_data["conditions"]
+                        Query.validate_custom_query(
+                            query_yaml_data["entity"],
+                            conditions
+                        )
+                    except Exception as e:
+                        raise SubmissionException(e)
 
 
 def validate_job_json(data):
@@ -287,10 +332,16 @@ class DefaultDeviceOwner(models.Model):
         default=False
     )
 
+    def __unicode__(self):
+        if self.user:
+            return self.user.username
+        return ''
+
 
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
+    Only the hostname, description and online status will be used in pipeline.
     """
 
     hostname = models.CharField(
@@ -298,7 +349,7 @@ class Worker(models.Model):
         max_length=200,
         primary_key=True,
         default=None,
-        editable=False
+        editable=True
     )
 
     rpc2_url = models.CharField(
@@ -319,15 +370,6 @@ class Worker(models.Model):
                    " linked device status transitions and devices should be"
                    " intact."))
 
-    ip_address = models.CharField(
-        verbose_name=_(u"IP Address"),
-        max_length=20,
-        null=True,
-        blank=True,
-        editable=False,
-        default=None
-    )
-
     is_master = models.BooleanField(
         verbose_name=_(u"Is Master?"),
         default=False,
@@ -343,73 +385,11 @@ class Worker(models.Model):
         editable=True
     )
 
-    uptime = models.CharField(
-        verbose_name=_(u"Host Uptime"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    arch = models.CharField(
-        verbose_name=_(u"Architecture"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    platform = models.CharField(
-        verbose_name=_(u"Platform"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    hardware_info = models.TextField(
-        verbose_name=_(u"Complete Hardware Information"),
-        editable=False,
-        blank=True
-    )
-
-    software_info = models.TextField(
-        verbose_name=_(u"Complete Software Information"),
-        editable=False,
-        blank=True
-    )
-
-    last_heartbeat = models.DateTimeField(
-        verbose_name=_(u"Last Heartbeat"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False
-    )
-
-    last_master_scheduler_tick = models.DateTimeField(
-        verbose_name=_(u"Last Master Scheduler Tick"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False,
-        help_text=("Corresponds to the master node's last scheduler tick. "
-                   "Does not have any impact when set on a worker node.")
-    )
-
     def __unicode__(self):
         return self.hostname
 
     def can_admin(self, user):
-        if user.has_perm('lava_scheduler_app.change_worker'):
-            return True
-        else:
-            return False
+        return user.has_perm('lava_scheduler_app.change_worker')
 
     def can_update(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):
@@ -427,37 +407,18 @@ class Worker(models.Model):
         return mark_safe(self.description)
 
     def get_hardware_info(self):
-        return mark_safe(self.hardware_info)
+        return ''
 
     def get_software_info(self):
-        return mark_safe(self.software_info)
+        return ''
 
     def too_long_since_last_heartbeat(self):
-        """Calculates if the last_heartbeat is more than the heartbeat_timeout
-        specified in seconds.
-
-        If there is a delay return True else False.
         """
-        if self.last_heartbeat is None:
-            return False
+        DEPRECATED
 
-        difference = timezone.now() - self.last_heartbeat
-
-        # We deliberately add a 10% delay to scheduler tick in order to account
-        # for network, processing, etc., overheads.
-        scheduler_tick = timezone.now() - self.master_scheduler_tick()
-        scheduler_tick = scheduler_tick.total_seconds()
-        scheduler_tick = scheduler_tick + (scheduler_tick * 0.1)
-
-        # scheduler_tick is added here to account for the time scheduler daemon
-        # process gets back to the next loop.
-        # Added since we observe offline worker in the UI which uses the same
-        # API to display offline workers.
-        heartbeat_timeout = utils.get_heartbeat_timeout() + scheduler_tick
-        if difference.total_seconds() > heartbeat_timeout:
-            return True
-        else:
-            return False
+        Always returns False.
+        """
+        return False
 
     def attached_devices(self):
         return Device.objects.filter(worker_host=self)
@@ -466,36 +427,10 @@ class Worker(models.Model):
         self.description = description
         self.save()
 
+    # pylint: disable=no-member
     @classmethod
     def update_heartbeat(cls, heartbeat_data):
-        heartbeat_data = simplejson.loads(heartbeat_data)
-        info_size = heartbeat_data.get('info_size', None)
-        hostname = heartbeat_data.get('hostname', None)
-        devices = heartbeat_data.get('devices', None)
-
-        worker, created = Worker.objects.get_or_create(hostname=hostname)
-        worker.uptime = heartbeat_data.get('uptime', None)
-        worker.last_heartbeat = timezone.now()
-
-        if info_size and info_size == 'complete':
-            worker.arch = heartbeat_data.get('arch', None)
-            worker.hardware_info = heartbeat_data.get('hardware_info', "")
-            worker.software_info = heartbeat_data.get('software_info', "")
-            worker.platform = heartbeat_data.get('platform', None)
-            worker.ip_address = heartbeat_data.get('ipaddr', None)
-
-        if worker:
-            worker.save()
-            for d in devices:
-                try:
-                    device = Device.objects.get(hostname=d)
-                    device.worker_host = worker
-                    device.save()
-                except Device.DoesNotExist:
-                    continue
-            return True
-        else:
-            return False
+        return False
 
     def on_master(self):
         return self.is_master
@@ -528,23 +463,17 @@ class Worker(models.Model):
             raise ValueError("Worker node unavailable")
 
     @classmethod
-    def record_last_master_scheduler_tick(self):
+    def record_last_master_scheduler_tick(cls):
         """Records the master's last scheduler tick timestamp.
         """
-        master = Worker.get_master()
-        master.last_master_scheduler_tick = timezone.now()
-        master.save()
+        pass
 
     def master_scheduler_tick(self):
         """Returns django.utils.timezone object of master's last scheduler tick
         timestamp. If the master's last scheduler tick is not yet recorded
         return the current timestamp.
         """
-        master = Worker.get_master()
-        if master.last_master_scheduler_tick:
-            return master.last_master_scheduler_tick
-        else:
-            return timezone.now()
+        return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):
@@ -608,7 +537,7 @@ class DeviceDictionary(DeviceKVStore):
     hostname = kvmodels.Field(pk=True)
     parameters = kvmodels.Field()
 
-    class Meta:
+    class Meta:  # pylint: disable=old-style-class,no-init
         app_label = 'pipeline'
 
 
@@ -870,10 +799,7 @@ class Device(RestrictedResource):
     def too_long_since_last_heartbeat(self):
         """This is same as worker heartbeat.
         """
-        if self.worker_host:
-            return self.worker_host.too_long_since_last_heartbeat()
-        else:
-            return True
+        return False
 
     def get_existing_health_check_job(self):
         """Get the existing health check job.
@@ -950,7 +876,7 @@ class Device(RestrictedResource):
         return jinja_str
 
 
-class TemporaryDevice(Device):
+class TemporaryDevice(Device):  # pylint: disable=model-no-explicit-unicode
     """
     A temporary device which inherits all properties of a normal Device.
     Heavily used by vm-groups implementation.
@@ -993,7 +919,7 @@ def _get_tag_list(tags, pipeline=False):
     :raise: JSONDataError if a tag cannot be found in the database.
     """
     taglist = []
-    if type(tags) != list:
+    if not isinstance(tags, list):
         msg = "'device_tags' needs to be a list - received %s" % type(tags)
         raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
     for tag_name in tags:
@@ -1173,10 +1099,12 @@ def _check_device_types(user):
     return all_devices
 
 
+# pylint: disable=too-many-arguments,too-many-variables,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
-                         device_type=None, target_group=None, orig=None):
+                         device_type=None, target_group=None,
+                         orig=None):
 
-    if type(job_data) is not dict:
+    if not isinstance(job_data, dict):
         # programming error
         raise RuntimeError("Invalid job data %s" % job_data)
 
@@ -1189,16 +1117,16 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
-    public = True,
+    public_state = True,
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
     param = job_data['visibility']
     if isinstance(param, str):
         if param == 'personal':
-            public = False
+            public_state = False
             visibility = TestJob.VISIBLE_PERSONAL
     elif isinstance(param, dict):
-        public = False
+        public_state = False
         if 'group' in param:
             visibility = TestJob.VISIBLE_GROUP
             viewing_groups.extend(Group.objects.filter(name__in=param['group']))
@@ -1212,7 +1140,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   target_group=target_group,
                   description=job_data['job_name'],
                   health_check=False,
-                  user=user, is_public=public,
+                  user=user, is_public=public_state,
                   visibility=visibility,
                   is_pipeline=True)
     job.save()
@@ -1235,7 +1163,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     return job
 
 
-def _pipeline_protocols(job_data, user, yaml_data=None):
+def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-many-locals,too-many-branches
     """
     Handle supported pipeline protocols
     Check supplied parameters and change the device selection if necessary.
@@ -1269,7 +1197,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         DevicesUnavailableException if all criteria cannot be met.
     """
     device_list = []
-    if type(job_data) is dict and 'protocols' not in job_data:
+    if isinstance(job_data, dict) and 'protocols' not in job_data:
         return device_list
 
     if not yaml_data:
@@ -1362,14 +1290,16 @@ class PipelineStore(models.Model):
         """
         Exports the pipeline as YAML
         """
-        # FIXME: add a command line call to retrieve specific items - too slow to show in admin interface.
         val = self.kee
         msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
         data = JobPipeline.get(msg)
-        if type(data.pipeline) == str:
+        if isinstance(data.pipeline, str):
             # if this fails, fix lava_dispatcher.pipeline.actions.explode()
             data.pipeline = yaml.load(data.pipeline)
         return data
+
+    def __unicode__(self):
+        return ''
 
 
 class JobPipeline(PipelineKVStore):
@@ -1380,7 +1310,7 @@ class JobPipeline(PipelineKVStore):
     job_id = kvmodels.Field(pk=True)
     pipeline = kvmodels.Field()
 
-    class Meta:
+    class Meta:  # pylint: disable=old-style-class,no-init
         app_label = 'pipeline'
 
 
@@ -1388,6 +1318,9 @@ class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+    class Meta:
+        index_together = ["status", "requested_device_type", "requested_device"]
+
     objects = RestrictedResourceManager.from_queryset(
         RestrictedTestJobQuerySet)()
 
@@ -1427,6 +1360,9 @@ class TestJob(RestrictedResource):
         (VISIBLE_PERSONAL, 'Personal only'),
         (VISIBLE_GROUP, 'Group only'),
     )
+
+    NOTIFY_EMAIL_METHOD = 'email'
+    NOTIFY_IRC_METHOD = 'irc'
 
     id = models.AutoField(primary_key=True)
 
@@ -1522,7 +1458,8 @@ class TestJob(RestrictedResource):
     submit_time = models.DateTimeField(
         verbose_name=_(u"Submit time"),
         auto_now=False,
-        auto_now_add=True
+        auto_now_add=True,
+        db_index=True
     )
     start_time = models.DateTimeField(
         verbose_name=_(u"Start time"),
@@ -1618,34 +1555,29 @@ class TestJob(RestrictedResource):
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'job-output',
                                  'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_job = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_job:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_job = int(last.read())
 
-        return False
+        return self.id <= last_archived_job
 
     def archived_bundle(self):
-        """Checks if the current bundle file was archived.
+        """
+        DEPRECATED
+
+        Checks if the current bundle file was archived.
         """
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_bundle = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_bundle:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_bundle = int(last.read())
 
-        return False
+        return self.id <= last_archived_bundle
 
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
@@ -1670,7 +1602,7 @@ class TestJob(RestrictedResource):
             return None
 
     @property
-    def device_role(self):
+    def device_role(self):  # pylint: disable=too-many-return-statements
         if not (self.is_multinode or self.is_vmgroup):
             return "Error"
         if self.is_pipeline:
@@ -1754,6 +1686,7 @@ class TestJob(RestrictedResource):
 
         return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
 
+    # pylint: disable=too-many-statements,too-many-branches,too-many-locals
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
         """
@@ -1794,7 +1727,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
-                logger.debug("Requested device %s is unavailable." % job_data['target'])
+                logger.debug("Requested device %s is unavailable.", job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_exclusivity([target], False)
@@ -1837,7 +1770,6 @@ class TestJob(RestrictedResource):
                         (count, board, all_devices.get(board.name, 0)))
         elif 'vm_group' in job_data:
             target = None
-            device_type = None
             requested_devices = {}
             vm_group = job_data['vm_group']
 
@@ -1954,7 +1886,7 @@ class TestJob(RestrictedResource):
         # device_types requested per role.
         allowed_devices = {}
         orig_job_data = job_data
-        job_data = utils.process_repeat_parameter(job_data)
+        job_data = utils.process_repeat_parameter(job_data)  # pylint: disable=redefined-variable-type
         if 'device_group' in job_data:
             device_count = {}
             target = None  # prevent multinode jobs reserving devices which are currently running.
@@ -1981,7 +1913,7 @@ class TestJob(RestrictedResource):
             job_list = []
             try:
                 parent_id = (TestJob.objects.latest('id')).id + 1
-            except:
+            except:  # pylint: disable=bare-except
                 parent_id = 1
             child_id = 0
 
@@ -2029,13 +1961,14 @@ class TestJob(RestrictedResource):
             return job_list
 
         elif 'vm_group' in job_data:
+            # deprecated support
             target = None
             vm_group = str(uuid.uuid4())
             node_json = utils.split_vm_job(job_data, vm_group)
             job_list = []
             try:
                 parent_id = (TestJob.objects.latest('id')).id + 1
-            except:
+            except:  # pylint: disable=bare-except
                 parent_id = 1
             child_id = 0
 
@@ -2045,7 +1978,7 @@ class TestJob(RestrictedResource):
                     name = node_json[role][c]["device_type"]
                     try:
                         device_type = DeviceType.objects.get(name=name)
-                    except DeviceType.DoesNotExist as e:
+                    except DeviceType.DoesNotExist:
                         if name != "dynamic-vm":
                             raise DevicesUnavailableException("device type %s does not exist" % name)
                         else:
@@ -2089,7 +2022,6 @@ class TestJob(RestrictedResource):
                     child_id += 1
 
                     # Reset values if already set
-                    device_type = None
                     target = None
             return job_list
 
@@ -2217,27 +2149,25 @@ class TestJob(RestrictedResource):
         """
         logger = logging.getLogger('lava_scheduler_app')
         if not user:
-            logger.info("Unidentified user requested cancellation of job submitted by %s" % (
-                self.submitter
-            ))
+            logger.info("Unidentified user requested cancellation of job submitted by %s", self.submitter)
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
-            logger.info("Cancel %s - clearing reserved status for device %s" % (
-                self, self.actual_device.hostname))
+            logger.info("Cancel %s - clearing reserved status for device %s",
+                        self, self.actual_device.hostname)
             self.actual_device.cancel_reserved_status(user, "job-cancel")
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
         elif self.status == TestJob.SUBMITTED:
-            logger.info("Cancel %s" % self)
+            logger.info("Cancel %s", self)
             self.status = TestJob.CANCELED
             self._send_cancellation_mail(user)
         elif self.status == TestJob.RUNNING:
-            logger.info("Cancel %s" % self)
+            logger.info("Cancel %s", self)
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
         elif self.status == TestJob.CANCELING:
-            logger.info("Completing cancel of %s" % self)
+            logger.info("Completing cancel of %s", self)
             self.status = TestJob.CANCELED
         if user:
             self.set_failure_comment("Canceled by %s" % user.username)
@@ -2338,10 +2268,7 @@ class TestJob(RestrictedResource):
 
     @property
     def is_multinode(self):
-        if self.target_group:
-            return True
-        else:
-            return False
+        return bool(self.target_group)
 
     @property
     def lookup_worker(self):
@@ -2367,10 +2294,8 @@ class TestJob(RestrictedResource):
     def is_vmgroup(self):
         if self.is_pipeline:
             return False
-        if self.vm_group:
-            return True
         else:
-            return False
+            return bool(self.vm_group)
 
     @property
     def display_id(self):
@@ -2440,6 +2365,7 @@ class TestJob(RestrictedResource):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
         if self.is_multinode or self.is_vmgroup:
+            # FIXME: bad use of map - use list comprehension
             return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)
@@ -2514,6 +2440,7 @@ class TestJob(RestrictedResource):
                     object_id__in=self.testdata_set.all().values_list(
                         'id', flat=True),
                     name=xaxis_attribute).values_list('value', flat=True)[0]
+            # FIXME: bare except
             except:  # There's no attribute, use date.
                 pass
 
@@ -2524,6 +2451,9 @@ class TestJobUser(models.Model):
 
     class Meta:
         unique_together = ("test_job", "user")
+        permissions = (
+            ('cancel_resubmit_testjob', 'Can cancel or resubmit test jobs'),
+        )
 
     user = models.ForeignKey(
         User,
@@ -2538,6 +2468,11 @@ class TestJobUser(models.Model):
     is_favorite = models.BooleanField(
         default=False,
         verbose_name='Favorite job')
+
+    def __unicode__(self):
+        if self.user:
+            return self.user.username
+        return ''
 
 
 class DeviceStateTransition(models.Model):

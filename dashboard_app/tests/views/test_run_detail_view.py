@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import django
+from django.http import HttpResponseForbidden, HttpResponse
 from django_testscenarios.ubertest import (TestCase, TestCaseWithScenarios)
 from dashboard_app.models import BundleStream, TestRun
 from django.contrib.auth.models import (User, Group)
@@ -100,5 +101,13 @@ class TestRunViewAuth(TestCaseWithScenarios):
             self.client.login_user(self.accessing_user)
 
     def test_run_unauth_access(self):
+        """
+        The status code can vary by the installed dependencies but the
+        content of the response is the same.
+        """
         response = self.client.get(self.test_run_url)
-        self.assertEqual(response.status_code, 403)
+        if django.VERSION > (1, 8):
+            self.assertIsInstance(response, HttpResponseForbidden)
+        else:
+            self.assertIsInstance(response, HttpResponse)
+            self.assertIn('403', response.content)

@@ -555,13 +555,6 @@ $(document).ready(function () {
         table_body += '</tr></tbody>';
         $("#results-table_" + this.chart_id + " tbody").html(table_head +
                                                        table_body);
-
-        this.update_tooltips();
-    }
-
-    ImageChart.prototype.update_tooltips = function() {
-        // Update tooltips on the remaining td's for the test names.
-        $(document).tooltip({items: "td"});
     }
 
     ImageChart.prototype.set_dates = function() {

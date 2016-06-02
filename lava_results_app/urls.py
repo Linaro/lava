@@ -22,6 +22,7 @@ URL mappings for the LAVA Results application
 from django.conf.urls import *
 from lava_results_app.views import (
     index,
+    metadata_export,
     suite,
     suite_csv_stream,
     suite_csv,
@@ -113,6 +114,8 @@ urlpatterns = [
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)$', testjob, name='lava.results.testjob'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/csv$', testjob_csv, name='lava.results.testjob_csv'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/yaml$', testjob_yaml, name='lava.results.testjob_yaml'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/metadata$',
+        metadata_export, name='lava.results.job.metadata'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$', suite, name='lava.results.suite'),
     url(r'^chart$', chart_list, name='lava.results.chart_list'),
     url(r'^chart/\+add$', chart_add, name='lava.results.chart_add'),

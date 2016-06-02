@@ -1,4 +1,3 @@
-import os
 import pytz
 import yaml
 from dateutil import parser
@@ -7,12 +6,6 @@ from django.conf import settings
 from collections import OrderedDict
 from django.utils.safestring import mark_safe
 from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.models import (
-    DeviceDictionary,
-    DeviceDictionaryTable,
-    JobPipeline,
-    PipelineStore,
-)
 from lava_scheduler_app.utils import load_devicetype_template
 
 
@@ -34,66 +27,8 @@ def get_priority_select(current):
 
 
 @register.filter
-def get_type(value):
-    """
-    Detects iterable types from not iterable types
-    enough for the templates to work out if it is a value or a key.
-    """
-    if type(value) == str:
-        return 'str'
-    if type(value) == unicode:
-        return 'str'
-    if type(value) == bool:
-        return 'str'
-    if type(value) == int:
-        return 'str'
-    if type(value) == dict:
-        return 'dict'
-    if type(value) == list:
-        return 'list'
-    return type(value)
-
-
-@register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
-
-
-@register.filter
-def get_device_dictionary(data):
-    key = os.path.basename(os.path.dirname(data))
-    device_dict_obj = DeviceDictionaryTable.objects.get(id=key)
-    device_dict = device_dict_obj.lookup_device_dictionary()
-    return device_dict.to_dict()
-
-
-@register.filter
-def get_pipeline_store(data):
-    key = os.path.basename(os.path.dirname(data))
-    device_dict_obj = PipelineStore.objects.get(id=key)
-    device_dict = device_dict_obj.lookup_job_pipeline()
-    return device_dict.to_dict()
-
-
-@register.filter
-def get_device_parameters(data, key):
-    if type(data) == str:
-        return data
-    if type(data) == dict:
-        if type(key) == str and key in data:
-            return data.get(key)
-        return key.keys()
-    return (type(data), type(key), data)
-
-
-@register.filter
-def get_yaml_parameters(parameters):
-    # FIXME: it should be possible to dump this dict as YAML.
-    try:
-        ret = yaml.safe_dump(parameters, default_flow_style=False, canonical=False, default_style=None)
-    except:
-        return parameters
-    return ret
 
 
 @register.filter
@@ -265,3 +200,26 @@ def result_name(result_dict):
             ))
     else:
         return None
+
+
+@register.filter()
+def metadata_key(key, index=0):
+    return '.'.join(key.split('.')[index:]).replace('definition.', '')
+
+
+@register.filter()
+def markup_metadata(key, value):
+    if 'target.device_type' in key:
+        return mark_safe("<a href='/scheduler/device_type/%s'>%s</a>" % (value, value))
+    elif 'target.hostname' in key:
+        return mark_safe("<a href='/scheduler/device/%s'>%s</a>" % (value, value))
+    elif 'definition.repository' in key:
+        repo = value.replace('git:', 'http:')
+        return mark_safe("<a href='%s'>%s</a>" % (repo, value))
+    else:
+        return value
+
+
+@register.filter()
+def markup_completion(data):
+    return [key for key, _ in data.items() if 'test' in key]

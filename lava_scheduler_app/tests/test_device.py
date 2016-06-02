@@ -20,6 +20,8 @@ from django.contrib.auth.models import User
 from lava_dispatcher.pipeline.device import PipelineDevice
 
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
+# python3 needs print to be a function, so disable pylint
+# pylint: disable=superfluous-parens
 
 
 class ModelFactory(object):
@@ -34,7 +36,7 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
-    def get_unique_user(self, prefix='generic'):
+    def get_unique_user(self, prefix='generic'):  # pylint: disable=no-self-use
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
     def make_user(self):
@@ -221,7 +223,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertIn('commands', ramdisk_args)
         self.assertIn('boot', ramdisk_args['commands'])
         self.assertIn(
-            "setenv bootargs 'console=ttyfake1,56 debug rw root=/dev/ram0 ip=dhcp'",
+            "setenv bootargs 'console=ttyfake1,56 debug rw root=/dev/ram0  ip=dhcp'",
             ramdisk_args['commands'])
 
         device_dictionary.update(
@@ -270,10 +272,11 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)
         template = env.get_template("%s.jinja2" % 'cubie')
-        device_configuration = template.render()
+        # pylint gets this wrong from jinja
+        device_configuration = template.render()  # pylint: disable=no-member
 
         chk_template = prepare_jinja_template('cubie', jinja_data, system_path=False, path=jinja2_path)
-        self.assertEqual(template.render(), chk_template.render())
+        self.assertEqual(template.render(), chk_template.render())  # pylint: disable=no-member
         yaml_data = yaml.load(device_configuration)
         self.assertTrue(validate_device(yaml_data))
         self.assertIn('timeouts', yaml_data)
@@ -354,9 +357,9 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         vlan.save()
         del vlan
         vlan = DeviceDictionary.get('vlanned1')
-        cmp = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
+        cmp_str = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
         for line in str(data).split('\n'):
-            self.assertIn(line, cmp)
+            self.assertIn(line, cmp_str)
 
     def test_network_map(self):
         """
@@ -481,9 +484,11 @@ class TestTemplates(TestCaseWithFactory):
 
     debug = False  # set to True to see the YAML device config output
 
-    def validate_data(self, hostname, data):
+    def validate_data(self, hostname, data, job_ctx=None):
+        if not job_ctx:
+            job_ctx = {}
         test_template = prepare_jinja_template(hostname, data, system_path=False)
-        rendered = test_template.render()
+        rendered = test_template.render(**job_ctx)
         if self.debug:
             print('#######')
             print(rendered)
@@ -504,11 +509,42 @@ class TestTemplates(TestCaseWithFactory):
 {% set connection_command = 'adb -s R32D300FRYP shell' %}"""))
 
     def test_x86_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'x86.jinja2' %}
+        data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
-{% set connection_command = 'telnet localhost 7302' %}"""))
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
+            if 'commands' in value:
+                for item in value['commands']:
+                    self.assertFalse(item.endswith(','))
+        depth = 0
+        # check configured commands blocks for trailing commas inherited from JSON V1 configuration.
+        # reduce does not help as the top level dictionary also contains lists, integers and strings
+        for block, action_value in template_dict['actions'].items():
+            if 'methods' in action_value:
+                depth = 1 if depth < 1 else depth
+                for method_key, method_value in action_value.items():
+                    depth = 2 if depth < 2 else depth
+                    for item_key, item_value in method_value.items():
+                        depth = 3 if depth < 3 else depth
+                        if isinstance(item_value, dict):
+                            depth = 4 if depth < 4 else depth
+                            for command_key, command_value in method_value[item_key].items():
+                                depth = 5 if depth < 5 else depth
+                                if isinstance(command_value, dict):
+                                    depth = 6 if depth < 6 else depth
+                                    if 'commands' in command_value:
+                                        depth = 7 if depth < 7 else depth
+                                        for item in command_value['commands']:
+                                            depth = 8 if depth < 8 else depth
+                                            if item.endswith(','):
+                                                self.fail("%s ends with a comma" % item)
+        self.assertEqual(depth, 8)
 
     def test_beaglebone_black_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
@@ -528,7 +564,21 @@ class TestTemplates(TestCaseWithFactory):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
 {% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
-{% set memory = 512 %}"""))
+{% set memory = 512 %}""", job_ctx={'arch': 'amd64'}))
+
+    def test_qemu_installer(self):
+        data = """{% extends 'qemu.jinja2' %}
+{% set exclusive = 'True' %}
+{% set mac_addr = 'DE:AD:BE:EF:28:01' %}
+{% set memory = 512 %}"""
+        job_ctx = {'arch': 'amd64'}
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=False)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertEqual(
+            'c',
+            template_dict['actions']['boot']['methods']['qemu']['parameters']['boot_options']['boot_order']
+        )
 
     def test_mustang_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'mustang.jinja2' %}

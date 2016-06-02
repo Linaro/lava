@@ -7,7 +7,7 @@ This is the **developer** documentation for the new dispatcher design.
 See :ref:`refactoring_use_cases` for information for lab administrators
 and users of the new design.
 
-The refactoring takes place alongside the current dispatcher and existing
+The refactoring takes place alongside the V1 dispatcher and existing
 JSON jobs are unaffected. A migration will take place where individual
 devices are configured for
 :ref:`pipeline support <pipeline_device_requirements>` and individual jobs
@@ -15,19 +15,21 @@ are then re-written using the :ref:`pipeline_schema <pipeline_schema>`.
 The administrator of each instance will be able to manage their own
 migration and at some point after ``validation.linaro.org`` has completed
 the migration of all devices to pipeline support, the support for the
-current dispatcher will be removed. Detailed planning for the migration
-of ``validation.linaro.org`` has not begun and details will be
-announced using the `Linaro Validation mailing list`_ before the migration
-itself starts on ``validation.linaro.org``.
+current dispatcher will be removed.
+
+``validation.linaro.org`` supports LAVA V2 pipeline submissions as of
+the ``2016.2`` release and the V2 support will continue to expand in
+subsequent releases.
 
 The LAVA developers use a `playground instance <http://playground.validation.linaro.org>`_
-which has already begun a migration.
+for testing of selected changes prior to merging into master. There is
+also a `staging instance <http://staging.validation.linaro.org>`_ for
+testing of the current master branch and release candidates for the next
+production release.
 
 Devices indicate their support for pipeline jobs in the
 :ref:`detailed device information <device_owner_help>` for each device
 and device type.
-
-.. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
 
 Pipeline Architecture
 *********************
@@ -83,12 +85,9 @@ assumptions about the test in the dispatcher configuration and put more
 flexibility into the hands of the test writer.
 
 .. note:: The new code is still developing, some areas are absent,
-          some areas will change substantially before it will work.
-          All details here need to be seen only as examples and the
-          specific code may well change independently. This documentation
-          is aimed at LAVA developers - although some content covers user
-          facing actions, the syntax and parameters for these actions
-          are still subject to change and do not constitute an API.
+          some areas will change substantially before the migration completes.
+          There may be changes to the submission formats but these will
+          be announced on the :ref:`lava_announce` mailing list.
 
 From **2015.8 onwards** the sample jobs supporting the unit tests
 conform to the :ref:`pipeline_schema`.

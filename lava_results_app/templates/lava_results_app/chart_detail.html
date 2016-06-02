@@ -107,13 +107,16 @@
   {% for chart_query in chart.chartquery_set.all %}
   <div id="{{ chart_query.id }}" class="sortable-placeholder">
     <div class="chart-title">
-      {{ chart_query.query.name }}
-      <a style="font-size: 13px;" href="{% url 'lava_results_app.views.chart.views.chart_query_remove' chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
+      <a href="{{ chart_query.query.get_absolute_url }}">{{ chart_query.query.owner_name }}</a>
+      <a class="chart-title-link" href="{% url 'lava_results_app.views.chart.views.chart_query_remove' chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
         remove
       </a>
-      <a style="font-size: 13px;" href="{{ chart_query.get_absolute_url }}">
+      <a class="chart-title-link" href="{{ chart_query.get_absolute_url }}">
         edit
       </a>
+    </div>
+    <div>
+      Last updated: {% if chart_query.query.is_live %} Live query{% else %}{{ chart_query.query.last_updated | default:"Never" }}{% endif %}
     </div>
     <div>
       Type: {{ chart_query.chart_type }}
