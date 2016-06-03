@@ -54,3 +54,4 @@ include version.py
 recursive-include etc/dispatcher-config README
 include share/*
 include share/zmq/*
+include lava_server/templates/robots.txt
