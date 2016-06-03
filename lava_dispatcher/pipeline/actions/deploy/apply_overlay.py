@@ -411,6 +411,9 @@ class ApplyLxcOverlay(Action):
         self.name = "apply-lxc-overlay"
         self.summary = "apply overlay on the container"
         self.description = "apply the overlay to the container by copying"
+        self.lava_test_dir = os.path.realpath(
+            '%s/../../../pipeline/lava_test_shell' % os.path.dirname(__file__))
+        self.scripts_to_copy = ['lava-test-runner']
 
     def validate(self):
         super(ApplyLxcOverlay, self).validate()
@@ -432,6 +435,19 @@ class ApplyLxcOverlay(Action):
         if command_output and command_output is not '':
             raise JobError("Unable to untar overlay: %s" %
                            command_output)  # FIXME: JobError needs a unit test
+
+        # FIXME: Avoid copying this special 'lava-test-runner' which does not
+        #        have 'sync' in cleanup. This should be handled during the
+        #        creation of the overlay instead. Make a special case to copy
+        #        lxc specific scripts, with distro specific versions.
+        fname = os.path.join(self.lava_test_dir, 'lava-test-runner')
+        output_file = '%s/bin/%s' % (lxc_path, os.path.basename(fname))
+        self.logger.debug("Copying %s", output_file)
+        try:
+            shutil.copy(fname, output_file)
+        except IOError:
+            raise JobError("Unable to copy: %s" % output_file)
+
         return connection
 
 
