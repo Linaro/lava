@@ -139,11 +139,11 @@ $(document).ready(function () {
     }
 
     ChartQuery.prototype.setup_item_menu = function() {
-        chart_id = this.chart_id;
-        $("#item_menu_" + chart_id).menu();
-        $("#item_menu_" + chart_id).hide();
-        $("#item_menu_" + chart_id).mouseleave(function() {
-            $("#item_menu_" + chart_id).hide();
+        $("#item_menu_" + this.chart_id).menu();
+        $("#item_menu_" + this.chart_id).hide();
+        $("#item_menu_" + this.chart_id).attr("chart_id", this.chart_id);
+        $("#item_menu_" + this.chart_id).mouseleave(function() {
+            $("#item_menu_" + $(this).attr("chart_id")).hide();
         });
     }
 
@@ -163,22 +163,23 @@ $(document).ready(function () {
         this.setup_item_menu();
 
         // Bind plotclick event.
-	chart_id = this.chart_id;
 	chart_name = this.chart_data.basic.chart_name;
+        $("#inner_container_" + this.chart_id).attr("chart_id", this.chart_id);
         $("#inner_container_" + this.chart_id).bind(
             "plotclick",
             function (event, pos, item) {
                 if (item) {
                     // Make datapoint unique value
                     datapoint = item.datapoint.join("_");
-		    toggle_item_menu(chart_id, pos.pageX, pos.pageY);
-		    $("#view_item_" + chart_id).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
-		    $("#omit_item_" + chart_id).attr(
+		    toggle_item_menu($(this).attr("chart_id"),
+                                     pos.pageX, pos.pageY);
+		    $("#view_item_" + $(this).attr("chart_id")).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
+		    $("#omit_item_" + $(this).attr("chart_id")).attr(
 			"href",
 			window.location.protocol + "//" +
 			    window.location.host + "/results/chart/" +
 			    chart_name + "/" +
-			    chart_id + "/" +
+			    $(this).attr("chart_id") + "/" +
 			    item.series.meta[datapoint]["pk"] +
 			    "/+omit-result");
                 }
