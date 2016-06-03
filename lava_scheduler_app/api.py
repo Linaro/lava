@@ -607,14 +607,18 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
         if job.is_pipeline:
-            return job.get_status_display()
+            return {
+                'job_status': job.get_status_display(),
+                'bundle_sha1': ""
+            }
 
         # DEPRECATED
         bundle_sha1 = ""
-        try:
-            bundle_sha1 = job.results_link.split('/')[-2]
-        except IndexError:
-            pass
+        if job.results_link:
+            try:
+                bundle_sha1 = job.results_link.split('/')[-2]
+            except IndexError:
+                pass
 
         job_status = {
             'job_status': job.get_status_display(),
