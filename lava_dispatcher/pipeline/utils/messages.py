@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_EXCEPTION_MSG,
     KERNEL_FAULT_MSG,
     KERNEL_PANIC_MSG,
+    KERNEL_INIT_ALERT,
 )
 
 
@@ -45,14 +46,17 @@ class LinuxKernelMessages(Action):
     EXCEPTION = 0
     FAULT = 1
     PANIC = 2
+    ALERT = 3
     # these can be omitted by InitMessages
-    FREE_UNUSED = 3
-    FREE_INIT = 4
+    FREE_UNUSED = 4
+    FREE_INIT = 5
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, 'exception'),
         (FAULT, KERNEL_FAULT_MSG, 'fault'),
         (PANIC, KERNEL_PANIC_MSG, 'panic'),
+        # ALERT is allowable behaviour - just needs a sendline to get to the prompt
+        (ALERT, KERNEL_INIT_ALERT, 'success'),
         (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, 'success'),
         (FREE_INIT, KERNEL_FREE_INIT_MSG, 'success'),
     )
@@ -94,6 +98,8 @@ class LinuxKernelMessages(Action):
 
         When multiple messages are identified, the list contains one dictionary
         for each message found.
+
+        Always returns a list, the list may be empty.
         """
         results = []
         while True:
@@ -104,7 +110,15 @@ class LinuxKernelMessages(Action):
             except pexpect.TIMEOUT:
                 raise JobError("time out in %s" % cls.name)
             message = connection.raw_connection.after
-            if index <= cls.PANIC:
+            if index == cls.ALERT:
+                connection.sendline(connection.check_char)
+                # this is allowable behaviour, not a failure.
+                results.append({
+                    cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
+                    'message': cls.name
+                })
+                break
+            elif index <= cls.PANIC:
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
                     'message': message

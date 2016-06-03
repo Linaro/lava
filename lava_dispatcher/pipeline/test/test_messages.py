@@ -127,3 +127,16 @@ class TestBootMessages(unittest.TestCase):
         results = LinuxKernelMessages.parse_failures(connection)
         # 5 more traces appear during init
         self.assertEqual(len(list(results)), 5)
+
+    def test_kernel_ramdisk_alert(self):
+        logfile = os.path.join(os.path.dirname(__file__), 'kernel-3.txt')
+        self.assertTrue(os.path.exists(logfile))
+        child = pexpect.spawn('cat', [logfile])
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(connection)
+        self.assertEqual(len(list(results)), 1)
+        self.assertIn('message', results[0])
+        self.assertIn('success', results[0])
+        self.assertNotIn('panic', results[0])

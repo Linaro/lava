@@ -124,6 +124,8 @@ KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
 # panic
 KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
+# init dropping to a shell - often needs a sendline
+KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
 
 # qemu installer size limit in Mb
 # (i.e. size * 1024 * 1024)
