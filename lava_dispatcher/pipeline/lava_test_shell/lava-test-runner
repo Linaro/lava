@@ -1,0 +1,115 @@
+#!/bin/sh
+
+if [ "$1" = "" ]
+then
+    LAVA_PATH="/lava"
+else
+	LAVA_PATH=$1
+fi
+
+echo $LAVA_PATH
+PREFIX="<LAVA_TEST_RUNNER>:"
+WORKFILE="$LAVA_PATH/lava-test-runner.conf"
+RESULTSDIR="$LAVA_PATH/results"
+BINDIR="$LAVA_PATH/bin"
+
+hwcontext()
+{
+	ODIR=$1
+	mkdir -p ${ODIR}/hwcontext
+	cpuinfo=${ODIR}/hwcontext/cpuinfo.txt
+	meminfo=${ODIR}/hwcontext/meminfo.txt
+
+	[ -f ${cpuinfo} ] || cat /proc/cpuinfo > ${cpuinfo}
+	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
+}
+
+swcontext()
+{
+	ODIR=$1
+	mkdir -p ${ODIR}/swcontext
+	build=${ODIR}/swcontext/build.txt
+	pkgs=${ODIR}/swcontext/pkgs.txt
+
+	lava-os-build > ${build}
+
+	# this has to print a list of installed packages that will look similar to
+	# what android's package list does
+	lava-installed-packages  > ${pkgs}
+}
+
+cleanup()
+{
+	# just adds a little handy debugging
+	ls ${RESULTSDIR}
+	echo "${PREFIX} exiting lava-test-runner"
+}
+trap cleanup INT TERM EXIT
+
+export PATH=${BINDIR}:${PATH}
+echo "${PREFIX} started"
+mkdir -p ${RESULTSDIR}
+
+# move the workfile to something timestamped and run that. This
+# prevents us from running the same thing again after a reboot
+TS=`date +%s`
+mv ${WORKFILE} ${WORKFILE}-${TS}
+WORKFILE=${WORKFILE}-${TS}
+
+echo "${PREFIX} looking for work in ${WORKFILE}"
+for line in $(cat ${WORKFILE}); do
+	test=`basename $line`
+	echo "${PREFIX} running ${test} under lava-test-shell..."
+	odir=${RESULTSDIR}/${test}-`date +%s`
+	mkdir ${odir}
+	mkdir ${odir}/attachments/
+	touch ${odir}/stdout.log
+	mkdir ${odir}/attributes/
+	cp ${line}/uuid ${odir}/analyzer_assigned_uuid
+	cp ${line}/testdef.yaml ${odir}/
+	cp ${line}/testdef_metadata ${odir}/
+
+	cp ${line}/run.sh ${odir}/attachments/
+	echo 'text/plain' > ${odir}/attachments/run.sh.mimetype
+	if [ -f ${line}/install.sh ]; then
+		cp ${line}/install.sh ${odir}/attachments/
+		echo 'text/plain' > ${odir}/attachments/install.sh.mimetype
+		echo "${PREFIX} running ${test} installer ..."
+		/bin/sh ${line}/install.sh
+		R=$?
+		echo ${R} > ${odir}/install_return_code
+		if [ ${R} -ne 0 ] ; then
+			echo "${PREFIX} ${test} installer failed, skipping"
+			hwcontext ${odir}
+			swcontext ${odir}
+			continue
+		fi
+	fi
+
+	echo "${PREFIX} save hardware/software context info for ${test}..."
+	hwcontext ${odir}
+	swcontext ${odir}
+
+	# run.sh includes a "read -t <timeout>" which isn't supported by dash
+	# so be sure to use bash (ash also works).
+
+	shell="none"
+	if [ -f /bin/bash ]; then
+		shell="/bin/bash"
+	else
+		if [ -f /bin/ash ]; then
+			shell="/bin/ash"
+		fi
+	fi
+
+	if [ $shell = "none" ]; then
+		echo "-----------------------------------------------"
+		echo "ERROR: Unable to find a usable shell. Aborting."
+		echo "-----------------------------------------------"
+		exit 1
+	fi
+
+	lava-test-shell --output_dir ${odir} ${shell} -e "${line}/run.sh"
+	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
+done
+
