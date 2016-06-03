@@ -142,18 +142,20 @@ class AutoLoginAction(Action):
         if isinstance(prompts, list):
             for prompt in prompts:
                 check_prompt_characters(prompt)
-            self.logger.debug("Setting shell prompt(s) to %s" % ', '.join(connection.prompt_str))  # pylint: disable=logging-not-lazy
             connection.prompt_str.extend(prompts)
         else:
             check_prompt_characters(prompts)
-            self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
             connection.prompt_str.append(prompts)
+
+        self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
 
         if params is None:
             self.logger.debug("Parsing kernel messages")
             parsed = LinuxKernelMessages.parse_failures(connection)
-            if parsed:
-                self.results = parsed
+            if len(parsed) and 'success' in parsed[0]:
+                self.results = {'success': parsed[0]}
+            else:
+                self.results = {'fail': parsed}
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
         return connection
