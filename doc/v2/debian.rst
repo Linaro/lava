@@ -61,6 +61,29 @@ build, ready for use with ``$ sudo dpkg -i``.
           service will be restarted each time ``lava-server`` is
           installed or updated.
 
+.. _devel_branches:
+
+Which branch to use for changes
+===============================
+
+Any and all changes for inclusion into a future release need to be based
+on the current git master branch and will need rebasing from time to
+time as master moves ahead.
+
+All testing of the LAVA source code is based on the relevant master
+branch which is then merged into the staging branch for testing as a
+release candidate. The final release involves merging staging into the
+release branch. Git tags are based on the release branch.
+
+When using existing git tags or the release branch, create a new local
+branch and commit your changes to ensure that a
+:ref:`local version string <local_version_strings>` is used.
+
+There can also be new dependencies added by changes in master and
+staging before those changes are merged into release or uploaded as
+a production release. When these changes are merged into master, the
+packaging will also be updated.
+
 .. _local_version_strings:
 
 Local version strings

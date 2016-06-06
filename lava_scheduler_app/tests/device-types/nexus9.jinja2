@@ -11,14 +11,16 @@ fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
 actions:
   deploy:
     methods:
+      lxc:
       fastboot:
     connections:
+      lxc:
       serial:
-      adb:
   boot:
     connections:
-      adb:
+      lxc:
     methods:
+      lxc:
       fastboot:
 
 {% endblock %}

@@ -393,7 +393,10 @@ class ArrayAgg(models.Aggregate):
 #    and testrun has any of the tests/testcases requested
 #    [and testrun has attribute with key = build_number_attribute]
 #    [and testrun.bundle.uploaded_by = uploaded_by]
-def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
+def evaluate_filter(user, filter_data, prefetch_related=None, descending=True):
+    if not prefetch_related:
+        prefetch_related = []
+
     accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
         user)
     bs_ids = list(
@@ -471,8 +474,8 @@ def get_named_attributes(filter, content_type):
     return object_attribute_ids
 
 
-def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
-                        descending=True, image_chart_filter=None):
+def get_filter_testruns(user, filter, limit=100, descending=True,
+                        image_chart_filter=None):
     # Return the list of test runs which meet the conditions specified in the
     # filter.
 
@@ -516,14 +519,15 @@ def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
         'denormalization',
         'bundle',
         'bundle__bundle_stream',
-        'test'
+        'test',
+        'bug_links'
     )[:limit]
 
     return reversed(testruns)
 
 
-def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
-                           descending=True, image_chart_filter=None):
+def get_filter_testresults(user, filter, limit=50, descending=True,
+                           image_chart_filter=None):
     # Return the list of test results which meet the conditions specified in
     # the filter.
 
@@ -569,7 +573,9 @@ def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
         'test_run__denormalization',
         'test_run__bundle',
         'test_run__bundle__bundle_stream',
-        'test_run__test'
+        'test_run__test',
+        'bug_links',
+        'test_case'
     )[:limit]
 
     return reversed(testresults)

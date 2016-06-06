@@ -23,7 +23,6 @@ Views for the Dashboard application
 import csv
 import json
 import os
-import re
 import django
 import shutil
 import tempfile
@@ -34,7 +33,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
 from django.views.decorators.http import require_POST
 from django.template.loader import get_template
 from django.db.models.manager import Manager
@@ -44,12 +42,9 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseRedirect,
 )
 from django.shortcuts import render_to_response, redirect, get_object_or_404
-from django.template import RequestContext, loader
-from django.utils.safestring import mark_safe
-from django.forms import ModelForm
+from django.template import RequestContext
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -61,19 +56,13 @@ from dashboard_app.models import (
     BundleStream,
     ImageReport,
     ImageReportChart,
-    ImageChartUser,
     NamedAttribute,
-    Tag,
     Test,
     TestCase,
     TestResult,
     TestRun,
     TestRunFilter,
-    TestDefinition,
     BugLink,
-)
-from lava_scheduler_app.models import (
-    TestJob,
 )
 from dashboard_app.views.tables import (
     BundleStreamTable,
@@ -81,16 +70,12 @@ from dashboard_app.views.tables import (
     BundleDetailTable,
     TestRunTable,
     TestTable,
-    TestDefinitionTable,
 )
 from dashboard_app.views.filters.tables import PublicFiltersTable
 from dashboard_app.views.image_reports.tables import UserImageReportTable
 
 from django_tables2 import (
-    Column,
     RequestConfig,
-    SingleTableView,
-    TemplateColumn,
 )
 from lava.utils.lavatable import LavaView
 
@@ -228,11 +213,11 @@ def bundle_stream_list(request):
         "discrete_data": table.prepare_discrete_data(data),
         'has_personal_streams': (
             request.user.is_authenticated() and
-            BundleStream.objects.filter(user=request.user).count() > 0),
+            BundleStream.objects.filter(user=request.user).exists()),
         'has_team_streams': (
             request.user.is_authenticated() and
             BundleStream.objects.filter(
-                group__in=request.user.groups.all()).count() > 0),
+                group__in=request.user.groups.all()).exists()),
     }
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     if django.VERSION > (1, 8):
@@ -332,7 +317,7 @@ def bundle_list_export(request, pathname):
         pathname=pathname
     )
 
-    file_name = bundle_stream.slug
+    file_name = bundle_stream.slug.replace('/', '_')
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
@@ -1029,8 +1014,8 @@ def my_subscriptions(request):
     )
 
 
-def redirect_to(request, object, trailing):
-    url = object.get_absolute_url() + trailing
+def redirect_to(request, obj, trailing):
+    url = obj.get_absolute_url() + trailing
     qs = request.META.get('QUERY_STRING')
     if qs:
         url += '?' + qs

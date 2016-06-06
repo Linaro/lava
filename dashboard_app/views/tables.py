@@ -1,19 +1,10 @@
-from django.conf import settings
-from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 import django_tables2 as tables
-from django_tables2 import SingleTableView
 from lava.utils.lavatable import LavaTable
 from dashboard_app.models import (
-    Attachment,
-    Bundle,
-    BundleStream,
-    Tag,
-    Test,
     TestResult,
     TestRun,
-    TestDefinition,
 )
 
 

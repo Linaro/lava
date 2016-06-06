@@ -12,9 +12,6 @@ The scripts available in the :ref:`multinode_api` are not installed for
 test jobs which are not part of a MultiNode group, so the job will simply
 fail that test as a ``command not found``.
 
-Therefore, by reversing the :ref:`changes_to_json`, a MultiNode JSON file
-can be converted to singlenode.
-
 Other calls which may require communication with other devices may need
 to be removed from your YAML. This can be extended to retain a set of
 singlenode YAML files in which new wrapper scripts and new builds are
@@ -68,9 +65,6 @@ one other device in the group or the waiting device will :ref:`timeout <timeouts
 This can be a particular problem if you remove test definitions from the
 JSON or edit a YAML file without checking other uses of the same file.
 
-``#`` can be used as a comment in YAML but JSON does not support
-comments, so take care.
-
 .. _parsers:
 
 Test your result parsers
@@ -89,7 +83,7 @@ just to see what the default LAVA parsers can provide.
 Be obsessive about paths and scripts
 ====================================
 
-* If you use ``cd`` in your YAML, always store where you were and where you end up using ``pwd``. 
+* If you use ``cd`` in your YAML, always store where you were and where you end up using ``pwd``.
 * Output your location prior to calling local wrapper scripts.
 * Ensure that all wrapper scripts are executable in your VCS
 * Ensure that the relevant interpreter is installed. e.g. python is not necessarily part of the test image.
@@ -105,15 +99,3 @@ Always check whether the test result came back as failed due to some
 cause other than the test definition itself. Particularly with MultiNode,
 a test result can fail due to some problem on a different board within
 the group.
-
-.. _json_files:
-
-Check your JSON files
-=====================
-
-Syntax problems will be picked up by LAVA when you submit but also check
-that the URLs listed in the JSON are correct. Keep your YAML descriptions,
-names and filenames unique so that it is easier to pick up if the JSON
-simply calls the wrong YAML test definition.
-
-

@@ -17,7 +17,7 @@
 # along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 #
 from django.core.files.base import ContentFile
-from django.db import models, transaction, IntegrityError
+from django.db import models, IntegrityError
 
 import logging
 

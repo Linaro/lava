@@ -1,4 +1,3 @@
-import glob
 import unittest
 from lava_scheduler_app.dbutils import (
     create_job,
@@ -41,7 +40,6 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         TestJob.objects.all().delete()  # pylint: disable=no-member
         Tag.objects.all().delete()
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_select_device(self):
         self.restart()
         hostname = 'fakeqemu3'
@@ -52,6 +50,8 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(),
             self.factory.make_user())
+        # this uses the system jinja2 path - local changes to the qemu.jinja2
+        # will not be available.
         selected = select_device(job, self.dispatchers)
         self.assertIsNone(selected)
         job.actual_device = device
@@ -71,7 +71,6 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         self.assertEqual(selected, device)
         # print(selected)  # pylint: disable=superfluous-parens
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_handlers(self):
         self.restart()
         hostname = 'fakeqemu3'
@@ -94,7 +93,6 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         self.assertEqual(job.actual_device, device)
         self.assertEqual(device.status, Device.RESERVED)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_dispatcher_restart(self):
         self.restart()
         hostname = 'fakeqemu4'

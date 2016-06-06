@@ -18,7 +18,7 @@
 
 import django_tables2 as tables
 from lava.utils.lavatable import LavaTable
-from dashboard_app.models import ImageReport, ImageReportChart
+from dashboard_app.models import ImageReportChart
 
 
 class UserImageReportTable(LavaTable):

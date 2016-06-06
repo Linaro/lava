@@ -1,5 +1,4 @@
-from django.conf.urls import (
-    patterns, url, include, handler500, handler404)
+from django.conf.urls import patterns, url, include
 
 urlpatterns = patterns(
     '',

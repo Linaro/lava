@@ -389,14 +389,13 @@ def job_report(start_day, end_day, health_check):
     end_date = now + datetime.timedelta(end_day)
 
     res = TestJob.objects.filter(health_check=health_check,
-                                 start_time__range=(start_date, end_date),
-                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
-                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+                                 start_time__range=(start_date, end_date)).values('status')
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'fail': res.filter(status__in=(TestJob.INCOMPLETE, TestJob.CANCELED,
+                                       TestJob.CANCELING)).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
@@ -483,6 +482,27 @@ def active_device_list(request):
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Pipeline Devices", parent=index)
+def pipeline_device_list(request):
+
+    data = PipelineDeviceView(request, model=Device, table_class=DeviceTable)
+    ptable = DeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
+        ptable)
+    return render_to_response(
+        "lava_scheduler_app/pipelinedevices.html",
+        {
+            'pipeline_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                pipeline_device_list),
         },
         RequestContext(request))
 
@@ -590,7 +610,7 @@ def mydevice_type_health_history_log(request):
         RequestContext(request))
 
 
-def get_restricted_job(user, pk):
+def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
@@ -601,7 +621,7 @@ def get_restricted_job(user, pk):
         return job
     if device_type.num_devices_visible_to(user) == 0:
         raise Http404()
-    if job.can_view(user):
+    if utils.check_user_auth(user, job, request=request):
         return job
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
@@ -665,6 +685,16 @@ class ActiveDeviceView(DeviceTableView):
         visible = filter_device_types(self.request.user)
         return Device.objects.filter(device_type__in=visible)\
             .exclude(status=Device.RETIRED).order_by("hostname")
+
+
+class PipelineDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible,
+                                     is_pipeline=True)\
+                             .exclude(status=Device.RETIRED)\
+                             .order_by("hostname")
 
 
 class DeviceTypeOverView(JobTableView):
@@ -1388,7 +1418,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     description = description_data(job.id) if job.is_pipeline else {}
     return render_to_response(
@@ -1405,7 +1435,7 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404()
     filename = description_filename(job.id)
@@ -1420,7 +1450,7 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
@@ -1429,7 +1459,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
 def expanded_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/expanded_job_definition.html",
@@ -1444,7 +1474,7 @@ def expanded_job_definition(request, pk):
 
 
 def expanded_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
@@ -1453,7 +1483,7 @@ def expanded_job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/multinode_job_definition.html",
@@ -1478,7 +1508,7 @@ def multinode_job_definition_plain(request, pk):
 
 @BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
 def vmgroup_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/vmgroup_job_definition.html",
@@ -1493,7 +1523,7 @@ def vmgroup_job_definition(request, pk):
 
 
 def vmgroup_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
     response['Content-Disposition'] = \
         "attachment; filename=vmgroup_job_%d.json" % job.id
@@ -1567,7 +1597,7 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404
     description = description_data(job.id)
@@ -1602,7 +1632,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, job, log_name):
-    job = get_restricted_job(request.user, job)
+    job = get_restricted_job(request.user, job, request=request)
     if not job.is_pipeline:
         raise Http404
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
@@ -1628,7 +1658,7 @@ def job_section_log(request, job, log_name):
 
 
 def job_status(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response_dict = {'job_status': job.get_status_display()}
     if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
             job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
@@ -1703,7 +1733,7 @@ def job_pipeline_incremental(request, pk):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if job.is_pipeline:
         return redirect(job_complete_log, pk=pk)
     log_file = job.output_file()
@@ -1739,7 +1769,7 @@ def job_log_file(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     if not log_file:
         raise Http404
@@ -2333,9 +2363,11 @@ def device_looping_mode(request, pk):
 
 @post_only
 def device_force_health_check(request, pk):
-    device = Device.objects.get(pk=pk)
+    device = get_object_or_404(Device, pk=pk)
     if device.can_admin(request.user):
         job = initiate_health_check_job(device)
+        if not job:
+            raise Http404
         return redirect(job)
     else:
         return HttpResponseForbidden(

@@ -48,7 +48,7 @@ class TestOpenIDLogin(TestCase):
     _identity_url = 'http://example.com/identity'
 
     if not USE_OPENID_AUTH:
-        urls = None
+        pass
     else:
         urls = tuple(
             django_openid_auth.tests.urls.urlpatterns +

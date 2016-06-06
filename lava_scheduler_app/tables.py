@@ -47,8 +47,9 @@ class RestrictedIDLinkColumn(IDLinkColumn):
         device_type = record.job_device_type()
         if not device_type:
             return pklink(record)
-        if device_type.num_devices_visible_to(user) == 0:
-            return "Unavailable"
+        elif device_type.owners_only:
+            if device_type.num_devices_visible_to(user) == 0:
+                return "Unavailable"
         elif record.is_accessible_by(user):
             return pklink(record)
         else:
@@ -174,7 +175,7 @@ class JobTable(LavaTable):
         super(JobTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")  # pylint: disable=invalid-name
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
@@ -286,9 +287,10 @@ class TagsColumn(tables.Column):
     def render(self, value):
         tag_id = 'tag-%s' % os.urandom(4).encode('hex')
         tags = ''
-        if len(value.all()) > 0:
+        values = list(value.all())
+        if len(values) > 0:
             tags = '<p class="collapse" id="%s">' % tag_id
-            tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in value.all())
+            tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in values)
             tags += '</p><p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></p></a></p>' % tag_id
         return mark_safe(tags)
 
@@ -437,19 +439,9 @@ class DeviceHealthTable(LavaTable):
             return pklink(report)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -530,19 +522,9 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -617,48 +599,23 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
         self.length = 10
         self.show_help = True
 
-    last_master_scheduler_tick = DateColumn()
-
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     {% endif %}
     ''')
-    status = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    down
-    {% else %}
-    up
-    {% endif %}
-        ''')
-    status.orderable = False
 
     is_master = tables.Column()
-    uptime = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    ---
-    {% else %}
-    {{ record.uptime }}
-    {% endif %}
-        ''')
-    arch = tables.Column()
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
         exclude = [
-            'rpc2_url', 'description', 'hardware_info', 'software_info',
-            'platform', 'last_heartbeat', 'last_complete_info_update',
-            'display'
+            'rpc2_url', 'display'
         ]
         sequence = [
-            'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'
+            'hostname', 'description', 'is_master'
         ]
 
 
@@ -777,12 +734,13 @@ class OnlineDeviceTable(DeviceTable):
         self.length = 25
 
     def render_status(self, record):  # pylint: disable=no-self-use
-        t = DeviceStateTransition.objects.filter(device=record).order_by('-id')
         status = Device.STATUS_CHOICES[record.status][1]
-        if t:
-            return "%s (reason: %s)" % (status, t[0].message)
-        else:
+        try:
+            t = DeviceStateTransition.objects.filter(device=record).order_by('-id')[0]
+        except IndexError:
             return status
+        else:
+            return "%s (reason: %s)" % (status, t.message)
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         exclude = [

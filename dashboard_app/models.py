@@ -29,7 +29,6 @@ import logging
 import os
 import simplejson
 import traceback
-import contextlib
 import django
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -49,16 +48,14 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator
 )
-from django.db import models, connection, IntegrityError
+from django.db import models, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.template import Template, Context
 from django.template.defaultfilters import filesizeformat, slugify
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
-from django.db.utils import DatabaseError
 from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
 
@@ -1801,12 +1798,12 @@ def send_image_report_notifications(sender, bundle):
                 for chart_filter in chart.imagechartfilter_set.all():
                     chart_tests += chart_filter.chart_tests
 
-                chart_tests = [chart_test.test for chart_test in chart_tests]
-
                 for filter_match in filter_matches:
 
                     if filter_match.filter in chart_filters:
                         if chart.chart_type == "pass/fail":
+                            chart_tests = [chart_test.test for chart_test in
+                                           chart_tests]
                             for test_run in filter_match.test_runs:
                                 if test_run.test in chart_tests:
 
@@ -1815,6 +1812,8 @@ def send_image_report_notifications(sender, bundle):
                                         matches.append(test_run)
 
                         elif chart.chart_type == "measurement":
+                            chart_tests = [chart_test.test_case for chart_test
+                                           in chart_tests]
                             for test_result in filter_match.specific_results:
                                 if test_result.test_case in chart_tests:
                                     if test_result.measurement <\
@@ -1822,6 +1821,8 @@ def send_image_report_notifications(sender, bundle):
                                         matches.append(test_result)
 
                         elif chart.chart_type == "attributes":
+                            chart_tests = [chart_test.test for chart_test in
+                                           chart_tests]
                             for test_run in filter_match.test_runs:
                                 if test_run.test in chart_tests:
                                     for attr in chart_test.attributes:
@@ -2278,7 +2279,7 @@ class ImageReportChart(models.Model):
             # Add comments flag to indicate whether comments do exist in
             # any of the test result in this test run.
             has_comments = test_run.test_results.exclude(
-                comments__isnull=True).count() != 0
+                comments__isnull=True).exists()
 
             test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 
@@ -2424,7 +2425,7 @@ class ImageReportChart(models.Model):
             # Set attribute based on xaxis_attribute.
             attribute = None
             if self.xaxis_attribute:
-                attribute = test_run.attributes.get(
+                attribute = test_result.test_run.attributes.get(
                     name=self.xaxis_attribute).value
 
             chart_item = {

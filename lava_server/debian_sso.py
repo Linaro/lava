@@ -110,16 +110,16 @@ class DebianSsoUserBackend(RemoteUserBackend):
     the DDs first and last name are pulled from Debian's LDAP.
     """
 
-    def generate_unique_username(self, count, slug):  # pylint: disable=no-self-use
+    def generate_unique_username(self, count, slug):
         username = '%s%d' % (slug, count)
         try:
             User.objects.get(username=username)
             count += 1
-            return generate_unique_username(count)
+            return self.generate_unique_username(count, slug)
         except User.DoesNotExist:
             return username
 
-    def ensure_unique_username(self, username):  # pylint: disable=no-self-use
+    def ensure_unique_username(self, username):
         count = 0
         try:
             User.objects.get(username=username)

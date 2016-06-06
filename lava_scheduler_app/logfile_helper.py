@@ -1,5 +1,8 @@
 import re
 
+# DEPRECATED
+# pylint: disable=invalid-name,old-style-class,no-init
+
 
 def getDispatcherErrors(logfile):
     errors = []

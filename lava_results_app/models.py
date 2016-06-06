@@ -32,7 +32,8 @@ import logging
 import urllib
 import yaml
 
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -58,9 +59,6 @@ from lava_scheduler_app.managers import (
 )
 
 from lava_results_app.utils import help_max_length
-
-# TODO: this may need to be ported - clashes if redefined
-from dashboard_app.models import NamedAttribute
 
 
 class InvalidConditionsError(Exception):
@@ -354,7 +352,7 @@ class TestCase(models.Model, Queryable):
 
     metadata = models.CharField(
         blank=True,
-        max_length=1024,
+        max_length=4096,
         help_text=_(u"Metadata collected by the pipeline action, stored as YAML."),
         null=True,
         verbose_name=_(u"Action meta data as a YAML string")
@@ -490,6 +488,7 @@ class TestCase(models.Model, Queryable):
 class MetaType(models.Model):
     """
     name will be a label, like a deployment type (NFS) or a boot type (bootz)
+    for test metadata, the MetaType is just the section_name.
     """
     DEPLOY_TYPE = 0
     BOOT_TYPE = 1
@@ -521,9 +520,10 @@ class MetaType(models.Model):
     section_names = {
         DEPLOY_TYPE: 'to',
         BOOT_TYPE: 'method',
+        TEST_TYPE: 'definitions',
     }
 
-    name = models.CharField(max_length=32)
+    name = models.CharField(max_length=256)
     metatype = models.PositiveIntegerField(
         verbose_name=_(u"Type"),
         help_text=_(u"metadata action type"),
@@ -549,7 +549,8 @@ class MetaType(models.Model):
 
     @classmethod
     def get_type_name(cls, section, definition):
-        logger = logging.getLogger('lava_results_app')
+        logger = logging.getLogger('dispatcher-master')
+        retval = None
         data = [action for action in definition['actions'] if section in action]
         if not data:
             logger.debug('get_type_name: skipping %s' % section)
@@ -557,7 +558,38 @@ class MetaType(models.Model):
         data = data[0][section]
         if section in MetaType.TYPE_MAP:
             if MetaType.TYPE_MAP[section] in MetaType.section_names:
-                return data[MetaType.section_names[MetaType.TYPE_MAP[section]]]
+                retval = data[MetaType.section_names[MetaType.TYPE_MAP[section]]]
+        if isinstance(retval, list):
+            # No simple way to collapse a long list of definitions into 255 characters
+            return MetaType.section_names[MetaType.TYPE_MAP[section]]
+        else:
+            return retval
+
+
+class NamedTestAttribute(models.Model):
+    """
+    Model for adding named test attributes to arbitrary other model instances.
+
+    Example:
+        class Foo(Model):
+            attributes = fields.GenericRelation(NamedTestAttribute)
+    """
+    name = models.TextField()
+
+    value = models.TextField()
+
+    # Content type plumbing
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def __unicode__(self):
+        return _(u"{name}: {value}").format(
+            name=self.name,
+            value=self.value)
+
+    class Meta:
+        unique_together = (('object_id', 'name', 'content_type'))
 
 
 class TestData(models.Model):
@@ -572,7 +604,7 @@ class TestData(models.Model):
 
     # Attributes
 
-    attributes = fields.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedTestAttribute)
 
     # Attachments
 
@@ -584,6 +616,8 @@ class TestData(models.Model):
 
 class ActionData(models.Model):
     """
+    Each Action in the pipeline has Data tracked in this model.
+    One TestData object can relate to multiple ActionData objects.
     When TestData creates a new item, the level and name
     of that item are created and referenced.
     Other actions are ignored.
@@ -747,11 +781,12 @@ class Query(models.Model):
 
     is_changed = models.BooleanField(
         default=False,
-        verbose_name='Live query')
+        verbose_name='Conditions have changed')
 
     is_updating = models.BooleanField(
         default=False,
-        verbose_name='Live query')
+        editable=False,
+        verbose_name='Query is currently updating')
 
     last_updated = models.DateTimeField(
         blank=True,
@@ -832,7 +867,7 @@ class Query(models.Model):
                                condition.table.model_class()))
                 raise
 
-            if condition.table.model_class() == NamedAttribute:
+            if condition.table.model_class() == NamedTestAttribute:
                 # For custom attributes, need two filters since
                 # we're comparing the key(name) and the value.
                 filter_key_name = '{0}__name'.format(relation_string)
@@ -899,38 +934,38 @@ class Query(models.Model):
 
     def refresh_view(self):
 
-        if not self.is_live:
-            hour_ago = timezone.now() - timedelta(hours=1)
-
-            with transaction.atomic():
-                # Lock the selected row until the end of transaction.
-                query = Query.objects.select_for_update().get(pk=self.id)
-                if query.is_updating:
-                    raise QueryUpdatedError("query is currently updating")
-                # TODO: commented out because of testing purposes.
-                # elif query.last_updated and query.last_updated > hour_ago:
-                #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
-                else:
-                    query.is_updating = True
-                    query.save()
-
-            try:
-                if not QueryMaterializedView.view_exists(self.id):
-                    QueryMaterializedView.create(self)
-                elif self.is_changed:
-                    QueryMaterializedView.drop(self.id)
-                    QueryMaterializedView.create(self)
-                else:
-                    QueryMaterializedView.refresh(self.id)
-
-                self.last_updated = timezone.now()
-                self.is_changed = False
-
-            finally:
-                self.is_updating = False
-                self.save()
-        else:
+        if self.is_live:
             raise RefreshLiveQueryError("Refreshing live query not permitted.")
+
+        hour_ago = timezone.now() - timedelta(hours=1)
+
+        with transaction.atomic():
+            # Lock the selected row until the end of transaction.
+            query = Query.objects.select_for_update().get(pk=self.id)
+            if query.is_updating:
+                raise QueryUpdatedError("query is currently updating")
+            # TODO: commented out because of testing purposes.
+            # elif query.last_updated and query.last_updated > hour_ago:
+            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+            else:
+                query.is_updating = True
+                query.save()
+
+        try:
+            if not QueryMaterializedView.view_exists(self.id):
+                QueryMaterializedView.create(self)
+            elif self.is_changed:
+                QueryMaterializedView.drop(self.id)
+                QueryMaterializedView.create(self)
+            else:
+                QueryMaterializedView.refresh(self.id)
+
+            self.last_updated = timezone.now()
+            self.is_changed = False
+
+        finally:
+            self.is_updating = False
+            self.save()
 
     @classmethod
     def parse_conditions(cls, content_type, conditions):
@@ -942,7 +977,12 @@ class Query(models.Model):
         for condition_str in conditions.split(cls.CONDITIONS_SEPARATOR):
             condition = QueryCondition()
             condition_fields = condition_str.split(cls.CONDITION_DIVIDER)
-            if len(condition_fields) == 3:
+            if len(condition_fields) == 2:
+                condition.table = content_type
+                condition.field = condition_fields[0]
+                condition.operator = QueryCondition.EXACT
+                condition.value = condition_fields[1]
+            elif len(condition_fields) == 3:
                 condition.table = content_type
                 condition.field = condition_fields[0]
                 condition.operator = condition_fields[1]
@@ -1001,6 +1041,29 @@ class Query(models.Model):
         else:
             return ContentType.objects.filter(model=model_name)[0]
 
+    @classmethod
+    def validate_custom_query(cls, model_name, conditions):
+        """Validate custom query content type and conditions.
+
+        :param model_name: Content type name (entity).
+        :type model_name: str
+        :param conditions: Query conditions, fields and values.
+        :type conditions: dict
+        :raise InvalidContentTypeError model_name is not recognized.
+        :raise InvalidConditionsError conditions do not have correct format.
+        :return Nothing
+        """
+        content_type = cls.get_content_type(model_name)
+        if content_type.model_class() not in QueryCondition.RELATION_MAP:
+            raise InvalidContentTypeError(
+                "Wrong table name in entity param. Please refer to query doc.")
+        condition_list = []
+        for key in conditions:
+            condition_list.append("%s%s%s" % (key, cls.CONDITION_DIVIDER,
+                                              conditions[key]))
+        conditions = cls.CONDITIONS_SEPARATOR.join(condition_list)
+        cls.parse_conditions(content_type, conditions)
+
     def save(self, *args, **kwargs):
         super(Query, self).save(*args, **kwargs)
         if self.is_live:
@@ -1031,7 +1094,7 @@ class QueryCondition(models.Model):
     table = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=[
-            'testsuite', 'testjob', 'namedattribute']) | (
+            'testsuite', 'testjob', 'namedtestattribute']) | (
                 Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Condition model'
     )
@@ -1042,20 +1105,20 @@ class QueryCondition(models.Model):
             TestJob: None,
             TestSuite: 'testsuite',
             TestCase: 'testsuite__testcase',
-            NamedAttribute: 'testdata__attributes',
+            NamedTestAttribute: 'testdata__attributes',
         },
         TestSuite: {
             TestJob: 'job',
             TestCase: 'testcase',
             TestSuite: None,
-            NamedAttribute:
+            NamedTestAttribute:
                 'job__testdata__attributes',
         },
         TestCase: {
             TestCase: None,
             TestJob: 'suite__job',
             TestSuite: 'suite',
-            NamedAttribute:
+            NamedTestAttribute:
                 'suite__job__testdata__attributes',
         }
     }
@@ -1113,6 +1176,8 @@ class QueryCondition(models.Model):
 
 def _get_foreign_key_model(model, fieldname):
     """ Returns model if field is a foreign key, otherwise None. """
+    # FIXME: RemovedInDjango110Warning: 'get_field_by_name is an unofficial API
+    # that has been deprecated. You may be able to replace it with 'get_field()'
     field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
@@ -1193,11 +1258,8 @@ class Chart(models.Model):
                 (), dict(name=self.name))
 
     def can_admin(self, user):
-        if user.is_superuser or self.owner == user or \
-           (self.group and user in self.group.user_set.all()):
-            return True
-        else:
-            return False
+        return user.is_superuser or self.owner == user or \
+            (self.group and user in self.group.user_set.all())
 
 
 # Chart types
@@ -1343,6 +1405,9 @@ class ChartQuery(models.Model):
             data["query_name"] = self.query.name
             data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
+            data["query_live"] = self.query.is_live
+            data["query_updated"] = self.query.last_updated.strftime(
+                settings.DATETIME_INPUT_FORMATS[0])
             data["entity"] = self.query.content_type.model
             data["conditions"] = self.query.serialize_conditions()
             data["has_omitted"] = QueryOmitResult.objects.filter(

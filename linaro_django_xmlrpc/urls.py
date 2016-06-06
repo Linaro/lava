@@ -17,7 +17,7 @@
 # along with linaro-django-xmlrpc.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.conf.urls import patterns, url, handler500, handler404
+from django.conf.urls import url
 
 from linaro_django_xmlrpc.globals import mapper
 from linaro_django_xmlrpc.views import (

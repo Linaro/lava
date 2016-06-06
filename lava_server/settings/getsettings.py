@@ -31,9 +31,6 @@ Simple integration for Django settings.py
  handling is done by distribution-specific packaging scripts which generate the
  /etc/lava-server/instance.conf and this embeds the database access
  methods into that file. default_database.conf is not needed.
- Under lava-deployment-tool, these settings were duplicated in
- /srv/lava/instances/<INSTANCE>/instance.conf and
- /srv/lava/instances/<INSTANCE>/etc/lava-server/default-database.conf
  When packaged, all settings are in /etc/lava-server/instance.conf
 
  Only the secret key is separate.
@@ -226,21 +223,6 @@ class Settings(object):
         return self._settings.get("LOG_SIZE_LIMIT", default)
 
     @property
-    def MEDIA_URL(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#media-url
-
-        Bridge for the settings file MEDIA_URL property.
-
-        By default it produces the string:
-
-            ``"/{mount_point}media/"``
-
-        """
-        default = "/{mount_point}media/".format(mount_point=self.mount_point)
-        return self._settings.get("MEDIA_URL", default)
-
-    @property
     def STATIC_ROOT(self):
         """
         Similar to MEDIA_ROOT but only for static files shipped with each application.
@@ -268,19 +250,6 @@ class Settings(object):
         """
         default = "/{mount_point}static/".format(mount_point=self.mount_point)
         return self._settings.get("STATIC_URL", default)
-
-    @property
-    def ADMIN_MEDIA_PREFIX(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#admin-media-prefix
-
-        Bridge for the settings file ADMIN_MEDIA_DIRS property.
-
-        By default it produces the string:
-            ``"{STATIC_URL}admin/"``
-        """
-        default = self.STATIC_URL + "admin/"
-        return self._settings.get("ADMIN_MEDIA_PREFIX", default)
 
     if django.VERSION > (1, 8):
         @property
@@ -330,7 +299,7 @@ class Settings(object):
     @property
     def ADMINS(self):
         """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#admins
+        See: https://docs.djangoproject.com/en/1.8/ref/settings/#admins
 
         Bridge for the settings file ADMIN property.
 
@@ -338,33 +307,38 @@ class Settings(object):
 
             ``("{appname} Administrator", "root@localhost')``
         """
-        default = (
-            ('{appname} Administrator'.format(appname=self._appname), 'root@localhost'),
-        )
-        return self._settings.get("ADMINS", default)
+        default = [
+            ['{appname} Administrator'.format(appname=self._appname), 'root@localhost'],
+        ]
+
+        value = self._settings.get("ADMINS", default)
+        # In Django < 1.9, this a tuple of tuples
+        # In Django >= 1.9 this is a list of tuples
+        # See https://docs.djangoproject.com/en/1.8/ref/settings/#admins
+        # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
+        if django.VERSION < (1, 9):
+            return tuple(tuple(v) for v in value)
+        else:
+            return [tuple(v) for v in value]
 
     @property
     def MANAGERS(self):
         """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#managers
+        See: http://docs.djangoproject.com/en/1.8/ref/settings/#managers
 
         Bridge for the settings file MANAGERS property.
 
         By default it returns whatever ADMINS returns.
         """
-        return self._settings.get("MANAGERS", self.ADMINS)
+        value = self._settings.get("MANAGERS", None)
+        if not value:
+            return self.ADMINS
 
-    @property
-    def SEND_BROKEN_LINK_EMAILS(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#send-broken-link-emails
-
-        Bridge for the settings file SEND_BROKEN_LINK_EMAILS property.
-
-        By default it returns False
-        """
-        default = False
-        return self._settings.get("SEND_BROKEN_LINK_EMAILS", default)
+        # Same format as ADMINS
+        if django.VERSION < (1, 9):
+            return tuple(tuple(v) for v in value)
+        else:
+            return [tuple(v) for v in value]
 
     @property
     def LOGIN_URL(self):

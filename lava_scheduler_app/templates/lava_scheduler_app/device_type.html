@@ -28,18 +28,14 @@
     {% endif %}
   </div>
 {% endif %}
-<div>
-  {% if user.is_authenticated and user.is_superuser %}
-    <a href="{% url 'admin:lava_scheduler_app_devicetype_change' device_type %}" class="btn btn-xs btn-danger" title="Admin this device type - {{ device_type.name }}">
-      <span class="glyphicon glyphicon-wrench"></span> Admin this type
-    </a>
-  {% endif %}
-</div>
 <ul class="nav nav-tabs">
+  <li class="active"><a href="#status" data-toggle="tab">Status</a></li>
   <li><a href="#information" data-toggle="tab">Information</a></li>
-  <li><a href="#status" data-toggle="tab">Status</a></li>
 {% if device_type|deploy_methods:'deploy' %}
   <li><a href="#support" data-toggle="tab">Support</a></li>
+{% endif %}
+{% if user.is_superuser %}
+  <li><a href="{% url 'admin:lava_scheduler_app_devicetype_change' device_type %}" title="Admin this device type - {{ device_type.name }}"><span class="glyphicon glyphicon-wrench"></span> Admin</a></li>
 {% endif %}
 </ul>
 <div class="tab-content">

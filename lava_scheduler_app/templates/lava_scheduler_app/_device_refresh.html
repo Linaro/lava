@@ -16,13 +16,9 @@
     {% endif %}
     {% for tag in job.tags.all %}
       {% if forloop.first %}
-      {% if forloop.revcounter > 1 %}
-      <dt>Required Tags</dt>
-      {% else %}
-      <dt>Required Tag</dt>
+      <dt>Required Tag{{ forloop.revcounter|pluralize }}</dt>
       {% endif %}
-      {% endif %}
-      <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
+      <dd>{{ tag.name }}{% if tag.description %}<abbr title="{{ tag.description }}">(?)</abbr>{% endif %}</dd>
     {% endfor %}
 
     {% if job.actual_device %}

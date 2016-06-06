@@ -29,10 +29,11 @@ import signal
 import time
 import yaml
 import zmq
+import zmq.auth
+from zmq.auth.thread import ThreadAuthenticator
 
 from django.db import transaction
 from django.db.utils import OperationalError, InterfaceError
-from django.contrib.auth.models import User
 from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.utils import mkdir
@@ -110,8 +111,7 @@ def get_env_string(filename):
 
 class Command(BaseCommand):
     """
-    worker_host is the hostname of the worker - under the old dispatcher, this was declared by
-    that worker using the heartbeat. In the new dispatcher, this field is set by the admin
+    worker_host is the hostname of the worker this field is set by the admin
     and could therefore be empty in a misconfigured instance.
     """
     logger = None
@@ -135,6 +135,14 @@ class Command(BaseCommand):
         parser.add_argument('--log-socket',
                             default='tcp://*:5555',
                             help="Socket waiting for logs. Default: tcp://*:5555")
+        parser.add_argument('--encrypt', default=False, action='store_true',
+                            help="Encrypt messages")
+        parser.add_argument('--master-cert',
+                            default='/etc/lava-dispatcher/certificates.d/master.key_secret',
+                            help="Certificate for the master socket")
+        parser.add_argument('--slaves-certs',
+                            default='/etc/lava-dispatcher/certificates.d',
+                            help="Directory for slaves certificates")
         parser.add_argument('-l', '--level',
                             default='DEBUG',
                             help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
@@ -168,16 +176,20 @@ class Command(BaseCommand):
         try:
             scanned = yaml.load(message)
         except yaml.YAMLError:
-            # failure to scan is not an error here, it just means the message is not a result
+            # failure to scan is not an error here, it just means the message
+            # is not a result
             scanned = None
-        # the results logger wraps the OrderedDict in a dict called results, for identification,
-        # YAML then puts that into a list of one item for each call to log.results.
+        # the results logger wraps the OrderedDict in a dict called results,
+        # for identification, YAML then puts that into a list of one item for
+        # each call to log.results.
         if isinstance(scanned, list) and len(scanned) == 1:
             if isinstance(scanned[0], dict) and 'results' in scanned[0]:
                 job = TestJob.objects.get(id=job_id)
                 ret = map_scanned_results(scanned_dict=scanned[0], job=job)
                 if not ret:
-                    self.logger.warning("[%s] Unable to map scanned results: %s", job_id, yaml.dump(scanned[0]))
+                    self.logger.warning(
+                        "[%s] Unable to map scanned results: %s",
+                        job_id, yaml.dump(scanned[0]))
 
         # Clear filename
         if '/' in level or '/' in name:
@@ -540,8 +552,29 @@ class Command(BaseCommand):
         # Create the sockets
         context = zmq.Context()
         self.pull_socket = context.socket(zmq.PULL)
-        self.pull_socket.bind(options['log_socket'])
         self.controler = context.socket(zmq.ROUTER)
+
+        if options['encrypt']:
+            self.logger.info("Starting encryption")
+            try:
+                auth = ThreadAuthenticator(context)
+                auth.start()
+                self.logger.debug("Opening master certificate: %s", options['master_cert'])
+                master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
+                self.logger.debug("Using slaves certificates from: %s", options['slaves_certs'])
+                auth.configure_curve(domain='*', location=options['slaves_certs'])
+            except IOError as err:
+                self.logger.error(err)
+                auth.stop()
+                return
+            self.controler.curve_publickey = master_public
+            self.controler.curve_secretkey = master_secret
+            self.controler.curve_server = True
+            self.pull_socket.curve_publickey = master_public
+            self.pull_socket.curve_secretkey = master_secret
+            self.pull_socket.curve_server = True
+
+        self.pull_socket.bind(options['log_socket'])
         self.controler.bind(options['master_socket'])
 
         # Last access to the database for new jobs and cancelations
@@ -636,7 +669,9 @@ class Command(BaseCommand):
                 continue
 
         # Closing sockets and droping messages.
-        self.logger.info("[CLOSE] Closing the socket and dropping messages")
+        self.logger.info("[CLOSE] Closing the sockets and dropping messages")
         self.controler.close(linger=0)
         self.pull_socket.close(linger=0)
+        if options['encrypt']:
+            auth.stop()
         context.term()

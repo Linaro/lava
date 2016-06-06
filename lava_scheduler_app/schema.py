@@ -94,6 +94,46 @@ def _job_actions_schema():
     ])
 
 
+def _job_notify_schema():
+    from lava_scheduler_app.models import TestJob
+    return Schema({
+        Required('method'): Any(TestJob.NOTIFY_EMAIL_METHOD,
+                                TestJob.NOTIFY_IRC_METHOD),
+        Required('criteria'): _notify_criteria_schema(),
+        'recipients': [str],
+        'verbosity': Any('verbose', 'quiet', 'status-only'),
+        'compare': _notify_compare_schema()
+    }, extra=True)
+
+
+def _notify_criteria_schema():
+    return Schema({
+        Required('status'): Any('complete', 'incomplete'),
+        'type': Any('progression', 'regression')
+    }, extra=True)
+
+
+def _notify_compare_schema():
+    return Schema({
+        'query': Any(_query_name_schema(), _query_conditions_schema()),
+        'blacklist': [str]
+    }, extra=True)
+
+
+def _query_name_schema():
+    return Schema({
+        Required('username'): str,
+        Required('name'): str
+    })
+
+
+def _query_conditions_schema():
+    return Schema({
+        Required('entity'): str,
+        'conditions': dict
+    })
+
+
 def vlan_name(value):
     if re.match("^[_a-zA-Z0-9]+$", str(value)):
         return str(value)
@@ -120,7 +160,10 @@ def _job_protocols_schema():
             'name': str,
             'distribution': str,
             'release': str,
-            'arch': str
+            'arch': str,
+            'template': str,
+            'mirror': str,
+            'security_mirror': str
         }
     })
 
@@ -146,9 +189,11 @@ def _job_schema():
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
+            'metadata': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
-            Required('actions'): _job_actions_schema()
+            Required('actions'): _job_actions_schema(),
+            'notify': _job_notify_schema()
         }
     )
 
@@ -191,6 +236,7 @@ def _device_schema():
     Less strict than the job_schema as this is primarily admin / template controlled.
     """
     return Schema({
+        'character_delays': dict,
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,

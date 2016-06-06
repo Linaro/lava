@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import xmlrpclib
-from simplejson import JSONDecodeError
 from linaro_django_xmlrpc.models import ExposedAPI
 
 from lava_results_app.models import (

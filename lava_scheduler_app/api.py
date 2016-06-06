@@ -3,7 +3,7 @@ import yaml
 import jinja2
 from simplejson import JSONDecodeError
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count
+from django.db.models import Count, Q
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
@@ -11,7 +11,6 @@ from lava_scheduler_app.models import (
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
-    Worker,
     DeviceDictionary,
 )
 from lava_scheduler_app.views import (
@@ -31,6 +30,9 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app.dbutils import testjob_submission
 
 # functions need to be members to be exposed in the API
+# pylint: disable=no-self-use
+
+# to make a function visible in the API, it must be a member of SchedulerAPI
 # pylint: disable=no-self-use
 
 
@@ -72,7 +74,7 @@ class SchedulerAPI(ExposedAPI):
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
             raise xmlrpclib.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
-            raise xmlrpclib.Fault(400, "Device unavailable:" % str(exc))
+            raise xmlrpclib.Fault(400, "Device unavailable: %s" % str(exc))
         if isinstance(job, type(list())):
             return [j.sub_id for j in job]
         else:
@@ -320,6 +322,172 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def get_device_status(self, hostname):
+        """
+        Name
+        ----
+        `get_device_status` (`hostname`)
+
+        Description
+        -----------
+        Get status, running job, date from which it is offline of the given
+        device and the user who put it offline.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device for which the status is asked.
+
+        Return value
+        ------------
+        This function returns an XML-RPC dictionary which contains hostname,
+        status, date from which the device is offline if the device is offline,
+        the user who put the device offline if the device is offline and the
+        job id of the running job.
+        The device has to be visible to the user who requested device's status.
+
+        Note that offline_since and offline_by can be empty strings if the device
+        status is manually changed by an administrator in the database or from
+        the admin site of LAVA even if device's status is offline.
+        """
+
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+
+        device_dict = {}
+        if device.is_visible_to(self.user):
+            device_dict["hostname"] = device.hostname
+            device_dict["status"] = Device.STATUS_CHOICES[device.status][1].lower()
+            device_dict["job"] = None
+            device_dict["offline_since"] = None
+            device_dict["offline_by"] = None
+
+            if device.current_job:
+                device_dict["job"] = device.current_job.pk
+
+            if device.status == Device.OFFLINE:
+                device_dict["offline_since"] = ""
+                device_dict["offline_by"] = ""
+                try:
+                    last_transition = device.transitions.latest('created_on')
+                    if last_transition.new_state == Device.OFFLINE:
+                        device_dict["offline_since"] = str(last_transition.created_on)
+                        if last_transition.created_by:
+                            device_dict["offline_by"] = last_transition.created_by.username
+                except Device.DoesNotExist:
+                    pass
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to access %s information." % hostname
+            )
+        return device_dict
+
+    def put_into_maintenance_mode(self, hostname, reason, notify=None):
+        """
+        Name
+        ----
+        `put_into_maintenance_mode` (`hostname`, `reason`, `notify`)
+
+        Description
+        -----------
+        Put the given device in maintenance mode with the given reason and optionally
+        notify the given mail address when the job has finished.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device to put into maintenance mode.
+        `reason`: string
+            The reason given to justify putting the device into maintenance mode.
+        `notify`: string
+            Email address of the user to notify when the job has finished. Can be
+            omitted.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token and has
+        sufficient permission.
+        """
+
+        self._authenticate()
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        if not reason:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Reason was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        if device.can_admin(self.user):
+            device.put_into_maintenance_mode(self.user, reason, notify)
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to put %s into maintenance mode." % hostname
+            )
+
+    def put_into_online_mode(self, hostname, reason, skip_health_check=False):
+        """
+        Name
+        ----
+        `put_into_online_mode` (`hostname`, `reason`, `skip_health_check`)
+
+        Description
+        -----------
+        Put the given device into online mode with the given reason ans skip health
+        check if asked.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device to put into online mode.
+        `reason`: string
+            The reason given to justify putting the device into online mode.
+        `skip_health_check`: boolean
+            Skip health check when putting the board into online mode. If
+            omitted, health check is not skipped by default.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token and has
+        sufficient permission.
+        """
+
+        self._authenticate()
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        if not reason:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Reason was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        if device.can_admin(self.user):
+            device.put_into_online_mode(self.user, reason, skip_health_check)
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to put %s into online mode." % hostname
+            )
+
     def pending_jobs_by_device_type(self):
         """
         Name
@@ -424,7 +592,7 @@ class SchedulerAPI(ExposedAPI):
 
         `bundle_sha1`: string
         The sha1 hash code of the bundle, if it existed. Otherwise it will be
-        an empty string.
+        an empty string. (LAVA V1 only)
         """
         self._authenticate()
         if not job_id:
@@ -438,17 +606,79 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
+        if job.is_pipeline:
+            return {
+                'job_status': job.get_status_display(),
+                'bundle_sha1': ""
+            }
+
+        # DEPRECATED
         bundle_sha1 = ""
-        try:
-            bundle_sha1 = job.results_link.split('/')[-2]
-        except:
-            pass
+        if job.results_link:
+            try:
+                bundle_sha1 = job.results_link.split('/')[-2]
+            except IndexError:
+                pass
 
         job_status = {
             'job_status': job.get_status_display(),
             'bundle_sha1': bundle_sha1
         }
 
+        return job_status
+
+    def job_list_status(self, job_id_list):
+        """
+        Name
+        ----
+        job_list_status ([job_id, job_id, job_id])
+
+        Description
+        -----------
+        Get the status of a list of job ids.
+
+        Arguments
+        ---------
+        `job_id_list`: list
+            List of job ids for which the output is required.
+            For multinode jobs specify the job sub_id as a float
+            in the XML-RPC call:
+            job_list_status([1, 2, 3,1, 5])
+
+        Return value
+        ------------
+        The user needs to be authenticated with an username and token.
+
+        This function returns an XML-RPC structure of job status with the
+        following content.
+
+        `job_status`: string
+        {ID: ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']}
+
+        If the user is not able to view one of the specified jobs, that entry
+        will be omitted.
+
+        """
+        self._authenticate()
+        job_status = {}
+        # optimise the query for a long list instead of using the
+        # convenience handlers
+        if not isinstance(job_id_list, list):
+            raise xmlrpclib.Fault(400, "Bad request: needs to be a list")
+        if not all(isinstance(chk, (float, int)) for chk in job_id_list):
+            raise xmlrpclib.Fault(400, "Bad request: needs to be a list of integers or floats")
+        jobs = TestJob.objects.filter(
+            Q(id__in=job_id_list) | Q(sub_id__in=job_id_list)).select_related(
+                'actual_device', 'requested_device', 'requested_device_type')
+        for job in jobs:
+            device_type = job.job_device_type()
+            if not job.can_view(self.user) or not job.is_accessible_by(self.user) and not self.user.is_superuser:
+                continue
+            if device_type.owners_only:
+                # do the more expensive check second and only for a hidden device type
+                if device_type.num_devices_visible_to(self.user) == 0:
+                    continue
+            job_status[str(job.display_id)] = job.get_status_display()
         return job_status
 
     def worker_heartbeat(self, heartbeat_data):
@@ -459,7 +689,7 @@ class SchedulerAPI(ExposedAPI):
 
         Description
         -----------
-        Pushes the heartbeat of dispatcher worker node.
+        Dropped - arguments are ignored.
 
         Arguments
         ---------
@@ -471,15 +701,10 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC boolean output, provided the user is
         authenticated with an username and token.
         """
-        worker = Worker()
         if not self.user:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
-        if not worker.can_update(self.user):
-            raise xmlrpclib.Fault(403, "Permission denied.")
-
-        worker.update_heartbeat(heartbeat_data)
         return True
 
     def notify_incomplete_job(self, job_id):

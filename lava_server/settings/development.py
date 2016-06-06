@@ -18,7 +18,6 @@
 
 import os
 
-from lava_server.extension import loader
 from lava_server.settings.common import *
 
 # Top-level directory of the project.
@@ -95,7 +94,6 @@ if django.VERSION < (1, 8):
         os.path.join(PROJECT_SRC_DIR, 'dashboard_app', 'templates', 'dashboard_app'),
         os.path.join(PROJECT_SRC_DIR, 'lava_results_app', 'templates', 'lava_results_app'),
         os.path.join(PROJECT_SRC_DIR, 'google_analytics', 'templates', 'google_analytics'),
-        os.path.join(PROJECT_SRC_DIR, 'lava_markitup', 'templates', 'lava_markitup'),
         os.path.join(PROJECT_SRC_DIR, "templates"),
     )
 else:
@@ -108,7 +106,6 @@ else:
                 os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
                 os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
                 os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_markitup', 'templates', 'lava_markitup'),
             ],
             'OPTIONS': {
                 'context_processors': [
@@ -151,9 +148,6 @@ except ImportError:
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Load extensions
-loader.contribute_to_settings(locals())
 
 # default branding details
 BRANDING_ALT = "Linaro logo"

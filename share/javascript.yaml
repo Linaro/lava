@@ -95,16 +95,6 @@ debian:
       chart.js: chart.min.js
       bootbox.data.toggle.js: bootbox.data.toggle.min.js
   - uglify:
-    lava_directory: lava_markitup/static/lava_markitup/
-    destination: lava_markitup/static/lava_markitup/
-    files:
-      jquery.markitup.js: jquery.markitup.min.js
-  - uglify:
-    lava_directory: lava_markitup/static/lava_markitup/sets/markdown/
-    destination: lava_markitup/static/lava_markitup/sets/markdown/
-    files:
-      set.js: set.min.js
-  - uglify:
     lava_directory: lava_server/lava-server/js/
     destination: lava_server/lava-server/js/
     files:
