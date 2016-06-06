@@ -45,9 +45,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, socket_addr, parameters):
+    def __init__(self, job_id, socket_addr, master_cert, slave_cert, parameters):
         self.job_id = job_id
         self.socket_addr = socket_addr
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -81,12 +83,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     @context.setter
     def context(self, data):
         self.__context__.pipeline_data.update(data)
-
-    def reset_context(self):
-        """
-        Called within multiple deployment jobs from an Action.run()
-        """
-        self.__context__ = PipelineContext()
 
     def diagnose(self, trigger):
         """
@@ -140,7 +136,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         """
         # Add the ZMQ handler now
         if self.socket_addr is not None:
-            self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
+            self.logger.addZMQHandler(self.socket_addr, self.master_cert,
+                                      self.slave_cert, self.job_id)  # pylint: disable=maybe-no-member
         else:
             self.logger.addHandler(logging.StreamHandler())
 
@@ -163,20 +160,3 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.logger.exception(self.pipeline.errors)
             return len(self.pipeline.errors)
         return 0
-
-
-class ResetContext(Action):
-    """
-    Allow multiple deployment jobs to clear the context before each new deployment
-    """
-    def __init__(self):
-        super(ResetContext, self).__init__()
-        self.name = "reset-context"
-        self.summary = "reset context for current job"
-        self.description = "clear dynamic data from previous deployment"
-
-    def run(self, connection, args=None):
-        connection = super(ResetContext, self).run(connection, args)
-        self.logger.debug("Resetting dynamic data from previous deployment")
-        self.job.reset_context()
-        return connection

@@ -20,7 +20,6 @@
 
 
 import time
-from contextlib import contextmanager
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -62,13 +61,14 @@ class RetryAction(Action):
             except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
                 self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
-                if self.timeout:
-                    self.logger.warning("%s: timeout reached. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
             if "boot-result" not in self.data:
                 self.data['boot-result'] = 'failed'
+            # tried and failed
+            self.job.pipeline.cleanup_actions(connection, self.errors)
+            raise JobError(self.errors)
         return connection
 
     # FIXME: needed?
@@ -205,10 +205,9 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
                 "No deployment strategy available for the given "
                 "device '%s'. %s" % (device['hostname'], cls))
 
-        # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class Boot(object):
@@ -248,9 +247,9 @@ class Boot(object):
             )
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class LavaTest(object):  # pylint: disable=abstract-class-not-used
@@ -292,9 +291,9 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
             raise NotImplementedError(msg)
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class PipelineContext(object):  # pylint: disable=too-few-public-methods

@@ -1,0 +1,80 @@
+device_type: x86
+
+commands:
+  connect: telnet bumblebee 8003
+  hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command reboot --delay 5
+  power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command off
+  power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command on
+
+character-delays:
+      boot: 100
+      test: 100
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      grub:
+        parameters:
+          bootloader_prompt: grub>
+          boot_message: Linux version
+          send_char: True
+        ramdisk:
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod linux
+          - insmod tftp
+          - insmod pata
+          - insmod part_msdos
+          - linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 root=/dev/ram0 ip=dhcp
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        nfs:
+          commands:
+          - insmod linux
+          - insmod tftp
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},vers=3,tcp,hard,intr ip=dhcp'
+          - boot
+        debian-installer:
+          expect_shell: False
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod linux
+          - insmod tftp
+          - insmod pata
+          - insmod part_msdos
+          - linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} efi=noruntime --- console=ttyS0,115200 debug verbose
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        debian-installed:
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod linux
+          - insmod tftp
+          - insmod pata
+          - insmod part_msdos
+          - insmod chain
+          - ls (ata0,msdos1)/
+          - chainloader (ata0,msdos1)/boot/grub/i386-pc/boot.img
+          - boot
+
+timeouts:
+  actions:
+    auto-login-action:
+      seconds: 600
+    installer-wait:
+      seconds: 2000
+  connections:
+    bootloader-action:
+       seconds: 2000
+    installer-wait:
+      seconds: 2000
+    bootloader-commands:
+      seconds: 600

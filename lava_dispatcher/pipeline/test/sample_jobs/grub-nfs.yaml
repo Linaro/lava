@@ -9,6 +9,7 @@ timeouts:
   extract-nfsrootfs:
     seconds: 90
 priority: medium
+visibility: public
 
 actions:
   - deploy:
@@ -16,7 +17,7 @@ actions:
        minutes: 10
      to: tftp
      nfsrootfs:
-         url: http://snapshots.linaro.org/openembedded/images/minimal-armv8-gcc-5.2/790/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
+         url: http://releases.linaro.org/openembedded/images/minimal-armv8/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
          compression: gz
      kernel:
          url: http://images.validation.linaro.org/d02/20151209-1510/Image

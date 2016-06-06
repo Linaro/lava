@@ -19,13 +19,17 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+
+import sys
 import glob
 import stat
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     GitRepoAction,
@@ -126,7 +130,10 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             scripts_to_copy.append(script)
         check_list = [os.path.basename(scr) for scr in scripts_to_copy]
 
-        self.assertItemsEqual(check_list, script_list)
+        if sys.version_info[0] == 2:
+            self.assertItemsEqual(check_list, script_list)
+        elif sys.version_info[0] == 3:
+            self.assertCountEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
@@ -137,7 +144,6 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = None
         self.job.pipeline.validate_actions()
@@ -161,24 +167,23 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
-        deploy = boot = finalize = overlay = test = None
+        boot = finalize = None
         self.job.pipeline.validate_actions()
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
-            deploy = self.job.pipeline.actions[0]
             boot = self.job.pipeline.actions[1]
             finalize = self.job.pipeline.actions[3]
-            overlay = deploy.internal_pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
-        testdef = overlay.internal_pipeline.actions[2]
         self.assertIsInstance(testdef, TestDefinitionAction)
         test = testdef.internal_pipeline.actions[1]
         install = testdef.internal_pipeline.actions[2]
         runsh = testdef.internal_pipeline.actions[3]
-        self.assertIsInstance(deploy, DeployAction)
+        self.assertIsInstance(deploy, DeployImagesAction)
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, test, finalize
@@ -189,12 +194,12 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         testdef = {'params': {'VARIABLE_NAME_1': 'value_1', 'VARIABLE_NAME_2': 'value_2'}}
         content = test.handle_parameters(testdef)
         self.assertEqual(
-            content,
-            [
+            set(content),
+            {
                 '###default parameters from yaml###\n', "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
                 '######\n', '###test parameters from json###\n', "VARIABLE_NAME_1='eth2'\n",
                 "VARIABLE_NAME_2='wlan0'\n", '######\n'
-            ]
+            }
         )
 
 
@@ -225,3 +230,36 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(boot), 2)
         self.assertEqual(len(shell), 2)
         self.assertEqual(len(finalize), 1)
+
+
+class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestSkipInstall, self).setUp()
+        factory = BBBFactory()
+        self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
+
+    def test_skip_install_params(self):
+        self.assertIsNotNone(self.job)
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        apply = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testoverlay = [action for action in apply.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdefs = [action for action in testoverlay.internal_pipeline.actions if action.name == 'test-install-overlay']
+        ubuntu_testdef = None
+        single_testdef = None
+        for testdef in testdefs:
+            if testdef.parameters['path'] == 'ubuntu/smoke-tests-basic.yaml':
+                ubuntu_testdef = testdef
+            elif testdef.parameters['path'] == 'lava-test-shell/single-node/singlenode03.yaml':
+                single_testdef = testdef
+            else:
+                self.fail('Unexpected test definition in sample job.')
+        self.assertNotIn('skip_install', ubuntu_testdef.parameters)
+        self.assertIn('skip_install', single_testdef.parameters)
+        self.job.validate()
+        self.assertEqual(
+            single_testdef.skip_list,
+            ['keys', 'sources', 'deps', 'steps', 'all']
+        )
+        self.assertEqual(single_testdef.skip_options, ['deps'])

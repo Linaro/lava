@@ -43,7 +43,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
         return job
 
 
@@ -65,8 +66,8 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error('adb'), 'adb not installed')
-    @unittest.skipIf(infrastructure_error('fastboot'), 'fastboot not installed')
+    @unittest.skipIf(infrastructure_error('lxc-create'),
+                     'lxc-create not installed')
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -91,17 +92,19 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertNotIn('lava_lmp_cache_file', dir(overlay))
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_dir'])
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_sh_cmd'])
-        self.assertEqual(overlay.parameters['deployment_data']['distro'], 'android')
+        self.assertEqual(overlay.parameters['deployment_data']['distro'],
+                         'debian')
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_part_attr'])
         self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, 'lava-*')))
 
+    @unittest.skipIf(infrastructure_error('lxc-attach'),
+                     'lxc-attach not installed')
     def test_boot(self):
         for action in self.job.pipeline.actions:
             if isinstance(action, BootAction):
                 # get the action & populate it
-                self.assertEqual(action.parameters['method'], 'fastboot')
-                self.assertEqual(action.parameters['prompts'],
-                                 ['shell@mako:/ $', 'shell@mako'])
+                self.assertIn(action.parameters['method'], ['lxc', 'fastboot'])
+                self.assertEqual(action.parameters['prompts'], ['root@(.*):/#'])
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:

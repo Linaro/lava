@@ -95,6 +95,9 @@ LXC_PATH = "/var/lib/lxc"
 # LXC finalize timeout
 LAVA_LXC_TIMEOUT = 30
 
+# LXC templates with mirror option
+LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
+
 # Timeout used by the vland protocol when waiting for vland to
 # respond to the api.create_vlan request, in seconds.
 VLAND_DEPLOY_TIMEOUT = 120
@@ -106,3 +109,25 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
 GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
+
+# Timeout for USB devices to settle and show up
+USB_SHOW_UP_TIMEOUT = 10
+
+# kernel boot monitoring
+# Some successful kernel builds end the boot with this string
+KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'
+# Some successful kernel builds end the boot with this string
+KERNEL_FREE_INIT_MSG = 'Freeing init memory'
+# exception
+KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+# unhandled fault
+KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
+# panic
+KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
+# init dropping to a shell - often needs a sendline
+KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
+
+# qemu installer size limit in Mb
+# (i.e. size * 1024 * 1024)
+INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
+INSTALLER_QUIET_MSG = 'Loading initial ramdisk'

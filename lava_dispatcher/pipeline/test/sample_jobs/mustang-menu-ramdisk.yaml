@@ -9,6 +9,7 @@ timeouts:
   menu-interrupt:
     minutes: 3
 priority: medium
+visibility: public
 
 actions:
 

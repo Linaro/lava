@@ -1,6 +1,7 @@
 include README
 recursive-include lava_dispatcher/default-config *.conf
 include lava_dispatcher/lava_test_shell/*
+include lava_dispatcher/pipeline/lava_test_shell/*
 include .testr.conf
 include .gitreview
 include COPYING
@@ -8,7 +9,7 @@ include lava/dispatcher/lava-dispatcher-slave
 include lava/dispatcher/lava-slave
 include lava_dispatcher/default-config/lava-dispatcher/README
 recursive-include lava_dispatcher/pipeline/devices *.conf *.yaml
-recursive-include lava_dispatcher/pipeline/test/pipeline_refs *.yaml
+recursive-include lava_dispatcher/pipeline/test *.yaml *.txt
 recursive-include lava_dispatcher/pipeline/device_types *.conf
 include lava_dispatcher/pipeline/test/sample_jobs/*
 include lava_dispatcher/tests/test-config/bin/*
@@ -18,6 +19,7 @@ include etc/*
 include etc/logrotate.d/*
 include version.py
 include share/*
+include share/apache2/*
 include linaro_dashboard_bundle/schemas/*.json
 include linaro_dashboard_bundle/test_documents/*.json
 

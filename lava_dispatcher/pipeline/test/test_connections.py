@@ -21,7 +21,9 @@
 
 import os
 import yaml
+import logging
 import unittest
+import subprocess
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
@@ -45,7 +47,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, socket_addr=None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 0, socket_addr=None,
+                               master_cert=None, slave_cert=None, output_dir=output_dir)
         return job
 
     def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -53,7 +56,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
         return job
 
 
@@ -64,6 +68,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         factory = Factory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_job(self):
@@ -154,6 +159,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('ssh', scp.scp)
         self.assertFalse(scp.primary)
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_tar_command(self):
         self.job.validate()
         login = [item for item in self.job.pipeline.actions if item.name == 'login-ssh'][0]
@@ -221,7 +227,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn(  # ipv4
             login.parameters['parameters']['hostID'],
             prepare.host_keys)
-        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': u'172.16.200.165'})
+        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': '172.16.200.165'})
         self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
         self.assertIn(
             login.parameters['parameters']['host_key'],
@@ -229,13 +235,14 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         host_data = prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID'])
         self.assertEqual(
             host_data[login.parameters['parameters']['host_key']],
-            u'172.16.200.165'
+            '172.16.200.165'
         )
         data = scp_overlay.get_common_data(MultinodeProtocol.name, 'ipv4')
         if 'protocols' in scp_overlay.parameters:
             for params in scp_overlay.parameters['protocols'][MultinodeProtocol.name]:
-                (replacement_key, placeholder) = [(key, value) for key, value in params['message'].items() if key != 'yaml_line'][0]
-                self.assertEqual(data[replacement_key], u'172.16.200.165')
+                (replacement_key, placeholder) = [
+                    (key, value)for key, value in params['message'].items() if key != 'yaml_line'][0]
+                self.assertEqual(data[replacement_key], '172.16.200.165')
                 self.assertEqual(placeholder, '$ipaddr')
         environment = scp_overlay.get_common_data('environment', 'env_dict')
         self.assertIsNotNone(environment)
@@ -267,7 +274,8 @@ class TestTimeouts(unittest.TestCase):
     def create_custom_job(self, data, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         parser = JobParser()
-        job = parser.parse(data, device, 4212, None, output_dir=output_dir)
+        job = parser.parse(data, device, 4212, None, None, None,
+                           output_dir=output_dir)
         return job
 
     def test_action_timeout(self):
@@ -284,25 +292,25 @@ class TestTimeouts(unittest.TestCase):
         """
         Test connection timeout specified in the submission YAML
         """
-        data = yaml.load(
-            open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        with open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+            data = yaml.load(uboot_ramdisk)
         data['timeouts']['connection'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))
         for action in job.pipeline.actions:
             if action.internal_pipeline:
-                for action in action.internal_pipeline.actions:
-                    if action.connection_timeout and action.name != 'uboot-retry':
+                for check_action in action.internal_pipeline.actions:
+                    if check_action.connection_timeout and check_action.name != 'uboot-retry':
                         # uboot-retry has an override in this sample job
-                        self.assertEqual(action.connection_timeout.duration, 20)
+                        self.assertEqual(check_action.connection_timeout.duration, 20)
 
     def test_action_connection_timeout(self):
         """
         Test connection timeout specified for a particular action
         """
-        data = yaml.load(
-            open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        with open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+            data = yaml.load(uboot_ramdisk)
         data['timeouts']['connections'] = {'uboot-retry': {}}
         data['timeouts']['connections']['uboot-retry'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))
@@ -313,3 +321,4 @@ class TestTimeouts(unittest.TestCase):
             Timeout.parse(job.device['timeouts']['connections'][retry.name]),
             retry.connection_timeout.duration
         )
+        self.assertEqual(90, retry.timeout.duration)

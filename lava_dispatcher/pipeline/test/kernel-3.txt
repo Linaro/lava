@@ -1,0 +1,241 @@
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Initializing cgroup subsys cpuacct
+[    0.000000] Linux version 3.16.0-4-armmp (debian-kernel@lists.debian.org) (gcc version 4.8.4 (Debian 4.8.4-1) ) #1 SMP Debian 3.16.7-ckt20-1+deb8u2 (2016-01-02)
+[    0.000000] CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c5387d
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] Machine model: TI AM335x BeagleBone
+[    0.000000] Memory policy: Data cache writeback
+[    0.000000]   HighMem zone: 1048574 pages exceeds freesize 0
+[    0.000000] CPU: All CPU(s) started in SVC mode.
+[    0.000000] AM335X ES2.0 (sgx neon )
+[    0.000000] PERCPU: Embedded 9 pages/cpu @dfac9000 s12608 r8192 d16064 u36864
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 129792
+[    0.000000] Kernel command line: console=ttyO0,115200n8 root=/dev/ram0  ip=dhcp
+[    0.000000] PID hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000000] Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)
+[    0.000000] Memory: 472948K/523264K available (6413K kernel code, 829K rwdata, 2204K rodata, 688K init, 393K bss, 50316K reserved, 0K highmem)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xffe00000   (2048 kB)
+[    0.000000]     vmalloc : 0xe0800000 - 0xff000000   ( 488 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xe0000000   ( 512 MB)
+[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+[    0.000000]     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc0872938   (8619 kB)
+[    0.000000]       .init : 0xc0873000 - 0xc091f140   ( 689 kB)
+[    0.000000]       .data : 0xc0920000 - 0xc09ef610   ( 830 kB)
+[    0.000000]        .bss : 0xc09ef610 - 0xc0a51b34   ( 394 kB)
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=4 to nr_cpu_ids=1.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] IRQ: Found an INTC at 0xfa200000 (revision 5.0) with 128 interrupts
+[    0.000000] Total of 128 interrupts on 1 active controller
+[    0.000000] OMAP clockevent source: timer2 at 24000000 Hz
+[    0.000013] sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 178956969942ns
+[    0.000033] OMAP clocksource: timer1 at 24000000 Hz
+[    0.000382] Console: colour dummy device 80x30
+[    0.000414] Calibrating delay loop... 995.32 BogoMIPS (lpj=1990656)
+[    0.047313] pid_max: default: 32768 minimum: 301
+[    0.047442] Security Framework initialized
+[    0.047530] AppArmor: AppArmor disabled by boot time parameter
+[    0.047539] Yama: disabled by default; enable with sysctl kernel.yama.*
+[    0.047617] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.047630] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.048544] Initializing cgroup subsys memory
+[    0.048575] Initializing cgroup subsys devices
+[    0.048612] Initializing cgroup subsys freezer
+[    0.048632] Initializing cgroup subsys net_cls
+[    0.048663] Initializing cgroup subsys blkio
+[    0.048687] Initializing cgroup subsys perf_event
+[    0.048701] Initializing cgroup subsys net_prio
+[    0.048773] CPU: Testing write buffer coherency: ok
+[    0.048830] ftrace: allocating 23120 entries in 68 pages
+[    0.105065] CPU0: thread -1, cpu 0, socket -1, mpidr 0
+[    0.105458] Setting up static identity map for 0x805c2358 - 0x805c23b0
+[    0.113765] Brought up 1 CPUs
+[    0.113790] SMP: Total of 1 processors activated (995.32 BogoMIPS).
+[    0.113798] CPU: All CPU(s) started in SVC mode.
+[    0.114609] devtmpfs: initialized
+[    0.118607] VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3
+[    0.129177] omap_hwmod: tptc0 using broken dt data from edma
+[    0.129299] omap_hwmod: tptc1 using broken dt data from edma
+[    0.129405] omap_hwmod: tptc2 using broken dt data from edma
+[    0.133886] omap_hwmod: debugss: _wait_target_disable failed
+[    0.192098] pinctrl core: initialized pinctrl subsystem
+[    0.192641] regulator-dummy: no parameters
+[    0.201564] NET: Registered protocol family 16
+[    0.202074] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.209834] platform 49000000.edma: alias fck already exists
+[    0.209862] platform 49000000.edma: alias fck already exists
+[    0.209876] platform 49000000.edma: alias fck already exists
+[    0.210658] OMAP GPIO hardware version 0.1
+[    0.218599] No ATAGs?
+[    0.218629] hw-breakpoint: debug architecture 0x4 unsupported.
+[    0.219535] EXYNOS: PMU not supported
+[    0.219855] omap_init_mbox: hwmod doesn't have valid attrs
+[    0.220743] Serial: AMBA PL011 UART driver
+[    0.237558] edma-dma-engine edma-dma-engine.0: TI EDMA DMA engine driver
+[    0.238314] vmmcsd_fixed: 3300 mV 
+[    0.239744] vgaarb: loaded
+[    0.240286] usbcore: registered new interface driver usbfs
+[    0.240357] usbcore: registered new interface driver hub
+[    0.240595] usbcore: registered new device driver usb
+[    0.241067] omap_i2c 44e0b000.i2c: could not find pctldev for node /pinmux@44e10800/pinmux_i2c0_pins, deferring probe
+[    0.241090] platform 44e0b000.i2c: Driver omap_i2c requests probe deferral
+[    0.241327] media: Linux media interface: v0.10
+[    0.241388] Linux video capture interface: v2.00
+[    0.241490] pps_core: LinuxPPS API ver. 1 registered
+[    0.241497] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.241526] PTP clock support registered
+[    0.243048] Switched to clocksource timer1
+[    0.298272] NET: Registered protocol family 2
+[    0.299351] TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.299402] TCP bind hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.299462] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.299529] TCP: reno registered
+[    0.299543] UDP hash table entries: 256 (order: 1, 8192 bytes)
+[    0.299564] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes)
+[    0.299767] NET: Registered protocol family 1
+[    0.300382] Unpacking initramfs...
+[    3.048606] Freeing initrd memory: 35020K (c2001000 - c4234000)
+[    3.049066] hw perfevents: enabled with ARMv7 Cortex-A8 PMU driver, 5 counters available
+[    3.051695] futex hash table entries: 256 (order: 2, 16384 bytes)
+[    3.051794] audit: initializing netlink subsys (disabled)
+[    3.051887] audit: type=2000 audit(3.016:1): initialized
+[    3.053428] zbud: loaded
+[    3.053782] VFS: Disk quotas dquot_6.5.2
+[    3.053856] Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    3.054023] msgmni has been set to 992
+[    3.055937] alg: No test for stdrng (krng)
+[    3.056099] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 249)
+[    3.056365] io scheduler noop registered
+[    3.056380] io scheduler deadline registered
+[    3.056519] io scheduler cfq registered (default)
+[    3.057328] pinctrl-single 44e10800.pinmux: 142 pins at pa f9e10800 size 568
+[    3.060341] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    3.062043] Serial: AMBA driver
+[    3.062285] Serial: IMX driver
+[    3.062867] omap_uart 44e09000.serial: no wakeirq for uart0
+[    3.063153] 44e09000.serial: ttyO0 at MMIO 0x44e09000 (irq = 88, base_baud = 3000000) is a OMAP UART0
+[    3.776422] console [ttyO0] enabled
+[    3.784070] mousedev: PS/2 mouse device common for all mice
+[    3.791376] omap_rtc 44e3e000.rtc: rtc core: registered 44e3e000.rtc as rtc0
+[    3.798843] 44e3e000.rtc: already running
+[    3.804606] ledtrig-cpu: registered to indicate activity on CPUs
+[    3.811045] hidraw: raw HID events driver (C) Jiri Kosina
+[    3.817321] usbcore: registered new interface driver usbhid
+[    3.823165] usbhid: USB HID core driver
+[    3.827942] TCP: cubic registered
+[    3.831515] NET: Registered protocol family 10
+[    3.837244] mip6: Mobile IPv6
+[    3.840449] NET: Registered protocol family 17
+[    3.845138] mpls_gso: MPLS GSO support
+[    3.849202] omap_voltage_late_init: Voltage driver support not added
+[    3.856490] ThumbEE CPU extension supported.
+[    3.861034] Registering SWP/SWPB emulation handler
+[    3.866857] registered taskstats version 1
+[    3.878707] omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz
+[    3.885088] omap_rtc 44e3e000.rtc: setting system clock to 2016-06-03 09:03:39 UTC (1464944619)
+[    3.898648] vmmcsd_fixed: disabling
+[    3.903761] Freeing unused kernel memory: 688K (c0873000 - c091f000)
+Loading, please wait...
+[    3.993527] systemd-udevd[58]: starting version 215
+[    4.009424] random: systemd-udevd urandom read with 1 bits of entropy available
+[    4.137520] omap_wdt: OMAP Watchdog Timer Rev 0x01: initial timeout 60 sec
+[    4.250207] [drm] Initialized drm 1.1.0 20060810
+[    4.273699] omap_rng 48310000.rng: OMAP Random Number Generator ver. 20
+[    4.301884] omap-sham 53100000.sham: hw accel on OMAP rev 4.3
+[    4.321158] mmc0: host does not support reading read-only switch. assuming write-enable.
+[    4.329811] omap-sham 53100000.sham: initialization failed.
+[    4.355848] omap-sham: probe of 53100000.sham failed with error -22
+[    4.364489] cpsw 4a100000.ethernet: Detected MACID = 90:59:af:5b:0b:ac
+[    4.373243] mmc0: new high speed SDHC card at address aaaa
+[    4.413978] mmcblk0: mmc0:aaaa SU16G 14.8 GiB 
+[    4.435724]  mmcblk0: p1 p2
+[    4.469597] omap-aes 53500000.aes: OMAP AES hw accel rev: 3.2
+[    4.512681] mmc1: BKOPS_EN bit is not set
+[    4.528800] mmc1: new high speed MMC card at address 0001
+[    4.563866] mmcblk1: mmc1:0001 MMC02G 1.78 GiB 
+[    4.586632] mmcblk1boot0: mmc1:0001 MMC02G partition 1 1.00 MiB
+[    4.612840] mmcblk1boot1: mmc1:0001 MMC02G partition 2 1.00 MiB
+[    4.636108] musb-hdrc musb-hdrc.0.auto: musb_init_controller failed with status -517
+[    4.659473]  mmcblk1: p1 p2 p3 < p5 >
+[    4.677994] tda998x 0-0070: found TDA19988
+[    4.685686]  mmcblk1boot1: unknown partition table
+[    4.708061] platform musb-hdrc.0.auto: Driver musb-hdrc requests probe deferral
+[    4.716978] [drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[    4.723981] [drm] No driver support for vblank timestamp query.
+[    4.751374]  mmcblk1boot0: unknown partition table
+[    4.764090] musb-hdrc musb-hdrc.0.auto: musb_init_controller failed with status -517
+[    4.772477] tilcdc 4830e000.lcdc: No connectors reported connected with modes
+[    4.780282] 47401300.usb-phy supply vcc not found, using dummy regulator
+[    4.818879] platform musb-hdrc.0.auto: Driver musb-hdrc requests probe deferral
+[    4.830084] [drm] Cannot find any crtc or sizes - going 1024x768
+[    4.852605] musb-hdrc musb-hdrc.1.auto: musb_init_controller failed with status -517
+[    4.865425] davinci_mdio 4a101000.mdio: davinci mdio revision 1.6
+[    4.871935] davinci_mdio 4a101000.mdio: detected phy mask fffffffe
+[    4.901266] Console: switching to colour frame buffer device 128x48
+[    4.912894] tilcdc 4830e000.lcdc: fb0:  frame buffer device
+[    4.918719] tilcdc 4830e000.lcdc: registered panic notifier
+[    4.929284] [drm] Initialized tilcdc 1.0.0 20121205 on minor 0
+[    4.945241] platform musb-hdrc.1.auto: Driver musb-hdrc requests probe deferral
+[    4.990654] libphy: 4a101000.mdio: probed
+[    4.994977] davinci_mdio 4a101000.mdio: phy[0]: device 4a101000.mdio:00, driver SMSC LAN8710/LAN8720
+[    5.013907] 47401b00.usb-phy supply vcc not found, using dummy regulator
+[    5.054005] musb-hdrc musb-hdrc.1.auto: MUSB HDRC host driver
+[    5.090254] musb-hdrc musb-hdrc.1.auto: new USB bus registered, assigned bus number 1
+[    5.156169] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002
+[    5.163365] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    5.170933] usb usb1: Product: MUSB HDRC host driver
+[    5.176130] usb usb1: Manufacturer: Linux 3.16.0-4-armmp musb-hcd
+[    5.182498] usb usb1: SerialNumber: musb-hdrc.1.auto
+[    5.191893] random: nonblocking pool is initialized
+[    5.256014] hub 1-0:1.0: USB hub found
+[    5.279819] hub 1-0:1.0: 1 port detected
+Begin: Loading essential drivers ... done.
+Begin: Running /scripts/init-premount ... done.
+Begin: Mounting root file system ... Begin: Running /scripts/local-top ... done.
+Begin: Running /scripts/local-premount ... done.
+Begin: Waiting for root file system ... Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+Begin: Running /scripts/local-block ... done.
+done.
+Gave up waiting for root device.  Common problems:
+ - Boot args (cat /proc/cmdline)
+   - Check rootdelay= (did the system wait long enough?)
+   - Check root= (did the system wait for the right device?)
+ - Missing modules (cat /proc/modules; ls /dev)
+ALERT!  /dev/ram0 does not exist.  Dropping to a shell!#
+export PS1=\"lava-test: # \"

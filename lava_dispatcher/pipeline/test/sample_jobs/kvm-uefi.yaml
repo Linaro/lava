@@ -1,0 +1,53 @@
+device_type: qemu
+
+job_name: kvm-jessie-uefi
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        os: debian
+        uefi:
+          # not a standard download as UEFI needs separate handling
+          url: http://images.validation.linaro.org/kvm/bios-256k.bin
+        images:
+          disk1:
+            # not actually a UEFI image, just for the unit test
+            url: http://images.validation.linaro.org/kvm/jessie-grub.img.gz
+            image_arg: -drive format=raw,file={disk1}
+    - boot:
+        method: qemu
+        media: tmpfs
+        connection: serial
+        failure_retry: 2
+        auto_login: {login_prompt: 'login:', username: root}
+        prompts:
+          - 'root@debian:~#'
+
+    - test:
+        failure_retry: 3
+        timeout:
+          minutes: 10
+        name: kvm-basic-singlenode  # is not present, use "test $N"
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced

@@ -25,11 +25,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
     QCowConversionAction,
 )
-from lava_dispatcher.pipeline.actions.deploy.mount import (
-    MountAction,
-    UnmountAction,
-)
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
@@ -43,16 +39,19 @@ class DeployImagesAction(DeployAction):
     def __init__(self):
         super(DeployImagesAction, self).__init__()
         self.name = 'deployimages'
-        self.description = "deploy images using loopback mounts"
+        self.description = "deploy images using guestfs"
         self.summary = "deploy images"
-
-    def validate(self):
-        # Nothing to do at this stage. Everything is done by internal actions
-        super(DeployImagesAction, self).validate()
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = mkdtemp()
+        if 'uefi' in parameters:
+            uefi_path = mkdtemp()
+            download = DownloaderAction('uefi', uefi_path)
+            download.max_retries = 3
+            self.internal_pipeline.add_action(download)
+            # uefi option of QEMU needs a directory, not the filename
+            self.set_common_data('image', 'uefi_dir', uefi_path)  # just the path, not the filename
         for image in parameters['images'].keys():
             if image != 'yaml_line':
                 download = DownloaderAction(image, path)
@@ -60,12 +59,10 @@ class DeployImagesAction(DeployAction):
                 self.internal_pipeline.add_action(download)
                 if parameters['images'][image].get('format', '') == 'qcow2':
                     self.internal_pipeline.add_action(QCowConversionAction(image))
-                self.internal_pipeline.add_action(MountAction(image))
-                self.internal_pipeline.add_action(CustomisationAction())
-                self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-                self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
-                self.internal_pipeline.add_action(DeployDeviceEnvironment())
-                self.internal_pipeline.add_action(UnmountAction())
+        self.internal_pipeline.add_action(CustomisationAction())
+        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.internal_pipeline.add_action(ApplyOverlayGuest())
+        self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
 
 # FIXME: may need to be renamed if it can only deal with QEMU image deployment
@@ -74,18 +71,17 @@ class DeployImages(Deployment):
     Strategy class for an Image based Deployment.
     Accepts parameters to deploy a QEMU
     Uses existing Actions to download and checksum
-    as well as copying test files.
+    as well as creating a qcow2 image for the test files.
     Does not boot the device.
+    Requires guestfs instead of loopback support.
     Prepares the following actions and pipelines:
         retry_pipeline
             download_action
         report_checksum_action
-        mount_pipeline
-            customisation_action
-            test_definitions_action
-        umount action
+        customisation_action
+        test_definitions_action
     """
-    compatibility = 1
+    compatibility = 4
 
     def __init__(self, parent, parameters):
         super(DeployImages, self).__init__(parent)
@@ -104,10 +100,12 @@ class DeployImages(Deployment):
         """
         if device['device_type'] != 'qemu':
             return False
+        if parameters['to'] != 'tmpfs':
+            return False
         # lookup if the job parameters match the available device methods
         if 'images' not in parameters:
             # python3 compatible
             # FIXME: too broad
-            print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens
+            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
             return False
         return True

@@ -5,7 +5,8 @@ actions:
     methods:
       image:
         parameters:
-          root_part: 1
+          guest:
+            size: 512  # in Mb
   boot:
     connections:
       serial:
@@ -16,19 +17,20 @@ actions:
           command:
             qemu-system-x86_64
           boot_options:
-            root: /dev/sda1
-            console: ttyS0,115200
+            console: ttyS0,38400n8
+            boot_order: c  # See qemu-system man page for -boot [order=drives] option - arch-specific
           options:
             - -nographic
             - -enable-kvm
             - -cpu host
             - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
-            - -m 512
+            - -m 2048
 
 timeouts:
-  apply-overlay-image:
-    minutes: 2
-  umount-retry:
-    seconds: 57
-  lava-test-shell:
-    seconds: 30
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    umount-retry:
+      seconds: 57
+    lava-test-shell:
+      seconds: 30

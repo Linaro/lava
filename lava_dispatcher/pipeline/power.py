@@ -75,7 +75,7 @@ class RebootDevice(Action):
             command = self.job.device['commands']['soft_reset']
             if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s command failed" % command)
-            self.results = {'status': "success"}
+            self.results = {"success": self.job.device.power_state}
         else:
             connection = super(RebootDevice, self).run(connection, args)
             connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
@@ -84,7 +84,7 @@ class RebootDevice(Action):
             # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
             connection.sendline("reboot -n")  # initramfs may require -n for *now*
             connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
-        self.results = {'status': "success"}
+        self.results = {"success": connection.prompt_str}
         self.data[PDUReboot.key()] = False
         if 'bootloader_prompt' in self.data['common']:
             self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
@@ -155,7 +155,7 @@ class PowerOn(Action):
                 return connection
             if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s command failed" % command)
-            self.results = {'status': 'success'}
+            self.results = {'success': self.name}
             self.job.device.power_state = 'on'
         return connection
 
@@ -267,7 +267,7 @@ class FinalizeAction(Action):
         if connection:
             connection.finalise()
         for protocol in self.job.protocols:
-            protocol.finalise_protocol()
+            protocol.finalise_protocol(self.job.device)
         if self.errors:
             self.results = {'status': self.errors}
             self.logger.debug('status: %s' % self.errors)
@@ -278,7 +278,7 @@ class FinalizeAction(Action):
                 'Status': 'Incomplete',
                 'Errors': self.job.pipeline.errors})
         else:
-            self.results = {'status': "Complete"}
+            self.results = {'success': "Complete"}
             self.logger.debug("Status: Complete")
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
             results.write(yaml.dump(self.job.pipeline.describe()))

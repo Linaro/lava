@@ -25,7 +25,10 @@ import shutil
 import tarfile
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.action import Action, Pipeline
-from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
+from lava_dispatcher.pipeline.actions.deploy.testdef import (
+    TestDefinitionAction,
+    get_test_action_namespaces,
+)
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.network import rpcinfo_nfs
@@ -111,12 +114,25 @@ class OverlayAction(DeployAction):
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
-        self.data[self.name].setdefault('location', mkdtemp())
-        self.logger.debug("Preparing overlay tarball in %s", self.data[self.name]['location'])
-        if 'lava_test_results_dir' not in self.data:
+        tmp_dir = mkdtemp()
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            if namespace not in get_test_action_namespaces(self.job.parameters):
+                self.logger.debug("skipped %s", self.name)
+                return connection
+            self.set_common_data(namespace, 'location', tmp_dir)
+            lava_test_results_dir = self.get_common_data(
+                namespace, 'lava_test_results_dir')
+            shell = self.get_common_data(namespace, 'lava_test_sh_cmd')
+        elif 'lava_test_results_dir' not in self.data:
             self.logger.error("Unable to identify lava test results directory - missing OS type?")
             return connection
-        lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
+        else:
+            lava_test_results_dir = self.data['lava_test_results_dir']
+            shell = self.parameters['deployment_data']['lava_test_sh_cmd']
+            self.data[self.name].setdefault('location', tmp_dir)
+        self.logger.debug("Preparing overlay tarball in %s", tmp_dir)
+        lava_path = os.path.abspath("%s/%s" % (tmp_dir, lava_test_results_dir))
         for runner_dir in ['bin', 'tests', 'results']:
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
@@ -128,7 +144,7 @@ class OverlayAction(DeployAction):
                 output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
                 self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
-                    fout.write("#!%s\n\n" % self.parameters['deployment_data']['lava_test_sh_cmd'])
+                    fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
         connection = super(OverlayAction, self).run(connection, args)
@@ -173,12 +189,20 @@ class MultinodeOverlayAction(OverlayAction):
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
-        if 'location' not in self.data['lava-overlay']:
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+            shell = self.get_common_data(namespace, 'lava_test_sh_cmd')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+            shell = self.parameters['deployment_data']['lava_test_sh_cmd']
+        if not os.path.exists(location):
             raise RuntimeError("Unable to find overlay location")
-        location = self.data['lava-overlay']['location']
-        shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # the roles list can only be populated after the devices have been assigned
         # therefore, cannot be checked in validate which is executed at submission.
@@ -186,7 +210,7 @@ class MultinodeOverlayAction(OverlayAction):
             raise RuntimeError("multinode definition without complete list of roles after assignment")
 
         # Generic scripts
-        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
+        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         scripts_to_copy = glob.glob(os.path.join(self.lava_multi_node_test_dir, 'lava-*'))
         self.logger.debug(self.lava_multi_node_test_dir)
         self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
@@ -213,7 +237,7 @@ class MultinodeOverlayAction(OverlayAction):
                     elif foutname == 'lava-self':
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.job.device.target)
                     else:
-                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % self.data['lava_test_results_dir'])
+                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % lava_test_results_dir)
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)
                         # always write out full debug logs
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
@@ -274,6 +298,9 @@ class VlandOverlayAction(OverlayAction):
                 ]
             )
         for interface in device_params:
+            if not device_params[interface]['tags']:
+                # skip primary interface
+                continue
             for tag in device_params[interface]['tags']:
                 self.tags.extend([interface, tag])
 
@@ -292,14 +319,22 @@ class VlandOverlayAction(OverlayAction):
         if not self.params:
             self.logger.debug("skipped %s", self.name)
             return connection
-        if 'location' not in self.data['lava-overlay']:
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+            shell = self.get_common_data(namespace, 'lava_test_sh_cmd')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+            shell = self.parameters['deployment_data']['lava_test_sh_cmd']
+        if not os.path.exists(location):
             raise RuntimeError("Unable to find overlay location")
-        location = self.data['lava-overlay']['location']
-        shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
-        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
+        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         scripts_to_copy = glob.glob(os.path.join(self.lava_vland_test_dir, 'lava-*'))
         self.logger.debug(self.lava_vland_test_dir)
         self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
@@ -338,21 +373,30 @@ class CompressOverlay(Action):
         self.description = "Create a lava overlay tarball and store alongside the job"
 
     def run(self, connection, args=None):
-        if 'location' not in self.data['lava-overlay']:
+        output = os.path.join(self.job.parameters['output_dir'],
+                              "overlay-%s.tar.gz" % self.level)
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+            self.set_common_data(namespace, 'output', output)
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
             raise RuntimeError("Unable to find overlay location")
         if not self.valid:
             self.logger.error(self.errors)
             return connection
         connection = super(CompressOverlay, self).run(connection, args)
-        location = self.data['lava-overlay']['location']
-        output = os.path.join(self.job.parameters['output_dir'], "overlay-%s.tar.gz" % self.level)
         cur_dir = os.getcwd()
         try:
             with tarfile.open(output, "w:gz") as tar:
                 os.chdir(location)
-                tar.add(".%s" % self.data['lava_test_results_dir'])
+                tar.add(".%s" % lava_test_results_dir)
                 # ssh authorization support
                 if os.path.exists('./root/'):
                     tar.add(".%s" % '/root/')
@@ -414,12 +458,19 @@ class SshAuthorize(Action):
             self.logger.debug("No authorisation required.")  # idempotency
             return connection
         # add the authorization keys to the overlay
-        if 'location' not in self.data['lava-overlay']:
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
             raise RuntimeError("Unable to find overlay location")
-        location = self.data['lava-overlay']['location']
-        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
+        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         output_file = '%s/%s' % (lava_path, os.path.basename(self.identity_file))
         shutil.copyfile(self.identity_file, output_file)
         shutil.copyfile("%s.pub" % self.identity_file, "%s.pub" % output_file)

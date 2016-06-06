@@ -20,6 +20,7 @@
 
 import os
 import shutil
+import logging
 import subprocess
 import tempfile
 import unittest
@@ -29,6 +30,7 @@ from lava_dispatcher.pipeline.test.test_uboot import Factory
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.utils import vcs
 
@@ -36,6 +38,8 @@ from lava_dispatcher.pipeline.utils import vcs
 class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
+        logging.disable(logging.CRITICAL)
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -104,9 +108,12 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertRaises(InfrastructureError, git.clone, 'foo.bar', 'badhash')
 
 
+@unittest.skipIf(infrastructure_error('bzr'), "bzr not installed")
 class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
+        logging.disable(logging.CRITICAL)
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory

@@ -75,7 +75,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertIn('hostname', device)
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None)
+            job = job_parser.parse(sample_job_data, device, 4212, None, None, None)
         uboot_action = None
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -142,6 +142,7 @@ class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-publ
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None,
+                None, None,
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],
@@ -166,12 +167,13 @@ overrides:
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None,
+                None, None,
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],
             data
         )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(JobError):
             job.validate()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
@@ -188,6 +190,7 @@ overrides:
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None,
+                None, None,
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],

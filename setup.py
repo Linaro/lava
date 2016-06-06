@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
+import sys
 from setuptools import setup, find_packages
 from version import version_tag
 
+if sys.version_info[0] == 2:
+    lzma = 'pyliblzma >= 0.5.3'
+elif sys.version_info[0] == 3:
+    lzma = ''
 
 setup(
     name="lava-dispatcher",
@@ -60,6 +65,7 @@ setup(
             'lava_test_shell/distro/ubuntu/*',
             'lava_test_shell/distro/debian/*',
             'lava_test_shell/distro/oe/*',
+            'pipeline/lava_test_shell/lava-test-runner',
         ],
         'linaro_dashboard_bundle': [
             'schemas/*',
@@ -73,7 +79,7 @@ setup(
         'configglue',
         'PyYAML',
         'pyserial >= 2.6',
-        'pyliblzma >= 0.5.3',
+        '%s' % lzma,
         'requests',
         'netifaces >= 0.10.0',
         'nose',

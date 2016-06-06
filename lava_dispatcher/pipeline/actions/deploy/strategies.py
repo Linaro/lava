@@ -29,3 +29,4 @@ from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
 from lava_dispatcher.pipeline.actions.deploy.ssh import Ssh
 from lava_dispatcher.pipeline.actions.deploy.fastboot import Fastboot
 from lava_dispatcher.pipeline.actions.deploy.lxc import Lxc
+from lava_dispatcher.pipeline.actions.deploy.iso import DeployIso

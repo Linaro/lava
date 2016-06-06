@@ -22,7 +22,6 @@
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
-    Timeout
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction

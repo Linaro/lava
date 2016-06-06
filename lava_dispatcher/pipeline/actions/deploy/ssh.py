@@ -166,7 +166,8 @@ class PrepareOverlayScp(Action):
             for params in self.parameters['protocols'][MultinodeProtocol.name]:
                 replacement_key = [key for key, _ in params['message'].items() if key != 'yaml_line'][0]
                 if replacement_key not in data:
-                    self.logger.error("Mismatched replacement key %s and received data %s", replacement_key, data.keys())
+                    self.logger.error("Mismatched replacement key %s and received data %s",
+                                      replacement_key, list(data.keys()))
                     continue
                 self.set_common_data(self.name, host_key, str(data[replacement_key]))
                 self.logger.info("data %s replacement key is %s", host_key, self.get_common_data(self.name, host_key))

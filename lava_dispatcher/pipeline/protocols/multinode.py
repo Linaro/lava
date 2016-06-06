@@ -45,8 +45,8 @@ class MultinodeProtocol(Protocol):
 
     # FIXME: use errors and valid where old code just logged complaints
 
-    def __init__(self, parameters):
-        super(MultinodeProtocol, self).__init__(parameters)
+    def __init__(self, parameters, job_id):
+        super(MultinodeProtocol, self).__init__(parameters, job_id)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
         self.system_timeout = Timeout('system', LAVA_MULTINODE_SYSTEM_TIMEOUT)
@@ -254,7 +254,7 @@ class MultinodeProtocol(Protocol):
         self.settings = {
             'blocksize': 4096,
             'port': 3179,  # debug port
-            'coordinator_hostname': u'localhost',
+            'coordinator_hostname': 'localhost',
             'poll_delay': 3
         }
 
@@ -286,7 +286,7 @@ class MultinodeProtocol(Protocol):
         self.logger.debug("Initialising group %s" % self.parameters['protocols'][self.name]['target_group'])
         self._send(init_msg, True)
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         fin_msg = {
             "request": "clear_group",
             "group_size": self.parameters['protocols'][self.name]['group_size']
@@ -299,7 +299,7 @@ class MultinodeProtocol(Protocol):
             json_data = json.loads(data)
         except (ValueError, TypeError) as exc:
             raise JobError("Invalid data for %s protocol: %s %s" % (self.name, data, exc))
-        if type(json_data) != dict:
+        if not isinstance(json_data, dict):
             raise JobError("Invalid data type %s for protocol %s" % (data, self.name))
         if not json_data:
             raise JobError("No data to be sent over protocol %s" % self.name)
@@ -356,7 +356,7 @@ class MultinodeProtocol(Protocol):
             self.logger.debug("requesting lava_send %s" % message_id)
             if 'message' in json_data and json_data['message'] is not None:
                 send_msg = json_data['message']
-                if type(send_msg) is not dict:
+                if not isinstance(send_msg, dict):
                     send_msg = {json_data['message']: None}
                 self.logger.debug("message: %s", json.dumps(send_msg))
                 if 'yaml_line' in send_msg:
@@ -407,9 +407,11 @@ class MultinodeProtocol(Protocol):
                             if key != 'yaml_line' and value.startswith('$')]
             for item in replaceables:
                 if 'message' in reply:
-                    data = [val for val in reply['message'].items() if self.parameters['target'] in val][0][1]
+                    target_list = [val for val in reply['message'].items()
+                                   if self.parameters['target'] in val]
                 else:
-                    data = [val for val in reply.items()][0][1]
+                    target_list = [val for val in list(reply.items())]
+                data = target_list[0][1]
                 if item not in data:
                     self.logger.warning("Skipping %s - not found in %s", item, data)
                     continue

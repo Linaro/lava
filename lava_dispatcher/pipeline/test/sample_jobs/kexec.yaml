@@ -13,6 +13,7 @@ timeouts:
   call-kexec:
     seconds: 45  # artificially short
 priority: medium
+visibility: public
 
 actions:
   - deploy:

@@ -21,10 +21,9 @@ protocols:
   lava-vland:
     vlan_one:
       tags:
-      - 1G
-    vlan_two:
-      tags:
-      - 1G
+      - 100M
+      - RJ45
+      - 10M
 
 priority: medium
 visibility: public

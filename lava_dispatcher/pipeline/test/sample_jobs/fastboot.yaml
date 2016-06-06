@@ -7,37 +7,65 @@ timeouts:
   action:
     minutes: 15         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
+visibility: public
+
+protocols:
+  lava-lxc:
+    name: lxc-nexus4-test
+    template: debian
+    distribution: debian
+    release: sid
+    arch: amd64
 
 actions:
+  - deploy:
+      namespace: tlxc
+      timeout:
+        minutes: 5
+      to: lxc
+      packages:
+      - android-tools-adb
+      - android-tools-fastboot
+      os: debian
+
+  - boot:
+      namespace: tlxc
+      prompts:
+      - 'root@(.*):/#'
+      timeout:
+        minutes: 5
+      method: lxc
+
   - deploy:
       timeout:
         minutes: 15
       to: fastboot
+      namespace: droid
+      connection: lxc
       images:
         boot:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
-
         userdata:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
         system:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/system.img
-      os: android
+      os: debian
 
   - boot:
+      namespace: droid
+      prompts:
+      - 'root@(.*):/#'
       timeout:
         minutes: 15
       method: fastboot
-      prompts:
-        - 'shell@mako:/ $'
-        - 'shell@mako'
 
   - test:
-      failure_retry: 3
-      name: nexus4-basic
+      namespace: tlxc
       timeout:
         minutes: 5
+      connection: lxc
       definitions:
-        - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
-          from: git
-          path: android/echo-pass-fail-error-test.yaml
-          name: echo-pass-fail-error-test
+      - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+        from: git
+        path: debian/get-adb-serial.yaml
+        name: get-adb-serial

@@ -47,8 +47,8 @@ class VlandProtocol(Protocol):
     name = "lava-vland"
     level = 5
 
-    def __init__(self, parameters):
-        super(VlandProtocol, self).__init__(parameters=parameters)
+    def __init__(self, parameters, job_id):
+        super(VlandProtocol, self).__init__(parameters, job_id)
         self.logger = logging.getLogger('dispatcher')
         self.vlans = {}
         self.ports = []
@@ -249,7 +249,7 @@ class VlandProtocol(Protocol):
         }
         ret = self.multinode_protocol(wait_msg)
         if ret:
-            values = ret.values()[0]
+            values = list(ret.values())[0]
             return (values['vlan_name'], values['vlan_tag'],)
         raise JobError("Waiting for vlan creation failed: %s", ret)
 
@@ -358,17 +358,19 @@ class VlandProtocol(Protocol):
         self.multinode_protocol = protocols[0]
         if not self.valid:
             return False
-        interfaces = [interface for interface, _ in device['parameters']['interfaces'].iteritems()]
+        interfaces = [interface for interface, _ in device['parameters']['interfaces'].items()]
         available = []
         for iface in interfaces:
-            available.extend(device['parameters']['interfaces'][iface]['tags'])
+            if device['parameters']['interfaces'][iface]['tags']:
+                # skip primary interfaces
+                available.extend(device['parameters']['interfaces'][iface]['tags'])
         requested = []
-        count = 0
         for friendly_name in self.parameters['protocols'][self.name]:
             if friendly_name == 'yaml_line':
                 continue
-            self.names[friendly_name] = "%s%s%02d" % (self.base_group, self.sub_id, count)
-            count += 1
+            base_jobid = "%s" % job.job_id
+            base = "%s%s" % (base_jobid[-8:], friendly_name[:8])
+            self.names[friendly_name] = ''.join(e for e in base if e.isalnum())[:16]
         self.params = copy.deepcopy(self.parameters['protocols'][self.name])
         for vlan_name in self.params:
             if vlan_name == 'yaml_line':
@@ -377,7 +379,7 @@ class VlandProtocol(Protocol):
                 self.errors = "%s already configured for %s" % (device['hostname'], self.name)
             else:
                 requested.extend(self.params[vlan_name]['tags'])
-        if not any(set(requested).intersection(available)):
+        if set(available) & set(requested) != set(requested):
             self.errors = "Requested link speeds %s are not available %s for %s" % (
                 requested, available, device['hostname'])
         if not self.valid:
@@ -393,7 +395,12 @@ class VlandProtocol(Protocol):
                 if ' '.join([device_info['switch'], str(device_info['port'])]) in self.nodes_seen:
                     # combination of switch & port already processed for this device
                     continue
-                if any(set(device_info['tags']).intersection(self.params[vlan_name]['tags'])):
+                if not device_info['tags']:
+                    # primary network interface, must not allow a vlan
+                    continue
+                # device interface tags & job tags must equal job tags
+                # device therefore must support all job tags, not all job tags available on the device need to be specified
+                if set(device_info['tags']) & set(self.params[vlan_name]['tags']) == set(self.params[vlan_name]['tags']):
                     self.params[vlan_name]['switch'] = device_info['switch']
                     self.params[vlan_name]['port'] = device_info['port']
                     self.nodes_seen.append(' '.join([device_info['switch'], str(device_info['port'])]))
@@ -472,7 +479,7 @@ class VlandProtocol(Protocol):
             return True
         return False
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         # restore any ports to base_vlan
         for port_id in self.ports:
             self.logger.info("Finalizing port %s", port_id)

@@ -166,7 +166,6 @@ class SelectorMenuAction(Action):
         self.description = 'select specified menu items'
         self.selector = SelectorMenu()
         self.items = []
-        self.send_char_delay = 0
 
     def validate(self):
         super(SelectorMenuAction, self).validate()
@@ -177,8 +176,8 @@ class SelectorMenuAction(Action):
         for item in self.items:
             if 'select' in item:
                 for _ in item['select']:
-                    item_keys[item['select'].keys()[0]] = None
-        disallowed = set(item_keys) - {'items', 'prompt', 'enter', 'escape'}
+                    item_keys[list(item['select'].keys())[0]] = None
+        disallowed = set(item_keys) - {'items', 'prompt', 'enter', 'escape', 'wait', 'fallback'}
         if disallowed:
             self.errors = "Unable to recognise item %s" % disallowed
 
@@ -218,7 +217,7 @@ class SelectorMenuAction(Action):
                             self.logger.debug("Selecting option %s", action)
                         elif 'fallback' in block['select']:
                             action = self.selector.select(menu_text, block['select']['fallback'])
-                        connection.sendline(action)
+                        connection.sendline(action, delay=self.character_delay)
                         self._change_prompt(connection, change_prompt)
                 if 'escape' in block['select']:
                     self.logger.debug("Sending escape")
@@ -226,7 +225,7 @@ class SelectorMenuAction(Action):
                     self._change_prompt(connection, change_prompt)
                 if 'enter' in block['select']:
                     self.logger.debug("Sending %s Ctrl-M", block['select']['enter'])
-                    connection.raw_connection.send(block['select']['enter'], delay=self.send_char_delay)
+                    connection.raw_connection.send(block['select']['enter'], delay=self.character_delay)
                     connection.raw_connection.sendcontrol('M')
                     self._change_prompt(connection, change_prompt)
             else:

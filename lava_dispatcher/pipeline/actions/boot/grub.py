@@ -89,19 +89,18 @@ class GrubMainAction(BootAction):
         super(GrubMainAction, self).validate()
 
     def populate(self, parameters):
+        self.expect_shell = parameters.get('expect_shell', True)
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterrupt())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
-        if parameters.get("expect-shell", True):
+        if self.expect_shell:
             self.internal_pipeline.add_action(AutoLoginAction())
             self.internal_pipeline.add_action(ExpectShellSession())  # wait
             self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
-            self.expect_shell = False
-            self.logger.debug("expect-shell was false, waiting for installer to complete")
             self.logger.debug("Doing a boot without a shell (installer)")
             self.internal_pipeline.add_action(InstallerWait())
             self.internal_pipeline.add_action(PowerOff())
@@ -113,6 +112,7 @@ class GrubMainAction(BootAction):
             if not connection.prompt_str:
                 connection.prompt_str = self.parameters['prompts']
             connection.timeout = self.connection_timeout
+            connection.sendline("#")  # poke the shell so test-shell has something to match
             self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
@@ -170,13 +170,13 @@ class InstallerWait(Action):
 
     def validate(self):
         super(InstallerWait, self).validate()
-        if "boot-finished" not in self.parameters:
-            self.errors = "Missing boot-finished string"
+        if "boot_finished" not in self.parameters:
+            self.errors = "Missing boot_finished string"
 
     def run(self, connection, args=None):
         connection = super(InstallerWait, self).run(connection, args)
-        wait_string = self.parameters['boot-finished']
-        self.logger.debug("Not expecting a shell, so waiting for boot-finished: %s", wait_string)
+        wait_string = self.parameters['boot_finished']
+        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", wait_string)
         connection.prompt_str = wait_string
         self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
@@ -285,7 +285,7 @@ class BootloaderCommandsAction(Action):
         self.wait(connection)
         i = 1
         for line in self.data[self.type]['commands']:
-            connection.sendline(line, delay=100, send_char=True)
+            connection.sendline(line, delay=self.character_delay, send_char=True)
             if i != (len(self.data[self.type]['commands'])):
                 self.wait(connection)
                 i += 1

@@ -21,7 +21,7 @@
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import Constructor
-from lava_dispatcher.pipeline.job import Job, ResetContext
+from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -123,8 +123,8 @@ class JobParser(object):
         }
 
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, job_id, socket_addr, output_dir=None,
-              env_dut=None):
+    def parse(self, content, device, job_id, socket_addr, master_cert,
+              slave_cert, output_dir=None, env_dut=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -133,7 +133,7 @@ class JobParser(object):
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
         self.context['default_connection_duration'] = Timeout.default_duration()
-        job = Job(job_id, socket_addr, data)
+        job = Job(job_id, socket_addr, master_cert, slave_cert, data)
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
@@ -141,7 +141,7 @@ class JobParser(object):
         job.parameters['target'] = device.target
         level_tuple = Protocol.select_all(job.parameters)
         # sort the list of protocol objects by the protocol class level.
-        job.protocols = [item[0](job.parameters) for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])]
+        job.protocols = [item[0](job.parameters, job_id) for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])]
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
@@ -150,20 +150,15 @@ class JobParser(object):
         for action_data in data['actions']:
             action_data.pop('yaml_line', None)
             for name in action_data:
-                if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
+                if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update(self._map_context_defaults())
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
-                    # reset the context before adding a second deployment and again before third etc.
-                    if name == 'deploy' and counts[name] >= 2:
-                        reset_context = ResetContext()
-                        reset_context.section = name
-                        pipeline.add_action(reset_context)
                     parse_action(action_data, name, device, pipeline)
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
-                    for c_iter in xrange(count):
+                    for c_iter in range(count):
                         for repeating in repeats:  # block of YAML to repeat
                             for repeat_action in repeating:  # name of the action for this block
                                 if repeat_action == 'yaml_line':
@@ -177,12 +172,12 @@ class JobParser(object):
                     action = Action.select(name)()
                     action.job = job
                     # put parameters (like rootfs_type, results_dir) into the actions.
-                    if type(action_data[name]) == dict:
+                    if isinstance(action_data[name], dict):
                         action.parameters = action_data[name]
                     elif name == "commands":
                         # FIXME
                         pass
-                    elif type(action_data[name]) == list:
+                    elif isinstance(action_data[name], list):
                         for param in action_data[name]:
                             action.parameters = param
                     action.summary = name

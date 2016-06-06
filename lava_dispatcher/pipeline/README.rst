@@ -80,7 +80,7 @@ Main concepts in the design
 
 - *Connection* is a data connection between the dispatcher host and the
   device under test. Examples of connections: serial connection, SSH
-  connection, adb shell, etc.
+  connection, etc.
 
 - *Action* an action that has to be performed. A Action can be a
   shell commands run on the target, an operations run on

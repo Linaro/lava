@@ -55,7 +55,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
         return job
 
 
@@ -153,7 +154,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
-        job = Job(4212, None, parameters)
+        job = Job(4212, None, None, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.set_pipeline(pipeline)
@@ -185,7 +186,6 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)
         self.assertIn("boot", commands)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_download_action(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/ipxe.yaml')
@@ -213,7 +213,6 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_reset_actions(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/ipxe.yaml')
@@ -269,7 +268,8 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         sample_job_data = yaml.load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
         sample_job_string = yaml.dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
+        job = parser.parse(sample_job_string, device, 4212, None, None, None,
+                           output_dir='/tmp')
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         retry = [action for action in bootloader.internal_pipeline.actions

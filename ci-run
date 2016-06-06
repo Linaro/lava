@@ -2,6 +2,13 @@
 
 set -e
 
+echo "Checking pep8"
 pep8 --ignore E501 .
 
+echo "Starting unit tests"
+echo
 TMPDIR=. python setup.py test "$@"
+
+# to run python3 unit tests, you can use
+# python3 -m unittest discover -v lava_dispatcher.pipeline
+# but the python3 dependencies are not automatically installed.

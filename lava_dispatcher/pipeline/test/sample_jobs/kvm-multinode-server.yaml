@@ -26,6 +26,7 @@ protocols:
       minutes: 10
 
 priority: medium
+visibility: public
 
 actions:
 
@@ -36,10 +37,9 @@ actions:
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             compression: gz
         os: debian
-        root_partition: 1
         role: server
 
     - boot:

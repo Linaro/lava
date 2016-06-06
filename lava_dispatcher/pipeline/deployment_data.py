@@ -52,13 +52,26 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
     def __repr__(self):
         return repr(self.__data__)
 
-    def get(self, key):
-        return self.__data__.get(key)
+    def get(self, *args):
+        if len(args) == 1:
+            return self.__data__.get(args[0])
+        else:
+            if args[0] in self.__data__.keys():
+                return self.__data__.get(args[0])
+            else:
+                return args[1]
 
     def keys(self):
+        """
+        Exists principally so that the return looks like a list
+        of keys of a normal dict object. The most common thing
+        to do with the return value of dict.keys() is to iterate
+        or just with if _ in dict.keys():, so take the line of
+        least surprise, despite what 2to3 thinks.
+        https://docs.python.org/3/library/stdtypes.html#dict-views
+        """
         return self.__data__.keys()
 
-# FIXME: harmonise the prompt management to avoid duplication with device configuration
 android = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': "root@linaro# ",
     'TESTER_PS1_PATTERN': "root@linaro# ",
@@ -143,10 +156,22 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'installer_extra_cmd': 'cp -r /lava-* /target/ || true ;',
+
+    # DEBIAN_INSTALLER preseeeding
+    'locale': 'debian-installer/locale=en_US',
+    'keymaps': 'console-keymaps-at/keymap=us keyboard-configuration/xkb-keymap=us',
+    'netcfg': 'netcfg/choose_interface=auto netcfg/get_hostname=debian netcfg/get_domain=',
+    'base': 'auto=true install noshell debug verbose BOOT_DEBUG=1 DEBIAN_FRONTEND=text ',
+    'prompts': [
+        'ERROR: Installation step failed',
+        'Press enter to continue',
+        'reboot: Power down',
+        'Requesting system poweroff'
+    ],
 
     # for lava-test-shell
     'distro': 'debian',
-    'boot_finished': 'reboot: Restarting system',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',

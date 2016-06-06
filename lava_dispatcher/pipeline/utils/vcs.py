@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import sys
 import logging
 import os
 import subprocess
@@ -62,14 +63,22 @@ class BzrHelper(VCSHelper):
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
                 commit_id = subprocess.check_output(['bzr', 'revno'],
-                                                    env=env).strip()
+                                                    env=env).strip().decode('utf-8')
 
         except subprocess.CalledProcessError as exc:
             logger = logging.getLogger('dispatcher')
-            logger.exception({
-                'command': [i.strip() for i in exc.cmd],
-                'message': [i.strip() for i in exc.message],
-                'output': exc.output.split('\n')})
+            if sys.version > '3':
+                exc_message = str(exc)
+                logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': exc_message,
+                    'output': str(exc).split('\n')})
+            else:
+                exc_message = exc.message
+                logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': [i.strip() for i in exc_message],
+                    'output': exc.output.split('\n')})
             raise InfrastructureError("Unable to fetch bzr repository '%s'"
                                       % (self.url))
         finally:
@@ -111,14 +120,22 @@ class GitHelper(VCSHelper):
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
             logger = logging.getLogger('dispatcher')
-            logger.exception({
-                'command': [i.strip() for i in exc.cmd],
-                'message': [i.strip() for i in exc.message],
-                'output': exc.output.split('\n')})
+            if sys.version > '3':
+                exc_message = str(exc)
+                logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': exc_message,
+                    'output': str(exc).split('\n')})
+            else:
+                exc_message = exc.message
+                logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': [i.strip() for i in exc_message],
+                    'output': exc.output.split('\n')})
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
 
-        return commit_id
+        return commit_id.decode('utf-8')
 
 
 class TarHelper(VCSHelper):

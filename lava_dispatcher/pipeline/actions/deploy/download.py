@@ -24,8 +24,9 @@
 
 import math
 import os
+import sys
+import shutil
 import time
-import urlparse
 import hashlib
 import requests
 import subprocess
@@ -33,7 +34,6 @@ import bz2
 import contextlib
 import lzma
 import zlib
-import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -47,10 +47,17 @@ from lava_dispatcher.pipeline.utils.constants import (
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
 
+if sys.version_info[0] == 2:
+    import urlparse as lavaurl
+elif sys.version_info[0] == 3:
+    import urllib.parse as lavaurl  # pylint: disable=no-name-in-module,import-error
+
+# pylint: disable=logging-not-lazy
 
 # FIXME: separate download actions for decompressed and uncompressed downloads
 # so that the logic can be held in the Strategy class, not the Action.
 # FIXME: create a download3.py which uses urllib.urlparse
+
 
 class DownloaderAction(RetryAction):
     """
@@ -69,16 +76,16 @@ class DownloaderAction(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Find the right action according to the url
-        if 'images' in parameters:
-            url = urlparse.urlparse(parameters['images'][self.key]['url'])
+        if 'images' in parameters and self.key in parameters['images']:
+            url = lavaurl.urlparse(parameters['images'][self.key]['url'])
         else:
-            url = urlparse.urlparse(parameters[self.key]['url'])
+            url = lavaurl.urlparse(parameters[self.key]['url'])
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url)
         elif url.scheme == 'http' or url.scheme == 'https':
-            action = HttpDownloadAction(self.key, self.path, url)
+            action = HttpDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
         elif url.scheme == 'file':
-            action = FileDownloadAction(self.key, self.path, url)
+            action = FileDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.internal_pipeline.add_action(action)
@@ -109,6 +116,14 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     def reader(self):
         raise NotImplementedError
 
+    def cleanup(self):
+        nested_tmp_dir = os.path.join(self.path, self.key)
+        self.logger.debug("%s cleanup", self.name)
+        if os.path.exists(nested_tmp_dir):
+            self.logger.debug("Cleaning up temporary tree.")
+            shutil.rmtree(nested_tmp_dir)
+        self.data['download_action'][self.key]['file'] = ''
+
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
@@ -123,11 +138,18 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             filename = os.path.join(path, '.'.join(parts[:-1]))
         return filename, suffix
 
+    def cleanup(self):
+        nested_tmp_dir = os.path.join(self.path, self.key)
+        if os.path.exists(nested_tmp_dir):
+            self.logger.info("%s %s cleanup", self.name, nested_tmp_dir)
+            shutil.rmtree(nested_tmp_dir)
+        super(DownloadHandler, self).cleanup()
+
     @contextlib.contextmanager
-    def _decompressor_stream(self):
+    def _decompressor_stream(self):  # pylint: disable=too-many-branches
         dwnld_file = None
         compression = False
-        if 'images' in self.parameters:
+        if 'images' in self.parameters and self.key in self.parameters['images']:
             compression = self.parameters['images'][self.key].get('compression', False)
         else:
             if self.key == 'ramdisk':
@@ -139,6 +161,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         if os.path.exists(fname):
             nested_tmp_dir = os.path.join(self.path, self.key)
+            if os.path.exists(nested_tmp_dir):
+                self.logger.warning("Cleaning up existing directory: %s", nested_tmp_dir)
+                shutil.rmtree(nested_tmp_dir)
             os.makedirs(nested_tmp_dir)
             fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
 
@@ -172,10 +197,10 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
     def validate(self):
         super(DownloadHandler, self).validate()
-        self.data.setdefault('download_action', {self.key: {}})
-        if 'images' in self.parameters:
+        self.data.setdefault('download_action', {self.key: {}})  # pylint: disable=no-member
+        if 'images' in self.parameters and self.key in self.parameters['images']:
             image = self.parameters['images'][self.key]
-            self.url = urlparse.urlparse(image['url'])
+            self.url = lavaurl.urlparse(image['url'])
             compression = image.get('compression', None)
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
             image_arg = image.get('image_arg', None)
@@ -185,7 +210,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.data['download_action'][self.key]['file'] = image_name
             self.data['download_action'][self.key]['image_arg'] = image_arg
         else:
-            self.url = urlparse.urlparse(self.parameters[self.key]['url'])
+            self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
             compression = self.parameters[self.key].get('compression', False)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
@@ -197,7 +222,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             if compression not in ['gz', 'bz2', 'xz']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
 
-    def run(self, connection, args=None):
+    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_size, last_value):
             """ Compute progress when the size is unknown """
             condition = downloaded_size >= last_value + 25 * 1024 * 1024
@@ -216,22 +241,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            md5sum = None
-            sha256sum = None
 
-            if 'images' in self.parameters:
+            if 'images' in self.parameters and self.key in self.parameters['images']:
                 remote = self.parameters['images'][self.key]
-
-                md5sum = remote.get('md5sum', None)
-                sha256sum = remote.get('sha256sum', None)
             else:
                 remote = self.parameters[self.key]
-
-                if 'md5sum' in self.parameters:
-                    md5sum = self.parameters['md5sum'].get(self.key, None)
-
-                if 'sha256sum' in self.parameters:
-                    sha256sum = self.parameters['sha256sum'].get(self.key, None)
+            md5sum = remote.get('md5sum', None)
+            sha256sum = remote.get('sha256sum', None)
 
             self.logger.info("downloading %s as %s" % (remote, fname))
 
@@ -269,19 +285,34 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.data['download_action'][self.key]['md5'] = md5.hexdigest()
         self.data['download_action'][self.key]['sha256'] = sha256.hexdigest()
 
-        if md5sum and md5sum != self.data['download_action'][self.key]['md5']:
-            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
-            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
-            raise JobError("MD5 checksum for '%s' does not match." % fname)
+        if md5sum is not None:
+            if md5sum != self.data['download_action'][self.key]['md5']:
+                self.logger.error("md5sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['md5']))
+                self.logger.info("sha256sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['sha256']))
+                self.results = {'fail': {
+                    'md5': md5sum, 'download': self.data['download_action'][self.key]['md5']}}
+                raise JobError("MD5 checksum for '%s' does not match." % fname)
+            self.results = {'success': {'md5': md5sum}}
 
-        if sha256sum and sha256sum != self.data['download_action'][self.key]['sha256']:
-            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
-            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
-            raise JobError("SHA256 checksum for '%s' does not match." % fname)
+        if sha256sum is not None:
+            if sha256sum != self.data['download_action'][self.key]['sha256']:
+                self.logger.info("md5sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['md5']))
+                self.logger.error("sha256sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['sha256']))
+                self.results = {'fail': {
+                    'sha256': sha256sum, 'download': self.data['download_action'][self.key]['sha256']}}
+                raise JobError("SHA256 checksum for '%s' does not match." % fname)
+            self.results = {'success': {'sha256': sha256sum}}
 
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
+            self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
+        elif self.parameters['to'] == 'iso-installer':
+            suffix = self.data['deploy-iso-installer'].get('suffix', '')
             self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
         else:
             self.set_common_data('file', self.key, fname)
@@ -346,8 +377,8 @@ class HttpDownloadAction(DownloadHandler):
                     timeout=HTTP_DOWNLOAD_TIMEOUT)
                 if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                     self.errors = "Resources not available at '%s'" % (self.url.geturl())
-            else:
-                self.size = int(res.headers.get('content-length', -1))
+
+            self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:

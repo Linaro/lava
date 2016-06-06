@@ -4,7 +4,6 @@ commands:
     soft_reset: fastboot -s usb:2-1.2 reboot
     power_off: /home/stylesen/work/pdu/pdu-control-off.sh 5
     power_on: /home/stylesen/work/pdu/pdu-control-on.sh 5
-    adb_command: adb -s 0123456789
     fastboot_command: fastboot -s usb:2-1.2
 device_type: hi6220-hikey
 adb_serial_number: 0123456789
@@ -19,7 +18,6 @@ actions:
       serial:
   boot:
     connections:
-      adb:
       serial:
     methods:
       uefi-menu:

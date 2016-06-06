@@ -5,12 +5,6 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.mount.MountAction
-    name: mount_action
-    pipeline:
-    - {class: actions.deploy.mount.OffsetAction, name: offset_action}
-    - {class: actions.deploy.mount.LoopCheckAction, name: loop_check}
-    - {class: actions.deploy.mount.LoopMountAction, name: loop_mount}
   - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
@@ -46,12 +40,8 @@
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
-  - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+  - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.mount.UnmountAction
-    name: umount-retry
-    pipeline:
-    - {class: actions.deploy.mount.Unmount, name: umount}
 - class: actions.boot.qemu.BootQEMUImageAction
   name: boot_image_retry
   pipeline:
@@ -59,6 +49,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -73,6 +64,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -87,6 +79,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -101,6 +94,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -115,6 +109,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -129,6 +124,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -143,6 +139,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -157,6 +154,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -171,6 +169,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -185,6 +184,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -199,6 +199,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -213,6 +214,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -227,10 +229,10 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
-- {class: job.ResetContext, name: reset-context}
 - class: actions.deploy.image.DeployImagesAction
   name: deployimages
   pipeline:
@@ -238,12 +240,6 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.mount.MountAction
-    name: mount_action
-    pipeline:
-    - {class: actions.deploy.mount.OffsetAction, name: offset_action}
-    - {class: actions.deploy.mount.LoopCheckAction, name: loop_check}
-    - {class: actions.deploy.mount.LoopMountAction, name: loop_mount}
   - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
@@ -279,12 +275,8 @@
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
-  - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+  - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.mount.UnmountAction
-    name: umount-retry
-    pipeline:
-    - {class: actions.deploy.mount.Unmount, name: umount}
 - class: actions.boot.qemu.BootQEMUImageAction
   name: boot_image_retry
   pipeline:
@@ -292,6 +284,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

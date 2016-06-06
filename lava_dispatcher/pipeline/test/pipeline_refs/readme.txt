@@ -1,8 +1,10 @@
 To rebuild and update these pipeline references, use:
 
     import yaml
-    with open('/tmp/test.yaml', 'wb') as describe:
+    with open('/tmp/test.yaml', 'w') as describe:
         yaml.dump(self.job.pipeline.describe(False), describe)
+
+(Avoid opening in binary mode as this would fail with python3.)
 
 Then use:
 

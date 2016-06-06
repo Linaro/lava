@@ -183,7 +183,7 @@ class CommandRunner(object):
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1, check_char='#'):
-        wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
+        return wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
 
     def get_connection(self):
         return self._connection
@@ -253,13 +253,14 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     name = 'protocol'
     level = 0
 
-    def __init__(self, parameters):
+    def __init__(self, parameters, job_id):
         self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []
         self.parameters = parameters
         self.configured = False
+        self.job_id = job_id
 
     @classmethod
     def select_all(cls, parameters):
@@ -288,7 +289,7 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def configure(self, device, job):
         self.configured = True
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         raise NotImplementedError()
 
     def check_timeout(self, duration, data):

@@ -39,7 +39,7 @@ def substitute(command_list, dictionary):
     """
     parsed = []
     for line in command_list:
-        for key, value in dictionary.items():  # 2to3 false positive, works with python3
+        for key, value in dictionary.items():
             if not key or not value:
                 continue
             line = line.replace(key, value)

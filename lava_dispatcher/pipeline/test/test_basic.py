@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import sys
 import glob
 import time
 import unittest
@@ -30,7 +31,7 @@ from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -125,7 +126,8 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                                   output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -137,7 +139,8 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                                   output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -297,32 +300,35 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
         pipe = job.describe()
-        self.assertEqual(pipe['compatibility'], ExpectShellSession.compatibility)
-        self.assertEqual(job.compatibility, ExpectShellSession.compatibility)
+        self.assertEqual(pipe['compatibility'], DeployImages.compatibility)
+        self.assertEqual(job.compatibility, DeployImages.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
-        job_def = yaml.load(open(kvm_yaml, 'r'))
+        with open(kvm_yaml, 'r') as kvm_yaml:
+            job_def = yaml.load(kvm_yaml)
         job_def['compatibility'] = job.compatibility
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, output_dir=mkdtemp())
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+                               output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             pass
         self.assertIsNotNone(job)
         job_def['compatibility'] = job.compatibility + 1
         self.assertRaises(
-            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, mkdtemp()
+            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, None, None,
+            mkdtemp()
         )
         job_def['compatibility'] = 0
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, output_dir=mkdtemp())
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+                               output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             pass
         self.assertIsNotNone(job)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_common_data(self):
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
@@ -396,3 +402,32 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
         self.assertIsNot(conn, pipe.run_actions(conn))
+
+
+class TestStrategySelector(unittest.TestCase):
+    """
+    Check the lambda operation
+    """
+    class Base(object):
+        priority = 0
+
+    class First(Base):
+        priority = 1
+
+    class Second(Base):
+        priority = 2
+
+    class Third(Base):
+        priority = 3
+
+    @unittest.skipIf(sys.version_info[0] == 3, 'test case only for python2')
+    def test_prioritized(self):
+        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
+        self.assertIsInstance(prioritized[0], TestStrategySelector.Third)
+
+    def test_willing(self):
+        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        self.assertIsInstance(willing[0], TestStrategySelector.Third)
