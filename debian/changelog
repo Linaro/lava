@@ -1,3 +1,25 @@
+lava-server (2016.6-1) unstable; urgency=medium
+
+  * New production release
+  * Update V1 docs for Ubuntu changes - lava-server no longer
+    migrates into Ubuntu and was removed from Xenial.
+  * Drop heartbeat support
+  * Prevent scheduler ValueError in reservation
+  * scheduler: reduce the number of SQL queries
+  * Expose DISALLOWED_USER_AGENTS to handle search bots
+  * Add a page for listing Pipeline Devices.
+  * Add Auth support in REST API for more functions
+  * Remove device status glyphicons everywhere, since heartbeat is dead.
+  * Create metadata on the number of test definitions
+  * Remove the need for extensions
+  * Remove deprecated lava_projects
+  * Update docs for guestfs and resulting issues.
+  * Enable job definition metadata.
+  * dispatcher-master: support zmq CURVE encryption
+  * Add documentation on using ZMQ curve
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 07 Jun 2016 07:49:43 +0100
+
 lava-server (2016.4-1) unstable; urgency=medium
 
   * New production release
