@@ -1233,11 +1233,6 @@ job_name: qemu-pipeline
             self.assertIn('timeouts', str(exc))
         bad_submission += """
 notify:
-  method: email
-        """
-        self.assertRaises(SubmissionException, validate_submission,
-                          yaml.load(bad_submission))
-        bad_submission += """
   criteria:
     status: complete
         """

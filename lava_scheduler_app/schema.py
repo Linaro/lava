@@ -95,20 +95,48 @@ def _job_actions_schema():
 
 
 def _job_notify_schema():
-    from lava_scheduler_app.models import TestJob
     return Schema({
-        Required('method'): Any(TestJob.NOTIFY_EMAIL_METHOD,
-                                TestJob.NOTIFY_IRC_METHOD),
         Required('criteria'): _notify_criteria_schema(),
-        'recipients': [str],
+        'recipients': _recipient_schema(),
         'verbosity': Any('verbose', 'quiet', 'status-only'),
         'compare': _notify_compare_schema()
     }, extra=True)
 
 
+def _recipient_schema():
+    from lava_scheduler_app.models import NotificationRecipient
+    return Schema([
+        {
+            Required('to'): {
+                Required('method'): Any(NotificationRecipient.EMAIL_STR,
+                                        NotificationRecipient.IRC_STR),
+                'user': str,
+                'email': str,
+                'server': str,
+                'handle': str
+            }
+        }
+    ])
+
+
+def _email_recipient_schema():
+    return Schema({
+        'user': str,
+        'email': str
+    }, extra=True)
+
+
+def _irc_recipient_schema():
+    return Schema({
+        'user': str,
+        'server': str,
+        'handle': str
+    }, extra=True)
+
+
 def _notify_criteria_schema():
     return Schema({
-        Required('status'): Any('complete', 'incomplete'),
+        Required('status'): Any('complete', 'incomplete', 'canceled'),
         'type': Any('progression', 'regression')
     }, extra=True)
 

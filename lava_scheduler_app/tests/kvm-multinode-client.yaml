@@ -63,9 +63,12 @@ context:
   arch: amd64
 
 notify:
-  method: email
   criteria:
     status: complete
+  recipients:
+    - to:
+        user: admin
+        method: email
   compare:
     query:
       entity: testjob

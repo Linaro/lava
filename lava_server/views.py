@@ -18,9 +18,15 @@
 
 import sys
 import django
+from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseServerError, HttpResponseForbidden
+from django.core.urlresolvers import reverse
+from django.http import (
+    HttpResponseServerError,
+    HttpResponseForbidden,
+    HttpResponseRedirect
+)
 from django.shortcuts import render_to_response, render
 from django.template import loader, RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -30,6 +36,22 @@ from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
+
+from lava_scheduler_app.models import ExtendedUser
+
+
+class ExtendedUserIRCForm(forms.ModelForm):
+
+    class Meta:
+        model = ExtendedUser
+        fields = ('irc_server', 'irc_handle', 'user')
+        widgets = {'user': forms.HiddenInput}
+
+    def __init__(self, *args, **kwargs):
+        super(ExtendedUserIRCForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True, **kwargs):
+        return super(ExtendedUserIRCForm, self).save(commit=commit, **kwargs)
 
 
 @BreadCrumb(_("LAVA"))
@@ -42,11 +64,24 @@ def index(request):
             parent=index)
 @login_required
 def me(request):  # pylint: disable=invalid-name
+    ExtendedUser.objects.get_or_create(user=request.user)
     data = {
+        'irc_form': ExtendedUserIRCForm(instance=request.user.extendeduser),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             me, you=request.user.get_full_name() or request.user.username),
     }
     return render(request, 'me.html', data)
+
+
+@login_required
+def update_irc_settings(request):
+
+    extended_user = request.user.extendeduser
+    if request.method == 'POST':
+        form = ExtendedUserIRCForm(request.POST, instance=extended_user)
+        if form.is_valid():
+            extended_user = form.save()
+            return HttpResponseRedirect(reverse('lava.me'))
 
 
 @requires_csrf_token
