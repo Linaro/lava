@@ -50,6 +50,10 @@ class RestrictedIDLinkColumn(IDLinkColumn):
         elif device_type.owners_only:
             if device_type.num_devices_visible_to(user) == 0:
                 return "Unavailable"
+            elif record.is_accessible_by(user):
+                return pklink(record)
+            else:
+                return "Private"
         elif record.is_accessible_by(user):
             return pklink(record)
         else:
