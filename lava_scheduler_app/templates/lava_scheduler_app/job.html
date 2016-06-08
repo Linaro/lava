@@ -223,8 +223,8 @@
 {% endif %}
 
 {% if size_warning %}
-<div class="alert alert-warning" id="size-warning">
-<p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }} bytes).
+<div class="alert alert-danger" id="size-warning">
+<p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
     It can only be downloaded.</p>
 </div>
 {% endif %}
