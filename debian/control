@@ -59,7 +59,7 @@ Architecture: all
 Section: metapackages
 Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
  lava-dev, lava-tool, lavapdu-client, linaro-image-tools, ntp | ntpdate,
- tftpd-hpa, openssh-client, schroot, lxc, bridge-utils, ${misc:Depends}
+ tftpd-hpa, openssh-client, schroot, lxc, rsync, bridge-utils, ${misc:Depends}
 Recommends: lavapdu-daemon
 Suggests: vmdebootstrap
 Description: Linaro Automated Validation Architecture metapackage
