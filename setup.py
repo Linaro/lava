@@ -65,7 +65,7 @@ setup(
             'lava_test_shell/distro/ubuntu/*',
             'lava_test_shell/distro/debian/*',
             'lava_test_shell/distro/oe/*',
-            'pipeline/lava_test_shell/lava-test-runner',
+            'pipeline/lava_test_shell/*',
         ],
         'linaro_dashboard_bundle': [
             'schemas/*',

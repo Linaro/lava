@@ -81,6 +81,9 @@ class OverlayAction(DeployAction):
         self.lava_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell' % os.path.dirname(__file__))
         self.scripts_to_copy = []
+        self.lava_v2_test_dir = os.path.realpath(
+            '%s/../../../pipeline/lava_test_shell' % os.path.dirname(__file__))
+        self.v2_scripts_to_copy = []
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
@@ -92,8 +95,12 @@ class OverlayAction(DeployAction):
         distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
         for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
             self.scripts_to_copy.append(script)
+        for script in glob.glob(os.path.join(self.lava_v2_test_dir, 'lava-*')):
+            self.v2_scripts_to_copy.append(script)
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
+        if not self.v2_scripts_to_copy:
+            self.errors = "Unable to update lava_test_shell support scripts."
         if self.job.parameters.get('output_dir', None) is None:
             self.errors = "Unable to use output directory."
 
@@ -143,6 +150,14 @@ class OverlayAction(DeployAction):
             with open(fname, 'r') as fin:
                 output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
                 self.logger.debug("Creating %s", output_file)
+                with open(output_file, 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), self.xmod)
+        for fname in self.v2_scripts_to_copy:
+            with open(fname, 'r') as fin:
+                output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
+                self.logger.debug("Updating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())

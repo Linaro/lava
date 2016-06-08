@@ -282,8 +282,6 @@ class TestShellAction(TestAction):
                 self.signal_director.signal(name, params)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
-            # force output in case there was none but minimal content to increase speed.
-            test_connection.sendline(check_char)
             ret_val = True
 
         elif event == "test_case":
