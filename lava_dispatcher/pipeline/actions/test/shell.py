@@ -139,7 +139,9 @@ class TestShellAction(TestAction):
         connection.timeout = self.connection_timeout
         self.wait(connection)
 
-        pre_command_list = self.get_common_data(self.name, 'pre-command-list')
+        # use the string instead of self.name so that inheriting classes (like multinode)
+        # still pick up the correct command.
+        pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
         if pre_command_list:
             for command in pre_command_list:
                 connection.sendline(command)
