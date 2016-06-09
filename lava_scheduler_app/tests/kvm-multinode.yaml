@@ -16,12 +16,16 @@ protocols:
     roles:
       client:
         device_type: qemu
+        context:
+          arch: amd64
         count: 1
         tags:
         - usb-flash
         - usb-eth
       server:
         device_type: qemu
+        context:
+          arch: amd64
         count: 1
     timeout:
       seconds: 60
@@ -79,9 +83,6 @@ actions:
         role:
         - server
         - client
-
-context:
-  arch: amd64
 
 notify:
   criteria:
