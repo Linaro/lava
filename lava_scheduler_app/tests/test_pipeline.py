@@ -902,6 +902,48 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertNotIn(fakeqemu2, allowed_devices)
         self.assertNotIn(fakeqemu1, allowed_devices)
 
+    def test_multinode_v2_metadata(self):
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        client_submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode-client.yaml'), 'r'))
+        job_ctx = client_submission.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        parser_device = PipelineDevice(device_config, device.hostname)
+        parser = JobParser()
+        pipeline_job = parser.parse(
+            yaml.dump(client_submission), parser_device,
+            4212, None, None, None, output_dir='/tmp/test')
+        pipeline = pipeline_job.describe()
+        from lava_results_app.dbutils import _get_job_metadata
+        self.assertEqual(
+            {
+                'test.0.definition.name': 'multinode-basic',
+                'test.0.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
+                'test.0.definition.from': 'git',
+                'boot.0.method': 'qemu',
+                'test.0.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
+            },
+            _get_job_metadata(pipeline['job']['actions'])
+        )
+        # simulate dynamic connection
+        dynamic = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
+        self.assertEqual(
+            _get_job_metadata(dynamic['job']['actions']),
+            {
+                'omitted.1.inline.name': 'ssh-client',
+                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.definition.name': 'smoke-tests',
+                'boot.0.method': 'ssh',
+                'omitted.1.inline.path': 'inline/ssh-client.yaml',
+                'test.0.definition.from': 'git',
+                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml'
+            }
+        )
+
 
 class VlanInterfaces(TestCaseWithFactory):
 

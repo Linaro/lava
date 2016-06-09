@@ -756,6 +756,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
         'priority',
         'visibility',
         'notify',
+        'metadata',
     ]
     skip = ['role', 'roles']
     scheduling = ['device_type', 'connection', 'host_role', 'context']  # top level values to be preserved

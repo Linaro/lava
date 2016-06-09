@@ -270,6 +270,7 @@ def map_metadata(description, job):
         return False
     if not created:
         # prevent updates of existing TestData
+        logger.debug("[%s] skipping alteration of existing TestData", job.id)
         return False
     testdata.save()
 

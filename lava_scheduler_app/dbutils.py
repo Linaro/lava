@@ -779,12 +779,12 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
 
     validate_list = job.sub_jobs_list if job.is_multinode else [job]
     for check_job in validate_list:
-        parser_device = None if job.dynamic_connection else device_object
+        # dynamic connections still get the device config of the host
         try:
             logger.info("[%d] Parsing definition", check_job.id)
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
-                check_job.definition, parser_device,
+                check_job.definition, device_object,
                 check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
@@ -809,7 +809,8 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(pipeline_dump)
-            map_metadata(pipeline_dump, job)
+            if not map_metadata(pipeline_dump, check_job):
+                logger.warning("[%d] unable to map metadata" % check_job.id)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:

@@ -27,6 +27,9 @@ protocols:
 
 priority: medium
 
+metadata:
+  source: lava_scheduler_app unit tests
+
 actions:
 
     - deploy:
