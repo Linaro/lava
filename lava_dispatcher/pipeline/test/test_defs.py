@@ -18,15 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import re
 import os
-
 import sys
 import glob
 import stat
+import yaml
+import pexpect
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.action import InfrastructureError
-from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
+from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, PatternFixup
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -182,6 +184,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
         apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
+        self.assertIsNotNone(apply_overlay)
 
 
 class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -283,8 +286,8 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(self.job)
         deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
-        apply = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        testoverlay = [action for action in apply.internal_pipeline.actions if action.name == 'test-definition'][0]
+        lava_apply = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testoverlay = [action for action in lava_apply.internal_pipeline.actions if action.name == 'test-definition'][0]
         testdefs = [action for action in testoverlay.internal_pipeline.actions if action.name == 'test-install-overlay']
         ubuntu_testdef = None
         single_testdef = None
@@ -303,3 +306,141 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
             ['keys', 'sources', 'deps', 'steps', 'all']
         )
         self.assertEqual(single_testdef.skip_options, ['deps'])
+
+
+class TestDefinitions(unittest.TestCase):
+    """
+    For compatibility until the V1 code is removed and we can start
+    cleaning up Lava Test Shell.
+    Parsing patterns in the Test Shell Definition YAML are problematic,
+    difficult to debug and rely on internal python syntax.
+    The fixupdict is even more confusing for all concerned.
+    """
+
+    def setUp(self):
+        super(TestDefinitions, self).setUp()
+        self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
+        self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
+        factory = BBBFactory()
+        self.job = factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
+
+    def test_pattern(self):
+        self.assertTrue(os.path.exists(self.testdef))
+        with open(self.testdef, 'r') as par:
+            params = yaml.load(par)
+        self.assertIn('parse', params.keys())
+        line = 'test1a: pass'
+        self.assertEqual(
+            '(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
+            params['parse']['pattern'])
+        match = re.search(params['parse']['pattern'], line)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(), line)
+        self.assertEqual(match.group(1), 'test1a')
+        self.assertEqual(match.group(2), 'pass')
+
+    def test_v1_defaults(self):
+        pattern = PatternFixup(testdef=None, count=0)
+        # without a name from a testdef, the pattern is not valid.
+        self.assertFalse(pattern.valid())
+        with open(self.testdef, 'r') as par:
+            params = yaml.load(par)
+        pattern = PatternFixup(testdef=params, count=0)
+        self.assertTrue(pattern.valid())
+
+    def test_definition_lists(self):
+        self.job.validate()
+        self.assertIn('common', self.job.context)
+        self.assertIn("test-definition", self.job.context['common'])
+        self.assertIn("testdef_index", self.job.context['common']['test-definition'])
+        self.assertIn("test_list", self.job.context['common']['test-definition'])
+        self.assertEqual(
+            self.job.context['common']['test-definition']['testdef_index'],
+            {0: 'smoke-tests', 1: 'singlenode-advanced'}
+        )
+        test_list = self.job.context['common']['test-definition']['test_list']
+        self.assertEqual(len(test_list), 2)
+        self.assertIn('path', test_list[0])
+        self.assertIn('path', test_list[1])
+        self.assertIn('name', test_list[0])
+        self.assertIn('name', test_list[1])
+        self.assertEqual(test_list[0]['path'], 'ubuntu/smoke-tests-basic.yaml')
+        self.assertEqual(test_list[0]['name'], 'smoke-tests')
+        self.assertEqual(test_list[1]['path'], 'lava-test-shell/single-node/singlenode03.yaml')
+        self.assertEqual(test_list[1]['name'], 'singlenode-advanced')
+        self.assertEqual(
+            self.job.context['common']['test-runscript-overlay']['testdef_levels'],
+            {
+                '1.3.2.4.4': '0_smoke-tests',
+                '1.3.2.4.8': '1_singlenode-advanced'
+            }
+        )
+        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
+        #  uuid = "%s_%s" % (self.job.job_id, self.level)
+        self.assertEqual(
+            {repo.uuid for repo in git_repos},
+            {'4212_1.3.2.4.1', '4212_1.3.2.4.5'}
+        )
+        self.assertEqual(
+            set(git_repos[0].get_common_data('test-runscript-overlay', 'testdef_levels').values()),
+            {'1_singlenode-advanced', '0_smoke-tests'}
+        )
+        # fake up a run step
+        with open(self.testdef, 'r') as par:
+            params = yaml.load(par)
+        self.assertEqual(
+            '(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
+            params['parse']['pattern'])
+        self.job.context.setdefault('test', {})
+        for git_repo in git_repos:
+            self.job.context['test'].setdefault(git_repo.uuid, {})
+            self.job.context['test'][git_repo.uuid]['testdef_pattern'] = {'pattern': params['parse']['pattern']}
+        self.assertEqual(
+            self.job.context['test'],
+            {
+                '4212_1.3.2.4.5': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}},
+                '4212_1.3.2.4.1': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}}}
+        )
+        testdef_index = self.job.context['common']['test-definition']['testdef_index']
+        start_run = '0_smoke-tests'
+        uuid_list = definition.get_common_data('repo-action', 'uuid-list')
+        for key, value in testdef_index.items():
+            if start_run == "%s_%s" % (key, value):
+                self.assertEqual('4212_1.3.2.4.1', uuid_list[key])
+                self.assertEqual(
+                    self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern'],
+                    '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'
+                )
+
+    @unittest.skipIf(sys.version > '3', 'pexpect issues in python3')
+    def test_defined_pattern(self):
+        """
+        For python3 support, need to resolve:
+        TypeError: cannot use a bytes pattern on a string-like object
+        TypeError: cannot use a string pattern on a bytes-like object
+        whilst retaining re_pat as a compiled regular expression in the
+        pexpect support.
+        """
+        data = """test1a: pass
+test2a: fail
+test3a: skip
+\"test4a:\" \"unknown\"
+        """
+        with open(self.testdef, 'r') as par:
+            params = yaml.load(par)
+        pattern = params['parse']['pattern']
+        re_pat = re.compile(pattern, re.M)
+        match = re.search(re_pat, data)
+        if match:
+            self.assertEqual(match.groupdict(), {'test_case_id': 'test1a', 'result': 'pass'})
+        child = pexpect.spawn('cat', [self.res_data])
+        child.expect([re_pat, pexpect.EOF])
+        self.assertEqual(child.after, b'test1a: pass')
+        child.expect([re_pat, pexpect.EOF])
+        self.assertEqual(child.after, b'test2a: fail')
+        child.expect([re_pat, pexpect.EOF])
+        self.assertEqual(child.after, pexpect.EOF)

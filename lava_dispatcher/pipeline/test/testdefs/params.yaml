@@ -1,0 +1,44 @@
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: parameters-test
+    description: "test commands for Linux Linaro ubuntu Images with parameters"
+    maintainer:
+        - neil.williams@linaro.org
+    os:
+        - ubuntu
+    scope:
+        - functional
+    devices:
+        - kvm
+        - arndale
+        - panda
+        - beaglebone-black
+        - beagle-xm
+
+params:
+    VARIABLE_NAME_1: value_1
+    VARIABLE_NAME_2: value_2
+
+run:
+    steps:
+        - echo "test1a:" "pass"
+        - echo "test2a:" "fail"
+        - echo 'test3a:' 'skip'
+        - echo '"test4a:" "unknown"'
+        - lava-test-case echo1 --shell echo "test1b:" "pass"
+        - lava-test-case echo2 --shell echo "test2b:" "fail"
+        - lava-test-case echo3 --shell echo 'test3b:' 'skip'
+        - lava-test-case echo4 --shell echo '"test4b:" "unknown"'
+        - lava-test-case test3 --result pass
+        - lava-test-case test4 --result fail
+        - lava-test-case test5 --result pass --measurement 99 --units bottles
+        - lava-test-case test6 --result fail --measurement 0 --units mugs
+        - echo $VARIABLE_NAME_1
+        - echo $VARIABLE_NAME_2
+        - echo $SPACED_VAR
+        - echo $PUB_KEY
+        - ./scripts/linux-cpuinfo.sh
+        - ./scripts/result-params.py
+
+parse:
+    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"

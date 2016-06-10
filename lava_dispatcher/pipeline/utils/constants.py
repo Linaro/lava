@@ -131,3 +131,7 @@ KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
 # (i.e. size * 1024 * 1024)
 INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
 INSTALLER_QUIET_MSG = 'Loading initial ramdisk'
+
+# V1 compatibility
+DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
+DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}

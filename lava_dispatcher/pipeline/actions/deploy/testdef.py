@@ -26,7 +26,6 @@ import base64
 import hashlib
 import tarfile
 import shutil
-from uuid import uuid4
 from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
@@ -39,6 +38,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_V1_FIXUP, DEFAULT_V1_PATTERN
 
 
 def identify_test_definitions(parameters):
@@ -133,13 +133,9 @@ class RepoAction(Action):
         self.summary = "repo base class"
         self.vcs = None
         self.runner = None
-        self.default_pattern = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
-        self.default_fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
-        # FIXME: sort out a genuinely unique ID based on the *database* JobID and pipeline level for reproducibility
-        # {DB-JobID}-{PipelineLevel}, e.g. 15432.0-3.5.4
-        # delay until jobs can be scheduled from the UI.
-        # allows individual testcase results to be at a predictable URL
-        self.uuid = str(uuid4())
+        self.default_pattern = DEFAULT_V1_PATTERN
+        self.default_fixupdict = DEFAULT_V1_FIXUP
+        self.uuid = None
 
     @classmethod
     def select(cls, repo_type):
@@ -168,7 +164,18 @@ class RepoAction(Action):
                 raise RuntimeError("RepoAction validate called super without setting the vcs")
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
+        # a genuinely unique ID based on the *database* JobID and pipeline level for reproducibility
+        # and tracking - {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
+        self.uuid = "%s_%s" % (self.job.job_id, self.level)
         super(RepoAction, self).validate()
+        # list of levels involved in the repo actions for this overlay
+        uuid_list = self.get_common_data('repo-action', 'uuid-list')
+        if uuid_list:
+            if self.uuid not in uuid_list:
+                uuid_list.append(self.uuid)
+        else:
+            uuid_list = [self.uuid]
+        self.set_common_data('repo-action', 'uuid-list', uuid_list)
 
     def run(self, connection, args=None):
         """
@@ -178,6 +185,7 @@ class RepoAction(Action):
         unpack an overlay.tgz after mounting.
         """
         connection = super(RepoAction, self).run(connection, args)
+        # FIXME: standardise on set_common_data and get_common_data
         self.data.setdefault('test', {})
         self.data['test'].setdefault(self.uuid, {})
         self.data['test'][self.uuid].setdefault('runner_path', {})
@@ -242,9 +250,14 @@ class RepoAction(Action):
 
         if 'parse' in testdef:
             pattern = testdef['parse'].get('pattern', '')
+            fixup = testdef['parse'].get('fixupdict', '')
         else:
             pattern = self.default_pattern
-        self.data['test'][self.uuid]['testdef_pattern'] = {'pattern': pattern}
+            fixup = self.default_fixupdict
+        self.data['test'][self.uuid].setdefault('testdef_pattern', {})
+        self.data['test'][self.uuid]['testdef_pattern'].update({'pattern': pattern})
+        self.data['test'][self.uuid]['testdef_pattern'].update({'fixupdict': fixup})
+        self.logger.debug("uuid=%s testdef=%s" % (self.uuid, self.data['test'][self.uuid]['testdef_pattern']))
 
 
 class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
@@ -568,16 +581,16 @@ class TestDefinitionAction(TestAction):
         files are created by TestOverlayAction. More complex scripts like the
         install:deps script and the main run script have custom Actions.
         """
-        index = {}
+        index = OrderedDict()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.test_list = identify_test_definitions(self.job.parameters)
         if not self.test_list:
             return
+        self.set_common_data(self.name, 'test_list', self.test_list[0])
         for testdefs in self.test_list:
             for testdef in testdefs:
-                # FIXME: only run the tests defined for this test action, not all the jobs for this deployment/job
-                # This includes only running the install steps for the relevant deployment as the next deployment
-                # could be a different OS.
+                # namespace support allows only running the install steps for the relevant
+                # deployment as the next deployment could be a different OS.
                 handler = RepoAction.select(testdef['from'])()
 
                 # set the full set of job YAML parameters for this handler as handler parameters.
@@ -585,6 +598,8 @@ class TestDefinitionAction(TestAction):
                 handler.parameters = testdef
                 # store the correct test_name before incrementing the local index dict
                 handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
+                self.internal_pipeline.add_action(handler)
+                handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
 
                 # copy details into the overlay, one per handler but the same class each time.
                 overlay = TestOverlayAction()
@@ -608,12 +623,12 @@ class TestDefinitionAction(TestAction):
                 runsh.test_uuid = handler.uuid
 
                 index[len(list(index.keys()))] = handler.parameters['name']
-                self.internal_pipeline.add_action(handler)
 
                 # add overlay handlers to the pipeline
                 self.internal_pipeline.add_action(overlay)
                 self.internal_pipeline.add_action(installer)
                 self.internal_pipeline.add_action(runsh)
+                self.set_common_data(self.name, 'testdef_index', index)
 
     def validate(self):
         """
@@ -694,8 +709,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
-        test_list = identify_test_definitions(self.job.parameters)
-        for testdef in test_list[0]:
+        test_list = self.get_common_data('test-definition', 'test_list')
+        for testdef in test_list:
             if 'parameters' in testdef:  # optional
                 if not isinstance(testdef['parameters'], dict):
                     self.errors = "Invalid test definition parameters"
@@ -820,7 +835,6 @@ class TestInstallAction(TestOverlayAction):
             self.results = {'skipped %s' % self.name: self.test_uuid}
             return
 
-        # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
         content = self.handle_parameters(testdef)
 
@@ -873,6 +887,25 @@ class TestRunnerAction(TestOverlayAction):
         self.name = "test-runscript-overlay"
         self.description = "overlay run script onto image"
         self.summary = "applying LAVA test run script"
+        self.testdef_levels = {}  # allow looking up the testname from the level of this action
+
+    def validate(self):
+        testdef_index = self.get_common_data('test-definition', 'testdef_index')
+        if not testdef_index:
+            self.errors = "Unable to identify test definition index"
+        # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
+        # to self.testdef_levels {'1.3,4,1': '0_smoke-tests', ...}
+        for count, name in testdef_index.items():
+            if self.parameters['name'] == name:
+                self.testdef_levels[self.level] = "%s_%s" % (count, name)
+        if not self.testdef_levels:
+            self.errors = "Unable to identify test definition names"
+        current = self.get_common_data(self.name, 'testdef_levels')
+        if current:
+            current.update(self.testdef_levels)
+        else:
+            current = self.testdef_levels
+        self.set_common_data(self.name, 'testdef_levels', current)
 
     def run(self, connection, args=None):
         connection = super(TestRunnerAction, self).run(connection, args)
@@ -882,6 +915,7 @@ class TestRunnerAction(TestOverlayAction):
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
 
+        testdef_levels = self.get_common_data('test-runscript-overlay', 'testdef_levels')
         with open(yaml_file, 'r') as test_file:
             testdef = yaml.safe_load(test_file)
 
@@ -896,7 +930,8 @@ class TestRunnerAction(TestOverlayAction):
             for line in content:
                 runsh.write(line)
             runsh.write('set -e\n')
-            runsh.write('export TESTRUN_ID=%s\n' % self.parameters['name'])
+            # use the testdef_index value for the testrun name to handle repeats at source
+            runsh.write('export TESTRUN_ID=%s\n' % testdef_levels[self.level])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')

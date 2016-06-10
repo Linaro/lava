@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import re
+import sys
 import time
 import logging
 import pexpect
@@ -31,6 +33,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Pipeline,
     JobError,
+    TestError
 )
 from lava_dispatcher.pipeline.logical import (
     LavaTest,
@@ -40,9 +43,15 @@ from lava_dispatcher.pipeline.connection import (
     BaseSignalHandler,
     SignalMatch
 )
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
+from lava_dispatcher.pipeline.utils.constants import (
+    DEFAULT_SHELL_PROMPT,
+    DEFAULT_V1_PATTERN,
+    DEFAULT_V1_FIXUP,
+)
+if sys.version > '3':
+    from functools import reduce  # pylint: disable=redefined-builtin
 
-# pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes
+# pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
 
 
 class TestShell(LavaTest):
@@ -74,6 +83,54 @@ class TestShellRetry(RetryAction):
         self.internal_pipeline.add_action(TestShellAction())
 
 
+# FIXME: move to utils and call inside the overlay
+class PatternFixup(object):
+
+    def __init__(self, testdef, count):
+        """
+        Like all good arrays, the count is expected to start at zero.
+        Avoid calling from validate() or populate() - this needs the
+        RepoAction to be running.
+        """
+        super(PatternFixup, self).__init__()
+        self.pat = DEFAULT_V1_PATTERN
+        self.fixup = DEFAULT_V1_FIXUP
+        if isinstance(testdef, dict) and 'metadata' in testdef:
+            self.testdef = testdef
+            self.name = "%d_%s" % (count, reduce(dict.get, ['metadata', 'name'], testdef))
+        else:
+            self.testdef = {}
+            self.name = None
+
+    def valid(self):
+        return self.fixupdict() and self.pattern() and self.name
+
+    def update(self, pattern, fixupdict):
+        if not isinstance(pattern, str):
+            raise TestError("Unrecognised test parse pattern type: %s" % type(pattern))
+        try:
+            self.pat = re.compile(pattern, re.M)
+        except re.error as exc:
+            raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc.message))
+        self.fixup = fixupdict
+
+    def fixupdict(self):
+        if 'parse' in self.testdef and 'fixupdict' in self.testdef['parse']:
+            self.fixup = self.testdef['parse']['fixupdict']
+        return self.fixup
+
+    def pattern(self):
+        if 'parse' in self.testdef and 'pattern' in self.testdef['parse']:
+            self.pat = self.testdef['parse']['pattern']
+            if not isinstance(self.pat, str):
+                raise TestError("Unrecognised test parse pattern type: %s" % type(self.pat))
+            try:
+                self.pat = re.compile(self.pat, re.M)
+            except re.error as exc:
+                raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc.message))
+        return self.pat
+
+
 class TestShellAction(TestAction):
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
@@ -88,24 +145,32 @@ class TestShellAction(TestAction):
         self.name = "lava-test-shell"
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
-        self.match = SignalMatch()
+        self.signal_match = SignalMatch()
         self.definition = None
         self.testset_name = None  # FIXME
         self.report = {}
         self.start = None
+        self.testdef_dict = {}
+        # noinspection PyTypeChecker
+        self.pattern = PatternFixup(testdef=None, count=0)
+
+    def _reset_patterns(self):
+        # Extend the list of patterns when creating subclasses.
+        self.patterns = {
+            "exit": "<LAVA_TEST_RUNNER>: exiting",
+            "eof": pexpect.EOF,
+            "timeout": pexpect.TIMEOUT,
+            "signal": r"<LAVA_SIGNAL_(\S+) ([^>]+)>",
+        }
+        # noinspection PyTypeChecker
+        self.pattern = PatternFixup(testdef=None, count=0)
 
     def validate(self):
         if "definitions" in self.parameters:
             for testdef in self.parameters["definitions"]:
                 if "repository" not in testdef:
                     self.errors = "Repository missing from test definition"
-        # Extend the list of patterns when creating subclasses.
-        self.patterns.update({
-            "exit": "<LAVA_TEST_RUNNER>: exiting",
-            "eof": pexpect.EOF,
-            "timeout": pexpect.TIMEOUT,
-            "signal": r"<LAVA_SIGNAL_(\S+) ([^>]+)>",
-        })
+        self._reset_patterns()
         super(TestShellAction, self).validate()
 
     def run(self, connection, args=None):
@@ -130,6 +195,10 @@ class TestShellAction(TestAction):
 
         self.signal_director.connection = connection
 
+        pattern_dict = {self.pattern.name: self.pattern}
+        # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
+        self.set_common_data(self.name, 'pattern_dictionary', pattern_dict)
+
         self.logger.info("Executing test definitions using %s" % connection.name)
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
@@ -145,17 +214,6 @@ class TestShellAction(TestAction):
         if pre_command_list:
             for command in pre_command_list:
                 connection.sendline(command)
-
-        # FIXME: a predictable UID could be calculated from existing data here.
-        # instead, uuid is read from the params to set _current_handler
-        # FIXME: can only be run once per TestAction, so collate all patterns for all test definitions.
-        # (or work out the uuid from the signal params?)
-
-        # FIXME: not being set
-        if self.signal_director.test_uuid:
-            self.patterns.update({
-                "test_case": self.data["test"][self.signal_director.test_uuid]["testdef_pattern"]["pattern"],
-            })
 
         with connection.test_connection() as test_connection:
             # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
@@ -174,7 +232,42 @@ class TestShellAction(TestAction):
         self.logger.debug(self.report)
         return connection
 
-    def check_patterns(self, event, test_connection, check_char):
+    def parse_v2_case_result(self, data, fixupdict=None):
+        # FIXME: Ported from V1 - still needs integration
+        if not fixupdict:
+            fixupdict = {}
+        res = {}
+        for key in data:
+            res[key] = data[key]
+
+            if key == 'measurement':
+                # Measurement accepts non-numeric values, but be careful with
+                # special characters including space, which may distrupt the
+                # parsing.
+                res[key] = res[key]
+
+            elif key == 'result':
+                if res['result'] in fixupdict:
+                    res['result'] = fixupdict[res['result']]
+                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
+                    logging.error('Bad test result: %s', res['result'])
+                    res['result'] = 'unknown'
+
+        if 'test_case_id' not in res:
+            self.logger.warning(
+                """Test case results without test_case_id (probably a sign of an """
+                """incorrect parsing pattern being used): %s""", res)
+
+        if 'result' not in res:
+            self.logger.warning(
+                """Test case results without result (probably a sign of an """
+                """incorrect parsing pattern being used): %s""", res)
+            self.logger.warning('Setting result to "unknown"')
+            res['result'] = 'unknown'
+
+        return res
+
+    def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -191,8 +284,6 @@ class TestShellAction(TestAction):
             self.testset_name = None
 
         elif event == "timeout":
-            # if target.is_booted():
-            #    target.reset_boot()
             self.logger.warning("err: lava_test_shell has timed out")
             self.errors = "lava_test_shell has timed out"
             self.testset_name = None
@@ -205,9 +296,20 @@ class TestShellAction(TestAction):
                 self.signal_director.test_uuid = params[1]
                 self.definition = params[0]
                 uuid = params[1]
-            #    self._handle_testrun(params)
                 self.start = time.time()
+                self.logger.debug("Starting test definition: %s" % self.definition)
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
+                self.start = time.time()
+                # set the pattern for this run from pattern_dict
+                testdef_index = self.get_common_data('test-definition', 'testdef_index')
+                uuid_list = self.get_common_data('repo-action', 'uuid-list')
+                for key, value in testdef_index.items():
+                    if self.definition == "%s_%s" % (key, value):
+                        pattern = self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern']
+                        fixup = self.job.context['test'][uuid_list[key]]['testdef_pattern']['fixupdict']
+                        self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
+                        self.pattern.update(pattern, fixup)
+                        self.logger.info("Enabling test definition pattern %r" % pattern)
                 self.logger.results({
                     "definition": "lava",
                     "case": self.definition,
@@ -219,6 +321,9 @@ class TestShellAction(TestAction):
             elif name == "ENDRUN":
                 self.definition = params[0]
                 uuid = params[1]
+                # remove the pattern for this run from pattern_dict
+                self._reset_patterns()
+                self.logger.info("Ending use of test pattern.")
                 self.logger.info("Ending test lava.%s (%s), duration %.02f",
                                  self.definition, uuid,
                                  time.time() - self.start)
@@ -232,7 +337,8 @@ class TestShellAction(TestAction):
                 self.start = None
             elif name == "TESTCASE":
                 data = handle_testcase(params)
-                res = self.match.match(data)  # FIXME: rename!
+                # get the fixup from the pattern_dict
+                res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
                 p_res = self.data["test"][
                     self.signal_director.test_uuid
                 ].setdefault("results", OrderedDict())
@@ -243,24 +349,34 @@ class TestShellAction(TestAction):
                     raise JobError(
                         "Duplicate test_case_id in results: %s",
                         res["test_case_id"])
-
+                # check for measurements
+                calc = {}
+                if 'measurement' in res:
+                    calc['measurement'] = res['measurement']
+                if 'measurement' in res and 'units' in res:
+                    calc['units'] = res['units']
                 # turn the result dict inside out to get the unique
                 # test_case_id/testset_name as key and result as value
                 if self.testset_name:
-                    self.logger.results({
-                        "definition": self.definition,
-                        "case": res["test_case_id"],
-                        "set": self.testset_name,
-                        "result": res["result"]})
+                    res_data = {
+                        'definition': self.definition,
+                        'case': res["test_case_id"],
+                        'set': self.testset_name,
+                        'result': res["result"]
+                    }
+                    res_data.update(calc)
+                    self.logger.results(res_data)
                     self.report.update({
                         "set": self.testset_name,
                         "case": res["test_case_id"],
                         "result": res["result"]})
                 else:
-                    self.logger.results({
-                        "definition": self.definition,
-                        "case": res["test_case_id"],
-                        "result": res["result"]})
+                    res_data = {
+                        'definition': self.definition,
+                        'case': res["test_case_id"],
+                        'result': res["result"]}
+                    res_data.update(calc)
+                    self.logger.results(res_data)
                     self.report.update({
                         res["test_case_id"]: res["result"]
                     })
@@ -287,22 +403,38 @@ class TestShellAction(TestAction):
         elif event == "test_case":
             match = test_connection.match
             if match is pexpect.TIMEOUT:
-                # if target.is_booted():
-                #    target.reset_boot()
                 self.logger.warning("err: lava_test_shell has timed out (test_case)")
             else:
-                res = self.match.match(match.groupdict())  # FIXME: rename!
+                res = self.signal_match.match(match.groupdict())
                 self.logger.debug("outer_loop_result: %s" % res)
-                # self.data["test"][self.signal_director.test_uuid].setdefault("results", {})
-                # self.data["test"][self.signal_director.test_uuid]["results"].update({
-                #     {res["test_case_id"]: res}
-                # })
                 ret_val = True
+        elif event == 'test_case_result':
+            res = test_connection.match.groupdict()
+            if res:
+                # FIXME: make this a function
+                # check for measurements
+                calc = {}
+                if 'measurement' in res:
+                    calc['measurement'] = res['measurement']
+                if 'measurement' in res and 'units' in res:
+                    calc['units'] = res['units']
+                res_data = {
+                    'definition': self.definition,
+                    'case': res["test_case_id"],
+                    'result': res["result"]}
+                res_data.update(calc)
+                self.logger.results(res_data)
+                self.report.update({
+                    res["test_case_id"]: res["result"]
+                })
+            ret_val = True
 
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
         self.logger.debug("test shell timeout: %d seconds" % timeout)
+        if 'test_case_results' in self.patterns:
+            self.logger.info("Test case result pattern: %r" % self.patterns['test_case_results'])
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
 
