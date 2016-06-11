@@ -1,3 +1,9 @@
+lava-dispatcher (2016.6-2) unstable; urgency=medium
+
+  * Align architecture list with guestfs support, also dropping armel
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 11 Jun 2016 12:18:52 +0100
+
 lava-dispatcher (2016.6-1) unstable; urgency=medium
 
   * New production release
