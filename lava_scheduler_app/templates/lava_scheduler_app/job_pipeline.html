@@ -234,6 +234,7 @@
         <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
         <code class="results bg-primary">
+          <a class="none" href="{{ line.msg|result_url:job.id }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% for k, v in value.items %}
@@ -243,6 +244,7 @@
                 {{ key }}: {{ value }}<br />
             {% endif %}
           {% endfor %}
+          </a>
         </code>
           {% else %}
             {% get_action_id line.msg as act_id %}
@@ -515,8 +517,12 @@
       $('.affix h4').click(function() {
         if(affix_toggle) {
           $('#affix-full').css('display', 'block');
+          $('.affix span').removeClass('glyphicon-arrow-down');
+          $('.affix span').addClass('glyphicon-arrow-up');
         } else {
           $('#affix-full').css('display', 'none');
+          $('.affix span').removeClass('glyphicon-arrow-up');
+          $('.affix span').addClass('glyphicon-arrow-down');
         }
         affix_toggle = !affix_toggle;
       });
