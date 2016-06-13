@@ -1,3 +1,4 @@
 Tests: testsuite
-Depends: lava-server, django-testscenarios, python-tz, tftpd-hpa, git
+Depends: lava-server, django-testscenarios, python-tz, tftpd-hpa, git,
+ qemu-system-x86
 Restrictions: allow-stderr
