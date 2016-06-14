@@ -1822,13 +1822,16 @@ def job_log_pipeline_incremental(request, pk):
     except ValueError:
         first_line = 0
 
-    with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-        data = yaml.load(f_in)[first_line:]
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+            data = yaml.load(f_in)[first_line:]
+    except IOError:
+        data = []
 
     response = HttpResponse(
         simplejson.dumps(data), content_type='application/json')
 
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+    if job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
 
     return response

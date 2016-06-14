@@ -199,7 +199,6 @@
     </div>
     {% endif %}
 
-    {% if log_data or job.status <= job.RUNNING %}
     <div class="affix">
       <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></h4>
       <div id="affix-full">
@@ -218,7 +217,6 @@
       <label class="btn btn-success" id="target_label" for="target"><input type="checkbox" id="target" autocomplete="off">output</label>
       <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
     </div>
-    {% endif %}
 
     <div class="row" id="sectionlogs">
       <div class="col-md-12">
@@ -234,7 +232,6 @@
         <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
         <code class="results bg-primary">
-          <a class="none" href="{{ line.msg|result_url:job.id }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% for k, v in value.items %}
@@ -244,14 +241,13 @@
                 {{ key }}: {{ value }}<br />
             {% endif %}
           {% endfor %}
-          </a>
         </code>
           {% else %}
             {% get_action_id line.msg as act_id %}
         <code class="{{ line.lvl }} bg-{{ line.lvl }}" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}"{% endif %}>{{ line.msg }}</code>
           {% endif %}
         {% endfor %}
-        {% if job.status == job.RUNNING %}
+        {% if job.status <= job.RUNNING %}
         <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
         {% endif %}
       </div>
@@ -507,11 +503,6 @@
         sheet.insertRule(rule, index);
       });
 
-      // Add a timer for the log updates
-{% if job.status == job.RUNNING %}
-      pollTimer = setTimeout(poll, 1000);
-{% endif %}
-
       // Open the affix if the user click on the button
       var affix_toggle = true;
       $('.affix h4').click(function() {
@@ -546,83 +537,119 @@
       });
   });
 
+
+  // Add a timer for the log updates
+{% if job.status <= job.RUNNING %}
+  pollTimer = setTimeout(poll, 5000);
+{% endif %}
+
+  var poll_status = 1;
+  var poll_logs = 1;
   var position = 0;
   var progressNode = $('#log-messages');
   var action_id_regexp = /^start: ([\d.]+) [\w_-]+ /;
   function poll() {
-    $.ajax({
-      url: '{% url 'lava_scheduler_app.views.job_log_pipeline_incremental' pk=job.pk %}?line=' + position,
-      success: function(data, success, xhr) {
-        // Do we have to scroll down ?
-        var scroll_down = false;
-        if((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-          scroll_down = true;
+    // Update job status
+    if(poll_status) {
+      $.ajax({
+        url: '{% url 'lava.scheduler.job_status' pk=job.pk %}',
+        success: function(data, success, xhr) {
+          $('#jobstatusdef').html(data['job_status']);
+          $('#statusblock').html(data['device']);
+          $('#jobtiming').html(data['timing']);
+          if(!('priority' in data)) {
+            $('#priority-choice').css('display', 'none')
+          }
+          if('failure_comment' in data) {
+            $('#failure_comment').html(data['failure_comment']);
+            $('#failure_block').css('display', 'block');
+          }
+          if ('X-JobStatus' in data) {
+            poll_status = 0;
+          }
         }
+      });
+    }
 
-        // Loop on all new code blocks
-        for(var i = 0; i < data.length; i++) {
-            var d = data[i];
-            var level = d['lvl'];
+    // Update logs
+    if(poll_logs) {
+      $.ajax({
+        url: '{% url 'lava.scheduler.job.log_pipeline_incremental' pk=job.pk %}?line=' + position,
+        success: function(data, success, xhr) {
+          // Do we have to scroll down ?
+          var scroll_down = false;
+          if((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            scroll_down = true;
+          }
 
-            var node;
-            if(level == 'debug') {
-              if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
-                $('<code class="keyboard"></code>')
-                  .append($('<kbd></kbd>').text(d['msg']['sending']))
+          // Loop on all new code blocks
+          for(var i = 0; i < data.length; i++) {
+              var d = data[i];
+              var level = d['lvl'];
+
+              var node;
+              if(level == 'debug') {
+                if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
+                  $('<code class="keyboard"></code>')
+                    .append($('<kbd></kbd>').text(d['msg']['sending']))
+                    .insertBefore(progressNode);
+                } else {
+                  var action_id = action_id_regexp.exec(d['msg']);
+                  if(action_id) {
+                    console.log(action_id[1]);
+                    node = $('<code class="debug" id="' + action_id[1] + '"></code>');
+                  } else {
+                    node = $('<code class="debug"></code>');
+                  }
+                  node.text(d['msg']).insertBefore(progressNode);
+                }
+              } else if(level == 'target') {
+                $('<code class="target bg-success"></code>')
+                  .text(d['msg'])
                   .insertBefore(progressNode);
+              } else if(level == 'results') {
+                var node = $('<code class="results bg-primary"></code>');
+                for(key in d['msg']) {
+                  if(typeof(d['msg'][key]) == 'string') {
+                    node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
+                    node.append($('<br />'));
+                  } else {
+                    for(k in d ['msg'][key]) {
+                      node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
+                      node.append($('<br />'));
+                    }
+                  }
+                }
+                node.insertBefore(progressNode);
               } else {
                 var action_id = action_id_regexp.exec(d['msg']);
                 if(action_id) {
                   console.log(action_id[1]);
-                  node = $('<code class="debug" id="' + action_id[1] + '"></code>');
+                  node = $('<code class="' + level + ' bg-' + level + '" id="' + action_id[1] + '"></code>');
                 } else {
-                  node = $('<code class="debug"></code>');
+                  node = $('<code class="' + level + ' bg-' + level + '"></code>');
                 }
                 node.text(d['msg']).insertBefore(progressNode);
               }
-            } else if(level == 'target') {
-              $('<code class="target bg-success"></code>')
-                .text(d['msg'])
-                .insertBefore(progressNode);
-            } else if(level == 'results') {
-              var node = $('<code class="results bg-primary"></code>');
-              for(key in d['msg']) {
-                if(typeof(d['msg'][key]) == 'string') {
-                  node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
-                  node.append($('<br />'));
-                } else {
-                  for(k in d ['msg'][key]) {
-                    node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
-                    node.append($('<br />'));
-                  }
-                }
-              }
-              node.insertBefore(progressNode);
-            } else {
-              var action_id = action_id_regexp.exec(d['msg']);
-              if(action_id) {
-                console.log(action_id[1]);
-                node = $('<code class="' + level + ' bg-' + level + '" id="' + action_id[1] + '"></code>');
-              } else {
-                node = $('<code class="' + level + ' bg-' + level + '"></code>');
-              }
-              node.text(d['msg']).insertBefore(progressNode);
-            }
-        }
-        // Relaunch the timer
-        if(xhr.getResponseHeader('X-Is-Finished')) {
-          $('#log-messages').css('display', 'none');
-        } else {
-          position += data.length
-          pollTimer = setTimeout(poll, 1000);
-        }
+          }
+          // Relaunch the timer
+          if(xhr.getResponseHeader('X-Is-Finished')) {
+            $('#log-messages').css('display', 'none');
+            poll_logs = 0;
+          } else {
+            position += data.length
+          }
 
-        // Scroll down
-        if (scroll_down) {
-          document.getElementById('bottom').scrollIntoView();
+          // Scroll down
+          if (scroll_down) {
+            document.getElementById('bottom').scrollIntoView();
+          }
         }
-      }
-    });
+      });
+    }
+    if(poll_status || poll_logs) {
+      pollTimer = setTimeout(poll, 5000);
+    }
   };
 </script>
 {% endblock scripts %}
