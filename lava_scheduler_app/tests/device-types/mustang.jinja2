@@ -25,7 +25,7 @@ actions:
   deploy:
     parameters:
       add_header: u-boot
-      mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
     methods:
       tftp:
       ssh:
