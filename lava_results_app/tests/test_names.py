@@ -113,93 +113,26 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertIs(type(store.pipeline), dict)
         self.factory.cleanup()
 
-    def test_name(self):
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), self.user)
-        result_sample = """
-- results: !!python/object/apply:collections.OrderedDict
-  - - [linux-linaro-ubuntu-pwd, pass]
-    - [linux-linaro-ubuntu-uname, pass]
-    - [linux-linaro-ubuntu-vmstat, pass]
-    - [linux-linaro-ubuntu-ifconfig, pass]
-    - [linux-linaro-ubuntu-lscpu, pass]
-    - [linux-linaro-ubuntu-lsb_release, pass]
-    - [linux-linaro-ubuntu-netstat, pass]
-    - [linux-linaro-ubuntu-ifconfig-dump, pass]
-    - [linux-linaro-ubuntu-route-dump-a, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up-lo, pass]
-    - [linux-linaro-ubuntu-route-dump-b, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up, pass]
-    - [ping-test, fail]
-    - [realpath-check, fail]
-    - [ntpdate-check, pass]
-    - [curl-ftp, pass]
-    - [tar-tgz, pass]
-    - [remove-tgz, pass]
-        """
-        scanned = yaml.load(result_sample)[0]
-        suite = TestSuite.objects.create(
-            job=job,
-            name='test-suite'
-        )
-        suite.save()
-        for testcase, result in scanned['results'].items():
-            TestCase.objects.create(
-                name=testcase,
-                suite=suite,
-                result=TestCase.RESULT_MAP[result]
-            ).save()
-        self.assertIsNot([], TestCase.objects.all())
-        for testcase in TestCase.objects.all():
-            self.assertEqual(testcase.suite, suite)
-            self.assertIsNotNone(testcase.name)
-            self.assertIsNotNone(testcase.result)
-        self.factory.cleanup()
-
     def test_pipelinestore(self):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
-        result_sample = {
-            'results': {
-                'test-runscript-overlay': OrderedDict([
-                    ('success', 'c66c77b2-bc32-4cec-bc6d-477712da7eb6'),
-                    ('filename', '/tmp/tmp9ICoFn/lava-device/tests/2_singlenode-advanced/run.sh')]),
-                'test-install-overlay': OrderedDict([
-                    ('success', 'c66c77b2-bc32-4cec-bc6d-477712da7eb6')]),
-                'power_off': OrderedDict([('status', 'Complete')]),
-                'test-overlay': OrderedDict([('success', 'c66c77b2-bc32-4cec-bc6d-477712da7eb6')]),
-                'git-repo-action': OrderedDict([('success', '6dd3121dc7f2855d710e83fe39c217392e4fb2b4')]),
-                'lava-test-shell': OrderedDict([
-                    ('linux-linaro-ubuntu-pwd', 'pass'),
-                    ('linux-linaro-ubuntu-uname', 'pass'),
-                    ('linux-linaro-ubuntu-vmstat', 'pass'),
-                    ('linux-linaro-ubuntu-ifconfig', 'pass'),
-                    ('linux-linaro-ubuntu-lscpu', 'pass'),
-                    ('linux-linaro-ubuntu-lsb_release', 'fail'),
-                    ('linux-linaro-ubuntu-netstat', 'pass'),
-                    ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
-                    ('linux-linaro-ubuntu-route-dump-a', 'pass'),
-                    ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
-                    ('linux-linaro-ubuntu-route-dump-b', 'pass'),
-                    ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
-                    ('ping-test', 'fail'),
-                    ('realpath-check', 'fail'),
-                    ('ntpdate-check', 'pass'),
-                    ('curl-ftp', 'pass'),
-                    ('tar-tgz', 'pass'),
-                    ('remove-tgz', 'pass')])}
-        }
-        ret = map_scanned_results(scanned_dict=result_sample, job=job)
-        self.assertTrue(ret)
-        self.assertIsNot([], TestCase.objects.all())
-        self.assertIsNot([], TestCase.objects.all())
+        result_samples = [
+            {"case": "test-runscript-overlay", "definition": "lava", "duration": 1.8733930587768555, "level": "1.3.3.4", "result": "pass"},
+            {"case": "apply-overlay-guest", "definition": "lava", "duration": 46.395780086517334, "level": "1.4", "result": "pass"},
+            {"case": "smoke-tests-basic", "definition": "lava", "uuid": "44148c2f-3c7d-4143-889e-dd4a77084e07", "result": "fail"},
+            {"case": "linux-INLINE-lscpu", "definition": "smoke-tests-basic", "result": "pass"},
+            {"case": "smoke-tests-basic", "definition": "lava", "duration": "2.61", "uuid": "44148c2f-3c7d-4143-889e-dd4a77084e07", "result": "pass"}
+        ]
+        for sample in result_samples:
+            ret = map_scanned_results(results=sample, job=job)
+            self.assertTrue(ret)
+        self.assertEqual(4, TestCase.objects.count())
         val = URLValidator()
         for testcase in TestCase.objects.all():
             self.assertIsNotNone(testcase.name)
             self.assertIsNotNone(testcase.result)
             if testcase.test_set:
                 val('http://localhost/%s' % testcase.get_absolute_url())
-        self.assertIsNotNone(TestCase.objects.filter(name='ping-test'))
         self.factory.cleanup()
 
     def test_level_input(self):
@@ -207,123 +140,62 @@ class TestTestSuite(TestCaseWithFactory):
             self.factory.make_job_yaml(), self.user)
         suite = TestSuite.objects.create(
             job=job,
-            name='test-suite'
+            name='lava'
         )
         suite.save()
-        result_sample = """
-results:
-  lava-test-shell: !!python/object/apply:collections.OrderedDict
-    - - [ping-test, fail]
-  power_off: !!python/object/apply:collections.OrderedDict
-    - - [status, Complete]
-      - [level, 5.1]
-        """
-        scanned = yaml.load(result_sample)
-        ret = map_scanned_results(scanned_dict=scanned, job=job)
+        ret = map_scanned_results(
+            results={"case": "test-overlay", "definition": "lava",
+                     "duration": 0.01159811019897461, "level": "1.3.3.2",
+                     "result": "pass"}, job=job)
         self.assertTrue(ret)
-        for testcase in TestCase.objects.filter(suite=suite):
-            if testcase.name == 'power_off':
-                self.assertTrue(type(testcase.metadata) in [str, unicode])
-                self.assertTrue(type(testcase.action_data) == OrderedDict)
-                self.assertEqual(testcase.action_data['status'], 'Complete')
-                self.assertEqual(testcase.action_data['level'], 5.1)
-                self.assertEqual(testcase.action_level, '5.1')
-                self.assertEqual(testcase.result, TestCase.RESULT_UNKNOWN)
+        self.assertEqual(1, TestCase.objects.filter(suite=suite).count())
+        testcase = TestCase.objects.get(suite=suite)
+        self.assertTrue(type(testcase.metadata) in [str, unicode])
+        self.assertEqual(testcase.result, TestCase.RESULT_PASS)
         self.factory.cleanup()
 
     def test_bad_input(self):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
         # missing {'results'} key
-        result_sample = """
-lava-test-shell: !!python/object/apply:collections.OrderedDict
-  - - [ping-test, fail]
-    - [realpath-check, fail]
-    - [ntpdate-check, pass]
-    - [curl-ftp, pass]
-    - [tar-tgz, pass]
-    - [remove-tgz, pass]
-        """
-        scanned = yaml.load(result_sample)
-        suite = TestSuite.objects.create(
-            job=job,
-            name='test-suite'
-        )
-        suite.save()
-        self.assertEqual('/results/%s/test-suite' % job.id, suite.get_absolute_url())
-        ret = map_scanned_results(scanned_dict=scanned, job=job)
-        self.assertFalse(ret)
-
-        result_sample = """
-results:
-  lava-test-shell: !!python/object/apply:collections.OrderedDict
-    - - [ping-test, fail]
-  power_off: !!python/object/apply:collections.OrderedDict
-    - - [status, Complete]
-        """
-        scanned = yaml.load(result_sample)
-        self.assertEqual('/results/%s/test-suite' % job.id, suite.get_absolute_url())
-        ret = map_scanned_results(scanned_dict=scanned, job=job)
-        self.assertTrue(ret)
-        for testcase in TestCase.objects.filter(suite=suite):
-            if testcase.name == 'power_off':
-                self.assertTrue(type(testcase.metadata) in [str, unicode])
-                self.assertTrue(type(testcase.action_data) == OrderedDict)
-                self.assertEqual(testcase.action_data['status'], 'Complete')
-                self.assertEqual(testcase.result, TestCase.RESULT_UNKNOWN)
-            elif testcase.name == 'ping-test':
-                self.assertIsNone(testcase.metadata)
-                self.assertEqual(testcase.result, TestCase.RESULT_FAIL)
-            else:
-                self.fail("Unrecognised testcase name")
+        result_samples = [
+            {"definition": "lava", "result": "pass"},
+            {"case": "test-runscript-overlay", "result": "pass"},
+            {"case": "test-runscript-overlay", "definition": "lava"},
+            {}
+        ]
+        for sample in result_samples:
+            ret = map_scanned_results(results=sample, job=job)
+            self.assertFalse(ret)
         self.factory.cleanup()
 
     def test_set(self):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
-        result_sample = """
-results:
-    lava-test-shell: !!python/object/apply:collections.OrderedDict
-      - - [ping-test, fail]
-        - - set-name
-          - !!python/object/apply:collections.OrderedDict
-            - - [linux-linaro-foo, pass]
-              - [linux-linaro-ubuntu-uname, pass]
-              - [linux-linaro-ubuntu-vmstat, pass]
-              - [linux-linaro-ubuntu-ifconfig, pass]
-              - [linux-linaro-ubuntu-lscpu, pass]
-              - [linux-linaro-ubuntu-lsb_release, pass]
-              - [linux-linaro-ubuntu-netstat, pass]
-              - [linux-linaro-ubuntu-ifconfig-dump, pass]
-              - [linux-linaro-ubuntu-route-dump-a, pass]
-              - [linux-linaro-ubuntu-route-ifconfig-up-lo, pass]
-              - [linux-linaro-ubuntu-route-dump-b, pass]
-              - [linux-linaro-ubuntu-route-ifconfig-up, pass]
-        - [realpath-check, fail]
-        - [ntpdate-check, pass]
-        - [curl-ftp, pass]
-        - [tar-tgz, pass]
-        - [remove-tgz, pass]
-        """
-        scanned = yaml.load(result_sample)
+        result_samples = [
+            {"case": "linux-INLINE-lscpu", "definition": "smoke-tests-basic", "result": "fail", "set": "listing"},
+            {"case": "linux-INLINE-lspci", "definition": "smoke-tests-basic", "result": "fail", "set": "listing"}
+        ]
         suite = TestSuite.objects.create(
             job=job,
             name='test-suite'
         )
         suite.save()
         self.assertEqual('/results/%s/test-suite' % job.id, suite.get_absolute_url())
-        ret = map_scanned_results(scanned_dict=scanned, job=job)
-        self.assertTrue(ret)
-        self.assertIsNot([], TestCase.objects.all())
+
+        for sample in result_samples:
+            ret = map_scanned_results(results=sample, job=job)
+            self.assertTrue(ret)
+
+        self.assertEqual(2, TestCase.objects.count())
         val = URLValidator()
         for testcase in TestCase.objects.filter(suite=suite):
             self.assertEqual(testcase.suite, suite)
             self.assertIsNotNone(testcase.name)
             self.assertIsNotNone(testcase.result)
             self.assertIsNone(testcase.metadata)
-            self.assertNotEqual(testcase.result, TestCase.RESULT_UNKNOWN)
-            if testcase.test_set:
-                self.assertEqual(testcase.test_set.name, 'set-name')
-                self.assertTrue(testcase.name.startswith('linux-linaro'))
-                val('http://localhost/%s' % testcase.get_absolute_url())
+            self.assertEqual(testcase.result, TestCase.RESULT_PASS)
+            self.assertEqual(testcase.test_set.name, 'listing')
+            self.assertTrue(testcase.name.startswith('linux-INLINE-'))
+            val('http://localhost/%s' % testcase.get_absolute_url())
         self.factory.cleanup()

@@ -171,30 +171,40 @@ class Command(BaseCommand):
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("Failed to parse log message, skipping: %s", msg)
-            return False
+            return
 
         try:
             scanned = yaml.load(message)
         except yaml.YAMLError:
-            # failure to scan is not an error here, it just means the message
-            # is not a result
-            scanned = None
-        # the results logger wraps the OrderedDict in a dict called results,
-        # for identification, YAML then puts that into a list of one item for
-        # each call to log.results.
-        if isinstance(scanned, list) and len(scanned) == 1:
-            if isinstance(scanned[0], dict) and 'results' in scanned[0]:
-                job = TestJob.objects.get(id=job_id)
-                ret = map_scanned_results(scanned_dict=scanned[0], job=job)
-                if not ret:
-                    self.logger.warning(
-                        "[%s] Unable to map scanned results: %s",
-                        job_id, yaml.dump(scanned[0]))
+            self.logger.error("[%s] data are not valid YAML, dropping", job_id)
+            return
+
+        # Look for "results" level
+        try:
+            message_lvl = scanned["lvl"]
+            message_msg = scanned["msg"]
+        except KeyError:
+            self.logger.error(
+                "[%s] Invalid log line, missing \"lvl\" or \"msg\" keys: %s",
+                job_id, message)
+            return
+
+        if message_lvl == "results":
+            try:
+                job = TestJob.objects.get(pk=job_id)
+            except TestJob.DoesNotExist:
+                self.logger.error("[%s] Unknown job id", job_id)
+                return
+            ret = map_scanned_results(results=message_msg, job=job)
+            if not ret:
+                self.logger.warning(
+                    "[%s] Unable to map scanned results: %s",
+                    job_id, message)
 
         # Clear filename
         if '/' in level or '/' in name:
             self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
-            return False
+            return
         filename = "%s/job-%s/pipeline/%s/%s-%s.log" % (options['output_dir'],
                                                         job_id, level.split('.')[0],
                                                         level, name)
@@ -236,7 +246,6 @@ class Command(BaseCommand):
         with open(filename, 'a+') as f_out:
             f_out.write(message)
             f_out.write('\n')
-        return True
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
@@ -623,8 +632,7 @@ class Command(BaseCommand):
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
-                    if not self.logging_socket(options):
-                        continue
+                    self.logging_socket(options)
 
                 # Garbage collect file handlers
                 now = time.time()
