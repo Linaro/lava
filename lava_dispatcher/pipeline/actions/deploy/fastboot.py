@@ -154,6 +154,11 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
             self.internal_pipeline.add_action(download)
             self.internal_pipeline.add_action(ApplySystemAction())
+        if 'vendor' in image_keys:
+            download = DownloaderAction('vendor', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyVendorAction())
 
 
 class EnterFastbootAction(DeployAction):
@@ -482,5 +487,44 @@ class ApplySystemAction(DeployAction):
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply system image using fastboot: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        return connection
+
+
+class ApplyVendorAction(DeployAction):
+    """
+    Fastboot deploy vendor image.
+    """
+
+    def __init__(self):
+        super(ApplyVendorAction, self).__init__()
+        self.name = "fastboot_apply_vendor_action"
+        self.description = "fastboot apply vendor image"
+        self.summary = "fastboot apply vendor"
+        self.retries = 3
+        self.sleep = 10
+
+    def validate(self):
+        super(ApplyVendorAction, self).validate()
+        if 'download_action' not in self.data:
+            raise RuntimeError("download-action missing: %s" % self.name)
+        if 'file' not in self.data['download_action']['vendor']:
+            self.errors = "no file specified for fastboot vendor image"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, args=None):
+        connection = super(ApplyVendorAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['vendor']['file']
+        dst = copy_to_lxc(lxc_name, src)
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'vendor', dst]
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise JobError("Unable to apply vendor image using fastboot: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection

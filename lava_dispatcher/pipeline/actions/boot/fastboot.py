@@ -133,6 +133,9 @@ class WaitForAdbDevice(Action):
         connection = super(WaitForAdbDevice, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['adb_serial_number']
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
+        self.logger.debug("Starting adb daemon")
+        self.run_command(adb_cmd)
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                    '-s', serial_number, 'wait-for-device']
         self.logger.debug("%s: Waiting for device", serial_number)
