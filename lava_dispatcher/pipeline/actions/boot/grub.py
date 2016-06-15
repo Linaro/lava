@@ -176,7 +176,8 @@ class InstallerWait(Action):
     def run(self, connection, args=None):
         connection = super(InstallerWait, self).run(connection, args)
         wait_string = self.parameters['boot_finished']
-        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", wait_string)
+        msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
+        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s" % msg)
         connection.prompt_str = wait_string
         self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
