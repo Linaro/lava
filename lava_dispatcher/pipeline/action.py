@@ -294,7 +294,12 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     'connection-timeout': action.connection_timeout.duration
                 }
             )
-            action.logger.results({action.name: action.results})
+            action.logger.results({
+                "definition": "lava",
+                "case": action.name,
+                "level": action.level,
+                "duration": action.elapsed_time,
+                "result": "fail" if action.errors else "pass"})
 
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
