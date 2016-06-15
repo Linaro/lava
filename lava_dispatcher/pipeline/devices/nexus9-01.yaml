@@ -1,0 +1,33 @@
+device_type: nexus9
+adb_serial_number: HT4B7JT01005
+fastboot_serial_number: HT4B7JT01005
+device_path: /dev/bus/usb/004
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      fastboot:
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60
