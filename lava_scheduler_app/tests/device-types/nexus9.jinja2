@@ -3,6 +3,7 @@
 device_type: nexus9
 adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
 fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
+device_path: '{{ device_path|default(None) }}'
 
 {% block vland %}
 {# skip the parameters dict at top level #}
