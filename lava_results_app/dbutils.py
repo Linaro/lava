@@ -183,24 +183,31 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                 continue
             namespace = block.get('namespace', None)
             definitions = [reduce(dict.get, ['definitions'], block)][0]
-            for definition in definitions:
-                if definition['from'] == 'inline':
-                    # an inline repo without test cases will not get reported.
-                    if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
-                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                    else:
-                        # store the fact that an inline exists but would not generate any testcases
-                        prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
-                    retval['%s.inline.name' % prefix] = definition['name']
-                    retval['%s.inline.path' % prefix] = definition['path']
-                else:
+            if not definitions:
+                monitor = [reduce(dict.get, ['monitor'], block)][0]
+                if monitor:
                     prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                    # FIXME: what happens with remote definition without lava-test-case?
-                    retval['%s.definition.name' % prefix] = definition['name']
-                    retval['%s.definition.path' % prefix] = definition['path']
-                    retval['%s.definition.from' % prefix] = definition['from']
-                    retval['%s.definition.repository' % prefix] = definition['repository']
-                count += 1
+                    retval['%s.monitor.name' % prefix] = monitor['name']
+                    count += 1
+            else:
+                for definition in definitions:
+                    if definition['from'] == 'inline':
+                        # an inline repo without test cases will not get reported.
+                        if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        else:
+                            # store the fact that an inline exists but would not generate any testcases
+                            prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
+                        retval['%s.inline.name' % prefix] = definition['name']
+                        retval['%s.inline.path' % prefix] = definition['path']
+                    else:
+                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        # FIXME: what happens with remote definition without lava-test-case?
+                        retval['%s.definition.name' % prefix] = definition['name']
+                        retval['%s.definition.path' % prefix] = definition['path']
+                        retval['%s.definition.from' % prefix] = definition['from']
+                        retval['%s.definition.repository' % prefix] = definition['repository']
+                    count += 1
     return retval
 
 
@@ -225,7 +232,7 @@ def build_action(action_data, testdata, submission):
         logger.debug("Unrecognised metatype in action_data: %s", action_data['section'])
         return
     # lookup the type from the job definition.
-    type_name = MetaType.get_type_name(action_data['section'], submission)
+    type_name = MetaType.get_type_name(action_data, submission)
     if not type_name:
         logger.debug(
             "type_name failed for %s metatype %s",

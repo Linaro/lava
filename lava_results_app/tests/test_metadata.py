@@ -1,3 +1,4 @@
+import os
 import yaml
 import decimal
 from django.core.exceptions import MultipleObjectsReturned
@@ -137,3 +138,22 @@ class TestMetaTypes(TestCaseWithFactory):
                 'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml',
                 'test.1.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
         )
+
+    def test_job_multi(self):
+        MetaType.objects.all().delete()
+        multi_test_file = os.path.join(os.path.dirname(__file__), 'multi-test.yaml')
+        self.assertTrue(os.path.exists(multi_test_file))
+        with open(multi_test_file, 'r') as test_support:
+            data = test_support.read()
+        job = TestJob.from_yaml_and_user(data, self.user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        parser = JobParser()
+        obj = PipelineDevice(device_config, device.hostname)
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        allow_missing_path(pipeline_job.pipeline.validate_actions, self,
+                           'qemu-system-x86_64')
+        pipeline = pipeline_job.describe()
+        map_metadata(yaml.dump(pipeline), job)
