@@ -545,7 +545,7 @@
 
   var poll_status = 1;
   var poll_logs = 1;
-  var position = 0;
+  var position = {{ log_data|length }};
   var progressNode = $('#log-messages');
   var action_id_regexp = /^start: ([\d.]+) [\w_-]+ /;
   function poll() {
