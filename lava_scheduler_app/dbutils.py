@@ -19,14 +19,15 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.models import (
-    DeviceDictionary,
     Device,
+    DeviceDictionary,
+    DevicesUnavailableException,
     DeviceType,
+    is_deprecated_json,
+    JSONDataError,
     TestJob,
     TemporaryDevice,
-    JSONDataError,
     validate_job,
-    is_deprecated_json,
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
