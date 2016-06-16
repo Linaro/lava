@@ -91,7 +91,12 @@ def initiate_health_check_job(device):
             device.put_into_maintenance_mode(
                 user, "target must not be defined in health check definitions.")
             return None
-    return testjob_submission(job_data, user, check_device=device)
+    try:
+        job = testjob_submission(job_data, user, check_device=device)
+    except DevicesUnavailableException as exc:
+        logger.error("[%s] failed to submit health check - %s", device.device_type.name, exc)
+        return None
+    return job
 
 
 def submit_health_check_jobs():
