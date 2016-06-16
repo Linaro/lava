@@ -75,7 +75,6 @@
 #       'fail_count': int,
 # }
 
-import django
 import datetime
 
 from django.contrib.contenttypes.models import ContentType

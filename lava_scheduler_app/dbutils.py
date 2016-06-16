@@ -11,7 +11,6 @@ import jinja2
 import datetime
 import logging
 import simplejson
-import django
 from traceback import format_exc
 from django.db.models import Q
 from django.db import IntegrityError, transaction

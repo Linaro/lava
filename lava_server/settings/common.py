@@ -30,7 +30,6 @@ from lava_scheduler_app.settings import *
 
 import os
 import imp
-import django
 
 # Check for available modules
 available_modules = list()

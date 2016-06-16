@@ -23,7 +23,6 @@ Views for the Dashboard application
 import csv
 import json
 import os
-import django
 import shutil
 import tempfile
 

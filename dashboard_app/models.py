@@ -29,7 +29,6 @@ import logging
 import os
 import simplejson
 import traceback
-import django
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
