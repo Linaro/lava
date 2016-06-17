@@ -1,6 +1,5 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-{% load django_tables2 %}
 
 {% block content %}
 <h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
@@ -25,7 +24,4 @@
   {% endif %}
 {% endfor %}
 
-{% endblock %}
-{% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
 {% endblock %}
