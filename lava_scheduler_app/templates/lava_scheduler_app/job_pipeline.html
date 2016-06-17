@@ -234,7 +234,7 @@
           {% elif line.lvl == "target" %}
         <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        <code class="results bg-primary">
+        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% for k, v in value.items %}
@@ -244,7 +244,7 @@
                 {{ key }}: {{ value }}<br />
             {% endif %}
           {% endfor %}
-        </code>
+        </code></a>
           {% elif line.lvl == "error" or line.lvl == "exception" %}
         <code class="{{ line.lvl }} bg-danger" title="{{ line.dt }}">{{ line.msg }}</code>
           {% else %}
@@ -601,7 +601,6 @@
                 } else {
                   var action_id = action_id_regexp.exec(d['msg']);
                   if(action_id) {
-                    console.log(action_id[1]);
                     node = $('<code class="debug" id="' + action_id[1] + '"></code>');
                   } else {
                     node = $('<code class="debug"></code>');
@@ -613,6 +612,7 @@
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else if(level == 'results') {
+                var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
                 var node = $('<code class="results bg-primary"></code>');
                 for(key in d['msg']) {
                   if(typeof(d['msg'][key]) == 'string') {
@@ -625,7 +625,8 @@
                     }
                   }
                 }
-                node.insertBefore(progressNode);
+                link.append(node);
+                link.insertBefore(progressNode);
               } else if (level == 'error' || level == 'exception' ) {
                 $('<code class="' + level + ' bg-danger"></code>')
                   .text(d['msg'])
