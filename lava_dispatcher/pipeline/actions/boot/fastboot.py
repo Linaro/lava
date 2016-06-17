@@ -19,8 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-import tarfile
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -28,11 +26,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
-from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.constants import ANDROID_TMP_DIR
 
 
 class BootFastboot(Boot):

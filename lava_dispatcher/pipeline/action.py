@@ -827,7 +827,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.connection_timeout.duration)))
+        self.logger.debug("%s: Wait for prompt. %s seconds",
+                          self.name, int(self.connection_timeout.duration))
         return connection.wait()
 
 

@@ -202,5 +202,5 @@ class IsoRebootAction(Action):
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
-        self.logger.debug("boot-result: %s" % self.data['boot-result'])
+        self.logger.debug("boot-result: %s", self.data['boot-result'])
         return shell_connection

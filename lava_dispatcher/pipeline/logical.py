@@ -98,7 +98,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         Log the requested diagnostic.
         Raises NotImplementedError if subclass has omitted a trigger classmethod.
         """
-        self.logger.debug("%s diagnostic triggered." % self.trigger())
+        self.logger.debug("%s diagnostic triggered.", self.trigger())
         return connection
 
 
@@ -135,9 +135,9 @@ class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
             return connection
         if self.data[self.key()]:
             self.adjuvant = True
-            self.logger.warning("Adjuvant %s required" % self.name)
+            self.logger.warning("Adjuvant %s required", self.name)
         else:
-            self.logger.debug("Adjuvant %s skipped" % self.name)
+            self.logger.debug("Adjuvant %s skipped", self.name)
         return connection
 
 

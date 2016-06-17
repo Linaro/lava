@@ -169,7 +169,7 @@ class BootloaderInterrupt(Action):
             if self.job.device.connect_command is '':
                 self.errors = "Unable to connect to device %s" % hostname
         else:
-            self.logger.debug("%s may need manual intervention to reboot" % hostname)
+            self.logger.debug("%s may need manual intervention to reboot", hostname)
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
@@ -299,7 +299,7 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, args)
         connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         i = 1
         for line in self.data[self.type]['commands']:
@@ -309,6 +309,6 @@ class BootloaderCommandsAction(Action):
                 i += 1
         # allow for auto_login
         connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         return connection

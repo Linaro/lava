@@ -20,11 +20,9 @@
 
 import contextlib
 import os
-import yaml
 import pexpect
 import sys
 import time
-import logging
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,

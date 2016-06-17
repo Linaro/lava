@@ -19,15 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-import json
 import signal
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 
 

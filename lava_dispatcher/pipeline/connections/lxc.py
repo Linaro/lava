@@ -57,7 +57,7 @@ class ConnectLxc(Action):
         if 'device_path' in list(self.job.device.keys()):
             if self.job.device['device_path']:
                 # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
-                self.logger.info("Wait %d seconds for usb device to show up" %
+                self.logger.info("Wait %d seconds for usb device to show up",
                                  USB_SHOW_UP_TIMEOUT)
                 sleep(USB_SHOW_UP_TIMEOUT)
 

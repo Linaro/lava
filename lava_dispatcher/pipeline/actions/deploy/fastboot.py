@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
@@ -196,7 +195,7 @@ class EnterFastbootAction(DeployAction):
                    adb_serial_number, 'devices']
         command_output = self.run_command(adb_cmd)
         if command_output and adb_serial_number in command_output:
-            self.logger.debug("Device is in adb: %s" % command_output)
+            self.logger.debug("Device is in adb: %s", command_output)
             adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                        '-s', adb_serial_number, 'reboot-bootloader']
             command_output = self.run_command(adb_cmd)
@@ -210,7 +209,7 @@ class EnterFastbootAction(DeployAction):
                         fastboot_serial_number, 'devices']
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
-            self.logger.debug("Device is in fastboot: %s" % command_output)
+            self.logger.debug("Device is in fastboot: %s", command_output)
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                             '-s', fastboot_serial_number, 'reboot-bootloader']
             command_output = self.run_command(fastboot_cmd)
