@@ -28,6 +28,7 @@ actions:
     nfsrootfs:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/jessie-armhf-nfs.tar.gz
       compression: gz
+      prefix: jessie/
     os: oe
     dtb:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/dtbs/am335x-boneblack.dtb

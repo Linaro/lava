@@ -356,6 +356,17 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('compression', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
 
+    def test_prefix(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/bbb-skip-install.yaml')
+        job.validate()
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        self.assertIn('prefix', nfs.parameters['nfsrootfs'])
+        self.assertEqual(nfs.parameters['nfsrootfs']['prefix'], 'jessie/')
+        self.assertEqual(nfs.param_key, 'nfsrootfs')
+
 
 class TestOverlayCommands(unittest.TestCase):  # pylint: disable=too-many-public-methods
 

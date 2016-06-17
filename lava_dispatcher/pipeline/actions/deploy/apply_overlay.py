@@ -230,6 +230,7 @@ class ExtractNfsRootfs(ExtractRootfs):
         self.summary = "unpack nfsrootfs, ready to apply lava overlay"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
+        self.rootdir = DISPATCHER_DOWNLOAD_DIR
 
     def validate(self):
         super(ExtractNfsRootfs, self).validate()
@@ -241,6 +242,31 @@ class ExtractNfsRootfs(ExtractRootfs):
             self.errors = "no file specified extract as %s" % self.param_key
         if not os.path.exists('/usr/sbin/exportfs'):
             raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
+        if 'prefix' in self.parameters[self.param_key]:
+            prefix = self.parameters[self.param_key]['prefix']
+            if prefix.startswith('/'):
+                self.errors = 'prefix must not be an absolute path'
+            if not prefix.endswith('/'):
+                self.errors = 'prefix must be a directory and end with /'
+
+    def run(self, connection, args=None):
+        if not self.parameters.get(self.param_key, None):  # idempotency
+            return connection
+        connection = super(ExtractRootfs, self).run(connection, args)
+        root = self.data['download_action'][self.param_key]['file']
+        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        untar_file(root, root_dir)
+        if 'prefix' in self.parameters[self.param_key]:
+            prefix = self.parameters[self.param_key]['prefix']
+            self.logger.warning("Adding '%s' prefix, any other content will not be visible." % prefix)
+            self.rootdir = os.path.join(root_dir, prefix)
+        else:
+            self.rootdir = root_dir
+        # sets the directory into which the overlay is unpacked and
+        # which is used in the substitutions into the bootloader command string.
+        self.set_common_data('file', self.file_key, self.rootdir)
+        self.logger.debug("Extracted %s to %s", self.file_key, self.rootdir)
+        return connection
 
 
 class ExtractModules(Action):
