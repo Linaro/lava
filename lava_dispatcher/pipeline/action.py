@@ -357,7 +357,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                         TypeError, RuntimeError, AttributeError):
                     action.elapsed_time = time.time() - start
                     msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
-                    action.logger.exception(msg)
+                    action.logger.exception(traceback.format_exc())
                     action.errors = msg
                     action.cleanup()
                     self.cleanup_actions(connection, None)
