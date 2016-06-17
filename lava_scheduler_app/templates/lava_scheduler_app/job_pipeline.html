@@ -203,7 +203,7 @@
     {% endif %}
 
     <div class="affix">
-      <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></h4>
+      <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
       <div id="affix-full">
         <ul class="list-unstyled">
           {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=pipeline_data %}
@@ -229,7 +229,7 @@
         <code class="keyboard" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
             {% else %}
               {% get_action_id line.msg as act_id %}
-        <code class="debug" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}{% endif %}">{{ line.msg }}</code>
+        <code class="debug" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}"{% endif %}>{{ line.msg }}</code>
             {% endif %}
           {% elif line.lvl == "target" %}
         <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>

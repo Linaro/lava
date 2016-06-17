@@ -1,7 +1,6 @@
 {% for action in pipeline %}
-  <li><a href="#{{ action.level }}">{{ action.level }} - {{ action.name }}</a>
+  <li><a href="#{{ action.level }}">{{ action.level }} - {{ action.name }}</a></li>
   {% if 'pipeline' in action %}
     {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=action.pipeline %}
   {% endif %}
-  </li>
 {% endfor %}
