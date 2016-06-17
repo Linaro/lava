@@ -17,11 +17,12 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.db.models import Count
 from django.http import (
-    HttpResponse,
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
+    HttpResponseRedirect,
 )
 from django.shortcuts import (
     get_object_or_404,
@@ -1602,6 +1603,10 @@ def job_complete_log(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404
+    # If this is a new log format, redirect to the job page
+    if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
+        return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
+
     description = description_data(job.id)
     pipeline = description.get('pipeline', {})
     sections = []
