@@ -17,6 +17,9 @@
       border: 1px solid black;
       white-space: normal;
     }
+    .exception {
+      border: 1px solid red;
+    }
 
     .failure_comment {
       white-space: pre-wrap;
@@ -242,6 +245,8 @@
             {% endif %}
           {% endfor %}
         </code>
+          {% elif line.lvl == "error" or line.lvl == "exception" %}
+        <code class="{{ line.lvl }} bg-danger" title="{{ line.dt }}">{{ line.msg }}</code>
           {% else %}
             {% get_action_id line.msg as act_id %}
         <code class="{{ line.lvl }} bg-{{ line.lvl }}" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}"{% endif %}>{{ line.msg }}</code>
@@ -621,10 +626,13 @@
                   }
                 }
                 node.insertBefore(progressNode);
+              } else if (level == 'error' || level == 'exception' ) {
+                $('<code class="' + level + ' bg-danger"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
               } else {
                 var action_id = action_id_regexp.exec(d['msg']);
                 if(action_id) {
-                  console.log(action_id[1]);
                   node = $('<code class="' + level + ' bg-' + level + '" id="' + action_id[1] + '"></code>');
                 } else {
                   node = $('<code class="' + level + ' bg-' + level + '"></code>');
