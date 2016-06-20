@@ -1,14 +1,31 @@
 
-FIXME
+.. image:: images/arch-overview.png
 
-<Diagram>
+LAVA installations consist of two primary components - a master and a
+worker. The master has all the code required to run a worker and can
+support multiple remote workers to increase the number of devices
+available on any one instance.
 
-Describe here the main components:
+Elements of the master
+**********************
 
- * server
- * dispatcher
- * master
- * slave
- * DUT
+* **web interface** - apache and uwsgi interfacing with django as well as
+  providing XML-RPC access and REST API.
+* **database** - postgresql, local to the master with no external access.
+* **dispatcher-master daemon** - controls messages from the master to the
+  worker(s) using :abbr:`ZMQ (zero MQ)`.
 
-FIXME
+Elements of the slave
+*********************
+
+* **lava-slave daemon** - receives control messages from the master and
+  sends logs and results to the master, optionally uses authentication
+  and encryption using :abbr:`ZMQ (zero MQ)`.
+
+* **dispatcher** - the ``lava-dispatch`` process, started by the
+  ``lava-slave`` when instructed to do so by the master. This process
+  manages all the operations on the device under test, according to the
+  job submission and device parameters sent by the master.
+
+* **device under test**. Note that all the configuration for how the
+  dispatcher interacts with the device is sent from the server.

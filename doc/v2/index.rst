@@ -42,7 +42,60 @@ Architecture
 Features
 ********
 
-FIXME! <stuff>
+Deployment methods
+==================
+
+All test jobs involve a deployment step of some kind, even if that is
+just to prepare the overlay used to copy the test scripts onto the
+device or to setup the process of parsing the results when the test job
+starts.
+
+Boot methods
+============
+
+Hardware devices need to be instructed how to boot, emulated devices need
+to boot the emulator. For other devices, a ``boot`` can be simply establishing
+a connection to the device.
+
+Test methods
+============
+
+The principal test method in LAVA is the Lava Test Shell which requires
+a POSIX type environment to be running on the booted device. Other test
+methods available include executing tests using ADB.
+
+Multiple device testing
+=======================
+
+Some test jobs need to boot up multiple devices in a single, coordinated,
+group. For example, a server could be tested against multiple clients.
+LAVA supports starting these sub jobs as a group as well as passing
+messages between nodes via the dispatcher connection, without needing
+the devices to have a working network stack.
+
+Scheduling
+==========
+
+LAVA has advanced support for scheduling multiple jobs across multiple
+devices, whether those jobs use one device or several. Scheduling is
+ordered using these criteria:
+
+* submit time
+* priority
+* device tags
+* user access
+* health checks
+
+Advanced use cases
+==================
+
+Advanced use cases expand on this support to include:
+
+* creating and deleting customised virtual networks, where suitable
+  hardware and software support exists.
+* extracting data from LAVA to manage job submission and result handling
+  to support developer-specific tasks like
+  `KernelCI <https://kernelci.org/>`_.
 
 .. toctree::
    :maxdepth: 1
