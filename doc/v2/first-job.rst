@@ -20,7 +20,7 @@ installation.
 
  # Sample JOB definition for an x86_64 QEMU
  device_type: qemu
- job_name: kvm-pipeline
+ job_name: QEMU pipeline, first job
 
  timeouts:
    job:
@@ -33,39 +33,34 @@ installation.
    arch: amd64
 
  actions:
+ - deploy:
+   timeout:
+     minutes: 5
+   to: tmpfs
+   images:
+     rootfs:
+       image_arg: -drive format=raw,file={rootfs}
+       url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+       compression: gz
+   os: debian
 
-    - deploy:
-        timeout:
-          minutes: 5
-        to: tmpfs
-        images:
-            rootfs:
-              image_arg: -drive format=raw,file={rootfs}
-              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-              compression: gz
-        os: debian
-        root_partition: 1
+ - boot:
+   method: qemu
+   media: tmpfs
+   prompts: ["root@debian:"]
 
-    - boot:
-        method: qemu
-        media: tmpfs
-        prompts: ["root@debian:"]
-        failure_retry: 2
-
-    - test:
-        failure_retry: 3
-        name: kvm-basic-singlenode
-        timeout:
-          minutes: 5 # uses install:deps, so may take a few minutes
-        definitions:
-            - repository: git://git.linaro.org/qa/test-definitions.git
-              from: git
-              path: ubuntu/smoke-tests-basic.yaml
-              name: smoke-tests
-            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
-              from: git
-              path: lava-test-shell/single-node/singlenode03.yaml
-              name: singlenode-advanced
+ - test:
+   timeout:
+     minutes: 5
+   definitions:
+   - repository: git://git.linaro.org/qa/test-definitions.git
+     from: git
+     path: ubuntu/smoke-tests-basic.yaml
+     name: smoke-tests
+   - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+     from: git
+     path: lava-test-shell/single-node/singlenode03.yaml
+     name: singlenode-advanced
 
 .. seealso:: :ref:`explain_first_job`.
 
