@@ -40,7 +40,7 @@ Writing Tests
    dispatcher-format.rst
    dispatcher-actions2.rst
    lava_test_shell.rst
-   publishing-results.rst
+   publishing-artifacts.rst
    healthchecks.rst
    hacking-session.rst
    writing-multinode.rst
