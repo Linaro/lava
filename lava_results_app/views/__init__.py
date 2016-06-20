@@ -53,7 +53,7 @@ class ResultsView(LavaView):
     def get_queryset(self):
         return TestSuite.objects.all().select_related('job').prefetch_related(
             'job__actual_device', 'job__actual_device__device_type'
-        ).order_by('-job__id')
+        ).order_by('-job__id', 'name')
 
 
 class SuiteView(LavaView):
