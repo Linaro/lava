@@ -8,6 +8,8 @@ import simplejson
 import StringIO
 import datetime
 import urllib2
+import sys
+
 import django
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -1303,6 +1305,17 @@ def _prepare_template(request):
     return job_template
 
 
+def remove_broken_string(line):
+    # Check that the string is valid unicode.
+    # This is not needed for python3.
+    try:
+        line['msg'].encode('utf-8')
+    except AttributeError:
+        pass
+    except UnicodeDecodeError:
+        line['msg'] = '<<lava: broken line>>'
+
+
 @BreadCrumb("Job", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
@@ -1354,6 +1367,11 @@ def job_detail(request, pk):
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
                     log_data = yaml.load(f_in)
+
+                    if sys.version_info < (3, 0):
+                        for line in log_data:
+                            remove_broken_string(line)
+
             except IOError:
                 log_data = []
 
@@ -1821,6 +1839,10 @@ def job_log_pipeline_incremental(request, pk):
     try:
         with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
             data = yaml.load(f_in)[first_line:]
+            if sys.version_info < (3, 0):
+                for line in data:
+                    remove_broken_string(line)
+
     except IOError:
         data = []
 
