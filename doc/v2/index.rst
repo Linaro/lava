@@ -20,7 +20,7 @@ features are:
 * Results
 * Queries
 * Charts
-* <Foo> FIXME
+* Data export APIs
 
 The architecture has been significantly improved since V1, bringing
 major changes in terms of how a distributed LAVA instance is

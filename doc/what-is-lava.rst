@@ -23,7 +23,7 @@ means. Depending on context, this could be many things, for example:
 * testing whether a kernel scheduler change reduces power consumption
   for a certain workload
 * etc.
- 
+
 LAVA is good for automated validation. LAVA tests the Linux kernel on
 a range of supported boards every day. LAVA tests proposed android
 changes in gerrit before they are landed, and does the same for other
@@ -31,6 +31,12 @@ projects like gcc. Linaro runs a central validation lab in Cambridge,
 containing racks full of computers supplied by Linaro members and the
 necessary infrastucture to control them (servers, serial console
 servers, network switches etc.)
+
+LAVA is good for providing developers with the ability to run customised
+test on a variety of different types of hardware, some of which may be
+difficult to obtain or integrate. Although LAVA has support for emulation
+(based on QEMU), LAVA is best at providing test support for real hardware
+devices.
 
 .. note:: This overview document explains LAVA using
           http://validation.linaro.org/ which is the official
@@ -42,7 +48,18 @@ What is LAVA **not**?
 *********************
 
 * LAVA is **not** a set of tests - it is infrastructure to enable
-  users to run their own tests.
+  users to run their own tests. LAVA concentrates on providing a range
+  of deployment methods and a range of boot methods. Once the login is
+  complete, the test consists of whatever scripts the test writer
+  chooses to execute in that environment.
 
 * LAVA is **not** a test lab - it is the software that can used in a
   test lab to control test devices.
+
+* LAVA is **not** a complete :abbr:`CI (continuous integration)` system -
+  it is software that can form part of a CI loop. LAVA supports data
+  extraction to make it easier to produce a frontend which is directly
+  relevant to particular groups of developers.
+
+* LAVA is **not** a build farm - other tools need to be used to prepare
+  binaries which can be passed to the device using LAVA.
