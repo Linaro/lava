@@ -30,6 +30,7 @@ from lava_results_app.models import (
     TestSuite,
 )
 
+
 class ActionDataAdmin(admin.ModelAdmin):
     list_display = ('job_pk', 'action_level', 'action_name')
     ordering = ('-testdata__testjob__pk', '-action_level', )
