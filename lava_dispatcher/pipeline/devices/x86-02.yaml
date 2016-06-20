@@ -64,6 +64,30 @@ actions:
           - ls (ata0,msdos1)/
           - chainloader (ata0,msdos1)/boot/grub/i386-pc/boot.img
           - boot
+        centos-installer:
+          expect_shell: False
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod linux
+          - insmod tftp
+          - insmod pata
+          - insmod part_msdos
+          - linux (tftp,{SERVER_IP})/{KERNEL} noshell inst.text inst.cmdline RUNKS=1 inst.ks=file://{PRESEED_LOCAL} efi=noruntime --- console=ttyS0,115200 debug verbose
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        centos-installed:
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod linux
+          - insmod tftp
+          - insmod pata
+          - insmod part_msdos
+          - insmod chain
+          - ls (ata0,msdos1)/
+          - chainloader (ata0,msdos1)/grub2/i386-pc/boot.img
+          - boot
 
 timeouts:
   actions:

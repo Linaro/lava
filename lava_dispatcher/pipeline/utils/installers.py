@@ -22,6 +22,16 @@ import os
 import re
 
 
+def add_to_kickstart(preseedfile, extra_command):
+    with open(preseedfile, 'a') as pf:
+        pf.write('\n')
+        pf.write('%post\n')
+        pf.write('exec < /dev/console > /dev/console\n')
+        pf.write(extra_command + '\n')
+        pf.write('%end\n')
+    pf.close()
+
+
 def add_late_command(preseedfile, extra_command):
     added = False
     append_line = " ; " + extra_command + "\n"

@@ -1,13 +1,12 @@
-device_type: d02
+device_type: grub-x86
 
-job_name: d02-debian-preseed
+job_name: grub-x86-debian-preseed
 timeouts:
   job:
     minutes: 300
   action:
     minutes: 300
 priority: medium
-visibility: public
 
 actions:
   - deploy:
@@ -15,38 +14,37 @@ actions:
        minutes: 10
      to: tftp
      kernel:
-        url: https://builds.96boards.org/releases/reference-platform/components/debian-installer/16.03/debian-installer/arm64/linux
+        url: http://mirror.centos.org/altarch/7/os/i386/images/pxeboot/vmlinuz
      ramdisk:
-         url: https://builds.96boards.org/releases/reference-platform/components/debian-installer/16.03/debian-installer/arm64/initrd.gz
-         compression: gz
+         url: http://mirror.centos.org/altarch/7/os/i386/images/pxeboot/initrd.img
+         compression: xz
      preseed:
-         url: http://ironhide.bounceme.net/d02/preseed-lava.cfg
-     os: debian_installer
+         url: http://ironhide.bounceme.net/centos/installer/centos-ks-lab-i386.cfg
+     os: centos_installer
 
   - boot:
      method: grub
+     commands: centos-installer
      expect_shell: False
-     commands: debian-installer
      timeout:
        minutes: 50
      boot_finished:
-     - 'reboot: Restarting system'
-     - 'reboot: System halted'
-     - 'Requesting system halt'
+     - 'Restarting system.'
+     - 'dracut Warning: Killing all remaining processes'
 
   - boot:
       method: grub
-      commands: debian-installed
+      os: centos
+      commands: centos-installed
       auto_login:
         login_prompt: 'login:'
         username: root
         password_prompt: 'Password:'
-        password: linaro123
+        password: linaro
       timeout:
           minutes: 5
       prompts:
-       - 'root@debian:~#'
-       - 'root@d02:~#'
+       - 'root@centos ~'
 
   - test:
      failure_retry: 3

@@ -238,6 +238,7 @@ class BootloaderCommandOverlay(Action):
             '{SERVER_IP}': ip_addr
         }
         substitutions['{PRESEED_CONFIG}'] = self.get_common_data('file', 'preseed')
+        substitutions['{PRESEED_LOCAL}'] = self.get_common_data('file', 'preseed_local')
         substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
         substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
         substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')

@@ -151,6 +151,22 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_shell_file': None,
 })
 
+centos = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'centos',
+    'tar_flags': '--warning no-timestamp',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
+})
+
 debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
@@ -172,6 +188,23 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
 
     # for lava-test-shell
     'distro': 'debian',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
+})
+
+centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+    'installer_extra_cmd': 'curl {OVERLAY_URL} > /lava-overlay.tar.gz\ntar -zxvf /lava-overlay.tar.gz -C /',
+    'preseed_to_ramdisk': "preseed.cfg",
+
+    # for lava-test-shell
+    'distro': 'centos',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
