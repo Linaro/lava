@@ -1,13 +1,13 @@
 .. _dispatcher_yaml:
 
-Writing YAML files for the refactored dispatcher
-################################################
+Writing YAML files for the pipeline dispatcher
+##############################################
 
 FIXME! Massive overlap here...
 
-To use the new features in the refactored dispatcher, a new submission
-format was required and as YAML supports comments, it was decided to
-adopt YAML as the new format.
+To use the new features in the pipeline (v2) dispatcher, a new
+submission format was required and as YAML supports comments, it was
+decided to adopt YAML as the new format.
 
 `Online YAML`_ Parser.
 
@@ -271,7 +271,9 @@ For a device dictionary containing::
  {% set console_device: '/dev/ttyO0' %}
 
 The job is unable to set an override using the same variable name, so this
-will fail to set :file:`/dev/ttyAMX0`::
+will fail to set :file:`/dev/ttyAMX0`:
+
+.. code-block:: yaml
 
  context:
    console_device: /dev/ttyAMX0
@@ -282,7 +284,9 @@ Example Two
 -----------
 
 If the device dictionary contains no setting for ``console_device``, then
-the job context value can override the device type template default::
+the job context value can override the device type template default:
+
+.. code-block:: yaml
 
  context:
    console_device: /dev/ttyAMX0
@@ -301,7 +305,9 @@ The device dictionary can set::
 
  {% set mac_address: '00:01:73:69:5A:EF' %}
 
-If the job context sets::
+If the job context sets:
+
+.. code-block:: yaml
 
  context:
    tftp_mac_address: 'FF:01:00:69:AA:CC'
@@ -379,7 +385,9 @@ for the complete content of `base.yaml`
 The above :term:`device dictionary` and the :term:`device type`
 template are combined together in order to form the device
 configuration which will look like the following for a nexus 10
-device::
+device:
+
+.. code-block:: yaml
 
  commands:
      connect: adb -s R32D300FRYP shell

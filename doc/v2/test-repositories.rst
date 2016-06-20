@@ -77,7 +77,9 @@ Sharing the contents of test definitions
 ****************************************
 
 A YAML test definition file can clone another repository by specifying
-the address of the repository to clone::
+the address of the repository to clone
+
+.. code-block:: yaml
 
   install:
       bzr-repos:
@@ -100,7 +102,9 @@ Adding test definition dependencies
 ***********************************
 
 If your test depends on other tests to be executed before you run the
-current test, add an explicit dependency in the test definition YAML::
+current test, add an explicit dependency in the test definition YAML:
+
+.. code-block:: yaml
 
  test-case-deps:
    - git-repo: git://git.linaro.org/qa/test-definitions.git

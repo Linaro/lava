@@ -30,7 +30,7 @@ Metadata includes:
 #. A short name of the purpose of the file
 #. A description of the instructions contained in the file.
 
-::
+.. code-block:: yaml
 
   metadata:
       format: Lava-Test Test Definition 1.0
@@ -47,7 +47,7 @@ If the file is not under version control (i.e. not in a git or bzr
 repository), the **version** of the file must also be specified in the
 metadata:
 
-::
+.. code-block:: yaml
 
   metadata:
       format: Lava-Test Test Definition 1.0
@@ -62,7 +62,7 @@ There are also optional metadata fields:
 #. A list of devices which are expected to be able to run these
    instructions.
 
-::
+.. code-block:: yaml
 
       maintainer:
           - user.user@linaro.org
@@ -79,7 +79,9 @@ There are also optional metadata fields:
 
 The instructions within the YAML file can include installation
 requirements for images based on supported distributions (currently,
-Ubuntu or Debian)::
+Ubuntu or Debian):
+
+.. code-block:: yaml
 
   install:
       deps:
@@ -98,7 +100,9 @@ Ubuntu or Debian)::
 
 When an external PPA or package repository (specific to debian based
 distros) is required for installation of packages, it can be added in
-the `install` section as follows::
+the `install` section as follows:
+
+.. code-block:: yaml
 
   install:
       keys:
@@ -137,7 +141,9 @@ and `Ubuntu PPA addition <https://git.linaro.org/people/senthil.kumaran/test-def
           over-ride the trust check.
 
 The principal purpose of the test definitions in the YAML file is to
-run commands on the device. These are specified in the run steps::
+run commands on the device. These are specified in the run steps:
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -172,12 +178,16 @@ Writing commands to run on the device
 #. Avoid use of redirects and pipes inside the run steps. If the command
    needs to use redirection and/or pipes, use a custom script in your
    repository and execute that script instead. See :ref:`custom_scripts`
-#. Take care with YAML syntax. These lines will fail with wrong syntax::
+#. Take care with YAML syntax. These lines will fail with wrong syntax:
+
+.. code-block:: yaml
 
     - echo "test1: pass"
     - echo test2: fail
 
-   While this syntax will pass::
+   While this syntax will pass:
+
+.. code-block:: yaml
 
     - echo "test1:" "pass"
     - echo "test2:" "fail"
@@ -195,7 +205,9 @@ Writing custom scripts to support tests
 
 When multiple actions are necessary to get usable output, write a
 custom script to go alongside the YAML and execute that script as a
-run step::
+run step:
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -246,7 +258,9 @@ passes and failures in the result bundle which can be easily tracked
 over time.
 
 To use the exit value, simply precede the command with a call to
-``lava-test-case`` with a test-case name (no spaces)::
+``lava-test-case`` with a test-case name (no spaces):
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -254,7 +268,9 @@ To use the exit value, simply precede the command with a call to
           - lava-test-case test-ls-fail --shell ls /user/somewhere/else/
 
 Use subshells instead of backticks to execute a command as an argument
-to another command::
+to another command:
+
+.. code-block:: yaml
 
   - lava-test-case pointless-example --shell ls $(pwd)
 
@@ -269,7 +285,9 @@ Parsing command outputs
 FIXME - is this still relevant for V2? Still mentions a bundle...
 
 If the test involves parsing the output of a command rather than simply
-relying on the exit value, LAVA can use a pass/fail/skip/unknown output::
+relying on the exit value, LAVA can use a pass/fail/skip/unknown output:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -281,12 +299,16 @@ relying on the exit value, LAVA can use a pass/fail/skip/unknown output::
 The quotes are required to ensure correct YAML parsing.
 
 The parse section can supply a parser to convert the output into
-test case results::
+test case results:
+
+.. code-block:: yaml
 
   parse:
       pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-The result of the above test would be a result bundle::
+The result of the above test would be a result bundle:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -299,7 +321,9 @@ Recording test case results
 ***************************
 
 ``lava-test-case`` can also be used with a parser with the extra
-support for checking the exit value of the call::
+support for checking the exit value of the call:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -308,7 +332,9 @@ support for checking the exit value of the call::
         - lava-test-case echo1 --shell echo "test3:" "pass"
         - lava-test-case echo2 --shell echo "test4:" "fail"
 
-This syntax will result in extra test results::
+This syntax will result in extra test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -321,7 +347,9 @@ Note that ``echo2`` **passed** because the ``echo "test4:" "fail"`` returned
 an exit code of zero.
 
 Alternatively, the ``--result`` command can be used to output the value
-to be picked up by the parser::
+to be picked up by the parser:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -330,7 +358,9 @@ to be picked up by the parser::
         - lava-test-case test5 --result pass
         - lava-test-case test6 --result fail
 
-This syntax will result in the test results::
+This syntax will result in the test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -348,7 +378,7 @@ measurements and units per test at a precision of 10 digits.
 
 ``--result`` must always be specified.
 
-::
+.. code-block:: yaml
 
   run:
      steps:
@@ -357,7 +387,9 @@ measurements and units per test at a precision of 10 digits.
         - lava-test-case test5 --result pass --measurement 99 --units bottles
         - lava-test-case test6 --result fail --measurement 0 --units mugs
 
-This syntax will result in the test results::
+This syntax will result in the test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
