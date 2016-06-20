@@ -234,7 +234,7 @@
           {% elif line.lvl == "target" %}
         <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary">
+        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% for k, v in value.items %}
@@ -613,7 +613,7 @@
                   .insertBefore(progressNode);
               } else if(level == 'results') {
                 var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
-                var node = $('<code class="results bg-primary"></code>');
+                var node = $('<code class="results bg-primary" id="results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'] + '"></code>');
                 for(key in d['msg']) {
                   if(typeof(d['msg'][key]) == 'string') {
                     node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
