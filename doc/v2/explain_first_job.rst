@@ -3,6 +3,11 @@
 The first job in detail
 #######################
 
+As the first job, this is a simple emulated test which does not need
+any extra hardware, it does not use protocols and runs as a single job.
+
+.. note:: This kind of test is generally termed ``singlenode``.
+
 Top level elements of a test job
 ********************************
 
@@ -40,7 +45,7 @@ Top level elements of a test job
 
  # Sample JOB definition for an x86_64 QEMU
  device_type: qemu
- job_name: kvm-pipeline
+ job_name: QEMU pipeline, first job
 
  timeouts:
    job:
@@ -55,41 +60,125 @@ Top level elements of a test job
 Actions within the test job
 ***************************
 
+Each test job needs a list of actions, comprising of ``deploy``, ``boot``
+and ``test``.
 
+* **deploy** - download files required to boot the device and prepare
+  an overlay of files to run in the test action.
+* **boot** - specify the method to boot the device and the prompts which
+  will dictate whether the device is considered to have been booted
+  correctly.
+* **test** - specify the repositories to clone which will provide the
+  scripts which will run the test you want to execute for this job.
+
+Deploy action for QEMU
+======================
+
+Deployment methods are identified by the ``to`` parameter, for QEMU
+the supported deployment method is to ``tmpfs``. The image to deploy
+is specified as an image dictionary which supports the formatting of
+the options to QEMU and the compression algorithm to use to decompress
+the download prior to passing to QEMU.
+
+Arguments to QEMU need to include the filename, often embedded within
+a specific option string. To achieve this, LAVA supports a ``label``
+for the image which will be substituted into the option.
 
 .. code-block:: yaml
 
  actions:
+ - deploy:
+   timeout:
+     minutes: 5
+   to: tmpfs
+   images:
+     rootfs:
+       image_arg: -drive format=raw,file={rootfs}
+       url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+       compression: gz
+   os: debian
 
-    - deploy:
-        timeout:
-          minutes: 5
-        to: tmpfs
-        images:
-            rootfs:
-              image_arg: -drive format=raw,file={rootfs}
-              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-              compression: gz
-        os: debian
-        root_partition: 1
+The other role of a deploy action is to prepare the overlay which will
+contain the test shell scripts and repositories. These will be added to
+the booted image and then executed automatically, generating the results
+for the test job.
 
-    - boot:
-        method: qemu
-        media: tmpfs
-        prompts: ["root@debian:"]
-        failure_retry: 2
+Certain aspects of executing tests on a booted device require knowledge
+about which :abbr:`OS (operating system)` will be running after the device
+has booted. This is particularly relevant when the test scripts may require
+additional dependencies to be installed in the running system. The test
+scripts need to know whether to use ``apt`` or ``yum`` or something else
+to do the installation work. Some other OS deployments may change other
+elements within the test, so the test job submission will **fail** if
+the ``os`` parameter is not set or is set to an unrecognised string.
 
-    - test:
-        failure_retry: 3
-        name: kvm-basic-singlenode
-        timeout:
-          minutes: 5 # uses install:deps, so may take a few minutes
-        definitions:
-            - repository: git://git.linaro.org/qa/test-definitions.git
-              from: git
-              path: ubuntu/smoke-tests-basic.yaml
-              name: smoke-tests
-            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
-              from: git
-              path: lava-test-shell/single-node/singlenode03.yaml
-              name: singlenode-advanced
+Supported operating systems include ``debian``, ``ubuntu``, ``oe`` (for
+OpenEmbedded) and ``fedora``.
+
+Example of deploy label subsitution
+-----------------------------------
+
+``https://images.validation.linaro.org/kvm-debian-wheezy.img.gz`` is
+downloaded and then decompressed using the ``gz`` algorithm to create
+a file called ``kvm-debian-wheezy.img`` in a ``tmpfs`` location. This
+location is then substituted into the ``image_arg``::
+
+ -drive format=raw,file=/tmp/tmp.23FDsf/kvm-debian-wheezy.img
+
+Boot action for QEMU
+====================
+
+One of the primary roles of the boot action parameters is to ensure that
+the correct pipeline is constructed for this test job. The specified
+method is used to match against the available boot methods. In this case,
+the boot method is to call QEMU. The ``qemu`` boot method also needs the
+``media`` parameter set to ``tmpfs`` to distinguish this from other boot
+methods.
+
+.. code-block:: yaml
+
+ - boot:
+   method: qemu
+   media: tmpfs
+   prompts: ["root@debian:"]
+
+.. note:: **prompts** - this is a list of prompt strings which the test
+   writer **MUST** specify in advance and which LAVA will use to determine
+   whether the boot was successful. One of the specified prompts **must**
+   match before the test can be started. When building or downloading
+   images prepared by others, it is **essential** that the test writer
+   records the information on what prompt will be presented when the
+   system boots into that image successfully. If this information is not
+   available from the location from which you downloaded the image, you
+   will need to ask for that information or boot the image yourself and
+   identify the prompt.
+
+Test action for QEMU
+====================
+
+The test action block in the first job contains two sets of definition
+parameters, each consisting of:
+
+* **repository** - the URL to pass to git or bzr to clone the repository
+* **from** - the method of obtaining the repository.
+* **path** - the YAML file inside the repository which contains the
+  Lava Test Shell Definition to be used for this test.
+* **name** - the name to use when executing this test.
+
+The test action block in the first job also includes a timeout as an
+example of how to specify a timeout for a particular section of the job.
+
+.. code-block:: yaml
+
+ - test:
+   timeout:
+     minutes: 5
+   definitions:
+   - repository: git://git.linaro.org/qa/test-definitions.git
+     from: git
+     path: ubuntu/smoke-tests-basic.yaml
+     name: smoke-tests
+   - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+     from: git
+     path: lava-test-shell/single-node/singlenode03.yaml
+     name: singlenode-advanced
