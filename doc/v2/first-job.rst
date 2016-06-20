@@ -34,33 +34,33 @@ installation.
 
  actions:
  - deploy:
-   timeout:
-     minutes: 5
-   to: tmpfs
-   images:
-     rootfs:
-       image_arg: -drive format=raw,file={rootfs}
-       url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-       compression: gz
-   os: debian
+     timeout:
+       minutes: 5
+     to: tmpfs
+     images:
+       rootfs:
+         image_arg: -drive format=raw,file={rootfs}
+         url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+         compression: gz
+     os: debian
 
  - boot:
-   method: qemu
-   media: tmpfs
-   prompts: ["root@debian:"]
+     method: qemu
+     media: tmpfs
+     prompts: ["root@debian:"]
 
  - test:
-   timeout:
-     minutes: 5
-   definitions:
-   - repository: git://git.linaro.org/qa/test-definitions.git
-     from: git
-     path: ubuntu/smoke-tests-basic.yaml
-     name: smoke-tests
-   - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
-     from: git
-     path: lava-test-shell/single-node/singlenode03.yaml
-     name: singlenode-advanced
+     timeout:
+       minutes: 5
+     definitions:
+     - repository: git://git.linaro.org/qa/test-definitions.git
+       from: git
+       path: ubuntu/smoke-tests-basic.yaml
+       name: smoke-tests
+     - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode03.yaml
+       name: singlenode-advanced
 
 .. seealso:: :ref:`explain_first_job`.
 
@@ -76,10 +76,10 @@ Jobs may be submitted to LAVA in one of three ways:
  * the XML-RPC API
 
 .. note:: ``lava-tool`` is a general-purpose command line interface
-	  for LAVA which can be used directly on the LAVA server
-	  machines and also remotely on any computer running a
-	  Debian-based distribution. See :ref:`lava_tool` for more
-	  information.
+      for LAVA which can be used directly on the LAVA server
+      machines and also remotely on any computer running a
+      Debian-based distribution. See :ref:`lava_tool` for more
+      information.
 
 For now, lava-tool is the easiest option to demonstrate. Once you have
 copied the above job definition to a file, (for example
@@ -104,8 +104,17 @@ the above submission the job id returned is 82287. Visit
 see the details of the job run: the test device chosen, the test
 results, etc.
 
-FIXME
-<graphic here, and some details of what you'll see>
+.. image:: images/first-job-submitted.png
+
+It may take some time before the job actually starts, depending on the
+number of jobs waiting in the queue for a device of this type. Once the
+job starts, the status information will automatically update and the
+logs will appear.
+
+Results are populated live and will start to appear during the operation
+of the deploy action. The plain log can be downloaded and the definition
+is available for later reference. If you are the submitter of the job,
+you can also choose to cancel the job.
 
 .. index: test definitions
 
@@ -113,9 +122,6 @@ FIXME
 
 Test Definitions
 ----------------
-
-.. note:: The following is crap, but we should have something
-	  here I think. FIXME!
 
 In order to run a test, a test definition is required. A test
 definition is expressed in YAML format. A minimal test definition
@@ -134,20 +140,55 @@ would look something like the following:
           - "lava-test-case passtest --result pass"
           - "lava-test-case failtest --result pass"
 
-In order to run the above test definition with a minimal job file, the
-following job json could be used and submitted in the same way as
-explained above:
+The first job mentioned above uses a more complex test definition:
+
+https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/smoke-tests-basic.yaml
+
+The metadata in a test definition is for the maintenance of that test
+definition and covers details like the maintainer, the kinds of devices
+which may find this test definition useful and the scope of the test
+definition. (Scope is arbitrary, often a scope of functional is used to
+describe a test which is useful to test that the image is functioning
+correctly.) The run steps of this definition are:
 
 .. code-block:: yaml
 
-  run:
-      steps:
-          - "lava-test-case passtest --result pass"
-          - "lava-test-case failtest --result pass"
+ run:
+    steps:
+        - lava-test-case linux-linaro-ubuntu-pwd --shell pwd
+        - lava-test-case linux-linaro-ubuntu-uname --shell uname -a
+        - lava-test-case linux-linaro-ubuntu-vmstat --shell vmstat
+        - lava-test-case linux-linaro-ubuntu-ifconfig --shell ifconfig -a
+        - lava-test-case linux-linaro-ubuntu-lscpu --shell lscpu
+        - lava-test-case linux-linaro-ubuntu-lsb_release --shell lsb_release -a
+
+This simple test executes a series of commands in the booted image. The
+exit value of each command is used to determine whether the test case
+passed or failed. You can try any of these commands on a Ubuntu or Debian
+system to see what the commands should create as output.
+
+.. seealso:: :ref:`writing_tests`
 
 .. index: results
 
-.. downloading_results:
+.. _viewing_results
+
+Viewing test results
+--------------------
+
+On the job view page, there is a button to access the Results. Results
+can also be accessed from the Results Overview in the menu. The results
+for the first job example could look like:
+
+.. image:: images/first-results.png
+
+The results include the test definitions submitted within the job as well
+as a reserved ``lava`` set of results generated during the operation of
+the test job itself. There is also metadata which is generated by the
+test job, including details like the URL of the test definitions used
+and the type of deploy and boot methods involved in the test job.
+
+.. _downloading_results:
 
 Downloading test results
 ------------------------
