@@ -296,7 +296,7 @@ The arguments are:
 See :ref:`test_attach`.
 
 lava-background-process-stop
------------------------------
+----------------------------
 
 This stops a process previously started in the background using
 :ref:`lava-background-process-start`. The user can attach files to the
