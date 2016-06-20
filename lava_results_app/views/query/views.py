@@ -24,6 +24,7 @@ import simplejson
 import tempfile
 
 from django.db import IntegrityError
+from django.db.models import Q
 from django.db.utils import ProgrammingError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -214,7 +215,7 @@ def query_list(request):
             'terms_data': terms_data,
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_list),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -264,7 +265,7 @@ def query_display(request, username, name):
             'discrete_data': table.prepare_discrete_data(view),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_display, username=username, name=name),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -310,7 +311,7 @@ def query_custom(request):
             'discrete_data': table.prepare_discrete_data(view),
 
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_custom),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -332,7 +333,7 @@ def query_detail(request, username, name):
             'view_exists': view_exists,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
             'condition_form': QueryConditionForm(
                 instance=None,
                 initial={'query': query, 'table': query.content_type}),
@@ -623,11 +624,14 @@ def get_query_names(request):
 
     term = request.GET['term']
     result = []
+
     query_list = Query.objects.filter(
-        name__startswith=term).distinct().order_by('name')
+        Q(is_archived=False),
+        Q(name__istartswith=term) |
+        Q(owner__username__istartswith=term)).distinct().order_by('name')
     for query in query_list:
-        result.append({"value": query.name,
-                       "label": query.name,
+        result.append({"value": query.owner_name,
+                       "label": query.owner_name,
                        "id": query.id,
                        "content_type": query.content_type.model_class().__name__})
     return HttpResponse(
@@ -667,6 +671,7 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
             'is_copy': is_copy,
             'query_name': query_name,
             'form': form,
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request))
 
 

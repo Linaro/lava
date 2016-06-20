@@ -21,7 +21,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
@@ -42,7 +42,6 @@ from django_tables2 import (
 )
 
 from dashboard_app.models import (
-    Bundle,
     BundleStream,
     NamedAttribute,
     Test,
@@ -87,7 +86,10 @@ class UserFiltersView(FilterView):
 class PublicFiltersView(FilterView):
 
     def get_queryset(self):
-        filters = TestRunFilter.objects.filter(public=True)
+        filters = TestRunFilter.objects.filter(public=True)\
+                               .prefetch_related("bundle_streams", "bundle_streams__user", "bundle_streams__group")\
+                               .prefetch_related("tests__cases", "tests__cases__test_case", "attributes")\
+                               .select_related("owner")
         non_accessible_filters = []
         for filter in filters:
             if not filter.is_accessible_by(self.request.user):
@@ -378,7 +380,7 @@ def get_tests_json(request):
         raise Http404
 
     tests = Test.objects.filter(
-        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id').prefetch_related('test_cases')
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, content_type='application/json')

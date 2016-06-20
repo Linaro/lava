@@ -82,7 +82,6 @@ Other Topics
 .. toctree::
    :maxdepth: 2
 
-   extending.rst
    arm_energy_probe.rst
    device-capabilities.rst
    packaging.rst

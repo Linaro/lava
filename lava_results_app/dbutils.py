@@ -28,77 +28,9 @@ from lava_results_app.models import (
     ActionData,
     MetaType,
 )
+from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.pipeline.action import Timeout
 # pylint: disable=no-member
-
-
-METADATA_MAPPING_DESCRIPTION = {
-    "boot.commands": ["job", "actions", "boot", "commands"],
-    "boot.method": ["job", "actions", "boot", "method"],
-    "boot.type": ["job", "actions", "boot", "type"],
-    "deploy.os": ["job", "actions", "deploy", "os"],
-    "deploy.ramdisk-type": ["job", "actions", "deploy", "ramdisk-type"],
-    "target.hostname": ["device", "hostname"],
-    "target.device_type": ["device", "device_type"]
-}
-
-
-def _test_case(name, suite, result, testset=None, testshell=False):
-    """
-    Create a TestCase for the specified name and result
-    :param name: name of the testcase to create
-    :param suite: current TestSuite
-    :param result: the result for this TestCase
-    :param testset: Use a TestSet if supplied.
-    :param testshell: handle lava-test-shell outside a TestSet.
-    :return:
-    """
-    logger = logging.getLogger('dispatcher-master')
-    if testshell:
-        TestCase.objects.create(
-            name=name,
-            suite=suite,
-            result=TestCase.RESULT_MAP[result]
-        ).save()
-    elif testset:
-        TestCase.objects.create(
-            name=name,
-            suite=suite,
-            test_set=testset,
-            result=TestCase.RESULT_MAP[result]
-        ).save()
-    else:
-        try:
-            metadata = yaml.dump(result)
-        except yaml.YAMLError:
-            msg = "Unable to store metadata %s for %s as YAML" % (result, name)
-            suite.job.set_failure_comment(msg)
-            logger.warning(msg)
-            metadata = None
-        match_action = None
-        # the action level should exist already
-        if 'level' in result and metadata:
-            match_action = ActionData.objects.filter(
-                action_level=str(result['level']),
-                testdata__testjob=suite.job)
-            if match_action:
-                match_action = match_action[0]
-                if 'duration' in result:
-                    match_action.duration = result['duration']
-                if 'timeout' in result:
-                    match_action.timeout = result['timeout']  # duration, positive integer
-        case = TestCase.objects.create(
-            name=name,
-            suite=suite,
-            test_set=testset,
-            metadata=metadata,
-            result=TestCase.RESULT_UNKNOWN
-        )
-        with transaction.atomic():
-            case.save()
-            if match_action:
-                match_action.testcase = case
-                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
 
 
 def _check_for_testset(result_dict, suite):
@@ -111,8 +43,8 @@ def _check_for_testset(result_dict, suite):
     """
     logger = logging.getLogger('dispatcher-master')
     testset = None
-    if 'test_set' in result_dict:
-        set_name = result_dict['test_set']
+    if 'set' in result_dict:
+        set_name = result_dict['set']
         if set_name != urllib.quote(set_name):
             msg = "Invalid testset name '%s', ignoring." % set_name
             suite.job.set_failure_comment(msg)
@@ -125,75 +57,150 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
-def map_scanned_results(scanned_dict, job):
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches
     """
     Sanity checker on the logged results dictionary
-    :param scanned_dict: results logged via the slave
-    :param suite: the current test suite
+    :param results: results logged via the slave
+    :param job: the current test job
     :return: False on error, else True
     """
     logger = logging.getLogger('dispatcher-master')
-    if not isinstance(scanned_dict, dict):
-        logger.debug("%s is not a dictionary", scanned_dict)
+
+    if not isinstance(results, dict):
+        logger.debug("%s is not a dictionary", results)
         return False
-    if 'results' not in scanned_dict:
-        logger.debug("missing results in %s", scanned_dict.keys())
+
+    if not set(["definition", "case", "result"]).issubset(set(results.keys())):
+        logger.error("Missing some keys (\"definition\", \"case\" or \"result\") in %s", results)
         return False
-    results = scanned_dict['results']
-    if isinstance(results, str):
-        logger.warning("Invalid results string: %s", results)
-        return False
-    if 'test_definition' in results and 'test_set' in results:
-        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
-        if created:
-            suite.save()
-        testset = _check_for_testset(results, suite)
-    elif 'test_definition' in results:
-        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
-        if created:
-            suite.save()
-        logger.debug("%s", suite)
-        testset = None
+
+    suite, created = TestSuite.objects.get_or_create(name=results["definition"], job=job)
+    if created:
+        suite.save()
+    testset = _check_for_testset(results, suite)
+
+    name = results["case"]
+    if suite.name == "lava":
+        match_action = None
+        if "level" in results:
+            match_action = ActionData.objects.filter(
+                action_level=str(results['level']),
+                testdata__testjob=suite.job)
+            if match_action:
+                match_action = match_action[0]
+                if 'duration' in results:
+                    match_action.duration = results['duration']
+                if 'timeout' in results:
+                    match_action.timeout = results['timeout']  # duration, positive integer
+        result_val = TestCase.RESULT_MAP[results['result']]
+        try:
+            # For lava test suite, the test (actions) can be seen two times.
+            case = TestCase.objects.get(name=name, suite=suite)
+            case.test_set = testset
+            case.metadata = yaml.dump(results)
+            case.result = result_val
+        except TestCase.DoesNotExist:
+            case = TestCase.objects.create(name=name,
+                                           suite=suite,
+                                           test_set=testset,
+                                           metadata=yaml.dump(results),
+                                           result=result_val)
+        with transaction.atomic():
+            case.save()
+            if match_action:
+                match_action.testcase = case
+                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
+
     else:
-        suite, created = TestSuite.objects.get_or_create(name='lava', job=job)
-        if created:
-            suite.save()
-        testset = None
-    for name, result in results.items():
-        if name == 'test_definition' or name == 'test_set':
-            # already handled
-            continue
+        result = results["result"]
         if testset:
-            logger.debug("%s/%s %s", testset, name, result)
-            _test_case(name, suite, result, testset=testset)
+            logger.debug("%s/%s/%s %s", suite, testset, name, result)
         else:
             logger.debug("%s/%s %s", suite, name, result)
-            _test_case(name, suite, result, testshell=(suite.name != 'lava'))
+        TestCase.objects.create(
+            name=name,
+            suite=suite,
+            test_set=testset,
+            result=TestCase.RESULT_MAP[result]
+        ).save()
     return True
 
 
-def _get_nested_value(data, mapping):
-    # get the value from a nested dictionary based on keys given in 'mapping'.
-    value = data
-    for key in mapping:
-        try:
-            value = value[key]
-        except TypeError:
-            # check case when nested value is list and not dict.
-            for item in value:
-                if key in item:
-                    value = item[key]
-        except KeyError:
-            return None
+def _get_job_metadata(data):  # pylint: disable=too-many-branches
+    if not isinstance(data, list):
+        return None
+    retval = {}
+    for action in data:
+        deploy = [reduce(dict.get, ['deploy'], action)]
+        count = 0
+        for block in deploy:
+            if not block:
+                continue
+            namespace = block.get('namespace', None)
+            prefix = "deploy.%d.%s" % (count, namespace) if namespace else 'deploy.%d' % count
+            value = block.get('method', None)
+            if value:
+                retval['%s.method' % prefix] = value
+                count += 1
+        boot = [reduce(dict.get, ['boot'], action)]
+        count = 0
+        for block in boot:
+            if not block:
+                continue
+            namespace = block.get('namespace', None)
+            prefix = "boot.%d.%s" % (count, namespace) if namespace else 'boot.%d' % count
+            value = block.get('commands', None)
+            if value:
+                retval['%s.commands' % prefix] = value
+            value = block.get('method', None)
+            if value:
+                retval['%s.method' % prefix] = value
+            value = block.get('type', None)
+            if value:
+                retval['%s.type' % prefix] = value
+            count += 1
+        test = [reduce(dict.get, ['test'], action)]
+        count = 0
+        for block in test:
+            if not block:
+                continue
+            namespace = block.get('namespace', None)
+            definitions = [reduce(dict.get, ['definitions'], block)][0]
+            for definition in definitions:
+                if definition['from'] == 'inline':
+                    # an inline repo without test cases will not get reported.
+                    if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                    else:
+                        # store the fact that an inline exists but would not generate any testcases
+                        prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
+                    retval['%s.inline.name' % prefix] = definition['name']
+                    retval['%s.inline.path' % prefix] = definition['path']
+                else:
+                    prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                    # FIXME: what happens with remote definition without lava-test-case?
+                    retval['%s.definition.name' % prefix] = definition['name']
+                    retval['%s.definition.path' % prefix] = definition['path']
+                    retval['%s.definition.from' % prefix] = definition['from']
+                    retval['%s.definition.repository' % prefix] = definition['repository']
+                count += 1
+    return retval
 
-    return value
+
+def _get_device_metadata(data):
+    hostname = data.get('hostname', None)
+    devicetype = data.get('device_type', None)
+    return {
+        'target.hostname': hostname,
+        'target.device_type': devicetype
+    }
 
 
 def build_action(action_data, testdata, submission):
     # test for a known section
-    logger = logging.getLogger('lava_results_app')
+    logger = logging.getLogger('dispatcher-master')
     if 'section' not in action_data:
-        logger.warn("Invalid action data - missing section")
+        logger.warning("Invalid action data - missing section")
         return
 
     metatype = MetaType.get_section(action_data['section'])
@@ -215,6 +222,7 @@ def build_action(action_data, testdata, submission):
     if 'max_retries' in action_data:
         max_retry = action_data['max_retries']
 
+    # maps the static testdata derived from the definition to the runtime pipeline construction
     action = ActionData.objects.create(
         action_name=action_data['name'],
         action_level=action_data['level'],
@@ -254,16 +262,26 @@ def map_metadata(description, job):
     except yaml.YAMLError as exc:
         logger.exception("[%s] %s", job.id, exc)
         return False
-    testdata = TestData.objects.create(testjob=job)
+    try:
+        testdata, created = TestData.objects.get_or_create(testjob=job)
+    except MultipleObjectsReturned:
+        # only happens for small number of jobs affected by original bug.
+        logger.info("[%s] skipping alteration of duplicated TestData", job.id)
+        return False
+    if not created:
+        # prevent updates of existing TestData
+        return False
     testdata.save()
-    # Add metadata from description data.
-    for key in METADATA_MAPPING_DESCRIPTION:
-        value = _get_nested_value(
-            description_data,
-            METADATA_MAPPING_DESCRIPTION[key]
-        )
-        if value:
-            testdata.attributes.create(name=key, value=value)
+
+    # get job-action metadata
+    action_values = _get_job_metadata(description_data['job']['actions'])
+    for key, value in action_values.items():
+        testdata.attributes.create(name=key, value=value)
+
+    # get metadata from device
+    device_values = _get_device_metadata(description_data['device'])
+    for key, value in device_values.items():
+        testdata.attributes.create(name=key, value=value)
 
     # Add metadata from job submission data.
     if "metadata" in submission_data:
@@ -292,7 +310,7 @@ def export_testcase(testcase):
     Returns string versions of selected elements of a TestCase
     Unicode causes issues with CSV and can complicate YAML parsing
     with non-python parsers.
-    :param testcases: list of TestCase objects
+    :param testcase: list of TestCase objects
     :return: Dictionary containing relevant information formatted for export
     """
     actiondata = testcase.action_data

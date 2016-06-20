@@ -94,6 +94,74 @@ def _job_actions_schema():
     ])
 
 
+def _job_notify_schema():
+    return Schema({
+        Required('criteria'): _notify_criteria_schema(),
+        'recipients': _recipient_schema(),
+        'verbosity': Any('verbose', 'quiet', 'status-only'),
+        'compare': _notify_compare_schema()
+    }, extra=True)
+
+
+def _recipient_schema():
+    from lava_scheduler_app.models import NotificationRecipient
+    return Schema([
+        {
+            Required('to'): {
+                Required('method'): Any(NotificationRecipient.EMAIL_STR,
+                                        NotificationRecipient.IRC_STR),
+                'user': str,
+                'email': str,
+                'server': str,
+                'handle': str
+            }
+        }
+    ])
+
+
+def _email_recipient_schema():
+    return Schema({
+        'user': str,
+        'email': str
+    }, extra=True)
+
+
+def _irc_recipient_schema():
+    return Schema({
+        'user': str,
+        'server': str,
+        'handle': str
+    }, extra=True)
+
+
+def _notify_criteria_schema():
+    return Schema({
+        Required('status'): Any('complete', 'incomplete', 'canceled'),
+        'type': Any('progression', 'regression')
+    }, extra=True)
+
+
+def _notify_compare_schema():
+    return Schema({
+        'query': Any(_query_name_schema(), _query_conditions_schema()),
+        'blacklist': [str]
+    }, extra=True)
+
+
+def _query_name_schema():
+    return Schema({
+        Required('username'): str,
+        Required('name'): str
+    })
+
+
+def _query_conditions_schema():
+    return Schema({
+        Required('entity'): str,
+        'conditions': dict
+    })
+
+
 def vlan_name(value):
     if re.match("^[_a-zA-Z0-9]+$", str(value)):
         return str(value)
@@ -120,7 +188,10 @@ def _job_protocols_schema():
             'name': str,
             'distribution': str,
             'release': str,
-            'arch': str
+            'arch': str,
+            'template': str,
+            'mirror': str,
+            'security_mirror': str
         }
     })
 
@@ -146,9 +217,11 @@ def _job_schema():
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
+            'metadata': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
-            Required('actions'): _job_actions_schema()
+            Required('actions'): _job_actions_schema(),
+            'notify': _job_notify_schema()
         }
     )
 
@@ -157,6 +230,7 @@ def _device_deploy_schema():
     return Schema({
         'connections': dict,
         Required('methods'): dict,
+        Optional('parameters'): _simple_params(),
     })
 
 
@@ -190,9 +264,11 @@ def _device_schema():
     Less strict than the job_schema as this is primarily admin / template controlled.
     """
     return Schema({
+        'character_delays': dict,
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'device_path': str,
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),

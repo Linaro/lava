@@ -5,9 +5,13 @@ from django.contrib.auth.admin import UserAdmin
 from django.db.models import Q
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable,
+    User, Worker, DefaultDeviceOwner,
     Architecture, ProcessorFamily, BitWidth, Core
 )
+from linaro_django_xmlrpc.models import AuthToken
+
+# django admin API itself isn't pylint clean, so some settings must be suppressed.
+# pylint: disable=no-self-use,function-redefined
 
 
 class DefaultOwnerInline(admin.StackedInline):
@@ -19,11 +23,27 @@ class DefaultOwnerInline(admin.StackedInline):
     can_delete = False
 
 
+def expire_user_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
+    for user in queryset.filter(is_active=True):
+        AuthToken.objects.filter(user=user).delete()
+        user.is_staff = False
+        user.is_superuser = False
+        user.is_active = False
+        for group in user.groups.all():
+            group.user_set.remove(user)
+        for permission in user.user_permissions.all():
+            user.user_permissions.remove(permission)
+        user.save()
+
+expire_user_action.short_description = 'Expire user account'
+
+
 class UserAdmin(UserAdmin):
     """
     Defines the override class for DefaultOwnerInline
     """
     inlines = (DefaultOwnerInline, )
+    actions = [expire_user_action]
 
 
 #  Setup the override in the django admin interface at startup.
@@ -31,21 +51,23 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 
-def offline_action(modeladmin, request, queryset):
+def offline_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for device in queryset.filter(status__in=[Device.IDLE, Device.RUNNING, Device.RESERVED]):
         if device.can_admin(request.user):
             device.put_into_maintenance_mode(request.user, "admin action")
+
+
 offline_action.short_description = "take offline"
 
 
-def online_action(modeladmin, request, queryset):
+def online_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action")
 online_action.short_description = "take online"
 
 
-def online_action_without_health_check(modeladmin, request, queryset):
+def online_action_without_health_check(modeladmin, request, queryset):  # pylint: disable=unused-argument,invalid-name
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action", True)
@@ -53,7 +75,7 @@ online_action_without_health_check.short_description = \
     "take online without manual health check"
 
 
-def retire_action(modeladmin, request, queryset):
+def retire_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for device in queryset:
         if device.can_admin(request.user):
             new_status = device.RETIRED
@@ -65,14 +87,14 @@ def retire_action(modeladmin, request, queryset):
 retire_action.short_description = "retire"
 
 
-def cancel_action(modeladmin, request, queryset):
+def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for testjob in queryset:
         if testjob.can_cancel(request.user):
             testjob.cancel(request.user)
 cancel_action.short_description = 'cancel selected jobs'
 
 
-def health_unknown(modeladmin, request, queryset):
+def health_unknown(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for device in queryset.filter(health_status=Device.HEALTH_PASS):
         device.health_status = Device.HEALTH_UNKNOWN
         device.save()
@@ -309,14 +331,15 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
-def hide_worker_action(modeladmin, request, queryset):
+# API defined by django admin
+def hide_worker_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for worker in queryset.filter(display=True):
         worker.display = False
         worker.save()
 hide_worker_action.short_description = "Hide selected worker(s)"
 
 
-def show_worker_action(modeladmin, request, queryset):
+def show_worker_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for worker in queryset.filter(display=False):
         worker.display = True
         worker.save()
@@ -325,8 +348,7 @@ show_worker_action.short_description = "Show selected worker(s)"
 
 class WorkerAdmin(admin.ModelAdmin):
     actions = [hide_worker_action, show_worker_action]
-    list_display = ('hostname', 'display', 'ip_address', 'is_master',
-                    'uptime', 'arch')
+    list_display = ('hostname', 'display', 'is_master')
     ordering = ['hostname']
 
 

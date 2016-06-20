@@ -18,7 +18,6 @@
 
 import os
 
-from lava_server.extension import loader
 from lava_server.settings.common import *
 
 # Top-level directory of the project.
@@ -89,46 +88,35 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 SECRET_KEY = '00000000000000000000000000000000000000000000000000'
 
 # Use templates from the checkout directory
-if django.VERSION < (1, 8):
-    TEMPLATE_DIRS = (
-        os.path.join(PROJECT_SRC_DIR, 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-        os.path.join(PROJECT_SRC_DIR, 'dashboard_app', 'templates', 'dashboard_app'),
-        os.path.join(PROJECT_SRC_DIR, 'lava_results_app', 'templates', 'lava_results_app'),
-        os.path.join(PROJECT_SRC_DIR, 'google_analytics', 'templates', 'google_analytics'),
-        os.path.join(PROJECT_SRC_DIR, 'lava_markitup', 'templates', 'lava_markitup'),
-        os.path.join(PROJECT_SRC_DIR, "templates"),
-    )
-else:
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_server', 'templates'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_markitup', 'templates', 'lava_markitup'),
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(PROJECT_SRC_DIR, '..', 'lava_server', 'templates'),
+            os.path.join(PROJECT_SRC_DIR, '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
+            os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
+            os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
+            os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.request",
+                "django.template.context_processors.static",
+                "lava_server.context_processors.lava",
+                "lava_server.context_processors.ldap_available",
             ],
-            'OPTIONS': {
-                'context_processors': [
-                    # Insert your TEMPLATE_CONTEXT_PROCESSORS here
-                    "django.contrib.auth.context_processors.auth",
-                    "django.template.context_processors.debug",
-                    "django.template.context_processors.i18n",
-                    "django.template.context_processors.media",
-                    "django.template.context_processors.request",
-                    "django.template.context_processors.static",
-                    "lava_server.context_processors.lava",
-                    "lava_server.context_processors.ldap_available",
-                ],
-                'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                ]
-            },
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
         },
-    ]
+    },
+]
 
 
 # Serve static files used by lava-server from the checkout directory
@@ -151,9 +139,6 @@ except ImportError:
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Load extensions
-loader.contribute_to_settings(locals())
 
 # default branding details
 BRANDING_ALT = "Linaro logo"

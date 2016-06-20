@@ -24,12 +24,11 @@ import tempfile
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from django.utils.safestring import mark_safe
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -95,6 +94,10 @@ class OtherImageReportView(LavaView):
             is_archived=False,
             is_published=True,
             image_report_group=None).order_by('name')
+        other_reports = other_reports.prefetch_related("imagereportchart_set",
+                                                       "imagereportchart_set__imagechartfilter_set",
+                                                       "imagereportchart_set__imagechartfilter_set__filter",
+                                                       "imagereportchart_set__imagechartfilter_set__filter__bundle_streams")
 
         non_accessible_reports = []
         for report in other_reports:
@@ -122,6 +125,10 @@ class GroupImageReportView(LavaView):
             is_archived=False,
             is_published=True,
             image_report_group=self.image_report_group).order_by('name')
+        group_reports = group_reports.prefetch_related("imagereportchart_set",
+                                                       "imagereportchart_set__imagechartfilter_set",
+                                                       "imagereportchart_set__imagechartfilter_set__filter",
+                                                       "imagereportchart_set__imagechartfilter_set__filter__bundle_streams")
 
         non_accessible_reports = []
         for report in group_reports:
@@ -141,8 +148,8 @@ def image_report_list(request):
 
     group_tables = {}
     terms_data = search_data = discrete_data = {}
-    for group in ImageReportGroup.objects.all():
-        if group.imagereport_set.count():
+    for group in ImageReportGroup.objects.all().prefetch_related("imagereport_set"):
+        if group.imagereport_set.exists():
             prefix = "group_%s_" % group.id
             group_view = GroupImageReportView(request, group, model=ImageReportChart, table_class=GroupImageReportTable)
             table = GroupImageReportTable(group_view.get_table_data(prefix), prefix=prefix)
@@ -415,7 +422,7 @@ def image_report_add_group(request, name):
     image_report.save()
 
     if old_group:
-        if not old_group.imagereport_set.count():
+        if not old_group.imagereport_set.exists():
             old_group.delete()
 
     return HttpResponse(group_name, content_type='application/json')

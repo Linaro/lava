@@ -102,7 +102,7 @@ class LavaSystemAPI(SystemAPI):
 
         """
         self._authenticate()
-        if type(job_list) is not list:
+        if not isinstance(job_list, list):
             raise xmlrpclib.Fault(
                 errors.BAD_REQUEST,
                 "job list argument must be a list")
@@ -172,7 +172,7 @@ class LavaSystemAPI(SystemAPI):
 
         """
         self._authenticate()
-        if type(bundle_list) is not list:
+        if not isinstance(bundle_list, list):
             raise xmlrpclib.Fault(
                 errors.BAD_REQUEST,
                 "bundle list argument must be a list")
@@ -273,7 +273,7 @@ class LavaSystemAPI(SystemAPI):
 
         """
         self._authenticate()
-        if type(device_list) is not list:
+        if not isinstance(device_list, list):
             raise xmlrpclib.Fault(
                 errors.BAD_REQUEST,
                 "device list argument must be a list")
@@ -353,7 +353,7 @@ class LavaSystemAPI(SystemAPI):
 
         """
         self._authenticate()
-        if type(type_list) is not list:
+        if not isinstance(type_list, list):
             raise xmlrpclib.Fault(
                 errors.BAD_REQUEST,
                 "type list argument must be a list")

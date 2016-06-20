@@ -1,7 +1,6 @@
 import logging.config
 import argparse
-import django
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 
 
 class SchedulerCommand(BaseCommand):
@@ -34,10 +33,7 @@ class SchedulerCommand(BaseCommand):
                             help="Log level, default is taken from settings.")
         parser.add_argument('-f', '--logfile', action='store', default=None, type=str,
                             help="Path to log file, default is taken from settings.")
-        if django.VERSION >= (1, 8):
-            parser.add_argument('args', nargs=argparse.REMAINDER)
-        else:
-            parser.add_argument('--args', nargs=argparse.REMAINDER)
+        parser.add_argument('args', nargs=argparse.REMAINDER)
 
     def _configure(self, options):
         from django.conf import settings

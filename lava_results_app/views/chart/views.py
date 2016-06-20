@@ -16,20 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import csv
-import os
-import shutil
 import simplejson
-import tempfile
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django.core import serializers
-from django.core.exceptions import (
-    PermissionDenied,
-    ValidationError,
-    FieldError
-)
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.http import (
@@ -38,10 +30,8 @@ from django.http import (
     HttpResponseRedirect
 )
 from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext, defaultfilters
-from django.utils.safestring import mark_safe
+from django.template import RequestContext
 
-from dashboard_app.models import NamedAttribute
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
@@ -64,8 +54,6 @@ from lava_results_app.models import (
     ChartQuery,
     ChartQueryUser,
     TestCase,
-    TestSuite,
-    InvalidConditionsError,
     InvalidContentTypeError
 )
 
@@ -75,9 +63,6 @@ from lava_results_app.views.chart.tables import (
     GroupChartTable,
 )
 
-from lava_scheduler_app.models import TestJob
-
-from django.contrib.contenttypes.models import ContentType
 from django_tables2 import (
     RequestConfig,
 )
@@ -184,7 +169,7 @@ def chart_list(request):
             'terms_data': terms_data,
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(chart_list),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -281,7 +266,7 @@ def chart_detail(request, name):
             'chart_queries': chart.queries.all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_detail, name=name),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 

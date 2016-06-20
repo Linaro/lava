@@ -17,11 +17,12 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.db.models import Count
 from django.http import (
-    HttpResponse,
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
+    HttpResponseRedirect,
 )
 from django.shortcuts import (
     get_object_or_404,
@@ -294,7 +295,7 @@ def index(request):
         request,
         "lava_scheduler_app/index.html",
         {
-            'device_status': "%d/%d" % _online_total(),
+            'device_status': "%d/%d" % (num_online, num_not_retired),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
             'num_jobs_running': running_jobs_count,
@@ -389,14 +390,13 @@ def job_report(start_day, end_day, health_check):
     end_date = now + datetime.timedelta(end_day)
 
     res = TestJob.objects.filter(health_check=health_check,
-                                 start_time__range=(start_date, end_date),
-                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
-                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+                                 start_time__range=(start_date, end_date)).values('status')
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'fail': res.filter(status__in=(TestJob.INCOMPLETE, TestJob.CANCELED,
+                                       TestJob.CANCELING)).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
@@ -483,6 +483,27 @@ def active_device_list(request):
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Pipeline Devices", parent=index)
+def pipeline_device_list(request):
+
+    data = PipelineDeviceView(request, model=Device, table_class=DeviceTable)
+    ptable = DeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
+        ptable)
+    return render_to_response(
+        "lava_scheduler_app/pipelinedevices.html",
+        {
+            'pipeline_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                pipeline_device_list),
         },
         RequestContext(request))
 
@@ -590,7 +611,7 @@ def mydevice_type_health_history_log(request):
         RequestContext(request))
 
 
-def get_restricted_job(user, pk):
+def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
@@ -599,9 +620,9 @@ def get_restricted_job(user, pk):
     if not device_type:
         # dynamic connection - might need to still be restricted?
         return job
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         raise Http404()
-    if job.can_view(user):
+    if utils.check_user_auth(user, job, request=request):
         return job
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
@@ -618,8 +639,8 @@ def filter_device_types(user):
     at least one device this user can see.
     """
     visible = []
-    for device_type in DeviceType.objects.filter(display=True):
-        if len(device_type.devices_visible_to(user)) > 0:
+    for device_type in DeviceType.objects.filter(display=True).only('name', 'owners_only'):
+        if device_type.num_devices_visible_to(user) > 0:
             visible.append(device_type.name)
     return visible
 
@@ -633,16 +654,7 @@ def filter_device_types(user):
 #
 # Query Expressions:
 # https://docs.djangoproject.com/en/1.8/ref/models/expressions/
-#
-# But both the above are available only in django >=1.8, hence there isn't
-# a simple way of replacing SQL Aggregates that will work both in django
-# 1.7 and 1.8, hence this check is available.
-#
-# FIXME: Remove this check when support for django 1.7 ceases.
-if django.VERSION >= (1, 8):
-    aggregate_cls = models.aggregates.Aggregate
-else:
-    aggregate_cls = models.sql.aggregates.Aggregate
+aggregate_cls = models.aggregates.Aggregate
 
 
 class SumIfSQL(aggregate_cls):
@@ -665,6 +677,16 @@ class ActiveDeviceView(DeviceTableView):
         visible = filter_device_types(self.request.user)
         return Device.objects.filter(device_type__in=visible)\
             .exclude(status=Device.RETIRED).order_by("hostname")
+
+
+class PipelineDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible,
+                                     is_pipeline=True)\
+                             .exclude(status=Device.RETIRED)\
+                             .order_by("hostname")
 
 
 class DeviceTypeOverView(JobTableView):
@@ -693,46 +715,56 @@ class NoDTDeviceView(DeviceTableView):
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
-    dt = get_object_or_404(DeviceType, pk=pk)
+    try:
+        dt = DeviceType.objects \
+            .select_related('architecture', 'bits', 'processor') \
+            .get(pk=pk)
+    except DeviceType.DoesNotExist:
+        raise Http404()
+    # Check that at least one device is visible to the current user
     if dt.owners_only:
-        visible = filter_device_types(request.user)
-        if dt.name not in visible:
+        if dt.num_devices_visible_to(request.user) == 0:
             raise Http404('No device type matches the given query.')
+
+    # Get some test job statistics
+    now = timezone.now().date()
+    devices = list(Device.objects.filter(device_type=dt)
+                   .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     daily_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     weekly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     weekly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     monthly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     monthly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     health_summary_data = [{
         "Duration": "24hours",
@@ -760,10 +792,9 @@ def device_type_detail(request, pk):
 
     prefix = "dt_"
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
-    dt = get_object_or_404(DeviceType, pk=dt)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix)
-        .filter(actual_device__in=Device.objects.filter(device_type=dt)),
+        .filter(actual_device__in=devices),
         prefix=prefix,
     )
     config = RequestConfig(request, paginate={"per_page": dt_jobs_ptable.length})
@@ -804,7 +835,7 @@ def device_type_detail(request, pk):
 
     if dt.health_check_job == "":
         health_freq_str = ""
-    elif not list(Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED))):
+    elif not Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED)).count():
         health_freq_str = ""
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
@@ -837,7 +868,7 @@ def device_type_detail(request, pk):
                 Q(requested_device_type=dt) |
                 Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
             'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
@@ -1282,6 +1313,7 @@ def job_detail(request, pk):
                                                             test_job=job)
         is_favorite = testjob_user.is_favorite
 
+    template = "lava_scheduler_app/job.html"
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1298,6 +1330,7 @@ def job_detail(request, pk):
         job_data = description.get('job', {})
         action_list = job_data.get('actions', [])
         pipeline = description.get('pipeline', {})
+
         deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
         boot_list = [item['boot'] for item in action_list if 'boot' in item]
         test_list = [item['test'] for item in action_list if 'test' in item]
@@ -1306,13 +1339,23 @@ def job_detail(request, pk):
             if 'section' in action:
                 sections.append({action['section']: action['level']})
         default_section = 'boot'  # to come from user profile later.
-        if 'section' in request.GET:
-            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-        else:
-            log_data = utils.folded_logs(job, default_section, sections, summary=True)
-            if not log_data:
-                default_section = 'deploy'
+
+        # Is it the old log format?
+        if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+            if 'section' in request.GET:
+                log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
+            else:
                 log_data = utils.folded_logs(job, default_section, sections, summary=True)
+                if not log_data:
+                    default_section = 'deploy'
+                    log_data = utils.folded_logs(job, default_section, sections, summary=True)
+        else:
+            template = "lava_scheduler_app/job_pipeline.html"
+            try:
+                with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+                    log_data = yaml.load(f_in)
+            except IOError:
+                log_data = []
 
         data.update({
             'device_data': description.get('device', {}),
@@ -1373,13 +1416,12 @@ def job_detail(request, pk):
         data.update({
             'expand': True,
         })
-    return render_to_response(
-        "lava_scheduler_app/job.html", data, RequestContext(request))
+    return render_to_response(template, data, RequestContext(request))
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     description = description_data(job.id) if job.is_pipeline else {}
     return render_to_response(
@@ -1396,7 +1438,7 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404()
     filename = description_filename(job.id)
@@ -1411,7 +1453,7 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
@@ -1420,7 +1462,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
 def expanded_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/expanded_job_definition.html",
@@ -1435,7 +1477,7 @@ def expanded_job_definition(request, pk):
 
 
 def expanded_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
@@ -1444,7 +1486,7 @@ def expanded_job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/multinode_job_definition.html",
@@ -1469,7 +1511,7 @@ def multinode_job_definition_plain(request, pk):
 
 @BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
 def vmgroup_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/vmgroup_job_definition.html",
@@ -1484,7 +1526,7 @@ def vmgroup_job_definition(request, pk):
 
 
 def vmgroup_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
     response['Content-Disposition'] = \
         "attachment; filename=vmgroup_job_%d.json" % job.id
@@ -1558,9 +1600,13 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404
+    # If this is a new log format, redirect to the job page
+    if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
+        return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
+
     description = description_data(job.id)
     pipeline = description.get('pipeline', {})
     sections = []
@@ -1593,7 +1639,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, job, log_name):
-    job = get_restricted_job(request.user, job)
+    job = get_restricted_job(request.user, job, request=request)
     if not job.is_pipeline:
         raise Http404
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
@@ -1619,7 +1665,7 @@ def job_section_log(request, job, log_name):
 
 
 def job_status(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response_dict = {'job_status': job.get_status_display()}
     if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
             job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
@@ -1694,7 +1740,7 @@ def job_pipeline_incremental(request, pk):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if job.is_pipeline:
         return redirect(job_complete_log, pk=pk)
     log_file = job.output_file()
@@ -1730,14 +1776,23 @@ def job_log_file(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
+    # Old style jobs
     log_file = job.output_file()
-    if not log_file:
+    if log_file:
+        response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+        response['Content-Transfer-Encoding'] = 'quoted-printable'
+        response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+        return response
+
+    # New pipeline jobs
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
+            response = HttpResponse(log_file, content_type='application/yaml')
+            response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+            return response
+    except IOError:
         raise Http404
-    response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
-    response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
-    return response
 
 
 def job_log_incremental(request, pk):
@@ -1752,6 +1807,29 @@ def job_log_incremental(request, pk):
     response['X-Current-Size'] = str(start + len(new_content))
     if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
+    return response
+
+
+def job_log_pipeline_incremental(request, pk):
+    job = get_restricted_job(request.user, pk)
+    # Start from this line
+    try:
+        first_line = int(request.GET.get("line", 0))
+    except ValueError:
+        first_line = 0
+
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+            data = yaml.load(f_in)[first_line:]
+    except IOError:
+        data = []
+
+    response = HttpResponse(
+        simplejson.dumps(data), content_type='application/json')
+
+    if job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+
     return response
 
 
@@ -2025,7 +2103,7 @@ def edit_transition(request):
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
     device_type = transition.device.device_type
-    if len(device_type.devices_visible_to(request.user)) == 0:
+    if device_type.num_devices_visible_to(request.user) == 0:
         raise Http404()
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
@@ -2149,22 +2227,32 @@ class MyDTHealthHistoryView(JobTableView):
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
-    device = get_object_or_404(Device, pk=pk)
+    # Find the device and raise 404 if we are not allowed to see it
+    try:
+        device = Device.objects.select_related('device_type', 'user').get(pk=pk)
+    except Device.DoesNotExist:
+        raise Http404()
+
+    # Any user that can access to a device_type can
+    # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        visible = filter_device_types(request.user)
-        if device.device_type.name not in visible:
+        if device.device_type.num_devices_visible_to(request.user) == 0:
             raise Http404('No device matches the given query.')
 
-    devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')
-    devices_list = [dev[0] for dev in devices.values_list('hostname')]
-    try:
-        next_device = devices_list[devices_list.index(device.hostname) + 1]
-    except IndexError:
-        next_device = None
-    try:
-        previous_device = devices_list[:devices_list.index(device.hostname)].pop()
-    except IndexError:
-        previous_device = None
+    # Find previous and next device
+    devices = Device.objects \
+        .filter(device_type_id=device.device_type_id) \
+        .only('hostname').order_by('hostname')
+    previous_device = None
+    devices_iter = iter(devices)
+    for d in devices_iter:
+        if d.hostname == device.hostname:
+            try:
+                next_device = next(devices_iter).hostname
+            except StopIteration:
+                next_device = None
+            break
+        previous_device = d.hostname
 
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
@@ -2203,8 +2291,6 @@ def device_detail(request, pk):
 
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
-
-    visible = filter_device_types(request.user)
 
     overrides = None
     if device.is_pipeline:
@@ -2316,9 +2402,11 @@ def device_looping_mode(request, pk):
 
 @post_only
 def device_force_health_check(request, pk):
-    device = Device.objects.get(pk=pk)
+    device = get_object_or_404(Device, pk=pk)
     if device.can_admin(request.user):
         job = initiate_health_check_job(device)
+        if not job:
+            raise Http404
         return redirect(job)
     else:
         return HttpResponseForbidden(

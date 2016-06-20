@@ -161,6 +161,11 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         master_jobs = self.scheduler_tick(master)
         worker_jobs = self.scheduler_tick(worker)
 
+        if len(master_jobs) == 0:
+            master_jobs = self.scheduler_tick(master)
+        if len(worker_jobs) == 0:
+            worker_jobs = self.scheduler_tick(worker)
+
         self.assertEqual(1, len(master_jobs))
         self.assertEqual(master_jobs[0].actual_device, panda01)
 

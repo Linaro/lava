@@ -238,6 +238,10 @@ kernels. The eventual templates will exist on the server and can be used
 to declare the detailed device support so that test writers know in advance
 what kind of images the device can use.
 
+.. index:: trailing comma
+
+.. _v1_trailing_commas:
+
 Actions
 -------
 
@@ -296,10 +300,17 @@ Next are the commands for the deployment method itself:
 These are retained with only formatting changes - after all, these are
 what the device needs to be able to boot.
 
-#. Remove trailing commas (remnants of the old config)
+#. Remove **trailing commas** (remnants of the old config)
 #. Remove one level of quote marks **unless** the command embeds a colon
    (e.g. NFS), in which case the **whole line** is quoted.
 #. Make each line part of a list by prefixing with a hyphen and a space.
+
+.. note:: Trailing commas are known to cause problems on devices - check
+   the config carefully and be particularly watchful for failures where
+   the device reports ``cannot find device 'net0,'`` when working V1 jobs
+   would report using ``device 'net0'``. Commas are required in V1 but
+   YAML processing for V2 will include trailing commas as part of the
+   string, not part of the formatting.
 
 Timeouts
 --------
@@ -549,9 +560,9 @@ which is specific to that one device - usually including the serial
 connection command and the power commands.
 
 The first point of reference with a new template is the ``lava-server``
-`base.yaml <https://git.linaro.org/lava/lava-server.git/blob_plain/HEAD:/etc/dispatcher-config/device-types/base.yaml>`_
+`base.jinja2 <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/base.jinja2>`_
 template and existing examples (e.g. `beaglebone-black
-<https://git.linaro.org/lava/lava-server.git/blob_plain/HEAD:/etc/dispatcher-config/device-types/beaglebone-black.yaml>`_)
+<https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/beaglebone-black.jinja2>`_)
 - templates live on the server, are populated with data from
 the database and the resulting YAML is sent to the dispatcher.
 
@@ -567,15 +578,15 @@ For example, a new mustang template starts as::
 
  {% endblock %}
 
-The content of the template is a YAML file based directly on the working
-device YAML above. Where there are values, these are provided with defaults
+The content is a jinja2 template based directly on the working device jinja2
+template above. Where there are values, these are provided with defaults
 matching the currently working values. Where there are common blocks of
-code in ``base.yaml``, these are pulled in using Jinja2 templates. The
+code in ``base.jinja2``, these are pulled in using Jinja2 templates. The
 ``commands`` block itself is left to the device dictionary (and picked
-up by ``base.yaml``).
+up by ``base.jinja2``).
 
 ``ramdisk`` and ``nfs`` are particularly common deployment methods, so
-the majority of the commands are already available in ``base.yaml``.
+the majority of the commands are already available in ``base.jinja2``.
 These commands use ``{{ console_device }}`` and ``{{ baud_rate }}``,
 which need to be defined with defaults:
 
@@ -667,7 +678,7 @@ Creating a device dictionary for the device
 ===========================================
 
 Examples of exported device dictionaries exist in the ``lava-server``
-`codebase <https://git.linaro.org/lava/lava-server.git/blob_plain/HEAD:/etc/dispatcher-config/devices/bbb-01.yaml>`_
+`codebase <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/bbb-01.yaml>`_
 for unit test support. The dictionary extends the new template and
 provides the device-specific values.
 
@@ -691,17 +702,17 @@ directly and add two sub-directories::
  mkdir ./device-types
  mkdir ./devices
 
-Copy ``base.yaml`` into the ``device-types`` directory, along with your
+Copy ``base.jinja2`` into the ``device-types`` directory, along with your
 new local template. Copy the device dictionary file to ``devices``. If
-your locally working YAML file is called ``working.yaml``, the comparison
+your locally working jinja2 file is called ``working.jinja2``, the comparison
 would be::
 
- $ lava-tool compare-device-conf --wdiff --dispatcher-config-dir . devices/mustang01.yaml working.yaml
- $ lava-tool compare-device-conf --dispatcher-config-dir . devices/mustang01.yaml working.yaml
+ $ lava-tool compare-device-conf --wdiff --dispatcher-config-dir . devices/mustang01.yaml working.jinja2
+ $ lava-tool compare-device-conf --dispatcher-config-dir . devices/mustang01.yaml working.jinja2
 
-Iterate through the changes, testing any changes to the ``working.yaml``
+Iterate through the changes, testing any changes to the ``working.jinja2``
 at each stage, until you have no differences between the generated YAML
-and the working YAML.
+and the working jinja2.
 
 Pay particular attention to whitespace and indentation which have a
 direct impact on the structure of the object represented by the file.
@@ -710,7 +721,7 @@ it is often necessary to change the order of fields within a single
 command to get an appropriate match, even if that order has no actual
 effect. By ensuring that the content does match, it allows the comparison
 to show other changes like indents. Be prepared to change both the
-``working.yaml`` and the template so that the indenting is the same in
+``working.jinja2`` and the template so that the indenting is the same in
 each even after commands have been substituted.
 
 .. note:: The snippets here are just examples. In particular, formatting
@@ -722,7 +733,7 @@ each even after commands have been substituted.
 Adapting the base commands to the device type
 ---------------------------------------------
 
-``base.yaml`` for most devices uses the command
+``base.jinja2`` for most devices uses the command
 ``base_uboot_commands`` which expands to::
 
           - setenv autoload no
@@ -758,7 +769,7 @@ but the process involves:
    "Pipeline Device" box.
 #. Add the template to the ``lava-server`` configuration::
 
-   $ sudo cp device-types/mustang.yaml /etc/lava-server/dispatcher-config/device-types/
+   $ sudo cp device-types/mustang.jinja2 /etc/lava-server/dispatcher-config/device-types/
 
 #. Import the device dictionary to provide the device-specific configuration::
 

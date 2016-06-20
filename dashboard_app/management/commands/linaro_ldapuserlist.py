@@ -18,10 +18,11 @@
 
 
 import os
+import sys
 import csv
 import ldap
 
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 from lava_server.settings.getsettings import Settings
 
 

@@ -1,8 +1,6 @@
 import logging
 import sys
-from django.contrib.auth.models import Group, Permission, User
-from django.test import TransactionTestCase
-from django.test.client import Client
+from django.contrib.auth.models import User
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
     Device,
@@ -24,10 +22,12 @@ from dashboard_app.views import (
 )
 from dashboard_app.models import BundleStream
 
-logger = logging.getLogger()
-logger.level = logging.INFO  # change to DEBUG to see *all* output
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
+LOGGER = logging.getLogger()
+LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
+LOGGER.addHandler(logging.StreamHandler(sys.stdout))
+
+# pylint does not like TestCaseWithFactory
+# pylint: disable=too-many-ancestors
 
 
 class TestTable(LavaTable):
@@ -49,7 +49,7 @@ class TestTestTable(TestCase):
         logging.debug("Creating an empty LavaTable")
         self.assertEqual(table.length, 10)
 
-    def test_default_length(self):
+    def test_default_length_table(self):
         table = TestLengthTable(self.data)
         logging.debug("Creating a derived LavaTable")
         self.assertEqual(table.length, 25)
@@ -84,7 +84,7 @@ class TestDeviceView(LavaView):
 
 class TestJobView(LavaView):
 
-    def get_queryset(self, request=None):
+    def get_queryset(self):
         return all_jobs_with_custom_sort()
 
 
@@ -166,7 +166,7 @@ class TestForDeviceTable(TestCase):
         self.assertEqual(table.prepare_terms_data(view), {prefix: {}})
         self.assertEqual(table.prepare_times_data(view), {prefix: []})
 
-    def test_device_table_model(self):
+    def test_device_table_model2(self):
         view = TestDeviceView(None, model=Device, table_class=TestDeviceTable)
         table = TestDeviceTable(view.get_table_data())
         self.assertEqual(table.prepare_search_data(view),
@@ -196,19 +196,19 @@ class TestHiddenDevicesInDeviceTable(TestCase):
 
     def test_device_table_view(self):
         device_type = DeviceType(name="generic", owners_only=False, health_check_job='')
-        device_type.save()
+        device_type.save()  # pylint: disable=no-member
         device = Device(device_type=device_type, hostname='generic1', status=Device.OFFLINE)
         user = self.make_user()
         device.user = user
-        device.save()
+        device.save()  # pylint: disable=no-member
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 1)
 
     def test_device_table_hidden(self):
         hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
-        hidden.save()
+        hidden.save()  # pylint: disable=no-member
         device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
-        device.save()
+        device.save()  # pylint: disable=no-member
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 0)
 

@@ -5,12 +5,9 @@ from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
-    DeviceType,
     DeviceDictionary,
-    JobPipeline,
     TestJob,
     Tag,
-    DevicesUnavailableException,
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
@@ -21,19 +18,21 @@ from lava_scheduler_app.tests.test_pipeline import YamlFactory
 from lava_scheduler_app.dbutils import find_device_for_job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+
+# pylint does not like TestCaseWithFactory
+# pylint: disable=too-many-ancestors,no-self-use
 
 
 class VlandFactory(YamlFactory):
 
     def __init__(self):
-        super(YamlFactory, self).__init__()
+        super(VlandFactory, self).__init__()
         self.bbb1 = None
         self.cubie1 = None
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=invalid-name
         bbb_type = self.make_device_type(name='bbb')
         cubie_type = self.make_device_type(name='cubietruck')
         self.bbb1 = self.make_device(bbb_type, hostname='bbb1')
@@ -247,7 +246,7 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)
         with open(client_file_name) as sample_job_data:
-            bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, output_dir='/tmp/')
+            bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, None, None, output_dir='/tmp/')
         os.close(client_handle)
         os.unlink(client_file_name)
         self.assertIn('protocols', bbb_job.parameters)

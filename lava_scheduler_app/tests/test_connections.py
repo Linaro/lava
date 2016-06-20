@@ -1,24 +1,19 @@
 # unit tests for primary and secondary connections
 import os
 import yaml
-import logging
 from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
     DeviceDictionary,
-    JobPipeline,
     TestJob,
-    Tag,
     DevicesUnavailableException,
-    _pipeline_protocols,
+    SubmissionException,
 )
-from django.db import models
-from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
-from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.schema import SubmissionException
+from lava_scheduler_app.utils import jinja_template_path
+from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
+
+# TestCaseWithFactory cannot help causing too-many-ancestors, so ignore
+# pylint: disable=too-many-ancestors
 
 class YamlSshFactory(YamlFactory):
 

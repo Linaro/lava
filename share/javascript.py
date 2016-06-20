@@ -51,7 +51,7 @@ def handle_embedded(os_name, data, dirname, simulate=False):
     python_dir = None
     dependencies = {}
     os_check = check_os(os_name, data)
-    for os_data in os_check.next():
+    for os_data in next(os_check):
         for dkey, value in os_data.items():
             if dkey == 'python_dir':
                 python_dir = value
@@ -59,10 +59,10 @@ def handle_embedded(os_name, data, dirname, simulate=False):
                     python_dir = str(python_dir[1:])
             elif dkey == 'package':
                 package = os_data
-                print 'Linking files from "%s" into "%s"' % (
+                print('Linking files from "%s" into "%s"' % (
                     package['package'],
                     package['lava_directory']
-                )
+                ))
                 if 'version' in package:
                     dependencies[package['package']] = "(>= %s)" % package['version']
                 else:
@@ -81,8 +81,8 @@ def handle_embedded(os_name, data, dirname, simulate=False):
                         os.unlink(our_path)
                         os.symlink(ext_path, our_path)
                     else:
-                        print "rm %s" % our_path
-                        print "ln -s %s %s" % (ext_path, our_path)
+                        print("rm %s" % our_path)
+                        print("ln -s %s %s" % (ext_path, our_path))
     return dependencies
 
 
@@ -91,7 +91,7 @@ def uglify(os_name, data, dirname, remove=False, simulate=False):
     """
     python_dir = None
     os_check = check_os(os_name, data)
-    for os_data in os_check.next():
+    for os_data in next(os_check):
         for dkey, value in os_data.items():
             if dkey == 'python_dir':
                 python_dir = value
@@ -117,17 +117,17 @@ def uglify(os_name, data, dirname, remove=False, simulate=False):
                                  dest_path, '-c', '-m'],
                                 stderr=open(os.devnull, 'wb'))
                         except Exception as e:
-                            print e
+                            print(e)
 
                         if remove:
                             if not os.path.exists(install_path):
-                                print "WARNING: JS file %s does not exist" % (
-                                    install_path)
+                                print("WARNING: JS file %s does not exist" % (
+                                    install_path))
                                 continue
                             os.unlink(install_path)
                     else:
-                        print "uglifyjs %s -o %s -c -m" % (orig_path,
-                                                           dest_path)
+                        print("uglifyjs %s -o %s -c -m" % (orig_path,
+                                                           dest_path))
 
     return None
 
@@ -140,7 +140,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Handle embedded javascript')
     parser.add_argument(
-        '-f', '--filename',
+        '-f', '--filename', required=True,
         help='YAML file describing embedded javascript')
     parser.add_argument(
         '-r', '--remove',
@@ -150,9 +150,6 @@ def main():
         action='store_true', help='Only echo the commands')
 
     args = parser.parse_args()
-    if not args.filename and args.simulate:
-        print "Please provide a suitable YAML file"
-        sys.exit(1)
     data = yaml.load(open(args.filename, 'r'))
     # only have data for debian-based packages so far.
     dependencies = handle_embedded('debian', data, os.getcwd(), args.simulate)
@@ -164,9 +161,9 @@ def main():
             dep_list.append(package)
     if args.simulate:
         # only useful for Debian-based
-        print ""
-        print "Build-Depends:", ", ".join(sorted(dep_list))
-        print "Depends:", ", ".join(sorted(dep_list))
+        print("")
+        print("Build-Depends:", ", ".join(sorted(dep_list)))
+        print("Depends:", ", ".join(sorted(dep_list)))
 
     uglify('debian', data, os.getcwd(), args.remove, args.simulate)
     return 0

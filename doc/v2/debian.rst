@@ -61,6 +61,29 @@ build, ready for use with ``$ sudo dpkg -i``.
           service will be restarted each time ``lava-server`` is
           installed or updated.
 
+.. _devel_branches:
+
+Which branch to use for changes
+===============================
+
+Any and all changes for inclusion into a future release need to be based
+on the current git master branch and will need rebasing from time to
+time as master moves ahead.
+
+All testing of the LAVA source code is based on the relevant master
+branch which is then merged into the staging branch for testing as a
+release candidate. The final release involves merging staging into the
+release branch. Git tags are based on the release branch.
+
+When using existing git tags or the release branch, create a new local
+branch and commit your changes to ensure that a
+:ref:`local version string <local_version_strings>` is used.
+
+There can also be new dependencies added by changes in master and
+staging before those changes are merged into release or uploaded as
+a production release. When these changes are merged into master, the
+packaging will also be updated.
+
 .. _local_version_strings:
 
 Local version strings
@@ -73,10 +96,12 @@ The local version is built (using ``./version.py``) from these components:
 
    $ git tag --sort -v:refname|head -n1
    2015.12
+
 * incremental revision list count::
 
    $ git rev-list --count HEAD
    5451
+
 * latest git hash::
 
    $ git rev-parse --short HEAD
@@ -403,3 +428,100 @@ To build an ``armhf`` package of lava-dispatcher using the developer
 scripts, use::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+
+Debugging Django issues
+***********************
+
+When trying to investigate LAVA web pages generation we advise you to use
+`django-debug-toolbar <https://django-debug-toolbar.readthedocs.org>`_. This is
+a Django application that provide more information on how the page was
+rendered, including:
+
+* SQL queries
+* templates involved
+* HTTP headers
+
+For instance, the toolbar is a really helpful resource to debug the Django
+:abbr:`ORM (Object Relational Model)`.
+
+Installing
+==========
+
+On a Debian system, just run::
+
+  $ apt-get install python-django-debug-toolbar
+
+Configuration
+=============
+
+Once the ``python-django-debug-toolbar`` package is installed, the toolbar
+needs to be enabled in the instance. Two settings are required in
+``/etc/lava-server/settings.conf``
+
+* ``"DEBUG": true,``
+* ``"USE_DEBUG_TOOLBAR": true,``
+
+.. note:: ``settings.conf`` is JSON syntax, so ensure that the previous
+   line ends with a comma and that the resulting file validates as JSON.
+   Use `JSONLINT <http://www.jsonlint.com>`_
+
+The toolbar can be disabled without disabling django debug but
+django must be in debug mode for the toolbar to be loaded at all.
+
+Restart the ``django`` related services to complete the installation of the toolbar::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
+Installation can be checked using ``lava-server manage shell``::
+
+ >>> from django.conf import settings
+ >>> 'debug_toolbar' in settings.INSTALLED_APPS
+ True
+
+.. seealso:: :ref:`developer_access_to_django_shell`
+
+In order to see the toolbar, you should also check the value of `INTERNAL_IPS
+<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_.
+Local addresses ``127.0.0.1`` and ``::1`` are enabled by default.
+
+To add more addresses, set ``INTERNAL_IPS`` to a list of addresses in
+``/etc/lava-server/settings.conf``, (JSON syntax) for example::
+
+  "INTERNAL_IPS": ["192.168.0.5", "10.0.0.6"],
+
+These value depends on your setup. But if you don't see the toolbar
+that's the first think to look at.
+
+Apache then needs access to django-debug-toolbar CSS and JS files::
+
+  sudo su -
+  cd /usr/share/lava-server/static/
+  ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
+
+In ``/etc/lava-server/settings.conf`` remove the reference to htdocs
+in ``STATICFILES_DIRS``. Django-debug-toolbar does check that all
+directories listed in ``STATICFILES_DIRS`` exists. While this is only
+a leftover from previous versions of LAVA installer that is not
+needed anymore.
+
+Once the changes are complete, ensure the settings are loaded by restarting
+both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
+Performance overhead
+====================
+
+Keep in mind that django-debug-toolbar has some overhead on the webpage
+generation and should only be used while debugging.
+
+Django-debug-toolbar can be disabled, while not debugging, by changing the value
+of ``USE_DEBUG_TOOLBAR`` in ``/etc/lava-server/settings.conf`` to ``false``
+or by changing the ``̀DEBUG`` level in ``/etc/lava-server/settings.conf`` to ``DEBUG: false``.
+
+Ensure the settings are reloaded by restarting both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart

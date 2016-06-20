@@ -25,103 +25,60 @@
 # All comments below are strictly for development usage and
 # reference.
 
+# Import application settings
+from lava_scheduler_app.settings import *
+
 import os
 import imp
-import django
-try:
-    import devserver
-    devserver_import = True
-except ImportError:
-    devserver_import = False
-try:
-    import django_extensions
-    django_extensions_import = True
-except ImportError:
-    django_extensions_import = False
-try:
-    import hijack
-    hijack_import = True
-except ImportError:
-    hijack_import = False
-try:
-    # test the import without actually importing
-    # as the rest of the settings are not ready yet.
-    imp.find_module('django_openid_auth')
-    USE_OPENID_AUTH = True
-except ImportError:
-    USE_OPENID_AUTH = False
 
-if USE_OPENID_AUTH:
-    from openid import oidutil
+# Check for available modules
+available_modules = list()
+for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
+    try:
+        imp.find_module(module_name)
+        available_modules.append(module_name)
+    except ImportError:
+        pass
 
-# Administrator contact, used for sending
-# emergency email when something breaks
-ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
-)
+# Internationalization
+# https://docs.djangoproject.com/en/1.8/topics/i18n/
+LANGUAGE_CODE = 'en-us'
 
-MANAGERS = ADMINS
-
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
 TIME_ZONE = 'UTC'
 
-# Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en-us'
+USE_I18N = True
+
+USE_L10N = True
 
 SITE_ID = 1
 
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery.
-USE_I18N = True
+DISALLOWED_USER_AGENTS = []
 
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale
-USE_L10N = True
-
-if django.VERSION < (1, 8):
-    # List of callables that know how to import templates from various sources.
-    TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )
-else:
-    PROJECT_DIR = os.path.dirname(os.path.join(os.path.dirname(__file__), '..', '..'))
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [
-                # insert your TEMPLATE_DIRS here
-                os.path.join(PROJECT_DIR, 'templates'),
-                os.path.join(PROJECT_DIR, '..', '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-                os.path.join(PROJECT_DIR, '..', '..', 'dashboard_app', 'templates', 'dashboard_app'),
-                os.path.join(PROJECT_DIR, '..', '..', 'lava_results_app', 'templates', 'lava_results_app'),
-                os.path.join(PROJECT_DIR, '..', '..', 'google_analytics', 'templates', 'google_analytics'),
-                os.path.join(PROJECT_DIR, '..', '..', 'lava_markitup', 'templates', 'lava_markitup'),
+PROJECT_DIR = os.path.dirname(os.path.join(os.path.dirname(__file__), '..', '..'))
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(PROJECT_DIR, 'templates'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.static",
+                # LAVA context processors
+                "lava_server.context_processors.lava",
+                "lava_server.context_processors.ldap_available",
             ],
-            'OPTIONS': {
-                'context_processors': [
-                    # Insert your TEMPLATE_CONTEXT_PROCESSORS here
-                    "django.contrib.auth.context_processors.auth",
-                    "django.template.context_processors.debug",
-                    "django.template.context_processors.i18n",
-                    "django.template.context_processors.media",
-                    "django.template.context_processors.request",
-                    "django.template.context_processors.static",
-                    "lava_server.context_processors.lava",
-                    "lava_server.context_processors.ldap_available",
-                ],
-                'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                ]
-            },
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
         },
-    ]
+    },
+]
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -133,33 +90,12 @@ MIDDLEWARE_CLASSES = [
 
 ROOT_URLCONF = 'lava_server.urls'
 
-STATICFILES_MEDIA_DIRNAMES = (
-    "media",
-    "static",
-)
-
-STATICFILES_PREPEND_LABEL_APPS = [
-]
-
-if django.VERSION < (1, 4):
-    STATICFILES_PREPEND_LABEL_APPS.append("django.contrib.admin")
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = "/media/"
-
-# URL that handles the media served from STATIC_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://static.lawrence.com", "http://example.com/static/"
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.9/howto/static-files/
 STATIC_URL = "/static/"
 
+# General URL prefix
 MOUNT_POINT = ""
-
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-# trailing slash.
-# Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = MOUNT_POINT + "/static/admin/"
 
 # The true outer url is /lava-server/
 LOGIN_REDIRECT_URL = MOUNT_POINT + "/"
@@ -175,51 +111,30 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
-    'django_tables2',
     'django.contrib.staticfiles',
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    # Add LAVA applications
+    'dashboard_app',
+    'lava_results_app',
+    'lava_scheduler_daemon',
+    'lava_scheduler_app',
+    # Needed applications
+    'django_tables2',
     'linaro_django_xmlrpc',
-    'lava_markitup',  # Support app for MarkItUp in LAVA
     'google_analytics',
 ]
 
-if USE_OPENID_AUTH:
-    INSTALLED_APPS += ['django_openid_auth']
+for module_name in available_modules:
+    INSTALLED_APPS.append(module_name)
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-if devserver_import:
-    INSTALLED_APPS += ['devserver']
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
-if django_extensions_import:
-    INSTALLED_APPS += ['django_extensions']
-
-if hijack_import:
-    INSTALLED_APPS += ['hijack']
-
-if django.VERSION < (1, 8):
-    TEMPLATE_CONTEXT_PROCESSORS = [
-        "django.contrib.auth.context_processors.auth",
-        "django.core.context_processors.debug",
-        "django.core.context_processors.i18n",
-        "django.core.context_processors.media",
-        "django.core.context_processors.request",
-        "django.core.context_processors.static",
-        "lava_server.context_processors.lava",
-        "lava_server.context_processors.ldap_available",
-    ]
-
-    if USE_OPENID_AUTH:
-        TEMPLATE_CONTEXT_PROCESSORS += ['lava_server.context_processors.openid_available']
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-)
-
-if USE_OPENID_AUTH:
-    AUTHENTICATION_BACKENDS += ('django_openid_auth.auth.OpenIDBackend',)
+if "django_openid_auth" in available_modules:
+    AUTHENTICATION_BACKENDS.append('django_openid_auth.auth.OpenIDBackend')
     MIGRATION_MODULES = {
         'django_openid_auth': 'django_openid_auth.migrations'
     }
@@ -230,21 +145,13 @@ if USE_OPENID_AUTH:
     OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
     # python-openid is too noisy, so we silence it.
+    from openid import oidutil
     oidutil.log = lambda msg, level=0: None
-
-RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
 # Add google analytics model.
 GOOGLE_ANALYTICS_MODEL = True
 
-ME_PAGE_ACTIONS = [
-    ("password_change", "Change your password"),
-    ("logout", "Sign out"),
-]
-
 ALLOWED_HOSTS = ['*']
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 # this is a tad ugly but the upstream package still needs something here.
 KEY_VALUE_STORE_BACKEND = 'db://lava_scheduler_app_devicedictionarytable'

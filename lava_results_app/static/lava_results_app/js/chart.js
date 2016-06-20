@@ -139,11 +139,11 @@ $(document).ready(function () {
     }
 
     ChartQuery.prototype.setup_item_menu = function() {
-        chart_id = this.chart_id;
-        $("#item_menu_" + chart_id).menu();
-        $("#item_menu_" + chart_id).hide();
-        $("#item_menu_" + chart_id).mouseleave(function() {
-            $("#item_menu_" + chart_id).hide();
+        $("#item_menu_" + this.chart_id).menu();
+        $("#item_menu_" + this.chart_id).hide();
+        $("#item_menu_" + this.chart_id).attr("chart_id", this.chart_id);
+        $("#item_menu_" + this.chart_id).mouseleave(function() {
+            $("#item_menu_" + $(this).attr("chart_id")).hide();
         });
     }
 
@@ -163,22 +163,23 @@ $(document).ready(function () {
         this.setup_item_menu();
 
         // Bind plotclick event.
-	chart_id = this.chart_id;
 	chart_name = this.chart_data.basic.chart_name;
+        $("#inner_container_" + this.chart_id).attr("chart_id", this.chart_id);
         $("#inner_container_" + this.chart_id).bind(
             "plotclick",
             function (event, pos, item) {
                 if (item) {
                     // Make datapoint unique value
                     datapoint = item.datapoint.join("_");
-		    toggle_item_menu(chart_id, pos.pageX, pos.pageY);
-		    $("#view_item_" + chart_id).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
-		    $("#omit_item_" + chart_id).attr(
+		    toggle_item_menu($(this).attr("chart_id"),
+                                     pos.pageX, pos.pageY);
+		    $("#view_item_" + $(this).attr("chart_id")).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
+		    $("#omit_item_" + $(this).attr("chart_id")).attr(
 			"href",
 			window.location.protocol + "//" +
 			    window.location.host + "/results/chart/" +
 			    chart_name + "/" +
-			    chart_id + "/" +
+			    $(this).attr("chart_id") + "/" +
 			    item.series.meta[datapoint]["pk"] +
 			    "/+omit-result");
                 }
@@ -202,28 +203,35 @@ $(document).ready(function () {
     }
 
     ChartQuery.prototype.update_headline = function() {
-        query_link = this.chart_data.basic.query_link.replace(/\\/g, "");
 	if (this.chart_data.basic.query_name) {
+            query_link = this.chart_data.basic.query_link.replace(/\\/g, "");
+            if (this.chart_data.basic.query_live) {
+                last_updated = "Live query";
+            } else {
+                last_updated = "Last updated: " +
+                    this.chart_data.basic.query_updated;
+            }
             $("#headline_container_" + this.chart_id).append(
 		'<span class="chart-headline">' +
                     '<a href="' + query_link + '" target="_blank">' +
 		    this.chart_data.basic.query_name +
-                    '</a></span>');
+                    '</a></span> <span>' + last_updated +
+                    '</span>');
             $("#headline_container_" + this.chart_id).append(
-		'<span>' + this.chart_data.basic.query_description + '</span>');
-	}
+		'<div>' + this.chart_data.basic.query_description + '</div>');
 
-	if (this.chart_data.basic.has_omitted) {
-            $("#headline_container_" + this.chart_id).append(
-                '<div class="alert alert-info">' +
-                    '<button type="button" class="close" ' +
-                    'data-dismiss="alert">&times;</button>' +
-                    '<strong>This chart has some of the results omitted.' +
-                    '</strong> ' +
-                    'Check the underlying <strong><a href="' + query_link +
-                    '" target="_blank">' + 'query</a></strong> ' +
-                    'for the list of omitted results.' +
-                    '</div>');
+	    if (this.chart_data.basic.has_omitted) {
+                $("#headline_container_" + this.chart_id).append(
+                    '<div class="alert alert-info">' +
+                        '<button type="button" class="close" ' +
+                        'data-dismiss="alert">&times;</button>' +
+                        '<strong>This chart has some of the results omitted.' +
+                        '</strong> ' +
+                        'Check the underlying <strong><a href="' + query_link +
+                        '" target="_blank">' + 'query</a></strong> ' +
+                        'for the list of omitted results.' +
+                        '</div>');
+	    }
 	}
     }
 
@@ -547,13 +555,6 @@ $(document).ready(function () {
         table_body += '</tr></tbody>';
         $("#results-table_" + this.chart_id + " tbody").html(table_head +
                                                        table_body);
-
-        this.update_tooltips();
-    }
-
-    ChartQuery.prototype.update_tooltips = function() {
-        // Update tooltips on the remaining td's for the test names.
-        $(document).tooltip({items: "td"});
     }
 
     ChartQuery.prototype.set_dates = function() {

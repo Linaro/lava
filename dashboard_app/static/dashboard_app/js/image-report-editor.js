@@ -201,10 +201,10 @@ update_events = function(filter_id) {
 filter_available_tests = function(text) {
     if (text != '') {
         $('#available_tests option').filter(function() {
-            return $(this).text().toLowerCase().indexOf(text) != 0;
+            return !$(this).text().toLowerCase().startsWith(text);
         }).css("display", "none");
         $('#available_tests option').filter(function() {
-            return $(this).text().toLowerCase().indexOf(text) == 0;
+            return $(this).text().toLowerCase().startsWith(text);
         }).css("display", "block");
     } else {
         $('#available_tests option').css("display", "block");

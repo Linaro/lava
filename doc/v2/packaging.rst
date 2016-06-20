@@ -43,6 +43,21 @@ lava-server     apache and WSGI settings and HTML content
 lava-dispatcher dispatches jobs to devices
 =============== =========================================
 
+Package dependencies
+====================
+
+Take note of the Debian dependencies - not all are available with
+pypi and not all are necessarily available in your distribution. A
+large part of packaging LAVA for a distribution is taking on the
+maintenance of a variety of dependency modules and packages which do
+not (yet) exist in the distribution.
+
+Depending on how the distribution is organised, it may take a significant
+amount of time to get the dependencies uploaded and available in the
+appropriate suite, release or location. Many of these dependencies will
+also depend on new packages, so the order of uploads will have to be
+identified in advance.
+
 .. _packaging_daemon_renaming:
 
 Daemon renaming

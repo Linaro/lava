@@ -23,17 +23,14 @@ from django import forms
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.forms.models import inlineformset_factory
 from django.utils.html import escape
-
-from dashboard_app.models import NamedAttribute
 
 from lava_results_app.models import (
     Query,
     QueryCondition,
-    QueryGroup,
     TestCase,
-    TestSuite
+    TestSuite,
+    NamedTestAttribute
 )
 from lava_scheduler_app.models import TestJob
 
@@ -42,7 +39,7 @@ class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
         exclude = ('is_published', 'query_group', 'group', 'is_changed',
-                   'is_updating')
+                   'last_updated', 'is_updating')
         widgets = {'owner': forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
@@ -57,6 +54,31 @@ class QueryForm(forms.ModelForm):
     def save(self, commit=True, **kwargs):
         instance = super(QueryForm, self).save(commit=commit, **kwargs)
         return instance
+
+    def clean(self):
+        form_data = self.cleaned_data
+
+        try:
+            # Existing (or archived) Query validataion.
+            existing_query = Query.objects.get(name=form_data["name"],
+                                               owner=form_data["owner"])
+            if existing_query:
+                if existing_query.is_archived:
+                    self.add_error(
+                        "name",
+                        """ Query already exists but is archived. Please
+                        contact system adminstrator or consult LAVA doc. """)
+                elif not self.instance.id:
+                    self.add_error(
+                        "name",
+                        "Query with this owner and name already exists.")
+        except KeyError:
+            # form_data will pick up the rest of validation errors.
+            pass
+        except Query.DoesNotExist:
+            pass
+
+        return form_data
 
 
 class QueryConditionForm(forms.ModelForm):
@@ -78,7 +100,7 @@ class QueryConditionForm(forms.ModelForm):
             "health_check", "user", "group", "priority", "is_pipeline"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
-        NamedAttribute: []
+        NamedTestAttribute: []
     }
 
     def __init__(self, *args, **kwargs):

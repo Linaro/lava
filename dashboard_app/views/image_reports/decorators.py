@@ -1,5 +1,4 @@
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import available_attrs
 from django.utils.functional import wraps
@@ -27,7 +26,9 @@ def public_filters_or_login_required(view_func):
             report_name = kwargs.get('name', None)
             image_report = get_object_or_404(ImageReport, name=report_name)
             for image_chart in image_report.imagereportchart_set.all():
-                for chart_filter in image_chart.imagechartfilter_set.all():
+                chart_filters = image_chart.imagechartfilter_set.all()\
+                                           .select_related("filter")
+                for chart_filter in chart_filters:
                     if not chart_filter.filter.public:
                         raise PermissionDenied
         return view_func(request, *args, **kwargs)

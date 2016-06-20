@@ -18,7 +18,6 @@
 
 
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import available_attrs
 from django.utils.functional import wraps
@@ -30,7 +29,9 @@ def ownership_required(view_func):
     @wraps(view_func, assigned=available_attrs(view_func))
     def wrapper(request, *args, **kwargs):
         report_name = kwargs.get('name', None)
-        query = get_object_or_404(Query, name=report_name)
+        username = kwargs.get('username', None)
+        query = get_object_or_404(Query, name=report_name,
+                                  owner__username=username)
         if query.is_accessible_by(request.user):
             return view_func(request, *args, **kwargs)
         else:

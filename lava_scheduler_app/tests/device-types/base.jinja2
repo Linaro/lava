@@ -1,3 +1,6 @@
+{# Base Kernel options #}
+{% set base_kernel_args = '' %}
+
 {% set base_uboot_commands = (
 "          - setenv autoload no
           - setenv initrd_high '0xffffffff'
@@ -70,6 +73,17 @@
 {% set base_menu_boot_message = "Loaded: LinuxImage" -%}
 {% set base_menu_dictionary = {} -%}
 
+{% block character_delays %}
+{% if boot_character_delay or test_character_delay %}
+character-delays:
+{% if boot_character_delay %}
+      boot: {{ boot_character_delay }}
+{% endif -%}
+{% if test_character_delay %}
+      test: {{ test_character_delay }}
+{% endif -%}
+{% endif -%}
+{% endblock -%}
 
 {% block commands %}
 {% if connection_command %}
@@ -89,12 +103,6 @@ commands:
 {% endif %}
 {% if power_on_command %}
     power_on: {{ power_on_command }}
-{% endif %}
-{% if adb_command %}
-    adb_command: {{ adb_command | default('adb -s {{ adb_serial_number }}') }}
-{% endif %}
-{% if fastboot_command %}
-    fastboot_command: {{ fastboot_command | default('fastboot -s {{ fastboot_serial_number }}') }}
 {% endif %}
 {% endif %}
 {% endblock -%}

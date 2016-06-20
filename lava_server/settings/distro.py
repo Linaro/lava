@@ -1,8 +1,7 @@
 # Django settings for django_hello project used on Debian systems.
 
-import os
+import re
 from lava_server.settings.getsettings import Settings
-from lava_server.extension import loader
 from lava_server.settings.production import *
 from django.db.backends.signals import connection_created
 
@@ -27,11 +26,6 @@ SECRET_KEY = distro_settings.SECRET_KEY
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 MEDIA_ROOT = distro_settings.MEDIA_ROOT
 
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = distro_settings.MEDIA_URL
-
 # Absolute filesystem path to the directory that will hold archived files.
 ARCHIVE_ROOT = distro_settings.ARCHIVE_ROOT
 
@@ -44,20 +38,8 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
 STATIC_URL = distro_settings.STATIC_URL
 
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-# trailing slash.
-# Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = distro_settings.ADMIN_MEDIA_PREFIX
-
 # List of absolute pathnames used to resolve templates.
-if django.VERSION < (1, 8):
-    if isinstance(distro_settings.TEMPLATE_DIRS, tuple):
-        TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'templates'),)
-    else:
-        TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
-    TEMPLATE_DIRS = distro_settings.TEMPLATE_DIRS + TEMPLATE_DIRS
-else:
-    TEMPLATES = distro_settings.TEMPLATES
+TEMPLATES = distro_settings.TEMPLATES
 
 # Like TEMPLATE_DIRS but for static files
 STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
@@ -69,15 +51,8 @@ STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
 ADMINS = distro_settings.ADMINS
 
 # A tuple in the same format as ADMINS that specifies who should get
-# broken-link notifications when SEND_BROKEN_LINK_EMAILS=True.
+# broken-link notifications when BrokenLinkEmailsMiddleware is enabled
 MANAGERS = distro_settings.MANAGERS
-
-# Whether to send an e-mail to the MANAGERS each time somebody visits a
-# Django-powered page that is 404ed with a non-empty referer (i.e., a broken
-# link). This is only used if CommonMiddleware is installed (see Middleware.
-# See also IGNORABLE_404_STARTS, IGNORABLE_404_ENDS and Error reporting via
-# e-mail.
-SEND_BROKEN_LINK_EMAILS = distro_settings.SEND_BROKEN_LINK_EMAILS
 
 # LOG_SIZE_LIMIT in megabytes
 LOG_SIZE_LIMIT = distro_settings.LOG_SIZE_LIMIT
@@ -130,12 +105,22 @@ if AUTH_LDAP_SERVER_URI:
     INSTALLED_APPS.append('ldap')
     INSTALLED_APPS.append('django_auth_ldap')
     import ldap
-    from django_auth_ldap.config import (
-        LDAPSearch, LDAPSearchUnion, GroupOfNamesType)
+    from django_auth_ldap.config import (LDAPSearch, LDAPSearchUnion)
+
+    def get_ldap_group_types():
+        """Return a list of all LDAP group types supported by django_auth_ldap module"""
+        import django_auth_ldap.config
+        import inspect
+        types = []
+        for name, obj in inspect.getmembers(django_auth_ldap.config):
+            if inspect.isclass(obj) and name.endswith('Type'):
+                types.append(name)
+
+        return types
 
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
                                'django.contrib.auth.backends.ModelBackend'] + \
-        [x for x in AUTHENTICATION_BACKENDS]
+        AUTHENTICATION_BACKENDS
 
     DISABLE_OPENID_AUTH = distro_settings.get_setting("DISABLE_OPENID_AUTH")
     if DISABLE_OPENID_AUTH:
@@ -165,8 +150,13 @@ if AUTH_LDAP_SERVER_URI:
             "AUTH_LDAP_GROUP_SEARCH"))
 
     if distro_settings.get_setting("AUTH_LDAP_GROUP_TYPE"):
-        AUTH_LDAP_GROUP_TYPE = eval(distro_settings.get_setting(
-            "AUTH_LDAP_GROUP_TYPE"))
+        group_type = distro_settings.get_setting("AUTH_LDAP_GROUP_TYPE")
+        # strip params from group type to get the class name
+        group_class = group_type.split('(', 1)[0]
+        group_types = get_ldap_group_types()
+        if group_class in group_types:
+            exec('from django_auth_ldap.config import ' + group_class)
+            AUTH_LDAP_GROUP_TYPE = eval(group_type)
 
     if distro_settings.get_setting("AUTH_LDAP_USER_FLAGS_BY_GROUP"):
         AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
@@ -176,7 +166,20 @@ if AUTH_LDAP_SERVER_URI:
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 elif AUTH_DEBIAN_SSO:
     MIDDLEWARE_CLASSES.append('lava_server.debian_sso.DebianSsoUserMiddleware')
-    AUTHENTICATION_BACKENDS += ('lava_server.debian_sso.DebianSsoUserBackend',)
+    AUTHENTICATION_BACKENDS.append('lava_server.debian_sso.DebianSsoUserBackend')
+
+USE_DEBUG_TOOLBAR = distro_settings.get_setting('USE_DEBUG_TOOLBAR', False)
+
+if USE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append('debug_toolbar')
+    default_ips = ['127.0.0.1', '::1']
+    default_ips.extend(distro_settings.get_setting('INTERNAL_IPS', []))
+    INTERNAL_IPS = default_ips
+
+# handling for bots which don't deal with robots.txt properly
+regexes = distro_settings.get_setting('DISALLOWED_USER_AGENTS', [])
+for regex in regexes:
+    DISALLOWED_USER_AGENTS.append(re.compile(r'%s' % regex, re.IGNORECASE))
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
@@ -205,6 +208,11 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'lava'
+        },
         'logfile': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': distro_settings.get_setting("DJANGO_LOGFILE", "/var/log/lava-server/django.log"),
@@ -237,6 +245,11 @@ LOGGING = {
             'handlers': ['logfile'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'publisher': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         }
     }
 }
@@ -245,8 +258,14 @@ LOGGING = {
 # set to false in /etc/lava-server/settings.conf to hide the Results menu
 PIPELINE = distro_settings.get_setting("PIPELINE", True)
 
-# Load extensions
-loader.contribute_to_settings(locals(), distro_settings)
+# Scheduler options
+SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
+
+# Override ZMQ events defined in lava_scheduler_app.settings
+EVENT_NOTIFICATION = distro_settings.get_setting("EVENT_NOTIFICATION", EVENT_NOTIFICATION)
+INTERNAL_EVENT_SOCKET = distro_settings.get_setting("INTERNAL_EVENT_SOCKET", INTERNAL_EVENT_SOCKET)
+EVENT_SOCKET = distro_settings.get_setting("EVENT_SOCKET", EVENT_SOCKET)
+EVENT_TOPIC = distro_settings.get_setting("EVENT_TOPIC", EVENT_TOPIC)
 
 
 def set_timeout(connection, **kw):

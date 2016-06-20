@@ -51,6 +51,18 @@ that point will include that codename in the table.
          and dependencies which are installed using jessie-backports are
          **fully supported** by upstream and are the same codebase as the
          relevant production release available from the :ref:`lava_repositories`.
+.. [#f4] Ubuntu vivid vervet 15.04 was released on April 23rd, 2015 and
+         wily werewolf on October 22nd 2015. LAVA packages no longer
+         migrate from Debian into the current development release of Ubuntu,
+         so wily werewolf has the last ``lava-server`` update, 2015.8.1-1.
+         Once Ubuntu makes a release, the LAVA packages in that release
+         do not receive updates. Support for ``lava-server`` on Ubuntu
+         Trusty 14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped
+         at 2015.9.post1. Support for ``lava-dispatcher`` on Ubuntu Trusty
+         14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped at
+         2015.9. See :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
+.. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
+
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
 .. _jessie-backports: http://backports.debian.org/
@@ -330,7 +342,7 @@ superuser privileges in the LAVA web UI. After logging in with OpenID
 or LDAP successfully, make use of the following command to make this
 user a superuser::
 
-  $ sudo lava-server manage authorize_superuser {username}
+  $ sudo lava-server manage authorize_superuser --username {username}
 
 .. note:: `{username}` is the username of OpenID or LDAP user.
 
@@ -341,7 +353,7 @@ Alternatively, in LAVA instances that use LDAP as authentication
 mechanism, the `addldapuser` command can be used to populate a user
 from LDAP and also grant superuser privilege as follows::
 
-  $ sudo lava-server manage addldapuser {username} --superuser
+  $ sudo lava-server manage addldapuser --username {username} --superuser
 
 .. note:: `{username}` is the username of LDAP user.
 
@@ -361,5 +373,5 @@ LDAP user account without losing data, using the `mergeldapuser`
 command, provided the LDAP username does not already exist in the LAVA
 instance::
 
-  $ sudo lava-server manage mergeldapuser <lava_user> <ldap_user>
+  $ sudo lava-server manage mergeldapuser --lava-user <lava_user> --ldap-user <ldap_user>
 

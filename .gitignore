@@ -14,3 +14,4 @@ man/_build
 lava_server/precious
 django.log
 *~
+*.min.js

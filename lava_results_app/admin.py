@@ -20,18 +20,54 @@
 Administration interface of the LAVA Results application.
 """
 
-from django import forms
 from django.contrib import admin
-from django.contrib.admin.actions import delete_selected
-from django.contrib.contenttypes import fields
-from django.utils.translation import ugettext_lazy as _
 
 from lava_results_app.models import (
-    Query
+    ActionData,
+    Query,
+    TestCase,
+    TestSet,
+    TestSuite,
 )
+
+
+class ActionDataAdmin(admin.ModelAdmin):
+    list_display = ('job_pk', 'action_level', 'action_name')
+    ordering = ('-testdata__testjob__pk', '-action_level', )
+
+    def job_pk(self, action):
+        return action.testdata.testjob.pk
 
 
 class QueryAdmin(admin.ModelAdmin):
     save_as = True
 
+
+class TestCaseAdmin(admin.ModelAdmin):
+    list_display = ('job_pk', 'suite_name', 'name', 'result')
+    ordering = ('-suite__job__pk', 'suite__name', 'name')
+
+    def job_pk(self, testcase):
+        return testcase.suite.job.pk
+
+    def suite_name(self, testcase):
+        return testcase.suite.name
+
+
+class TestSetAdmin(admin.ModelAdmin):
+    list_display = ('suite', 'name')
+
+
+class TestSuiteAdmin(admin.ModelAdmin):
+    list_display = ('job_pk', 'name')
+    ordering = ('-job__pk', 'name')
+
+    def job_pk(self, testsuite):
+        return testsuite.job.pk
+
+
+admin.site.register(ActionData, ActionDataAdmin)
 admin.site.register(Query, QueryAdmin)
+admin.site.register(TestCase, TestCaseAdmin)
+admin.site.register(TestSet, TestSetAdmin)
+admin.site.register(TestSuite, TestSuiteAdmin)

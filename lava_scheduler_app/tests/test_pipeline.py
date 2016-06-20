@@ -14,10 +14,7 @@ from lava_scheduler_app.models import (
     _check_submit_to_device,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
-from django.db import models
 from django.db.models import Q
-from django.core.exceptions import ValidationError
-from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
 from lava_scheduler_app.utils import (
@@ -27,7 +24,7 @@ from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
@@ -241,6 +238,37 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(job.requested_device, device)
         self.assertIsNone(job.actual_device)
 
+    def test_pipeline_health_assignment(self):
+        user = self.factory.make_user()
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu1")
+        self.assertTrue(device1.is_pipeline)
+        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
+        self.assertTrue(device2.is_pipeline)
+        device3 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu3')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu3")
+        self.assertTrue(device3.is_pipeline)
+        job1 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device1)
+        job2 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device2)
+        self.assertEqual(user, job1.submitter)
+        self.assertTrue(job1.health_check)
+        self.assertEqual(job1.requested_device, device1)
+        self.assertEqual(job2.requested_device, device2)
+        self.assertIsNone(job1.actual_device)
+        self.assertIsNone(job2.actual_device)
+        device_list = Device.objects.filter(device_type=device1.device_type)
+        count = 0
+        while True:
+            device_list.reverse()
+            assigned = find_device_for_job(job2, device_list)
+            if assigned != device2:
+                self.fail("[%d] invalid device assigment in health check." % count)
+            count += 1
+            if count > 100:
+                break
+        self.assertGreater(count, 100)
+
     def test_invalid_device(self):
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
@@ -252,7 +280,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         del device_config['device_type']
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, output_dir='/tmp')
+        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, None, None, output_dir='/tmp')
 
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
@@ -324,11 +352,13 @@ class TestPipelineSubmit(TestCaseWithFactory):
         menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
         self.assertIn(
             job_ctx['nfsroot_args'],
-            [item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
+            [
+                item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
                 'new Entry' in item['select']['wait']][0]
         )
         self.assertEqual(
-            [item['select']['items'][0] for item in menu_data if 'select' in item and
+            [
+                item['select']['items'][0] for item in menu_data if 'select' in item and
                 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
             'TFTP on MAC Address: FF:01:00:69:AA:CC'  # matches the job_ctx
         )
@@ -338,7 +368,8 @@ class TestPipelineSubmit(TestCaseWithFactory):
         # the variable, the job could set it to override the device type template default, as shown by the
         # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
         self.assertEqual(
-            [item['select']['enter'] for item in menu_data if 'select' in item and
+            [
+                item['select']['enter'] for item in menu_data if 'select' in item and
                 'wait' in item['select'] and 'Description' in item['select']['wait']][0],
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
@@ -424,7 +455,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, output_dir=job.output_dir)
+                job.id, None, None, None, output_dir=job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -753,7 +784,8 @@ class TestYamlMultinode(TestCaseWithFactory):
                     # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, output_dir=check_job.output_dir)
+                        check_job.id, None, None, None,
+                        output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
                 if os.path.exists('/dev/loop0'):  # rather than skipping the entire test, just the validation.
@@ -793,7 +825,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_list:
             self.assertEqual(job.requested_device_type, device_type)
 
-    def test_multinode_with_retired(self):
+    def test_multinode_with_retired(self):  # pylint: disable=too-many-statements
         """
         check handling with retired devices in device_list
         """
@@ -912,7 +944,7 @@ class VlanInterfaces(TestCaseWithFactory):
         device_dict.save()
         self.filename = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
 
-    def test_vlan_interface(self):
+    def test_vlan_interface(self):  # pylint: disable=too-many-locals
         device_dict = DeviceDictionary.get('bbb-01')
         chk = {
             'hostname': 'bbb-01',

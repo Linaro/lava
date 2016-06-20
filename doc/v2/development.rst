@@ -89,6 +89,8 @@ https://github.com/Linaro
 It is worth sending an email to the `lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
 
+.. _development_workflow:
+
 Patch Submissions and workflow
 ==============================
 
@@ -150,8 +152,7 @@ Run the unit tests
 ------------------
 
 Extra dependencies are required to run the tests. On Debian based distributions,
-you can install ``lava-dev``. (If you only need to run the ``lava-dispatcher``
-unit tests, you can just install ``pep8`` and ``python-testscenarios``.)
+you can install ``lava-dev``.
 
 To run the tests, use the ``ci-run`` script::
 
@@ -344,8 +345,8 @@ development.
 Database migrations
 -------------------
 
-LAVA recommends Debian Jessie but also supports Ubuntu Trusty which has
-an older version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
+LAVA recommends Debian Jessie but also supports testing and unstable which
+have a newer version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
 
 Database migrations on Debian Jessie and later are managed within
 django. Support for
@@ -378,16 +379,39 @@ for more information.
 Python 3.x
 ----------
 
-There is no pressure or expectation on delivering python 3.x code.
-LAVA is a long way from being able to use python 3.x support,
+LAVA dispatcher now supports python3 testing but **only** for the
+pipeline unit tests. Code changes to the V2 dispatcher code (i.e. in
+the ``lava_dispatcher/pipeline`` tree) **must** be sufficiently aware
+of Python3 to not break the unit tests when run using python3.
+
+LAVA is not yet ready to use python 3.x support at runtime,
 particularly in lava-server, due to the lack of python 3.x migrations
 in dependencies. However it is good to take python 3.x support into
-account, when writing new code, so that it makes it easy during
-the move anytime in the future.
+account in ``lava-server``, when writing new code for LAVA v2, so that
+it makes it easy during the move anytime in the future.
 
-Developers can run unit tests against python 3.x for all LAVA
-components from time to time and keep a check on how we can support
-python 3.x without breaking compatibility with python 2.x
+All reviews run the ``lava-dispatcher.pipelnie`` V2 unit tests against
+python 3.x and changes must pass without breaking compatibility with
+python 2.x
+
+The ``./ci-run`` script for ``lava-dispatcher`` shows how to run the
+python3 unit tests::
+
+ # to run python3 unit tests, you can use
+ # python3 -m unittest discover -v lava_dispatcher.pipeline
+ # but the python3 dependencies are not automatically installed.
+
+The list of python3 dependencies needed for the pipeline unit tests is
+maintained as part of the functional tests:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/dispatcher-pipeline-python3.yaml
+
+From time to time, reviews may add more python dependencies - check on
+the :ref:`mailing_lists` if your tests start to fail after rebasing on
+current master or if you want to help with more python3 support in LAVA V2.
+
+Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
+going to support python3.
 
 Pylint
 ------
@@ -400,13 +424,35 @@ code smells, refer to Martin Fowler's `refactoring book`_. LAVA
 developers stick on to `PEP 008`_ (aka `Guido's style guide`_) across
 all the LAVA component code.
 
+``pylint`` does need to be used with some caution, the messages produced
+should not be followed blindly. It can be very useful for spotting unused
+imports, unused variables and other issues. One notable problem is with
+``logging-not-lazy`` as there can be times when lazy logging can result
+in out of date or invalid information being logged. This is a particular
+problem when passing variables like dictionaries and lists to the logger
+in the dispatcher as these later need to be turned into YAML.
+
 To simplify the pylint output, some warnings are recommended to be
 disabled::
 
  $ pylint -d line-too-long -d missing-docstring
 
-**NOTE**: Docstrings should still be added wherever a docstring would
-be useful.
+.. note:: Docstrings should still be added wherever a docstring would
+   be useful.
+
+``pylint`` also supports local disabling of warnings and there are many
+examples of:
+
+.. code-block:: python
+
+ variable = func_call()  # pylint: disable=
+
+There is a ``pylint-django`` plugin available in unstable and testing
+and whilst it improves the pylint output for the ``lava-server`` codebase,
+it still has a high level of false indications.
+
+pep8
+----
 
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
@@ -425,9 +471,7 @@ any. Most of the LAVA components such as ``lava-server``,
 ``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
-distributions, you can install lava-dev. (If you only need to run the
-``lava-dispatcher`` unit tests, you can just install `pep8` and
-`python-testscenarios`.)
+distributions, you can install lava-dev.
 
 To run the tests, use the ci-run / ci-build scripts::
 

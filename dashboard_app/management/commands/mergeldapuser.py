@@ -21,8 +21,8 @@ import sys
 import ldap
 
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 from dashboard_app.helpers import get_ldap_user_properties
-from lava_server.utils import OptArgBaseCommand as BaseCommand
 
 
 class Command(BaseCommand):

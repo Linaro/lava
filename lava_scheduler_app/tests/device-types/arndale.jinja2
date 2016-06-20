@@ -7,6 +7,7 @@ device_type: arndale
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {# adds the parameters: top level block #}
 {% block vland %}
@@ -23,6 +24,9 @@ device_type: arndale
 
 actions:
   deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
     methods:
       tftp:
       ssh:
@@ -43,7 +47,6 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('ARNDALE5250') }}
           boot_message: {{ boot_message|default('Booting Linux') }}
-          mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
           send_char: False
           # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
@@ -53,7 +56,8 @@ actions:
 {{ base_uboot_addr_commands }}
 {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 drm_kms_helper.edid_firmware=edid-1920x1080.fw root=/dev/nfs rw {{ base_nfsroot_args }} earlyprintk ip=:::::eth0:dhcp'"
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 drm_kms_helper.edid_firmware=edid-1920x1080.fw
+             root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} earlyprintk ip=:::::eth0:dhcp'"
           - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot
         ramdisk:

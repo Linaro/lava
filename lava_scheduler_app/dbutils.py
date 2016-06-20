@@ -11,7 +11,6 @@ import jinja2
 import datetime
 import logging
 import simplejson
-import django
 from traceback import format_exc
 from django.db.models import Q
 from django.db import IntegrityError, transaction
@@ -19,14 +18,15 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.models import (
-    DeviceDictionary,
     Device,
+    DeviceDictionary,
+    DevicesUnavailableException,
     DeviceType,
+    is_deprecated_json,
+    JSONDataError,
     TestJob,
     TemporaryDevice,
-    JSONDataError,
     validate_job,
-    is_deprecated_json,
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -49,7 +49,9 @@ def match_vlan_interface(device, job_def):
         if 'tags' not in device_dict['parameters']:
             return False
         for interface, tags in device_dict['parameters']['tags'].iteritems():
-            if any(set(tags).intersection(tag_list)) and interface not in interfaces:
+            # tags & job tags must equal job tags
+            # device therefore must support all job tags, not all job tags available on the device need to be specified
+            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
                 logger.debug("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
@@ -58,18 +60,21 @@ def match_vlan_interface(device, job_def):
 
 
 def initiate_health_check_job(device):
+    logger = logging.getLogger('dispatcher-master')
+    logger.info("Initiating health check")
     if not device:
         # logic error
+        logger.error("No device")
         return None
     if device.status in [Device.RETIRED]:
         # logic error
+        logger.error("[%s] has been retired", device)
         return None
 
     existing_health_check_job = device.get_existing_health_check_job()
     if existing_health_check_job:
         return existing_health_check_job
 
-    logger = logging.getLogger('dispatcher-master')
     job_data = device.device_type.health_check_job
     user = User.objects.get(username='lava-health')
     if not job_data:
@@ -86,7 +91,12 @@ def initiate_health_check_job(device):
             device.put_into_maintenance_mode(
                 user, "target must not be defined in health check definitions.")
             return None
-    return testjob_submission(job_data, user, check_device=device)
+    try:
+        job = testjob_submission(job_data, user, check_device=device)
+    except DevicesUnavailableException as exc:
+        logger.error("[%s] failed to submit health check - %s", device.device_type.name, exc)
+        return None
+    return job
 
 
 def submit_health_check_jobs():
@@ -153,7 +163,7 @@ def testjob_submission(job_definition, user, check_device=None):
     Single submission frontend for JSON or YAML
     :param job_definition: string of the job submission
     :param user: user attempting the submission
-    :param: check_device: set specified device as the target
+    :param check_device: set specified device as the target
     **and** thereby set job as a health check job. (JSON only)
     :return: a job or a list of jobs
     :raises: SubmissionException, Device.DoesNotExist,
@@ -216,6 +226,7 @@ def check_device_and_job(job, device):
     the database when jobs terminate. Monitor and remove once
     V1 scheduling has ceased.
 
+    :param job: The job being processed.
     :param device: the device about the be assigned to the job.
     :return: the device if OK or None on error.
     """
@@ -256,10 +267,13 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
         return None
 
     logger = logging.getLogger('dispatcher-master')
-    # forced health check support
+    # health check support
     if job.health_check is True:
-        if job.requested_device and job.requested_device.status == Device.OFFLINE:
-            logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+        if job.requested_device:
+            if job.requested_device.status == Device.OFFLINE:
+                logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+            else:
+                logger.debug("[%s] - assigning %s for health check.", job.id, job.requested_device)
             return job.requested_device
     for device in device_list:
         if device != job.requested_device and device.device_type != job.requested_device_type:
@@ -274,7 +288,7 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             if tmp_dev and job.vm_group != tmp_dev[0].vm_group:
                 continue
         # these are the principal requirements and checks.
-        # for pipeline, requested_device is only used for automated health checks
+        # for pipeline, requested_device is only used for automated health checks, handled above.
         # device_type, requested_device and requested_device_type have been retrieved with select_related
         # tags.all() has been retrieved using prefetch_related
         if device == job.requested_device or device.device_type == job.requested_device_type:
@@ -375,7 +389,8 @@ def _validate_queue():
     """
     logger = logging.getLogger('dispatcher-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
-    jobs = jobs.filter(actual_device__isnull=False)
+    jobs = jobs.filter(actual_device__isnull=False) \
+               .select_related('actual_device', 'actual_device__current_job')
     for job in jobs:
         if not job.actual_device.current_job:
             device = Device.objects.get(hostname=job.actual_device.hostname)
@@ -401,11 +416,8 @@ def _validate_idle_device(job, device):
     """
     # FIXME: do this properly in the dispatcher master.
     # FIXME: isolate forced health check requirements
-    if django.VERSION >= (1, 8):
-        # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
-        device.refresh_from_db()
-    else:
-        device = Device.objects.get(hostname=device.hostname)
+    # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
+    device.refresh_from_db()
 
     logger = logging.getLogger('dispatcher-master')
     # to be valid for reservation, no queued TestJob can reference this device
@@ -509,9 +521,10 @@ def assign_jobs():
                 if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
                     if not match_vlan_interface(device, job_dict):
                         logger.debug("%s does not match vland tags", str(device.hostname))
-                        devices.remove(device)
+                        if device in devices:
+                            devices.remove(device)
                         continue
-            if not _validate_idle_device(job, device):
+            if not _validate_idle_device(job, device) and device in devices:
                 logger.debug("Removing %s from the list of available devices",
                              str(device.hostname))
                 devices.remove(device)
@@ -548,7 +561,6 @@ def assign_jobs():
     if postprocess and reserved_devices:
         logger.debug("All queued jobs checked, %d devices reserved and validated", len(reserved_devices))
 
-    # worker heartbeat must not occur within this loop
     logger.info("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
 
 
@@ -773,7 +785,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 check_job.definition, parser_device,
-                check_job.id, None, output_dir=check_job.output_dir)
+                check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
                 KeyError, TypeError, RuntimeError) as exc:
@@ -794,9 +806,10 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # write the pipeline description to the job output directory.
             if not os.path.exists(check_job.output_dir):
                 os.makedirs(check_job.output_dir)
+            pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-                describe_yaml.write(yaml.dump(pipeline))
-            map_metadata(yaml.dump(pipeline), job)
+                describe_yaml.write(pipeline_dump)
+            map_metadata(pipeline_dump, job)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:

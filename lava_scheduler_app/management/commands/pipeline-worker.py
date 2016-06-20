@@ -21,7 +21,7 @@
 # pylint: disable=invalid-name,no-member
 
 import sys
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 from lava_scheduler_app.models import Worker
 
 

@@ -1,5 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
+{% load utils %}
 
 {% block title %}{{ block.super }} | {% trans "API" %} | {% trans "Authentication Tokens" %}{% endblock %}
 
@@ -23,7 +24,7 @@
 
 {% block content %}
 <h2>Authentication Tokens</h2>
-<p>Authentication tokens allow scripts using <a href="{{ STATIC_URL }}docs/lava-tool.html">lava-tool</a> to
+<p>Authentication tokens allow scripts using <a href="{{ STATIC_URL }}docs/{% if not 'HIDE_V2_DOCS'|get_settings %}v2{% else %}v1{% endif %}/lava-tool.html">lava-tool</a> to
 securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token
 is compromised you can quickly remove it. Anyone using that token will no longer be able to authenticate as You
 in the system.</p>
@@ -38,7 +39,7 @@ in the system.</p>
                   <h4 class="modal-title" id="newTokenModalLabel">Description of new token</h4>
                 </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
                       <div id="description-container" class="form-group">
                       <p>The token description is arbitrary text
                       which can help you to associate tokens with an intended purpose.
@@ -66,6 +67,45 @@ in the system.</p>
   {% endif %}
 
   <h3>Most recently created tokens shown first</h3>
+    {% if unused %}
+    <button class="btn btn-sm btn-danger" data-toggle="modal"
+            data-target="#deleteUnusedTokensModal"
+            {% if unused == 1 %}
+            title="Delete the unused token">Delete the {{ unused }} unused token
+            {% else %}
+            title="Delete all unused tokens">Delete all {{ unused }} unused tokens
+            {% endif %}
+        <span class="glyphicon glyphicon-trash"></span></button>
+    <div class="modal fade" id="deleteUnusedTokensModal" tabindex="-1" role="dialog"
+         aria-labelledby="deleteUnusedTokensModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+    <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        {% if unused == 1 %}
+      <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete the {{ unused }} unused token</h3>
+        {% else %}
+      <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete <b>ALL</b> {{ unused }} unused tokens</h3>
+        {% endif %}
+    </div>
+    <div class="modal-body">
+    {% if unused == 1 %}
+      <p>Are you sure that you want to delete <b>the {{ unused }} unused token</b>?</p>
+    {% else %}
+      <p>Are you sure that you want to delete <b>all {{ unused }} unused tokens</b>?</p>
+    {% endif %}
+    </div>
+    <div class="modal-footer">
+        <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_unused_tokens' %}">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <input class="btn btn-danger" type="submit" value="Delete"/>
+            {% csrf_token %}
+         </form>
+    </div>
+    </div>
+    </div>
+    </div>
+    {% endif %}
 
 <div class="row">
   <div class="col-md-12">
@@ -114,7 +154,7 @@ in the system.</p>
                     <h4 class="modal-title" id="editTokenModal{{ token.id }}">Edit description of {{ token }}</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
                       <div id="description-container" class="form-group">
                         <p>An empty description will clear the existing content.</p>
                         <input id="description" name="description" value="{{ token.description }}"/>

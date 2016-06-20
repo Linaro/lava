@@ -16,26 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-import simplejson
-
 from django import forms
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.db import models
-from django.forms.models import inlineformset_factory
-from django.utils.html import escape
-
-from dashboard_app.models import NamedAttribute
-
 from lava_results_app.models import (
     Chart,
-    ChartGroup,
     ChartQuery,
     ChartQueryUser,
-    TestCase
+    TestCase,
 )
-from lava_scheduler_app.models import TestJob
 
 
 class ChartForm(forms.ModelForm):

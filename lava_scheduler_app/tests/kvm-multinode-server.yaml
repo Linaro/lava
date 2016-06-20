@@ -58,3 +58,16 @@ actions:
 
 context:
   arch: amd64
+
+notify:
+  criteria:
+    status: complete
+  recipients:
+    - to:
+        user: admin
+        method: email
+  compare:
+    query:
+      entity: testjob
+      conditions:
+        submitter: admin

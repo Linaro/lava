@@ -1,9 +1,9 @@
 # pylint: disable=too-many-lines
 
+import jinja2
 import logging
 import os
 import uuid
-import json
 import simplejson
 import urlparse
 import smtplib
@@ -23,8 +23,11 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
-from django.db import models
+from django.db import models, IntegrityError
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
@@ -38,12 +41,18 @@ from django_restricted_resource.models import (
 )
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 from lava_scheduler_app.schema import validate_submission, SubmissionException
-from dashboard_app.models import Bundle, BundleStream, NamedAttribute
+from dashboard_app.models import (
+    Bundle,
+    BundleStream,
+    NamedAttribute,
+    get_domain
+)
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
+
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 
@@ -59,6 +68,27 @@ class JSONDataError(ValueError):
 
 class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
+
+
+class ExtendedUser(models.Model):
+
+    user = models.OneToOneField(User)
+
+    irc_handle = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC handle'
+    )
+
+    irc_server = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC server'
+    )
 
 
 class Tag(models.Model):
@@ -97,6 +127,64 @@ def validate_job(data):
 
         # validate against the submission schema.
         validate_submission(yaml_data)  # raises SubmissionException if invalid.
+        validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+
+
+def validate_yaml(yaml_data):
+    if "notify" in yaml_data:
+        if "recipients" in yaml_data["notify"]:
+            for recipient in yaml_data["notify"]["recipients"]:
+                if recipient["to"]["method"] == \
+                   NotificationRecipient.EMAIL_STR:
+                    if "email" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or email address specified.")
+                else:
+                    if "handle" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or IRC handle specified.")
+                if "user" in recipient["to"]:
+                    try:
+                        User.objects.get(username=recipient["to"]["user"])
+                    except User.DoesNotExist:
+                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
+                elif "email" in recipient["to"]:
+                    try:
+                        validate_email(recipient["to"]["email"])
+                    except ValidationError:
+                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
+
+        if "compare" in yaml_data["notify"] and \
+           "query" in yaml_data["notify"]["compare"]:
+            from lava_results_app.models import Query
+            query_yaml_data = yaml_data["notify"]["compare"]["query"]
+            if "username" in query_yaml_data:
+                try:
+                    query = Query.objects.get(
+                        owner__username=query_yaml_data["username"],
+                        name=query_yaml_data["name"])
+                    if query.content_type.model_class() != TestJob:
+                        raise SubmissionException(
+                            "Only TestJob queries allowed.")
+                except Query.DoesNotExist:
+                    raise SubmissionException(
+                        "Query ~%s/%s does not exist" % (
+                            query_yaml_data["username"],
+                            query_yaml_data["name"]))
+            else:  # Custom query.
+                if query_yaml_data["entity"] != "testjob":
+                    raise SubmissionException(
+                        "Only TestJob queries allowed.")
+                try:
+                    conditions = None
+                    if "conditions" in query_yaml_data:
+                        conditions = query_yaml_data["conditions"]
+                    Query.validate_custom_query(
+                        query_yaml_data["entity"],
+                        conditions
+                    )
+                except Exception as e:
+                    raise SubmissionException(e)
 
 
 def validate_job_json(data):
@@ -256,21 +344,23 @@ class DeviceType(models.Model):
     def get_absolute_url(self):
         return ("lava.scheduler.device_type.detail", [self.pk])
 
-    def devices_visible_to(self, user):
+    def num_devices_visible_to(self, user):
         """
         Prepare a list of devices of this DeviceType which
         this user can see. If the DeviceType is not hidden,
         returns all devices of this type.
         :param user: User to check
-        :return: a list of devices of this DeviceType which the
-        user can see. The list may be empty if the type is hidden
+        :return: the number of devices of this DeviceType which the
+        user can see. This may be 0 if the type is hidden
         and the user owns none of the devices of this type.
         """
-        q = list(Device.objects.filter(device_type=self))
+        devices = Device.objects.filter(device_type=self) \
+                                .only('user', 'group') \
+                                .select_related('user', 'group')
         if self.owners_only:
-            return [o for o in q if o.is_owned_by(user)]
+            return len([d for d in devices if d.is_owned_by(user)])
         else:
-            return q
+            return devices.count()
 
 
 class DefaultDeviceOwner(models.Model):
@@ -285,10 +375,16 @@ class DefaultDeviceOwner(models.Model):
         default=False
     )
 
+    def __unicode__(self):
+        if self.user:
+            return self.user.username
+        return ''
+
 
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
+    Only the hostname, description and online status will be used in pipeline.
     """
 
     hostname = models.CharField(
@@ -296,7 +392,7 @@ class Worker(models.Model):
         max_length=200,
         primary_key=True,
         default=None,
-        editable=False
+        editable=True
     )
 
     rpc2_url = models.CharField(
@@ -317,15 +413,6 @@ class Worker(models.Model):
                    " linked device status transitions and devices should be"
                    " intact."))
 
-    ip_address = models.CharField(
-        verbose_name=_(u"IP Address"),
-        max_length=20,
-        null=True,
-        blank=True,
-        editable=False,
-        default=None
-    )
-
     is_master = models.BooleanField(
         verbose_name=_(u"Is Master?"),
         default=False,
@@ -341,73 +428,11 @@ class Worker(models.Model):
         editable=True
     )
 
-    uptime = models.CharField(
-        verbose_name=_(u"Host Uptime"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    arch = models.CharField(
-        verbose_name=_(u"Architecture"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    platform = models.CharField(
-        verbose_name=_(u"Platform"),
-        max_length=200,
-        null=True,
-        blank=True,
-        default=None,
-        editable=False
-    )
-
-    hardware_info = models.TextField(
-        verbose_name=_(u"Complete Hardware Information"),
-        editable=False,
-        blank=True
-    )
-
-    software_info = models.TextField(
-        verbose_name=_(u"Complete Software Information"),
-        editable=False,
-        blank=True
-    )
-
-    last_heartbeat = models.DateTimeField(
-        verbose_name=_(u"Last Heartbeat"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False
-    )
-
-    last_master_scheduler_tick = models.DateTimeField(
-        verbose_name=_(u"Last Master Scheduler Tick"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False,
-        help_text=("Corresponds to the master node's last scheduler tick. "
-                   "Does not have any impact when set on a worker node.")
-    )
-
     def __unicode__(self):
         return self.hostname
 
     def can_admin(self, user):
-        if user.has_perm('lava_scheduler_app.change_worker'):
-            return True
-        else:
-            return False
+        return user.has_perm('lava_scheduler_app.change_worker')
 
     def can_update(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):
@@ -425,37 +450,18 @@ class Worker(models.Model):
         return mark_safe(self.description)
 
     def get_hardware_info(self):
-        return mark_safe(self.hardware_info)
+        return ''
 
     def get_software_info(self):
-        return mark_safe(self.software_info)
+        return ''
 
     def too_long_since_last_heartbeat(self):
-        """Calculates if the last_heartbeat is more than the heartbeat_timeout
-        specified in seconds.
-
-        If there is a delay return True else False.
         """
-        if self.last_heartbeat is None:
-            return False
+        DEPRECATED
 
-        difference = timezone.now() - self.last_heartbeat
-
-        # We deliberately add a 10% delay to scheduler tick in order to account
-        # for network, processing, etc., overheads.
-        scheduler_tick = timezone.now() - self.master_scheduler_tick()
-        scheduler_tick = scheduler_tick.total_seconds()
-        scheduler_tick = scheduler_tick + (scheduler_tick * 0.1)
-
-        # scheduler_tick is added here to account for the time scheduler daemon
-        # process gets back to the next loop.
-        # Added since we observe offline worker in the UI which uses the same
-        # API to display offline workers.
-        heartbeat_timeout = utils.get_heartbeat_timeout() + scheduler_tick
-        if difference.total_seconds() > heartbeat_timeout:
-            return True
-        else:
-            return False
+        Always returns False.
+        """
+        return False
 
     def attached_devices(self):
         return Device.objects.filter(worker_host=self)
@@ -464,36 +470,10 @@ class Worker(models.Model):
         self.description = description
         self.save()
 
+    # pylint: disable=no-member
     @classmethod
     def update_heartbeat(cls, heartbeat_data):
-        heartbeat_data = simplejson.loads(heartbeat_data)
-        info_size = heartbeat_data.get('info_size', None)
-        hostname = heartbeat_data.get('hostname', None)
-        devices = heartbeat_data.get('devices', None)
-
-        worker, created = Worker.objects.get_or_create(hostname=hostname)
-        worker.uptime = heartbeat_data.get('uptime', None)
-        worker.last_heartbeat = timezone.now()
-
-        if info_size and info_size == 'complete':
-            worker.arch = heartbeat_data.get('arch', None)
-            worker.hardware_info = heartbeat_data.get('hardware_info', "")
-            worker.software_info = heartbeat_data.get('software_info', "")
-            worker.platform = heartbeat_data.get('platform', None)
-            worker.ip_address = heartbeat_data.get('ipaddr', None)
-
-        if worker:
-            worker.save()
-            for d in devices:
-                try:
-                    device = Device.objects.get(hostname=d)
-                    device.worker_host = worker
-                    device.save()
-                except Device.DoesNotExist:
-                    continue
-            return True
-        else:
-            return False
+        return False
 
     def on_master(self):
         return self.is_master
@@ -526,23 +506,17 @@ class Worker(models.Model):
             raise ValueError("Worker node unavailable")
 
     @classmethod
-    def record_last_master_scheduler_tick(self):
+    def record_last_master_scheduler_tick(cls):
         """Records the master's last scheduler tick timestamp.
         """
-        master = Worker.get_master()
-        master.last_master_scheduler_tick = timezone.now()
-        master.save()
+        pass
 
     def master_scheduler_tick(self):
         """Returns django.utils.timezone object of master's last scheduler tick
         timestamp. If the master's last scheduler tick is not yet recorded
         return the current timestamp.
         """
-        master = Worker.get_master()
-        if master.last_master_scheduler_tick:
-            return master.last_master_scheduler_tick
-        else:
-            return timezone.now()
+        return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):
@@ -606,7 +580,7 @@ class DeviceDictionary(DeviceKVStore):
     hostname = kvmodels.Field(pk=True)
     parameters = kvmodels.Field()
 
-    class Meta:
+    class Meta:  # pylint: disable=old-style-class,no-init
         app_label = 'pipeline'
 
 
@@ -794,7 +768,7 @@ class Device(RestrictedResource):
         if self.device_type.owners_only:
             if not user:
                 return False
-            if len(self.device_type.devices_visible_to(user)) == 0:
+            if self.device_type.num_devices_visible_to(user) == 0:
                 return False
         if not self.is_public:
             if not user:
@@ -868,10 +842,7 @@ class Device(RestrictedResource):
     def too_long_since_last_heartbeat(self):
         """This is same as worker heartbeat.
         """
-        if self.worker_host:
-            return self.worker_host.too_long_since_last_heartbeat()
-        else:
-            return True
+        return False
 
     def get_existing_health_check_job(self):
         """Get the existing health check job.
@@ -948,7 +919,7 @@ class Device(RestrictedResource):
         return jinja_str
 
 
-class TemporaryDevice(Device):
+class TemporaryDevice(Device):  # pylint: disable=model-no-explicit-unicode
     """
     A temporary device which inherits all properties of a normal Device.
     Heavily used by vm-groups implementation.
@@ -991,7 +962,7 @@ def _get_tag_list(tags, pipeline=False):
     :raise: JSONDataError if a tag cannot be found in the database.
     """
     taglist = []
-    if type(tags) != list:
+    if not isinstance(tags, list):
         msg = "'device_tags' needs to be a list - received %s" % type(tags)
         raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
     for tag_name in tags:
@@ -1131,7 +1102,7 @@ def _get_device_type(user, name):
         msg = "Device type '%s' is unavailable. %s" % (name, e)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -1163,7 +1134,7 @@ def _check_device_types(user):
         # dt[1] -> device type count
         device_type = DeviceType.objects.get(name=dt[0])
         if device_type.owners_only:
-            count = len(device_type.devices_visible_to(user))
+            count = device_type.num_devices_visible_to(user)
             if count > 0:
                 all_devices[dt[0]] = count
         if dt[1] > 0:
@@ -1171,10 +1142,12 @@ def _check_device_types(user):
     return all_devices
 
 
+# pylint: disable=too-many-arguments,too-many-variables,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
-                         device_type=None, target_group=None, orig=None):
+                         device_type=None, target_group=None,
+                         orig=None):
 
-    if type(job_data) is not dict:
+    if not isinstance(job_data, dict):
         # programming error
         raise RuntimeError("Invalid job data %s" % job_data)
 
@@ -1187,16 +1160,16 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
-    public = True,
+    public_state = True,
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
     param = job_data['visibility']
     if isinstance(param, str):
         if param == 'personal':
-            public = False
+            public_state = False
             visibility = TestJob.VISIBLE_PERSONAL
     elif isinstance(param, dict):
-        public = False
+        public_state = False
         if 'group' in param:
             visibility = TestJob.VISIBLE_GROUP
             viewing_groups.extend(Group.objects.filter(name__in=param['group']))
@@ -1210,7 +1183,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   target_group=target_group,
                   description=job_data['job_name'],
                   health_check=False,
-                  user=user, is_public=public,
+                  user=user, is_public=public_state,
                   visibility=visibility,
                   is_pipeline=True)
     job.save()
@@ -1233,7 +1206,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     return job
 
 
-def _pipeline_protocols(job_data, user, yaml_data=None):
+def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-many-locals,too-many-branches
     """
     Handle supported pipeline protocols
     Check supplied parameters and change the device selection if necessary.
@@ -1267,7 +1240,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         DevicesUnavailableException if all criteria cannot be met.
     """
     device_list = []
-    if type(job_data) is dict and 'protocols' not in job_data:
+    if isinstance(job_data, dict) and 'protocols' not in job_data:
         return device_list
 
     if not yaml_data:
@@ -1360,14 +1333,16 @@ class PipelineStore(models.Model):
         """
         Exports the pipeline as YAML
         """
-        # FIXME: add a command line call to retrieve specific items - too slow to show in admin interface.
         val = self.kee
         msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
         data = JobPipeline.get(msg)
-        if type(data.pipeline) == str:
+        if isinstance(data.pipeline, str):
             # if this fails, fix lava_dispatcher.pipeline.actions.explode()
             data.pipeline = yaml.load(data.pipeline)
         return data
+
+    def __unicode__(self):
+        return ''
 
 
 class JobPipeline(PipelineKVStore):
@@ -1378,7 +1353,7 @@ class JobPipeline(PipelineKVStore):
     job_id = kvmodels.Field(pk=True)
     pipeline = kvmodels.Field()
 
-    class Meta:
+    class Meta:  # pylint: disable=old-style-class,no-init
         app_label = 'pipeline'
 
 
@@ -1386,6 +1361,9 @@ class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+    class Meta:
+        index_together = ["status", "requested_device_type", "requested_device"]
+
     objects = RestrictedResourceManager.from_queryset(
         RestrictedTestJobQuerySet)()
 
@@ -1404,6 +1382,14 @@ class TestJob(RestrictedResource):
         (CANCELED, 'Canceled'),
         (CANCELING, 'Canceling'),
     )
+    STATUS_MAP = {
+        "Submitted": SUBMITTED,
+        "Running": RUNNING,
+        "Complete": COMPLETE,
+        "Incomplete": INCOMPLETE,
+        "Canceled": CANCELED,
+        "Canceling": CANCELING,
+    }
 
     LOW = 0
     MEDIUM = 50
@@ -1425,6 +1411,9 @@ class TestJob(RestrictedResource):
         (VISIBLE_PERSONAL, 'Personal only'),
         (VISIBLE_GROUP, 'Group only'),
     )
+
+    NOTIFY_EMAIL_METHOD = 'email'
+    NOTIFY_IRC_METHOD = 'irc'
 
     id = models.AutoField(primary_key=True)
 
@@ -1520,7 +1509,8 @@ class TestJob(RestrictedResource):
     submit_time = models.DateTimeField(
         verbose_name=_(u"Submit time"),
         auto_now=False,
-        auto_now_add=True
+        auto_now_add=True,
+        db_index=True
     )
     start_time = models.DateTimeField(
         verbose_name=_(u"Start time"),
@@ -1616,34 +1606,29 @@ class TestJob(RestrictedResource):
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'job-output',
                                  'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_job = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_job:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_job = int(last.read())
 
-        return False
+        return self.id <= last_archived_job
 
     def archived_bundle(self):
-        """Checks if the current bundle file was archived.
+        """
+        DEPRECATED
+
+        Checks if the current bundle file was archived.
         """
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_bundle = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_bundle:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_bundle = int(last.read())
 
-        return False
+        return self.id <= last_archived_bundle
 
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
@@ -1668,7 +1653,7 @@ class TestJob(RestrictedResource):
             return None
 
     @property
-    def device_role(self):
+    def device_role(self):  # pylint: disable=too-many-return-statements
         if not (self.is_multinode or self.is_vmgroup):
             return "Error"
         if self.is_pipeline:
@@ -1752,6 +1737,7 @@ class TestJob(RestrictedResource):
 
         return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
 
+    # pylint: disable=too-many-statements,too-many-branches,too-many-locals
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
         """
@@ -1792,7 +1778,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
-                logger.debug("Requested device %s is unavailable." % job_data['target'])
+                logger.debug("Requested device %s is unavailable.", job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_exclusivity([target], False)
@@ -1835,7 +1821,6 @@ class TestJob(RestrictedResource):
                         (count, board, all_devices.get(board.name, 0)))
         elif 'vm_group' in job_data:
             target = None
-            device_type = None
             requested_devices = {}
             vm_group = job_data['vm_group']
 
@@ -1865,7 +1850,7 @@ class TestJob(RestrictedResource):
                 # Right now we support only 'kvm' type vms.
                 #
                 # FIXME: Once we have support for 'xen' augment this list
-                if dtype in ['kvm', 'kvm-arm', 'kvm-aarch64']:
+                if dtype in ['kvm', 'kvm-arm', 'kvm-aarch32', 'kvm-aarch64']:
                     if dtype in requested_devices:
                         count = count + requested_devices[dtype][0]
                         requested_devices[dtype] = (count, role)
@@ -1952,7 +1937,7 @@ class TestJob(RestrictedResource):
         # device_types requested per role.
         allowed_devices = {}
         orig_job_data = job_data
-        job_data = utils.process_repeat_parameter(job_data)
+        job_data = utils.process_repeat_parameter(job_data)  # pylint: disable=redefined-variable-type
         if 'device_group' in job_data:
             device_count = {}
             target = None  # prevent multinode jobs reserving devices which are currently running.
@@ -1979,7 +1964,7 @@ class TestJob(RestrictedResource):
             job_list = []
             try:
                 parent_id = (TestJob.objects.latest('id')).id + 1
-            except:
+            except:  # pylint: disable=bare-except
                 parent_id = 1
             child_id = 0
 
@@ -2027,13 +2012,14 @@ class TestJob(RestrictedResource):
             return job_list
 
         elif 'vm_group' in job_data:
+            # deprecated support
             target = None
             vm_group = str(uuid.uuid4())
             node_json = utils.split_vm_job(job_data, vm_group)
             job_list = []
             try:
                 parent_id = (TestJob.objects.latest('id')).id + 1
-            except:
+            except:  # pylint: disable=bare-except
                 parent_id = 1
             child_id = 0
 
@@ -2043,7 +2029,7 @@ class TestJob(RestrictedResource):
                     name = node_json[role][c]["device_type"]
                     try:
                         device_type = DeviceType.objects.get(name=name)
-                    except DeviceType.DoesNotExist as e:
+                    except DeviceType.DoesNotExist:
                         if name != "dynamic-vm":
                             raise DevicesUnavailableException("device type %s does not exist" % name)
                         else:
@@ -2087,7 +2073,6 @@ class TestJob(RestrictedResource):
                     child_id += 1
 
                     # Reset values if already set
-                    device_type = None
                     target = None
             return job_list
 
@@ -2215,27 +2200,25 @@ class TestJob(RestrictedResource):
         """
         logger = logging.getLogger('lava_scheduler_app')
         if not user:
-            logger.info("Unidentified user requested cancellation of job submitted by %s" % (
-                self.submitter
-            ))
+            logger.info("Unidentified user requested cancellation of job submitted by %s", self.submitter)
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
-            logger.info("Cancel %s - clearing reserved status for device %s" % (
-                self, self.actual_device.hostname))
+            logger.info("Cancel %s - clearing reserved status for device %s",
+                        self, self.actual_device.hostname)
             self.actual_device.cancel_reserved_status(user, "job-cancel")
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
         elif self.status == TestJob.SUBMITTED:
-            logger.info("Cancel %s" % self)
+            logger.info("Cancel %s", self)
             self.status = TestJob.CANCELED
             self._send_cancellation_mail(user)
         elif self.status == TestJob.RUNNING:
-            logger.info("Cancel %s" % self)
+            logger.info("Cancel %s", self)
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
         elif self.status == TestJob.CANCELING:
-            logger.info("Completing cancel of %s" % self)
+            logger.info("Completing cancel of %s", self)
             self.status = TestJob.CANCELED
         if user:
             self.set_failure_comment("Canceled by %s" % user.username)
@@ -2336,10 +2319,7 @@ class TestJob(RestrictedResource):
 
     @property
     def is_multinode(self):
-        if self.target_group:
-            return True
-        else:
-            return False
+        return bool(self.target_group)
 
     @property
     def lookup_worker(self):
@@ -2365,10 +2345,8 @@ class TestJob(RestrictedResource):
     def is_vmgroup(self):
         if self.is_pipeline:
             return False
-        if self.vm_group:
-            return True
         else:
-            return False
+            return bool(self.vm_group)
 
     @property
     def display_id(self):
@@ -2438,6 +2416,7 @@ class TestJob(RestrictedResource):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
         if self.is_multinode or self.is_vmgroup:
+            # FIXME: bad use of map - use list comprehension
             return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)
@@ -2462,35 +2441,17 @@ class TestJob(RestrictedResource):
     def get_measurement_results(self):
         # Get measurement values per lava_results_app.testcase.
         # TODO: add min, max
-        from lava_results_app.models import TestCase
+        from lava_results_app.models import TestSuite, TestCase
 
         results = {}
-        for suite in self.testsuite_set.all():
-            sum = 0
-
-            # TODO: this is not available in 1.7 but is much better solution.
-            # results[suite.name]['measurement'] = suite.testcase_set.all().\
-            #     annotate(measurement_float=Func(F('measurement'),
-            #                                     function='CAST',
-            #              template='%(function)s(%(expressions)s as FLOAT)')).\
-            #     aggregate(models.Avg('measurement_float'))
-
-            for testcase in suite.testcase_set.all():
-                if testcase.name not in results:
-                    results[testcase.name] = {}
-                    results[testcase.name]['measurement'] = 0
-                    results[testcase.name]['count'] = 0
-                    results[testcase.name]['fail'] = False
-
-                results[testcase.name]['measurement'] += float(testcase.measurement)
-                results[testcase.name]['count'] += 1
-                results[testcase.name]['fail'] |= testcase.result != TestCase.RESULT_PASS
-
-            for name in results:
-                try:
-                    results[name]['measurement'] = results[name]['measurement'] / results[name]['count']
-                except ZeroDivisionError:
-                    results[name]['measurement'] = 0
+        for suite in TestSuite.objects.filter(job=self).prefetch_related(
+                'testcase_set').annotate(
+                    test_case_avg=models.Avg('testcase__measurement')):
+            if suite.name not in results:
+                results[suite.name] = {}
+            results[suite.name]['measurement'] = suite.test_case_avg
+            results[suite.name]['fail'] = suite.testcase_set.filter(
+                result=TestCase.RESULT_MAP['fail']).count()
 
         return results
 
@@ -2530,16 +2491,522 @@ class TestJob(RestrictedResource):
                     object_id__in=self.testdata_set.all().values_list(
                         'id', flat=True),
                     name=xaxis_attribute).values_list('value', flat=True)[0]
+            # FIXME: bare except
             except:  # There's no attribute, use date.
                 pass
 
         return attribute
+
+    def create_notification(self, notify_data):
+        # Create notification object.
+        notification = Notification()
+
+        if "verbosity" in notify_data:
+            notification.verbosity = Notification.VERBOSITY_MAP[
+                notify_data["verbosity"]]
+
+        notification.job_status_trigger = TestJob.STATUS_MAP[
+            notify_data["criteria"]["status"].title()]
+        if "type" in notify_data["criteria"]:
+            notification.type = Notification.TYPE_MAP[
+                notify_data["criteria"]["type"]]
+        if "compare" in notify_data:
+            if "blacklist" in notify_data["compare"]:
+                notification.blacklist = notify_data["compare"]["blacklist"]
+            if "query" in notify_data["compare"]:
+                from lava_results_app.models import Query
+                query_data = notify_data["compare"]["query"]
+                if "username" in query_data:
+                    # DoesNotExist scenario already verified in validate
+                    notification.query_owner = User.objects.get(
+                        username=query_data["username"])
+                    notification.query_name = query_data["name"]
+                else:  # Custom query.
+                    notification.entity = Query.get_content_type(
+                        query_data["entity"])
+                    if "conditions" in query_data:
+                        # Save conditions as a string.
+                        notification.conditions = Query.CONDITIONS_SEPARATOR.join(['%s%s%s' % (key, Query.CONDITION_DIVIDER, value) for (key, value) in query_data["conditions"].items()])
+
+        notification.test_job = self
+        notification.template = Notification.DEFAULT_TEMPLATE
+        notification.save()
+
+        if "recipients" in notify_data:
+            for recipient in notify_data["recipients"]:
+                notification_recipient = NotificationRecipient(
+                    notification=notification)
+                notification_recipient.method = NotificationRecipient.METHOD_MAP[recipient["to"]["method"]]
+                if "user" in recipient["to"]:
+                    user = User.objects.get(
+                        username=recipient["to"]["user"])
+                    notification_recipient.user = user
+                if "email" in recipient["to"]:
+                    notification_recipient.email = recipient["to"]["email"]
+                if "handle" in recipient["to"]:
+                    notification_recipient.irc_handle = recipient["to"][
+                        "handle"]
+                if "server" in recipient["to"]:
+                    notification_recipient.irc_server = recipient["to"][
+                        "server"]
+
+                try:
+                    notification_recipient.save()
+                except IntegrityError:
+                    # Ignore unique constraint violation.
+                    pass
+
+        else:
+            try:
+                notification_recipient = NotificationRecipient.objects.create(
+                    user=self.submitter,
+                    notification=notification)
+            except IntegrityError:
+                # Ignore unique constraint violation.
+                pass
+
+    def send_notifications(self):
+        notification = self.notification
+        for recipient in notification.notificationrecipient_set.all():
+            if recipient.method == NotificationRecipient.EMAIL:
+                if recipient.status == NotificationRecipient.NOT_SENT:
+                    try:
+                        logging.info("sending email notification to %s",
+                                     recipient.email_address)
+                        title = "LAVA notification for Test Job %s" % self.id
+                        kwargs = self.get_notification_args(recipient)
+                        body = self.create_notification_body(
+                            notification.template, **kwargs)
+                        result = send_mail(
+                            title, body, settings.SERVER_EMAIL,
+                            [recipient.email_address])
+                        if result:
+                            recipient.status = NotificationRecipient.SENT
+                            recipient.save()
+                    except (smtplib.SMTPRecipientsRefused,
+                            smtplib.SMTPSenderRefused, socket.error):
+                        logging.warn("failed to send email notification to %s",
+                                     recipient.email_address)
+            else:
+                # TODO: implement irc notification.
+                pass
+
+    def get_notification_args(self, recipient):
+        kwargs = {}
+        kwargs["job"] = self
+        if recipient.user:
+            kwargs["user"] = {}
+            kwargs["user"]["username"] = recipient.user.username
+            kwargs["user"]["first_name"] = recipient.user.first_name
+            kwargs["user"]["last_name"] = recipient.user.last_name
+        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["query"] = {}
+        if self.notification.query_name or self.notification.entity:
+            kwargs["query"]["results"] = self.notification.get_query_results()
+            kwargs["query"]["link"] = self.notification.get_query_link()
+            # Find the first job which has status COMPLETE and is not the
+            # current job (this can happen with custom queries) for comparison.
+            compare_index = None
+            for index, result in enumerate(kwargs["query"]["results"]):
+                if result.status == TestJob.COMPLETE and \
+                   self != result:
+                    compare_index = index
+                    break
+
+            kwargs["query"]["compare_index"] = compare_index
+            if compare_index is not None:
+                # Get testsuites diffs between current job and latest complete
+                # job from query.
+                new_suites = self.testsuite_set.all()
+                old_suites = kwargs["query"]["results"][
+                    compare_index].testsuite_set.all()
+                left_suites_diff = new_suites.exclude(
+                    name__in=old_suites.values_list(
+                        'name', flat=True))
+                right_suites_diff = old_suites.exclude(
+                    name__in=new_suites.values_list('name', flat=True))
+
+                kwargs["query"]["left_suites_diff"] = left_suites_diff
+                kwargs["query"]["right_suites_diff"] = right_suites_diff
+
+                # Get testcases diffs between current job and latest complete
+                # job from query.
+                from lava_results_app.models import TestCase, TestSuite
+                new_cases = TestCase.objects.filter(suite__job=self)
+                old_cases = TestCase.objects.filter(
+                    suite__job=kwargs["query"]["results"][compare_index])
+
+                left_cases_diff = new_cases.exclude(
+                    name__in=old_cases.values_list(
+                        'name', flat=True))
+                right_cases_diff = old_cases.exclude(
+                    name__in=new_cases.values_list('name', flat=True))
+
+                kwargs["query"]["left_cases_diff"] = left_cases_diff
+                kwargs["query"]["right_cases_diff"] = right_cases_diff
+
+                left_suites_intersection = new_suites.filter(
+                    name__in=old_suites.values_list(
+                        'name', flat=True))
+
+                # Format results.
+                left_suites_count = {}
+                for suite in left_suites_intersection:
+                    left_suites_count[suite.name] = (
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_PASS).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_FAIL).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_SKIP).count()
+                    )
+
+                right_suites_intersection = old_suites.filter(
+                    name__in=new_suites.values_list(
+                        'name', flat=True))
+
+                # Format results.
+                right_suites_count = {}
+                for suite in right_suites_intersection:
+                    right_suites_count[suite.name] = (
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_PASS).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_FAIL).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_SKIP).count()
+                    )
+
+                kwargs["query"]["left_suites_count"] = left_suites_count
+                kwargs["query"]["right_suites_count"] = right_suites_count
+
+                # Format {<Testcase>: old_result, ...}
+                testcases_changed = {}
+                for suite in left_suites_intersection:
+                    try:
+                        old_suite = TestSuite.objects.get(
+                            name=suite.name,
+                            job=kwargs["query"]["results"][compare_index])
+                    except TestSuite.DoesNotExist:
+                        continue  # No matching suite, move on.
+                    for testcase in suite.testcase_set.all():
+                        try:
+                            old_testcase = TestCase.objects.get(
+                                suite=old_suite, name=testcase.name)
+                            if old_testcase and \
+                               testcase.result != old_testcase.result:
+                                testcases_changed[testcase] = old_testcase.get_result_display()
+                        except TestCase.DoesNotExist:
+                            continue  # No matching TestCase, move on.
+                        except TestCase.MultipleObjectsReturned:
+                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare" % old_suite)
+
+                kwargs["query"]["testcases_changed"] = testcases_changed
+
+        return kwargs
+
+    def create_notification_body(self, template_name, **kwargs):
+        txt_body = u""
+        txt_body = Notification.TEMPLATES_ENV.get_template(
+            template_name).render(**kwargs)
+        return txt_body
+
+    def notification_criteria(self, criteria, old_job):
+        if self.status == TestJob.STATUS_MAP[
+           criteria["status"].title()]:
+            if "type" in criteria:
+                if criteria["type"] == "regression":
+                    if old_job.status == TestJob.COMPLETE and \
+                       self.status == TestJob.INCOMPLETE:
+                        return True
+                if criteria["type"] == "progression":
+                    if old_job.status == TestJob.INCOMPLETE and \
+                       self.status == TestJob.COMPLETE:
+                        return True
+            else:
+                return True
+
+        return False
+
+
+class Notification(models.Model):
+
+    TEMPLATES_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "templates/",
+        TestJob._meta.app_label)
+
+    TEMPLATES_ENV = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
+        extensions=["jinja2.ext.i18n"])
+
+    DEFAULT_TEMPLATE = "testjob_notification.txt"
+
+    QUERY_LIMIT = 5
+
+    test_job = models.OneToOneField(
+        TestJob,
+        null=False,
+        on_delete=models.CASCADE)
+
+    REGRESSION = 0
+    PROGRESSION = 1
+    TYPE_CHOICES = (
+        (REGRESSION, 'regression'),
+        (PROGRESSION, 'progression'),
+    )
+    TYPE_MAP = {
+        'regression': REGRESSION,
+        'progression': PROGRESSION,
+    }
+
+    type = models.IntegerField(
+        choices=TYPE_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_(u"Type"),
+    )
+
+    job_status_trigger = models.CommaSeparatedIntegerField(
+        choices=TestJob.STATUS_CHOICES,
+        max_length=30,
+        default=TestJob.COMPLETE,
+        verbose_name=_(u"Job status trigger"),
+    )
+
+    VERBOSE = 0
+    QUIET = 1
+    STATUS_ONLY = 2
+    VERBOSITY_CHOICES = (
+        (VERBOSE, 'verbose'),
+        (QUIET, 'quiet'),
+        (STATUS_ONLY, 'status-only'),
+    )
+    VERBOSITY_MAP = {
+        'verbose': VERBOSE,
+        'quiet': QUIET,
+        'status-only': STATUS_ONLY,
+    }
+
+    verbosity = models.IntegerField(
+        choices=VERBOSITY_CHOICES,
+        default=QUIET,
+    )
+
+    template = models.CharField(
+        max_length=50,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Template name'
+    )
+
+    blacklist = models.CharField(
+        max_length=400,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Test Case blacklist'
+    )
+
+    time_sent = models.DateTimeField(
+        verbose_name=_(u"Time sent"),
+        auto_now=False,
+        auto_now_add=True,
+        editable=False
+    )
+
+    query_owner = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Query owner'
+    )
+
+    query_name = models.CharField(
+        max_length=1024,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Query name',
+    )
+
+    entity = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True
+    )
+
+    conditions = models.CharField(
+        max_length=400,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Conditions'
+    )
+
+    def get_query_results(self):
+        from lava_results_app.models import Query
+        if self.query_name:
+            query = Query.objects.get(name=self.query_name,
+                                      owner=self.query_owner)
+            # We use query_owner as user here since we show only status.
+            return query.get_results(self.query_owner, self.QUERY_LIMIT)
+        else:
+            return Query.get_queryset(
+                self.entity,
+                Query.parse_conditions(self.entity, self.conditions),
+                self.QUERY_LIMIT)
+
+    def get_query_link(self):
+        from lava_results_app.models import Query
+        if self.query_name:
+            query = Query.objects.get(name=self.query_name,
+                                      owner=self.query_owner)
+            return query.get_absolute_url()
+        else:
+            # Make absolute URL manually.
+            return "%s?entity=%s&conditions=%s" % (
+                reverse("lava.results.query_custom"),
+                self.entity.model,
+                self.conditions)
+
+
+class NotificationRecipient(models.Model):
+
+    class Meta:
+        unique_together = ("user", "notification")
+
+    user = models.ForeignKey(
+        User,
+        default=None,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Notification user recipient'
+    )
+
+    email = models.CharField(
+        max_length=100,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='recipient email'
+    )
+
+    irc_handle = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC handle'
+    )
+
+    irc_server = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC server'
+    )
+
+    notification = models.ForeignKey(
+        Notification,
+        null=False,
+        on_delete=models.CASCADE,
+        verbose_name='Notification'
+    )
+
+    SENT = 0
+    NOT_SENT = 1
+    STATUS_CHOICES = (
+        (SENT, 'sent'),
+        (NOT_SENT, 'not sent'),
+    )
+    STATUS_MAP = {
+        'sent': SENT,
+        'not sent': NOT_SENT,
+    }
+
+    status = models.IntegerField(
+        choices=STATUS_CHOICES,
+        default=NOT_SENT,
+        verbose_name=_(u"Status"),
+    )
+
+    EMAIL = 0
+    EMAIL_STR = 'email'
+    IRC = 1
+    IRC_STR = 'irc'
+
+    METHOD_CHOICES = (
+        (EMAIL, EMAIL_STR),
+        (IRC, IRC_STR),
+    )
+    METHOD_MAP = {
+        EMAIL_STR: EMAIL,
+        IRC_STR: IRC,
+    }
+
+    method = models.IntegerField(
+        choices=METHOD_CHOICES,
+        default=EMAIL,
+        verbose_name=_(u"Method"),
+    )
+
+    @property
+    def email_address(self):
+        if self.email:
+            return self.email
+        else:
+            return self.user.email
+
+    @property
+    def irc_handle(self):
+        if self.irc_handle:
+            return self.irc_handle
+        else:
+            return self.user.extendeduser.irc_handle
+
+    @property
+    def irc_server(self):
+        if self.irc_server:
+            return self.irc_server
+        else:
+            return self.user.extendeduser.irc_server
+
+
+@receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
+def process_notifications(sender, **kwargs):
+    new_job = kwargs["instance"]
+    notification_status = [TestJob.COMPLETE, TestJob.INCOMPLETE,
+                           TestJob.CANCELED]
+    # Send only for pipeline jobs.
+    # If it's a new TestJob, no need to send notifications.
+    if new_job.is_pipeline and new_job.id:
+        old_job = TestJob.objects.get(pk=new_job.id)
+        if old_job.status not in notification_status and \
+           new_job.status in notification_status:
+            job_def = yaml.load(new_job.definition)
+            if "notify" in job_def:
+                if new_job.notification_criteria(job_def["notify"]["criteria"],
+                                                 old_job):
+                    try:
+                        old_job.notification
+                    except ObjectDoesNotExist:
+                        new_job.create_notification(job_def["notify"])
+
+                    new_job.send_notifications()
 
 
 class TestJobUser(models.Model):
 
     class Meta:
         unique_together = ("test_job", "user")
+        permissions = (
+            ('cancel_resubmit_testjob', 'Can cancel or resubmit test jobs'),
+        )
 
     user = models.ForeignKey(
         User,
@@ -2554,6 +3021,11 @@ class TestJobUser(models.Model):
     is_favorite = models.BooleanField(
         default=False,
         verbose_name='Favorite job')
+
+    def __unicode__(self):
+        if self.user:
+            return self.user.username
+        return ''
 
 
 class DeviceStateTransition(models.Model):

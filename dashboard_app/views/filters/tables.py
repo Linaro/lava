@@ -18,18 +18,14 @@
 
 import datetime
 import operator
-from collections import OrderedDict
 from django.conf import settings
 from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 import django_tables2 as tables
 from lava.utils.lavatable import LavaTable
-from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
-    Bundle,
     TestRun,
-    TestRunFilter,
     TestRunFilterSubscription,
 )
 
@@ -192,7 +188,8 @@ class BundleTestColumn(tables.Column):
     def render(self, record):
         r = []
         if 'id__arrayagg' in record:
-            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])
+            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])\
+                                  .select_related("bundle", "bundle__bundle_stream")
             for run in runs:
                 r.append('<a href="' +
                          run.bundle.get_absolute_url() + '">' +

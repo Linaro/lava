@@ -22,6 +22,7 @@ Keep to just the response rendering functions
 """
 import csv
 import yaml
+from collections import OrderedDict
 from django.template import RequestContext
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render_to_response
@@ -31,14 +32,15 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.tables import ResultsTable, SuiteTable
+from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
+from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
 from lava_results_app.utils import check_request_auth
-from lava_results_app.models import TestSuite, TestCase, TestSet
+from lava_results_app.models import TestSuite, TestCase, TestSet, TestData
 from lava.utils.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name
@@ -49,7 +51,9 @@ class ResultsView(LavaView):
     Base results view
     """
     def get_queryset(self):
-        return TestSuite.objects.all().order_by('-job__id')
+        return TestSuite.objects.all().select_related('job').prefetch_related(
+            'job__actual_device', 'job__actual_device__device_type'
+        ).order_by('-job__id', 'name')
 
 
 class SuiteView(LavaView):
@@ -63,7 +67,7 @@ class SuiteView(LavaView):
 @BreadCrumb("Results", parent=lava_index)
 def index(request):
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    result_table = ResultsTable(
+    result_table = ResultsIndexTable(
         data.get_table_data(),
     )
     RequestConfig(request, paginate={"per_page": result_table.length}).configure(result_table)
@@ -84,11 +88,47 @@ def query(request):
 
 @BreadCrumb("Test job {job}", parent=index, needs=['job'])
 def testjob(request, job):
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
     suite_table = ResultsTable(
         data.get_table_data().filter(job=job)
     )
+    failed_definitions = []
+    yaml_dict = OrderedDict()
+    if TestData.objects.filter(testjob=job).exists():
+        # some duplicates can exist, so get would fail here and [0] is quicker than try except.
+        testdata = TestData.objects.filter(
+            testjob=job).prefetch_related('actionlevels__testcase', 'actionlevels__testcase__suite')[0]
+        if job.status in [TestJob.INCOMPLETE, TestJob.COMPLETE]:
+            # returns something like ['singlenode-advanced', 'smoke-tests-basic', 'smoke-tests-basic']
+            executed = [
+                {
+                    case.action_metadata['test_definition_start']:
+                        case.action_metadata.get('success', '')}
+                for case in TestCase.objects.filter(
+                    suite__in=TestSuite.objects.filter(job=job))
+                if case.action_metadata and 'test_definition_start' in
+                case.action_metadata and case.suite.name == 'lava']
+
+            submitted = [
+                actiondata.testcase.action_metadata for actiondata in
+                testdata.actionlevels.all() if actiondata.testcase and
+                'test-runscript-overlay' in actiondata.action_name]
+            # compare with a dict similar to created in executed
+            for item in submitted:
+                if executed and {item['name']: item['success']} not in executed:
+                    comparison = {}
+                    if item['from'] != 'inline':
+                        comparison['repository'] = item['repository']
+                    comparison['path'] = item['path']
+                    comparison['name'] = item['name']
+                    comparison['uuid'] = item['success']
+                    failed_definitions.append(comparison)
+
+        # hide internal python objects, like OrderedDict
+        for data in testdata.attributes.all().order_by('name'):
+            yaml_dict[str(data.name)] = str(data.value)
+
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
     return render_to_response(
         "lava_results_app/job.html", {
@@ -96,6 +136,8 @@ def testjob(request, job):
             'job': job,
             'job_link': pklink(job),
             'suite_table': suite_table,
+            'metadata': yaml_dict,
+            'failed_definitions': failed_definitions,
         }, RequestContext(request))
 
 
@@ -134,6 +176,7 @@ def testjob_yaml(request, job):
 @BreadCrumb("Suite {pk}", parent=testjob, needs=['job', 'pk'])
 def suite(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
@@ -206,9 +249,31 @@ def suite_yaml(request, job, pk):
     return response
 
 
+def metadata_export(request, job):
+    """
+    Dispatcher adds some metadata,
+    Job submitter can add more.
+    CSV is not supported as the user-supplied metadata can
+    include nested dicts or lists.
+    """
+    job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
+    # testdata from job & export
+    testdata = get_object_or_404(TestData, testjob=job)
+    response = HttpResponse(content_type='text/yaml')
+    filename = "lava_metadata_%s.yaml" % job.id
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    yaml_dict = {}
+    # hide internal python objects
+    for data in testdata.attributes.all():
+        yaml_dict[str(data.name)] = str(data.value)
+    yaml.dump(yaml_dict, response)
+    return response
+
+
 @BreadCrumb("TestSet {case}", parent=testjob, needs=['job', 'pk', 'ts', 'case'])
 def testset(request, job, ts, pk, case):
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
     test_cases = TestCase.objects.filter(name=case, test_set=test_set)
@@ -234,7 +299,7 @@ def testcase(request, job, pk, case):
     :param case: the name of one or more TestCase objects in the TestSuite
     """
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
     return render_to_response(
         "lava_results_app/case.html", {

@@ -2,12 +2,17 @@
 {% block body %}
 device_type: kvm
 
+# allow job context override - use a different variable name, undefined if not in job context
+{% set base_guest_fs_size = guestfs_size | default(512) %}
+{% set boot_order = installer_boot_order | default('c') %}
+
 actions:
   deploy:
     methods:
       image:
         parameters:
-          root_part: {{ root_part|default(1) }}
+          guest:
+            size: {{ base_guest_fs_size }}  # in Mb
   boot:
     methods:
       qemu:
@@ -24,7 +29,9 @@ actions:
 {% if arch == 'arm64' %}
             {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
 {% elif arch == 'amd64' %}
-            {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
+            {root: {{ boot_root|default('/dev/sda1') }},
+             console: {{ boot_console|default('ttyS0,115200') }},
+             boot_order: {{ installer_boot_order }}}
 {% else %}
             {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
 {% endif %}

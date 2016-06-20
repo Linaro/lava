@@ -22,8 +22,6 @@ from dashboard_app.models import (
     ImageReport,
     ImageReportChart,
     ImageChartFilter,
-    ImageChartTest,
-    ImageChartTestCase,
     ImageChartUser,
     Test,
     TestCase,
