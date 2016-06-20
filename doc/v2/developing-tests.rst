@@ -3,9 +3,9 @@
 Introduction to the LAVA Test Developer Guide
 #############################################
 
-This guide aims to enable engineers to be able to
+This guide aims to enable users to be able to
 
-#. Submit desired jobs/tests on target deployed where the LAVA server
+#. Submit desired jobs/tests on targets deployed where the LAVA server
    is located and report results.
 #. Understand how test job files need to be written so that jobs get
    submitted properly.
@@ -26,12 +26,12 @@ Guide Contents
 
 * :ref:`new_dispatcher_actions`
 * :ref:`lava_test_shell`
-* :ref:`multinode`
 
 Assumptions at the start of this guide
 **************************************
 
-#. The desired board is already deployed at the LAVA Server location.
+#. The desired board is already configured for use with a LAVA Server
+   instance.
 #. A user account (username, password, email address) is already created
    by a LAVA administrator on your behalf, with permissions to submit jobs.
 #. ``lava-tool`` is already installed on your test system and a suitable
@@ -69,14 +69,14 @@ well as the currently active jobs. Also check the Devices pages:
 * My Devices - available from your profile menu by clicking on your
   name once signed into the instance.
 
-For a :ref:`multinode` job, you may need to check more than one
+For a :ref:`writing_multinode` job, you may need to check more than one
 :term:`device type`.
 
 Devices are considered available for new jobs according to the
 :ref:`device_status`.
 
 * Idle, Reserved, Offline, Offlining - jobs can be submitted.
-* restricted - only available for submissions made by declared users.
+* Restricted - only available for submissions made by declared users.
 * Retired - jobs will be rejected if all remaining devices of this type
   are retired.
 
@@ -93,10 +93,14 @@ https://validation.linaro.org/scheduler/device_type/qemu
 Actions to be run for a LAVA test
 *********************************
 
-#. Deploy: Each device type supports a range of deployment
-   methods.
-#. Boot: Each device type supports a range of boot methods.
-#. Test: Run the lava test shell.
+There are three important sets of actions that will be run for a LAVA
+test:
+
+#. Deploy: The information needed to set up a device to boot a test
+   image. Each device type supports a range of deployment methods.
+#. Boot: The steps to follow to start the test image on the
+   device. Each device type supports a range of boot methods.
+#. Test: Run the lava test shell, running the specified tests.
 
 Examples
 ********
@@ -114,7 +118,7 @@ Deploying a pre-built QEMU image
         images:
             rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
               compression: gz
         os: debian
 
@@ -139,19 +143,16 @@ no tags), any of those devices can be used for the Test Job.
 Using LAVA Test Shell
 =====================
 
-The ``lava_test_shell`` action provides a way to employ a more black-box style
-testing approach with the target device. The action only requires that a
-deploy action (deploy_linaro_image/deploy_linaro_android_image) has been
-executed. Its format is:
+The ``lava_test_shell`` action provides a way to employ a black-box
+style testing approach with the target device. Its format is:
 
 .. code-block:: yaml
 
     - test:
         failure_retry: 3
-        name: kvm-basic-singlenode  # is not present, use "test $N"
-        # only s, m & h are supported.
+        name: kvm-basic-singlenode
         timeout:
-          minutes: 5 # uses install:deps, so takes longer than singlenode01
+          minutes: 5
         definitions:
             - repository:
                 metadata:
@@ -172,13 +173,14 @@ executed. Its format is:
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
 
-You can put multiple test definition URLs in "definitions"
-list. These will be run sequentially without reboot.
+The "definitions" list here may contain multiple test definition
+URLs. These will all be run sequentially in one go; the system will
+not be rebooted between the definitions.
 
 .. seealso:: :ref:`Dispatcher Actions <test_action_definitions>`
 

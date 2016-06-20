@@ -42,7 +42,7 @@ Caching queries
 ===============
 
 Queries can be live or cached. Cached queries data can be refreshed either
-through UI or via the XMLRPC API call by creator or someone in group assigned
+through UI or via the XML-RPC API call by creator or someone in group assigned
 to the query.
 Please keep in mind, live queries are executed whenever someone visits the
 query page or refreshes it. Viewing a live query will usually take longer than
@@ -51,7 +51,7 @@ server which can cause the query to timeout.
 
 When adding/updating and removing conditions, query is **not** automatically
 updated. This needs to be done either through UI after updating the conditions
-or via XMLRPC.
+or via XML-RPC.
 
 Authorization and admin
 =======================

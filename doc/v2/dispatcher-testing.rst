@@ -327,7 +327,7 @@ be marked and retained until such time as either the new model replaces
 the old or the bug can be fixed in both models. Whereas the submission
 schema, log file structure and result bundle schema have thrown away any
 backwards compatibility, LavaTestShell will need to at least attempt to
-retain compatibility whilst improving the overall design and integrating
+retain compatibility while improving the overall design and integrating
 the test shell operations into the new classes.
 
 Current possible issues include:
@@ -533,10 +533,10 @@ Construct your pipeline to use Actions in the order:
 .. note:: There may be several Retry actions necessary within these
           steps.
 
-So, for a UBoot operation, this results in a pipeline like:
+So, for a U-Boot operation, this results in a pipeline like:
 
 * UBootCommandOverlay - substitutes dynamic and device-specific data
-  into the UBoot command list specified in the device configuration.
+  into the U-Boot command list specified in the device configuration.
 * ConnectDevice - establishes a serial connection to the device, as
   specified by the device configuration
 * UBootRetry - wraps the subsequent actions in a retry
@@ -544,7 +544,7 @@ So, for a UBoot operation, this results in a pipeline like:
  * UBootInterrupt - sets the ``Hit any key`` prompt in a new connection
  * ResetDevice - sends the reboot command to the device
  * ExpectShellSession - waits for the specified prompt to match
- * UBootCommandsAction - issues the commands to UBoot
+ * UBootCommandsAction - issues the commands to U-Boot
 
 .. _starting_connections:
 
@@ -861,5 +861,5 @@ distribution release of a foreign architecture and running tests inside
 that chroot.
 
 Android tests may involve setting up a VM or a configured chroot to
-expose USB devices whilst retaining the ability to use different
+expose USB devices while retaining the ability to use different
 versions of tools for different tests.

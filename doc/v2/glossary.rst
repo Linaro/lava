@@ -6,11 +6,10 @@
    the item in the contents list. All terms are automatically
    added to the Sphinx index.
 
+FIXME - need to add many more terms here
+
 Glossary of terms
 =================
-
-Contents
---------
 
 [ :term:`action level` ]
 [ :term:`device dictionary` ]
@@ -224,7 +223,7 @@ Contents
     like fail-early, error identification, avoid defaults, fail and
     diagnose later, as well as giving test writers more rope to make
     LAVA more transparent. See :ref:`dispatcher_design` and
-    :ref:`refactoring_use_cases`.
+    :ref:`pipeline_use_cases`.
 
   priority
     A job has a default priority of ``Medium``. This means that the job
@@ -232,7 +231,7 @@ Contents
     of jobs of the same priority. Every :term:`health check` has a higher
     priority than any submitted job and if a health check is required, it
     will **always** run before any other jobs. Priority only has any
-    effect whilst the job is queued as ``Submitted``.
+    effect while the job is queued as ``Submitted``.
 
   remote worker
     A dispatcher with devices attached which does not have a web frontend
@@ -243,7 +242,7 @@ Contents
     Within LAVA, the process of developing the :term:`pipeline` code
     in parallel with the existing code, resulting in new elements
     alongside old code - possibly disabled on some instances.
-    See :ref:`dispatcher_design` and :ref:`refactoring_use_cases`.
+    See :ref:`dispatcher_design` and :ref:`pipeline_use_cases`.
 
   restricted device
     A restricted device can only accept job submissions from the device
@@ -256,7 +255,7 @@ Contents
     ``Query`` to replace `filter`. This code is in ongoing
     development but includes support for:
 
-    * viewing results so far whilst the test job is still running
+    * viewing results so far while the test job is still running
     * retaining results from earlier actions even if the test job
       fails later
     * allowing any action in the pipeline to generate results

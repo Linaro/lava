@@ -240,7 +240,7 @@ Obtaining configuration of a known device
 
 The simplest way to start is to download the working configuration of
 a device of the same known device type using
-`XMLRPC <https://staging.validation.linaro.org/api/help/#scheduler.get_pipeline_device_config>`_
+`XML-RPC <https://staging.validation.linaro.org/api/help/#scheduler.get_pipeline_device_config>`_
 or the :command:`lava-tool get-pipeline-device-config` command,
 see :manpage:`lava-tool (1)`. This will (by default) write a new file
 in the current working directory containing the configuration.
@@ -342,7 +342,7 @@ Creating a device dictionary for the device
 ===========================================
 
 The local YAML file downloaded using :command:`get-pipeline-device-config`,
-whether XMLRPC or :file:`lava-tool` is the result of combining a device
+whether XML-RPC or :file:`lava-tool` is the result of combining a device
 dictionary and the Jinja2 template. To be able to submit and schedule jobs
 on the device, the values from your modified file need to be entered into
 the database of the instance you want to use to schedule the jobs. These
@@ -468,8 +468,8 @@ from the database for that device.
 
 .. _updating_device_dictionary_using_xmlrpc:
 
-Using XMLRPC
-------------
+Using XML-RPC
+-------------
 
 Superusers can use ``import_device_dictionary`` to update a Jinja2 string
 for a specified Device hostname:
@@ -485,11 +485,11 @@ for a specified Device hostname:
   server.scheduler.import_device_dictionary(device_hostname, jinja_string)
 
 If the dictionary did not exist for this hostname, it will be created.
-The XMLRPC call will return::
+The XML-RPC call will return::
 
  Adding new device dictionary for black01
 
-The dictionary is then updated. If the file is valid, the XMLRPC call will
+The dictionary is then updated. If the file is valid, the XML-RPC call will
 return::
 
  Device dictionary updated for black01

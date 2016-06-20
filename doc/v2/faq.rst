@@ -38,7 +38,7 @@ credentials in the link to the lava server. ::
 
   $ lava-tool submit-job http://<login>:<token>@localhost/RPC2/
 
-You can also use XMLRPC directly:
+You can also use XML-RPC directly:
 
 .. code-block:: python
 
@@ -202,7 +202,7 @@ starting vagrant, if you want to use qemu to run LAVA tests. Vagrant
 prefers particular versions of virtualbox. Vagrant version 1.0.3 does
 not work with virtualbox 4.2 but a vagrant session setup in an earlier
 version of virtualbox can still be accessed from the virtualbox
-manager. Login as vagrant:vagrant.
+manager. Log in as vagrant:vagrant.
 
 
 Others

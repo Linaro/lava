@@ -8,7 +8,7 @@ LAVA Hacking Sessions
 A LAVA hacking session is a lava-test-shell test that provides interactive
 ssh access to a LAVA device inside a defined test environment. This support
 differs from the SSH protocol support in that the job waits for a real
-user to login instead of expecting a dynamic connection to run a test shell.
+user to log in instead of expecting a dynamic connection to run a test shell.
 
 Assumptions
 ===========
@@ -20,8 +20,9 @@ Assumptions
 Device requirements
 ===================
 
-Some devices may need parameters to configure the network correctly to allow the
-user to login to the hacking session. e.g. QEMU jobs need to setup a ``tap`` device:
+Some devices may need parameters to configure the network correctly to
+allow the user to log in to the hacking session. e.g. QEMU jobs need
+to setup a ``tap`` device:
 
 .. code-block:: yaml
 
@@ -78,7 +79,7 @@ Starting a Hacking Session
         timeout:
           minutes: 5
         definitions:
-         - repository: http://git.linaro.org/lava-team/hacking-session.git
+         - repository: https://git.linaro.org/lava-team/hacking-session.git
            from: git
            path: hacking-session-debian.yaml
            name: hacking

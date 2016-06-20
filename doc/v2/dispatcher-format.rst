@@ -3,6 +3,8 @@
 Writing YAML files for the refactored dispatcher
 ################################################
 
+FIXME! Massive overlap here...
+
 To use the new features in the refactored dispatcher, a new submission
 format was required and as YAML supports comments, it was decided to
 adopt YAML as the new format.
@@ -19,7 +21,7 @@ so take care when preparing new files.
              change without notice. Only a very restricted set of
              actions and device types are supported. Jobs using the
              refactored code can only be submitted from the command
-             line (using XMLRPC or :ref:`lava_tool`).
+             line (using XML-RPC or :ref:`lava_tool`).
 
 .. _yaml_job:
 
@@ -78,7 +80,7 @@ preceding hyphen.
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
 
 This stanza describes a deployment strategy where the timeout for the
@@ -121,7 +123,7 @@ Sample JOB definition for a KVM
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -150,7 +152,7 @@ Sample JOB definition for a KVM
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
@@ -512,7 +514,7 @@ Supported methods
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -570,7 +572,7 @@ Example code block:
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced

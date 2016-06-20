@@ -128,7 +128,7 @@ bundle.
             "command": "submit_results_on_host",
             "parameters": {
                 "stream": "/anonymous/instance-manager/",
-                "server": "http://validation.linaro.org/RPC2/"
+                "server": "https://validation.linaro.org/RPC2/"
             }
         }
  }
@@ -217,7 +217,7 @@ message ID ``sending`` (with or without the associated key value pairs).
 Summary
 =======
 
-http://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/panda-only-group.json
+https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/panda-only-group.json
 
 http://multinode.validation.linaro.org/dashboard/image-reports/panda-multinode
 

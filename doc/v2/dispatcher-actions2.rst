@@ -1,28 +1,29 @@
-.. _new_dispatcher_actions:
+.. _dispatcher_actions:
 
-Refactored Dispatcher Actions
-#############################
+Dispatcher Actions
+##################
 
-The refactored dispatcher uses a Pipeline structure, see
+The V2 dispatcher uses a Pipeline structure - see
 :ref:`pipeline_construction`. Actions can have internal pipelines
 containing more actions. Actions are selected for a particular job
 using a Strategy (see :ref:`using_strategy_classes`) which uses the
 parameters in the job submission and the device configuration to build
 the top level pipeline.
 
-The refactored dispatcher does not make assumptions or guesses - if the
-job submission does not specify a piece of data, that piece of data will
-not be available to the pipeline. This may cause the job submission to
-be rejected if one or more Actions selected by the Strategy require
-this information. See :ref:`keep_dispatcher_dumb`.
+The pipeline dispatcher does not make assumptions or guesses - if the
+job submission does not specify a piece of data, that piece of data
+will not be available to the pipeline. This may cause the job
+submission to be rejected if one or more Actions selected by the
+Strategy require this information. See :ref:`keep_dispatcher_dumb`.
 
 Dispatcher Actions
 ******************
 
-Job submissions for the refactored dispatcher use YAML and can create
-a pipeline of actions based on five basic types. Parameters in the YAML
-and in the device configuration are used to select the relevant Strategy
-for the job and this determines which actions are added to the pipeline.
+Job submissions for the pipeline dispatcher use YAML and can create a
+pipeline of actions based on five basic types. Parameters in the YAML
+and in the device configuration are used to select the relevant
+Strategy for the job and this determines which actions are added to
+the pipeline.
 
 In addition, the job has some general parameters, including a job name
 and :ref:`dispatcher_timeouts`.
@@ -40,7 +41,7 @@ In general, the deployments do not modify the downloaded files. Where
 the LAVA scripts and test definitions need to be added, these are first
 prepared as a standalone tarball which is also retained within the final
 job data and is available for download later. Exceptions include specific
-requirements of bootloaders (like u-boot) to have a bootloader-specific
+requirements of bootloaders (like U-Boot) to have a bootloader-specific
 header on a ramdisk to which LAVA needs to add the LAVA extensions.
 
 * Download files required by the job to the dispatcher, decompressing
@@ -73,7 +74,7 @@ deploy to the requested location.
         images:
           rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
               compression: gz
 
       * The ``image_arg`` determines how QEMU handles the image. The
@@ -89,13 +90,13 @@ deploy to the requested location.
 
          compression: gz
 
-      * The checksum of the file to download can be provided to be checked
-        against the downloaded content. This can help if there is a transparent
-        proxy between the dispatcher as a proxy might return a cached file if
-        the content of the URL has changed without changing the URL itself.
-        If compression is used, the checksum to specify is the checksum of the
-        compressed file, irrespective of whether that file is decompressed
-        later.::
+      * The checksum of the file to download can be provided, and if
+	so it will be checked against the downloaded content. This can
+	help to detect multiple potential problems such as
+	misconfigured caching or corrupted downloads. If compression
+	is used, the checksum to specify is the checksum of the
+	compressed file, irrespective of whether that file is
+	decompressed later.::
 
          md5sum: 6ea432ac3c23210c816551782346ed1c
          sha256sum: 1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21
@@ -107,7 +108,7 @@ deploy to the requested location.
 
         os: debian
 
-  * **tftp**: Used to support TFTP deployments, e.g. using UBoot. Files
+  * **tftp**: Used to support TFTP deployments, e.g. using U-Boot. Files
     are downloaded to a temporary directory in the TFTP tree and the
     filenames are substituted into the bootloader commands specified in
     the device configuration or overridden in the job. The files to
@@ -119,62 +120,65 @@ deploy to the requested location.
 
      to: tftp
 
-    * **kernel** - in an appropriate format to what the commands require::
+    * **kernel**: in an appropriate format to what the commands require::
 
        kernel:
-         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
 
-    * **dtb** - in an appropriate format to what the commands require::
+    * **dtb**: in an appropriate format to what the commands require::
 
        dtb:
-         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+         url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
-    * **ramdisk** - in an appropriate format to what the commands require.
-      If a header is already applied, the ``header`` value **must**
-      specify the type of header, e.g. ``u-boot``. This header will
-      be removed before unpacking, ready for the LAVA overlay files.
-      If a header needs to be applied after any LAVA overlay files are
-      added to the ramdisk, the ``add-header`` value must specify the type
-      of header to add, e.g. ``u-boot``.
-      The compression algorithm to be used to unpack the ramdisk **must**
-      be specified explicitly.
-      ::
+    * **ramdisk** - in an appropriate format for what the commands
+      require. If a header is already applied, the ``header`` value
+      **must** specify the type of header, e.g. ``u-boot``. This
+      header will be removed before unpacking, ready for the LAVA
+      overlay files. If a header needs to be applied after any LAVA
+      overlay files are added to the ramdisk, the ``add-header`` value
+      must specify the type of header to add, e.g. ``u-boot``. The
+      compression algorithm to be used to unpack the ramdisk **must**
+      be specified explicitly. ::
 
        ramdisk:
-         url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+         url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
          compression: gz
          header: u-boot
          add-header: u-boot
 
-    * **nfsrootfs** - **must** be a tarball and supports one of ``gz``, ``xz`` or
-      ``bz2`` compression. The NFS is unpacked into a temporary directory onto the
-      dispatcher in a location supported by NFS exports.
-      The compression algorithm to be used to unpack the nfsrootfs **must**
-      be specified explicitly.
-      ::
+    * **nfsrootfs** - **must** be a tarball; supported compression
+      methods are ``gz``, ``xz`` and ``bz2``. The NFS tarball is
+      unpacked into a temporary directory onto the dispatcher in a
+      location supported by NFS exports. The compression algorithm to
+      be used to unpack the nfsrootfs **must** be specified
+      explicitly. ::
 
        nfsrootfs:
-         url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+         url: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
          compression: gz
 
-    * **nfs_url** - use a persistent NFS URL instead of a compressed tarball. See
-      :ref:`persistence` for the limitations of persistent storage. The creation and
-      maintenance of the persistent location is **solely** the responsibility of the
-      test writer. The ``nfs_url`` **must** include the IP address of the NFS server
-      and the full path to the directory which contains the root filesystem, separated
-      by a single colon. In the YAML, all values containing a colon **must** be quoted::
+    * **nfs_url** - use a persistent NFS URL instead of a compressed
+    tarball. See :ref:`persistence` for the limitations of persistent
+    storage. The creation and maintenance of the persistent location
+    is **solely** the responsibility of the test writer. The
+    ``nfs_url`` **must** include the IP address of the NFS server and
+    the full path to the directory which contains the root filesystem,
+    separated by a single colon. In the YAML, all values containing a
+    colon **must** be quoted::
 
        nfs_url: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
 
-      .. note:: LAVA does not shutdown the device or attempt to unmount the NFS when the
-         job finishes, the device is simply powered off. The test writer needs to ensure
-         that any background processes started by the test have been stopped before the
-         test finishes.
+      .. note:: LAVA does not shut down the device or attempt to
+         unmount the NFS filesystem when the job finishes; the device
+         is simply powered off. The test writer needs to ensure that
+         any background processes started by the test have been
+         stopped before the test finishes.
 
-    * **os** -  The operating system of the NFS **must** be specified so
-      that the LAVA scripts can install packages and identify other
-      defaults in the deployment data. Supported values are ``android``,
-      ``ubuntu``, ``debian`` or ``oe``::
+    * **os** - The operating system of the NFS root filesystem
+      **must** be specified so that the LAVA scripts can install
+      packages and identify other defaults in the deployment
+      data. Supported values are ``android``, ``ubuntu``, ``debian``
+      or ``oe``::
 
        os: debian
 
@@ -210,7 +214,7 @@ deploy to the requested location.
     The UUID can be obtained by writing the image to local media and checking
     the contents of ``/dev/disk/by-uuid``
 
-    The ramdisk may need adjustment for some bootloaders (like UBoot), so
+    The ramdisk may need adjustment for some bootloaders (like U-Boot), so
     mount the local media and use something like::
 
      mkimage -A arm -T ramdisk -C none -d /mnt/boot/init.. /mnt/boot/init..u-boot
@@ -255,7 +259,7 @@ Deploy example
         timeout:
           minutes: 2
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         compression: gz
         os: debian
 
@@ -301,15 +305,15 @@ endpoint of the boot process.
          method: qemu
 
 
-  * **u-boot** - boot the downloaded files using UBoot commands.
-  * **commands** - the predefined set of UBoot commands into which the
+  * **u-boot** - boot the downloaded files using U-Boot commands.
+  * **commands** - the predefined set of U-Boot commands into which the
     location of the downloaded files can be substituted (along with details
     like the SERVERIP and NFS location, where relevant). See the device
     configuration for the complete set of commands.
-  * **type** - the type of boot, dependent on the UBoot configuration.
+  * **type** - the type of boot, dependent on the U-Boot configuration.
     This needs to match the supported boot types in the device
     configuration, e.g. it may change the load addresses passed to
-    UBoot.
+    U-Boot.
 
   ::
 
@@ -340,7 +344,7 @@ Boot example
 Test
 ****
 
-The refactoring has retained compatibility with respect to the content of
+The pipeline has retained compatibility with respect to the content of
 Lava-Test-Shell Test Definitions although the submission format has changed:
 
 #. The :ref:`test_action` will **never** boot the device - a :ref:`boot_action`
@@ -392,7 +396,7 @@ Definitions
   .. code-block:: yaml
 
      definitions:
-         - repository: http://git.linaro.org/lava-team/hacking-session.git
+         - repository: https://git.linaro.org/lava-team/hacking-session.git
            from: git
            path: hacking-session-debian.yaml
            name: hacking
@@ -407,7 +411,7 @@ Definitions
            from: git
            path: ubuntu/smoke-tests-basic.yaml
            name: smoke-tests
-         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+         - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
            path: lava-test-shell/single-node/singlenode03.yaml
            name: singlenode-advanced
@@ -429,8 +433,8 @@ Test example
 Additional support
 ==================
 
-The refactoring supports some additional elements in Lava Test Shell
-which will not be supported in the current dispatcher.
+The V2 dispatcher  supports some additional elements in Lava Test Shell
+which will not be supported in the older V1 dispatcher.
 
 TestSets
 --------
@@ -470,8 +474,8 @@ like:
  {'results': {'first_set': {'date': 'pass', 'mount': 'pass'}, 'uname': 'pass'}}
 
 Each TestSet name must be valid as a URL, which is consistent with the
-requirements for test definition names and test case names in the
-current dispatcher.
+requirements for test definition names and test case names in the V1
+dispatcher.
 
 For TestJob ``1234``, the ``uname`` test case would appear as::
 
@@ -514,9 +518,9 @@ Repeating single actions
 Selected actions (``RetryAction``) within a pipeline (as determined
 by the Strategy) support repetition of all actions below that point.
 There will only be one ``RetryAction`` per top level action in each
-pipeline. e.g. a top level :ref:`boot_action` action for UBoot would
+pipeline. e.g. a top level :ref:`boot_action` action for U-Boot would
 support repeating the attempt to boot the device but not the actions
-which substitute values into the UBoot commands as these do not change
+which substitute values into the U-Boot commands as these do not change
 between boots (only between deployments).
 
 Any action which supports ``failure_retry`` can support ``repeat`` but
@@ -591,7 +595,7 @@ To repeat a specific boot and a specific test definition as one block
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
         root_partition: 1
 
@@ -622,14 +626,14 @@ Timeouts
 ********
 
 .. note:: The behaviour of actions and connections has changed during the
-   development of the refactoring. See :ref:`connection_timeout` and
+   development of the V2 dispatcher. See :ref:`connection_timeout` and
    :ref:`default_action_timeout`. Action timeouts can be specified for
    the default for all actions or for a specific action. Connection timeouts
    can be specified as the default for all connections or for the
    connections made by a specific action.
 
-Refactored timeouts now provide more detailed support. Individual actions
-have uniquely addressable timeouts.
+Timeouts now provide more detailed support. Individual actions have
+uniquely addressable timeouts.
 
 Timeouts are specified explicitly in days, hours, minutes and seconds.
 Any unspecified value is set to zero.
@@ -732,7 +736,7 @@ The level string represents the sequence within the pipeline and is a key
 component of how the pipeline data is organised. See also :ref:`pipeline_construction`.
 
 This allows typical action timeouts to be as short as practical, so that
-jobs fail quickly, whilst allowing for individual actions to take longer.
+jobs fail quickly, while allowing for individual actions to take longer.
 
 Typical actions which may need timeout extensions:
 
@@ -813,11 +817,11 @@ use a connection, this timeout will have no effect.
 Examples
 ********
 
-.. note:: The unit tests supporting the refactoring contain a number of
-          example jobs. However, these have been written to support the
-          tests and might not be appropriate for use on actual hardware
-          - the files specified are just examples of a URL, not a URL
-          of a working file.
+.. note:: The unit tests supporting the new dispatcher development
+          contain a number of example jobs. However, these have been
+          written to support the tests and might not be appropriate
+          for use on actual hardware - the files specified are just
+          examples of a URL, not a URL of a working file.
 
 .. _kvm_x86_example:
 
@@ -846,7 +850,7 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
         timeout:
           minutes: 2
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         compression: gz
         os: debian
 
@@ -926,10 +930,10 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
      timeout:
        minutes: 4
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     kernel: https://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
      os: oe
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 Ramdisk
 -------
@@ -942,10 +946,10 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
   - deploy:
      timeout: 2m
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
-     ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+     kernel: https://images.validation.linaro.org/functional-test-images/panda/uImage
+     ramdisk: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
      ramdisk-type: u-boot
-     dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+     dtb: https://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
 
 .. _protocols:
 
@@ -969,11 +973,10 @@ data passing over a Connection.
 Multinode Protocol
 ******************
 
-The initial protocol available with the refactoring is Multinode. This
-protocol allows actions within the Pipeline to make calls using the
-:ref:`multinode_api` outside of a test definition by wrapping the call
-inside the protocol. Wrapped calls do not necessarily have all of the
-functionality of the same call available in the test definition.
+This protocol allows actions within the Pipeline to make calls using
+the :ref:`multinode_api` outside of a test definition by wrapping the
+call inside the protocol. Wrapped calls do not necessarily have all of
+the functionality of the same call available in the test definition.
 
 The Multinode Protocol allows data to be shared between actions, including
 data generated in one test shell definition being made available over the

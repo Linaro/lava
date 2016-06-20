@@ -109,8 +109,8 @@ installation will need to be done in the run steps::
  run:
     steps:
         - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
-        - lava-test-case apt-update --shell apt-get update
-        - lava-test-case install-deps --shell apt-get -y install wget apache2
+        - lava-test-case apt-update --shell apt update
+        - lava-test-case install-deps --shell apt -y install wget apache2
 
 Note that although KVM devices can use apt, the network interface fails
 the LAVA test, so use the manual install steps for non-bridged KVM devices.
@@ -146,7 +146,7 @@ sender.yaml
  run:
    steps:
         - lava-test-case multinode-network --shell lava-network broadcast eth0
-        - lava-test-case wget-file --shell wget -O /var/www/testfile http://releases.linaro.org/latest/android/arndale/userdata.tar.bz2
+        - lava-test-case wget-file --shell wget -O /var/www/testfile https://releases.linaro.org/latest/android/arndale/userdata.tar.bz2
         - ./modify-data.sh
         - lava-test-case file-sync --shell lava-sync download
         - lava-test-case done-sync --shell lava-sync received
@@ -311,7 +311,7 @@ deploy_linaro_image
         {
             "command": "deploy_linaro_image",
             "parameters": {
-                "image": "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz",
+                "image": "https://images.validation.linaro.org/kvm-debian-wheezy.img.gz",
                 "role": "receiver"
             }
         },
@@ -380,7 +380,7 @@ and that you have permission to add to that stream.
             "command": "submit_results_on_host",
             "parameters": {
                 "stream": "/anonymous/use-cases/",
-                "server": "http://validation.linaro.org/RPC2/"
+                "server": "https://validation.linaro.org/RPC2/"
             }
         }
  }
@@ -398,7 +398,7 @@ Unique names versus shared names
 Each YAML file can have a different name or the name can be shared amongst
 many YAML files at which point those files form one test definition, irrespective
 of what each YAML file actually does. Sharing the name means that the results
-of the test definition always show up under the same test name. Whilst this
+of the test definition always show up under the same test name. While this
 can be useful, be aware that if you subsequently re-use one of the YAML files
 sharing a name in a test which does not use the other YAML files sharing
 the same name, there will be gaps in your data. When the filter is later
@@ -495,7 +495,7 @@ Summary
 
 The full version of this use case are available:
 
-http://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/kvm-beagleblack-group.json
+https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/kvm-beagleblack-group.json
 
 Example test results are visible here:
 

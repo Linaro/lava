@@ -2,6 +2,8 @@
 
 .. _multinode:
 
+FIXME - DEAD?
+
 Multi-Node LAVA (JSON)
 ######################
 

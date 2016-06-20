@@ -232,8 +232,8 @@ we need to specify.
      ramdisk: '0x4004000000'
      dtb: '0x4003000000'
 
-Only add ``bootz`` support if you know that the UBoot ``bootz`` command
-is present in the UBoot version on the board and that it works with zImage
+Only add ``bootz`` support if you know that the U-Boot ``bootz`` command
+is present in the U-Boot version on the board and that it works with zImage
 kernels. The eventual templates will exist on the server and can be used
 to declare the detailed device support so that test writers know in advance
 what kind of images the device can use.
@@ -373,8 +373,8 @@ Writing a job submission in YAML
 
 .. warning:: Do **not** be tempted into writing a script to convert
    the JSON to YAML. You need to understand what the job is doing and
-   why. e.g. the original job gives no clue that ``u-boot`` is involved
-   nor that the required ``u-boot`` parameters for this job are ``bootm``
+   why. e.g. the original job gives no clue that ``U-Boot`` is involved
+   nor that the required ``U-Boot`` parameters for this job are ``bootm``
    and not ``bootz``. Any such attempts would re-introduce assumptions
    that the refactoring is deliberately removing. Just because a file
    has a particular name or suffix does not mean that the job can make
@@ -396,7 +396,7 @@ Existing JSON::
                 "dtb": "http://images-internal/mustang/mustang.dtb_1.11",
                 "kernel": "http://images-internal/mustang/uImage_1.11",
                 "login_prompt": "login:",
-                "nfsrootfs": "http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz",
+                "nfsrootfs": "https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz",
                 "target_type": "ubuntu",
                 "username": "root"
             }
@@ -409,7 +409,7 @@ Existing JSON::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://git.linaro.org/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode03.yaml"
                     }
                 ],
@@ -460,7 +460,7 @@ Deploy
    - deploy:
        to: tftp
        kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+       nfsrootfs: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
        dtb: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
 
@@ -496,7 +496,7 @@ have  a name, separate from the content of the YAML file.
        minutes: 5
      name: singlenode-mustang-demo
      definitions:
-       - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
+       - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
          from: git
          path: singlenode/singlenode03.yaml
          name: singlenode-advanced
@@ -515,7 +515,7 @@ Complete YAML submission
    - deploy:
        to: tftp
        kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+       nfsrootfs: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
        dtb: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
    - boot:
@@ -533,7 +533,7 @@ Complete YAML submission
        minutes: 5
      name: singlenode-mustang-demo
      definitions:
-       - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
+       - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
          from: git
          path: singlenode/singlenode03.yaml
          name: singlenode-advanced

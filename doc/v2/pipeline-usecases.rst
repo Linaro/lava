@@ -1,4 +1,4 @@
-.. _refactoring_use_cases:
+.. _pipeline_use_cases:
 
 Refactoring Use Cases
 #####################

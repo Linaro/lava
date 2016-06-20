@@ -3,14 +3,17 @@
 LAVA Test Shell
 ***************
 
-The ``lava_test_shell`` action provides a way to employ a more black-box style
-testing appoach with the target device. The test definition format is quite
-flexible and allows for some interesting things.
+The ``lava_test_shell`` action provides a way to employ a black-box
+style testing appoach with the target device. The test definition
+format is designed to be flexible, allowing many options on how to do
+things.
 
 Quick start
 ===========
 
-A minimal test definition looks like this::
+A minimal test definition looks like this:
+
+.. code-block:: yaml
 
   metadata:
     name: passfail
@@ -39,20 +42,19 @@ A minimal test definition looks like this::
 .. note::  The parse pattern has similar quoting rules as Python, so
           \\s must be escaped as \\\\s and similar.
 
-However, the parameters such as os, devices, environment are optional in
-the metadata section. On the other hand parameters such as name, format,
-description are mandatory in the metadata section.
+Some of the parameters here (os, devices, environment) are optional in
+the metadata section. Others are mandatory (name, format, description).
 
 .. _versioned_test_definitions:
 
 Versioned test definitions
 --------------------------
 
-If your test definition is not part of a bzr or git repository then it
-is mandatory to have a **version** parameter in metadata section. The
-following example shows how a test definition metadata section will
-look like for a test definition which is not part of bzr or git
-repository::
+If your test definition is not part of a git or bzr repository then it
+is must include a **version** parameter in the metadata section like
+in the following example.
+
+.. code-block:: yaml
 
   metadata:
     name: passfail
@@ -68,9 +70,6 @@ repository::
     environment:
       - lava-test-shell
 
-.. note:: Only if the test definition is referred from a URL the
-          version parameter should be explicit.
-
 .. _lava_test_shell_setx:
 
 How a lava test shell is run
@@ -78,18 +77,18 @@ How a lava test shell is run
 
 A lava-test-shell is run by:
 
-* *compiling* the above test defintion into a shell script.
+* *building* the test definition into a shell script.
 
-   .. note:: This shell script will have a ``set -e`` at the top, so a
-          failing step will abort the entire test run. If you need to specify
-          a step that might fail, but should not cause the run to be aborted,
-          make sure you finish the command with ``|| true``.
+   .. note:: This shell script will include ``set -e``, so a failing
+          step will abort the entire test run. If you need to specify
+          a step that might fail, finish the command with ``|| true``
+	  to make that failure **not** abort the test run.
 
 * copying this script onto the device and arranging for it to be run
   when the device boots
 * booting the device and letting the test run
 * retrieving the output from the device and turning it into a test
-  result bundle
+  result
 * run subsequent test definitions, if any.
 
 Writing a test for lava-test-shell
@@ -97,19 +96,21 @@ Writing a test for lava-test-shell
 
 For the majority of cases, the above approach is the easiest thing to
 do: write shell code that outputs "test-case-id: result" for each test
-case you are interested in.  See the Test Developer Guide:
+case you are interested in. See the Test Developer Guide:
 
  * :ref:`test_developer`,
  * :ref:`writing_tests`
  * :ref:`parsing_output`.
 
-The advantage of the parsing approach is that it means your test is
-easy to work on independently from LAVA: simply write a script that
-produces the right sort of output, and then provide a very small
-amount of glue to wire it up in LAVA.  However, when you need it,
-there is also a more powerful, LAVA-specific, way of writing tests.
-When a test runs, ``$PATH`` is arranged so that some LAVA-specific
-utilities are available:
+A possible advantage of the parsing approach is that it means your
+test is easy to work on independently from LAVA: simply write a script
+that produces the right sort of output, and then provide a very small
+amount of glue to wire it up in LAVA. However, using the parsing
+option will mean writing potentially complicated regular expressions.
+
+When you need it, there is also a more powerful, LAVA-specific, way of
+writing tests. When a test runs, ``$PATH`` is arranged so that some
+LAVA-specific utilities are available:
 
  * ``lava-test-case``
  * ``lava-test-case-attach``
@@ -120,15 +121,17 @@ utilities are available:
 lava-test-case
 --------------
 
-lava-test-case records the results of a single test case. For example::
+lava-test-case records the results of a single test case. For example:
+
+.. code-block:: yaml
 
   steps:
     - "lava-test-case simpletestcase --result pass"
     - "lava-test-case fail-test --shell false"
 
-It has two forms.  One takes arguments to describe the outcome of the
-test case and the other takes the shell command to run -- the exit
-code of this shell command is used to produce the test result.
+It has two forms. One takes arguments to describe the outcome of the
+test case. The other takes the shell command to run, and the exit code
+of this shell command is used to produce the test result.
 
 Both forms take the name of the testcase as the first argument.
 
@@ -141,7 +144,9 @@ The first form takes these additional arguments:
  * ``--measurement $MEASUREMENT``: A numerical measurement associated with the test result
  * ``--units $UNITS``: The units of $MEASUREMENT
 
-``--result`` must always be specified.  For example::
+``--result`` must always be specified.  For example:
+
+.. code-block:: yaml
 
   run:
     steps:
@@ -154,7 +159,9 @@ if the unit is just a count.
 The most useful way to produce output for ``lava-test-case result`` is
 :ref:`custom_scripts` which allow preparation of LAVA results from other
 sources, complete with measurements. This involves calling ``lava-test-case``
-from scripts executed by the YAML file::
+from scripts executed by the YAML file:
+
+.. code-block:: python
 
  #!/usr/bin/env python
 
@@ -191,7 +198,9 @@ Using the exit status of a command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The second form of ``lava-test-case`` is indicated by the ``--shell``
-argument, for example::
+argument, for example:
+
+.. code-block:: yaml
 
   run:
     steps:
@@ -201,7 +210,9 @@ argument, for example::
 The result of a ``shell`` call will only be recorded as a pass or fail,
 dependent on the exit code of the command. The output of the command
 can, however, be parsed as a separate result if the command produces
-output suitable for the parser in the YAML::
+output suitable for the parser in the YAML:
+
+.. code-block:: yaml
 
  run:
     steps:
@@ -211,7 +222,7 @@ output suitable for the parser in the YAML::
 
 This example generates **two** test results to indicate that the
 shell command executed correctly but that the result of that
-execution was a fail::
+execution was a failure::
 
 #. **echo2** - pass
 #. **test2b** - fail
@@ -219,11 +230,14 @@ execution was a fail::
 lava-test-case-attach
 ---------------------
 
-.. caution:: ``lava-test-case-attach`` is retained with the
-   dispatcher refactoring but the effect of the script needs
-   consideration by the test writer. See :ref:`test_attach`.
+.. caution:: ``lava-test-case-attach`` is retained in the pipeline
+   dispatcher (V2) but the effect of the script needs consideration by
+   the test writer. See :ref:`test_attach`.
 
-This attaches a file to a test result with a particular ID, for example::
+This attaches a file to a test result with a particular ID, for
+example:
+
+.. code-block:: yaml
 
   steps:
     - "echo content > file.txt"
@@ -240,12 +254,14 @@ The arguments are:
 lava-test-run-attach
 --------------------
 
-.. caution:: ``lava-test-run-attach`` is retained with the
-   dispatcher refactoring but the effect of the script needs
-   consideration by the test writer. See :ref:`test_attach`.
+.. caution:: ``lava-test-run-attach`` is retained in the pipeline
+   dispatcher (V2) but the effect of the script needs consideration by
+   the test writer. See :ref:`test_attach`.
 
 This attaches a file to the overall test run that lava-test-shell is
-currently executing, for example::
+currently executing, for example:
+
+.. code-block:: yaml
 
   steps:
     - "echo content > file.txt"
@@ -261,7 +277,9 @@ lava-background-process-start
 -----------------------------
 
 This starts process in the background.
-For example::
+For example:
+
+.. code-block:: yaml
 
   steps:
     - lava-background-process-start MEM --cmd "free -m | grep Mem | awk '{print $3}' >> /tmp/memusage"
@@ -281,9 +299,12 @@ See :ref:`test_attach`.
 lava-background-process-stop
 -----------------------------
 
-This stops the process previously started in the background. User can attach files to the test run if there is a need.
+This stops the process previously started in the background. User can
+attach files to the test run if there is a need.
 
-For example::
+For example:
+
+.. code-block:: yaml
 
   steps:
     - lava-background-process-start MEM --cmd "free -m | grep Mem | awk '{print $3}' >> /tmp/memusage"
@@ -444,7 +465,7 @@ current test, the following definition will help::
       testdef: common/passfail.yaml
     - bzr-repo: lp:~stylesen/lava-dispatcher/sampletestdefs-bzr
       testdef: testdef.yaml
-    - url: http://people.linaro.org/~senthil.kumaran/deps_sample.yaml
+    - url: https://people.linaro.org/~senthil.kumaran/deps_sample.yaml
 
 The test cases specified within 'test-case-deps' section will be
 fetched from the given repositories or url and then executed in the

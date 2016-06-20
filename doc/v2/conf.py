@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'LAVA Server'
-copyright = u'2010-2014, Linaro Limited'
+copyright = u'2010-2016, Linaro Limited'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -211,4 +211,4 @@ latex_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'https://docs.python.org/': None}

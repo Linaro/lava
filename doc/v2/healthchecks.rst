@@ -5,19 +5,19 @@
 Writing Health Checks for device types
 **************************************
 
-The purpose of the health check is to ensure that the support systems
-of the device are suitable for running LAVA tests. To do this, the
-health check is run periodically and if the health check fails for
-any device, that device is automatically taken offline. Reports are
-available which show these failures and track the general health of
-the lab.
+A health check is a special type of test job, designed to validate
+that the support systems of a test device are suitable for running
+LAVA tests. To do this, health checks are run periodically. If a
+health check fails for any device, that device is automatically taken
+offline. Reports are available which show these failures and track the
+general health of the lab.
 
-http://validation.linaro.org/scheduler/reports
+https://validation.linaro.org/scheduler/reports
 
 For any one day where at least one health check failed, there is
 also a table providing information on the failed checks:
 
-http://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
+https://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
 
 Health checks are defined in the admin interface for each device type
 and run as the lava-health user.

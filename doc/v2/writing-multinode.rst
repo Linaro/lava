@@ -1,20 +1,7 @@
-.. _using_protocols:
-
-Using Protocols
-###############
-
-Protocols are a way for the dispatcher to communicate with processes
-using an established API to support actions running within the test
-job. The protocol defines which API calls are available through the
-LAVA interface and the Pipeline determines when the API call is made.
-
-Not all protocols can be called from all actions. Not all protocols are
-able to share data between actions.
-
 .. _writing_multinode:
 
 Writing MultiNode tests
-***********************
+#######################
 
 LAVA supports running a single test across multiple devices, combining
 groups of devices (of any type) within a group. Devices within the
@@ -107,7 +94,7 @@ the ``role`` which the device will have during the test.
         images:
             rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
               # url: file:///home/linaro/lava/kvm/kvm-debian-wheezy.img.gz
               compression: gz
         os: debian
@@ -122,7 +109,7 @@ the ``role`` which the device will have during the test.
         images:
             rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
               # url: file:///home/linaro/lava/kvm/kvm-debian-wheezy.img.gz
               compression: gz
         os: debian
@@ -175,7 +162,7 @@ In the YAML file to be used by devices with the role ``server``::
 
  run:
     steps:
-        - apt-get install myserver
+        - apt install myserver
         - lava-send server_installed
 
 In the YAML file to be used by devices with the role ``client``::

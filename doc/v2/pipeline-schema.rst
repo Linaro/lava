@@ -30,7 +30,7 @@ Job Submission Schema
 *********************
 
 The Job Submission Schema exists to act as an initial filter on strings
-submitted over XMLRPC. Only a simple, fast, check is made on YAML
+submitted over XML-RPC. Only a simple, fast, check is made on YAML
 syntax and basic object structure. Once this test passes, the YAML is
 entered into the database and a JobID is returned to the submitter.
 
@@ -70,7 +70,7 @@ An example pipeline job for a QEMU device looks like:
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         compression: gz
         os: debian
         # if root_partition partition is not present:
@@ -101,7 +101,7 @@ An example pipeline job for a QEMU device looks like:
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced

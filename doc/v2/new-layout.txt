@@ -1,0 +1,112 @@
+V2
+==
+
+1. LAVA overview
+-----------------
+ * What is LAVA? What is LAVA Not?
+ * Architecture
+ * Features
+ * Glossary
+ * Support
+ * Development Process
+
+2. First steps using LAVA V2
+----------------------------
+ * Logging in
+ * Auth tokens
+ * Submit first job
+ * lava_tool
+
+3. First steps installing LAVA V2
+---------------------------------
+ * Considerations, etc.
+ * Installation
+
+4. Writing tests for LAVA
+-------------------------
+ * Pipeline design philosophy
+ * Worked examples
+   + Qemu
+   + U-Boot
+   + Grub
+   + LXC
+   + Android
+   + Juno
+   + Models
+   + Installers
+   + MultiNode
+   + VLANd
+   ...
+ * Recommendations and best practices
+ * Test images - building and modifying
+ * Debugging test jobs
+ * LAVA test shell
+ * Hacking sessions
+ * Protocols
+ * MultiNode
+ * VLANd
+ * Publishing
+ * Health checks
+ * Complete reference
+
+5. Using test results
+---------------------
+ * Test result storage
+ * Queries
+ * Charts
+ * Data export
+
+6. LAVA administration 
+----------------------
+ * Installation
+ * Setup
+ * Architecture
+   + Components
+   + Scaling
+   + Caching
+ * Server
+ * Dispatcher
+ * Workers
+ * Devices and Device Types
+ * Authentication
+   + Hijacking
+ * Worked Examples
+ * Recommendations and best practices
+ * Hardware setup
+ * MultiNode
+ * VLANd
+ * PDU
+ * Serial
+ * Allocating devices
+   + Pools
+   + Restrictions
+   + Device tags
+ * Health checks
+
+7. LAVA XML-RPC APIs
+--------------------
+ * Results export
+ * Control
+
+8. Developer Guide
+------------------
+ * LAVA development
+ * Design of the Pipeline
+ * Developing within Debian
+
+9. Migration from V1
+--------------------
+ * Admins:
+   + Workers
+   + Devices
+   + Lab infrastructure
+ * Test writers:
+   + YAML
+   + Pipeline
+   + "No magic - more control"
+   + Worked examples
+
+10. Other
+---------
+ * Misc stuff that doesn't fit anywhere else
+

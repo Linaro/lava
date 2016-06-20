@@ -323,12 +323,12 @@ https://git.linaro.org/lava-team/refactoring.git/blob_plain/HEAD:/bbb-ssh-guest.
           to: tftp
           # authorize for ssh adds the ssh public key to authorized_keys
           authorize: ssh
-          kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+          kernel: https://images.validation.linaro.org/functional-test-images/bbb/zImage
           # nfsrootfs: file:///home/linaro/lava/nfsrootfs/jessie-rootfs2.tar.gz
-          nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+          nfsrootfs: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
           rootfs_compression: gz
           os: debian
-          dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+          dtb: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
           role:
           - host
 

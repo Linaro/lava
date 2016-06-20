@@ -3,9 +3,9 @@
 Lava Dispatcher Design
 ######################
 
-This is the **developer** documentation for the new dispatcher design.
-See :ref:`refactoring_use_cases` for information for lab administrators
-and users of the new design.
+This is the **developer** documentation for the new V2 dispatcher
+design. See :ref:`pipeline_use_cases` for information for lab
+administrators and users of the new design.
 
 The refactoring takes place alongside the current dispatcher and existing
 JSON jobs are unaffected. A migration will take place where individual
@@ -20,14 +20,15 @@ of ``validation.linaro.org`` has not begun and details will be
 announced using the `Linaro Validation mailing list`_ before the migration
 itself starts on ``validation.linaro.org``.
 
-The LAVA developers use a `playground instance <http://playground.validation.linaro.org>`_
-which has already begun a migration.
+The LAVA developers use a `playground instance
+<http://playground.validation.linaro.org>`_ which has already begun a
+migration.
 
 Devices indicate their support for pipeline jobs in the
 :ref:`detailed device information <device_owner_help>` for each device
 and device type.
 
-.. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
+.. _Linaro Validation mailing list: https://lists.linaro.org/mailman/listinfo/linaro-validation
 
 Pipeline Architecture
 *********************
@@ -62,14 +63,14 @@ Pipeline Architecture
 Principal changes
 =================
 
-#. **Database isolation** - only one daemon has a connection to the
-   database, the master daemon. This simplifies the architecture and
-   avoids the use of fault-intolerant database connections to remote
-   workers.
+#. **Database isolation** - Only the master daemon has a connection to
+   the database. This simplifies the architecture and avoids the use
+   of fault-intolerant database connections to remote workers.
 #. **Drop use of SSHFS** between workers and master - this was awkward
    to configure and problematic over external connections.
-#. **Move configuration onto the master** - the worker becomes a simple
-   slave which receives all configuration and tasks from the master.
+#. **Move configuration onto the master** - The worker becomes a
+   simple slave which receives all configuration and tasks from the
+   master.
 
 .. _objectives:
 
@@ -83,12 +84,13 @@ assumptions about the test in the dispatcher configuration and put more
 flexibility into the hands of the test writer.
 
 .. note:: The new code is still developing, some areas are absent,
-          some areas will change substantially before it will work.
-          All details here need to be seen only as examples and the
-          specific code may well change independently. This documentation
-          is aimed at LAVA developers - although some content covers user
-          facing actions, the syntax and parameters for these actions
-          are still subject to change and do not constitute an API.
+          some areas will change substantially before it will
+          work. All details here need to be seen only as examples and
+          the specific code may well change independently. This
+          documentation is aimed at LAVA developers; although some
+          content covers user-facing actions, the syntax and
+          parameters for these actions are still subject to change and
+          do not constitute an API.
 
 From **2015.8 onwards** the sample jobs supporting the unit tests
 conform to the :ref:`pipeline_schema`.
@@ -233,14 +235,15 @@ deployment. See also :ref:`dispatcher_actions`.
 Pipeline construction and flow
 ******************************
 
-The pipeline is a FIFO_ and has branches which are handled as a `tree walk`_. The top level
-object is the job, based on the YAML definition supplied by the
-**dispatcher-master**. The definition is processed by the scheduler and the
-submission interface with information specific to the actual device. The
-processed definition is parsed to generate the top level pipeline and
-:ref:`strategy classes <using_strategy_classes>`. Each strategy class
-adds a top level action to the top level pipeline. The top level action
-then populates branches containing more actions.
+The pipeline is a FIFO_ and has branches which are handled as a `tree
+walk`_. The top level object is the job, based on the YAML definition
+supplied by the **dispatcher-master**. The definition is processed by
+the scheduler and the submission interface with information specific
+to the actual device. The processed definition is parsed to generate
+the top level pipeline and :ref:`strategy classes
+<using_strategy_classes>`. Each strategy class adds a top level action
+to the top level pipeline. The top level action then populates
+branches containing more actions.
 
 Actions are populated, validated and executed in strict order. The next
 action in any branch waits until all branches of the preceding action
@@ -293,7 +296,7 @@ string, e.g. all actions in level 1.2.1, including all actions in sublevel
       #. A sublevel is set for each action in the internal pipeline.
          Level 1 creates 1.1 and level 2.3.2 creates 2.3.2.1.
 
-#. Parser waits whilst each Strategy completes branch population.
+#. Parser waits while each Strategy completes branch population.
 #. Parser adds the FinalizeAction to the top-level pipeline
 #. Loghandlers are set up
 #. Job validates the completed pipeline
@@ -427,7 +430,7 @@ This has several issues:
 * The UUID is not sequential or predictable, so finding this one, the
   next one or the previous one requires a database lookup for each. The
   new dispatcher model will not have a persistent database connection.
-* The UUID is not available to the dispatcher whilst running the job, so
+* The UUID is not available to the dispatcher while running the job, so
   cannot be cross-referenced to logs inside the job.
 * The UUID makes the final URL of individual test results overly long,
   unmemorable and complex, especially as the test run is also given
@@ -695,7 +698,7 @@ preparing custom images based upon it - must be documented clearly.
 
 Where possible, standard tools familiar to developers of the OS concerned
 should be used, e.g. debootstrap for Debian based images. The image can
-also be a standard OS install. Gold standard images are not "Linaro"
+also be a standard OS installation. Gold standard images are not "Linaro"
 images and should not require Linaro tools. Use AutoLogin support where
 required instead of modifying existing images to add Linaro-specific
 tools.
@@ -932,7 +935,7 @@ deployment.
         os: debian
         # not a real job, just used for unit tests
         compression: gz
-        image: http://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+        image: https://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download: /usr/bin/wget
 
@@ -1004,9 +1007,10 @@ to the bootloader, e.g.::
  "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae''",
 
 The dispatcher does NOT analyze the incoming image - internal UUIDs
-inside an image do not change as the refactored dispatcher does **not**
-break up or relay the partitions. Therefore, the UUIDs of partitions inside
-the image **MUST** be declared by the job submissions.
+inside an image do not change as the refactored dispatcher does
+**not** break up or reorganise the partitions. Therefore, the UUIDs of
+partitions inside the image **MUST** be declared by the job
+submissions.
 
 Connections
 ***********
@@ -1374,7 +1378,7 @@ which deploys normally and executes the connection **instead** of
 running a test definition. However, anyone with access to the test image
 would still be able to obtain the private key. Keys generated on a per
 job basis would still be open for the lifetime of the test job itself,
-up to the job timeout specified. Whilst this could provide test writers
+up to the job timeout specified. While this could provide test writers
 with the ability to control the options and commands used to create the
 connection, any additional security is minimal and support for this has
 not been implemented, yet.
@@ -1567,7 +1571,7 @@ Sequence
    whether this is done using install steps in the test definition or
    pre-existing packages in the test image or manual setup. The server
    **must** be configured to allow the (insecure) LAVA automation SSH
-   private key to login as authorized - this key is available in the
+   private key to log in as authorized - this key is available in the
    ``/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher
    `git tree <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.

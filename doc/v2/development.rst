@@ -8,9 +8,9 @@ LAVA is written in Python_, so you will need to know (or be willing to
 learn) Python_. Likewise, the web interface is a Django_ application so
 you will need to Django if you need to modify the web interface. The
 pipeline model uses YAML_ (so you'll need the
-`YAML Parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_) and Jinja2_.
+`YAML Parser <https://yaml-online-parser.appspot.com/?yaml=&type=json>`_) and Jinja2_.
 
-.. _Python: http://www.python.org/
+.. _Python: https://www.python.org/
 .. _Django: https://www.djangoproject.com/
 .. _YAML: http://yaml.org/
 .. _Jinja2: http://jinja.pocoo.org/docs/dev/
@@ -48,7 +48,7 @@ incompatible with your changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
 
-.. _Debian: http://www.debian.org/
+.. _Debian: https://www.debian.org/
 
 Community contributions
 =======================
@@ -95,7 +95,7 @@ Patch Submissions and workflow
 This is a short guide on how to send your patches to LAVA. The LAVA team
 uses the gerrit_ code review system to review changes.
 
-.. _gerrit: http://review.linaro.org/
+.. _gerrit: https://review.linaro.org/
 
 If you do not already have a Linaro account, you will first need to
 :ref:`register`.
@@ -111,16 +111,16 @@ There are two main components to LAVA, ``lava-server`` and
 
 ::
 
-    git clone http://git.linaro.org/git/lava/lava-server.git
+    git clone https://git.linaro.org/git/lava/lava-server.git
     cd lava-server
 
-    git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+    git clone https://git.linaro.org/git/lava/lava-dispatcher.git
     cd lava-dispatcher
 
 There is also ``lava-tool`` which is gaining more support for
 operations involving the :ref:`dispatcher_design`::
 
-    git clone http://git.linaro.org/git/lava/lava-tool.git
+    git clone https://git.linaro.org/git/lava/lava-tool.git
     cd lava-tool
 
 Setting up git-review
@@ -157,7 +157,7 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-See also :ref:`testing_refactoring_code`.
+See also :ref:`testing_pipeline_code`.
 
 Functional testing
 ------------------
@@ -182,7 +182,7 @@ Make your changes
 
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
-.. _`5 useful tips for a better commit message`: http://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
+.. _`5 useful tips for a better commit message`: https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
 Re-run the unit tests
 ---------------------
@@ -415,7 +415,7 @@ recommended::
 
 `pep8` can be installed in debian based systems as follows::
 
-  $ apt-get install pep8
+  $ apt install pep8
 
 Unit-tests
 ----------
@@ -433,10 +433,10 @@ To run the tests, use the ci-run / ci-build scripts::
 
   $ ./ci-run
 
-.. _`Pylint`: http://www.pylint.org/
+.. _`Pylint`: https://www.pylint.org/
 .. _`refactoring book`: http://www.refactoring.com/
-.. _`PEP 008`: http://www.python.org/dev/peps/pep-0008/
-.. _`Guido's style guide`: http://www.python.org/doc/essays/styleguide.html
+.. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
+.. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
 LAVA database model visualization
 ---------------------------------
@@ -445,7 +445,7 @@ LAVA database models can be visualized with the help of
 based systems install the following packages to get the visualization
 of LAVA database models::
 
-  $ apt-get install python-django-extensions python-pydot
+  $ apt install python-django-extensions python-pydot
 
 Once the above packages are installed successfully, use the following
 command to get the visualization of ``lava-server`` models in PNG
@@ -454,7 +454,7 @@ format::
   $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
 
 More documentation about graph models is available in
-http://django-extensions.readthedocs.org/en/latest/graph_models.html
+https://django-extensions.readthedocs.org/en/latest/graph_models.html
 
 Other useful features from `django_extensions`_ are as follows:
 
@@ -472,9 +472,9 @@ Other useful features from `django_extensions`_ are as follows:
 
 .. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
 .. _`pydot`: https://pypi.python.org/pypi/pydot
-.. _`shell_plus`: http://django-extensions.readthedocs.org/en/latest/shell_plus.html
-.. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
-.. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
+.. _`shell_plus`: https://django-extensions.readthedocs.org/en/latest/shell_plus.html
+.. _`validate_templates`: https://django-extensions.readthedocs.org/en/latest/validate_templates.html
+.. _`runscript`: https://django-extensions.readthedocs.org/en/latest/runscript.html
 
 .. _developer_access_to_django_shell:
 
