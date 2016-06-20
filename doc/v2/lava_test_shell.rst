@@ -246,9 +246,9 @@ example:
 
 The arguments are:
 
- 1. test case id
- 2. the file to attach
- 3. (optional) the MIME type of the file (if no MIME type is passed, a
+ 1. The test case id
+ 2. The file to attach
+ 3. (optional) The MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
 lava-test-run-attach
@@ -269,15 +269,14 @@ currently executing, for example:
 
 The arguments are:
 
- 1. the file to attach
- 2. (optional) the MIME type of the file (if no MIME type is passed, a
+ 1. The file to attach
+ 2. (optional) The MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
 lava-background-process-start
 -----------------------------
 
-This starts process in the background.
-For example:
+This starts a process in the background, for example:
 
 .. code-block:: yaml
 
@@ -290,17 +289,18 @@ For example:
 
 The arguments are:
 
- 1. Name that is used to identify the process later in
+ 1. The name that is used to identify the process later in
     lava-background-process-stop
- 2. The process to be run in the background
+ 2. The command line for the process to be run in the background
 
 See :ref:`test_attach`.
 
 lava-background-process-stop
 -----------------------------
 
-This stops the process previously started in the background. User can
-attach files to the test run if there is a need.
+This stops a process previously started in the background using
+:ref:`lava-background-process-start`. The user can attach files to the
+test run if there is a need.
 
 For example:
 
@@ -315,31 +315,31 @@ For example:
 
 The arguments are:
 
- 1. Name that was specified in lava-background-process-start
- 2. (optional) Indicate if you want to attach file(s) the test run
-    with specified mime type. See :ref:`test_attach`.
+ 1. The name that was specified in lava-background-process-start
+ 2. (optional) An indication that you want to attach file(s) to the
+    test run with specified mime type. See :ref:`test_attach`.
 
 .. _test_attach:
 
 Handling test attachments
 =========================
 
-The deprecated dispatcher support for test attachments depends on the
-deprecated bundle and `bundle stream` support - the scripts
-available in lava-test shell do not actually attach the requested files,
-just copy the files to a hard-coded directory where the bundle
-processing code expects to find data to put into the bundle. This
-relies on the device being booted into an environment with a working
-network connection - what was called the master image.
+The V1 dispatcher support for test attachments depends on the
+deprecated bundle and `bundle stream` support. The scripts available
+in lava-test shell do not actually attach the requested files, just
+copy the files to a hard-coded directory where the bundle processing
+code expects to find data to put into the bundle. This relies on the
+device being booted into an environment with a working network
+connection - what was called the master image.
 
-In the pipeline support, master images and bundles have been removed. This
-puts the handling of attachments into the control of the test writer. An
-equivalent method would be to simply add another deploy and boot action
-to get into an environment where the network connection is known to work,
-however the eventual location of the file needs to be managed by the
-test writer. An alternative method for text based data is simply to
-output the contents into the log file. (Individual parts of the log
-file can be downloaded separately.)
+In the V2 pipeline dispatcher, master images and bundles have been
+removed. This puts the handling of attachments into the control of the
+test writer. An equivalent method would be to simply add another
+deploy and boot action to get the test device into an environment
+where the network connection is known to work, however the eventual
+location of the file needs to be managed by the test writer. An
+alternative method for text based data is simply to output the
+contents into the log file.
 
 .. _handling_dependencies:
 
@@ -347,7 +347,9 @@ Handling Dependencies (Debian)
 ==============================
 
 If your test requires some packages to be installed before its run it can
-express that in the ``install`` section with::
+express that in the ``install`` section with:
+
+.. code-block:: yaml
 
   install:
       deps:
@@ -360,7 +362,9 @@ Adding Git/BZR Repositories
 ===========================
 
 If your test needs code from a shared repository, the action can clone this
-data on your behalf with::
+data on your behalf with:
+
+.. code-block:: yaml
 
   install:
       bzr-repos:
@@ -373,12 +377,13 @@ data on your behalf with::
           - cd lt_ti_lava
           - echo "now in the git cloned directory"
 
-This repository information will also be added to resulting bundle's software
-context when the results are submitted to the LAVA dashboard.
-
 git-repos
 ---------
-The git-repos section shown above can be customized as follows::
+
+There are several options for customising git repository handling in
+the git-repos action, for example:
+
+.. code-block:: yaml
 
   install:
       git-repos:
@@ -393,17 +398,21 @@ The git-repos section shown above can be customized as follows::
 
 * `url` is the git repository URL.
 * `skip_by_default` (optional) accepts a True or False. Repositories
-  can be skipped by default in the YAML and enabled for particular
-  jobs in the JSON. Similarly, repositories can be set to install by
-  default and be disabled for particular jobs in the JSON.
+  can be skipped by default in the test definition YAML and enabled
+  for particular jobs directly in the job submission YAML, and vice
+  versa.
 * `destination` (optional) is the directory in which the git
-  repository given in `url` should be cloned.
+  repository given in `url` should be cloned, to override normal git
+  behaviour.
 * `branch` (optional) is the branch within the git repository given in
-  `url` that should be cloned.
+  `url` that should be checked out after cloning.
 
 All the above parameters within the `git-repos` section could be
-controlled from the JSON job file. See the following JSON job
-definition and YAML test definition to get an understanding of how it works.
+controlled from the YAML job file. See the following JSON job
+definition and YAML test definition to get an understanding of how it
+works.
+
+FIXME! JSON
 
 .. * JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
 
@@ -416,7 +425,9 @@ Install Steps
 
 Before the test shell code is executed, it will optionally do some install
 work if needed. For example if you needed to build some code from a git repo
-you could do::
+you could do:
+
+.. code-block:: yaml
 
   install:
       git-repos:
@@ -434,7 +445,9 @@ Advanced Parsing
 
 You may need to incorporate an existing test that doesn't output results in
 in the required ``pass``/``fail``/``skip``/``unknown`` format required by
-LAVA. The parse section has a fixup mechanism that can help::
+LAVA. The parse section has a fixup mechanism that can help:
+
+.. code-block:: yaml
 
   parse:
       pattern: "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|FAIL))"
@@ -446,7 +459,9 @@ LAVA. The parse section has a fixup mechanism that can help::
           special characters need to be escaped. Otherwise, no escaping is
           necessary.
 
-Single quote example::
+Single quote example:
+
+.. code-block:: yaml
 
   parse:
       pattern: '(?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|FAIL))'
@@ -458,7 +473,9 @@ Adding dependent test cases
 ===========================
 
 If your test depends on other tests to be executed before you run the
-current test, the following definition will help::
+current test, the following definition will help:
+
+.. code-block:: yaml
 
   test-case-deps:
     - git-repo: git://git.linaro.org/qa/test-definitions.git
@@ -467,27 +484,39 @@ current test, the following definition will help::
       testdef: testdef.yaml
     - url: https://people.linaro.org/~senthil.kumaran/deps_sample.yaml
 
-The test cases specified within 'test-case-deps' section will be
-fetched from the given repositories or url and then executed in the
-same specified order. Following are valid repository or url source
-keys that can be specified inside the 'test-case-deps' section::
+The test cases specified within the 'test-case-deps' section will be
+fetched from the given repositories/URLs and then executed in the same
+specified order. The valid possible repository or URL source keys that
+may be specified inside the 'test-case-deps' section are::
 
  1. git-repo
  2. bzr-repo
  3. tar-repo
  4. url
 
-.. note:: For keys such as git-repo, bzr-repo and tar-repo testdef name
-          within this repo must be specfied with *testdef* parameter else
-          *lavatest.yaml* is the name assumed.
+.. note:: For keys such as git-repo, bzr-repo and tar-repo testdef,
+          the test definition name within the repo may be specfied
+          using the *testdef* parameter. Otherwise, the default name
+          of *lavatest.yaml* will be used.
+
+FIXME! This is magic and should be removed with V1
 
 .. _circular_dependencies:
 
-.. caution:: lava-test-shell does not take care of circular dependencies
-             within these test definitions. If a test definition say ``tc1.yaml``
-             is specified within ``test-case-deps`` section of ``tc-main.yaml`` and in
-             ``tc1.yaml`` there is a ``test-case-deps`` section which refers to
-             ``tc-main.yaml`` then this will create a **circular dependency**.
-             ``lava-test-shell`` will fetch the test definitions ``tc1.yaml`` and
-             ``tc-main.yaml`` indefinitely and fail after timeout. The log
-             for such cases would show many attempts at ``loading test definition...``.
+Circular dependencies
+=====================
+
+.. caution:: lava-test-shell does **not** take care of circular
+             dependencies within test definitions.
+
+As an example, if ``testA.yaml`` lists a dependency on ``testB.yaml``
+in its ``test-case-deps`` section then that will cause ``testB.yaml``
+to be loaded and run first. However, if ``testB.yaml`` **also** points
+to ``testA.yaml`` in its ``test-case-deps`` section, that will cause
+``testA.yaml`` to be loaded and run. This is an obvious **circular
+dependency**; real loops may be much more subtle, running through
+multiple test definitions in a complex setup with many defined
+dependencies. Be careful to avoid this! The log for a case like this
+would show many attempts at ``loading test definition...`` until the
+job is failed due to timeout.
+
