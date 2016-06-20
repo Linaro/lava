@@ -13,3 +13,4 @@ doc/v2/_build
 man/_build
 lava_server/precious
 django.log
+*~
