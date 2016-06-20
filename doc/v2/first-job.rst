@@ -67,7 +67,7 @@ installation.
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
 
-FIXME! Explain what this all does, step by step
+.. seealso:: :ref:`explain_first_job`.
 
 .. _job_submission:
 
