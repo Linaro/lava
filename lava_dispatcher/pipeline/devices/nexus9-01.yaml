@@ -1,7 +1,7 @@
 device_type: nexus9
 adb_serial_number: HT4B7JT01005
 fastboot_serial_number: HT4B7JT01005
-device_path: /dev/bus/usb/004
+device_path: ['/dev/bus/usb/004']
 
 actions:
   deploy:

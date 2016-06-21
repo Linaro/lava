@@ -1,7 +1,7 @@
 device_type: nexus4
 adb_serial_number: 04f228d1d9c76f39
 fastboot_serial_number: 04f228d1d9c76f39
-device_path: /dev/bus/usb/001
+device_path: ['/dev/bus/usb/001']
 
 actions:
   deploy:
