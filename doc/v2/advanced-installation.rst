@@ -1,14 +1,111 @@
 .. _advanced_installation:
 
 Advanced Installation Topics
-****************************
+############################
 
 The basic :ref:`installation` guide should be a good start for most users
 installing LAVA. For more advanced users, here is much more
 information and recommendations for administrators.
 
 Requirements to Consider Before Installing LAVA
-###############################################
+***********************************************
+
+.. _laptop_requirements:
+
+Laptops
+=======
+
+Be careful with laptop installs, particularly if you are using
+health checks. It is all too easy for a health check to take the
+device offline just because the laptop was suspended or without an
+internet connection at the relevant moment.
+
+Laptops also have limitations on device availability but are
+routinely used as development platforms and can support QEMU devices
+without problems.
+
+.. _virtual_machine_requirements:
+
+Virtual Machines
+================
+
+LAVA installs inside a virtual machine (or container) have particular
+constraints. A QEMU device or container may suffer from being executed
+within the constraints of the existing virtualisation and other devices
+may need USB device nodes to be passed through to the VM. Depending on
+the VM, it is also possible that storage space for the logs may become
+an issue.
+
+.. _workload_requirements:
+
+Workload
+========
+
+Consider the expected load of the master and each of the slaves:
+
+* The workload on the **master** primarily depends on:
+
+  #. the visibility of the instance,
+  #. the number of users,
+  #. the average number of jobs in the queue and
+  #. the total number of devices attached across all the slaves
+     connected to this master.
+
+* The workload on the **worker** involves a range of tasks, scaling
+  with the number of devices attached to the worker:
+
+  #. doing a lot of synchronous I/O,
+  #. decompression of large files
+  #. serving large files over TFTP or HTTP and
+  #. git clone operations.
+
+ARMv7 devices can serve as a master or worker but SATA support is
+**strongly** recommended along with 2GB of RAM.
+
+Localhost
+=========
+
+LAVA expects to be the primary host on the master. This has improved
+with V2 but unless your instance is V2-only, you may experience problems
+or require additional configuration to use LAVA as a virtual host.
+
+Other infrastructure
+====================
+
+LAVA will need other services to be available, either using separate
+tools on the same machines or as separate hardware. This list is not
+exhaustive.
+
+* **Remote power control** (:abbr:`PDU (Power Distribution Unit)`) -
+  the most common issue with new LAVA labs is obtaining and then
+  configuring the remote power control. There is no single device for
+  all use cases and a wide variety of possible solutions, depending on
+  your needs. Take the time to research the issues and ask on the
+  :ref:`lava_users` mailing list.
+* **Serial console support** - once more than a handful of devices are
+  attached to a worker it becomes necessary to have a separate unit
+  to handle the serial connectivity, turning serial ports into TCP
+  ports. Bespoke serial console servers can be expensive, alternatives
+  include ARMv7 boards with ``ser2net`` installed but the USB and ethernet
+  support needs to be reliable.
+* **Network switches** - simple unmanaged switches will work for small
+  LAVA labs but managed switches are essential to use :ref:`vland_in_lava`
+  and will also be important for medium to large LAVA labs.
+* **Power supply** (:abbr:`UPS (Uninterruptible Power Supply)`) - the entire
+  lab needs to be able to cope with power interruptions. Depending on the
+  budget, this could be a small UPS capable of supporting the master and
+  the worker for 10 minutes or it could be a combination of larger UPS
+  units and a generator.
+* **Fileserver** - the master is **not** the place to be putting build
+  artefacts, the worker will download those later to a temporary
+  location when the job starts. The development builds and the files
+  built to support the LAVA test need to happen on a suitably powerful
+  machine to match the expectations of the CI loop and the developers.
+* **Shelving and racks** - quite quickly, the tangle of power cables,
+  network cables, serial cables, devices, switches and other infrastructure
+  will swamp a desk etc. For even a small lab of a handful of devices, a
+  set of shelves or a wall-mounted rack is going to make things a lot
+  easier to manage.
 
 Architecture
 ============
@@ -18,9 +115,48 @@ Architecture
 .. _more_installation_types:
 
 Recommended Installation Types
-##############################
+******************************
 
-FIXME - need content
+Single instance
+===============
+
+The basic guide shows how to install ``lava-server`` and ``lava-dispatcher``
+on a single machine. This kind of instance can later be migrated to
+the same master with one or more remote slaves when more devices become
+available. Single instance installs are useful for local development,
+testing inside virtual machines and small scale testing.
+
+Limitations
+-----------
+
+The main limitation of a single instance is the number of devices which
+can be supported and the need to connect some devices directly to that
+machine. The solution then is to allocate a new machine as a slave and
+move some devices onto the slave.
+
+Master with one or more remote slaves
+=====================================
+
+Any single instance of LAVA V2 can be extended to work with one or more
+slaves which only need ``lava-dispatcher`` installed.
+
+.. seealso:: :ref:`Installing a slave <installing_pipeline_worker>`
+
+Authentication and encryption
+-----------------------------
+
+When the slave is on the same subnet and behind the same firewall as the
+master, admins can choose to use slaves without authentication. In all
+other cases, the ZMQ socket used for passing control messages to the
+slave and the socket used to pass logs back to the master need to use
+authentication which will then turn on :ref:`encryption <zmq_curve>`.
+
+Once authentication is configured on the master, one or more slaves can
+be :ref:`prepared <installing_pipeline_worker>` and also configured to
+use authentication.
+
+Other installation notes
+************************
 
 A note on wsgi buffers
 ======================
