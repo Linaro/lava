@@ -298,6 +298,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         if os.path.exists(runner_path):
             shutil.rmtree(runner_path)
 
+        self.logger.info("Fetching tests from %s", self.parameters['repository'])
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
@@ -306,8 +307,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             'repository': self.parameters['repository'], 'path': self.parameters['path']}
 
         # now read the YAML to create a testdef dict to retrieve metadata
-        self.logger.debug(os.path.join(runner_path, self.parameters['path']))
         yaml_file = os.path.join(runner_path, self.parameters['path'])
+        self.logger.debug("Tests stored (tmp) in %s", yaml_file)
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
         with open(yaml_file, 'r') as test_file:

@@ -321,6 +321,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # the action which overran the timeout has been allowed to complete.
                 name = self.job.parameters.get('job_name', '?')
                 msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
+                action.logger.error(msg)
                 action.errors = msg
                 final = self.actions[-1]
                 if final.name == "finalize":
