@@ -46,9 +46,14 @@ action_id_regexp = re.compile(r'^start: ([\d.]+) [\w_-]+ ')
 @register.assignment_tag
 def get_action_id(string):
     try:
-        return action_id_regexp.match(string).group(1)
+        return action_id_regexp.match(string).group(1).replace('.', '-')
     except (TypeError, AttributeError, IndexError):
         return ''
+
+
+@register.filter
+def replace_dots(string):
+    return string.replace('.', '-')
 
 
 @register.assignment_tag()
