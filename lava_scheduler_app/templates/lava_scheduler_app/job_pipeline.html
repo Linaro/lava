@@ -237,9 +237,13 @@
         <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
-              {% for k, v in value.items %}
-                {{ k }}: {{ v }}<br />
-              {% endfor %}
+              {% if key == "extra" %}
+                extra: ...<br />
+              {% else %}
+                {% for k, v in value.items %}
+                  {{ k }}: {{ v }}<br />
+                {% endfor %}
+              {% endif %}
             {% else %}
                 {{ key }}: {{ value }}<br />
             {% endif %}
@@ -625,6 +629,8 @@
                   if(typeof(d['msg'][key]) == 'string') {
                     node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
                     node.append($('<br />'));
+                  } else if(key == 'extra') {
+                    node.append($('<span>extra: ...<span><br />'));
                   } else {
                     for(k in d ['msg'][key]) {
                       node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
