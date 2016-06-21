@@ -38,6 +38,11 @@ difficult to obtain or integrate. Although LAVA has support for emulation
 (based on QEMU), LAVA is best at providing test support for real hardware
 devices.
 
+LAVA is principally aimed at testing across multiple hardware platforms
+to aid portability and encourage multi-platform development. As such,
+testing of systems which are already platform independent do not
+necessarily gain from being tested in LAVA.
+
 .. note:: This overview document explains LAVA using
           http://validation.linaro.org/ which is the official
           production instance of LAVA hosted by Linaro. Where examples
@@ -63,3 +68,8 @@ What is LAVA **not**?
 
 * LAVA is **not** a build farm - other tools need to be used to prepare
   binaries which can be passed to the device using LAVA.
+
+.. seealso:: :ref:`continuous_integration` which covers how LAVA relates to
+   continuous integration (CI) and covers the consequences of what
+   LAVA can and cannot do with particular emphasis on how automation
+   itself can block some forms of testing.
