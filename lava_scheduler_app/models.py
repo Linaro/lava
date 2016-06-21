@@ -2963,14 +2963,14 @@ class NotificationRecipient(models.Model):
             return self.user.email
 
     @property
-    def irc_handle(self):
+    def irc_handle_name(self):
         if self.irc_handle:
             return self.irc_handle
         else:
             return self.user.extendeduser.irc_handle
 
     @property
-    def irc_server(self):
+    def irc_server_name(self):
         if self.irc_server:
             return self.irc_server
         else:
