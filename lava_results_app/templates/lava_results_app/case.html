@@ -7,12 +7,19 @@
 {% for testcase in test_cases %}
   <h3>{{ testcase.name }} <a href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}"><span class="glyphicon glyphicon-chevron-right"></span></a></h3>
   {% if testcase.action_metadata %}
-  <dl class="dl-horizontal">
+  <ul class="list-unstyled">
   {% for key, value in testcase.action_metadata.items %}
-    <dt>{{ key }}</dt>
-    <dd>{{ value }}</dd>
+  {% if value.items %}
+    <li><strong>{{ key }}</strong><ul>
+    {% for k, v in value.items %}
+      <li><strong>{{ k }}</strong>: {{ v }}</li>
+    {% endfor %}
+    </ul></li>
+  {% else %}
+    <li><strong>{{ key }}</strong>: {{ value }}</li>
+  {% endif %}
   {% endfor %}
-  </dl>
+  </ul>
   {% else %}
   <p>{{ testcase.result_code }}</p>
   {% endif %}
