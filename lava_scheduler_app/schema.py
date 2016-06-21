@@ -268,7 +268,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
-        'device_path': str,
+        'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),
