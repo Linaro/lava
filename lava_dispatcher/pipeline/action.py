@@ -286,6 +286,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
     def _log_action_results(self, action):
         if action.results and isinstance(action.logger, YAMLLogger):
+            action.logger.results({
+                "definition": "lava",
+                "case": action.name,
+                "level": action.level,
+                "duration": action.elapsed_time,
+                "result": "fail" if action.errors else "pass",
+                "extra": action.results})
             action.results.update(
                 {
                     'level': action.level,
@@ -294,12 +301,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     'connection-timeout': action.connection_timeout.duration
                 }
             )
-            action.logger.results({
-                "definition": "lava",
-                "case": action.name,
-                "level": action.level,
-                "duration": action.elapsed_time,
-                "result": "fail" if action.errors else "pass"})
 
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
