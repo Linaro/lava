@@ -89,6 +89,17 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
 #        self.assertIsNotNone(testdef.job.device['hostname'])
 
+    def test_vcs_parameters(self):
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        git_repos = [action for action in testdef.internal_pipeline.actions if action.name == 'git-repo-action']
+        for git_repo in git_repos:
+            if git_repo.parameters['repository'] == 'http://git.linaro.org/lava-team/lava-functional-tests.git':
+                self.assertIn('revision', git_repo.parameters)
+            else:
+                self.assertNotIn('revision', git_repo.parameters)
+
     def test_overlay(self):
 
         script_list = [
