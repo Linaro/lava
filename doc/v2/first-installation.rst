@@ -58,6 +58,8 @@ Devices you wish to deploy in LAVA need to be:
  * a fastboot capable device accessible from the server; or
  * a virtual machine or simulator that emulates a serial connection
 
+.. _multinode_hardware_requirements:
+
 Multi-Node hardware requirements
 ********************************
 
@@ -200,6 +202,47 @@ validates as JSON before restarting apache::
 If the value is not set or set to ``true``, the Results app will be displayed.
 
 .. seealso:: :ref:`setting_up_pipeline_instance`
+
+.. index:: coordinator
+
+LAVA Coordinator setup
+**********************
+
+Multi-Node LAVA requires a LAVA Coordinator which manages the messaging
+within a group of nodes involved in a Multi-Node job set according to
+this API. The LAVA Coordinator is a singleton to which nodes need to connect
+over a TCP port (default: 3079). A single LAVA Coordinator can manage
+groups from multiple instances. If the network configuration uses a
+firewall, ensure that this port is open for connections from Multi-Node
+dispatchers.
+
+If multiple coordinators are necessary on a single machine (e.g. to test
+different versions of the coordinator during development), each
+coordinator needs to be configured for a different port.
+
+If the dispatcher is installed on the same machine as the coordinator,
+the dispatcher can use the packaged configuration file with the default
+hostname of ``localhost``.
+
+Each dispatcher then needs a copy of the LAVA Coordinator configuration
+file (JSON syntax), modified to point back to the hostname of the coordinator:
+
+Example JSON, modified for a coordinator on a machine with a fully
+qualified domain name::
+
+  {
+    "port": 3079,
+    "blocksize": 4096,
+    "poll_delay": 3,
+    "coordinator_hostname": "control.lab.org"
+  }
+
+An IP address can be specified instead, if appropriate.
+
+Each dispatcher needs to use the same port number and blocksize as is
+configured for the Coordinator on the specified machine. The poll_delay
+is the number of seconds each node will wait before polling
+the coordinator again.
 
 .. _serial_connections:
 
