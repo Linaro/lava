@@ -127,7 +127,10 @@ Some bots will handle ``/robots.txt` but some do not (or mishandle
 options within the file). To handle this, django supports
 ``DISALLOWED_USER_AGENTS`` and this is exposed in ``/etc/lava-server/settings.conf``.
 
-.. code-block:: json
+.. comment JSON code blocks must be complete JSON, not snippets,
+   so this is a plain block.
+
+..
 
    "DISALLOWED_USER_AGENTS": ["yandex", "bing"],
 

@@ -6,7 +6,6 @@ Developing LAVA on Debian
 #########################
 
 LAVA no longer supports development on Ubuntu.
-See :ref:`ubuntu_install`.
 
 Packages for LAVA are available for:
 

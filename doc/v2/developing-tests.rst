@@ -24,7 +24,7 @@ Pay particular attention to sections on:
 Guide Contents
 **************
 
-* :ref:`new_dispatcher_actions`
+* :ref:`dispatcher_actions`
 * :ref:`lava_test_shell`
 
 Assumptions at the start of this guide

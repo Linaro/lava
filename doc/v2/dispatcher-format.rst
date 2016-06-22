@@ -461,7 +461,7 @@ As Admin
 #. See :ref:`viewing_device_dictionary_content`
 #. See also :ref:`updating_device_dictionary_using_xmlrpc`
 
-.. _dispatcher_actions:
+.. _mapping_dispatcher_actions:
 
 Dispatcher actions
 ******************

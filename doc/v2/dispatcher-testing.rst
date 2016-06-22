@@ -1,4 +1,4 @@
-.. _testing_refactoring_code:
+.. _testing_pipeline_code:
 
 Testing the new design
 **********************

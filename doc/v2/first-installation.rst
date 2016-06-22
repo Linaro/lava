@@ -1,7 +1,7 @@
 .. _installation:
 
 Initial LAVA Installation
-*************************
+#########################
 
 The default installation provides an Apache2 config suitable for
 a simple LAVA server at ``http://localhost/`` once enabled.
@@ -15,12 +15,12 @@ Requirements to Consider Before Installing LAVA
 ###############################################
 
 Architecture
-============
+************
 
 .. include:: architecture-v2.rsti
 
 Software Requirements
-=====================
+*********************
 
 See :ref:`debian_installation` for instructions.
 
@@ -36,7 +36,7 @@ If you'd like to help us provide support for other distributions, feel
 free to contact us using the :ref:`lava_devel` mailing list.
 
 Hardware Requirements
-=====================
+*********************
 
 A small LAVA instance can be deployed on fairly modest hardware. We
 recommend at least 1GB of RAM to cover the runtime needs of the
@@ -49,7 +49,7 @@ If you are deploying many devices and expect to be running large
 numbers of jobs, you will obviously need more RAM and disk space.
 
 Device requirements
--------------------
+===================
 
 Devices you wish to deploy in LAVA need to be:
  * Physically connected to the server via usb, usb-serial,
@@ -59,7 +59,7 @@ Devices you wish to deploy in LAVA need to be:
  * a virtual machine or simulator that emulates a serial connection
 
 Multi-Node hardware requirements
---------------------------------
+********************************
 
 If the instance is going to be sent any job submissions from third
 parties or if your own job submissions are going to use Multi-Node,
@@ -123,7 +123,7 @@ Installation Types
 .. _single_instance:
 
 Single Master Instance installation
-===================================
+***********************************
 
 A single instance runs the web frontend, the database, the scheduler
 and the dispatcher on a single machine. If this machine is also running
@@ -139,25 +139,25 @@ method. This has been **deprecated** in V2; instead there is a much
 improved architecture for remote workers using :term:`ZMQ`.
 
 Running V1 only
-###############
+***************
 
 You're reading the wrong documentation - look at the `V1 docs
 <../v1/>`_ instead. But be aware that V1 is reaching end of life soon.
 
 Running V2 only
-###############
+***************
 
 FIXME - needs content!
 
 <stuff>
 
 Running a mix of V1 and V2
-##########################
+**************************
 
 .. _pipeline_install:
 
 What is the Pipeline?
-=====================
+#####################
 
 .. note:: Linaro production systems in the Cambridge lab began to
    migrate to the V2 Pipeline model with the 2016.2 production
@@ -204,12 +204,12 @@ If the value is not set or set to ``true``, the Results app will be displayed.
 .. _serial_connections:
 
 Setting Up Serial Connections to LAVA Devices
-=============================================
+#############################################
 
 .. _ser2net:
 
 Ser2net daemon
---------------
+**************
 
 ser2net provides a way for a user to connect from a network connection
 to a serial port, usually over telnet.
@@ -232,7 +232,7 @@ Example config (in /etc/ser2net.conf)::
           serial connection.
 
 StarTech rackmount usb
-----------------------
+**********************
 
 W.I.P
 
@@ -246,7 +246,7 @@ W.I.P
 This will create a symlink in /dev called rack-usb01 etc. which can then be addressed in the :ref:`ser2net` config file.
 
 Contact and bug reports
-=======================
+#######################
 
 Please report bugs using Linaro's Bugzilla:
 https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework

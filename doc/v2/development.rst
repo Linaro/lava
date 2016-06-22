@@ -36,58 +36,7 @@ changes include updates for the documentation.
 
 .. _RST: http://sphinx-doc.org/rest.html
 
-.. _contribute_upstream:
-
-Contributing Upstream
-*********************
-
-The best way to protect your investment on LAVA is to contribute your
-changes back. This way you don't have to maintain the changes you need
-by yourself, and you don't run the risk of LAVA changed in a way that is
-incompatible with your changes.
-
-Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
-
-.. _Debian: https://www.debian.org/
-
-Community contributions
-=======================
-
-Contributing via your distribution
-----------------------------------
-
-You are welcome to use the bug tracker of your chosen distribution.
-The maintainer for the packages in that distribution should :ref:`register`
-with Linaro (or already be part of Linaro) to be able to
-forward bug reports and patches into the upstream LAVA systems.
-
-.. _register:
-
-Register with Linaro as a Community contributor
------------------------------------------------
-
-If you, or anyone on your team, would like to register with Linaro directly,
-this will allow you to file an upstream bug, submit code for review by
-the LAVA team, etc. Register at the following url:
-
-https://register.linaro.org/
-
-If you are considering large changes, it is best to register and also
-to subscribe to the `lava_devel` mailing list and talk
-to us on IRC::
-
- irc.freenode.net
- #linaro-lava
-
-Contributing via GitHub
------------------------
-
-You can use GitHub to fork the LAVA packages and make pull requests.
-
-https://github.com/Linaro
-
-It is worth sending an email to the `lava_devel` mailing list, so
-that someone can migrate the pull request to a review.
+.. seealso: :ref:`contribute_upstream`
 
 .. _development_workflow:
 

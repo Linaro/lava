@@ -1,15 +1,15 @@
 First Steps Using LAVA V2
 #########################
 
-.. include:: logging-in.rst
+.. include:: logging-in.rsti
 
-.. include:: authentication-tokens.rst
+.. include:: authentication-tokens.rsti
 
-.. include:: first-job.rst
+.. include:: first-job.rsti
 
-.. include:: lava-tool.rst
+.. include:: lava-tool.rsti
 
-.. include:: tables.rst
+.. include:: ../tables.rst
 
 First Steps Installing LAVA V2
 ##############################

@@ -202,13 +202,13 @@ deploy to the requested location.
          compression: gz
 
     * **nfs_url** - use a persistent NFS URL instead of a compressed
-    tarball. See :ref:`persistence` for the limitations of persistent
-    storage. The creation and maintenance of the persistent location
-    is **solely** the responsibility of the test writer. The
-    ``nfs_url`` **must** include the IP address of the NFS server and
-    the full path to the directory which contains the root filesystem,
-    separated by a single colon. In the YAML, all values containing a
-    colon **must** be quoted::
+      tarball. See :ref:`persistence` for the limitations of persistent
+      storage. The creation and maintenance of the persistent location
+      is **solely** the responsibility of the test writer. The
+      ``nfs_url`` **must** include the IP address of the NFS server and
+      the full path to the directory which contains the root filesystem,
+      separated by a single colon. In the YAML, all values containing a
+      colon **must** be quoted::
 
        nfs_url: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
 

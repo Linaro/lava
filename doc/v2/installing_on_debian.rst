@@ -51,17 +51,6 @@ that point will include that codename in the table.
          and dependencies which are installed using jessie-backports are
          **fully supported** by upstream and are the same codebase as the
          relevant production release available from the :ref:`lava_repositories`.
-.. [#f4] Ubuntu vivid vervet 15.04 was released on April 23rd, 2015 and
-         wily werewolf on October 22nd 2015. LAVA packages no longer
-         migrate from Debian into the current development release of Ubuntu,
-         so wily werewolf has the last ``lava-server`` update, 2015.8.1-1.
-         Once Ubuntu makes a release, the LAVA packages in that release
-         do not receive updates. Support for ``lava-server`` on Ubuntu
-         Trusty 14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped
-         at 2015.9.post1. Support for ``lava-dispatcher`` on Ubuntu Trusty
-         14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped at
-         2015.9. See :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
-.. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 

@@ -10,7 +10,7 @@ test`` (DUT) and what actions should be performed there. Jobs are
 defined in *YAML* files.
 
 Job Definition
---------------
+==============
 
 Here's an example minimal job that you should be able to use right
 away if you have user access to an appropriately-configured LAVA
@@ -67,7 +67,7 @@ installation.
 .. _job_submission:
 
 Job Submission
---------------
+==============
 
 Jobs may be submitted to LAVA in one of three ways:
 
@@ -121,7 +121,7 @@ you can also choose to cancel the job.
 .. _test_definitions:
 
 Test Definitions
-----------------
+================
 
 In order to run a test, a test definition is required. A test
 definition is expressed in YAML format. A minimal test definition
@@ -171,10 +171,10 @@ system to see what the commands should create as output.
 
 .. index: results
 
-.. _viewing_results
+.. _viewing_results:
 
 Viewing test results
---------------------
+====================
 
 On the job view page, there is a button to access the Results. Results
 can also be accessed from the Results Overview in the menu. The results
@@ -191,7 +191,7 @@ and the type of deploy and boot methods involved in the test job.
 .. _downloading_results:
 
 Downloading test results
-------------------------
+========================
 
 LAVA V2 makes the test results available directly from the instance,
 without needing to go through ``lava-tool``. Currently, the results
@@ -233,7 +233,7 @@ differ from the username you use when logging in with LDAP.
    token.
 
 Web Based Job Submission
-^^^^^^^^^^^^^^^^^^^^^^^^
+========================
 
 **The web UI form does not yet support pipeline (V2) jobs; expect this
 support to appear soon**.
@@ -261,7 +261,20 @@ support to appear soon**.
    .. image:: ./images/job-details.png
 
 XML-RPC Job Submission
-^^^^^^^^^^^^^^^^^^^^^^
+======================
 
-See <WHERE? FIXME> for details on how to use the XML-RPC API.
+:ref:``lava-tool`` is a wrapper around the XML-RPC API with helpers
+for personal usage. The XML-RPC API itself supports a variety of
+queries and operations which can assist in creating a frontend
+to LAVA which can automate the submission of test jobs.
 
+Many languages have XML-RPC support, the API help page on each LAVA
+instance provides a python example script, with and without using
+tokens. Job submission requires using
+an :ref:`authentication token <authentication_tokens>` and should
+use ``https`` wherever possible to protect the token.
+
+.. seealso:: For help using the XML-RPC API to submit jobs, see the
+   sections on  :ref:`lava_tool` and the **Available methods** link from
+   the API menu of the LAVA instance.
+   For example: ``http://localhost/api/help``.

@@ -273,6 +273,8 @@ The arguments are:
  2. (optional) The MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
+.. _lava-background-process-start:
+
 lava-background-process-start
 -----------------------------
 

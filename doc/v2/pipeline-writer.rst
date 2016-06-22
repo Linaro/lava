@@ -88,7 +88,7 @@ Job submission data
 Writing a new TestJob
 =====================
 
-See :ref:`new_dispatcher_actions` for details of the available actions
+See :ref:`dispatcher_actions` for details of the available actions
 and use the `sample jobs <https://git.linaro.org/lava-team/refactoring.git>`_
 as examples.
 
