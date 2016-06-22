@@ -711,7 +711,7 @@ the boot method or deployment method.
 #. Respect the directory structure - a strategies module should not need
    to import anything from outside that directory. Keep modules together
    with modules used in the same submission YAML stanza.
-#. Expose all configuration in the YAML, noy python. There are FIXMEs
+#. Expose all configuration in the YAML, not python. There are FIXMEs
    in the code to remedy situations where this is not yet happening but
    avoid adding code which makes this problem worse. Extend the device
    or submission YAML structure if new values are needed.

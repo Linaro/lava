@@ -123,7 +123,9 @@ keys used in the `keys` list. These may be either the names of Debian
 keyring packages (already available in the standard Debian archive),
 or PGP key IDs. If using key IDs, LAVA will import them from a key
 server (`pgp.mit.edu`). PPA keys will be automatically imported using
-data from `launchpad.net`. FIXME! Is this true?
+data from `launchpad.net`. For more information, see the documentation
+of ``apt-add-repository``,
+`man 1 apt-add-repository <https://manpages.debian.org/cgi-bin/man.cgi?query=apt-add-repository&apropos=0&sektion=0&manpath=Debian+8+jessie&format=html&locale=en>`_
 
 See `Debian apt source addition
 <https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob_plain/92406804035c450fd7f3b0ab305ab9d2c0bf94fe:/debian/ppa.yaml>`_
@@ -294,7 +296,17 @@ YAML for your own tests, see the :ref:`test_developer`.
 Parsing command outputs
 ***********************
 
-FIXME - is this still relevant for V2? Still mentions a bundle...
+.. comment:: This duplicates lava_test_shell.rst Advanced Parsing
+
+.. warning:: Parse patterns and fixup dictionaries are confusing and
+   hard to debug. The syntax is Python and the support remains for
+   compatibility with existing Lava Test Shell Definitions. With LAVA
+   V2, it is recommended to move parsing into a
+   :ref:`custom script <custom_scripts>` contained within the
+   test definition repository. The script can simply call
+   ``lava-test-case`` directly with the relevant options once the
+   data is parsed. This has the advantage that the log output from
+   LAVA can be tested directly as input for the script.
 
 If the test involves parsing the output of a command rather than simply
 relying on the exit value, LAVA can use a pass/fail/skip/unknown output:
@@ -318,7 +330,7 @@ test case results:
   parse:
       pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-The result of the above test would be a result bundle:
+The result of the above test would be a set of results:
 
 .. code-block:: yaml
 
@@ -410,18 +422,6 @@ This syntax will result in the test results:
 
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
-
-
-.. note:: Each time a choice of unit is passed to lava-test-case, this
-	  will **overwrite** the choice of unit for all test cases
-	  with the same name. All previous test results will be
-	  changed to use the new ``units`` string. To counteract this,
-	  you can set the units manually on the test result details
-	  page. Setting this unit manually will raise a warning, since
-	  this will affect all the other test results in the system.
-
-FIXME: This is a mess, both in terms of documentation and
-implementation?!?
 
 .. _best_practices:
 

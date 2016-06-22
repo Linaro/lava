@@ -18,10 +18,8 @@ change and errors in the content might not be picked up by the code,
 so take care when preparing new files.
 
 .. warning:: This code is in ongoing development and the formats may
-             change without notice. Only a very restricted set of
-             actions and device types are supported. Jobs using the
-             refactored code can only be submitted from the command
-             line (using XML-RPC or :ref:`lava_tool`).
+             change. Jobs using the refactored code can only be
+             submitted from the command line (using XML-RPC or :ref:`lava_tool`).
 
 .. _yaml_job:
 

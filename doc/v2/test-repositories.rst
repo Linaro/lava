@@ -3,8 +3,6 @@
 Test definitions in version control
 ###################################
 
-FIXME! This is still talking about JSON everywhere!
-
 LAVA supports git and bzr version control for use with test
 definitions, and this is the recommended way to host and use test
 definitions for LAVA. When a repository is listed in a test
@@ -47,8 +45,9 @@ be good examples for you, including:
 Using specific revisions of a test definition
 *********************************************
 
-If a specific revision is specified as a parameter in the JSON, that
-revision of the repository will be used instead of HEAD.
+If a specific revision is specified as a parameter in the job
+submission YAML, that revision of the repository will be used instead of
+HEAD.
 
 .. code-block:: yaml
 
