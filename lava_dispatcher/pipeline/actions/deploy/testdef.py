@@ -702,18 +702,30 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
     def handle_parameters(self, testdef):
 
-        ret_val = ['###default parameters from yaml###\n']
+        ret_val = ['###default parameters from test definition###\n']
         if 'params' in testdef:
             for def_param_name, def_param_value in list(testdef['params'].items()):
                 if def_param_name is 'yaml_line':
                     continue
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
+        if 'parameters' in testdef:
+            for def_param_name, def_param_value in list(testdef['parameters'].items()):
+                if def_param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
         ret_val.append('######\n')
         # inject the parameters that were set in job submission.
-        ret_val.append('###test parameters from json###\n')
+        ret_val.append('###test parameters from job submission###\n')
         if 'parameters' in self.parameters and self.parameters['parameters'] != '':
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['parameters'].items()):
+                if param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
+                self.logger.debug('%s=\'%s\'' % (param_name, param_value))
+        if 'params' in self.parameters and self.parameters['params'] != '':
+            # turn a string into a local variable.
+            for param_name, param_value in list(self.parameters['params'].items()):
                 if param_name is 'yaml_line':
                     continue
                 ret_val.append('%s=\'%s\'\n' % (param_name, param_value))

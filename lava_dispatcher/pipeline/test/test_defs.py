@@ -191,14 +191,30 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(install, TestInstallAction)
         self.assertIsInstance(runsh, TestRunnerAction)
         self.assertIsNot(list(install.parameters.items()), [])
-        testdef = {'params': {'VARIABLE_NAME_1': 'value_1', 'VARIABLE_NAME_2': 'value_2'}}
+        testdef = {'params': {'VARIABLE_NAME_1': 'value_1',
+                              'VARIABLE_NAME_2': 'value_2'}}
         content = test.handle_parameters(testdef)
         self.assertEqual(
             set(content),
             {
-                '###default parameters from yaml###\n', "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
-                '######\n', '###test parameters from json###\n', "VARIABLE_NAME_1='eth2'\n",
-                "VARIABLE_NAME_2='wlan0'\n", '######\n'
+                '###default parameters from test definition###\n',
+                "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
+                '######\n', '###test parameters from job submission###\n',
+                "VARIABLE_NAME_1='eth2'\n", "VARIABLE_NAME_2='wlan0'\n",
+                '######\n'
+            }
+        )
+        testdef = {'parameters': {'VARIABLE_NAME_1': 'value_1',
+                                  'VARIABLE_NAME_2': 'value_2'}}
+        content = test.handle_parameters(testdef)
+        self.assertEqual(
+            set(content),
+            {
+                '###default parameters from test definition###\n',
+                "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
+                '######\n', '###test parameters from job submission###\n',
+                "VARIABLE_NAME_1='eth2'\n", "VARIABLE_NAME_2='wlan0'\n",
+                '######\n'
             }
         )
 

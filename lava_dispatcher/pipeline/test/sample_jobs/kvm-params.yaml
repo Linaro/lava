@@ -45,6 +45,13 @@ actions:
                 VARIABLE_NAME_1: "eth2"
                 VARIABLE_NAME_2: "wlan0"
               name: smoke-tests
+            - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
+              from: git
+              path: params.yaml
+              params:
+                VARIABLE_NAME_1: "eth2"
+                VARIABLE_NAME_2: "wlan0"
+              name: smoke-tests
             - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
