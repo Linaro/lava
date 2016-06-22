@@ -407,18 +407,17 @@ the git-repos action, for example:
 * `branch` (optional) is the branch within the git repository given in
   `url` that should be checked out after cloning.
 
-All the above parameters within the `git-repos` section could be
-controlled from the YAML job file. See the following JSON job
-definition and YAML test definition to get an understanding of how it
-works.
+.. _yaml_parameters:
 
-FIXME! JSON
+Using parameters in the job to update the definition
+====================================================
 
-.. * JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
+Parameters used in the test definition YAML can be
+controlled from the YAML job file. See the following YAML test
+definition to get an understanding of how it works.
 
-* YAML test definition - https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/git-params-controlled.yaml
-
-.. TODO: parameter support.
+* YAML test definition - https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/params/params.yaml
+* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/kvm-params.yaml
 
 Install Steps
 =============
@@ -442,6 +441,16 @@ you could do:
 
 Advanced Parsing
 ================
+
+.. warning:: Parse patterns and fixup dictionaries are confusing and
+   hard to debug. The syntax is Python and the support remains for
+   compatibility with existing Lava Test Shell Definitions. With LAVA
+   V2, it is recommended to move parsing into a
+   :ref:`custom script <custom_scripts>` contained within the
+   test definition repository. The script can simply call
+   ``lava-test-case`` directly with the relevant options once the
+   data is parsed. This has the advantage that the log output from
+   LAVA can be tested directly as input for the script.
 
 You may need to incorporate an existing test that doesn't output results in
 in the required ``pass``/``fail``/``skip``/``unknown`` format required by
@@ -493,13 +502,6 @@ may be specified inside the 'test-case-deps' section are::
  2. bzr-repo
  3. tar-repo
  4. url
-
-.. note:: For keys such as git-repo, bzr-repo and tar-repo testdef,
-          the test definition name within the repo may be specfied
-          using the *testdef* parameter. Otherwise, the default name
-          of *lavatest.yaml* will be used.
-
-FIXME! This is magic and should be removed with V1
 
 .. _circular_dependencies:
 
