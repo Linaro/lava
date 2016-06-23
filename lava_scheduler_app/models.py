@@ -2566,15 +2566,21 @@ class TestJob(RestrictedResource):
                 pass
 
     def send_notifications(self):
+        logger = logging.getLogger('lava_scheduler_app')
         notification = self.notification
+        irc_recipients = {}
+        # Prep template args.
+        kwargs = self.get_notification_args()
+        irc_message = self.create_irc_notification()
+
         for recipient in notification.notificationrecipient_set.all():
             if recipient.method == NotificationRecipient.EMAIL:
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     try:
-                        logging.info("sending email notification to %s",
-                                     recipient.email_address)
+                        logger.info("sending email notification to %s",
+                                    recipient.email_address)
                         title = "LAVA notification for Test Job %s" % self.id
-                        kwargs = self.get_notification_args(recipient)
+                        kwargs["user"] = self.get_recipient_args(recipient)
                         body = self.create_notification_body(
                             notification.template, **kwargs)
                         result = send_mail(
@@ -2585,20 +2591,40 @@ class TestJob(RestrictedResource):
                             recipient.save()
                     except (smtplib.SMTPRecipientsRefused,
                             smtplib.SMTPSenderRefused, socket.error):
-                        logging.warn("failed to send email notification to %s",
-                                     recipient.email_address)
-            else:
-                # TODO: implement irc notification.
-                pass
+                        logger.warn("failed to send email notification to %s",
+                                    recipient.email_address)
+            else:  # IRC method
+                if recipient.status == NotificationRecipient.NOT_SENT:
+                    if recipient.irc_server_name:
 
-    def get_notification_args(self, recipient):
+                        logger.info("sending IRC notification to %s on %s" %
+                                    (recipient.irc_handle_name,
+                                     recipient.irc_server_name))
+                        try:
+                            utils.send_irc_notification(
+                                Notification.DEFAULT_IRC_HANDLE,
+                                recipient=recipient.irc_handle_name,
+                                message=irc_message,
+                                server=recipient.irc_server_name)
+                            recipient.status = NotificationRecipient.SENT
+                            recipient.save()
+                            logger.info("IRC notification sent to %s" %
+                                        recipient.irc_handle_name)
+                        except Exception as e:
+                            logger.warn(
+                                "IRC notification not sent. Reason: %s - %s" %
+                                (e.__class__.__name__, str(e)))
+
+    def create_irc_notification(self):
         kwargs = {}
         kwargs["job"] = self
-        if recipient.user:
-            kwargs["user"] = {}
-            kwargs["user"]["username"] = recipient.user.username
-            kwargs["user"]["first_name"] = recipient.user.first_name
-            kwargs["user"]["last_name"] = recipient.user.last_name
+        kwargs["url_prefix"] = "http://%s" % get_domain()
+        return self.create_notification_body(
+            Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
+
+    def get_notification_args(self):
+        kwargs = {}
+        kwargs["job"] = self
         kwargs["url_prefix"] = "http://%s" % get_domain()
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
@@ -2705,6 +2731,14 @@ class TestJob(RestrictedResource):
 
         return kwargs
 
+    def get_recipient_args(self, recipient):
+        user_data = {}
+        if recipient.user:
+            user_data["username"] = recipient.user.username
+            user_data["first_name"] = recipient.user.first_name
+            user_data["last_name"] = recipient.user.last_name
+        return user_data
+
     def create_notification_body(self, template_name, **kwargs):
         txt_body = u""
         txt_body = Notification.TEMPLATES_ENV.get_template(
@@ -2740,6 +2774,8 @@ class Notification(models.Model):
         extensions=["jinja2.ext.i18n"])
 
     DEFAULT_TEMPLATE = "testjob_notification.txt"
+    DEFAULT_IRC_TEMPLATE = "testjob_irc_notification.txt"
+    DEFAULT_IRC_HANDLE = "lava-bot"
 
     QUERY_LIMIT = 5
 
@@ -2876,7 +2912,7 @@ class Notification(models.Model):
 class NotificationRecipient(models.Model):
 
     class Meta:
-        unique_together = ("user", "notification")
+        unique_together = ("user", "notification", "method")
 
     user = models.ForeignKey(
         User,
@@ -2967,14 +3003,20 @@ class NotificationRecipient(models.Model):
         if self.irc_handle:
             return self.irc_handle
         else:
-            return self.user.extendeduser.irc_handle
+            try:
+                return self.user.extendeduser.irc_handle
+            except:
+                return None
 
     @property
     def irc_server_name(self):
         if self.irc_server:
             return self.irc_server
         else:
-            return self.user.extendeduser.irc_server
+            try:
+                return self.user.extendeduser.irc_server
+            except:
+                return None
 
 
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
