@@ -151,6 +151,36 @@ it is also recommended that the devices would be made offline at the same time. 
 admin interface has support for selecting devices by worker and taking all selected devices
 offline in a single action.)
 
+.. _adding_qemu_v2_device:
+
+Adding your first QEMU device
+==============================
+
+For the first device, a simple :term:`device dictionary` can be used:
+
+.. code-block:: jinja
+
+  {% extends 'qemu.jinja2' %}
+  {% set arch = 'amd64' %}
+  {% set mac_addr = '52:54:00:12:34:59' %}
+  {% set memory = '1024' %}
+
+* The device dictionary **must** ``extend`` an existing template.
+* The QEMU template specifies that the ``arch`` variable must be set
+  to start the correct QEMU system binary
+* The MAC address needs to differ for each device of this type.
+* The available memory for the virtual machine is set in megabytes.
+
+The template itself lives in::
+
+ /etc/lava-server/dispatcher-config/device-types/qemu.jinja2
+
+This dictionary does not include a setting to use a ``tap`` device which
+means that this device would not support a hacking session inside the
+virtual machine. Setting up a bridge is out of scope for this documentation.
+
+.. seealso:: :ref:`create_device_dictionary`
+
 .. index::
    single: encrypt; ZMQ authentication; master slave configuration
 
