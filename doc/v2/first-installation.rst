@@ -140,21 +140,111 @@ LAVA V1 used to support a `distributed_instance` installation
 method. This has been **deprecated** in V2; instead there is a much
 improved architecture for remote workers using :term:`ZMQ`.
 
+Detailed instructions for setting up workers follows - first, think
+about the kind of configuration needed for your instance.
+
 Running V1 only
 ***************
 
 You're reading the wrong documentation - look at the `V1 docs
-<../v1/>`_ instead. But be aware that V1 is reaching end of life soon.
+<../v1/>`_ instead. But be aware that V1 is reaching end of life soon,
+so this would be a *frozen* instance.
+
+.. warning:: Installing any updates of ``lava-server`` or ``lava-dispatcher``
+   onto a *frozen* instance after the removal of V1 support will
+   cause permanent data loss.
 
 Running V2 only
 ***************
 
-FIXME - needs content!
+Layout
+======
 
-<stuff>
+* The master needs ``lava-server`` installed as a :ref:`single_instance`.
+* The worker only needs ``lava-dispatcher`` installed as a
+  :ref:`pipeline installation <setting_up_pipeline_instance>`.
+* Workers on the same subnet as the master can use :term:`ZMQ` without
+  using authentication and encryption. Workers on a remote network
+  are **strongly** recommended to use authentication and encryption
+  of the ZMQ messages.
+
+  .. seealso:: :ref:`zmq_curve`
+
+* ZMQ supports buffering the messages, so master and workers can be
+  independently restarted.
+
+Configuration outline
+======================
+
+* Configure the master as a :ref:`single_instance`.
+* Define some of the device-types likely to be used with this instance
+  in the django administrative interface.
+* Prepare device dictionaries for the devices of those types.
+
+You can choose whether the master has devices configured locally or
+only uses devices via one or more workers. Once you are happy with
+that install, think about adding workers - one at a time.
+
+* Configure ``lava-master`` to use the ``--encrypt`` option if the
+  master is to have any workers on remote networks.
+
+  * Generate certificates if ``--encrypt`` is to be used.
+
+* Configure ``lava-slave`` to look for the master ZMQ port instead of
+  ``localhost``.
+
+  * Install the master certificate and copy the slave certificate to
+    the master.
+
+* Add the worker to the database on the master using the django
+  administration interface.
+* Configure the device dictionaries on the master for all devices
+  attached to this worker.
+* Assign devices to that worker.
+* Run health checks and be sure that all devices are properly configured.
+* Repeat for additional workers.
 
 Running a mix of V1 and V2
 **************************
+
+.. warning:: Instances which mix V1 and V2 must consider that
+   V1 support **will** be removed during 2017, whilst V2 support will
+   continue. Mixed installations **must** be involved in the migration
+   to V2 and subscribe to the :ref:`support mailing lists <mailing_lists>`
+   or the V1 devices could stop working.
+
+Layout
+======
+
+* The master and **all** workers which will have any V1 devices
+  attached **must** use the V1 distributed deployment installation
+  method as described in the `V1 documentation <../v1/>`_
+* Selected devices can have the ``pipeline`` support enabled in the
+  django administration interface. These devices will then accept
+  pipeline and JSON job submissions.
+* Pipeline devices need a Device Dictionary to be able to run V2
+  job submissions.
+* The Device Dictionary can include a setting to make the device
+  **exclusive** to V2 submissions.
+* All workers which have any devices which are not **exclusive**
+  **must** have SSHFS and Postgres connections configured for V1
+  support.
+* Layouts which require workers to be geographically remote from the
+  master are recommended to **only** have **exclusive** devices to
+  limit the known issues with maintaining connections required for
+  V1 across networks outside your control.
+
+Configuration outline
+=====================
+
+The mixed configuration is the most complex to setup as it requires
+knowledge of V1 and V2.
+
+* Follow all the documentation for V1 distributed deployments and
+  ensure that all V1 devices are working.
+* Configure the workers using V2. Remember that if the worker has
+  V1 and V2 devices, that worker should be local to the master due
+  to known limitations of the V1 configuration.
 
 .. _pipeline_install:
 
