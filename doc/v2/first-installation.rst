@@ -104,11 +104,6 @@ upstream git repositories.
 Interim releases are made available from the the
 :ref:`staging-repo <lava_repositories>`.
 
-During periods when the internal transitions within Debian stop the
-``lava-server`` package from migrating automatically into the testing
-suite, users running Debian testing may also obtain the same release
-using the ``people.linaro.org`` repository.
-
 If in doubt, install the ``production`` release of ``lava-server``
 from official distribution mirrors. (Backports are included on Debian
 mirrors.)
