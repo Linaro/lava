@@ -183,7 +183,7 @@ Configuration outline
 
 You can choose whether the master has devices configured locally or
 only uses devices via one or more workers. Once you are happy with
-that install, think about adding workers - one at a time.
+that installation, think about adding workers - one at a time.
 
 * Configure ``lava-master`` to use the ``--encrypt`` option if the
   master is to have any workers on remote networks.
@@ -207,11 +207,13 @@ that install, think about adding workers - one at a time.
 Running a mix of V1 and V2
 **************************
 
-.. warning:: Instances which mix V1 and V2 must consider that
-   V1 support **will** be removed during 2017, whilst V2 support will
-   continue. Mixed installations **must** be involved in the migration
-   to V2 and subscribe to the :ref:`support mailing lists <mailing_lists>`
-   or the V1 devices could stop working.
+.. warning:: Administrators of instances which mix V1 and V2 must
+   consider that V1 support **will** be removed during 2017, while V2
+   support will continue. If you are running a mixed installation, we
+   **strongly** encourage you to get involved in the migration to V2
+   and subscribe to the :ref:`support mailing lists <mailing_lists>`
+   to ensure a clean migration for your V1 devices before they stop
+   working.
 
 Layout
 ======
@@ -221,14 +223,15 @@ Layout
   method as described in the `V1 documentation <../v1/>`_
 * Selected devices can have the ``pipeline`` support enabled in the
   django administration interface. These devices will then accept
-  pipeline and JSON job submissions.
+  both pipeline (YAML) and V1 (JSON) job submissions.
 * Pipeline devices need a Device Dictionary to be able to run V2
   job submissions.
 * The Device Dictionary can include a setting to make the device
-  **exclusive** to V2 submissions.
-* All workers which have any devices which are not **exclusive**
-  **must** have SSHFS and Postgres connections configured for V1
-  support.
+  **exclusive** to V2 submissions, so V1 JSON submissions will not be
+  *allowed.
+* All workers which have any devices which are not **exclusive** in
+  this way **must** have SSHFS and Postgres connections configured for
+  V1 support.
 * Layouts which require workers to be geographically remote from the
   master are recommended to **only** have **exclusive** devices to
   limit the known issues with maintaining connections required for
@@ -238,7 +241,7 @@ Configuration outline
 =====================
 
 The mixed configuration is the most complex to setup as it requires
-knowledge of V1 and V2.
+knowledge of both V1 and V2.
 
 * Follow all the documentation for V1 distributed deployments and
   ensure that all V1 devices are working.
