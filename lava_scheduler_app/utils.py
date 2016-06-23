@@ -43,6 +43,25 @@ from lava_server.settings.config_file import ConfigFile
 from lava_scheduler_app.schema import SubmissionException
 
 
+DEFAULT_IRC_SERVER = "irc.freenode.net"
+DEFAULT_IRC_PORT = 6667
+
+SERVICE_UNKNOWN_ERROR = "service not known"
+NO_SUCH_NICK_ERROR = "No such nick/channel"
+
+
+class IRCSendError(Exception):
+    """Global IRC error."""
+
+
+class IRCServerIncorrectError(IRCSendError):
+    """Error raised when IRC server name is erroneous."""
+
+
+class IRCHandleNotFoundError(IRCSendError):
+    """Error raised when user handle is not found on specific server."""
+
+
 def get_fqdn():
     """Returns the fully qualified domain name.
     """
@@ -885,3 +904,40 @@ def check_user_auth(user, job, request=None):
         check_request_auth(request, job)
         return True
     return job.can_view(user)
+
+
+def send_irc_notification(nick, recipient, message,
+                          server=DEFAULT_IRC_SERVER, port=DEFAULT_IRC_PORT):
+    """
+    Sends private IRC msg with netcat.
+    parameters:
+      server - the IRC server where the recipient is.
+      port - server port used for the communication.
+      nick - nick that sends the message.
+      recipient - recipient handle.
+      message - message content.
+    raise:
+      If there is an error, raise an exception and pass stderr message.
+    """
+
+    netcat_cmd = "echo -e 'NICK %s\nUSER %s 8 * %s\nPRIVMSG %s :%s\nQUIT\n' | nc -i 5 -q 15 %s %s" % (
+        nick, nick, nick, recipient, message,
+        server, port)
+
+    proc = subprocess.Popen(['/bin/bash', '-c', netcat_cmd],
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if proc.stderr:
+        with proc.stderr:
+            for line in iter(proc.stderr.readline, b''):
+                if SERVICE_UNKNOWN_ERROR in line:
+                    raise IRCServerIncorrectError(line)
+                else:
+                    raise IRCSendError(line)
+
+    with proc.stdout:
+        for line in iter(proc.stdout.readline, b''):
+            if NO_SUCH_NICK_ERROR in line:
+                raise IRCHandleNotFoundError(line)
+    proc.wait()

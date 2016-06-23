@@ -4,7 +4,7 @@ Dear {{ user.first_name }} {{ user.last_name }},
 Hello,
 {%- endif %}
 
-The job with ID # {{ job.id }} has finished with status {{ job.get_status_display() }} on {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}. Job was submitted by {{ job.submitter.username }}.
+The job with ID # {{ job.id }} has finished with status {{ job.get_status_display() }}{% if job.end_time %} on {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}{% endif %}. Job was submitted by {{ job.submitter.username }}.
 
 Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 
@@ -22,7 +22,7 @@ Visibility: {{ job.get_visibility_display() }}
 Description: {{ job.description }}
 Submitted: {{ job.submit_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
 Started: {{ job.start_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
-Finished: {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
+Finished: {% if job.end_time %}{{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}{% endif %}
 Duration: {{ job.duration }}
 {%- endif %}
 {%- if job.notification.verbosity == 0 %}
