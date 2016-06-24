@@ -1,4 +1,4 @@
-.. _json_hidden_device_type:
+.. _v2_hidden_device_type:
 
 Hidden device type
 ##################

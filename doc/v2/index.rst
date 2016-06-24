@@ -78,13 +78,19 @@ Scheduling
 
 LAVA has advanced support for scheduling multiple jobs across multiple
 devices, whether those jobs use one device or several. Scheduling is
-ordered using these criteria:
+ordered using these criteria, in this order:
 
-* submit time
-* priority
-* device tags
-* user access
-* health checks
+#. :term:`health checks <health check>`
+#. :term:`priority`
+#. submit time
+#. multinode group - see also :ref:`multinode`
+
+In addition, scheduling can be restricted to devices specified by the
+admin using:
+
+* :term:`device tags <device tag>`
+* user access limits - see :term:`restricted device` or
+  :term:`hidden device type`.
 
 Advanced use cases
 ==================
