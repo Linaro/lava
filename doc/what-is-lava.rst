@@ -14,8 +14,8 @@ LAVA is a collection of participating components in an evolving
 architecture. LAVA aims to make systematic, automatic and manual
 quality control more approachable for projects of all sizes.
 
-LAVA is designed for validation - testing whether the code that
-engineers are producing "works", in whatever sense that
+LAVA is designed for validation during development - testing whether
+the code that engineers are producing "works", in whatever sense that
 means. Depending on context, this could be many things, for example:
 
 * testing whether changes in the Linux kernel compile and boot
@@ -38,10 +38,11 @@ difficult to obtain or integrate. Although LAVA has support for emulation
 (based on QEMU), LAVA is best at providing test support for real hardware
 devices.
 
-LAVA is principally aimed at testing across multiple hardware platforms
-to aid portability and encourage multi-platform development. As such,
-testing of systems which are already platform independent do not
-necessarily gain from being tested in LAVA.
+LAVA is principally aimed at testing changes made by developers across
+multiple hardware platforms to aid portability and encourage
+multi-platform development. Systems which are already platform independent
+or which have been optimised for production may not necessarily be able
+to be tested in LAVA or may provide no overall gain.
 
 .. note:: This overview document explains LAVA using
           http://validation.linaro.org/ which is the official
@@ -68,6 +69,13 @@ What is LAVA **not**?
 
 * LAVA is **not** a build farm - other tools need to be used to prepare
   binaries which can be passed to the device using LAVA.
+
+* LAVA is **not** a production test environment for hardware - LAVA is
+  focused on developers and may require changes to the device or the
+  software to enable automation. These changes are often unsuitable for
+  production units. LAVA also expects that most devices will remain available
+  for repeated testing rather than testing the software with a changing
+  set of hardware.
 
 .. seealso:: :ref:`continuous_integration` which covers how LAVA relates to
    continuous integration (CI) and covers the consequences of what
