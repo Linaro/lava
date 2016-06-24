@@ -470,9 +470,13 @@ Deploy
  actions:
    - deploy:
        to: tftp
-       kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-       dtb: http://images-internal/mustang/mustang.dtb_1.11
+       kernel:
+         url: http://images-internal/mustang/uImage_1.11
+       nfsrootfs:
+         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         compression: gz
+       dtb:
+         url: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
 
 Boot
@@ -525,9 +529,13 @@ Complete YAML submission
  actions:
    - deploy:
        to: tftp
-       kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-       dtb: http://images-internal/mustang/mustang.dtb_1.11
+       kernel:
+         url: http://images-internal/mustang/uImage_1.11
+       nfsrootfs:
+         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         compression: gz
+       dtb:
+         url: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
    - boot:
      prompts:
