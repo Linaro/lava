@@ -538,7 +538,7 @@ Complete YAML submission
    job:
      minutes: 15
  actions:
-   - deploy:
+ - deploy:
        to: tftp
        kernel:
          url: http://images-internal/mustang/uImage_1.11
@@ -548,7 +548,7 @@ Complete YAML submission
        dtb:
          url: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
-   - boot:
+ - boot:
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
@@ -558,7 +558,7 @@ Complete YAML submission
      auto_login:
        login_prompt: "login:"
        username: root
-   - test:
+ - test:
      timeout:
        minutes: 5
      name: singlenode-mustang-demo
