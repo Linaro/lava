@@ -96,6 +96,8 @@ as a device type, some factors include:
 
 See also :ref:`device_type_metadata`.
 
+.. _naming_device_types:
+
 Choosing a name for a device type
 =================================
 
@@ -135,3 +137,51 @@ Examples
 
 * ``panda`` devices can support operating systems like Debian as well as
   supporting Android deployments using a single bootloader - U-Boot.
+
+.. _device_type_elements:
+
+Elements of a device type
+=========================
+
+**Name**
+   - see :ref:`naming_device_types`. Needs to match the name of a
+   jinja template in ``/etc/lava-server/dispatcher-config/device-types/``,
+   without the ``.jinja2`` suffix.
+
+**Has health check**
+   - see :term:`health check`
+
+**Display**
+   Enabled by default - can be disabled to hide the data about the
+   device type from the UI, without deleting the object and associated
+   data. The device type remains accessible in the django administrative
+   interface.
+
+**Owners only**
+   Disabled by default - enable to create a :term:`hidden device type`.
+
+**Health check frequency**
+
+   Each device type can run health checks at a specified frequency which
+   can be based on time intervals or numbers of test jobs.
+
+The device type also includes descriptive fields which would typically
+be empty for emulated device types:
+
+**Architecture name**
+  e.g. ARMv7, ARMv8
+
+**Processor name**
+  e.g. AM335X
+
+**CPU model name**
+  e.g. OMAP 4430 / OMAP4460
+
+**List of cores**
+  The number of cores on the device and the type of CPUs.
+  In the admin interface, cores can be added and the number of
+  each core specified.
+  e.g. 4 x Cortex-A9
+
+**Bit count**
+  e.g. 32 or 64

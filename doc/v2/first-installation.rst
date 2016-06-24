@@ -223,7 +223,7 @@ Layout
   job submissions.
 * The Device Dictionary can include a setting to make the device
   **exclusive** to V2 submissions, so V1 JSON submissions will not be
-  *allowed.
+  allowed.
 * All workers which have any devices which are not **exclusive** in
   this way **must** have SSHFS and Postgres connections configured for
   V1 support.

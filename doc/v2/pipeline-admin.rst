@@ -105,6 +105,8 @@ jinja template API can be supported in a device dictionary or device type templa
 the logic within the template support, such as conditionals and the use of blocks, is
 **only** to be done in the device type template.
 
+.. _checking_templates:
+
 Checking your templates
 -----------------------
 
