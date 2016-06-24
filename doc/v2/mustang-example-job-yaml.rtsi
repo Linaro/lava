@@ -1,0 +1,37 @@
+.. code-block:: yaml
+
+ device_type: mustang
+ job_name: mustang-singlenode-jessie
+ timeouts:
+   job:
+     minutes: 15
+ actions:
+ - deploy:
+       to: tftp
+       kernel:
+         url: http://images-internal/mustang/uImage_1.11
+       nfsrootfs:
+         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         compression: gz
+       dtb:
+         url: http://images-internal/mustang/mustang.dtb_1.11
+       os: debian
+ - boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
+     method: u-boot
+     commands: nfs
+     type: bootm
+     auto_login:
+       login_prompt: "login:"
+       username: root
+ - test:
+     timeout:
+       minutes: 5
+     name: singlenode-mustang-demo
+     definitions:
+       - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
+         from: git
+         path: singlenode/singlenode03.yaml
+         name: singlenode-advanced
