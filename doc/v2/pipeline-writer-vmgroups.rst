@@ -135,10 +135,13 @@ https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/mustang-ssh-guest.ya
     - deploy:
         role: [host]
         authorize: ssh
-        dtb: http://images-internal/mustang/mustang.dtb_1.11
-        kernel: http://images-internal/mustang/uImage_1.11
-        nfsrootfs: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-        rootfs_compression: gz
+        dtb:
+          url: http://images-internal/mustang/mustang.dtb_1.11
+        kernel:
+          url: http://images-internal/mustang/uImage_1.11
+        nfsrootfs:
+          url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+          compression: gz
         os: debian
         timeout: {minutes: 5}
         to: tftp

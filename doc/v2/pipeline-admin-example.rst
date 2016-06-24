@@ -43,10 +43,21 @@ The device configuration will become a device dictionary.
 However, initially, we need a single YAML file which contains the data
 that the pipeline will send to the dispatcher - a combination of the
 device type and device information. You can see examples of such content
-when validating pipeline jobs. (This example has been edited slightly to
-take out some of the noise.)::
+when validating pipeline jobs. (This is example and has been edited
+slightly to take out some of the noise.)::
 
  $ sudo lava-dispatch --target devices/bbb-01.yaml bbb-uboot-ramdisk.yaml --validate --output-dir=/tmp/test/
+
+Don't worry about running this example yourself at this stage. The files
+themselves may be useful for reference. The device YAML file comes from
+the lava-dispatcher unit tests:
+
+https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipeline/devices/bbb-01.yaml
+
+The job submission YAML used in the example comes from the lava-team
+refactoring repository of functional tests:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/bbb-uboot-ramdisk.yaml
 
 .. code-block:: yaml
 

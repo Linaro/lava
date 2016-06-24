@@ -1054,10 +1054,14 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
      timeout:
        minutes: 4
      to: tftp
-     kernel: https://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     kernel:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs:
+       url: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+       compression: gz
      os: oe
-     dtb: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 Ramdisk
 -------
@@ -1070,10 +1074,15 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
   - deploy:
      timeout: 2m
      to: tftp
-     kernel: https://images.validation.linaro.org/functional-test-images/panda/uImage
-     ramdisk: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-     ramdisk-type: u-boot
-     dtb: https://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+     kernel:
+       url: https://images.validation.linaro.org/functional-test-images/panda/uImage
+     ramdisk:
+       url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+       compression: gz
+       header: u-boot
+       add-header: u-boot
+     dtb:
+       url: https://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
 
 .. _protocols:
 

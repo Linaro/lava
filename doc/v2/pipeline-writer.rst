@@ -135,11 +135,15 @@ that device can use NFS - in this case, using tftp.
  actions:
   - deploy:
       to: tftp
-      kernel: https://images.validation.linaro.org/functional-test-images/bbb/zImage
+      kernel:
+        url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
       # nfsrootfs: file:///home/linaro/lava/nfsrootfs/jessie-rootfs.tar.gz
-      nfsrootfs: https://images.validation.linaro.org/pipeline/debian-jessie-rootfs.tar.gz
+      nfsrootfs:
+        url: https://images.validation.linaro.org/pipeline/debian-jessie-rootfs.tar.gz
+        compression: gz
       os: debian
-      dtb: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+      dtb:
+        url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 .. note:: the use of comments here allows the writer to flip between a remote image
    and a local test version of that image - this would be suitable for running
@@ -157,11 +161,15 @@ simply provide a ramdisk instead of an nfsrootfs:
 
   - deploy:
      to: tftp
-     kernel: https://images.validation.linaro.org/functional-test-images/bbb/zImage
-     ramdisk: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-     ramdisk-type: u-boot
+     kernel:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
+     ramdisk:
+       url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+       compression: gz
+       add-header: u-boot
      os: oe
-     dtb: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 .. note:: **ramdisk-type** must be explicitly set, despite the URL in this
    case happening to have a ``u-boot`` extension. This is not assumed.
