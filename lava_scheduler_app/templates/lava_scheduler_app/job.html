@@ -86,9 +86,10 @@
         <ul class="nav nav-pills nav-stacked">
         <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
         class="glyphicon glyphicon-fast-forward"></span></a></li>
+        {% if not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
-        {% if job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.sub_id %}" class="btn btn-info">Multinode Definition</a></li>
         {% elif job.is_vmgroup %}
            <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% elif expand %}
@@ -100,9 +101,17 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job.is_pipeline %}
-          <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
+          {% if job.is_multinode %}
+            <li><a href="{% url 'lava.scheduler.job.complete_log' job.sub_id %}" class="btn btn-primary">Complete log</a></li>
+          {% else %}
+            <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
+          {% endif %}
         {% elif job_file_present and not job.archived_job_file %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
+          {% if job.is_multinode %}
+            <li><a href="{% url 'lava.scheduler.job.log_file' job.sub_id %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
+          {% else %}
+            <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
+          {% endif %}
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
             {% if job.is_pipeline %}
@@ -121,26 +130,38 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if show_cancel %}
-          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+          {% if job.is_multinode %}
+            <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.sub_id %}" class="btn btn-warning">Cancel</a></li>
+          {% else %}
+            <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+          {% endif %}
         {% endif %}
         {% if show_resubmit and not job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.sub_id %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         {% if user.is_authenticated %}
-        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
-            {% if is_favorite %}
-              Remove from favorites
-            {% else %}
-              Add to favorites
-            {% endif %}
-        </a></li>
+          {% if job.is_multinode %}
+            <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.sub_id %}" class="btn btn-info">
+          {% else %}
+            <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
+          {% endif %}
+          {% if is_favorite %}
+            Remove from favorites
+          {% else %}
+            Add to favorites
+          {% endif %}
+            </a></li>
         {% endif %}
         </ul>
       </div>
       <div class="col-md-6">
         {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+          {% if job.is_multinode %}
+            <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.sub_id %}" class="btn btn-default">Comment</a></li>
+          {% else %}
+            <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+          {% endif %}
         {% if user.is_authenticated and user.is_superuser %}
         <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
             Admin this TestJob
@@ -149,7 +170,7 @@
         </ul>
         {% endif %}
         {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
-        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
+        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.sub_id %}" id="priority-choice">
           {% csrf_token %}
           <button id="priority-button" class="btn btn-default">Set priority</button><br />
           {{ job.priority|get_priority_select }}
@@ -609,11 +630,12 @@ operation.</p>
       </div>
     <div class="col-md-4">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.sub_id %}" class="btn btn-info">Multinode Definition</a></li>
         {% elif job.is_vmgroup %}
            <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
+        {% else %}
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% endif %}
         </ul>
       </div>
