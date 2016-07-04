@@ -319,6 +319,7 @@ def export_testcase(testcase):
     timeout = actiondata.timeout if actiondata else ''
     level = actiondata.action_level if actiondata else None
     casedict = {
+        'name': str(testcase.name),
         'job': str(testcase.suite.job_id),
         'suite': str(testcase.suite.name),
         'result': str(testcase.result_code),
