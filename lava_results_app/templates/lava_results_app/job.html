@@ -101,6 +101,40 @@
   </div>
  </div>
 
+<div class="panel-group" id="notifications_accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4><a data-toggle="collapse" data-parent="#notifications_accordion" href="#notification_collapse">
+        Notifications
+      </a>
+      </h4>
+    </div>
+  {% spaceless %}
+    <div id="notification_collapse" class="panel-collapse collapse">
+      <div class="panel-body">
+        <dl class="dl-horizontal">
+          {% for recipient in job.notification.notificationrecipient_set.all %}
+          <dt>Recipient</dt>
+          {% if recipient.method == 1 %}
+          <dd>{{ recipient.irc_handle_name }} on {{ recipient.irc_server_name }}</dd>
+          {% else %}
+          <dd>{{ recipient.email_address }}</dd>
+          {% endif %}
+          <dt>Method</dt>
+          <dd>{{ recipient.get_method_display }}</dd>
+          <dt>Status</dt>
+          <dd>{{ recipient.get_status_display }}</dd>
+          <br/>
+          {% empty %}
+          No notifications for this job.
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+  {% endspaceless %}
+  </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
