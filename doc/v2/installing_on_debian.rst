@@ -193,9 +193,18 @@ of packages to install LAVA.
 
 Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
-::
+Create an apt source for backports (use your preferred Debian mirror)::
 
  deb http://http.debian.net/debian jessie-backports main
+
+Remember to update your apt cache whenever add a new apt source::
+
+ $ sudo apt update
+
+Then upgrade or install ``lava-server`` from ``jessie-backports`` using
+the ``-t`` option::
+
+ $ sudo apt -t jessie-backports install lava-server
 
 .. _lava_archive_signing_key:
 
