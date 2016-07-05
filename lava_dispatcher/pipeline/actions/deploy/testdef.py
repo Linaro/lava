@@ -764,7 +764,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
         self.results = {
             'success': self.test_uuid,
-            'name': testdef['metadata']['name'],
+            'name': self.parameters['name'],
             'path': self.parameters['path'],
             'from': self.parameters['from'],
         }
@@ -889,14 +889,14 @@ class TestRunnerAction(TestOverlayAction):
         content = self.handle_parameters(testdef)
 
         # the 'lava' testdef name is reserved
-        if testdef['metadata']['name'] == 'lava':
+        if self.parameters['name'] == 'lava':
             raise TestError('The "lava" test definition name is reserved.')
 
         with open(filename, 'a') as runsh:
             for line in content:
                 runsh.write(line)
             runsh.write('set -e\n')
-            runsh.write('export TESTRUN_ID=%s\n' % testdef['metadata']['name'])
+            runsh.write('export TESTRUN_ID=%s\n' % self.parameters['name'])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
@@ -911,7 +911,7 @@ class TestRunnerAction(TestOverlayAction):
         self.results = {
             'success': self.test_uuid,
             "filename": filename,
-            'name': testdef['metadata']['name'],
+            'name': self.parameters['name'],
             'path': self.parameters['path'],
             'from': self.parameters['from'],
         }
