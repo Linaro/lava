@@ -235,7 +235,7 @@ class CommandRunner(object):
         return return_code
 
 
-class Protocol(object):  # pylint: disable=abstract-class-not-used
+class Protocol(object):
     """
     Similar to a Connection object, provides a transport layer for the dispatcher.
     Uses a pre-defined API instead of pexpect using Shell.

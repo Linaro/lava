@@ -76,7 +76,7 @@ class RetryAction(Action):
         self.run(connection)
 
 
-class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
+class DiagnosticAction(Action):
 
     def __init__(self):
         """
@@ -102,7 +102,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         return connection
 
 
-class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
+class AdjuvantAction(Action):
     """
     Adjuvants are associative actions - partners and helpers which can be executed if
     the initial Action determines a particular state.
@@ -141,7 +141,7 @@ class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
         return connection
 
 
-class Deployment(object):  # pylint: disable=abstract-class-not-used
+class Deployment(object):
     """
     Deployment is a strategy class which aggregates Actions
     until the request from the YAML can be validated or rejected.
@@ -252,7 +252,7 @@ class Boot(object):
         return willing[0]
 
 
-class LavaTest(object):  # pylint: disable=abstract-class-not-used
+class LavaTest(object):
     """
     Allows selection of the LAVA test method for this job within the parser.
     """
