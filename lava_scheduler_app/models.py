@@ -919,7 +919,7 @@ class Device(RestrictedResource):
         return jinja_str
 
 
-class TemporaryDevice(Device):  # pylint: disable=model-no-explicit-unicode
+class TemporaryDevice(Device):
     """
     A temporary device which inherits all properties of a normal Device.
     Heavily used by vm-groups implementation.
@@ -1142,7 +1142,7 @@ def _check_device_types(user):
     return all_devices
 
 
-# pylint: disable=too-many-arguments,too-many-variables,too-many-locals
+# pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None,
                          orig=None):
