@@ -6,7 +6,7 @@ commands:
   power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command off
   power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command on
 
-character-delays:
+character_delays:
       boot: 100
       test: 100
 

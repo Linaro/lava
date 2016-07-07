@@ -576,8 +576,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.max_retries = self.parameters['repeat']
         if self.job:
             if self.job.device:
-                if 'character-delays' in self.job.device:
-                    self.character_delay = self.job.device['character-delays'].get(self.section, 0)
+                if 'character_delays' in self.job.device:
+                    self.character_delay = self.job.device['character_delays'].get(self.section, 0)
 
     @parameters.setter
     def parameters(self, data):
