@@ -92,7 +92,12 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches
                     match_action.duration = results['duration']
                 if 'timeout' in results:
                     match_action.timeout = results['timeout']  # duration, positive integer
-        result_val = TestCase.RESULT_MAP[results['result']]
+        try:
+            result_val = TestCase.RESULT_MAP[results['result']]
+        except KeyError:
+            logger.error("Unable to MAP result \"%s\"", results['result'])
+            return False
+
         try:
             # For lava test suite, the test (actions) can be seen two times.
             case = TestCase.objects.get(name=name, suite=suite)
