@@ -25,6 +25,7 @@ import glob
 import stat
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
+from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
@@ -39,12 +40,24 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 # pylint: disable=duplicate-code
-
-
 # Test the loading of test definitions within the deploy stage
+
+def allow_missing_path(function, testcase, path):
+    try:
+        function()
+    except InfrastructureError as exc:
+        if not infrastructure_error(path):
+            testcase.fail(exc)
+
+
+def check_missing_path(testcase, exception, path):
+    if isinstance(exception, InfrastructureError):
+        if not infrastructure_error(path):
+            testcase.fail(exception)
 
 
 class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -157,7 +170,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
 
     def test_job_without_tests(self):
         deploy = boot = finalize = None
-        self.job.pipeline.validate_actions()
+        allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
@@ -180,7 +193,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
 
     def test_job_without_tests(self):
         boot = finalize = None
-        self.job.pipeline.validate_actions()
+        allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]

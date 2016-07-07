@@ -19,14 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-import glob
 import unittest
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy.testdef import get_deployment_testdefs
+from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 
 
 class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -40,7 +39,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_basic_structure(self):
         self.assertIsNotNone(self.job)
-        self.job.validate()
+        allow_missing_path(self.job.validate, self, 'qemu-system-x86_64')
         self.assertEqual([], self.job.pipeline.errors)
         description_ref = pipeline_reference('kvm-repeat.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
