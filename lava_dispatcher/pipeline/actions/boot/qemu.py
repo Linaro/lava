@@ -267,7 +267,10 @@ class CallQemuAction(Action):
         guest = self.get_common_data('guest', 'filename')
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
-            self.sub_command.append('-drive format=qcow2,file=%s,media=disk' % (os.path.realpath(guest)))
+            # interface is ide by default in qemu
+            interface = self.job.device['actions']['deploy']['methods']['image']['parameters']['guest'].get('interface', 'ide')
+            self.sub_command.append('-drive format=qcow2,file=%s,media=disk,if=%s' %
+                                    (os.path.realpath(guest), interface))
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
