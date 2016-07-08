@@ -7,6 +7,7 @@ device_type: qemu
 
 # allow job context override - use a different variable name, undefined if not in job context
 {% set base_guest_fs_size = guestfs_size | default(512) %}
+{% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
 
 actions:
   deploy:
@@ -15,6 +16,7 @@ actions:
         parameters:
           guest:
             size: {{ base_guest_fs_size }}  # in Mb
+            interface: {{ qemu_guest_fs_interface }}
   boot:
     connections:
       serial:
