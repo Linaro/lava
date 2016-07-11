@@ -20,6 +20,7 @@ def _deploy_tftp_schema():
         Required('to'): 'tftp',
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
+        Optional('nbdroot'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
     }, extra=True)
