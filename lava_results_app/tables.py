@@ -177,7 +177,7 @@ class SuiteTable(LavaTable):
     testset = tables.Column()
     result = tables.Column()
     measurement = tables.Column()
-    unit = tables.Column()
+    units = tables.Column()
     logged = DateColumn()
 
     def render_name(self, record):  # pylint: disable=no-self-use

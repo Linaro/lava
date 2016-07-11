@@ -118,15 +118,24 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches
 
     else:
         result = results["result"]
+        measurement = None
+        units = ''
         if testset:
             logger.debug("%s/%s/%s %s", suite, testset, name, result)
         else:
             logger.debug("%s/%s %s", suite, name, result)
+        if 'measurement' in results:
+            measurement = results['measurement']
+        if 'units' in results:
+            units = results['units']
+            logger.debug("%s/%s %s%s", suite, name, measurement, units)
         TestCase.objects.create(
             name=name,
             suite=suite,
             test_set=testset,
-            result=TestCase.RESULT_MAP[result]
+            result=TestCase.RESULT_MAP[result],
+            measurement=measurement,
+            units=units
         ).save()
     return True
 
