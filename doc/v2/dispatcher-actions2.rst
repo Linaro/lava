@@ -424,9 +424,7 @@ Definitions
 
 * **path** - the path within that repository to the YAML file containing
   the test definition.
-* **name** (optional) if not present, use the name from the YAML. The
-  name can also be overriden from the actual commands being run by
-  calling the lava-test-suite-name API call (e.g. `lava-test-suite-name FOO`).
+* **name** (required) - replaces the name from the YAML.
 * **params** (optional): Pass parameters to the Lava Test Shell
   Definition. The format is a YAML dictionary - the key is the name of
   the variable to be made available to the test shell, the value is the
