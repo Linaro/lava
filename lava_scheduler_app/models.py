@@ -1778,7 +1778,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
-                logger.debug("Requested device %s is unavailable.", job_data['target'])
+                logger.info("Requested device %s is unavailable.", job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_exclusivity([target], False)
@@ -2200,7 +2200,7 @@ class TestJob(RestrictedResource):
         """
         logger = logging.getLogger('lava_scheduler_app')
         if not user:
-            logger.info("Unidentified user requested cancellation of job submitted by %s", self.submitter)
+            logger.error("Unidentified user requested cancellation of job submitted by %s", self.submitter)
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
@@ -2396,7 +2396,7 @@ class TestJob(RestrictedResource):
             :param device: the actual device for this job, or None
             :return: True if there is a device and that device is status Reserved
             """
-            logger = logging.getLogger('lava_scheduler_app')
+            logger = logging.getLogger('dispatcher-master')
             if not job.actual_device:
                 return False
             if job.actual_device.current_job and job.actual_device.current_job != job:
