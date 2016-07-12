@@ -137,7 +137,7 @@
           {% endif %}
         {% endif %}
         {% if show_resubmit and not job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.sub_id %}" class="btn btn-default">Resubmit</a></li>
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         {% if user.is_authenticated %}
           {% if job.is_multinode %}
