@@ -146,6 +146,8 @@ BRANDING_ICON = 'lava-server/images/linaro-sprinkles.png'
 BRANDING_URL = 'http://www.linaro.org'
 BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22
+BRANDING_BUG_URL = "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework"
+BRANDING_SOURCE_URL = "https://git.linaro.org/gitweb?s=lava%2Flava"
 
 # Logging
 
