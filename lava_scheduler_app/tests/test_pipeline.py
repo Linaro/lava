@@ -27,10 +27,12 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.test.test_defs import check_missing_path
+from lava_dispatcher.pipeline.action import JobError, InfrastructureError
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from django_restricted_resource.managers import RestrictedResourceQuerySet
+from unittest import TestCase
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
@@ -788,8 +790,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                         output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
-                if os.path.exists('/dev/loop0'):  # rather than skipping the entire test, just the validation.
-                    self.assertRaises(JobError, pipeline_job.pipeline.validate_actions)
+                with TestCase.assertRaises(self, (JobError, InfrastructureError)) as check:
+                    pipeline_job.pipeline.validate_actions()
+                    check_missing_path(self, check, 'qemu-system-x86_64')
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
