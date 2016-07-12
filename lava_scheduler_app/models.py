@@ -792,12 +792,19 @@ class Device(RestrictedResource):
             return True
         return self.is_owned_by(user)
 
-    def state_transition_to(self, new_status, user=None, message=None, job=None):
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=message, job=job).save()
+    def state_transition_to(self, new_status, user=None, message=None,
+                            job=None):
+        logger = logging.getLogger('dispatcher-master')
+        try:
+            DeviceStateTransition.objects.create(
+                created_by=user, device=self, old_state=self.status,
+                new_state=new_status, message=message, job=job)
+        except ValidationError as e:
+            logger.error("Cannot create DeviceStateTransition object. %s" % e)
+            return False
         self.status = new_status
         self.save()
+        return True
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -3079,6 +3086,11 @@ class DeviceStateTransition(models.Model):
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
 
+    def clean(self):
+        if self.old_state == self.new_state:
+            raise ValidationError(
+                _("New state must be different then the old state."))
+
     def __unicode__(self):
         return u"%s: %s -> %s (%s)" % (self.device.hostname,
                                        self.get_old_state_display(),
@@ -3088,3 +3100,10 @@ class DeviceStateTransition(models.Model):
     def update_message(self, message):
         self.message = message
         self.save()
+
+
+@receiver(pre_save, sender=DeviceStateTransition,
+          dispatch_uid="clean_device_state_transition")
+def clean_device_state_transition(sender, **kwargs):
+    instance = kwargs["instance"]
+    instance.full_clean()

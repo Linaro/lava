@@ -186,8 +186,12 @@ class DatabaseJobTest(DatabaseJobSourceTestEngine):
         self.panda_type.save()
 
         Device.objects.get(hostname='panda01').state_transition_to(Device.OFFLINE)
-        Device.objects.get(hostname='panda02').state_transition_to(Device.IDLE)
-        Device.objects.get(hostname='panda03').state_transition_to(Device.RUNNING)
+        # Already in IDLE state.
+        self.assertFalse(Device.objects.get(
+            hostname='panda02').state_transition_to(Device.IDLE))
+        # Check that the return value is correct.
+        self.assertTrue(Device.objects.get(
+            hostname='panda03').state_transition_to(Device.RUNNING))
         Device.objects.get(hostname='panda04').state_transition_to(Device.RESERVED)
         Device.objects.get(hostname='panda05').state_transition_to(Device.RETIRED)
         Device.objects.get(hostname='panda06').state_transition_to(Device.OFFLINING)

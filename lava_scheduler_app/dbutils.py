@@ -612,7 +612,7 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
         end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
 
 
-def handle_health(job, new_device_status):
+def handle_health(job):
     """
     LOOPING = no change
     job is not health check = no change
@@ -623,7 +623,6 @@ def handle_health(job, new_device_status):
     should not be saved.
     """
     device = job.actual_device
-    device.status = new_device_status
     if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
         return device
     device.last_health_report_job = job
@@ -658,8 +657,12 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         job.save()
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    # Transition device only if it's not in OFFLINE/ING mode
+    # (by failed health check job which already transition it via
+    # put_into_maintenance_mode method)
+    if device.status not in [Device.OFFLINE, Device.OFFLINING]:
+        device.state_transition_to(Device.IDLE, message=msg, job=job)
     device.current_job = None
     # Save the result
     job.save()
@@ -673,8 +676,8 @@ def cancel_job(job):
         job.save()
         return
     msg = "Job %d cancelled" % job.id
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    device.state_transition_to(Device.IDLE, message=msg, job=job)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
