@@ -143,7 +143,7 @@
 <div class="container">
   {% block breadcrumb_container %}
     {% if context_help %}
-       <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a
+       <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a target="_blank"
           {% if not 'HIDE_V2_DOCS'|get_settings %}
            href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
            {% else %}
