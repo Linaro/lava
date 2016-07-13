@@ -8,6 +8,7 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    DeviceStateTransition,
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
@@ -382,7 +383,7 @@ class SchedulerAPI(ExposedAPI):
                         device_dict["offline_since"] = str(last_transition.created_on)
                         if last_transition.created_by:
                             device_dict["offline_by"] = last_transition.created_by.username
-                except Device.DoesNotExist:
+                except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
                     pass
         else:
             raise xmlrpclib.Fault(
