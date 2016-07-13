@@ -4,6 +4,7 @@
 device_type: d02
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
+{% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 
@@ -54,14 +55,14 @@ actions:
           - insmod part_msdos
           - insmod chain
           - ls
-          - ls (hd1,gpt1)
+          - ls {{ grub_installed_device }}
           - sleep 10
           - set
-          - set root=(hd1,gpt1)
+          - set root={{ grub_installed_device }}
           - sleep 10
-          - ls (hd1,gpt1)
+          - ls {{ grub_installed_device }}
           - sleep 10
-          - chainloader (hd1,gpt1)/efi/debian/grubaa64.efi
+          - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
           - sleep 10
           - boot
 
