@@ -116,6 +116,8 @@ particular results in the query results display page. Keep in mind that this
 action will effect all the charts using this query as well, since charts pull
 the results from queries.
 
+It is not possible to omit results from custom queries.
+
 
 Deleting a Query
 ================
@@ -319,6 +321,21 @@ should keep in mind that this setting is a free text field so if the custom
 attribute set is not found in the system, no results will be shown.
 Similarly, if particular test result does not contain the custom attribute that
 is set, that result will be omitted from chart.
+
+Omitting Chart Results
+======================
+
+Ability to omit specific results from charts is available through plot click
+event.
+
+Omitting results from chart will actually omit it from the underlying query,
+thus actively omitting it from all charts which include that query.
+It is not possible to omit results from custom charts or charts by URL from
+queries.
+
+Keep in mind that the charts can have tightly packed plot points so you might
+end up omitting the wrong results. Keep caution by reducing the date range or
+zooming in on the chart.
 
 
 Chart by URL
