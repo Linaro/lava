@@ -66,7 +66,6 @@ License: GPL-3.0+
 Files: dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js
  lava_scheduler_app/static/lava_scheduler_app/js/shCore.js
  lava_server/lava-server/js/jquery.cookie.js
- lava_markitup/static/lava_markitup/jquery.markitup.js
  lava_scheduler_app/static/lava_scheduler_app/js/shBrushJScript.js
  lava_scheduler_app/static/lava_scheduler_app/css/shCore.css
  lava_scheduler_app/static/lava_scheduler_app/css/shThemeDefault.css
