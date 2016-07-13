@@ -3,4 +3,5 @@ lava-server source: source-is-missing dashboard_app/static/dashboard_app/js/jque
 lava-server source: source-is-missing lava_server/lava-server/js/jquery.validate.js line length is 1081 characters (>512)
 lava-server source: source-is-missing lava_scheduler_app/static/lava_scheduler_app/js/beautify.js line length is 4234 characters (>512)
 lava-server source: source-is-missing lava_scheduler_app/static/lava_scheduler_app/js/shCore.js line length is 1083 characters (>512)
+lava-server source: source-is-missing lava_scheduler_app/static/lava_scheduler_app/js/anchor-v3.2.0.js line length is 1886 characters (>512)
 
