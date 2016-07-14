@@ -41,7 +41,7 @@ class SecondaryConnections(TestCaseWithFactory):
 
     def test_ssh_job_data(self):
         data = yaml.load(self.factory.make_job_yaml())
-        self.assertIn('context', data)
+        self.assertNotIn('context', data)
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])

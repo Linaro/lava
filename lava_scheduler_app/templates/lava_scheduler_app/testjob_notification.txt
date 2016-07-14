@@ -1,0 +1,109 @@
+{%- if user %}
+Dear {{ user.first_name }} {{ user.last_name }},
+{%- else %}
+Hello,
+{%- endif %}
+
+The job with ID # {{ job.id }} has finished with status {{ job.get_status_display() }} on {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}. Job was submitted by {{ job.submitter.username }}.
+
+Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
+
+{%- if job.notification.verbosity < 2 %}
+
+Device details:
+Hostname: {{ job.actual_device.hostname }}
+Type: {{ job.actual_device.device_type }}
+Owner: {{ job.actual_device.owner }}
+Worker: {{ job.actual_device.worker_host.hostname }}
+
+Job details:
+Priority: {{ job.get_priority_display() }}
+Visibility: {{ job.get_visibility_display() }}
+Description: {{ job.description }}
+Submitted: {{ job.submit_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
+Started: {{ job.start_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
+Finished: {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
+Duration: {{ job.duration }}
+{%- endif %}
+{%- if job.notification.verbosity == 0 %}
+
+Results:
+{%- for testsuite in job.testsuite_set.all() %}
+
+Test Suite {{ testsuite.name }}: {{ url_prefix }}{{ testsuite.get_absolute_url() }}
+{%- for testcase in testsuite.testcase_set.all() %}
+Test Case {{ testcase.name }}: {{ testcase.get_result_display() }}
+{%- if testcase.measurement %}
+Measurement: {{ testcase.measurement }} {{ testcase.units }}
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
+
+{%- if query %}
+
+Comparing:
+Query used: {{ url_prefix }}{{ query.link }}
+Last {{ job.notification.QUERY_LIMIT }} jobs:
+
+{% for result in query.results %}
+Test job: {{ url_prefix }}{{ result.get_absolute_url() }}
+Status: {{ result.get_status_display() }}
+{%- endfor %}
+
+{%- if query.compare_index is defined %}
+
+Comparing to latest complete job: {{ url_prefix }}{{ query.results[query.compare_index].get_absolute_url() }}
+New test suites added:
+{%- for suite in query.left_suites_diff %}
+{{ url_prefix }}{{ suite.get_absolute_url() }}
+{%- else %}
+None.
+{%- endfor %}
+Test suites removed:
+{%- for suite in query.right_suites_diff %}
+{{ url_prefix }}{{ suite.get_absolute_url() }}
+{%- else %}
+None.
+{%- endfor %}
+
+Suite result count changes:
+{%- for suite_name in query.left_suites_count if query.left_suites_count[suite_name] != query.right_suites_count[suite_name] %}
+Suite "{{ suite_name }}" has {{ query.left_suites_count[suite_name][0] }} passed, {{ query.left_suites_count[suite_name][1] }} failed, {{ query.left_suites_count[suite_name][2] }} skipped test cases.
+Previously "{{ suite_name }}" had {{ query.right_suites_count[suite_name][0] }} passed, {{ query.right_suites_count[suite_name][1] }} failed, {{ query.right_suites_count[suite_name][2] }} skipped test cases.
+
+{%- else %}{# for suite_name #}
+No result count changes.
+{%- endfor %}
+
+New test cases added:
+{%- for testcase in query.left_cases_diff %}
+{{ url_prefix }}{{ testcase.get_absolute_url() }}
+{%- else %}
+None.
+{%- endfor %}
+Test cases removed:
+{%- for testcase in query.right_cases_diff %}
+{{ url_prefix }}{{ testcase.get_absolute_url() }}
+{%- else %}
+None.
+{%- endfor %}
+
+Test cases result change:
+{%- for testcase in query.testcases_changed %}
+In suite "{{ testcase.suite.name }}", test case "{{ testcase.name }}" changed result from "{{ testcase.get_result_display() }}" to "{{ query.testcases_changed[testcase] }}".
+{%- else %}
+No test cases changed result.
+{%- endfor %}
+
+{%- else %}{# if query.compare_index #}
+
+No jobs with COMPLETE status to compare results with.
+{%- endif %}
+
+{%- else %}
+No query is set for results comparing.
+{%- endif %}{# query #}
+{%- endif %}{# verbosity #}
+
+LAVA
+Linaro Automated Validation Architecture

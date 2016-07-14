@@ -8,6 +8,7 @@ from lava_scheduler_app.models import (
     User, Worker, DefaultDeviceOwner,
     Architecture, ProcessorFamily, BitWidth, Core
 )
+from linaro_django_xmlrpc.models import AuthToken
 
 # django admin API itself isn't pylint clean, so some settings must be suppressed.
 # pylint: disable=no-self-use,function-redefined
@@ -22,11 +23,27 @@ class DefaultOwnerInline(admin.StackedInline):
     can_delete = False
 
 
+def expire_user_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
+    for user in queryset.filter(is_active=True):
+        AuthToken.objects.filter(user=user).delete()
+        user.is_staff = False
+        user.is_superuser = False
+        user.is_active = False
+        for group in user.groups.all():
+            group.user_set.remove(user)
+        for permission in user.user_permissions.all():
+            user.user_permissions.remove(permission)
+        user.save()
+
+expire_user_action.short_description = 'Expire user account'
+
+
 class UserAdmin(UserAdmin):
     """
     Defines the override class for DefaultOwnerInline
     """
     inlines = (DefaultOwnerInline, )
+    actions = [expire_user_action]
 
 
 #  Setup the override in the django admin interface at startup.
@@ -38,6 +55,8 @@ def offline_action(modeladmin, request, queryset):  # pylint: disable=unused-arg
     for device in queryset.filter(status__in=[Device.IDLE, Device.RUNNING, Device.RESERVED]):
         if device.can_admin(request.user):
             device.put_into_maintenance_mode(request.user, "admin action")
+
+
 offline_action.short_description = "take offline"
 
 

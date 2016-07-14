@@ -33,65 +33,6 @@ from lava_dispatcher.pipeline.action import Timeout
 # pylint: disable=no-member
 
 
-def _test_case(name, suite, result, testset=None, testshell=False):
-    """
-    Create a TestCase for the specified name and result
-    :param name: name of the testcase to create
-    :param suite: current TestSuite
-    :param result: the result for this TestCase
-    :param testset: Use a TestSet if supplied.
-    :param testshell: handle lava-test-shell outside a TestSet.
-    :return:
-    """
-    logger = logging.getLogger('dispatcher-master')
-    if testshell:
-        TestCase.objects.create(
-            name=name,
-            suite=suite,
-            result=TestCase.RESULT_MAP[result]
-        ).save()
-    elif testset:
-        TestCase.objects.create(
-            name=name,
-            suite=suite,
-            test_set=testset,
-            result=TestCase.RESULT_MAP[result]
-        ).save()
-    else:
-        try:
-            metadata = yaml.dump(result)
-        except yaml.YAMLError:
-            msg = "Unable to store metadata %s for %s as YAML" % (result, name)
-            suite.job.set_failure_comment(msg)
-            logger.warning(msg)
-            metadata = None
-        match_action = None
-        # the action level should exist already
-        if 'level' in result and metadata:
-            match_action = ActionData.objects.filter(
-                action_level=str(result['level']),
-                testdata__testjob=suite.job)
-            if match_action:
-                match_action = match_action[0]
-                if 'duration' in result:
-                    match_action.duration = result['duration']
-                if 'timeout' in result:
-                    match_action.timeout = result['timeout']  # duration, positive integer
-        result_val = TestCase.RESULT_PASS if 'success' in result else TestCase.RESULT_FAIL
-        case = TestCase.objects.create(
-            name=name,
-            suite=suite,
-            test_set=testset,
-            metadata=metadata,
-            result=result_val
-        )
-        with transaction.atomic():
-            case.save()
-            if match_action:
-                match_action.testcase = case
-                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
-
-
 def _check_for_testset(result_dict, suite):
     """
     The presence of the test_set key indicates the start and usage of a TestSet.
@@ -102,8 +43,8 @@ def _check_for_testset(result_dict, suite):
     """
     logger = logging.getLogger('dispatcher-master')
     testset = None
-    if 'test_set' in result_dict:
-        set_name = result_dict['test_set']
+    if 'set' in result_dict:
+        set_name = result_dict['set']
         if set_name != urllib.quote(set_name):
             msg = "Invalid testset name '%s', ignoring." % set_name
             suite.job.set_failure_comment(msg)
@@ -116,50 +57,86 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
-def map_scanned_results(scanned_dict, job):  # pylint: disable=too-many-branches
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches
     """
     Sanity checker on the logged results dictionary
-    :param scanned_dict: results logged via the slave
+    :param results: results logged via the slave
     :param job: the current test job
     :return: False on error, else True
     """
     logger = logging.getLogger('dispatcher-master')
-    if not isinstance(scanned_dict, dict):
-        logger.debug("%s is not a dictionary", scanned_dict)
+
+    if not isinstance(results, dict):
+        logger.debug("%s is not a dictionary", results)
         return False
-    if 'results' not in scanned_dict:
-        logger.debug("missing results in %s", scanned_dict.keys())
+
+    if not set(["definition", "case", "result"]).issubset(set(results.keys())):
+        logger.error("Missing some keys (\"definition\", \"case\" or \"result\") in %s", results)
         return False
-    results = scanned_dict['results']
-    if isinstance(results, str):
-        logger.warning("Invalid results string: %s", results)
-        return False
-    if 'test_definition' in results and 'test_set' in results:
-        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
-        if created:
-            suite.save()
-        testset = _check_for_testset(results, suite)
-    elif 'test_definition' in results:
-        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
-        if created:
-            suite.save()
-        logger.debug("%s", suite)
-        testset = None
+
+    suite, created = TestSuite.objects.get_or_create(name=results["definition"], job=job)
+    if created:
+        suite.save()
+    testset = _check_for_testset(results, suite)
+
+    name = results["case"]
+    if suite.name == "lava":
+        match_action = None
+        if "level" in results:
+            match_action = ActionData.objects.filter(
+                action_level=str(results['level']),
+                testdata__testjob=suite.job)
+            if match_action:
+                match_action = match_action[0]
+                if 'duration' in results:
+                    match_action.duration = results['duration']
+                if 'timeout' in results:
+                    match_action.timeout = results['timeout']  # duration, positive integer
+        try:
+            result_val = TestCase.RESULT_MAP[results['result']]
+        except KeyError:
+            logger.error("Unable to MAP result \"%s\"", results['result'])
+            return False
+
+        try:
+            # For lava test suite, the test (actions) can be seen two times.
+            case = TestCase.objects.get(name=name, suite=suite)
+            case.test_set = testset
+            case.metadata = yaml.dump(results)
+            case.result = result_val
+        except TestCase.DoesNotExist:
+            case = TestCase.objects.create(name=name,
+                                           suite=suite,
+                                           test_set=testset,
+                                           metadata=yaml.dump(results),
+                                           result=result_val)
+        with transaction.atomic():
+            case.save()
+            if match_action:
+                match_action.testcase = case
+                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
+
     else:
-        suite, created = TestSuite.objects.get_or_create(name='lava', job=job)
-        if created:
-            suite.save()
-        testset = None
-    for name, result in results.items():
-        if name == 'test_definition' or name == 'test_set':
-            # already handled
-            continue
+        result = results["result"]
+        measurement = None
+        units = ''
         if testset:
-            logger.debug("%s/%s %s", testset, name, result)
-            _test_case(name, suite, result, testset=testset)
+            logger.debug("%s/%s/%s %s", suite, testset, name, result)
         else:
             logger.debug("%s/%s %s", suite, name, result)
-            _test_case(name, suite, result, testshell=(suite.name != 'lava'))
+        if 'measurement' in results:
+            measurement = results['measurement']
+        if 'units' in results:
+            units = results['units']
+            logger.debug("%s/%s %s%s", suite, name, measurement, units)
+        TestCase.objects.create(
+            name=name,
+            suite=suite,
+            test_set=testset,
+            result=TestCase.RESULT_MAP[result],
+            measurement=measurement,
+            units=units
+        ).save()
     return True
 
 
@@ -307,6 +284,7 @@ def map_metadata(description, job):
         return False
     if not created:
         # prevent updates of existing TestData
+        logger.debug("[%s] skipping alteration of existing TestData", job.id)
         return False
     testdata.save()
 
@@ -355,6 +333,7 @@ def export_testcase(testcase):
     timeout = actiondata.timeout if actiondata else ''
     level = actiondata.action_level if actiondata else None
     casedict = {
+        'name': str(testcase.name),
         'job': str(testcase.suite.job_id),
         'suite': str(testcase.suite.name),
         'result': str(testcase.result_code),

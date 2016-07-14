@@ -9,14 +9,14 @@ timeouts:
     minutes: 3
 
 visibility: public
-context:
-  arch: amd64
 
 protocols:
   lava-multinode:
     roles:
       host:
         device_type: qemu
+        context:
+          arch: amd64
         count: 1
       guest:
         connection: ssh

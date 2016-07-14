@@ -813,7 +813,7 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    def get_results(self, user, limit=None):
+    def get_results(self, user, limit=None, order_by=['-id']):
         """ Used to get query results for persistant queries.
 
         Limit parameter should not be used in views where django tables are
@@ -827,7 +827,8 @@ class Query(models.Model):
             return Query.get_queryset(
                 self.content_type,
                 self.querycondition_set.all(),
-                limit).exclude(id__in=omitted_list).visible_by_user(user)
+                limit, order_by=order_by).exclude(
+                    id__in=omitted_list).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -837,10 +838,12 @@ class Query(models.Model):
                 view = TestSuiteViewFactory(self)
 
             return view.__class__.objects.all().exclude(
-                id__in=omitted_list).visible_by_user(user)[:limit]
+                id__in=omitted_list).order_by(*order_by).visible_by_user(
+                    user)[:limit]
 
     @classmethod
-    def get_queryset(cls, content_type, conditions, limit=None):
+    def get_queryset(cls, content_type, conditions, limit=None,
+                     order_by=['-id']):
         """ Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
@@ -926,7 +929,7 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct().extra(select={
+            **filters).distinct().order_by(*order_by).extra(select={
                 '%s_ptr_id' % content_type.model:
                 '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
@@ -1406,8 +1409,9 @@ class ChartQuery(models.Model):
             data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
             data["query_live"] = self.query.is_live
-            data["query_updated"] = self.query.last_updated.strftime(
-                settings.DATETIME_INPUT_FORMATS[0])
+            if self.query.last_updated is not None:
+                data["query_updated"] = self.query.last_updated.strftime(
+                    settings.DATETIME_INPUT_FORMATS[0])
             data["entity"] = self.query.content_type.model
             data["conditions"] = self.query.serialize_conditions()
             data["has_omitted"] = QueryOmitResult.objects.filter(

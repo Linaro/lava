@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 
+import jinja2
 import logging
 import os
 import uuid
@@ -22,8 +23,11 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
-from django.db import models
+from django.db import models, IntegrityError
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
@@ -37,12 +41,18 @@ from django_restricted_resource.models import (
 )
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 from lava_scheduler_app.schema import validate_submission, SubmissionException
-from dashboard_app.models import Bundle, BundleStream, NamedAttribute
+from dashboard_app.models import (
+    Bundle,
+    BundleStream,
+    NamedAttribute,
+    get_domain
+)
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
+
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 
@@ -58,6 +68,27 @@ class JSONDataError(ValueError):
 
 class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
+
+
+class ExtendedUser(models.Model):
+
+    user = models.OneToOneField(User)
+
+    irc_handle = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC handle'
+    )
+
+    irc_server = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC server'
+    )
 
 
 class Tag(models.Model):
@@ -101,47 +132,59 @@ def validate_job(data):
 
 def validate_yaml(yaml_data):
     if "notify" in yaml_data:
-        if yaml_data["notify"]["method"] == TestJob.NOTIFY_IRC_METHOD:
-            if "compare" in yaml_data["notify"]:
-                raise SubmissionException("compare options must not be used "
-                                          "with IRC notifications")
-        elif yaml_data["notify"]["method"] == TestJob.NOTIFY_EMAIL_METHOD:
-            if "recipients" in yaml_data["notify"]:
-                for recipient in yaml_data["notify"]["recipients"]:
+        if "recipients" in yaml_data["notify"]:
+            for recipient in yaml_data["notify"]["recipients"]:
+                if recipient["to"]["method"] == \
+                   NotificationRecipient.EMAIL_STR:
+                    if "email" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or email address specified.")
+                else:
+                    if "handle" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or IRC handle specified.")
+                if "user" in recipient["to"]:
                     try:
-                        User.objects.get(username=recipient)
+                        User.objects.get(username=recipient["to"]["user"])
                     except User.DoesNotExist:
-                        try:
-                            validate_email(recipient)
-                        except ValidationError:
-                            raise SubmissionException("%r is not a valid user and not a valid email address." % recipient)
-            # Validate queries only if email, because whole compare section is
-            # not used in 'irc' mode.
-            if "compare" in yaml_data["notify"] and \
-               "query" in yaml_data["notify"]["compare"]:
-                from lava_results_app.models import Query
-                query_yaml_data = yaml_data["notify"]["compare"]["query"]
-                if "username" in query_yaml_data:
+                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
+                elif "email" in recipient["to"]:
                     try:
-                        Query.objects.get(
-                            username=query_yaml_data["username"],
-                            name=query_yaml_data["username"])
-                    except Query.DoesNotExist:
+                        validate_email(recipient["to"]["email"])
+                    except ValidationError:
+                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
+
+        if "compare" in yaml_data["notify"] and \
+           "query" in yaml_data["notify"]["compare"]:
+            from lava_results_app.models import Query
+            query_yaml_data = yaml_data["notify"]["compare"]["query"]
+            if "username" in query_yaml_data:
+                try:
+                    query = Query.objects.get(
+                        owner__username=query_yaml_data["username"],
+                        name=query_yaml_data["name"])
+                    if query.content_type.model_class() != TestJob:
                         raise SubmissionException(
-                            "Query ~%s/%s does not exist" % (
-                                query_yaml_data["username"],
-                                query_yaml_data["name"]))
-                else:  # Custom query.
-                    try:
-                        conditions = None
-                        if "conditions" in query_yaml_data:
-                            conditions = query_yaml_data["conditions"]
-                        Query.validate_custom_query(
-                            query_yaml_data["entity"],
-                            conditions
-                        )
-                    except Exception as e:
-                        raise SubmissionException(e)
+                            "Only TestJob queries allowed.")
+                except Query.DoesNotExist:
+                    raise SubmissionException(
+                        "Query ~%s/%s does not exist" % (
+                            query_yaml_data["username"],
+                            query_yaml_data["name"]))
+            else:  # Custom query.
+                if query_yaml_data["entity"] != "testjob":
+                    raise SubmissionException(
+                        "Only TestJob queries allowed.")
+                try:
+                    conditions = None
+                    if "conditions" in query_yaml_data:
+                        conditions = query_yaml_data["conditions"]
+                    Query.validate_custom_query(
+                        query_yaml_data["entity"],
+                        conditions
+                    )
+                except Exception as e:
+                    raise SubmissionException(e)
 
 
 def validate_job_json(data):
@@ -876,7 +919,7 @@ class Device(RestrictedResource):
         return jinja_str
 
 
-class TemporaryDevice(Device):  # pylint: disable=model-no-explicit-unicode
+class TemporaryDevice(Device):
     """
     A temporary device which inherits all properties of a normal Device.
     Heavily used by vm-groups implementation.
@@ -1099,7 +1142,7 @@ def _check_device_types(user):
     return all_devices
 
 
-# pylint: disable=too-many-arguments,too-many-variables,too-many-locals
+# pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None,
                          orig=None):
@@ -1339,6 +1382,14 @@ class TestJob(RestrictedResource):
         (CANCELED, 'Canceled'),
         (CANCELING, 'Canceling'),
     )
+    STATUS_MAP = {
+        "Submitted": SUBMITTED,
+        "Running": RUNNING,
+        "Complete": COMPLETE,
+        "Incomplete": INCOMPLETE,
+        "Canceled": CANCELED,
+        "Canceling": CANCELING,
+    }
 
     LOW = 0
     MEDIUM = 50
@@ -1727,7 +1778,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
-                logger.debug("Requested device %s is unavailable.", job_data['target'])
+                logger.info("Requested device %s is unavailable.", job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_exclusivity([target], False)
@@ -2149,7 +2200,7 @@ class TestJob(RestrictedResource):
         """
         logger = logging.getLogger('lava_scheduler_app')
         if not user:
-            logger.info("Unidentified user requested cancellation of job submitted by %s", self.submitter)
+            logger.error("Unidentified user requested cancellation of job submitted by %s", self.submitter)
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
@@ -2345,7 +2396,7 @@ class TestJob(RestrictedResource):
             :param device: the actual device for this job, or None
             :return: True if there is a device and that device is status Reserved
             """
-            logger = logging.getLogger('lava_scheduler_app')
+            logger = logging.getLogger('dispatcher-master')
             if not job.actual_device:
                 return False
             if job.actual_device.current_job and job.actual_device.current_job != job:
@@ -2445,6 +2496,508 @@ class TestJob(RestrictedResource):
                 pass
 
         return attribute
+
+    def create_notification(self, notify_data):
+        # Create notification object.
+        notification = Notification()
+
+        if "verbosity" in notify_data:
+            notification.verbosity = Notification.VERBOSITY_MAP[
+                notify_data["verbosity"]]
+
+        notification.job_status_trigger = TestJob.STATUS_MAP[
+            notify_data["criteria"]["status"].title()]
+        if "type" in notify_data["criteria"]:
+            notification.type = Notification.TYPE_MAP[
+                notify_data["criteria"]["type"]]
+        if "compare" in notify_data:
+            if "blacklist" in notify_data["compare"]:
+                notification.blacklist = notify_data["compare"]["blacklist"]
+            if "query" in notify_data["compare"]:
+                from lava_results_app.models import Query
+                query_data = notify_data["compare"]["query"]
+                if "username" in query_data:
+                    # DoesNotExist scenario already verified in validate
+                    notification.query_owner = User.objects.get(
+                        username=query_data["username"])
+                    notification.query_name = query_data["name"]
+                else:  # Custom query.
+                    notification.entity = Query.get_content_type(
+                        query_data["entity"])
+                    if "conditions" in query_data:
+                        # Save conditions as a string.
+                        notification.conditions = Query.CONDITIONS_SEPARATOR.join(['%s%s%s' % (key, Query.CONDITION_DIVIDER, value) for (key, value) in query_data["conditions"].items()])
+
+        notification.test_job = self
+        notification.template = Notification.DEFAULT_TEMPLATE
+        notification.save()
+
+        if "recipients" in notify_data:
+            for recipient in notify_data["recipients"]:
+                notification_recipient = NotificationRecipient(
+                    notification=notification)
+                notification_recipient.method = NotificationRecipient.METHOD_MAP[recipient["to"]["method"]]
+                if "user" in recipient["to"]:
+                    user = User.objects.get(
+                        username=recipient["to"]["user"])
+                    notification_recipient.user = user
+                if "email" in recipient["to"]:
+                    notification_recipient.email = recipient["to"]["email"]
+                if "handle" in recipient["to"]:
+                    notification_recipient.irc_handle = recipient["to"][
+                        "handle"]
+                if "server" in recipient["to"]:
+                    notification_recipient.irc_server = recipient["to"][
+                        "server"]
+
+                try:
+                    notification_recipient.save()
+                except IntegrityError:
+                    # Ignore unique constraint violation.
+                    pass
+
+        else:
+            try:
+                notification_recipient = NotificationRecipient.objects.create(
+                    user=self.submitter,
+                    notification=notification)
+            except IntegrityError:
+                # Ignore unique constraint violation.
+                pass
+
+    def send_notifications(self):
+        notification = self.notification
+        for recipient in notification.notificationrecipient_set.all():
+            if recipient.method == NotificationRecipient.EMAIL:
+                if recipient.status == NotificationRecipient.NOT_SENT:
+                    try:
+                        logging.info("sending email notification to %s",
+                                     recipient.email_address)
+                        title = "LAVA notification for Test Job %s" % self.id
+                        kwargs = self.get_notification_args(recipient)
+                        body = self.create_notification_body(
+                            notification.template, **kwargs)
+                        result = send_mail(
+                            title, body, settings.SERVER_EMAIL,
+                            [recipient.email_address])
+                        if result:
+                            recipient.status = NotificationRecipient.SENT
+                            recipient.save()
+                    except (smtplib.SMTPRecipientsRefused,
+                            smtplib.SMTPSenderRefused, socket.error):
+                        logging.warn("failed to send email notification to %s",
+                                     recipient.email_address)
+            else:
+                # TODO: implement irc notification.
+                pass
+
+    def get_notification_args(self, recipient):
+        kwargs = {}
+        kwargs["job"] = self
+        if recipient.user:
+            kwargs["user"] = {}
+            kwargs["user"]["username"] = recipient.user.username
+            kwargs["user"]["first_name"] = recipient.user.first_name
+            kwargs["user"]["last_name"] = recipient.user.last_name
+        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["query"] = {}
+        if self.notification.query_name or self.notification.entity:
+            kwargs["query"]["results"] = self.notification.get_query_results()
+            kwargs["query"]["link"] = self.notification.get_query_link()
+            # Find the first job which has status COMPLETE and is not the
+            # current job (this can happen with custom queries) for comparison.
+            compare_index = None
+            for index, result in enumerate(kwargs["query"]["results"]):
+                if result.status == TestJob.COMPLETE and \
+                   self != result:
+                    compare_index = index
+                    break
+
+            kwargs["query"]["compare_index"] = compare_index
+            if compare_index is not None:
+                # Get testsuites diffs between current job and latest complete
+                # job from query.
+                new_suites = self.testsuite_set.all()
+                old_suites = kwargs["query"]["results"][
+                    compare_index].testsuite_set.all()
+                left_suites_diff = new_suites.exclude(
+                    name__in=old_suites.values_list(
+                        'name', flat=True))
+                right_suites_diff = old_suites.exclude(
+                    name__in=new_suites.values_list('name', flat=True))
+
+                kwargs["query"]["left_suites_diff"] = left_suites_diff
+                kwargs["query"]["right_suites_diff"] = right_suites_diff
+
+                # Get testcases diffs between current job and latest complete
+                # job from query.
+                from lava_results_app.models import TestCase, TestSuite
+                new_cases = TestCase.objects.filter(suite__job=self)
+                old_cases = TestCase.objects.filter(
+                    suite__job=kwargs["query"]["results"][compare_index])
+
+                left_cases_diff = new_cases.exclude(
+                    name__in=old_cases.values_list(
+                        'name', flat=True))
+                right_cases_diff = old_cases.exclude(
+                    name__in=new_cases.values_list('name', flat=True))
+
+                kwargs["query"]["left_cases_diff"] = left_cases_diff
+                kwargs["query"]["right_cases_diff"] = right_cases_diff
+
+                left_suites_intersection = new_suites.filter(
+                    name__in=old_suites.values_list(
+                        'name', flat=True))
+
+                # Format results.
+                left_suites_count = {}
+                for suite in left_suites_intersection:
+                    left_suites_count[suite.name] = (
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_PASS).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_FAIL).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_SKIP).count()
+                    )
+
+                right_suites_intersection = old_suites.filter(
+                    name__in=new_suites.values_list(
+                        'name', flat=True))
+
+                # Format results.
+                right_suites_count = {}
+                for suite in right_suites_intersection:
+                    right_suites_count[suite.name] = (
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_PASS).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_FAIL).count(),
+                        suite.testcase_set.filter(
+                            result=TestCase.RESULT_SKIP).count()
+                    )
+
+                kwargs["query"]["left_suites_count"] = left_suites_count
+                kwargs["query"]["right_suites_count"] = right_suites_count
+
+                # Format {<Testcase>: old_result, ...}
+                testcases_changed = {}
+                for suite in left_suites_intersection:
+                    try:
+                        old_suite = TestSuite.objects.get(
+                            name=suite.name,
+                            job=kwargs["query"]["results"][compare_index])
+                    except TestSuite.DoesNotExist:
+                        continue  # No matching suite, move on.
+                    for testcase in suite.testcase_set.all():
+                        try:
+                            old_testcase = TestCase.objects.get(
+                                suite=old_suite, name=testcase.name)
+                            if old_testcase and \
+                               testcase.result != old_testcase.result:
+                                testcases_changed[testcase] = old_testcase.get_result_display()
+                        except TestCase.DoesNotExist:
+                            continue  # No matching TestCase, move on.
+                        except TestCase.MultipleObjectsReturned:
+                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare" % old_suite)
+
+                kwargs["query"]["testcases_changed"] = testcases_changed
+
+        return kwargs
+
+    def create_notification_body(self, template_name, **kwargs):
+        txt_body = u""
+        txt_body = Notification.TEMPLATES_ENV.get_template(
+            template_name).render(**kwargs)
+        return txt_body
+
+    def notification_criteria(self, criteria, old_job):
+        if self.status == TestJob.STATUS_MAP[
+           criteria["status"].title()]:
+            if "type" in criteria:
+                if criteria["type"] == "regression":
+                    if old_job.status == TestJob.COMPLETE and \
+                       self.status == TestJob.INCOMPLETE:
+                        return True
+                if criteria["type"] == "progression":
+                    if old_job.status == TestJob.INCOMPLETE and \
+                       self.status == TestJob.COMPLETE:
+                        return True
+            else:
+                return True
+
+        return False
+
+
+class Notification(models.Model):
+
+    TEMPLATES_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "templates/",
+        TestJob._meta.app_label)
+
+    TEMPLATES_ENV = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
+        extensions=["jinja2.ext.i18n"])
+
+    DEFAULT_TEMPLATE = "testjob_notification.txt"
+
+    QUERY_LIMIT = 5
+
+    test_job = models.OneToOneField(
+        TestJob,
+        null=False,
+        on_delete=models.CASCADE)
+
+    REGRESSION = 0
+    PROGRESSION = 1
+    TYPE_CHOICES = (
+        (REGRESSION, 'regression'),
+        (PROGRESSION, 'progression'),
+    )
+    TYPE_MAP = {
+        'regression': REGRESSION,
+        'progression': PROGRESSION,
+    }
+
+    type = models.IntegerField(
+        choices=TYPE_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_(u"Type"),
+    )
+
+    job_status_trigger = models.CommaSeparatedIntegerField(
+        choices=TestJob.STATUS_CHOICES,
+        max_length=30,
+        default=TestJob.COMPLETE,
+        verbose_name=_(u"Job status trigger"),
+    )
+
+    VERBOSE = 0
+    QUIET = 1
+    STATUS_ONLY = 2
+    VERBOSITY_CHOICES = (
+        (VERBOSE, 'verbose'),
+        (QUIET, 'quiet'),
+        (STATUS_ONLY, 'status-only'),
+    )
+    VERBOSITY_MAP = {
+        'verbose': VERBOSE,
+        'quiet': QUIET,
+        'status-only': STATUS_ONLY,
+    }
+
+    verbosity = models.IntegerField(
+        choices=VERBOSITY_CHOICES,
+        default=QUIET,
+    )
+
+    template = models.CharField(
+        max_length=50,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Template name'
+    )
+
+    blacklist = models.CharField(
+        max_length=400,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Test Case blacklist'
+    )
+
+    time_sent = models.DateTimeField(
+        verbose_name=_(u"Time sent"),
+        auto_now=False,
+        auto_now_add=True,
+        editable=False
+    )
+
+    query_owner = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Query owner'
+    )
+
+    query_name = models.CharField(
+        max_length=1024,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Query name',
+    )
+
+    entity = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True
+    )
+
+    conditions = models.CharField(
+        max_length=400,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Conditions'
+    )
+
+    def get_query_results(self):
+        from lava_results_app.models import Query
+        if self.query_name:
+            query = Query.objects.get(name=self.query_name,
+                                      owner=self.query_owner)
+            # We use query_owner as user here since we show only status.
+            return query.get_results(self.query_owner, self.QUERY_LIMIT)
+        else:
+            return Query.get_queryset(
+                self.entity,
+                Query.parse_conditions(self.entity, self.conditions),
+                self.QUERY_LIMIT)
+
+    def get_query_link(self):
+        from lava_results_app.models import Query
+        if self.query_name:
+            query = Query.objects.get(name=self.query_name,
+                                      owner=self.query_owner)
+            return query.get_absolute_url()
+        else:
+            # Make absolute URL manually.
+            return "%s?entity=%s&conditions=%s" % (
+                reverse("lava.results.query_custom"),
+                self.entity.model,
+                self.conditions)
+
+
+class NotificationRecipient(models.Model):
+
+    class Meta:
+        unique_together = ("user", "notification")
+
+    user = models.ForeignKey(
+        User,
+        default=None,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name='Notification user recipient'
+    )
+
+    email = models.CharField(
+        max_length=100,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='recipient email'
+    )
+
+    irc_handle = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC handle'
+    )
+
+    irc_server = models.CharField(
+        max_length=40,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='IRC server'
+    )
+
+    notification = models.ForeignKey(
+        Notification,
+        null=False,
+        on_delete=models.CASCADE,
+        verbose_name='Notification'
+    )
+
+    SENT = 0
+    NOT_SENT = 1
+    STATUS_CHOICES = (
+        (SENT, 'sent'),
+        (NOT_SENT, 'not sent'),
+    )
+    STATUS_MAP = {
+        'sent': SENT,
+        'not sent': NOT_SENT,
+    }
+
+    status = models.IntegerField(
+        choices=STATUS_CHOICES,
+        default=NOT_SENT,
+        verbose_name=_(u"Status"),
+    )
+
+    EMAIL = 0
+    EMAIL_STR = 'email'
+    IRC = 1
+    IRC_STR = 'irc'
+
+    METHOD_CHOICES = (
+        (EMAIL, EMAIL_STR),
+        (IRC, IRC_STR),
+    )
+    METHOD_MAP = {
+        EMAIL_STR: EMAIL,
+        IRC_STR: IRC,
+    }
+
+    method = models.IntegerField(
+        choices=METHOD_CHOICES,
+        default=EMAIL,
+        verbose_name=_(u"Method"),
+    )
+
+    @property
+    def email_address(self):
+        if self.email:
+            return self.email
+        else:
+            return self.user.email
+
+    @property
+    def irc_handle_name(self):
+        if self.irc_handle:
+            return self.irc_handle
+        else:
+            return self.user.extendeduser.irc_handle
+
+    @property
+    def irc_server_name(self):
+        if self.irc_server:
+            return self.irc_server
+        else:
+            return self.user.extendeduser.irc_server
+
+
+@receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
+def process_notifications(sender, **kwargs):
+    new_job = kwargs["instance"]
+    notification_status = [TestJob.COMPLETE, TestJob.INCOMPLETE,
+                           TestJob.CANCELED]
+    # Send only for pipeline jobs.
+    # If it's a new TestJob, no need to send notifications.
+    if new_job.is_pipeline and new_job.id:
+        old_job = TestJob.objects.get(pk=new_job.id)
+        if old_job.status not in notification_status and \
+           new_job.status in notification_status:
+            job_def = yaml.load(new_job.definition)
+            if "notify" in job_def:
+                if new_job.notification_criteria(job_def["notify"]["criteria"],
+                                                 old_job):
+                    try:
+                        old_job.notification
+                    except ObjectDoesNotExist:
+                        new_job.create_notification(job_def["notify"])
+
+                    new_job.send_notifications()
 
 
 class TestJobUser(models.Model):

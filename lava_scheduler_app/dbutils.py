@@ -11,7 +11,6 @@ import jinja2
 import datetime
 import logging
 import simplejson
-import django
 from traceback import format_exc
 from django.db.models import Q
 from django.db import IntegrityError, transaction
@@ -19,14 +18,15 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.models import (
-    DeviceDictionary,
     Device,
+    DeviceDictionary,
+    DevicesUnavailableException,
     DeviceType,
+    is_deprecated_json,
+    JSONDataError,
     TestJob,
     TemporaryDevice,
-    JSONDataError,
     validate_job,
-    is_deprecated_json,
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -91,7 +91,12 @@ def initiate_health_check_job(device):
             device.put_into_maintenance_mode(
                 user, "target must not be defined in health check definitions.")
             return None
-    return testjob_submission(job_data, user, check_device=device)
+    try:
+        job = testjob_submission(job_data, user, check_device=device)
+    except DevicesUnavailableException as exc:
+        logger.error("[%s] failed to submit health check - %s", device.device_type.name, exc)
+        return None
+    return job
 
 
 def submit_health_check_jobs():
@@ -125,12 +130,13 @@ def submit_health_check_jobs():
         else:
             if time_denominator:
                 if not run_health_check:
-                    logger.debug("checking time since last health check")
+                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
                     logger.debug("%s needs to run_health_check", device)
-                    logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
+                    logger.debug("[%d] health_check_end=%s",
+                                 device.last_health_report_job.id, device.last_health_report_job.end_time)
                     logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
                     logger.debug("time_diff=%s", (
                         timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)))
@@ -411,11 +417,8 @@ def _validate_idle_device(job, device):
     """
     # FIXME: do this properly in the dispatcher master.
     # FIXME: isolate forced health check requirements
-    if django.VERSION >= (1, 8):
-        # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
-        device.refresh_from_db()
-    else:
-        device = Device.objects.get(hostname=device.hostname)
+    # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
+    device.refresh_from_db()
 
     logger = logging.getLogger('dispatcher-master')
     # to be valid for reservation, no queued TestJob can reference this device
@@ -777,12 +780,12 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
 
     validate_list = job.sub_jobs_list if job.is_multinode else [job]
     for check_job in validate_list:
-        parser_device = None if job.dynamic_connection else device_object
+        # dynamic connections still get the device config of the host
         try:
             logger.info("[%d] Parsing definition", check_job.id)
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
-                check_job.definition, parser_device,
+                check_job.definition, device_object,
                 check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
@@ -807,7 +810,8 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(pipeline_dump)
-            map_metadata(pipeline_dump, job)
+            if not map_metadata(pipeline_dump, check_job):
+                logger.warning("[%d] unable to map metadata" % check_job.id)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:

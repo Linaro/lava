@@ -20,7 +20,7 @@
 import sys
 
 from django.contrib.auth.models import User
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

@@ -14,6 +14,7 @@ from lava_results_app.dbutils import (
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 
 
 # pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
@@ -34,7 +35,8 @@ class TestMetaTypes(TestCaseWithFactory):
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
-        pipeline_job.pipeline.validate_actions()
+        allow_missing_path(pipeline_job.pipeline.validate_actions, self,
+                           'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
         map_metadata(yaml.dump(pipeline), job)
         self.assertEqual(MetaType.objects.filter(metatype=MetaType.DEPLOY_TYPE).count(), 1)
@@ -101,7 +103,8 @@ class TestMetaTypes(TestCaseWithFactory):
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
-        pipeline_job.pipeline.validate_actions()
+        allow_missing_path(pipeline_job.pipeline.validate_actions, self,
+                           'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
         retval = _get_device_metadata(pipeline['device'])
         self.assertEqual(

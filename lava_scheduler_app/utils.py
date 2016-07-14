@@ -751,15 +751,15 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     # FIXME: needs a Protocol base class in the server and protocol-specific split handlers
 
     copies = [
-        'context',
         'job_name',
         'timeouts',
         'priority',
         'visibility',
         'notify',
+        'metadata',
     ]
     skip = ['role', 'roles']
-    scheduling = ['device_type', 'connection', 'host_role']  # top level values to be preserved
+    scheduling = ['device_type', 'connection', 'host_role', 'context']  # top level values to be preserved
     maps = ['count']  # elements to be matched but not listed at top level.
 
     roles = {}

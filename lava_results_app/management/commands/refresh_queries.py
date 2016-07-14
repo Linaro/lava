@@ -20,7 +20,7 @@
 
 
 import sys
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 from lava_results_app.models import Query
 
 

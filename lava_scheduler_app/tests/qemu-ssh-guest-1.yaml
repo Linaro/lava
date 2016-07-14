@@ -19,7 +19,6 @@ actions:
     name: kvm-basic-singlenode
     role: guest
     timeout: {minutes: 5}
-context: {arch: amd64}
 job_name: qemu-guest-ssh
 connection: ssh
 host_role: host

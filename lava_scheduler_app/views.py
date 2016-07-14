@@ -8,6 +8,8 @@ import simplejson
 import StringIO
 import datetime
 import urllib2
+import sys
+
 import django
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -17,11 +19,12 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.db.models import Count
 from django.http import (
-    HttpResponse,
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
+    HttpResponseRedirect,
 )
 from django.shortcuts import (
     get_object_or_404,
@@ -653,16 +656,7 @@ def filter_device_types(user):
 #
 # Query Expressions:
 # https://docs.djangoproject.com/en/1.8/ref/models/expressions/
-#
-# But both the above are available only in django >=1.8, hence there isn't
-# a simple way of replacing SQL Aggregates that will work both in django
-# 1.7 and 1.8, hence this check is available.
-#
-# FIXME: Remove this check when support for django 1.7 ceases.
-if django.VERSION >= (1, 8):
-    aggregate_cls = models.aggregates.Aggregate
-else:
-    aggregate_cls = models.sql.aggregates.Aggregate
+aggregate_cls = models.aggregates.Aggregate
 
 
 class SumIfSQL(aggregate_cls):
@@ -1311,6 +1305,17 @@ def _prepare_template(request):
     return job_template
 
 
+def remove_broken_string(line):
+    # Check that the string is valid unicode.
+    # This is not needed for python3.
+    try:
+        line['msg'].encode('utf-8')
+    except AttributeError:
+        pass
+    except UnicodeDecodeError:
+        line['msg'] = '<<lava: broken line>>'
+
+
 @BreadCrumb("Job", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
@@ -1321,6 +1326,7 @@ def job_detail(request, pk):
                                                             test_job=job)
         is_favorite = testjob_user.is_favorite
 
+    template = "lava_scheduler_app/job.html"
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1337,6 +1343,7 @@ def job_detail(request, pk):
         job_data = description.get('job', {})
         action_list = job_data.get('actions', [])
         pipeline = description.get('pipeline', {})
+
         deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
         boot_list = [item['boot'] for item in action_list if 'boot' in item]
         test_list = [item['test'] for item in action_list if 'test' in item]
@@ -1345,13 +1352,28 @@ def job_detail(request, pk):
             if 'section' in action:
                 sections.append({action['section']: action['level']})
         default_section = 'boot'  # to come from user profile later.
-        if 'section' in request.GET:
-            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-        else:
-            log_data = utils.folded_logs(job, default_section, sections, summary=True)
-            if not log_data:
-                default_section = 'deploy'
+
+        # Is it the old log format?
+        if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+            if 'section' in request.GET:
+                log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
+            else:
                 log_data = utils.folded_logs(job, default_section, sections, summary=True)
+                if not log_data:
+                    default_section = 'deploy'
+                    log_data = utils.folded_logs(job, default_section, sections, summary=True)
+        else:
+            template = "lava_scheduler_app/job_pipeline.html"
+            try:
+                with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+                    log_data = yaml.load(f_in)
+
+                    if sys.version_info < (3, 0):
+                        for line in log_data:
+                            remove_broken_string(line)
+
+            except IOError:
+                log_data = []
 
         data.update({
             'device_data': description.get('device', {}),
@@ -1412,8 +1434,7 @@ def job_detail(request, pk):
         data.update({
             'expand': True,
         })
-    return render_to_response(
-        "lava_scheduler_app/job.html", data, RequestContext(request))
+    return render_to_response(template, data, RequestContext(request))
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
@@ -1600,6 +1621,10 @@ def job_complete_log(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404
+    # If this is a new log format, redirect to the job page
+    if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
+        return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
+
     description = description_data(job.id)
     pipeline = description.get('pipeline', {})
     sections = []
@@ -1770,13 +1795,22 @@ def job_log_file(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
+    # Old style jobs
     log_file = job.output_file()
-    if not log_file:
+    if log_file:
+        response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+        response['Content-Transfer-Encoding'] = 'quoted-printable'
+        response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+        return response
+
+    # New pipeline jobs
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
+            response = HttpResponse(log_file, content_type='application/yaml')
+            response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+            return response
+    except IOError:
         raise Http404
-    response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
-    response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
-    return response
 
 
 def job_log_incremental(request, pk):
@@ -1791,6 +1825,33 @@ def job_log_incremental(request, pk):
     response['X-Current-Size'] = str(start + len(new_content))
     if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
+    return response
+
+
+def job_log_pipeline_incremental(request, pk):
+    job = get_restricted_job(request.user, pk)
+    # Start from this line
+    try:
+        first_line = int(request.GET.get("line", 0))
+    except ValueError:
+        first_line = 0
+
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+            data = yaml.load(f_in)[first_line:]
+            if sys.version_info < (3, 0):
+                for line in data:
+                    remove_broken_string(line)
+
+    except IOError:
+        data = []
+
+    response = HttpResponse(
+        simplejson.dumps(data), content_type='application/json')
+
+    if job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+
     return response
 
 

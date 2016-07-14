@@ -19,7 +19,33 @@
           {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
       <dd><a href="{% url 'django.contrib.auth.views.password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
+      <dt>IRC settings</dt>
+      <dd>Server: {{ user.extendeduser.irc_server|default:"None" }}; Handle: {{ user.extendeduser.irc_handle|default:"None" }};<a data-toggle="modal" href="#irc_modal"> Update</a></dd>
     </dl>
+  </div>
+
+  <!-- Modal HTML -->
+  <div id="irc_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Update IRC settings</h4>
+        </div>
+        <form id="irc_form" method="post" action="{% url 'lava.update_irc_settings' %}">
+	  {% csrf_token %}
+        <div class="modal-body well">
+	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	    {{ irc_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input class="btn btn-primary" type="submit" value="Save" />
+        </div>
+        </form>
+
+      </div>
+    </div>
   </div>
 
   <div class="col-md-6">

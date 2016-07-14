@@ -39,14 +39,7 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 STATIC_URL = distro_settings.STATIC_URL
 
 # List of absolute pathnames used to resolve templates.
-if django.VERSION < (1, 8):
-    if isinstance(distro_settings.TEMPLATE_DIRS, tuple):
-        TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'templates'),)
-    else:
-        TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
-    TEMPLATE_DIRS = distro_settings.TEMPLATE_DIRS + TEMPLATE_DIRS
-else:
-    TEMPLATES = distro_settings.TEMPLATES
+TEMPLATES = distro_settings.TEMPLATES
 
 # Like TEMPLATE_DIRS but for static files
 STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
@@ -70,21 +63,10 @@ LOGIN_URL = distro_settings.LOGIN_URL
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = distro_settings.LOGIN_REDIRECT_URL
 
-# read which openID provider to use from the settings.conf
-OPENID_SSO_SERVER_URL = distro_settings.OPENID_SSO_SERVER_URL
-
 # The email address that error messages come from, such as those sent to
 # ADMINS and MANAGERS.
 if distro_settings.get_setting("SERVER_EMAIL"):
     SERVER_EMAIL = distro_settings.get_setting("SERVER_EMAIL")
-
-# Allow OpenID redirect domains to be configurable
-if distro_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS"):
-    ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS = distro_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS")
-
-if distro_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING"):
-    OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
-    OPENID_LAUNCHPAD_TEAMS_MAPPING = distro_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING")
 
 # Atlassian Crowd authentication config
 AUTH_CROWD_SERVER_REST_URI = distro_settings.get_setting("AUTH_CROWD_SERVER_REST_URI")
@@ -128,13 +110,6 @@ if AUTH_LDAP_SERVER_URI:
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
                                'django.contrib.auth.backends.ModelBackend'] + \
         AUTHENTICATION_BACKENDS
-
-    DISABLE_OPENID_AUTH = distro_settings.get_setting("DISABLE_OPENID_AUTH")
-    if DISABLE_OPENID_AUTH:
-        AUTHENTICATION_BACKENDS = [
-            'django_auth_ldap.backend.LDAPBackend',
-            'django.contrib.auth.backends.ModelBackend'] + \
-            [x for x in AUTHENTICATION_BACKENDS if "OpenID" not in x]
 
     # Load credentials
     AUTH_LDAP_BIND_DN = distro_settings.get_setting("AUTH_LDAP_BIND_DN")
@@ -194,6 +169,8 @@ BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images
 BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
+BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework")
+BRANDING_SOURCE_URL = distro_settings.get_setting("BRANDING_SOURCE_URL", "https://git.linaro.org/gitweb?s=lava%2Flava")
 
 HIDE_V1_DOCS = distro_settings.get_setting("HIDE_V1_DOCS", False)
 HIDE_V2_DOCS = distro_settings.get_setting("HIDE_V2_DOCS", False)

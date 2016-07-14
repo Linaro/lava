@@ -25,7 +25,6 @@ from django.utils.safestring import mark_safe
 from lava.utils.lavatable import LavaTable
 from lava_scheduler_app.tables import DateColumn, RestrictedIDLinkColumn
 from lava_results_app.models import TestCase
-from django.templatetags.static import static
 from markupsafe import escape
 
 
@@ -178,7 +177,7 @@ class SuiteTable(LavaTable):
     testset = tables.Column()
     result = tables.Column()
     measurement = tables.Column()
-    unit = tables.Column()
+    units = tables.Column()
     logged = DateColumn()
 
     def render_name(self, record):  # pylint: disable=no-self-use
@@ -187,22 +186,24 @@ class SuiteTable(LavaTable):
         )
 
     def render_result(self, record):  # pylint: disable=no-self-use
+        # Keep backward compatibility with the previous log format for V2
         if record.metadata:
-            if 'success' in record.action_metadata:
-                code = 'pass'
+            if record.result != TestCase.RESULT_UNKNOWN:
+                code = record.result_code
             else:
-                code = 'fail'
+                code = 'pass' if 'success' in record.action_metadata else 'fail'
         else:
             code = record.result_code
-        image = static('lava_results_app/images/icon-%s.png' % code)
+
+        if code == 'pass':
+            icon = 'ok'
+        elif code == 'fail':
+            icon = 'remove'
+        else:
+            icon = 'minus'
         return mark_safe(
-            '<a href="%s"><img src="%s"'
-            'alt="%s" width="16" height="16" border="0"/>%s</a>' % (
-                record.get_absolute_url(),
-                image,
-                code,
-                code,
-            )
+            '<a href="%s"><span class="glyphicon glyphicon-%s"></span> %s</a>' % (
+                record.get_absolute_url(), icon, code)
         )
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods

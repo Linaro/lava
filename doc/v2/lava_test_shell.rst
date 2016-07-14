@@ -370,25 +370,23 @@ The git-repos section shown above can be customized as follows::
             destination:  lava-d-s
             branch:       staging
 
-* `url` is the git repository URL.
-* `skip_by_default` (optional) accepts a True or False. Repositories
-  can be skipped by default in the YAML and enabled for particular
-  jobs in the JSON. Similarly, repositories can be set to install by
-  default and be disabled for particular jobs in the JSON.
-* `destination` (optional) is the directory in which the git
-  repository given in `url` should be cloned.
-* `branch` (optional) is the branch within the git repository given in
-  `url` that should be cloned.
+* **url** - is the git repository URL.
+* **skip_by_default** (optional) - accepts a True or False. Repositories can be
+  skipped by default in the YAML and enabled for particular jobs in the job
+  definition. Similarly, repositories can be set to install by default and be
+  disabled for particular jobs in the job definition.
+* **destination** (optional) - is the directory in which the git repository
+  given in **url** should be cloned.
+* **branch** (optional) - is the branch within the git repository given in
+  **url** that should be cloned.
 
 All the above parameters within the `git-repos` section could be
-controlled from the JSON job file. See the following JSON job
-definition and YAML test definition to get an understanding of how it works.
+controlled from the job definition. See the following job definition and test
+definition to get an understanding of how it works.
 
-.. * JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
+* Job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/pipeline/kvm-git-params-custom.yaml
 
-* YAML test definition - https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/git-params-controlled.yaml
-
-.. TODO: parameter support.
+* Test definition - https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/git-params-controlled.yaml
 
 Install Steps
 =============

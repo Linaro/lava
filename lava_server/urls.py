@@ -30,7 +30,7 @@ from dashboard_app.xmlrpc import DashboardAPI
 from lava_results_app.xmlrpc import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 
-from lava_server.views import index, me
+from lava_server.views import index, me, update_irc_settings
 from lava_server.xmlrpc import LavaMapper
 
 handler403 = 'lava_server.views.permission_error'
@@ -56,6 +56,10 @@ urlpatterns = [
     url(r'^{mount_point}me/$'.format(mount_point=settings.MOUNT_POINT),
         me,
         name='lava.me'),
+    url(r'^{mount_point}update-irc-settings/$'.format(
+        mount_point=settings.MOUNT_POINT),
+        update_irc_settings,
+        name='lava.update_irc_settings'),
 
     url(r'^{mount_point}accounts/'.format(mount_point=settings.MOUNT_POINT),
         include('django.contrib.auth.urls')),
