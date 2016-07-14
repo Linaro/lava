@@ -153,6 +153,6 @@ urlpatterns = [
         suite_csv_stream, name='lava.results.suite_csv_stream'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/yaml$',
         suite_yaml, name='lava.results.suite_yaml'),
-    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.+]+)$',
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.\(\)+]+)$',
         testcase, name='lava.results.testcase')
 ]
