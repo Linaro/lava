@@ -46,18 +46,20 @@ class BzrHelper(VCSHelper):
 
     def clone(self, dest_path, revision=None):
         cwd = os.getcwd()
-
+        logger = logging.getLogger('dispatcher')
         env = dict(os.environ)
         env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
 
         try:
             if revision is not None:
+                logger.debug("Running '%s branch -r %s %s'", self.binary, str(revision), self.url)
                 subprocess.check_output([self.binary, 'branch', '-r',
                                          str(revision), self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 commit_id = str(revision)
             else:
+                logger.debug("Running '%s branch %s'", self.binary, self.url)
                 subprocess.check_output([self.binary, 'branch', self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
@@ -66,7 +68,6 @@ class BzrHelper(VCSHelper):
                                                     env=env).strip().decode('utf-8')
 
         except subprocess.CalledProcessError as exc:
-            logger = logging.getLogger('dispatcher')
             if sys.version > '3':
                 exc_message = str(exc)
                 logger.exception({
@@ -104,11 +105,14 @@ class GitHelper(VCSHelper):
         self.binary = '/usr/bin/git'
 
     def clone(self, dest_path, revision=None):
+        logger = logging.getLogger('dispatcher')
         try:
+            logger.debug("Running '%s clone %s'", self.binary, self.url)
             subprocess.check_output([self.binary, 'clone', self.url, dest_path],
                                     stderr=subprocess.STDOUT)
 
             if revision is not None:
+                logger.debug("Running '%s checkout %s", self.binary, str(revision))
                 subprocess.check_output([self.binary, '--git-dir',
                                          os.path.join(dest_path, '.git'),
                                          'checkout', str(revision)],

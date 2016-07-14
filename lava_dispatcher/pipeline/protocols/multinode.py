@@ -115,9 +115,10 @@ class MultinodeProtocol(Protocol):
             self.sock.connect((self.settings['coordinator_hostname'], self.settings['port']))
             return True
         except socket.error as exc:
-            self.logger.exception(
-                "socket error on connect: %d %s %s" % (
-                    exc.errno, self.settings['coordinator_hostname'], self.settings['port']))
+            self.logger.exception("socket error on connect: %d %s %s",
+                                  exc.errno,
+                                  self.settings['coordinator_hostname'],
+                                  self.settings['port'])
             time.sleep(delay)
             self.sock.close()
             return False
@@ -135,7 +136,7 @@ class MultinodeProtocol(Protocol):
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
         except socket.error as exc:
-            self.logger.exception("socket error '%s' on send" % exc.message)
+            self.logger.exception("socket error '%s' on send", exc.message)
             self.sock.close()
             return False
         return True
@@ -153,7 +154,7 @@ class MultinodeProtocol(Protocol):
                 response += self.sock.recv(self.blocks)
                 recv_count += self.blocks
         except socket.error as exc:
-            self.logger.exception("socket error '%d' on response" % exc.errno)
+            self.logger.exception("socket error '%d' on response", exc.errno)
             self.sock.close()
             return json.dumps({"response": "wait"})
         return response
@@ -177,8 +178,9 @@ class MultinodeProtocol(Protocol):
         c_iter = 0
         response = None
         delay = self.settings['poll_delay']
-        self.logger.debug("Connecting to LAVA Coordinator on %s:%s timeout=%d seconds." % (
-            self.settings['coordinator_hostname'], self.settings['port'], timeout))
+        self.logger.debug("Connecting to LAVA Coordinator on %s:%s timeout=%d seconds.",
+                          self.settings['coordinator_hostname'],
+                          self.settings['port'], timeout)
         while True:
             c_iter += self.settings['poll_delay']
             if self._connect(delay):
@@ -187,8 +189,9 @@ class MultinodeProtocol(Protocol):
                 delay += 2
                 continue
             if not c_iter % int(10 * self.settings['poll_delay']):
-                self.logger.debug("sending message: %s waited %s of %s seconds" % (
-                    json.loads(message)['request'], c_iter, int(timeout)))
+                self.logger.debug("sending message: %s waited %s of %s seconds",
+                                  json.loads(message)['request'], c_iter,
+                                  timeout)
             # blocking synchronous call
             if not self._send_message(message):
                 continue
@@ -198,7 +201,7 @@ class MultinodeProtocol(Protocol):
             try:
                 json_data = json.loads(response)
             except ValueError:
-                self.logger.debug("response starting '%s' was not JSON" % response[:42])
+                self.logger.debug("response starting '%s' was not JSON", response[:42])
                 self.finalise_protocol()
                 break
             if json_data['response'] != 'wait':
@@ -235,20 +238,20 @@ class MultinodeProtocol(Protocol):
         self.initialise_group()
         if self.delayed_start:
             # delayed start needs to pull the sync timeout from the job parameters.
-            self.logger.info("%s protocol initialised - start is delayed by up to %s seconds" % (
-                self.name, self.system_timeout.duration))
+            self.logger.info("%s protocol initialised - start is delayed by up to %s seconds",
+                             self.name, self.system_timeout.duration)
             expect_role = self.parameters['protocols'][self.name]['expect_role']
-            self.logger.debug("Delaying start for %s seconds, lava_wait_all for role %s" % (
-                self.system_timeout.duration, expect_role))
+            self.logger.debug("Delaying start for %s seconds, lava_wait_all for role %s",
+                              self.system_timeout.duration, expect_role)
             # send using the system timeout
             sync_msg = {
                 "request": "lava_wait_all",
                 "waitrole": expect_role,
                 "messageID": 'lava_start'}
             self._send(sync_msg, True)
-            self.logger.debug("sent %s" % json.dumps(sync_msg))
+            self.logger.debug("sent %s", json.dumps(sync_msg))
         else:
-            self.logger.debug("%s protocol initialised" % self.name)
+            self.logger.debug("%s protocol initialised", self.name)
 
     def debug_setup(self):
         self.settings = {
@@ -270,9 +273,9 @@ class MultinodeProtocol(Protocol):
             "role": self.parameters['protocols'][self.name]['role'],
         }
         if self.delayed_start:
-            self.logger.debug("Debug: delayed start activated, waiting for %s" %
+            self.logger.debug("Debug: delayed start activated, waiting for %s",
                               self.parameters['protocols'][self.name]['expect_role'])
-        self.logger.debug("%s protocol initialised in debug mode" % self.name)
+        self.logger.debug("%s protocol initialised in debug mode", self.name)
 
     def initialise_group(self):
         """
@@ -283,7 +286,8 @@ class MultinodeProtocol(Protocol):
             "request": "group_data",
             "group_size": self.parameters['protocols'][self.name]['group_size']
         }
-        self.logger.debug("Initialising group %s" % self.parameters['protocols'][self.name]['target_group'])
+        self.logger.debug("Initialising group %s",
+                          self.parameters['protocols'][self.name]['target_group'])
         self._send(init_msg, True)
 
     def finalise_protocol(self, device=None):
@@ -292,7 +296,7 @@ class MultinodeProtocol(Protocol):
             "group_size": self.parameters['protocols'][self.name]['group_size']
         }
         self._send(fin_msg, True)
-        self.logger.debug("%s protocol finalised." % self.name)
+        self.logger.debug("%s protocol finalised.", self.name)
 
     def _check_data(self, data):
         try:
@@ -337,23 +341,24 @@ class MultinodeProtocol(Protocol):
         message_id = json_data['messageID']
 
         if json_data['request'] == "lava_sync":
-            self.logger.debug("requesting lava_sync '%s'" % message_id)
+            self.logger.debug("requesting lava_sync '%s'", message_id)
             reply_str = self.request_sync(message_id)
 
         elif json_data['request'] == 'lava_wait':
-            self.logger.debug("requesting lava_wait '%s'" % message_id)
+            self.logger.debug("requesting lava_wait '%s'", message_id)
             reply_str = self.request_wait(message_id)
 
         elif json_data['request'] == 'lava_wait_all':
             if 'role' in json_data and json_data['role'] is not None:
                 reply_str = self.request_wait_all(message_id, json_data['role'])
-                self.logger.debug("requesting lava_wait_all '%s' '%s'" % (message_id, json_data['role']))
+                self.logger.debug("requesting lava_wait_all '%s' '%s'",
+                                  message_id, json_data['role'])
             else:
-                self.logger.debug("requesting lava_wait_all '%s'" % message_id)
+                self.logger.debug("requesting lava_wait_all '%s'", message_id)
                 reply_str = self.request_wait_all(message_id)
 
         elif json_data['request'] == "lava_send":
-            self.logger.debug("requesting lava_send %s" % message_id)
+            self.logger.debug("requesting lava_send %s", message_id)
             if 'message' in json_data and json_data['message'] is not None:
                 send_msg = json_data['message']
                 if not isinstance(send_msg, dict):
@@ -361,10 +366,11 @@ class MultinodeProtocol(Protocol):
                 self.logger.debug("message: %s", json.dumps(send_msg))
                 if 'yaml_line' in send_msg:
                     del send_msg['yaml_line']
-                self.logger.debug("requesting lava_send %s with args %s" % (message_id, json.dumps(send_msg)))
+                self.logger.debug("requesting lava_send %s with args %s",
+                                  message_id, json.dumps(send_msg))
                 reply_str = self.request_send(message_id, send_msg)
             else:
-                self.logger.debug("requesting lava_send %s without args" % message_id)
+                self.logger.debug("requesting lava_send %s without args", message_id)
                 reply_str = self.request_send(message_id)
 
         if reply_str == '':
@@ -434,7 +440,7 @@ class MultinodeProtocol(Protocol):
         new_msg.update(msg)
         if system:
             return self.poll(json.dumps(new_msg), timeout=self.system_timeout.duration)
-        self.logger.debug("final message: %s" % json.dumps(new_msg))
+        self.logger.debug("final message: %s", json.dumps(new_msg))
         return self.poll(json.dumps(new_msg))
 
     def request_wait_all(self, message_id, role=None):
@@ -476,13 +482,13 @@ class MultinodeProtocol(Protocol):
         The message can consist of just the messageID:
         { "messageID": "string" }
         """
-        self.logger.debug("request_send %s %s" % (message_id, message))
+        self.logger.debug("request_send %s %s", message_id, message)
         if not message:
             message = {}
         send_msg = {"request": "lava_send",
                     "messageID": message_id,
                     "message": message}
-        self.logger.debug("Sending %s" % send_msg)
+        self.logger.debug("Sending %s", send_msg)
         return self._send(send_msg)
 
     def request_sync(self, msg):

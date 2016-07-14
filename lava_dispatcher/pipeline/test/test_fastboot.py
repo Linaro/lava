@@ -58,6 +58,7 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
+        self.assertIsInstance(self.job.device['device_path'], list)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)

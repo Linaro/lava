@@ -1,16 +1,13 @@
 device_type: d02
-parameters:
-  stuff:
-    - junk
 commands:
   connect: telnet ratchet 7003
   hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 02 --command reboot --delay 5
   power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 02 --command off
   power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 02 --command on
 
-character-delays:
-      boot: 300
-      test: 100
+character_delays:
+      boot: 30
+      test: 30
 
 actions:
   deploy:
@@ -42,27 +39,34 @@ actions:
           expect_shell: False
           commands:
           - net_bootp
-          - linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} efi=noruntime ---
+          - linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} efi=noruntime --- console=ttyS0,115200 debug verbose
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - devicetree (tftp,{SERVER_IP})/{DTB}
           - boot
         debian-installed:
           commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod part_msdos
           - insmod chain
           - ls
           - ls (hd1,gpt1)
+          - sleep 10
           - set
           - set root=(hd1,gpt1)
+          - sleep 10
           - ls (hd1,gpt1)
+          - sleep 10
           - chainloader (hd1,gpt1)/efi/debian/grubaa64.efi
+          - sleep 10
           - boot
 
 timeouts:
   actions:
     grub-main:
-      seconds: 30000
+      seconds: 5400
     bootloader-action:
-      seconds: 30000
+      seconds: 5400
     bootloader-interrupt:
       seconds: 300
     bootloader-commands:
@@ -72,18 +76,18 @@ timeouts:
     auto-login-action:
       seconds: 600
     installer-wait:
-      seconds: 30000
+      seconds: 5400
     pdu_reboot:
       seconds: 3000
   connections:
     pdu_reboot:
       seconds: 3000
     grub-main:
-       seconds: 30000
+       seconds: 5400
     bootloader-action:
-       seconds: 30000
+       seconds: 5400
     installer-wait:
-      seconds: 30000
+      seconds: 5400
     bootloader-retry:
       seconds: 3000
     bootloader-interrupt:

@@ -199,20 +199,28 @@ class LxcAddDeviceAction(Action):
         connection = super(LxcAddDeviceAction, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
         if 'device_path' in list(self.job.device.keys()):
-            # Wait USB_SHOW_UP_TIMEOUT seconds for the usb device to show up
-            self.logger.info("Waiting %d seconds for usb device to show up" %
-                             USB_SHOW_UP_TIMEOUT)
-            sleep(USB_SHOW_UP_TIMEOUT)
+            device_path = self.job.device['device_path']
+            if not isinstance(device_path, list):
+                raise JobError("device_path should be a list")
 
-            device_path = os.path.realpath(self.job.device['device_path'])
-            if os.path.isdir(device_path):
-                devices = os.listdir(device_path)
+            if device_path:
+                # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
+                self.logger.info("Wait %d seconds for usb device to show up",
+                                 USB_SHOW_UP_TIMEOUT)
+                sleep(USB_SHOW_UP_TIMEOUT)
+
+                for path in device_path:
+                    path = os.path.realpath(path)
+                    if os.path.isdir(path):
+                        devices = os.listdir(path)
+                    else:
+                        devices = [path]
+
+                    for device in devices:
+                        device = os.path.join(path, device)
+                        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+                        self.run_command(lxc_cmd)
+                        self.logger.debug("%s: devices added from %s", lxc_name,
+                                          path)
             else:
-                devices = [device_path]
-
-            for device in devices:
-                device = os.path.join(device_path, device)
-                lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                self.run_command(lxc_cmd)
-            self.logger.debug("%s: devices added from %s", lxc_name,
-                              device_path)
+                self.logger.debug("device_path is None")

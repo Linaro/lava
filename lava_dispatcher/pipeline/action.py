@@ -286,6 +286,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
     def _log_action_results(self, action):
         if action.results and isinstance(action.logger, YAMLLogger):
+            action.logger.results({
+                "definition": "lava",
+                "case": action.name,
+                "level": action.level,
+                "duration": action.elapsed_time,
+                "result": "fail" if action.errors else "pass",
+                "extra": action.results})
             action.results.update(
                 {
                     'level': action.level,
@@ -294,7 +301,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     'connection-timeout': action.connection_timeout.duration
                 }
             )
-            action.logger.results({action.name: action.results})
 
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -315,6 +321,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # the action which overran the timeout has been allowed to complete.
                 name = self.job.parameters.get('job_name', '?')
                 msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
+                action.logger.error(msg)
                 action.errors = msg
                 final = self.actions[-1]
                 if final.name == "finalize":
@@ -331,10 +338,9 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
             # Add action start timestamp to the log message
-            msg = {'msg': 'start: %s %s (max %ds)' % (action.level,
-                                                      action.name,
-                                                      action.timeout.duration),
-                   'ts': datetime.datetime.utcnow().isoformat()}
+            msg = 'start: %s %s (max %ds)' % (action.level,
+                                              action.name,
+                                              action.timeout.duration)
             if self.parent is None:
                 action.logger.info(msg)
             else:
@@ -353,7 +359,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                         TypeError, RuntimeError, AttributeError):
                     action.elapsed_time = time.time() - start
                     msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
-                    action.logger.exception(msg)
+                    action.logger.exception(traceback.format_exc())
                     action.errors = msg
                     action.cleanup()
                     self.cleanup_actions(connection, None)
@@ -363,9 +369,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     raise KeyboardInterrupt
                 action.elapsed_time = time.time() - start
                 # Add action end timestamp to the log message
-                msg = {'msg': "%s duration: %.02f" % (action.name,
-                                                      action.elapsed_time),
-                       'ts': datetime.datetime.utcnow().isoformat()}
+                msg = "%s duration: %.02f" % (action.name,
+                                              action.elapsed_time)
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
@@ -571,8 +576,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.max_retries = self.parameters['repeat']
         if self.job:
             if self.job.device:
-                if 'character-delays' in self.job.device:
-                    self.character_delay = self.job.device['character-delays'].get(self.section, 0)
+                if 'character_delays' in self.job.device:
+                    self.character_delay = self.job.device['character_delays'].get(self.section, 0)
 
     @parameters.setter
     def parameters(self, data):
@@ -822,7 +827,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.connection_timeout.duration)))
+        self.logger.debug("%s: Wait for prompt. %s seconds",
+                          self.name, int(self.connection_timeout.duration))
         return connection.wait()
 
 

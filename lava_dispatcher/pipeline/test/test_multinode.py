@@ -20,7 +20,6 @@
 
 
 import os
-import glob
 import yaml
 import uuid
 import json
@@ -34,8 +33,15 @@ from lava_dispatcher.pipeline.actions.boot.qemu import BootQemuRetry, CallQemuAc
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.pipeline.action import TestError, JobError, Timeout
+from lava_dispatcher.pipeline.action import (
+    TestError,
+    JobError,
+    Timeout,
+    InfrastructureError,
+)
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
+
 
 # pylint: disable=protected-access,superfluous-parens
 
@@ -86,9 +92,9 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
     def test_multinode_jobs(self):
         self.assertIsNotNone(self.client_job)
         self.assertIsNotNone(self.server_job)
-        self.client_job.validate()
+        allow_missing_path(self.client_job.validate, self, 'qemu-system-x86_64')
+        allow_missing_path(self.server_job.validate, self, 'qemu-system-x86_64')
         self.assertEqual(self.client_job.pipeline.errors, [])
-        self.server_job.validate()
         self.assertEqual(self.server_job.pipeline.errors, [])
 
     def test_protocol(self):
@@ -100,8 +106,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(client_protocol.name, server_protocol.name)
         self.assertIn('target_group', client_protocol.parameters['protocols'][client_protocol.name].keys())
         self.assertIn('actions', self.client_job.parameters.keys())
-        self.client_job.validate()
-        self.server_job.validate()
+        try:
+            self.client_job.validate()
+            self.server_job.validate()
+        except InfrastructureError:
+            pass
         self.assertIn('role', client_protocol.parameters['protocols'][client_protocol.name].keys())
         self.assertEqual([], self.client_job.pipeline.errors)
         self.assertEqual([], self.server_job.pipeline.errors)
@@ -185,7 +194,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def test_multinode_description(self):
         self.assertIsNotNone(self.client_job)
-        self.client_job.validate()
+        allow_missing_path(self.client_job.validate, self, 'qemu-system-x86_64')
         # check that the description can be re-loaded as valid YAML
         for action in self.client_job.pipeline.actions:
             data = action.explode()

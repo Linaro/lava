@@ -117,7 +117,7 @@ class ExpectBootloaderSession(Action):
         connection = super(ExpectBootloaderSession, self).run(connection, args)
         device_methods = self.job.device['actions']['boot']['methods']
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
-        self.logger.debug("%s: Waiting for prompt" % self.name)
+        self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)
         return connection
 
@@ -371,13 +371,13 @@ class UBootCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(UBootCommandsAction, self).run(connection, args)
         connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
             connection.sendline(line, delay=self.character_delay)
         # allow for auto_login
         params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
         connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         return connection

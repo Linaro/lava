@@ -121,8 +121,8 @@ class LoopCheckAction(DeployAction):
         # when one is unmounted
         if mounted_loops >= available_loops:
             raise InfrastructureError("Insufficient loopback devices?")
-        self.logger.debug("available loops: %s" % available_loops)
-        self.logger.debug("mounted_loops: %s" % mounted_loops)
+        self.logger.debug("available loops: %s", available_loops)
+        self.logger.debug("mounted_loops: %s", mounted_loops)
         return connection
 
 
@@ -175,7 +175,7 @@ class LoopMountAction(RetryAction):
         return connection
 
     def cleanup(self):
-        self.logger.debug("%s cleanup" % self.name)
+        self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
                 self.run_command(['umount', self.mntdir])
@@ -245,7 +245,7 @@ class Unmount(Action):
         """
         connection = super(Unmount, self).run(connection, args)
         mntdir = self.data['loop_mount']['mntdir']
-        self.logger.debug("umounting %s" % mntdir)
+        self.logger.debug("umounting %s", mntdir)
         if os.path.ismount(mntdir):
             self.run_command(['umount', mntdir])
         if os.path.isdir(mntdir):

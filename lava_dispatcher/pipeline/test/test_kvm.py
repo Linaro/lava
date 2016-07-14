@@ -26,7 +26,12 @@ import yaml
 import pexpect
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
+from lava_dispatcher.pipeline.action import (
+    Pipeline,
+    Action,
+    JobError,
+    InfrastructureError,
+)
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -35,6 +40,8 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_messages import FakeConnection
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
+from lava_dispatcher.pipeline.test.test_defs import allow_missing_path, check_missing_path
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 # pylint: disable=invalid-name
 
@@ -166,7 +173,7 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_validate(self):
         try:
-            self.job.pipeline.validate_actions()
+            allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
         except JobError as exc:
             self.fail(exc)
         for action in self.job.pipeline.actions:
@@ -231,7 +238,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_validate(self):
         try:
-            self.job.pipeline.validate_actions()
+            allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
         except JobError as exc:
             self.fail(exc)
         for action in self.job.pipeline.actions:
@@ -283,6 +290,8 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             self.job.pipeline.validate_actions()
         except JobError as exc:
             self.fail(exc)
+        except InfrastructureError:
+            pass
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
 
@@ -370,7 +379,9 @@ class TestAutoLogin(unittest.TestCase):
                                                           'username': 'root'},
                                            'prompts': ['root@debian:~#']})
 
-        self.assertRaises(JobError, self.job.validate)
+        with self.assertRaises((JobError, InfrastructureError)) as check:
+            self.job.validate()
+            check_missing_path(self, check, 'qemu-system-x86_64')
 
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -380,7 +391,9 @@ class TestAutoLogin(unittest.TestCase):
 
         autologinaction.parameters.update({'prompts': []})
 
-        self.assertRaises(JobError, self.job.validate)
+        with self.assertRaises((JobError, InfrastructureError)) as check:
+            self.job.validate()
+            check_missing_path(self, check, 'qemu-system-x86_64')
 
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -390,7 +403,9 @@ class TestAutoLogin(unittest.TestCase):
 
         autologinaction.parameters.update({'prompts': ['']})
 
-        self.assertRaises(JobError, self.job.validate)
+        with self.assertRaises((JobError, InfrastructureError)) as check:
+            self.job.validate()
+            check_missing_path(self, check, 'qemu-system-x86_64')
 
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -400,7 +415,9 @@ class TestAutoLogin(unittest.TestCase):
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#', '']})
 
-        self.assertRaises(JobError, self.job.validate)
+        with self.assertRaises((JobError, InfrastructureError)) as check:
+            self.job.validate()
+            check_missing_path(self, check, 'qemu-system-x86_64')
 
     def test_missing_autologin_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -427,7 +444,9 @@ class TestAutoLogin(unittest.TestCase):
 
         autologinaction.parameters.update({'prompts': ''})
 
-        self.assertRaises(JobError, self.job.validate)
+        with self.assertRaises((JobError, InfrastructureError)) as check:
+            self.job.validate()
+            check_missing_path(self, check, 'qemu-system-x86_64')
 
     def test_missing_autologin_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -544,6 +563,8 @@ class TestChecksum(unittest.TestCase):
             self.job.pipeline.validate_actions()
         except JobError as exc:
             self.fail(exc)
+        except InfrastructureError as exc:
+            check_missing_path(self, exc, 'qemu-system-x86_64')
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
 
@@ -582,6 +603,8 @@ class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml', mkdtemp())
 
+    @unittest.skipIf(infrastructure_error('qemu-system-x86_64'),
+                     'qemu-system-x86_64 not installed')
     def test_uefi_path(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
         downloaders = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']

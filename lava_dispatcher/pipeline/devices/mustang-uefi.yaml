@@ -6,7 +6,7 @@ commands:
   #power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
   #power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05
 
-character-delays:
+character_delays:
       boot: 10
 
 actions:

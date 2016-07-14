@@ -154,9 +154,11 @@ class LinuxKernelMessages(Action):
         results = self.parse_failures(connection)
         if len(results) > 1:
             self.results = {'fail': results}
-        else:
+        elif len(results) == 1:
             self.results = {
                 'success': self.name,
                 'message': results[0]['message']  # the matching prompt
             }
+        else:
+            self.results = {'result': 'skipped'}
         return connection

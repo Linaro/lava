@@ -25,6 +25,8 @@ import tarfile
 import tempfile
 import guestfs
 from configobj import ConfigObj
+
+from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.constants import LXC_PATH
 
 

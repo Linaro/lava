@@ -140,7 +140,7 @@ class BootloaderInterrupt(Action):
             if self.job.device.connect_command is '':
                 self.errors = "Unable to connect to device %s" % hostname
         else:
-            self.logger.debug("%s may need manual intervention to reboot" % hostname)
+            self.logger.debug("%s may need manual intervention to reboot", hostname)
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
@@ -176,7 +176,8 @@ class InstallerWait(Action):
     def run(self, connection, args=None):
         connection = super(InstallerWait, self).run(connection, args)
         wait_string = self.parameters['boot_finished']
-        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", wait_string)
+        msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
+        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)
         connection.prompt_str = wait_string
         self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
@@ -237,6 +238,7 @@ class BootloaderCommandOverlay(Action):
             '{SERVER_IP}': ip_addr
         }
         substitutions['{PRESEED_CONFIG}'] = self.get_common_data('file', 'preseed')
+        substitutions['{PRESEED_LOCAL}'] = self.get_common_data('file', 'preseed_local')
         substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
         substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
         substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
@@ -291,6 +293,6 @@ class BootloaderCommandsAction(Action):
                 i += 1
         # allow for auto_login
         connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         return connection

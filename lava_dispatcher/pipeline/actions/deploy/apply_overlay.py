@@ -33,7 +33,10 @@ from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_FNAME,
     DISPATCHER_DOWNLOAD_DIR,
 )
-from lava_dispatcher.pipeline.utils.installers import add_late_command
+from lava_dispatcher.pipeline.utils.installers import (
+    add_late_command,
+    add_to_kickstart
+)
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, prepare_guestfs
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
@@ -41,6 +44,8 @@ from lava_dispatcher.pipeline.utils.compression import (
     decompress_file,
     untar_file
 )
+from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 class ApplyOverlayImage(Action):
@@ -113,8 +118,8 @@ class PrepareOverlayTftp(Action):
         self.internal_pipeline.add_action(ExtractRamdisk())  # idempotent, checks for a ramdisk parameter
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
         self.internal_pipeline.add_action(ApplyOverlayTftp())
-        self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
         self.internal_pipeline.add_action(ConfigurePreseedFile())  # idempotent, checks for a preseed parameter
+        self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
 
     def run(self, connection, args=None):
         connection = super(PrepareOverlayTftp, self).run(connection, args)
@@ -167,6 +172,14 @@ class ApplyOverlayTftp(Action):
         else:
             self.logger.debug("No overlay directory")
             self.logger.debug(self.parameters)
+        if self.parameters.get('os', None) == "centos_installer":
+            # centos installer ramdisk doesnt like having anything other
+            # than the kickstart config being inserted. Instead, make the
+            # overlay accessible through tftp. Yuck.
+            tftp_dir = os.path.dirname(self.data['download_action']['ramdisk']['file'])
+            shutil.copy(overlay_file, tftp_dir)
+            suffix = self.data['tftp-deploy'].get('suffix', '')
+            self.set_common_data('file', 'overlay', os.path.join(suffix, os.path.basename(overlay_file)))
         untar_file(overlay_file, directory)
         if nfs_url:
             subprocess.check_output(['umount', directory])
@@ -217,6 +230,7 @@ class ExtractNfsRootfs(ExtractRootfs):
         self.summary = "unpack nfsrootfs, ready to apply lava overlay"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
+        self.rootdir = DISPATCHER_DOWNLOAD_DIR
 
     def validate(self):
         super(ExtractNfsRootfs, self).validate()
@@ -228,6 +242,31 @@ class ExtractNfsRootfs(ExtractRootfs):
             self.errors = "no file specified extract as %s" % self.param_key
         if not os.path.exists('/usr/sbin/exportfs'):
             raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
+        if 'prefix' in self.parameters[self.param_key]:
+            prefix = self.parameters[self.param_key]['prefix']
+            if prefix.startswith('/'):
+                self.errors = 'prefix must not be an absolute path'
+            if not prefix.endswith('/'):
+                self.errors = 'prefix must be a directory and end with /'
+
+    def run(self, connection, args=None):
+        if not self.parameters.get(self.param_key, None):  # idempotency
+            return connection
+        connection = super(ExtractRootfs, self).run(connection, args)
+        root = self.data['download_action'][self.param_key]['file']
+        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        untar_file(root, root_dir)
+        if 'prefix' in self.parameters[self.param_key]:
+            prefix = self.parameters[self.param_key]['prefix']
+            self.logger.warning("Adding '%s' prefix, any other content will not be visible." % prefix)
+            self.rootdir = os.path.join(root_dir, prefix)
+        else:
+            self.rootdir = root_dir
+        # sets the directory into which the overlay is unpacked and
+        # which is used in the substitutions into the bootloader command string.
+        self.set_common_data('file', self.file_key, self.rootdir)
+        self.logger.debug("Extracted %s to %s", self.file_key, self.rootdir)
+        return connection
 
 
 class ExtractModules(Action):
@@ -366,6 +405,16 @@ class CompressRamdisk(Action):
             raise RuntimeError("Unable to find ramdisk directory")
         ramdisk_dir = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
         ramdisk_data = self.data['extract-overlay-ramdisk']['ramdisk_file']
+        if self.parameters.get('preseed', None):
+            if self.parameters["deployment_data"].get("preseed_to_ramdisk", None):
+                # download action must have completed to get this far
+                # some installers (centos) cannot fetch the preseed file via tftp.
+                # Instead, put the preseed file into the ramdisk using a given name
+                # from deployment_data which we can use in the boot commands.
+                filename = self.parameters["deployment_data"]["preseed_to_ramdisk"]
+                self.logger.info("Copying preseed file into ramdisk: %s", filename)
+                shutil.copy(self.data['download_action']['preseed']['file'], os.path.join(ramdisk_dir, filename))
+                self.set_common_data('file', 'preseed_local', filename)
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)
         self.logger.debug("Building ramdisk %s containing %s",
@@ -467,3 +516,8 @@ class ConfigurePreseedFile(Action):
         if self.parameters["deployment_data"].get('installer_extra_cmd', None):
             if self.parameters.get('os', None) == "debian_installer":
                 add_late_command(self.data['download_action']['preseed']['file'], self.parameters["deployment_data"]["installer_extra_cmd"])
+            if self.parameters.get('os', None) == "centos_installer":
+                substitutions = {}
+                substitutions['{OVERLAY_URL}'] = 'tftp://' + dispatcher_ip() + '/' + self.get_common_data('file', 'overlay')
+                post_command = substitute([self.parameters["deployment_data"]["installer_extra_cmd"]], substitutions)
+                add_to_kickstart(self.data['download_action']['preseed']['file'], post_command[0])
