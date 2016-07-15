@@ -117,11 +117,16 @@ class CallQemuAction(Action):
             self.errors = "Unable to identify boot prompts from job definition."
         try:
             boot = self.job.device['actions']['boot']['methods']['qemu']
+            if 'parameters' not in boot or 'command' not in boot['parameters']:
+                self.errors = "Invalid device configuration - missing parameters"
+            elif not boot['parameters']['command']:
+                self.errors = "No QEMU binary command found - missing context."
             qemu_binary = which(boot['parameters']['command'])
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
         except AttributeError as exc:
-            self.errors = "Unable to parse device options: %s" % exc
+            self.errors = "Unable to parse device options: %s %s" % (
+                exc, self.job.device['actions']['boot']['methods']['qemu'])
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}

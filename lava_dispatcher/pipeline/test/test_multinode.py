@@ -183,6 +183,13 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertNotEqual(protocol_names, [])
         protocols = [protocol for protocol in testshell.job.protocols if protocol.name in protocol_names]
         self.assertNotEqual(protocols, [])
+        multinode_dict = {'multinode': '<LAVA_MULTI_NODE> <LAVA_(\\S+) ([^>]+)>'}
+        self.assertEqual(multinode_dict, testshell.multinode_dict)
+        self.assertIn('multinode', testshell.patterns)
+        self.assertEqual(testshell.patterns['multinode'], multinode_dict['multinode'])
+        testshell._reset_patterns()
+        self.assertIn('multinode', testshell.patterns)
+        self.assertEqual(testshell.patterns['multinode'], multinode_dict['multinode'])
         for protocol in protocols:
             protocol.debug_setup()
             if isinstance(protocol, MultinodeProtocol):

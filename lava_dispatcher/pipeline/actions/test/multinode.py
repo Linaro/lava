@@ -55,6 +55,9 @@ class MultinodeTestAction(TestShellAction):
         self.name = "multinode-test"
         self.description = "Executing lava-test-runner"
         self.summary = "Multinode Lava Test Shell"
+        self.multinode_dict = {
+            'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
+        }
 
     def validate(self):
         super(MultinodeTestAction, self).validate()
@@ -66,10 +69,12 @@ class MultinodeTestAction(TestShellAction):
         if not self.valid:
             self.errors = "Invalid base class TestAction"
             return
-        self.patterns.update({
-            'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
-        })
+        self.patterns.update(self.multinode_dict)
         self.signal_director.setup(self.parameters)
+
+    def _reset_patterns(self):
+        super(MultinodeTestAction, self)._reset_patterns()
+        self.patterns.update(self.multinode_dict)
 
     def populate(self, parameters):
         """
@@ -145,6 +150,7 @@ class MultinodeTestAction(TestShellAction):
             else:
                 message_str = ""
             self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+            self.connection.sendline('\n')
 
         def _on_wait(self, message_id):
             self.logger.debug("Handling signal <LAVA_WAIT %s>" % message_id)
@@ -160,6 +166,7 @@ class MultinodeTestAction(TestShellAction):
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
             self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
+            self.connection.sendline('\n')
 
         def _on_wait_all(self, message_id, role=None):
             self.logger.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
@@ -177,3 +184,4 @@ class MultinodeTestAction(TestShellAction):
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
             self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
+            self.connection.sendline('\n')
