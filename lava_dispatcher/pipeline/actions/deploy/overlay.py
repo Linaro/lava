@@ -178,6 +178,8 @@ class MultinodeOverlayAction(OverlayAction):
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell/multi_node' % os.path.dirname(__file__))
         self.lava_multi_node_cache_file = '/tmp/lava_multi_node_cache.txt'
+        self.lava_v2_multi_node_test_dir = os.path.realpath(
+            '%s/../../../pipeline/lava_test_shell/multi_node/' % os.path.dirname(__file__))
         self.role = None
         self.protocol = MultinodeProtocol.name
 
@@ -199,6 +201,9 @@ class MultinodeOverlayAction(OverlayAction):
                 self.errors = "multinode job without a specified role"
             else:
                 self.role = self.job.parameters['protocols'][self.protocol]['role']
+        # FIXME: rationalise all this when the V1 code is removed.
+        for script in glob.glob(os.path.join(self.lava_v2_multi_node_test_dir, 'lava-*')):
+            self.v2_scripts_to_copy.append(script)
 
     def run(self, connection, args=None):
         if self.role is None:
@@ -228,7 +233,8 @@ class MultinodeOverlayAction(OverlayAction):
         lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         scripts_to_copy = glob.glob(os.path.join(self.lava_multi_node_test_dir, 'lava-*'))
         self.logger.debug(self.lava_multi_node_test_dir)
-        self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
+        self.logger.debug("lava_path: %s", lava_path)
+        self.logger.debug("scripts to copy %s", scripts_to_copy)
 
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
@@ -256,6 +262,19 @@ class MultinodeOverlayAction(OverlayAction):
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)
                         # always write out full debug logs
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), self.xmod)
+        for fname in self.v2_scripts_to_copy:
+            with open(fname, 'r') as fin:
+                foutname = os.path.basename(fname)
+                output_file = '%s/bin/%s' % (lava_path, foutname)
+                self.logger.debug("Updating %s", output_file)
+                with open(output_file, 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
+                    fout.write("LAVA_TEST_BIN='%s/bin'\n" % lava_test_results_dir)
+                    fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)
+                    # always write out full debug logs
+                    fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
         self.call_protocols()

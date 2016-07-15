@@ -206,6 +206,7 @@ class TestShellAction(TestAction):
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.connection_timeout
+        self.logger.debug("Setting connection timeout: %s" % self.connection_timeout.duration)
         self.wait(connection)
 
         # use the string instead of self.name so that inheriting classes (like multinode)
@@ -224,7 +225,7 @@ class TestShellAction(TestAction):
                 delay=self.character_delay)
 
             if self.timeout:
-                test_connection.timeout = self.timeout.duration
+                test_connection.timeout = self.connection_timeout.duration
 
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
@@ -432,7 +433,6 @@ class TestShellAction(TestAction):
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
-        self.logger.debug("test shell timeout: %d seconds" % timeout)
         if 'test_case_results' in self.patterns:
             self.logger.info("Test case result pattern: %r" % self.patterns['test_case_results'])
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)

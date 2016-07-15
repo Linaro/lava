@@ -281,8 +281,12 @@ class TestTimeouts(unittest.TestCase):
     def test_action_timeout(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+        self.assertEqual(test_shell.connection_timeout.duration, 240)  # job specifies 4 minutes
+        self.assertEqual(test_shell.timeout.duration, 420)  # job specifies 7 minutes
         self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
         self.assertEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertEqual(test_action.timeout.duration, 300)
@@ -300,8 +304,9 @@ class TestTimeouts(unittest.TestCase):
         for action in job.pipeline.actions:
             if action.internal_pipeline:
                 for check_action in action.internal_pipeline.actions:
-                    if check_action.connection_timeout and check_action.name != 'uboot-retry':
-                        # uboot-retry has an override in this sample job
+                    if check_action.connection_timeout and check_action.name not in ['uboot-retry', 'lava-test-shell']:
+                        # lava-test-shell and uboot-retry have overrides in this sample job
+                        # lava-test-shell from the job, uboot-retry from the device
                         self.assertEqual(check_action.connection_timeout.duration, 20)
 
     def test_action_connection_timeout(self):
@@ -318,7 +323,7 @@ class TestTimeouts(unittest.TestCase):
         retry = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         self.assertEqual(retry.timeout.duration, Timeout.parse(job.device['timeouts']['actions'][retry.name]))
         self.assertEqual(
-            Timeout.parse(job.device['timeouts']['connections'][retry.name]),
+            Timeout.parse(data['timeouts']['connections'][retry.name]),
             retry.connection_timeout.duration
         )
         self.assertEqual(90, retry.timeout.duration)

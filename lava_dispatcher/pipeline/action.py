@@ -184,6 +184,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 self._override_action_timeout(action, overrides['actions'])
             elif action.name in overrides:
                 self._override_action_timeout(action, overrides)
+                parameters['timeout'] = overrides[action.name]
             if 'connections' in overrides and action.name in overrides['connections']:
                 self._override_connection_timeout(action, overrides['connections'])
         # Set the parameters after populate so the sub-actions are also
@@ -193,15 +194,14 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # job overrides device timeouts:
         if self.job and 'timeouts' in self.job.parameters:
             overrides = self.job.parameters['timeouts']
-            if 'actions' in overrides and action.name in overrides:
+            if 'actions' in overrides and action.name in overrides['actions']:
                 # set job level overrides
                 self._override_action_timeout(action, overrides['actions'])
             elif action.name in overrides:
                 self._override_action_timeout(action, overrides)
                 parameters['timeout'] = overrides[action.name]
-            if 'connections' in overrides and action.name in overrides:
+            if 'connections' in overrides and action.name in overrides['connections']:
                 self._override_connection_timeout(action, overrides['connections'])
-
         action.parameters = parameters
 
     def describe(self, verbose=True):
@@ -563,7 +563,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.timeout.name = self.name
         # Overide the duration if needed
         if 'timeout' in self.parameters:
-            self.timeout.duration = Timeout.parse(self.parameters['timeout'])
+            # preserve existing overrides
+            if self.timeout.duration == Timeout.default_duration():
+                self.timeout.duration = Timeout.parse(self.parameters['timeout'])
+                if self.name == 'uboot-retry':
+                    print(self.name, self.timeout.duration)
         if 'connection_timeout' in self.parameters:
             self.connection_timeout.duration = Timeout.parse(self.parameters['connection_timeout'])
 
