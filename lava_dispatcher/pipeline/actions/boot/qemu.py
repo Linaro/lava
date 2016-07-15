@@ -121,7 +121,7 @@ class CallQemuAction(Action):
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
         except AttributeError as exc:
-            raise InfrastructureError(exc)
+            self.errors = "Unable to parse device options: %s" % exc
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
