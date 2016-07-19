@@ -7,10 +7,9 @@ timeouts:
   job:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
-   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  connections:
-    lava-test-shell:
-      minutes: 4
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  connection:
+    minutes: 4
   actions:
     lava-test-shell:
       minutes: 7
@@ -49,10 +48,9 @@ actions:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
-     # only s, m & h are supported.
+     name: kvm-basic-singlenode
      timeout:
-       minutes: 5 # uses install:deps, so takes longer than singlenode01
+       minutes: 5
      definitions:
          - repository: git://git.linaro.org/qa/test-definitions.git
            from: git

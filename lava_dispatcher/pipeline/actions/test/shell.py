@@ -204,9 +204,7 @@ class TestShellAction(TestAction):
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
-        self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.connection_timeout
-        self.logger.debug("Setting connection timeout: %s" % self.connection_timeout.duration)
         self.wait(connection)
 
         # use the string instead of self.name so that inheriting classes (like multinode)
@@ -224,7 +222,12 @@ class TestShellAction(TestAction):
                     self.data["lava_test_results_dir"]),
                 delay=self.character_delay)
 
-            if self.timeout:
+            self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+            if self.timeout.duration > self.connection_timeout.duration:
+                self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                test_connection.timeout = self.timeout.duration
+            else:
+                self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
                 test_connection.timeout = self.connection_timeout.duration
 
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
