@@ -143,3 +143,6 @@ SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
 
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
+
+# override os.linesep which is platform-dependent based on the dispatcher, not device.
+LINE_SEPARATOR = '\r\n'

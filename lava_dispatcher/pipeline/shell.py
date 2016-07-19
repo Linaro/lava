@@ -31,7 +31,10 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
-from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
+from lava_dispatcher.pipeline.utils.constants import (
+    SHELL_SEND_DELAY,
+    LINE_SEPARATOR
+)
 
 
 class ShellLogger(object):
@@ -98,6 +101,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         )
         self.name = "ShellCommand"
         self.logger = logger
+        # os.linesep is based on the interpreter running the dispatcher, not the target device
+        self.linesep = LINE_SEPARATOR
         # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
@@ -117,7 +122,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         else:
             self.logger.debug({"sending": s})
         self.send(s, delay, send_char)
-        self.send(os.linesep, delay)
+        self.send(self.linesep, delay)
 
     def sendcontrol(self, char):
         self.logger.debug("sendcontrol: %s", char)
