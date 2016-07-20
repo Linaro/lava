@@ -18,6 +18,7 @@ from lava_scheduler_app.schema import validate_device, SubmissionException
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User
 from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.action import Timeout
 
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
 # python3 needs print to be a function, so disable pylint
@@ -591,3 +592,16 @@ class TestTemplates(TestCaseWithFactory):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+
+    def test_panda_template(self):
+        data = """{% extends 'panda.jinja2' %}
+{% set connection_command = 'telnet serial4 7012' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
+        self.assertTrue(self.validate_data('staging-panda-01', data))
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot-commands', template_dict['timeouts']['actions'])
+        self.assertEqual(120.0, Timeout.parse(template_dict['timeouts']['actions']['u-boot-commands']))
