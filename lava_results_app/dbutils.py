@@ -57,7 +57,7 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
-def map_scanned_results(results, job):  # pylint: disable=too-many-branches
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -291,11 +291,17 @@ def map_metadata(description, job):
     # get job-action metadata
     action_values = _get_job_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
+        if not key or not value:
+            logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
+            continue
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device
     device_values = _get_device_metadata(description_data['device'])
     for key, value in device_values.items():
+        if not key or not value:
+            logger.warning('[%s] Missing element in device. %s: %s', job.id, key, value)
+            continue
         testdata.attributes.create(name=key, value=value)
 
     # Add metadata from job submission data.

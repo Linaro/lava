@@ -1,5 +1,6 @@
 import yaml
 import decimal
+from django.core.exceptions import MultipleObjectsReturned
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
@@ -93,7 +94,7 @@ class TestMetaTypes(TestCaseWithFactory):
         action_data.save(update_fields=['timeout'])
         self.assertEqual(action_data.timeout, 300)
 
-    def test_repositories(self):
+    def test_repositories(self):  # pylint: disable=too-many-locals
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
         job_def = yaml.load(job.definition)
@@ -106,11 +107,22 @@ class TestMetaTypes(TestCaseWithFactory):
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
-        retval = _get_device_metadata(pipeline['device'])
+        device_values = _get_device_metadata(pipeline['device'])
         self.assertEqual(
-            retval,
+            device_values,
             {'target.hostname': 'fakeqemu1', 'target.device_type': 'qemu'}
         )
+        del pipeline['device']['device_type']
+        self.assertNotIn('device_type', pipeline['device'])
+        device_values = _get_device_metadata(pipeline['device'])
+        try:
+            testdata, _ = TestData.objects.get_or_create(testjob=job)
+        except (MultipleObjectsReturned):
+            self.fail('multiple objects')
+        for key, value in device_values.items():
+            if not key or not value:
+                continue
+            testdata.attributes.create(name=key, value=value)
         retval = _get_job_metadata(pipeline['job']['actions'])
         self.assertEqual(
             retval,
