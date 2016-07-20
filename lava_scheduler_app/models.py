@@ -792,12 +792,19 @@ class Device(RestrictedResource):
             return True
         return self.is_owned_by(user)
 
-    def state_transition_to(self, new_status, user=None, message=None, job=None):
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=message, job=job).save()
+    def state_transition_to(self, new_status, user=None, message=None,
+                            job=None):
+        logger = logging.getLogger('dispatcher-master')
+        try:
+            DeviceStateTransition.objects.create(
+                created_by=user, device=self, old_state=self.status,
+                new_state=new_status, message=message, job=job)
+        except ValidationError as e:
+            logger.error("Cannot create DeviceStateTransition object. %s" % e)
+            return False
         self.status = new_status
         self.save()
+        return True
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -919,7 +926,7 @@ class Device(RestrictedResource):
         return jinja_str
 
 
-class TemporaryDevice(Device):  # pylint: disable=model-no-explicit-unicode
+class TemporaryDevice(Device):
     """
     A temporary device which inherits all properties of a normal Device.
     Heavily used by vm-groups implementation.
@@ -1142,7 +1149,7 @@ def _check_device_types(user):
     return all_devices
 
 
-# pylint: disable=too-many-arguments,too-many-variables,too-many-locals
+# pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None,
                          orig=None):
@@ -1778,7 +1785,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
-                logger.debug("Requested device %s is unavailable.", job_data['target'])
+                logger.info("Requested device %s is unavailable.", job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_exclusivity([target], False)
@@ -2200,7 +2207,7 @@ class TestJob(RestrictedResource):
         """
         logger = logging.getLogger('lava_scheduler_app')
         if not user:
-            logger.info("Unidentified user requested cancellation of job submitted by %s", self.submitter)
+            logger.error("Unidentified user requested cancellation of job submitted by %s", self.submitter)
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
@@ -2396,7 +2403,7 @@ class TestJob(RestrictedResource):
             :param device: the actual device for this job, or None
             :return: True if there is a device and that device is status Reserved
             """
-            logger = logging.getLogger('lava_scheduler_app')
+            logger = logging.getLogger('dispatcher-master')
             if not job.actual_device:
                 return False
             if job.actual_device.current_job and job.actual_device.current_job != job:
@@ -2566,15 +2573,21 @@ class TestJob(RestrictedResource):
                 pass
 
     def send_notifications(self):
+        logger = logging.getLogger('lava_scheduler_app')
         notification = self.notification
+        irc_recipients = {}
+        # Prep template args.
+        kwargs = self.get_notification_args()
+        irc_message = self.create_irc_notification()
+
         for recipient in notification.notificationrecipient_set.all():
             if recipient.method == NotificationRecipient.EMAIL:
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     try:
-                        logging.info("sending email notification to %s",
-                                     recipient.email_address)
+                        logger.info("sending email notification to %s",
+                                    recipient.email_address)
                         title = "LAVA notification for Test Job %s" % self.id
-                        kwargs = self.get_notification_args(recipient)
+                        kwargs["user"] = self.get_recipient_args(recipient)
                         body = self.create_notification_body(
                             notification.template, **kwargs)
                         result = send_mail(
@@ -2585,20 +2598,40 @@ class TestJob(RestrictedResource):
                             recipient.save()
                     except (smtplib.SMTPRecipientsRefused,
                             smtplib.SMTPSenderRefused, socket.error):
-                        logging.warn("failed to send email notification to %s",
-                                     recipient.email_address)
-            else:
-                # TODO: implement irc notification.
-                pass
+                        logger.warn("failed to send email notification to %s",
+                                    recipient.email_address)
+            else:  # IRC method
+                if recipient.status == NotificationRecipient.NOT_SENT:
+                    if recipient.irc_server_name:
 
-    def get_notification_args(self, recipient):
+                        logger.info("sending IRC notification to %s on %s" %
+                                    (recipient.irc_handle_name,
+                                     recipient.irc_server_name))
+                        try:
+                            utils.send_irc_notification(
+                                Notification.DEFAULT_IRC_HANDLE,
+                                recipient=recipient.irc_handle_name,
+                                message=irc_message,
+                                server=recipient.irc_server_name)
+                            recipient.status = NotificationRecipient.SENT
+                            recipient.save()
+                            logger.info("IRC notification sent to %s" %
+                                        recipient.irc_handle_name)
+                        except Exception as e:
+                            logger.warn(
+                                "IRC notification not sent. Reason: %s - %s" %
+                                (e.__class__.__name__, str(e)))
+
+    def create_irc_notification(self):
         kwargs = {}
         kwargs["job"] = self
-        if recipient.user:
-            kwargs["user"] = {}
-            kwargs["user"]["username"] = recipient.user.username
-            kwargs["user"]["first_name"] = recipient.user.first_name
-            kwargs["user"]["last_name"] = recipient.user.last_name
+        kwargs["url_prefix"] = "http://%s" % get_domain()
+        return self.create_notification_body(
+            Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
+
+    def get_notification_args(self):
+        kwargs = {}
+        kwargs["job"] = self
         kwargs["url_prefix"] = "http://%s" % get_domain()
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
@@ -2705,6 +2738,14 @@ class TestJob(RestrictedResource):
 
         return kwargs
 
+    def get_recipient_args(self, recipient):
+        user_data = {}
+        if recipient.user:
+            user_data["username"] = recipient.user.username
+            user_data["first_name"] = recipient.user.first_name
+            user_data["last_name"] = recipient.user.last_name
+        return user_data
+
     def create_notification_body(self, template_name, **kwargs):
         txt_body = u""
         txt_body = Notification.TEMPLATES_ENV.get_template(
@@ -2740,6 +2781,8 @@ class Notification(models.Model):
         extensions=["jinja2.ext.i18n"])
 
     DEFAULT_TEMPLATE = "testjob_notification.txt"
+    DEFAULT_IRC_TEMPLATE = "testjob_irc_notification.txt"
+    DEFAULT_IRC_HANDLE = "lava-bot"
 
     QUERY_LIMIT = 5
 
@@ -2876,7 +2919,7 @@ class Notification(models.Model):
 class NotificationRecipient(models.Model):
 
     class Meta:
-        unique_together = ("user", "notification")
+        unique_together = ("user", "notification", "method")
 
     user = models.ForeignKey(
         User,
@@ -2963,18 +3006,24 @@ class NotificationRecipient(models.Model):
             return self.user.email
 
     @property
-    def irc_handle(self):
+    def irc_handle_name(self):
         if self.irc_handle:
             return self.irc_handle
         else:
-            return self.user.extendeduser.irc_handle
+            try:
+                return self.user.extendeduser.irc_handle
+            except:
+                return None
 
     @property
-    def irc_server(self):
+    def irc_server_name(self):
         if self.irc_server:
             return self.irc_server
         else:
-            return self.user.extendeduser.irc_server
+            try:
+                return self.user.extendeduser.irc_server
+            except:
+                return None
 
 
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
@@ -3037,6 +3086,11 @@ class DeviceStateTransition(models.Model):
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
 
+    def clean(self):
+        if self.old_state == self.new_state:
+            raise ValidationError(
+                _("New state must be different then the old state."))
+
     def __unicode__(self):
         return u"%s: %s -> %s (%s)" % (self.device.hostname,
                                        self.get_old_state_display(),
@@ -3046,3 +3100,10 @@ class DeviceStateTransition(models.Model):
     def update_message(self, message):
         self.message = message
         self.save()
+
+
+@receiver(pre_save, sender=DeviceStateTransition,
+          dispatch_uid="clean_device_state_transition")
+def clean_device_state_transition(sender, **kwargs):
+    instance = kwargs["instance"]
+    instance.full_clean()

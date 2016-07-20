@@ -429,8 +429,8 @@ Definitions
 
 * **path** - the path within that repository to the YAML file containing
   the test definition.
-* **name**  (required) - replaces the name from the YAML.
-* **parameters** (optional): Pass parameters to the Lava Test Shell
+* **name** (required) - replaces the name from the YAML.
+* **params** (optional): Pass parameters to the Lava Test Shell
   Definition. The format is a YAML dictionary - the key is the name of
   the variable to be made available to the test shell, the value is the
   value of that variable.
@@ -442,7 +442,7 @@ Definitions
            from: git
            path: hacking-session-debian.yaml
            name: hacking
-           parameters:
+           params:
             IRC_USER: ""
             PUB_KEY: ""
 

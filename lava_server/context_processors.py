@@ -42,7 +42,9 @@ def lava(request):
             'branding_icon': settings.BRANDING_ICON,
             'branding_alt': settings.BRANDING_ALT,
             'branding_height': settings.BRANDING_HEIGHT,
-            'branding_width': settings.BRANDING_WIDTH
+            'branding_width': settings.BRANDING_WIDTH,
+            'branding_bug_url': settings.BRANDING_BUG_URL,
+            'branding_source_url': settings.BRANDING_SOURCE_URL,
         }
     }
 

@@ -130,12 +130,13 @@ def submit_health_check_jobs():
         else:
             if time_denominator:
                 if not run_health_check:
-                    logger.debug("checking time since last health check")
+                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
                     logger.debug("%s needs to run_health_check", device)
-                    logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
+                    logger.debug("[%d] health_check_end=%s",
+                                 device.last_health_report_job.id, device.last_health_report_job.end_time)
                     logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
                     logger.debug("time_diff=%s", (
                         timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)))
@@ -611,7 +612,7 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
         end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
 
 
-def handle_health(job, new_device_status):
+def handle_health(job):
     """
     LOOPING = no change
     job is not health check = no change
@@ -622,7 +623,6 @@ def handle_health(job, new_device_status):
     should not be saved.
     """
     device = job.actual_device
-    device.status = new_device_status
     if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
         return device
     device.last_health_report_job = job
@@ -657,8 +657,12 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         job.save()
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    # Transition device only if it's not in OFFLINE/ING mode
+    # (by failed health check job which already transition it via
+    # put_into_maintenance_mode method)
+    if device.status not in [Device.OFFLINE, Device.OFFLINING]:
+        device.state_transition_to(Device.IDLE, message=msg, job=job)
     device.current_job = None
     # Save the result
     job.save()
@@ -672,8 +676,8 @@ def cancel_job(job):
         job.save()
         return
     msg = "Job %d cancelled" % job.id
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    device.state_transition_to(Device.IDLE, message=msg, job=job)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
@@ -779,12 +783,12 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
 
     validate_list = job.sub_jobs_list if job.is_multinode else [job]
     for check_job in validate_list:
-        parser_device = None if job.dynamic_connection else device_object
+        # dynamic connections still get the device config of the host
         try:
             logger.info("[%d] Parsing definition", check_job.id)
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
-                check_job.definition, parser_device,
+                check_job.definition, device_object,
                 check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
@@ -809,7 +813,8 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(pipeline_dump)
-            map_metadata(pipeline_dump, job)
+            if not map_metadata(pipeline_dump, check_job):
+                logger.warning("[%d] unable to map metadata" % check_job.id)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:

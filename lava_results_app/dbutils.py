@@ -92,7 +92,12 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches
                     match_action.duration = results['duration']
                 if 'timeout' in results:
                     match_action.timeout = results['timeout']  # duration, positive integer
-        result_val = TestCase.RESULT_MAP[results['result']]
+        try:
+            result_val = TestCase.RESULT_MAP[results['result']]
+        except KeyError:
+            logger.error("Unable to MAP result \"%s\"", results['result'])
+            return False
+
         try:
             # For lava test suite, the test (actions) can be seen two times.
             case = TestCase.objects.get(name=name, suite=suite)
@@ -113,15 +118,24 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches
 
     else:
         result = results["result"]
+        measurement = None
+        units = ''
         if testset:
             logger.debug("%s/%s/%s %s", suite, testset, name, result)
         else:
             logger.debug("%s/%s %s", suite, name, result)
+        if 'measurement' in results:
+            measurement = results['measurement']
+        if 'units' in results:
+            units = results['units']
+            logger.debug("%s/%s %s%s", suite, name, measurement, units)
         TestCase.objects.create(
             name=name,
             suite=suite,
             test_set=testset,
-            result=TestCase.RESULT_MAP[result]
+            result=TestCase.RESULT_MAP[result],
+            measurement=measurement,
+            units=units
         ).save()
     return True
 
@@ -270,6 +284,7 @@ def map_metadata(description, job):
         return False
     if not created:
         # prevent updates of existing TestData
+        logger.debug("[%s] skipping alteration of existing TestData", job.id)
         return False
     testdata.save()
 
@@ -318,6 +333,7 @@ def export_testcase(testcase):
     timeout = actiondata.timeout if actiondata else ''
     level = actiondata.action_level if actiondata else None
     casedict = {
+        'name': str(testcase.name),
         'job': str(testcase.suite.job_id),
         'suite': str(testcase.suite.name),
         'result': str(testcase.result_code),

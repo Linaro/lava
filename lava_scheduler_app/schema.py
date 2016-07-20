@@ -119,21 +119,6 @@ def _recipient_schema():
     ])
 
 
-def _email_recipient_schema():
-    return Schema({
-        'user': str,
-        'email': str
-    }, extra=True)
-
-
-def _irc_recipient_schema():
-    return Schema({
-        'user': str,
-        'server': str,
-        'handle': str
-    }, extra=True)
-
-
 def _notify_criteria_schema():
     return Schema({
         Required('status'): Any('complete', 'incomplete', 'canceled'),
@@ -268,7 +253,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
-        'device_path': str,
+        'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),

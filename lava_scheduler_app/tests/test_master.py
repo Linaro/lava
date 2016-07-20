@@ -14,6 +14,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker
 )
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
@@ -40,6 +41,8 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         TestJob.objects.all().delete()  # pylint: disable=no-member
         Tag.objects.all().delete()
 
+    @unittest.skipIf(infrastructure_error('qemu-system-x86_64'),
+                     'qemu-system-x86_64 not installed')
     def test_select_device(self):
         self.restart()
         hostname = 'fakeqemu3'

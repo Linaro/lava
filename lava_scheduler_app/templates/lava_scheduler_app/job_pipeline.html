@@ -109,7 +109,7 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-download"></span></a></li>
         {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
         {% endif %}
@@ -226,30 +226,34 @@
         {% for line in log_data %}
           {% if line.lvl == "debug" %}
             {% if "sending" in line.msg %}
-        <code class="keyboard" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
+        <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
             {% else %}
               {% get_action_id line.msg as act_id %}
-        <code class="debug" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}"{% endif %}>{{ line.msg }}</code>
+        <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
             {% endif %}
           {% elif line.lvl == "target" %}
-        <code class="target bg-success" title="{{ line.dt }}">{{ line.msg }}</code>
+        <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary">
+        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
-              {% for k, v in value.items %}
-                {{ k }}: {{ v }}<br />
-              {% endfor %}
+              {% if key == "extra" %}
+                extra: ...<br />
+              {% else %}
+                {% for k, v in value.items %}
+                  {{ k }}: {{ v }}<br />
+                {% endfor %}
+              {% endif %}
             {% else %}
                 {{ key }}: {{ value }}<br />
             {% endif %}
           {% endfor %}
         </code></a>
           {% elif line.lvl == "error" or line.lvl == "exception" %}
-        <code class="{{ line.lvl }} bg-danger" title="{{ line.dt }}">{{ line.msg }}</code>
+        <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% else %}
             {% get_action_id line.msg as act_id %}
-        <code class="{{ line.lvl }} bg-{{ line.lvl }}" title="{{ line.dt }}"{% if act_id %} id="{{ act_id }}"{% endif %}>{{ line.msg }}</code>
+        <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% endif %}
         {% endfor %}
         {% if job.status <= job.RUNNING %}
@@ -467,6 +471,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/anchor-v3.2.0.min.js"></script>
 <script type="text/javascript">
   $(document).ready(
     function() {
@@ -540,8 +545,11 @@
           affix.removeClass("fix-affix");
         }
       });
-  });
+    });
 
+    // A the links
+    anchors.options.placement = 'left';
+    anchors.add('code');
 
   // Add a timer for the log updates
 {% if job.status <= job.RUNNING %}
@@ -591,33 +599,38 @@
           for(var i = 0; i < data.length; i++) {
               var d = data[i];
               var level = d['lvl'];
+              var id = "L" + (position + i);
 
               var node;
               if(level == 'debug') {
                 if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
-                  $('<code class="keyboard"></code>')
-                    .append($('<kbd></kbd>').text(d['msg']['sending']))
+                  $('<code class="keyboard" id="' + id + '"></code>')
+                    .append($('<kbd></kbd>')
+                    .text(d['msg']['sending']))
                     .insertBefore(progressNode);
                 } else {
                   var action_id = action_id_regexp.exec(d['msg']);
                   if(action_id) {
-                    node = $('<code class="debug" id="' + action_id[1] + '"></code>');
-                  } else {
-                    node = $('<code class="debug"></code>');
+                    id = 'action_' + action_id[1].replace(/\./g, '-');
                   }
-                  node.text(d['msg']).insertBefore(progressNode);
+                  $('<code class="debug" id="' + id + '"></code>')
+                    .text(d['msg'])
+                    .insertBefore(progressNode);
                 }
               } else if(level == 'target') {
-                $('<code class="target bg-success"></code>')
+                $('<code class="target bg-success" id="' + id + '"></code>')
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else if(level == 'results') {
+                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
                 var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
-                var node = $('<code class="results bg-primary"></code>');
+                var node = $('<code class="results bg-primary" id="' + id + '"></code>');
                 for(key in d['msg']) {
                   if(typeof(d['msg'][key]) == 'string') {
                     node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
                     node.append($('<br />'));
+                  } else if(key == 'extra') {
+                    node.append($('<span>extra: ...<span><br />'));
                   } else {
                     for(k in d ['msg'][key]) {
                       node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
@@ -628,18 +641,20 @@
                 link.append(node);
                 link.insertBefore(progressNode);
               } else if (level == 'error' || level == 'exception' ) {
-                $('<code class="' + level + ' bg-danger"></code>')
+                $('<code class="' + level + ' bg-danger" id="' + id + '"></code>')
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else {
                 var action_id = action_id_regexp.exec(d['msg']);
                 if(action_id) {
-                  node = $('<code class="' + level + ' bg-' + level + '" id="' + action_id[1] + '"></code>');
-                } else {
-                  node = $('<code class="' + level + ' bg-' + level + '"></code>');
+                  id = 'action_' + action_id[1].replace(/\./g, '-');
                 }
-                node.text(d['msg']).insertBefore(progressNode);
+                $('<code class="' + level + ' bg-' + level + '" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
               }
+              // Add the anchor
+              anchors.add('#' + id);
           }
           // Relaunch the timer
           if(xhr.getResponseHeader('X-Is-Finished')) {
