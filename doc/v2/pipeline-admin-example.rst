@@ -530,9 +530,8 @@ have  a name, separate from the content of the YAML file.
 Complete YAML submission
 ========================
 
-FIXME: move complete YAML examples into an rsti file to check parsing.
-
-.. include:: mustang-example-job-yaml.rtsi
+.. include:: yaml/mustang-admin-example-job-yaml
+   :code: yaml
 
 Writing a device type template
 ******************************
