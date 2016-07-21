@@ -1,7 +1,10 @@
 .. _results_api:
 
-Results API
-***********
+Results APIs
+************
 
-FIXME - needs some text
+Multiple ways to get results:
 
+XMLRPC
+REST
+CSV/YAML downloads

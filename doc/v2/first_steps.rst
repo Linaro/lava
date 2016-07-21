@@ -89,8 +89,8 @@ LAVA Administration
    lxc-deploy.rst
    vland-admin.rst
 
-LAVA XML-RPC APIs
-#################
+LAVA APIs
+#########
 
 .. toctree::
    :hidden:
