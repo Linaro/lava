@@ -6,11 +6,8 @@ Logging In
 ==========
 
 Each LAVA instance offers a :ref:`local_user` and may also be
-configured to offer any combination of the following alternative
-authentication methods:
+configured to an alternative authentication method:
 
-* :ref:`launchpad_openid`
-* :ref:`google_openid`
 * :ref:`ldap_authentication`
 
 OpenID is no longer available for all installations of
@@ -35,6 +32,8 @@ A local user account may be created by an administrator within
 LAVA. The administrator may grant different permissions to the user to
 perform various operations within LAVA. A typical login screen will
 look something like the following.
+
+.. FIXME: local-user-login includes the removed launchpad support.
 
 .. image:: ./images/local-user-login.png
 

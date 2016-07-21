@@ -190,7 +190,7 @@ mean that LAVA is the best choice of test system for these systems.
   serial numbers, MAC addresses, IP addresses and bootloader timeouts
   **must** be configurable and persistent once configured.
 
-* **LAVA is not a complete CI solution** - even including the hardwar
+* **LAVA is not a complete CI solution** - even including the hardware
   support available from some LAVA instances, there are a lot more tools
   required outside of LAVA before a CI loop will actually work. The triggers
   from your development workflow to the build farm (which is not LAVA),

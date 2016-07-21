@@ -1,0 +1,43 @@
+# Sample JOB definition for an x86_64 QEMU
+device_type: qemu
+job_name: QEMU pipeline, first job
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+context:
+  arch: amd64
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

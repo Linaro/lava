@@ -18,51 +18,8 @@ Here's an example minimal job that you should be able to use right
 away if you have user access to an appropriately-configured LAVA
 installation.
 
-.. code-block:: yaml
-
- # Sample JOB definition for an x86_64 QEMU
- device_type: qemu
- job_name: QEMU pipeline, first job
-
- timeouts:
-   job:
-     minutes: 15
-   action:
-     minutes: 5
- priority: medium
- visibility: public
- context:
-   arch: amd64
-
- actions:
- - deploy:
-     timeout:
-       minutes: 5
-     to: tmpfs
-     images:
-       rootfs:
-         image_arg: -drive format=raw,file={rootfs}
-         url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-         compression: gz
-     os: debian
-
- - boot:
-     method: qemu
-     media: tmpfs
-     prompts: ["root@debian:"]
-
- - test:
-     timeout:
-       minutes: 5
-     definitions:
-     - repository: git://git.linaro.org/qa/test-definitions.git
-       from: git
-       path: ubuntu/smoke-tests-basic.yaml
-       name: smoke-tests
-     - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
-       from: git
-       path: lava-test-shell/single-node/singlenode03.yaml
-       name: singlenode-advanced
+.. include:: qemu-pipeline-first-job.yaml
+     :code: yaml
 
 .. seealso:: :ref:`explain_first_job`.
 
@@ -74,8 +31,9 @@ Job Submission
 Jobs may be submitted to LAVA in one of three ways:
 
  * the command line (using the ``lava-tool`` program); or
- * the web UI; or
- * the XML-RPC API
+ * the :ref:`XML-RPC <xml_rpc>` API
+
+ .. FIXME: add back later:  * the web UI
 
 .. note:: ``lava-tool`` is a general-purpose command line interface
       for LAVA which can be used directly on the LAVA server
@@ -195,44 +153,7 @@ and the type of deploy and boot methods involved in the test job.
 Downloading test results
 ========================
 
-LAVA V2 makes the test results available directly from the instance,
-without needing to go through ``lava-tool``. Currently, the results
-for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
-and YAML format.
-
-For example, the results for test job number 123 are available as
-CSV using::
-
- https://validation.linaro.org/results/123/csv
-
-The same results for job number 123 are available as YAML using::
-
- https://validation.linaro.org/results/123/yaml
-
-If you know the test definition name, you can download the results for
-that specific test definition only in the same way::
-
- https://validation.linaro.org/results/123/singlenode-advanced/csv
- https://validation.linaro.org/results/123/singlenode-advanced/yaml
-
-Some test jobs can be restricted to particular users or groups of
-users. The results of these test jobs are restricted in the same
-way. To download these results, you will need to specify your username
-and one of your :ref:`authentication_tokens` - remember to quote the
-URL if using it on the command line or the & will likely be
-interpreted by your shell::
-
- 'https://validation.linaro.org/results/123/csv?user=user.name&token=yourtokentextgoeshereononeverylongline'
-
- $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
-
-Use the **Username** as specified in `your Profile </me>`_ - this may
-differ from the username you use when logging in with LDAP.
-
-.. caution:: Take care of your tokens - avoid using personal tokens in
-   scripts and test definitions or other files that end up in public
-   git repositories. Wherever supported, use ``https://`` when using a
-   token.
+.. include:: restapi.rsti
 
 Web Based Job Submission
 ========================
@@ -265,7 +186,7 @@ support to appear soon**.
 XML-RPC Job Submission
 ======================
 
-:ref:``lava-tool`` is a wrapper around the XML-RPC API with helpers
+:ref:`lava_tool` is a wrapper around the XML-RPC API with helpers
 for personal usage. The XML-RPC API itself supports a variety of
 queries and operations which can assist in creating a frontend
 to LAVA which can automate the submission of test jobs.

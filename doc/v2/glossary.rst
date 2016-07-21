@@ -17,6 +17,7 @@ Glossary of terms
 [ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
 [ :term:`distributed deployment`] [ :term:`DUT` ]
 [ :term:`exclusive` ]
+[ :term:`frontend` ]
 [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
 [ :term:`interface tag` ]
 [ :term:`messageID` ]
@@ -140,6 +141,14 @@ Glossary of terms
     It is recommended to have pipeline support for all devices of the
     relevant device type before enabling exclusive pipeline support,
     especially if the device type has a :ref:`yaml_health_checks`
+
+  frontend
+    ``lava-server`` provides a generic `frontend` consisting of the Results,
+    Queries, Job tables, Device tables and Charts. Many projects will need
+    to customise this data to make it directly relevant to the developers.
+    This is supported using the :ref:`xml_rpc` and REST API support.
+
+    .. seealso:: :ref:`what_is_lava_not`
 
   hacking session
     A test job which uses a particular type of test definition to allow users to

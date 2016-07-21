@@ -50,6 +50,8 @@ to be tested in LAVA or may provide no overall gain.
           reference ``validation.linaro.org``, replace with the fully
           qualified domain name of your LAVA instance.
 
+.. _what_is_lava_not:
+
 What is LAVA **not**?
 *********************
 

@@ -21,49 +21,6 @@ Local Django user accounts are supported. When using local Django
 user accounts, new user accounts need to be created by Django admin prior
 to use.
 
-Support for `OAuth2`_ is under investigation in LAVA.
-
-.. _OAuth2: http://oauth.net/2/
-
-.. _launchpad_openid:
-
-Using Launchpad OpenID
-----------------------
-
-LAVA server, by default, is preconfigured to authenticate using
-Launchpad OpenID service but only **if** ``django-auth-openid`` support
-is available, e.g. Debian Jessie. Newer versions of django cannot work
-with the outdated django_openid_auth support.
-
-Your chosen OpenID server is configured using the ``OPENID_SSO_SERVER_URL``
-in ``/etc/lava-server/settings.conf`` (JSON syntax).
-
-To use Launchpad even if the LAVA default changes, use::
-
- "OPENID_SSO_SERVER_URL": "https://login.ubuntu.com/",
-
-Restart ``lava-server`` and ``apache2`` services if this is changed.
-
-.. _google_openid:
-
-Using Google+ OpenID
---------------------
-
-Google+ OpenID also needs the ``python-django-auth-openid`` support
-to be available.
-
-To switch from Launchpad to Google+ OpenID, change the setting for the
-``OPENID_SSO_SERVER_URL`` in ``/etc/lava-server/settings.conf``
-(JSON syntax)::
-
- "OPENID_SSO_SERVER_URL": "https://www.google.com/accounts/o8/id",
-
-The Google+ service is already deprecated and is due to be deactivated
-in September 2014 in preference for OAuth2.
-
-Restart ``lava-server`` and ``apache2`` services for the change to
-take effect.
-
 .. _ldap_authentication:
 
 Using Lightweight Directory Access Protocol (LDAP)

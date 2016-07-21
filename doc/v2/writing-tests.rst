@@ -296,7 +296,7 @@ YAML for your own tests, see the :ref:`test_developer`.
 Parsing command outputs
 ***********************
 
-.. comment:: This duplicates lava_test_shell.rst Advanced Parsing
+.. comment This duplicates lava_test_shell.rst Advanced Parsing
 
 .. warning:: Parse patterns and fixup dictionaries are confusing and
    hard to debug. The syntax is Python and the support remains for
@@ -400,7 +400,10 @@ Recording test case measurements and units
 Various tests require measurements and ``lava-test-case`` supports
 measurements and units per test at a precision of 10 digits.
 
-``--result`` must always be specified.
+``--result`` must always be specified and only numbers can be recorded
+as measurements (to support charts based on measurement trends).
+
+.. seealso:: :ref:`recording_test_result_data`
 
 .. code-block:: yaml
 
@@ -422,6 +425,32 @@ This syntax will result in the test results:
 
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
+
+.. _recording_test_result_data:
+
+Recording test case data
+************************
+
+Simple strings
+==============
+
+A version string or similar can be recorded as a ``lava-test-case``
+name::
+
+ lava-test-case ${VERSION} --result pass
+
+Version strings need specific handling to compare for newer, older etc.
+so LAVA does not support comparing or ordering of such strings beyond
+simple alphanumeric sorting. A custom :term:`frontend` would be the
+best way to handle such results.
+
+Files
+=====
+
+``lava-test-case-attach`` is :ref:`not supported in V2 <test_attach>`.
+
+.. FIXME: add details of the publishing API
+
 
 .. _best_practices:
 

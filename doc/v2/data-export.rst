@@ -5,6 +5,20 @@
 Exporting data out of LAVA
 ##########################
 
+LAVA supports two methods of extracting data and results are available
+whilst the job is running, XML-RPC and the REST API.
+
+.. FIXME: include details of the publisher for events as well as notifications.
+
+.. index:: rest api
+
+.. _rest_api:
+
+REST API
+********
+
+.. include:: restapi.rsti
+
 .. index:: xmlrpc
 
 .. _xml_rpc:
