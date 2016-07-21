@@ -63,6 +63,7 @@ Using Test Results
    storing-results.rst
    lava-queries-charts.rst
    data-export.rst
+   custom-result-handling.rst
 
 LAVA Administration
 ###################
