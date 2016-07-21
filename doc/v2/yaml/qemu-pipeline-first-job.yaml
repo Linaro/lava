@@ -1,4 +1,4 @@
-# Sample JOB definition for an x86_64 QEMU
+# Your first LAVA JOB definition for an x86_64 QEMU
 device_type: qemu
 job_name: QEMU pipeline, first job
 
@@ -9,8 +9,17 @@ timeouts:
     minutes: 5
 priority: medium
 visibility: public
+
+# context allows specific values to be overridden or included
 context:
+  # tell the qemu template which architecture is being tested
+  # the template uses that to ensure that qemu-system-x86_64 is executed.
   arch: amd64
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: first-job
+  docs-filename: qemu-pipeline-first-job.yaml
 
 actions:
 - deploy:
