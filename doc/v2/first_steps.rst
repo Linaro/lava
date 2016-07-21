@@ -21,6 +21,7 @@ First Steps Installing LAVA V2
    first-installation.rst
    installing_on_debian.rst
    first-devices.rst
+   devicetypes.rst
    simple-admin.rst
 
 Writing Tests
@@ -74,7 +75,6 @@ LAVA Administration
    pipeline-admin.rst
    proxy.rst
    pipeline-admin-example.rst
-   devicetypes.rst
    device-capabilities.rst
    authentication.rst
    hijack-user.rst

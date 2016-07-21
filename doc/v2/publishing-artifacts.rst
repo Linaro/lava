@@ -3,5 +3,4 @@
 Publishing artifacts
 ********************
 
-FIXME - needs some text
-
+Add docs about the publishing API, including how/what/where/why
