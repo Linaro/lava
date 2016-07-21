@@ -145,8 +145,8 @@ Elements of a device type
 
 **Name**
    - see :ref:`naming_device_types`. Needs to match the name of a
-   jinja template in ``/etc/lava-server/dispatcher-config/device-types/``,
-   without the ``.jinja2`` suffix.
+     jinja template in ``/etc/lava-server/dispatcher-config/device-types/``,
+     without the ``.jinja2`` suffix.
 
 **Has health check**
    - see :term:`health check`

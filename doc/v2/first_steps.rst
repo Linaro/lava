@@ -60,7 +60,6 @@ Using Test Results
    :hidden:
    :maxdepth: 1
 
-   storing-results.rst
    lava-queries-charts.rst
    data-export.rst
    custom-result-handling.rst
@@ -131,7 +130,6 @@ Other Topics
    :hidden:
    :maxdepth: 1
 
-   faq.rst
    lava-scheduler.rst
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
