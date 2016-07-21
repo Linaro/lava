@@ -53,7 +53,7 @@ whitespace.::
         echo $role
     done
 
-See :ref:`use_case_four`
+.. seealso :ref:`use_case_four`
 
 .. index:: lava-group
 
@@ -108,7 +108,7 @@ role::
         echo $device
     done
 
-See :ref:`use_case_four`
+.. seealso:: :ref:`use_case_four`
 
 .. index:: lava-send
 
@@ -155,7 +155,7 @@ that data will continue to be added to the data for that message ID and
 will be returned by subsequent calls to ``lava-wait`` for that message
 ID. Use a different message ID to collate different message data.
 
-See also :ref:`flow_tables`
+.. seealso:: :ref:`flow_tables`
 
 .. index:: lava-wait-all
 
@@ -197,7 +197,7 @@ Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
 makes all boards in the group run at the speed of the slowest board in
 the group up to the point where the sync or wait is called.
 
-See also :ref:`flow_tables`
+.. seealso:: :ref:`flow_tables`
 
 lava-wait-all <message-id> <role>
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -217,7 +217,7 @@ will act as a sender, at least one role will act as a receiver and any other rol
 can continue as normal. This level of complexity is not usually needed. It is advisable
 to draw out the sequence in a table to ensure that the correct calls are made.
 
-See also :ref:`flow_tables`
+.. seealso:: :ref:`flow_tables`
 
 .. index:: lava-sync
 
@@ -234,7 +234,7 @@ Usage: ``lava-sync <message>``
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
 
-See also :ref:`flow_tables`
+.. seealso:: :ref:`flow_tables`
 
 .. index:: lava-network
 
@@ -324,8 +324,10 @@ Usage:
 
 ``lava-network alias-hosts`` is an optional extension which extends the
 ``lava-network hosts`` support to use the role of each device in the
-group as an alias in the output. See :ref:`role_aliases` for more
-information on the limitations of using roles as aliases.
+group as an alias in the output.
+
+.. seealso:: :ref:`role_aliases` for more information on the
+   limitations of using roles as aliases.
 
 The ``hostname`` used in a query of ``lava-network`` is the LAVA hostname
 which may differ from the network hostname of the device (which is why
