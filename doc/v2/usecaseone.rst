@@ -11,13 +11,13 @@ available to another device in the same group.
 Source Code
 ===========
 
-* The YAML snippets in this example are not complete, for a working example of the code, see:
+This example keeps all of the :ref:`multinode_api` calls to the inline
+definitions. This is a recommended practice and future developments will
+make it easier to match up the synchronisation calls from inline
+definitions.
 
-  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/forwarder.yaml
-
-  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:receiver.yaml
-
-  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob/HEAD:/json/beagleblack-use-case.json
+.. include:: yaml/bbb-forward-receive.yaml
+   :code: yaml
 
 Requirements
 ============
@@ -112,23 +112,13 @@ installation will need to be done in the run steps::
         - lava-test-case apt-update --shell apt update
         - lava-test-case install-deps --shell apt -y install wget apache2
 
-Note that although KVM devices can use apt, the network interface fails
-the LAVA test, so use the manual install steps for non-bridged KVM devices.
-
 Preparing the test to send data
 -------------------------------
 
-``modify-data.sh`` would, presumably, unpack the data, modify it in
-some way and pack it back up again. In this example, it would be a no-op
-but note that it still needs to exist in the top level directory of your
-VCS repo and be executable.
-
-Any packages required by ``modify-data.sh`` need to be added to the install
-deps of sender.yaml. Providing useful contents of ``modify-data.sh`` is
-left as an exercise for the reader.
-
-Modification happens before the :ref:`lava_sync` ``download`` which tells the
-receiver that the data is ready to be transferred.
+A real test would, presumably, unpack the data, modify it in
+some way and pack it back up again. Modification would happen before
+the :ref:`lava_sync` ``download`` which tells the receiver that the
+data is ready to be transferred.
 
 The sender then waits for the receiver to acknowledge a correct download
 using :ref:`lava_sync` ``received`` and cleans up.
@@ -146,8 +136,8 @@ sender.yaml
  run:
    steps:
         - lava-test-case multinode-network --shell lava-network broadcast eth0
-        - lava-test-case wget-file --shell wget -O /var/www/testfile https://releases.linaro.org/latest/android/arndale/userdata.tar.bz2
-        - ./modify-data.sh
+        - lava-test-case wget-file --shell wget -O /var/www/testfile http://images.validation.linaro.org/production-repo/services-trace.txt
+        # could modify the download here
         - lava-test-case file-sync --shell lava-sync download
         - lava-test-case done-sync --shell lava-sync received
         - lava-test-case remove-tgz --shell rm /var/www/testfile
@@ -157,9 +147,7 @@ Handling the transfer to the receiver
 
 The receiver needs to know where to find the data. The sender can ensure that the
 file is in a particular location, it is up to the YAML to get the rest of the
-information of the network address of the sender. This example assumes that the
-data is modified in some undisclosed manner by the ``./modify-data.sh``
-script which is part of your testdef_repo before the receiver is notified.
+information of the network address of the sender.
 
 The LAVA :ref:`multinode_api` provides ways of querying the network information of devices
 within the group. In order to offer the data via apache, the sender needs to
@@ -199,6 +187,8 @@ receiver.yaml
 The receiver then needs to obtain that network information and process
 it to get the full URL of the data. To do command line processing and
 pipes, a helper script is needed:
+
+# FIXME: multiple test actions support is needed here.
 
 get-data.sh
 ^^^^^^^^^^^
@@ -246,24 +236,6 @@ The JSON ties the YAML test definition with the hardware and software to
 run the test definition. The JSON is also where multiple test
 definitions are combined into a single MultiNode test.
 
-General settings
-----------------
-
-.. warning:: **Timeout values need to be reduced from single node examples**
-
- - each synchronisation primitive uses the timeout from the general settings,
- - always check your timeout value - 900 is recommended.
-
-::
-
- {
-    "health_check": false,
-    "logging_level": "DEBUG",
-    "timeout": 900,
-    "job_name": "client-server test",
- }
-
-
 device_group
 ^^^^^^^^^^^^
 
@@ -276,23 +248,19 @@ the count and all such devices will have the same role and use the same
 commands and the same actions. (The job will be rejected if there are
 not enough devices available to satisfy the count.)
 
-::
+.. code-block:: yaml
 
- {
-    "device_group": [
-        {
-            "role": "sender",
-            "count": 1,
-            "device_type": "beaglebone-black"
-        },
-        {
-            "role": "receiver",
-            "count": 1,
-            "device_type": "kvm"
-        }
-    ],
- }
-
+  protocols:
+    lava-multinode:
+      roles:
+        client:
+          device_type: beaglebone-black
+          count: 1
+        server:
+          device_type: beaglebone-black
+          count: 1
+      timeout:
+        minutes: 6
 
 actions
 -------
@@ -301,28 +269,46 @@ When mixing different device_types in one group, the images to deploy
 will probably vary, so use the role parameter to determine which image
 gets used on which board(s).
 
-deploy_linaro_image
-^^^^^^^^^^^^^^^^^^^
+deploy
+^^^^^^
 
-::
+.. code-block:: yaml
 
- {
-    "actions": [
-        {
-            "command": "deploy_linaro_image",
-            "parameters": {
-                "image": "https://images.validation.linaro.org/kvm-debian-wheezy.img.gz",
-                "role": "receiver"
-            }
-        },
-        {
-            "command": "deploy_linaro_image",
-            "parameters": {
-                "image": "http://linaro-gateway/beaglebone/beaglebone_20130625-379.img.gz",
-                "role": "sender"
-            }
-        }
- }
+  actions:
+  - deploy:
+      role:
+      - client
+      - server
+      timeout:
+        minutes: 10
+      to: tftp
+      kernel:
+        url: http://people.linaro.org/~neil.williams/opentac/zImage
+      ramdisk:
+        url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+        compression: gz
+        header: u-boot
+        add-header: u-boot
+      os: oe
+      dtb:
+        url: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+
+boot
+^^^^
+
+.. code-block:: yaml
+
+    - boot:
+        role:
+        - server
+        - client
+        timeout:
+          seconds: 60
+        method: u-boot
+        commands: ramdisk
+        type: bootz
+        prompts:
+        - 'linaro-test'
 
 
 lava_test_shell
@@ -333,60 +319,39 @@ field to the parameters of the action.
 
 If any action has no role specified, it will be actioned for all roles.
 
-For Use Case One, we have a different YAML file for each role, so
-we have two lava_test_shell commands.
+.. code-block:: yaml
 
-::
+    - test:
+        role:
+        - client
+        timeout:
+          minutes: 5
+        definitions:
+        - from: inline
+          repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: forwarder
+              description: "MultiNode network test commands"
+            install:
+              deps:
+              - curl
+              - realpath
+              - lsb-release
+              - usbutils
+              - wget
+              - ntpdate
+              - apache2
+            run:
+              steps:
+              - lava-test-case multinode-role-output --shell lava-role
+              - lava-test-case multinode-sync --shell lava-sync running
+              - lava-test-case multinode-send-message --shell lava-send sending source=$(lava-self) role=$(lava-role) hostname=$(hostname -f) kernver=$(uname -r) kernhost=$(uname -n)
+              - lava-test-case multinode-group --shell lava-group
+              - lava-group
 
- {
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/people/neilwilliams/multinode-yaml.git",
-                        "testdef": "forwarder.yaml"
-                    }
-                ],
-                "role": "sender"
-            }
-        },
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/people/neilwilliams/multinode-yaml.git",
-                        "testdef": "receiver.yaml"
-                    }
-                ],
-                "role": "receiver"
-            }
-        }
- }
-
-
-submit_results
-^^^^^^^^^^^^^^
-
-The results for the entire group get aggregated into a single result
-bundle. Ensure that the bundle stream exists on the specified server
-and that you have permission to add to that stream.
-
-::
-
- {
-        {
-            "command": "submit_results_on_host",
-            "parameters": {
-                "stream": "/anonymous/use-cases/",
-                "server": "https://validation.linaro.org/RPC2/"
-            }
-        }
- }
-
-Prepare a filter for the results
-================================
+Prepare a Query for the results
+===============================
 
 Now decide how you are going to analyse the results of tests using
 this definition, using the name of the test definition specified in
