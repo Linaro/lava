@@ -1,0 +1,90 @@
+# Simple example of a LAVA MultiNode test using two Panda boards and a
+# Beaglebone-Black
+job_name: First MultiNode job
+
+# Reasonable defaults for a simple job
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: writing-multinode
+  docs-filename: first-multinode-job.yaml
+
+# Very simple multinode definition for our example
+# START-BLOCK-1
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: panda
+        count: 2
+      server:
+        device_type: beaglebone-black
+        count: 1
+    timeout:
+      minutes: 6
+# END-BLOCK-1
+
+# START-BLOCK-2
+actions:
+- deploy:
+    role:
+    - server
+    timeout:
+      minutes: 2
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/functional-test-images/panda/uImage
+    ramdisk:
+      url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+      compression: gz
+      header: u-boot
+      add-header: u-boot
+    os: oe
+    dtb:
+      url: http://images.validation.linaro.org/functional-test-images/am335x-boneblack.dtb
+
+- deploy:
+    role:
+    - client
+    timeout:
+      minutes: 2
+    to: tftp
+    kernel:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+    ramdisk:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+      compression: gz
+      header: u-boot
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+    modules:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+      compression: gz
+    # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
+    os: oe
+    dtb:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/omap4-panda.dtb
+# END-BLOCK-2
+
+# START-BLOCK-3
+- boot:
+    role:
+    - client
+    - server
+    method: u-boot
+    commands: ramdisk
+    prompts:
+    # escape the brackets to ensure that the prompt does not match
+    # kernel debug lines which may mention initramfs
+    - '\(initramfs\)'
+    type: bootz
+    timeout:
+      minutes: 2
+# END-BLOCK-3
