@@ -98,6 +98,7 @@ LAVA APIs
 
    results-api.rst
    control-api.rst
+   publishing-api.rst
 
 Developer guides
 ################
