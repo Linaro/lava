@@ -23,6 +23,7 @@ First Steps Installing LAVA V2
    first-devices.rst
    devicetypes.rst
    simple-admin.rst
+   growing_your_lab.rst
 
 Writing Tests
 #############
