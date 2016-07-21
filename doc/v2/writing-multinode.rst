@@ -3,59 +3,47 @@
 Writing MultiNode tests
 #######################
 
-LAVA supports running a single test across multiple devices, combining
-groups of devices (of any type) within a group. Devices within the
-same group can communicate with each other using the :ref:`multinode_api`.
+LAVA supports running a single test across multiple devices (of any
+type), combining those devices into a group. Devices within this
+MultiNode group can communicate with each other using the
+:ref:`multinode_api`.
 
-The test definitions used in MultiNode tests do not have to differ from
-single node tests, unless the tests need to support communication
-between devices in the same group.
+The test definitions used in MultiNode tests typically do not have to
+differ much from single-node tests, unless the tests need to support
+communication between devices in the same group. In fact, the
+recommended way to develop MultiNode tests is to start simple and
+build up complexity one step at a time. That's what the examples here
+will show.
 
-.. note:: when viewing MultiNode log files, the original YAML submitted
-          to start the job is available as the MultiNode Definition.
-          The other definition is the parsed content which was sent to
-          each node within the MultiNode job to create one log file and
-          one test job for each node. It is not usually useful to submit
-          the definition of one node of a MultiNode job as a separate job.
-
-.. _writing_multinode_protocol:
-
-Writing jobs using the multinode protocol
-*****************************************
-
-The initial protocol available with the refactoring is Multinode. This
-protocol defines the multinode group and also allows actions within the
-Pipeline to make calls using the :ref:`multinode_api` outside of a
-test definition.
-
-The Multinode Protocol allows data to be shared between actions, including
-data generated in one test shell definition being made available over the
-protocol to a deploy or boot action of jobs with a different ``role``.
-
-The Multinode Protocol can underpin the use of other tools without
-necessarily needing a dedicated Protocol class to be written for those
-tools. Using the Multinode Protocol is an extension of using the existing
-:ref:`multinode_api` calls within a test definition. The use of the
-protocol is an advanced use of LAVA and relies on the test writer
-carefully planning how the job will work.
-
-.. code-block:: yaml
-
-        protocols:
-          lava-multinode:
-            action: umount-retry
-            request: lava-sync
-            messageID: test
-
-This snippet would add a :ref:`lava_sync` call at the start of the
-UmountRetry action:
+.. note:: when viewing MultiNode log files, the original YAML
+          submitted to start the job is available as the MultiNode
+          Definition. The other definition is the parsed content which
+          was sent to each node within the MultiNode job to create a
+          separate log file and test job for each node. It is not
+          usually useful to submit the definition of one node of a
+          MultiNode job as a separate job.
 
 Writing a MultiNode job file
 ****************************
 
-The YAML job submission needs changes to combine the devices within the
-protocol. Remove the current ``device_type`` line, if any, and specify
-the LAVA multinode protocol roles.
+.. _multinode_roles:
+
+Define MultiNode roles
+======================
+
+Assuming that you have an already-working simple test job, the first
+changes to make are in device selection.
+
+* First of all, remove the ``device_type`` declaration in the job as
+  that only works for single devices.
+
+* Next, add configuration for the MultiNode protocol. This will tell
+  LAVA how to select multiple devices for your test.
+
+The MultiNode protocol defines **roles**. This example snippet creates
+a group of three devices, two of the ``device_type`` panda in the
+``client`` role and one of the ``device_type`` beaglebone-black in the
+``server`` role.
 
 .. code-block:: yaml
 
@@ -63,31 +51,41 @@ the LAVA multinode protocol roles.
     lava-multinode:
       roles:
         client:
-          device_type: qemu
-          count: 1
+          device_type: panda
+          count: 2
           request: lava-start
           expect_role: server
         server:
-          device_type: qemu
+          device_type: beaglebone-black
           count: 1
       timeout:
         minutes: 6
 
-This example creates a group of three devices, two of the ``device_type``
-panda and one of the ``device_type`` beaglebone-black. The :term:`role` is an
-arbitrary label which can be used later in the testjob to determine which
-tests are run on the devices and inside the test shell definition to
-determine how the devices communicate.
+.. note:: The :term:`role` is an arbitrary label - use whatever
+	  descriptive names you like for the different roles, so long
+	  as they are unique.
 
-This change is enough to run a Multi-Node test in LAVA. Each device will
-use the same YAML file, running the tests independently on each device.
+The role names that you define here will be used later in the test job
+to determine which tests are run on which devices, and inside the test
+shell definition to determine how the devices communicate.
 
-The next stage is to allow devices to run different tests according to
-the ``role`` which the device will have during the test.
+After just these changes, your test job will be enough to run a simple
+MultiNode test in LAVA. It will pick several devices for the test,
+then run exactly the same set of actions on each device independently.
+
+Using your MultiNode roles
+==========================
+
+The next step is to modify the test to run different actions on each
+device. This is done using the ``roles`` defined earlier:
+
+FIXME - continue with the same example submission!
 
 .. code-block:: yaml
 
     - deploy:
+        role:
+        - server
         timeout:
           minutes: 5
         to: tmpfs
@@ -99,10 +97,10 @@ the ``role`` which the device will have during the test.
               compression: gz
         os: debian
         root_partition: 1
-        role:
-        - server
 
     - deploy:
+        role:
+        - client
         timeout:
           minutes: 5
         to: tmpfs
@@ -121,14 +119,12 @@ the ``role`` which the device will have during the test.
             key: ipaddr
             timeout:
               minutes: 2
-        role:
-        - client
 
-This will deploy the specified ``kvm-debian-wheezy.img.gz`` image on every
-device in the group which is assigned the role ``server``. The second
-deployment uses the protocol to make a call over the Multinode API
-before the deploymet starts and will run on every device in
-the group which is assigned the role ``client``.
+This will deploy the specified ``kvm-debian-wheezy.img.gz`` image on
+every device in the group which is assigned the role ``server``. The
+second deployment uses the protocol to make a call over the Multinode
+API before the deployment starts and will run on every device in the
+group which is assigned the role ``client``.
 
 Using MultiNode commands to synchronise devices
 ***********************************************
@@ -236,3 +232,35 @@ It is also possible for devices to retrieve data about the group itself,
 including the role or name of the current device as well as the names
 and roles of other devices in the group. See :ref:`multinode_api` and
 :ref:`multinode_use_cases` for more information.
+
+.. _writing_multinode_protocol:
+
+Writing jobs using the MultiNode protocol
+*****************************************
+
+The MultiNode protocol defines the MultiNode group and also allows
+actions within the job Pipeline to make calls using the
+:ref:`multinode_api` outside of a test definition.
+
+The MultiNode protocol allows data to be shared between actions,
+including data generated in one test shell definition being made
+available over the protocol to a deploy or boot action of jobs with a
+different ``role``.
+
+The Multinode protocol can underpin the use of other tools without
+necessarily needing a dedicated protocol class to be written for those
+tools. Using the Multinode protocol is an extension of using the
+existing :ref:`multinode_api` calls within a test definition. The use
+of the protocol is an advanced use of LAVA and relies on the test
+writer carefully planning how the job will work.
+
+This snippet would add a :ref:`lava_sync` call at the start of the
+UmountRetry action:
+
+.. code-block:: yaml
+
+  protocols:
+    lava-multinode:
+      action: umount-retry
+      request: lava-sync
+      messageID: test
