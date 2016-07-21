@@ -8,6 +8,8 @@ Use Case One - Setting up a simple client:server test definition.
 One device needs to obtain / prepare some data and then make the data
 available to another device in the same group.
 
+# FIXME: this needs the multi-test support in multinode to be working!
+
 Source Code
 ===========
 
