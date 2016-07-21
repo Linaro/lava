@@ -3,5 +3,5 @@
 Control API
 ***********
 
-FIXME - needs some text
-
+Extract the existing doc strings from the API help - let's have a
+complete reference here too.
