@@ -75,7 +75,7 @@ health checks, without making the health check unnecessarily long:
            path: ubuntu/smoke-tests-basic.yaml
            name: smoke-tests
 
-These tests run simple Ubuntu test commands to do with networking and
+These tests run simple Debian/Ubuntu test commands to do with networking and
 basic functionality - it is common for ``linux-linaro-ubuntu-lsusb``
 and/or ``linux-linaro-ubuntu-lsb_release`` to fail as individual test
 cases but these failed test cases will **not** cause the health check
@@ -94,3 +94,14 @@ Using ``lava_test_shell`` in all health checks has several benefits:
    tests to pick up common hardware issues
 
 See also :ref:`writing_tests`.
+
+Skipping health checks
+======================
+
+When a device is taken online in the web UI, there is an option to
+skip the manual health check. Health checks will still run in the
+following circumstances when "Skip Health check" has been selected:
+
+* When the health status of the device is in Unknown, Fail or Looping
+* When the device has been offline for long enough that a health
+   check is already overdue.
