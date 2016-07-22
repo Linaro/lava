@@ -14,6 +14,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.core.exceptions import (
@@ -2650,9 +2651,11 @@ class TestJob(RestrictedResource):
             if compare_index is not None:
                 # Get testsuites diffs between current job and latest complete
                 # job from query.
-                new_suites = self.testsuite_set.all()
+                new_suites = self.testsuite_set.all().exclude(
+                    name__in=self.notification.blacklist)
                 old_suites = kwargs["query"]["results"][
-                    compare_index].testsuite_set.all()
+                    compare_index].testsuite_set.all().exclude(
+                        name__in=self.notification.blacklist)
                 left_suites_diff = new_suites.exclude(
                     name__in=old_suites.values_list(
                         'name', flat=True))
@@ -2665,9 +2668,12 @@ class TestJob(RestrictedResource):
                 # Get testcases diffs between current job and latest complete
                 # job from query.
                 from lava_results_app.models import TestCase, TestSuite
-                new_cases = TestCase.objects.filter(suite__job=self)
-                old_cases = TestCase.objects.filter(
-                    suite__job=kwargs["query"]["results"][compare_index])
+                new_cases = TestCase.objects.filter(suite__job=self).exclude(
+                    name__in=self.notification.blacklist).exclude(
+                        suite__name__in=self.notification.blacklist)
+                old_cases = TestCase.objects.filter(suite__job=kwargs["query"]["results"][compare_index]).exclude(
+                    name__in=self.notification.blacklist).exclude(
+                        suite__name__in=self.notification.blacklist)
 
                 left_cases_diff = new_cases.exclude(
                     name__in=old_cases.values_list(
@@ -2753,8 +2759,7 @@ class TestJob(RestrictedResource):
         return txt_body
 
     def notification_criteria(self, criteria, old_job):
-        if self.status == TestJob.STATUS_MAP[
-           criteria["status"].title()]:
+        if self.status == TestJob.STATUS_MAP[criteria["status"].title()]:
             if "type" in criteria:
                 if criteria["type"] == "regression":
                     if old_job.status == TestJob.COMPLETE and \
@@ -2844,12 +2849,10 @@ class Notification(models.Model):
         verbose_name='Template name'
     )
 
-    blacklist = models.CharField(
-        max_length=400,
-        default=None,
+    blacklist = ArrayField(
+        models.CharField(max_length=100, blank=True),
         null=True,
-        blank=True,
-        verbose_name='Test Case blacklist'
+        blank=True
     )
 
     time_sent = models.DateTimeField(
