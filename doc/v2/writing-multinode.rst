@@ -92,6 +92,11 @@ Here we can use *the same* boot actions for all the devices:
 Using MultiNode commands to synchronise devices
 ***********************************************
 
+.. include:: examples/test-jobs/first-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-BLOCK
+     :end-before: # END-TEST-BLOCK
+
 A very common requirement in a MultiNode test is that a device (or
 devices) within the MultiNode group can be told to wait until another
 device in the group is at a particular stage. This can be used to
@@ -121,16 +126,29 @@ will be included in the log files of the test.
 In the test definition to be used by devices with the role
 ``server``::
 
- run:
-    steps:
-        - apt install myserver
-        - lava-send server_installed
+.. include:: examples/test-jobs/first-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-SERVER-BLOCK
+     :end-before: # END-TEST-SERVER-BLOCK
+
+.. include:: examples/test-jobs/first-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-CLIENT-BLOCK
+     :end-before: # END-TEST-CLIENT-BLOCK
+
+# explain inline.
+
+.. include:: examples/test-jobs/first-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-SERVER-INLINE-BLOCK
+     :end-before: # END-TEST-SERVER-INLINE-BLOCK
 
 In the test definition for the ``client`` devices::
 
- run:
-    steps:
-        - lava-wait server_installed
+.. include:: examples/test-jobs/first-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
+     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
 
 This means that each device using the role ``client`` will wait until
 **any** one device in the group sends a signal with the messageID of
@@ -220,6 +238,8 @@ tools. Using the Multinode protocol is an extension of using the
 existing :ref:`multinode_api` calls within a test definition. The use
 of the protocol is an advanced use of LAVA and relies on the test
 writer carefully planning how the job will work.
+
+
 
 This snippet would add a :ref:`lava_sync` call at the start of the
 UmountRetry action:
