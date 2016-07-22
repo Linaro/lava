@@ -247,3 +247,22 @@ which change network configuration between jobs. The interfaces in the
 list should include the interface which a remote worker can use to
 serve files to all devices connected to this worker.
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   pipeline-server.rst
+   pipeline-admin.rst
+   proxy.rst
+   pipeline-admin-example.rst
+   device-capabilities.rst
+   authentication.rst
+   hijack-user.rst
+   hiddentypes.rst
+   migrate-lava.rst
+   pdudaemon.rst
+   nexus-deploy.rst
+   ipmi-pxe-deploy.rst
+   ipxe.rst
+   lxc-deploy.rst
+   vland-admin.rst

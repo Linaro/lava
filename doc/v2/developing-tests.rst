@@ -184,3 +184,26 @@ not be rebooted between the definitions.
 .. seealso:: :ref:`Dispatcher Actions <test_action_definitions>`
 
 .. seealso:: ``lava_test_shell`` `developer documentation <lava_test_shell.html>`_
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   writing-tests.rst
+   pipeline-usecases.rst
+   test-repositories.rst
+   dispatcher-format.rst
+   dispatcher-actions2.rst
+   lava_test_shell.rst
+   publishing-artifacts.rst
+   healthchecks.rst
+   hacking-session.rst
+   multinode.rst
+   writing-multinode.rst
+   multinodeapi.rst
+   multinode-usecases.rst
+   vland.rst
+   test-examples.rst
+   bootimages.rst
+   debugging.rst
+   tests-reference.rst

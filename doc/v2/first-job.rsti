@@ -30,10 +30,10 @@ Job Submission
 
 Jobs may be submitted to LAVA in one of three ways:
 
- * the command line (using the ``lava-tool`` program); or
- * the :ref:`XML-RPC <xml_rpc>` API
+* the command line (using the ``lava-tool`` program); or
+* the :ref:`XML-RPC <xml_rpc>` API
 
- .. FIXME: add back later:  * the web UI
+.. FIXME: add back later:  * the web UI
 
 .. note:: ``lava-tool`` is a general-purpose command line interface
       for LAVA which can be used directly on the LAVA server
@@ -201,3 +201,10 @@ use ``https`` wherever possible to protect the token.
    sections on  :ref:`lava_tool` and the **Available methods** link from
    the API menu of the LAVA instance.
    For example: ``http://localhost/api/help``.
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   explain_first_job.rst

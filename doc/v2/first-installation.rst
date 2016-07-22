@@ -395,5 +395,5 @@ the ``#linaro-lava`` channel on OFTC.
    :hidden:
    :maxdepth: 1
 
-   installing_on_debian.rst
    advanced-installation.rst
+   pipeline-debug.rst

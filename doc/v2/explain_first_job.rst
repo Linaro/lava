@@ -182,3 +182,5 @@ example of how to specify a timeout for a particular section of the job.
      from: git
      path: lava-test-shell/single-node/singlenode03.yaml
      name: singlenode-advanced
+
+.. seealso:: Back to your first job :ref:`job_submission`.

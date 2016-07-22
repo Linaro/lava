@@ -330,3 +330,9 @@ Early admin stuff:
 
 * where to find logs and debug information
 * device configuration and templates
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   lava-tool-issues.rst

@@ -124,7 +124,7 @@ strings descriptive using underscores instead of spaces. The messageID
 will be included in the log files of the test.
 
 In the test definition to be used by devices with the role
-``server``::
+``server``:
 
 .. include:: examples/test-jobs/first-multinode-job.yaml
      :code: yaml
@@ -143,7 +143,7 @@ In the test definition to be used by devices with the role
      :start-after: # START-TEST-SERVER-INLINE-BLOCK
      :end-before: # END-TEST-SERVER-INLINE-BLOCK
 
-In the test definition for the ``client`` devices::
+In the test definition for the ``client`` devices:
 
 .. include:: examples/test-jobs/first-multinode-job.yaml
      :code: yaml

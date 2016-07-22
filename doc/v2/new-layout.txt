@@ -56,7 +56,7 @@ V2
  * Charts
  * Data export
 
-6. LAVA administration 
+6. LAVA administration
 ----------------------
  * Installation
  * Setup
@@ -108,5 +108,5 @@ V2
 
 10. Other
 ---------
+ * context-sensitive help pages.
  * Misc stuff that doesn't fit anywhere else
-

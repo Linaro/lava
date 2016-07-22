@@ -36,3 +36,9 @@ Use data export for customised handling which can deliver:
 * customised charts
 * feeds into existing interfaces via transforms.
 
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   lava-queries-charts.rst

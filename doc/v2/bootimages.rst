@@ -1,6 +1,6 @@
 .. lava_images:
 
-.. # FIXME: massively out of date and based on V1 assumptions.
+.. still needs to be reconciled, maybe merge in the standard files section.
 
 Building and manipulating images
 ********************************
@@ -96,6 +96,12 @@ Tools to install and get to know
 Concepts behind boot images
 ===========================
 
+LAVA V2 uses GuestFS_ to remove the need for loop devices, offsets or
+``losetup`` during LAVA operations. The tools remain useful for times
+when the image needs to be modified outside LAVA.
+
+.. _GuestFS: http://libguestfs.org/
+
 #. **offsets** - once decompressed, many boot images contain multiple
    partitions, so a simple ``mount`` operation, even using the
    ``loop`` option, will fail. An offset tells ``mount`` where to look
@@ -122,7 +128,7 @@ Concepts behind boot images
    set a usable root password with the ``passwd`` command.
 
 Find the offset
-===============
+---------------
 
 #. First, **decompress your image**. These examples will assume that
    the resulting file is called ``test.img``
@@ -148,7 +154,7 @@ Find the offset
    Other tasks using ``parted`` will need root access or ``sudo``.
 
 Mounting partitions using loop and offset
-=========================================
+-----------------------------------------
 
 #. To mount the boot partition, pass the ``loop`` and ``offset`` options
    to ``mount``::
@@ -170,6 +176,10 @@ Mounting partitions using loop and offset
 
 Creating new images
 *******************
+
+#. QEMU has easy support for creating empty images::
+
+   $ qemu-image create test.img
 
 #. Use ``dd`` to create an empty file which can be used to host
    partitions and form the basis of a new boot image.
@@ -306,24 +316,6 @@ Other steps which may be required
 
     # echo board > ./etc/hostname
     # echo 127.0.0.1 board board.domain >> ./etc/hosts
-
-LAVA overlays
-=============
-
-To simplify login and use ``auto-serial-console``, there are overlay
-packages available for Debian and Ubuntu images which can be installed
-inside the image::
-
- chroot /mnt/sata/chroots/unstable-armhf
- mount proc -t proc /proc
- mount devpts -t devpts /dev/pts
- wget --no-check-certificate https://launchpad.net/~linaro-maintainers/+archive/overlay/+files/linaro-overlay-minimal_1112.2_all.deb
- wget --no-check-certificate https://launchpad.net/~linaro-maintainers/+archive/overlay/+files/linaro-overlay_1112.2_all.deb
- dpkg -i linaro-overlay-minimal_1112.2_all.deb linaro-overlay_1112.2_all.deb
- rm linaro-overlay-minimal_1112.2_all.deb linaro-overlay_1112.2_all.deb
- umount /dev/pts
- umount /proc
- exit
 
 .. _max_loop:
 

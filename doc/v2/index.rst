@@ -145,10 +145,11 @@ Support
 
    first_steps.rst
    first-installation.rst
-   writing-tests.rst
-   lava-queries-charts.rst
+   developing-tests.rst
+   results-intro.rst
    simple-admin.rst
    results-api.rst
-   process.rst
+   pipeline-admin.rst
+   development-intro.rst
    migration.rst
    other.rst

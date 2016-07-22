@@ -1,5 +1,5 @@
-Administrator use cases
-#######################
+Administrator Guide
+###################
 
 .. _admin_introduction:
 
@@ -524,3 +524,10 @@ If the dictionary does exist and the file is valid, you should see output::
 
 Updating the device dictionary replaces any previous device dictionary
 for the specified device.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   pipeline-admin-example.rst
+   pipeline-debug.rst

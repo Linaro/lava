@@ -240,3 +240,18 @@ https://github.com/Linaro
 
 It is worth sending an email to the :ref:`lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   process.rst
+   development.rst
+   dispatcher-design.rst
+   dispatcher-testing.rst
+   pipeline-design.rst
+   pipeline-schema.rst
+   debian.rst
+   packaging.rst
+   developer-example.rst
