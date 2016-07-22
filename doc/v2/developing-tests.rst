@@ -190,7 +190,7 @@ not be rebooted between the definitions.
    :maxdepth: 1
 
    writing-tests.rst
-   pipeline-usecases.rst
+   pipeline-writer.rst
    test-repositories.rst
    dispatcher-format.rst
    dispatcher-actions2.rst
@@ -203,6 +203,7 @@ not be rebooted between the definitions.
    multinodeapi.rst
    multinode-usecases.rst
    vland.rst
+   pipeline-usecases.rst
    test-examples.rst
    bootimages.rst
    debugging.rst
