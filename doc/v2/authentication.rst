@@ -13,9 +13,9 @@ tested and supported authentication methods for LAVA.
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
 .. note:: The previous OpenID support is not compatible with newer versions of django
-   (versions 1.9 or later). OpenID is available in Debian Jessie but not in unstable or
-   Stretch. If the ``python-django-auth-openid`` package is available and installed,
-   OpenID support will be enabled, otherwise it will be omitted, automatically.
+   (versions 1.8 or later). As of LAVA version 2016.8, versions of django
+   older than 1.8 are not supported, so installing this version will **remove**
+   the OpenID support.
 
 Local Django user accounts are supported. When using local Django
 user accounts, new user accounts need to be created by Django admin prior
@@ -43,10 +43,6 @@ in ``/etc/lava-server/settings.conf`` (JSON syntax)::
     "first_name": "givenName",
     "email": "mail"
   },
-  "DISABLE_OPENID_AUTH": true
-
-.. note:: ``DISABLE_OPENID_AUTH`` should be set in order to remove
-   OpenID based authentication support in the login page.
 
 Use the following parameter to set a custom LDAP login page message::
 
@@ -66,4 +62,3 @@ Other supported parameters are::
           ``/usr/lib/python2.7/dist-packages/lava_server/settings/common.py``
 
 Restart ``lava-server`` and ``apache2`` services if this is changed.
-
