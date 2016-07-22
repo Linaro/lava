@@ -89,17 +89,26 @@ is **strongly** advised to follow all of these rules.
 Problems with simplistic testing
 ================================
 
-#. '*connect & test*' seems simple enough - it doesn't seem as if you
+There are a number of common fallacies relating to automation. Check
+your test ideas against these before starting to make your plans:
+
+#. **connect & test** seems simple enough - it doesn't seem as if you
    need to deploy a new kernel or rootfs every time, no need to power
    off or reboot between tests. *Just* connect and run stuff.  After
    all, you already have a way to manually deploy stuff to the board.
-   The biggest problem with this method is :ref:`persistence` - LAVA
-   keeps the LAVA components separated from each other but test
-   frequently need to install support which will persist after the test,
-   write files which can interfere with other tests or break the manual
-   deployment in unexpected ways when things go wrong.
 
-#. '*test everything at the same time*' - you've built an entire system
+   * The biggest problem with this method is :ref:`persistence` - LAVA
+     keeps the LAVA components separated from each other but tests
+     frequently need to install support which will persist after the test,
+     write files which can interfere with other tests or break the manual
+     deployment in unexpected ways when things go wrong.
+   * The second problem within this fallacy is simply the power drain of
+     leaving the devices constantly powered on. In manual testing, you
+     would apply power at the start of your day and power off at the end.
+     In automated testing, these devices would be on all day, every day,
+     because test jobs could be submitted at any time.
+
+#. **test everything at the same time** - you've built an entire system
    and now you put the entire thing onto the device and do all the tests
    at the same time. There are numerous problems with this approach:
 
@@ -136,12 +145,180 @@ Problems with simplistic testing
         chainload some bootloaders, allowing the known working bootloader
         to be preserved.
 
-   #. Finally, note that it is **not** possible to automate every
-      test method. Some kinds of tests, some kinds of devices lack critical
-      elements that block automation - these are not problems in LAVA, these
-      are design limitations of the kind of test and the device itself.
-      Your preferred test plan may be infeasible to automate and some
-      level of compromise will be required.
+#. **I already have builds** - this may be true, however, automation puts
+   extra demands on what those builds are capable of supporting. When
+   testing manually, there are any number of times when a human will decide
+   that something needs to be entered, tweaked, modified, removed or
+   ignored which the automated system needs to be able to understand.
+   Examples include:
+
+   * ``/etc/resolv.conf`` - it is common for many build tools to generate
+     or copy a working ``/etc/resolv.conf`` based on the system within
+     which the build tool is executed. This is a frequent cause of
+     test jobs failing due to being unable to lookup web addresses using
+     :abbr:`DNS (Domain Name System)`. It is also common for an automated
+     system to be in a different network subnet to the build tool, again
+     causing the test job to be unable to use DNS due to the wrong data
+     in ``/etc/resolv.conf``.
+
+   * **Customised tools** - using non-standard build tools or putting custom
+     scripts, binaries and programs into a root filesystem is a common
+     reason for test jobs to fail when users migrate to updated builds.
+
+   * **Comparability** - LAVA has various ways to :ref:`support <getting_support>`
+     local admins but to make sense of logs or bug reports, the test job
+     needs to be comparable to one already known to work elsewhere.
+
+   Make use of the :ref:`standard files <providing_gold_standard_files>`
+   for known working device types. These files come with details of how
+   to rebuild the files, logs of the each build and checksums to be sure
+   the download is correct.
+
+#. **Automation can do everything** - it is **not** possible to automate every
+   test method. Some kinds of tests and some kinds of devices lack critical
+   elements that block automation. These are not problems in LAVA, these
+   are design limitations of the kind of test and the device itself.
+   Your preferred test plan may be infeasible to automate and some
+   level of compromise will be required.
+
+Best practice
+*************
+
+* Before you upgrade the server or dispatcher, run the standard test
+  jobs and a few carefully chosen stable jobs of your own as a set of
+  *functional tests* - just as the LAVA team do upstream.
+* Keep all the servers and dispatchers *regularly updated* with regard
+  to security updates and bug fixes. The more often you run the upgrades,
+  the fewer packages will be involved in each upgrade and so the easier
+  it will be to spot that one particular upgrade may be misbehaving.
+* Repeat your functional tests after all upgrades.
+* Use :term:`health checks <health check>` and tweak the frequency so that busy devices
+  run health checks often enough to catch problems early.
+* Add standard investigative tools. You may choose to use `nagios`_ and
+  / or `munin`_ or other similar tools.
+* Use configuration management. Various LAVA instances use `salt`_ or
+  `puppet`_ or `ansible`_. Test out various tools and make your own
+  choice.
+
+.. _`nagios`: https://www.nagios.org/about/
+.. _`munin`: http://munin-monitoring.org/
+.. _`salt`: https://saltstack.com/community/
+.. _`puppet`: https://github.com/puppetlabs/puppet
+.. _`ansible`: https://www.ansible.com/
+
+Triage
+******
+
+When you come across problems with your LAVA instance, there are some
+basic information sources, methods and tools which will help you
+identify the problem(s).
+
+Where to find debug information
+===============================
+
+Templates
+---------
+
+LAVA uses `Jinja2`_ to allow devices to be configured using common data
+blocks, inheritance and the device-specific :term:`device dictionary`.
+Templates are installed into::
+
+ /etc/lava-server/dispatcher-config/device-types/
+
+.. note:: Although these are configuration files and package updates
+   will respect any changes you make, please :ref:`talk to us <getting_support>`
+   about changes to existing templates maintained within the ``lava-server``
+   package.
+
+.. _Jinja2: http://jinja.pocoo.org/docs/dev/
+
+# FIXME: add link to developer notes on modifying/creating templates.
+
+Log files
+---------
+
+* **lava-master** - controls all V2 test jobs after devices have been
+  assigned. Logs are created on the master::
+
+    /var/log/lava-server/lava-master.log
+
+* **lava-scheduler** - controls how all devices are assigned. Control will
+  be handed over to ``lava-master`` once V1 code is removed. Logs are
+  created on the master::
+
+    /var/log/lava-server/lava-scheduler.log
+
+* **lava-slave** - controls the operation of the test job on the
+  slave. Includes details of the test results recorded and job exit
+  codes. Logs are created on the slave::
+
+   /var/log/lava-dispatcher/lava-slave.log
+
+TestJob data
+------------
+
+* **slave logs** are normally transmitted to the master but will also
+  appear in ``/tmp/lava-dispatcher/slave/`` in directories named from
+  the job ID. Logs include:
+
+  * ``err`` - captures any errors during processing,
+  * ``job.yaml`` - the test job configuration as sent from the master
+  * ``device.yaml`` - the device configuration as sent from the master
+  * ``logs/results.yaml`` - the results of the test job, as transmitted
+    to the master. Useful for debugging issues with result handling or
+    metadata generation.
+  * The Lava Test Shell Overlay, if the test job used Lava Test Shell.
+    This file is a tarball of the lava scripts and the test definitions
+    which the dispatcher makes available to the test job at runtime.
+    The overlay is named according to the level in the pipeline at which
+    it was created (to allow for test jobs which would use multiple
+    test actions). For example: ``overlay-1.3.4.tar.gz``.
+
+* **job validation** - the master retains a copy of the output from the
+  validation of the testjob. Currently, this validation occurs on the
+  master but may move to the slave in future. The logs is stored on the
+  master as the ``lavaserver`` user - so for job ID 4321::
+
+   $ sudo su lavaserver
+   $ ls /var/lib/lava-server/default/media/job-output/job-4321/description.yaml
+
+  * **other testjob data** - also stored in the same location on the
+    master are the complete log file (``output.yaml``) and the logs for
+    each specific action within the job in a directory tree below the
+    ``pipeline`` directory.
+
+Adding more devices
+*******************
+
+.. note:: If you are considering using MultiNode in your Test Plan,
+   now is the time to ensure that MultiNode jobs can run successfully
+   on your instance.
+
+Once you have a couple of QEMU devices running and you are happy with
+how to maintain, debug and test using those devices, start adding **known
+working** devices. These are devices which already have templates in::
+
+ /etc/lava-server/dispatcher-config/device-types/
+
+The majority of the known device types are low-cost ARM developer boards
+which are readily available. Even if you are not going to use these
+boards for your main testing, you are **recommended** to obtain a couple
+of these devices as these will make it substantially easier to learn how
+to administer LAVA for any devices other than emulators.
+
+Physical hardware like these dev-boards have hardware requirements like:
+
+* serial console servers
+* remote power control
+* network infrastructure
+* uninterruptible power supplies
+* shelving
+* cables
+* removable media
+
+Understanding how all of those bits fit together to make a functioning
+LAVA instance is much easier when you use devices which are known to
+work in LAVA.
 
 Early admin stuff:
 
