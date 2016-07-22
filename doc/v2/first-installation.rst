@@ -1,7 +1,10 @@
 .. _installation:
 
+First Steps Installing LAVA V2
+##############################
+
 Initial LAVA Installation
-#########################
+*************************
 
 The default installation provides an Apache2 config suitable for
 a simple LAVA server at ``http://localhost/`` once enabled.
@@ -12,15 +15,15 @@ debugging.
 .. _lava_requirements:
 
 Requirements to Consider Before Installing LAVA
-###############################################
+***********************************************
 
 Architecture
-************
+============
 
 .. include:: architecture-v2.rsti
 
 Software Requirements
-*********************
+=====================
 
 See :ref:`debian_installation` for instructions.
 
@@ -36,7 +39,7 @@ If you'd like to help us provide support for other distributions, feel
 free to contact us using the :ref:`lava_devel` mailing list.
 
 Hardware Requirements
-*********************
+=====================
 
 A small LAVA instance can be deployed on fairly modest hardware. We
 recommend at least 1GB of RAM to cover the runtime needs of the
@@ -61,7 +64,7 @@ Devices you wish to deploy in LAVA need to be:
 .. _multinode_hardware_requirements:
 
 Multi-Node hardware requirements
-********************************
+================================
 
 If the instance is going to be sent any job submissions from third
 parties or if your own job submissions are going to use Multi-Node,
@@ -92,7 +95,7 @@ decompression, and matching the amount of available RAM to the number
 and size of test images which are likely to be in use.
 
 Which release to install
-########################
+************************
 
 The LAVA team makes regular releases (called ``production releases``),
 typically monthly. These are installed onto Linaro's central instance
@@ -115,12 +118,12 @@ using unreleased code, development code and patches under review.
 .. _install_types:
 
 Installation Types
-##################
+******************
 
 .. _single_instance:
 
 Single Master Instance installation
-***********************************
+===================================
 
 A single instance runs the web frontend, the database, the scheduler
 and the dispatcher on a single machine. If this machine is also running
@@ -139,7 +142,7 @@ Detailed instructions for setting up workers follows - first, think
 about the kind of configuration needed for your instance.
 
 Running V1 only
-***************
+===============
 
 You're reading the wrong documentation - look at the `V1 docs
 <../v1/>`_ instead. But be aware that V1 is reaching end of life soon,
@@ -150,10 +153,10 @@ so this would be a *frozen* instance.
    cause permanent data loss.
 
 Running V2 only
-***************
+===============
 
 Layout
-======
+------
 
 * The master needs ``lava-server`` installed as a :ref:`single_instance`.
 * The worker only needs ``lava-dispatcher`` installed as a
@@ -169,7 +172,7 @@ Layout
   independently restarted.
 
 Configuration outline
-======================
+---------------------
 
 * Configure the master as a :ref:`single_instance`.
 * Define some of the device-types likely to be used with this instance
@@ -200,7 +203,7 @@ that installation, think about adding workers - one at a time.
 * Repeat for additional workers.
 
 Running a mix of V1 and V2
-**************************
+==========================
 
 .. warning:: Administrators of instances which mix V1 and V2 must
    consider that V1 support **will** be removed during 2017, while V2
@@ -211,7 +214,7 @@ Running a mix of V1 and V2
    working.
 
 Layout
-======
+------
 
 * The master and **all** workers which will have any V1 devices
   attached **must** use the V1 distributed deployment installation
@@ -233,7 +236,7 @@ Layout
   V1 across networks outside your control.
 
 Configuration outline
-=====================
+---------------------
 
 The mixed configuration is the most complex to setup as it requires
 knowledge of both V1 and V2.
@@ -247,7 +250,7 @@ knowledge of both V1 and V2.
 .. _pipeline_install:
 
 What is the Pipeline?
-#####################
+*********************
 
 .. note:: Linaro production systems in the Cambridge lab began to
    migrate to the V2 Pipeline model with the 2016.2 production
@@ -294,7 +297,7 @@ If the value is not set or set to ``true``, the Results app will be displayed.
 .. index:: coordinator
 
 LAVA Coordinator setup
-**********************
+======================
 
 Multi-Node LAVA requires a LAVA Coordinator which manages the messaging
 within a group of nodes involved in a Multi-Node job set according to
@@ -335,12 +338,12 @@ the coordinator again.
 .. _serial_connections:
 
 Setting Up Serial Connections to LAVA Devices
-#############################################
+=============================================
 
 .. _ser2net:
 
 Ser2net daemon
-**************
+--------------
 
 ser2net provides a way for a user to connect from a network connection
 to a serial port, usually over telnet.
@@ -363,7 +366,7 @@ Example config (in /etc/ser2net.conf)::
           serial connection.
 
 StarTech rackmount usb
-**********************
+----------------------
 
 W.I.P
 
@@ -377,7 +380,7 @@ W.I.P
 This will create a symlink in /dev called rack-usb01 etc. which can then be addressed in the :ref:`ser2net` config file.
 
 Contact and bug reports
-#######################
+***********************
 
 Please report bugs using Linaro's Bugzilla:
 https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
@@ -387,3 +390,10 @@ Debian Bug Tracking System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=la
 
 Feel free to contact us at validation (at) linaro (dot) org and on
 the ``#linaro-lava`` channel on OFTC.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   installing_on_debian.rst
+   advanced-installation.rst

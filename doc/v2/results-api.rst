@@ -1,5 +1,8 @@
 .. _results_api:
 
+LAVA APIs
+#########
+
 Results APIs
 ************
 

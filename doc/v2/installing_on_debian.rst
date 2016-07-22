@@ -1,7 +1,7 @@
 .. _debian_installation:
 
 Debian-based distributions
-##########################
+**************************
 
 These instructions cover installation on Debian. The supported
 versions are:

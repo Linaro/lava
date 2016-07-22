@@ -1,7 +1,10 @@
 .. _test_developer:
 
+Writing Tests
+#############
+
 Introduction to the LAVA Test Developer Guide
-#############################################
+*********************************************
 
 This guide aims to enable users to be able to
 
@@ -22,13 +25,13 @@ Pay particular attention to sections on:
 * :ref:`best_practices`
 
 Guide Contents
-**************
+==============
 
 * :ref:`dispatcher_actions`
 * :ref:`lava_test_shell`
 
 Assumptions at the start of this guide
-**************************************
+======================================
 
 #. The desired board is already configured for use with a LAVA Server
    instance.
@@ -55,7 +58,7 @@ To find out more about viewing job details, see :ref:`job_submission`.
 .. index:: availability
 
 Checking device availability
-****************************
+============================
 
 Use the LAVA scheduler to view available device types and devices. The
 main scheduler status page shows data for each :term:`device type` as
@@ -81,7 +84,7 @@ Devices are considered available for new jobs according to the
   are retired.
 
 Finding an image to run on the device
-*************************************
+=====================================
 
 Start with an image which is already in use in LAVA. You can find one
 of these images by checking the :term:`device type` in LAVA and viewing
@@ -91,7 +94,7 @@ e.g. for QEMU devices on validation.linaro.org:
 https://validation.linaro.org/scheduler/device_type/qemu
 
 Actions to be run for a LAVA test
-*********************************
+=================================
 
 There are three important sets of actions that will be run for a LAVA
 test:
@@ -103,10 +106,10 @@ test:
 #. Test: Run the lava test shell, running the specified tests.
 
 Examples
-********
+========
 
 Deploying a pre-built QEMU image
-================================
+--------------------------------
 
 .. code-block:: yaml
 
@@ -125,7 +128,7 @@ Deploying a pre-built QEMU image
 .. _device_tags_example:
 
 Using device tags
-=================
+-----------------
 
 A :term:`device tag` marks a specified device as having specific hardware
 capabilities which other devices of the same :term:`device type` do not.
@@ -141,7 +144,7 @@ no tags), any of those devices can be used for the Test Job.
           on the instance to get the correct tag information.
 
 Using LAVA Test Shell
-=====================
+---------------------
 
 The ``lava_test_shell`` action provides a way to employ a black-box
 style testing approach with the target device. Its format is:

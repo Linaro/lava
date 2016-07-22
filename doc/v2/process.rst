@@ -1,5 +1,8 @@
 .. index:: development process
 
+Developer guides
+################
+
 .. _development_process:
 
 Development process
@@ -57,3 +60,9 @@ this simple check-list:
 2. Add your code, change any existing files as needed.
 3. Create a patch from your changes.
 4. Send the patch to the `Linaro Code Review <https://review.linaro.org>`_ system.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   debian.rst

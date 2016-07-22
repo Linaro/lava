@@ -18,7 +18,7 @@ definitions. This is a recommended practice and future developments will
 make it easier to match up the synchronisation calls from inline
 definitions.
 
-.. include:: yaml/bbb-forward-receive.yaml
+.. include:: examples/test-jobs/bbb-forward-receive.yaml
    :code: yaml
 
 Requirements
@@ -239,7 +239,7 @@ run the test definition. The JSON is also where multiple test
 definitions are combined into a single MultiNode test.
 
 device_group
-^^^^^^^^^^^^
+------------
 
 The device_group collates the device-types and the role of each device
 type in the group along with the number of boards to allocate to each

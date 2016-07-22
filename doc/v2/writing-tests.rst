@@ -153,7 +153,7 @@ run commands on the device. These are specified in the run steps:
 .. _writing_test_commands:
 
 Writing commands to run on the device
-######################################
+*************************************
 
 #. All commands need to be executables available on the device. This
    is why the metadata section includes an "os" flag, so that commands
@@ -455,14 +455,14 @@ Files
 .. _best_practices:
 
 Best practices for writing a LAVA test job
-##########################################
+******************************************
 
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the
 complexity of the job and the ways to analyse the results.
 
 Use different test definitions for different test areas
-*******************************************************
+=======================================================
 
 Follow the standard UNIX model of *Make each program do one thing
 well*. Make a set of separate test definitions. Each definition should
@@ -470,14 +470,14 @@ concentrate on one area of functionality and test that one area
 thoroughly.
 
 Use different jobs for different test environments
-**************************************************
+==================================================
 
 While it is supported to reboot from one distribution and boot into a
 different one, the usefulness of this is limited. If the first
 environment fails, the subsequent tests might not run at all.
 
 Use a limited number of test definitions per job
-************************************************
+================================================
 
 While LAVA tries to ensure that all tests are run, adding more and
 more test repositories to a single LAVA job increases the risk that

@@ -1,7 +1,9 @@
 .. lava_images:
 
+.. # FIXME: massively out of date and based on V1 assumptions.
+
 Building and manipulating images
-################################
+********************************
 
 This section looks into how to manipulate, inspect and create boot
 images. The details of preparing a suitable kernel or configuring a

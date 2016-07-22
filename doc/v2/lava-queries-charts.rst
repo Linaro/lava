@@ -1,10 +1,13 @@
 .. _result_queries:
 
+Using Test Results
+##################
+
 LAVA result visualization
-#########################
+*************************
 
 LAVA Queries
-************
+============
 
 This is documentation for the new queries app, still in **development** stage.
 
@@ -19,7 +22,7 @@ Current features include querying following object sets:
 * Test suites
 
 Conditions
-==========
+----------
 
 You can add multiple conditions to each query where the query results must
 satisfy **all** conditions in order to be displayed.
@@ -39,7 +42,7 @@ This also means you can add the condition even if the field in the metadata is
 is not yet present in the system.
 
 Caching queries
-===============
+---------------
 
 Queries can be live or cached. Cached queries data can be refreshed either
 through UI or via the XML-RPC API call by creator or someone in group assigned
@@ -54,7 +57,7 @@ updated. This needs to be done either through UI after updating the conditions
 or via XML-RPC.
 
 Authorization and admin
-=======================
+-----------------------
 
 Queries which are not published are visible exclusively to the query owner.
 When query is published, it's results are generally visible to all users,
@@ -74,7 +77,7 @@ listing page, via 'query group label' option.
 .. _query_by_url:
 
 Query by URL
-============
+------------
 
 The ability to add conditions through URL is also available. User can add as
 many conditions as possible through URL but must also specify the object set
@@ -97,9 +100,8 @@ User should keep in mind that querying by URL is considered to be a live query
 so if the query is used often it should be created in the system so that the
 caching is enabled.
 
-
 Export Query
-============
+------------
 
 Currently, the only supported format for exporting is CSV.
 
@@ -107,7 +109,7 @@ User can download the query CSV export file from the query display page.
 
 
 Omitting Query Results
-======================
+----------------------
 
 Ability to omit specific results from queries is available.
 
@@ -118,9 +120,8 @@ the results from queries.
 
 It is not possible to omit results from custom queries.
 
-
 Deleting a Query
-================
+----------------
 
 In LAVA, deleting a query does not really delete it, but rather 'archives' it
 so that if user created rather complex query, that query can be restored at a
@@ -129,12 +130,10 @@ admin section of LAVA. If user tries to create a query with the same name and
 owner (himself) which was already archived, system will inform the user that
 it's already in the system.
 
-
-
 .. _lava_charts:
 
 LAVA Charts
-***********
+===========
 
 This is documentation for the new charts app, still in **development** stage.
 
@@ -143,7 +142,7 @@ It is part of the new :ref:`dispatcher_design`.
 LAVA charts represent the visual representation for the Queries app.
 
 How to create a Chart?
-======================
+----------------------
 
 On the Charts main page, after clicking on Create link and entering the name
 and the description for the Chart, you will be presented with the following
@@ -164,9 +163,8 @@ without making it permanent in the system (also from query display).
 
 Once chart is published, you can assign it to a chart group:
 
-
 Chart grouping
-==============
+--------------
 
 Once Chart is published, you can see the "Chart group label"
 field on the chart detail page.
@@ -182,11 +180,10 @@ chart from any chart group. At that point, if the chart group you just
 unassigned does not have any more charts assigned to it, the chart group will
 be deleted.
 
-
 .. _chart-permissions:
 
 Chart permissions
-=================
+-----------------
 
 Once Chart is published, you can see the ownership options on the chart detail
 page.
@@ -200,9 +197,8 @@ This field cannot be used to enable users to see the data in the chart if they
 are not able to for other authorization reasons (no device permissions or test
 job visibility permissions).
 
-
 Adding Queries
-==============
+--------------
 
 .. image:: ./images/chart-add-query.png
     :width: 430
@@ -243,13 +239,13 @@ re-ordering.
 
 
 Charts display page
-===================
+-------------------
 
 See below for description of each specific feature of the display page.
 
 
 Interactive charts
-^^^^^^^^^^^^^^^^^^
+------------------
 
 You can click on each of the indices on the chart and a new tab will open with
 that particular test job/suite/case.
@@ -323,7 +319,7 @@ Similarly, if particular test result does not contain the custom attribute that
 is set, that result will be omitted from chart.
 
 Omitting Chart Results
-======================
+----------------------
 
 Ability to omit specific results from charts is available through plot click
 event.
@@ -337,9 +333,8 @@ Keep in mind that the charts can have tightly packed plot points so you might
 end up omitting the wrong results. Keep caution by reducing the date range or
 zooming in on the chart.
 
-
 Chart by URL
-============
+------------
 
 Similar as for queries (see :ref:`query_by_url`), user can view charts by
 typing in the entity and conditions in URL. There is one aditional option
