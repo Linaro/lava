@@ -25,7 +25,13 @@ from lava_dispatcher.pipeline.action import Pipeline
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
+    PrepareOverlayTftp,
+    ExtractNfsRootfs,
+    OverlayAction,
+    ExtractModules,
+    ApplyOverlayTftp,
+)
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
@@ -53,10 +59,8 @@ def nfs_accept(device, parameters):
 
 class Nfs(Deployment):
     """
-    Strategy class for a tftp ramdisk based Deployment.
-    Downloads the relevant parts, copies to the tftp location.
-    Limited to what the bootloader can deploy which means ramdisk or nfsrootfs.
-    rootfs deployments would format the device and create a single partition for the rootfs.
+    Strategy class for a NFS deployment.
+    Downloads rootfs and deploys to NFS server on dispatcher
     """
 
     compatibility = 1
@@ -84,16 +88,12 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.name = "nfs-deploy"
         self.description = "deploy nfsrootfs"
         self.summary = "NFS deployment"
-        try:
-            self.tftp_dir = mkdtemp(basedir=self.tftp_dir)
-        except OSError:
-            # allows for unit tests to operate as normal user.
-            self.suffix = '/'
         self.download_dir = DISPATCHER_DOWNLOAD_DIR
         try:
             self.download_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         except OSError:
-            pass
+            # allows for unit tests to operate as normal user.
+            self.suffix = '/'
 
     def validate(self):
         super(NfsAction, self).validate()
@@ -111,9 +111,12 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         if 'modules' in parameters:
-            download = DownloaderAction('modules', path=self.tftp_dir)
+            download = DownloaderAction('modules', path=self.download_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
-        self.internal_pipeline.add_action(PrepareOverlayTftp())
+        self.internal_pipeline.add_action(ExtractNfsRootfs())
+        self.internal_pipeline.add_action(OverlayAction())
+        self.internal_pipeline.add_action(ExtractModules())
+        self.internal_pipeline.add_action(ApplyOverlayTftp())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())

@@ -4,9 +4,15 @@ parameters:
   media:  # four USB slots.
     usb:
       UUID-required: True
-      Kingston_DataTraveler:
-        uuid: "usb-Kingston_DataTraveler_2.0_60A44C4254D6F9707B561FA3-0:0"  # /dev/disk/by-id/
+      SanDisk_Ultra:
+        uuid: "usb-SanDisk_Ultra_20051536410F43008552-0:0"
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
+
+commands:
+  connect: telnet localhost 7002
+  hard_reset: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02; sleep 10; /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
+  power_off: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02
+  power_on: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
 
 character-delays:
   boot: 50
@@ -66,7 +72,7 @@ actions:
             enter: "dtb=board.dtb initrd=ramdisk.img console=ttyAMA0,115200 androidboot.hardware=juno systemd.log_target=null rootwait root=/dev/sda1"
             wait: 'Description for this new Entry:'
         - select:
-            enter: 'LAVA Master Image'
+            enter: '{TEST_MENU_NAME}'
             wait: "Choice:"
         - select:
             items:
@@ -85,8 +91,8 @@ actions:
             wait: "Start:"
         - select:
             items:
-              - LAVA Master Image
-        nfs:
+              - '{TEST_MENU_NAME}'
+        tftp:
         - select:
             items:
              - 'Boot Manager'
@@ -121,7 +127,7 @@ actions:
             enter: "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp"
             wait: 'Description for this new Entry:'
         - select:
-            enter: 'Test Image'
+            enter: '{TEST_MENU_NAME}'
             wait: "Choice:"
         - select:
             items:
@@ -146,4 +152,4 @@ actions:
             wait: "Start:"
         - select:
             items:
-              - Test Image
+              - '{TEST_MENU_NAME}'

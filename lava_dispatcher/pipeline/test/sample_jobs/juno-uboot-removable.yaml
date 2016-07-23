@@ -1,14 +1,15 @@
-# Sample JOB definition for a juno u-boot tftp busybox job
+# Sample JOB definition for a juno u-boot removable media job
 
 device_type: juno
 
-job_name: juno-uboot-oe-pipeline
+job_name: juno-uboot-removable
 timeouts:
   job:
-    minutes: 15            # timeout for the whole job (default: ??h)
+    minutes: 15
   action:
-   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+   minutes: 5
 priority: medium
+visibility: public
 
 actions:
 
@@ -30,7 +31,7 @@ actions:
      method: u-boot
      namespace: master-image
      commands: tftp
-     type: bootz
+     type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:
@@ -38,18 +39,6 @@ actions:
        - 'linaro-test'
        - 'root@debian:~#'
        - 'root@genericarmv8:~#'
-
-  - test:
-     namespace: master-image
-     failure_retry: 3
-     name: juno-basics
-     timeout:
-       minutes: 5
-     definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
-           from: git
-           path: openembedded/smoke-tests-basic.yaml
-           name: smoke-tests
 
   - deploy:
      timeout:
@@ -61,7 +50,7 @@ actions:
      image:
          url: http://releases.linaro.org/openembedded/juno-lsk/16.02/lt-vexpress64-openembedded_minimal-armv8-gcc-5.2_20160121-736.img.gz
          compression: gz
-     device: Kingston_DataTraveler # needs to be exposed in the device-specific UI
+     device: SanDisk_Ultra # needs to be exposed in the device-specific UI
      download:
          tool: /usr/bin/wget
          options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
@@ -70,7 +59,7 @@ actions:
      method: u-boot
      namespace: test-image
      commands: use-defaults
-     type: bootz
+     type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

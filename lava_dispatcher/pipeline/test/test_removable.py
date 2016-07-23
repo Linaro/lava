@@ -133,7 +133,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def test_juno_deployment(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/juno-uboot-oe-usb.yaml', '../devices/juno-uboot.yaml')
+        job = factory.create_job('sample_jobs/juno-uboot-removable.yaml', '../devices/juno-uboot.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('usb', job.device['parameters']['media'].keys())
