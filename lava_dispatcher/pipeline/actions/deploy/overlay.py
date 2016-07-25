@@ -172,6 +172,16 @@ class OverlayAction(DeployAction):
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
+
+        # Generate the file containing the secrets
+        if 'secrets' in self.job.parameters:
+            self.logger.debug("Creating %s/secrets", lava_path)
+            with open(os.path.join(lava_path, 'secrets'), 'w') as fout:
+                for key, value in self.job.parameters['secrets'].items():
+                    if key == 'yaml_line':
+                        continue
+                    fout.write("%s=%s\n" % (key, value))
+
         connection = super(OverlayAction, self).run(connection, args)
         return connection
 
