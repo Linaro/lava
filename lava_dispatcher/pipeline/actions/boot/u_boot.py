@@ -161,8 +161,12 @@ class UBootRetry(BootAction):
         self.logger.debug(connection.prompt_str)
         connection.timeout = self.connection_timeout
         self.wait(connection)
-        self.logger.error(self.errors)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        # Log an error only when needed
+        if self.errors:
+            self.logger.error(self.errors)
+            self.data['boot-result'] = 'failed'
+        else:
+            self.data['boot-result'] = 'success'
         return connection
 
 
