@@ -629,7 +629,14 @@ def handle_health(job):
     if job.status == TestJob.INCOMPLETE:
         device.health_status = Device.HEALTH_FAIL
         user = User.objects.get(username='lava-health')
-        device.put_into_maintenance_mode(user, "Health Check Job Failed")
+        # Cannot use device.put_into_maintenance_mode() here as
+        # that puts the device into offlining if there are validation errors.
+        # The next step here is to clear current_job. If
+        # device.put_into_online_mode is then called, the device
+        # would go into running with no current job, so we need OFFLINE
+        # so that put_into_online_mode goes to IDLE.
+        # FIXME: once V1 code is removed, standardise this state machine.
+        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job)
     elif job.status == TestJob.COMPLETE:
         device.health_status = Device.HEALTH_PASS
     elif job.status == TestJob.CANCELED:
@@ -659,8 +666,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
     device = handle_health(job)
     # Transition device only if it's not in OFFLINE/ING mode
-    # (by failed health check job which already transition it via
-    # put_into_maintenance_mode method)
+    # (by failed health check job which already transitions it)
     if device.status not in [Device.OFFLINE, Device.OFFLINING]:
         device.state_transition_to(Device.IDLE, message=msg, job=job)
     device.current_job = None
