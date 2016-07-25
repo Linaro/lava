@@ -1,7 +1,6 @@
 import os
 import yaml
 import jinja2
-import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -25,6 +24,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
+from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_defs import check_missing_path
@@ -36,6 +36,9 @@ from unittest import TestCase
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
+
+# set to True to see extra processing details
+DEBUG = False
 
 
 class YamlFactory(ModelFactory):
@@ -69,8 +72,9 @@ class YamlFactory(ModelFactory):
         self.make_fake_qemu_device(hostname)
         if tags:
             device.tags = tags
-        logging.debug("making a device of type %s %s %s with tags '%s'",
-                      device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
+        if DEBUG:
+            print("making a device of type %s %s %s with tags '%s'",
+                  device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
         device.save()
         return device
 
@@ -131,10 +135,21 @@ class PipelineDeviceTags(TestCaseWithFactory):
             self.factory.make_user())
 
     def test_yaml_device_tags(self):
-        data = yaml.load(self.factory.make_job_yaml(tags=['usb', 'controller']))
+        Tag.objects.all().delete()
+        tag_list = [
+            self.factory.ensure_tag('usb'),
+            self.factory.ensure_tag('sata')
+        ]
+        data = yaml.load(self.factory.make_job_yaml(tags=['usb', 'sata']))
+        validate_submission(data)
+        device = self.factory.make_device(self.device_type, 'fakeqemu4', tags=tag_list)
+        job_ctx = data.get('context', {})
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        validate_device(device_config)
         self.assertIn('tags', data)
         self.assertEqual(type(data['tags']), list)
         self.assertIn('usb', data['tags'])
+        self.assertEqual(set(Tag.objects.all()), set(device.tags.all()))
 
     def test_undefined_tags(self):
         Tag.objects.all().delete()
@@ -270,6 +285,45 @@ class TestPipelineSubmit(TestCaseWithFactory):
             if count > 100:
                 break
         self.assertGreater(count, 100)
+
+    def test_multinode_tags_assignment(self):
+        # kvm-multinode.yaml contains notification settings for admin
+        user = self.factory.ensure_user('admin', 'admin@test.com', 'admin')
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        tag_list = [
+            self.factory.ensure_tag('usb-flash'),
+            self.factory.ensure_tag('usb-eth')
+        ]
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=tag_list)
+        self.assertTrue(device1.is_pipeline)
+        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
+        self.assertTrue(device2.is_pipeline)
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        job_list = testjob_submission(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        client_job = None
+        server_job = None
+        for job in job_list:
+            job_def = yaml.load(job.definition)
+            if job_def['protocols'][MultinodeProtocol.name]['role'] == 'client':
+                client_job = job
+            elif job_def['protocols'][MultinodeProtocol.name]['role'] == 'server':
+                server_job = job
+            else:
+                self.fail("Unrecognised role in job")
+        self.assertEqual(set(client_job.tags.all()), set(tag_list))
+        self.assertEqual(list(server_job.tags.all()), [])
+        self.assertIsNone(client_job.actual_device)
+        self.assertIsNone(server_job.actual_device)
+        device_list = Device.objects.filter(device_type=device1.device_type)
+        assigned = find_device_for_job(client_job, device_list)
+        self.assertEqual(assigned, device1)
+        self.assertEqual(set(device1.tags.all()), set(client_job.tags.all()))
+        assigned = find_device_for_job(server_job, device_list)
+        self.assertEqual(assigned, device2)
+        self.assertEqual(set(device2.tags.all()), set(server_job.tags.all()))
 
     def test_invalid_device(self):
         user = self.factory.make_user()
@@ -618,6 +672,28 @@ class TestYamlMultinode(TestCaseWithFactory):
                     self.assertEqual(job, yaml.load(open(client_check, 'r')))
                 if role == 'server':
                     self.assertEqual(job, yaml.load(open(server_check, 'r')))
+
+    def test_multinode_tags(self):
+        Tag.objects.all().delete()
+        self.factory.ensure_tag('tap'),
+        self.factory.ensure_tag('virtio')
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        roles_dict = submission['protocols'][MultinodeProtocol.name]['roles']
+        roles_dict['client']['tags'] = ['tap']
+        roles_dict['server']['tags'] = ['virtio']
+        submission['protocols'][MultinodeProtocol.name]['roles'] = roles_dict
+        target_group = 'arbitrary-group-id'  # for unit tests only
+        jobs = split_multinode_yaml(submission, target_group)
+        self.assertEqual(len(jobs), 2)
+        for role, job_list in jobs.items():
+            for job in job_list:
+                if role == 'server':
+                    self.assertEqual(job['protocols']['lava-multinode']['tags'], ['virtio'])
+                elif role == 'client':
+                    self.assertEqual(job['protocols']['lava-multinode']['tags'], ['tap'])
+                else:
+                    self.fail('unexpected role')
 
     def test_multinode_protocols(self):
         user = self.factory.make_user()

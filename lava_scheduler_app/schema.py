@@ -204,6 +204,7 @@ def _job_schema():
             'context': _simple_params(),
             'metadata': dict,
             'secrets': dict,
+            'tags': [str],
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
