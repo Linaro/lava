@@ -49,6 +49,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     SECONDARY_DEPLOYMENT_MSG,
 )
 
+
 class Removable(Deployment):
     """
     Deploys an image to a usb or sata mass storage device

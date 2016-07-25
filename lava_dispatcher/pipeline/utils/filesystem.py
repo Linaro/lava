@@ -185,6 +185,7 @@ def copy_out_files(image, filenames, destination):
             out.write(file_buf)
     guest.shutdown()
 
+
 def copy_in_overlay(image, root_partition, overlay):
     """
     Mounts test image partition as specified by the test
@@ -206,6 +207,7 @@ def copy_in_overlay(image, root_partition, overlay):
     decompressed_overlay = decompress_file(overlay, 'gz')
     guest.tar_in(decompressed_overlay, '/')
     guest.umount(guest_partition)
+
 
 def copy_to_lxc(lxc_name, src):
     """Copies given file in SRC to lxc filesystem '/' with the provided
