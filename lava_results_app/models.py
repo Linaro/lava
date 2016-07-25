@@ -241,11 +241,12 @@ class TestSuite(models.Model, Queryable):
 
         return attribute
 
+    @models.permalink
     def get_absolute_url(self):
         """
         Web friendly name for the test suite
         """
-        return urllib.quote("/results/%s/%s" % (self.job.id, self.name))
+        return ("lava.results.suite", [self.job.id, self.name])
 
     def __unicode__(self):
         """
