@@ -398,6 +398,8 @@ Early admin stuff:
 
 * where to find logs and debug information
 * device configuration and templates
+* getting a number of cheap ARMv7 development boards
+
 
 .. toctree::
    :hidden:

@@ -200,10 +200,43 @@ Writing commands to run on the device
           multiple repositories. The copy of the script executed will be
           the one below the working directory of the current test.
 
+.. index:: inline test definition
+
+.. _inline_test_definitions:
+
+Using inline test definitions
+*****************************
+
+An inline test definition is included into the test job submission test action:
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
+     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
+
+An inline test definition **must**:
+
+#. Use the ``from: inline`` method.
+#. Provide a path to which the definition will be written
+#. Specify the metadata, at least:
+
+   #. ``format: Lava-Test Test Definition 1.0``
+   #. ``name``
+   #. ``description``
+
+Inline test definitions are **single files**, so if the test
+definition needs to call any scripts or programs, those need
+to be downloaded or installed before being called in the inline
+test definition.
+
 .. _custom_scripts:
 
 Writing custom scripts to support tests
 ***************************************
+
+.. note:: Custom scripts are not available in an :term:`inline` definition,
+   *unless* the definition itself downloads the script and makes it
+   executable.
 
 When multiple actions are necessary to get usable output, write a
 custom script to go alongside the YAML and execute that script as a

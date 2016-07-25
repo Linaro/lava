@@ -1,3 +1,5 @@
+.. index:: writing multinode
+
 .. _writing_multinode:
 
 Writing MultiNode tests
@@ -15,16 +17,21 @@ recommended way to develop MultiNode tests is to start simple and
 build up complexity one step at a time. That's what the examples here
 will show.
 
-.. note:: when viewing MultiNode log files, the original YAML
-          submitted to start the job is available as the MultiNode
-          Definition. The other definition is the parsed content which
-          was sent to each node within the MultiNode job to create a
-          separate log file and test job for each node. It is not
-          likely to be useful to submit the definition of one node of
-          a MultiNode job as a separate job.
+.. note:: When viewing MultiNode log files, the original YAML submitted to start the
+   job is available as the MultiNode Definition. The other definition is the parsed
+   content which was sent to each node within the MultiNode job to create a separate
+   log file and test job for each node. It is not likely to be useful to submit the
+   definition of one node of a MultiNode job as a separate job.
+
+.. _writing_multinode_job_file:
 
 Writing a MultiNode job file
 ****************************
+
+The first example is the simplest Multinode test job - the same job runs on two
+devices of the same type, without using any of the synchronisation calls.
+
+.. comment: add download links once packaging is updated for this branch.
 
 .. _multinode_roles:
 
@@ -51,8 +58,8 @@ a group of three devices, two of the ``device_type`` panda in the
      :end-before: # END-BLOCK-1
 
 .. note:: The :term:`role` is an arbitrary label - you may use
-	  whatever descriptive names you like for the different roles,
-	  so long as they are unique.
+   whatever descriptive names you like for the different roles,
+   so long as they are unique.
 
 The role names defined here will be used later in the test job to
 determine which tests are run on which devices, and also inside the
@@ -66,36 +73,82 @@ then run exactly the same set of actions on each device independently.
 Using your MultiNode roles
 ==========================
 
-The next thing to do is to modify the test job such that it may run
-different actions on each different device. This is done using the
-``roles`` that were defined earlier. Each action in the test
-definition should now include the ``role`` field and one or more
+The next thing to do is to modify the test job to use the roles. The next
+example will show how to run different actions on each different device, this
+first example uses both roles and so does the same things on two similar devices.
+Each action in the test definition should now include the ``role`` field and one or more
 label(s) to match those defined ``roles``.
 
-Here we deploy (slightly) different software to the ``server`` and
-``client`` machines; look for ``role: server`` and ``role: client`` in
-the two deploy blocks. In this case, the software is the same in both
-cases *except* for the supplied DTB:
+Here we deploy the same software to the ``server`` and
+``client`` machines by specifying each role in a list:
 
 .. include:: examples/test-jobs/first-multinode-job.yaml
      :code: yaml
      :start-after: # START-BLOCK-2
      :end-before: # END-BLOCK-2
 
-Here we can use *the same* boot actions for all the devices:
+We also use the same boot actions for all the devices:
 
 .. include:: examples/test-jobs/first-multinode-job.yaml
      :code: yaml
      :start-after: # START-BLOCK-3
      :end-before: # END-BLOCK-3
 
-Using MultiNode commands to synchronise devices
-***********************************************
+.. _running_multinode_tests:
+
+Running tests in multinode
+**************************
+
+Tests in multinode jobs can run independently, in which case the test action
+is very similar to a singlenode job:
 
 .. include:: examples/test-jobs/first-multinode-job.yaml
      :code: yaml
      :start-after: # START-TEST-BLOCK
      :end-before: # END-TEST-BLOCK
+
+.. _multinode_multiple_devices:
+
+Mixing devices of different types
+*********************************
+
+As well as running the same tasks on similar devices, MultiNode can run
+the same tests across different types of devices. This uses the ``role``
+support to allocate one ``deploy`` and/or ``boot`` action to one role and a
+different block to another role.
+
+This second example will use two ``panda`` devices and one ``beaglebone-black`` device.
+These devices need different files to deploy, different commands to boot and will
+take different lengths of time to get to a login prompt. Therefore, this
+second example also deals with synchronising devices within a multinode group.
+
+To run this testjob, you will need at least one idle ``beaglebone-black`` device
+and at least two idle ``panda`` devices.
+
+The examples include details of how to deploy to devices using `U-Boot <http://www.denx.de/wiki/U-Boot>`_
+but the important elements from a Multinode perspective are the use of ``role``.
+
+Allocating different device types to a group
+============================================
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-BLOCK-1
+     :end-before: # END-BLOCK-1
+
+Splitting deployments between roles
+===================================
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-BLOCK-2
+     :end-before: # END-BLOCK-2
+
+
+.. _using_multinode_synchronisation:
+
+Using MultiNode commands to synchronise devices
+***********************************************
 
 A very common requirement in a MultiNode test is that a device (or
 devices) within the MultiNode group can be told to wait until another
@@ -106,10 +159,39 @@ to make a connection to the server, for example. The only way to be
 sure that the server is ready for client connections is to make every
 client in the group wait until the server confirms that it is ready.
 
-This is done using the :ref:`multinode_api` and :ref:`lava_wait`. The
+Controlling synchronisation from the test shell
+===============================================
+
+.. note:: It is recommended to use :term:`inline` definitions for the
+   calls to the synchronisation helpers. This makes it much easier to
+   debug when a synchronisation call times out and will allow the *flow*
+   of the multinode job to be summarised in the UI.
+
+Synchronisation is done using the :ref:`multinode_api` and :ref:`lava_wait`. The
 test definition specified for the role ``client`` causes the device to
 wait until the test definition specified for the role ``server`` uses
 :ref:`lava_send` to signal that the server is ready.
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
+     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
+
+The ``server`` role would need to run an :term:`inline` definition to
+do some work and then tell the client that the server is ready:
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-SERVER-INLINE-BLOCK
+     :end-before: # END-TEST-SERVER-INLINE-BLOCK
+
+This means that each device using the role ``client`` will wait until
+**any** one device in the group sends a signal with the messageID of
+``server_installed``. The assumption here is that the group only has
+one device with the label ``server``.
+
+Controlling synchronisation from the dispatcher
+===============================================
 
 The Multinode protocol also provides support for using the Multinode
 API outside of the test shell definition - any action block can now
@@ -123,44 +205,17 @@ is a string, unique within the group. It is recommended to make these
 strings descriptive using underscores instead of spaces. The messageID
 will be included in the log files of the test.
 
-In the test definition to be used by devices with the role
-``server``:
-
-.. include:: examples/test-jobs/first-multinode-job.yaml
-     :code: yaml
-     :start-after: # START-TEST-SERVER-BLOCK
-     :end-before: # END-TEST-SERVER-BLOCK
-
-.. include:: examples/test-jobs/first-multinode-job.yaml
-     :code: yaml
-     :start-after: # START-TEST-CLIENT-BLOCK
-     :end-before: # END-TEST-CLIENT-BLOCK
-
-# explain inline.
-
-.. include:: examples/test-jobs/first-multinode-job.yaml
-     :code: yaml
-     :start-after: # START-TEST-SERVER-INLINE-BLOCK
-     :end-before: # END-TEST-SERVER-INLINE-BLOCK
-
-In the test definition for the ``client`` devices:
-
-.. include:: examples/test-jobs/first-multinode-job.yaml
-     :code: yaml
-     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
-     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
-
-This means that each device using the role ``client`` will wait until
-**any** one device in the group sends a signal with the messageID of
-``server_installed``. The assumption here is that the group only has
-one device with the label ``server``.
-
 If devices need to wait until *all* devices with a specified role send
 a signal, the devices which need to wait should instead use
 :ref:`lava_wait_all`.
 
 If the expected messageID is never sent, the job will timeout when the
 default timeout expires. See :ref:`timeouts`.
+
+.. seealso:: :ref:`writing_multinode_protocol` for more information on
+   how to call the Multinode API outside the test shell.
+
+.. _multinode_data_between_devices:
 
 Using MultiNode commands to pass data between devices
 *****************************************************
@@ -199,6 +254,8 @@ On the receiving device, the test definition would include a call to
    the API is **not** intended for large amounts of data (messages larger
    than about 4KB are considered large). Use other transfer protocols
    like ssh or wget to send large amounts of data between devices.
+
+.. _multinode_helper_tools:
 
 Helper tools in LAVA
 ====================
@@ -239,15 +296,4 @@ existing :ref:`multinode_api` calls within a test definition. The use
 of the protocol is an advanced use of LAVA and relies on the test
 writer carefully planning how the job will work.
 
-
-
-This snippet would add a :ref:`lava_sync` call at the start of the
-UmountRetry action:
-
-.. code-block:: yaml
-
-  protocols:
-    lava-multinode:
-      action: umount-retry
-      request: lava-sync
-      messageID: test
+.. FIXME: write the advanced use case for this section

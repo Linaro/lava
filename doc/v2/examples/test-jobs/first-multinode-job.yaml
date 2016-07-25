@@ -1,15 +1,24 @@
-# Simple example of a LAVA MultiNode test using two Panda boards and a
-# Beaglebone-Black
-job_name: First MultiNode job
+# Simplest multinode test job
+# Same job on two devices without synchronisation
+job_name: First Multinode Job
 
-# Reasonable defaults for a simple job
 timeouts:
   job:
-    minutes: 15
+    minutes: 10
   action:
-    minutes: 5
-priority: medium
+    minutes: 2
+  test:
+    minutes: 3
+  connection:
+   minutes: 4
+  actions:
+    multinode-test:
+      minutes: 5
+    lava-test-shell:
+      minutes: 2
+
 visibility: public
+priority: medium
 
 metadata:
   # please change these fields when modifying this job for your own tests.
@@ -22,10 +31,14 @@ protocols:
   lava-multinode:
     roles:
       client:
-        device_type: panda
-        count: 2
+        device_type: qemu
+        context:
+          arch: amd64
+        count: 1
       server:
-        device_type: beaglebone-black
+        device_type: qemu
+        context:
+          arch: amd64
         count: 1
     timeout:
       minutes: 6
@@ -36,105 +49,44 @@ actions:
 - deploy:
     role:
     - server
-    timeout:
-      minutes: 2
-    to: tftp
-    kernel:
-      url: http://images.validation.linaro.org/functional-test-images/panda/uImage
-    ramdisk:
-      url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-      compression: gz
-      header: u-boot
-      add-header: u-boot
-    os: oe
-    dtb:
-      url: http://images.validation.linaro.org/functional-test-images/am335x-boneblack.dtb
-
-- deploy:
-    role:
     - client
     timeout:
-      minutes: 2
-    to: tftp
-    kernel:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
-    ramdisk:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
-      compression: gz
-      header: u-boot
-      # the bootloader needs a u-boot header on the modified ramdisk
-      add-header: u-boot
-    modules:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
-      compression: gz
-    # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
-    os: oe
-    dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/omap4-panda.dtb
+      minutes: 5
+    to: tmpfs
+    images: 
+        rootfs: 
+          image_arg: -drive format=raw,file={rootfs}
+          url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+          compression: gz
+    os: debian
+    root_partition: 1
 # END-BLOCK-2
 
 # START-BLOCK-3
 - boot:
     role:
-    - client
     - server
-    method: u-boot
-    commands: ramdisk
+    - client
+    method: qemu
+    media: tmpfs
     prompts:
-    # escape the brackets to ensure that the prompt does not match
-    # kernel debug lines which may mention initramfs
-    - '\(initramfs\)'
-    type: bootz
-    timeout:
-      minutes: 2
+    - "root@debian:"
 # END-BLOCK-3
 
-# START-TEST-CLIENT-BLOCK
-- test:
-    role:
-    - client
-# END-TEST-CLIENT-BLOCK
-# START-TEST-CLIENT-INLINE-BLOCK
-    definitions:
-    - repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: client-wait
-          description: "client waiting for server"
-          os:
-          - debian
-          scope:
-          - functional
-        run:
-          steps:
-          - lava-wait server_installed
-      from: inline
-      name: client-wait
-      path: inline/client-wait.yaml
-# END-TEST-CLIENT-INLINE-BLOCK
-
-# START-TEST-SERVER-BLOCK
+# START-TEST-BLOCK
 - test:
     role:
     - server
-# END-TEST-SERVER-BLOCK
-# START-TEST-SERVER-INLINE-BLOCK
+    - client
+    timeout:
+      minutes: 10
     definitions:
-    - repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: client-ssh
-          description: "server installation"
-          os:
-          - debian
-          scope:
-          - functional
-        run:
-          steps:
-          - apt update
-          - apt install apache2
-          - lava-send server_installed
-      from: inline
-      name: ssh-client
-      path: inline/ssh-client.yaml
-# END-TEST-SERVER-INLINE-BLOCK
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/multi-node/multinode01.yaml
+      name: multinode-basic
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+# END-TEST-BLOCK

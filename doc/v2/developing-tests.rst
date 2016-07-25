@@ -263,6 +263,7 @@ not be rebooted between the definitions.
    multinode.rst
    writing-multinode.rst
    multinodeapi.rst
+   debugging.rst
    multinode-usecases.rst
    vland.rst
    pipeline-usecases.rst

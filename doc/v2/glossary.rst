@@ -19,7 +19,7 @@ Glossary of terms
 [ :term:`exclusive` ]
 [ :term:`frontend` ]
 [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
-[ :term:`interface tag` ]
+[ :term:`inline` ] [ :term:`interface tag` ]
 [ :term:`messageID` ]
 [ :term:`MultiNode` ]
 [ :term:`job definition` ]
@@ -178,6 +178,12 @@ Glossary of terms
   hostname
     The unique name of this device in this LAVA instance, used to link all
     jobs, results and device information to a specific device configuration.
+
+  inline
+    A type of test definition which is contained within the job submission instead
+    of being fetched from a URL. These are useful for debugging tests and are recommended
+    for the synchronisation support within :term:`multinode` test jobs.
+    See :ref:`inline_test_definitions`
 
   interface tag
      An interface tag is similar to :term:`device tag` but operate **solely** within

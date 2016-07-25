@@ -232,7 +232,7 @@ Once ``get-data.sh`` returns, the receiver notifies the sender that
 the transfer is complete, processes the data as it sees fit and cleans up.
 
 Preparing the JSON
-===================
+==================
 
 The JSON ties the YAML test definition with the hardware and software to
 run the test definition. The JSON is also where multiple test

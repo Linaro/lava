@@ -32,12 +32,6 @@ devices can be allocated.
 Once each board has booted the test image, the MultiNode API will be available for use within
 the test definition in the default PATH.
 
-.. toctree::
-   :maxdepth: 3
-
-   ../multinodeapi.rst
-   ../debugging.rst
-
 .. index:: timeout
 
 LAVA Multi-Node timeout behaviour
