@@ -58,7 +58,7 @@ To find out more about viewing job details, see :ref:`job_submission`.
 .. index:: availability
 
 Checking device availability
-============================
+****************************
 
 Use the LAVA scheduler to view available device types and devices. The
 main scheduler status page shows data for each :term:`device type` as
@@ -84,7 +84,7 @@ Devices are considered available for new jobs according to the
   are retired.
 
 Finding an image to run on the device
-=====================================
+*************************************
 
 Start with an image which is already in use in LAVA. You can find one
 of these images by checking the :term:`device type` in LAVA and viewing
@@ -94,7 +94,7 @@ e.g. for QEMU devices on validation.linaro.org:
 https://validation.linaro.org/scheduler/device_type/qemu
 
 Actions to be run for a LAVA test
-=================================
+*********************************
 
 There are three important sets of actions that will be run for a LAVA
 test:
@@ -106,10 +106,10 @@ test:
 #. Test: Run the lava test shell, running the specified tests.
 
 Examples
-========
+********
 
 Deploying a pre-built QEMU image
---------------------------------
+================================
 
 .. code-block:: yaml
 
@@ -125,10 +125,12 @@ Deploying a pre-built QEMU image
               compression: gz
         os: debian
 
+.. index:: device tag
+
 .. _device_tags_example:
 
 Using device tags
------------------
+=================
 
 A :term:`device tag` marks a specified device as having specific hardware
 capabilities which other devices of the same :term:`device type` do not.
@@ -143,8 +145,68 @@ no tags), any of those devices can be used for the Test Job.
           assigned to the requested boards. Check the device information
           on the instance to get the correct tag information.
 
+For singlenode jobs, tags are a top level list of strings in the job definition,
+the same level as ``job_name``, ``timeouts``, ``metadata`` and ``device_type``:
+
+.. code-block:: yaml
+
+    # Your first LAVA JOB definition for an x86_64 QEMU
+    device_type: qemu
+    job_name: QEMU pipeline, first job
+
+    tags:
+    - tap_device
+    - virtual_io
+
+    timeouts:
+      job:
+        minutes: 15
+      action:
+        minutes: 5
+    priority: medium
+    visibility: public
+
+    # context allows specific values to be overridden or included
+    context:
+      # tell the qemu template which architecture is being tested
+      # the template uses that to ensure that qemu-system-x86_64 is executed.
+      arch: amd64
+
+    metadata:
+      # please change these fields when modifying this job for your own tests.
+      docs-source: first-job
+      docs-filename: qemu-pipeline-first-job.yaml
+
+For :term:`multinode` test jobs, the tags are defined as part of the
+Multinode protocol:
+
+.. code-block:: yaml
+
+    protocols:
+      lava-multinode:
+        roles:
+          client:
+            device_type: qemu
+            context:
+              arch: amd64
+            count: 1
+            # In this example, only one role in the group uses tags
+            tags:
+            - tap_device
+            - virtual_io
+          server:
+            device_type: qemu
+            context:
+              arch: amd64
+            count: 1
+        timeout:
+          seconds: 60
+
+Device tags are only relevant during scheduling of the testjob and
+have no meaning to the dispatcher.
+
 Using LAVA Test Shell
----------------------
+=====================
 
 The ``lava_test_shell`` action provides a way to employ a black-box
 style testing approach with the target device. Its format is:

@@ -19,6 +19,8 @@ You need to be familiar with these sections:
 .. seealso:: `Django documentation on the Django Admin
    Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
 
+.. _simple_admiin_outline:
+
 Outline
 *******
 
@@ -32,8 +34,10 @@ task covering a wide range of skills.
 * **Triage**
 * **Python/Django knowledge** - for debugging
 
+.. _simple_admin_small:
+
 Start small
-===========
+***********
 
 These rules may seem harsh or obvious or tedious. However, multiple
 people have skipped one or more of these requirements and have learnt
@@ -81,13 +85,21 @@ is **strongly** advised to follow all of these rules.
    test shell definitions, :term:`device dictionaries <device dictionary>`,
    template changes and any code changes - all need to be in **version control**.
 
+#. **Control access to the dispatcher and devices** - device configuration details
+   like the connection command and remote power commands can be viewed by **all users**
+   who are able to submit to that device. In many cases, these details are sufficient
+   to allow anyone with the necessary access to administer those devices, including
+   modifying bootloader configuration. Only administrators should have access to **any**
+   machine which itself has access to the serial console server and/or remote power control
+   services. Typically, this will be controlled using SSH keys.
+
 #. **Subscribe** to the :ref:`mailing_lists` where you will find
    others who have setup their own LAVA instances.
 
 .. _simplistic_testing_problems:
 
 Problems with simplistic testing
-================================
+********************************
 
 There are a number of common fallacies relating to automation. Check
 your test ideas against these before starting to make your plans:
@@ -181,6 +193,54 @@ your test ideas against these before starting to make your plans:
    Your preferred test plan may be infeasible to automate and some
    level of compromise will be required.
 
+#. **Users are all admins too** - this will come back to bite! However, there
+   are other ways in which this can occur even after administrators have restricted
+   users to limited access. Test jobs (including hacking sessions) have full access
+   to the device as root. Users, therefore, can modify the device during a test
+   job and it depends on the device hardware support and device configuration as
+   to what may happen next. Some devices store bootloader configuration in files
+   which are accessible from userspace after boot. Some devices lack a management
+   interface that can intervene when a device fails to boot. Put these two together
+   and admins can face a situation where a test job has corrupted, overridden or
+   modified the bootloader configuration such that the device no longer boots
+   without intervention. Some operating systems require a debug setting to be enabled
+   before the device will be visible to the automation (e.g. the Android Debug Bridge).
+   It is trivial for a user to mistakenly deploy a default or production system
+   which does not have this modification.
+
+   Administrators need to be mindful of the situations from which users can
+   (mistakenly or otherwise) modify the device configuration such that the device
+   is unable to booting without intervention when the next job starts. This is one of
+   the key reasons for :term:`health checks <health check>` to run sufficiently often
+   that the impact on other users is minimised.
+
+.. index:: administrator
+
+.. _lava_admin_roles:
+
+Roles of LAVA administrators
+****************************
+
+The ongoing roles of administrators include:
+
+* monitor the number of devices which are online
+* identify the reasons for health check failures
+* communicate with users when a test job has made the device unbootable (i.e. *bricked*)
+* recover devices which have gone offline
+* restrict command line access to the dispatcher(s) and device(s) to only other
+  administrators. This includes access to the serial console server and the remote
+  power control service. Ideally, users must not have any access to the same subnet
+  as the dispatchers and devices, **except** for the purposes of accessing devices
+  during :ref:`hacking_session`. This may involve port forwarding or firewall configuration
+  and is **not** part of the LAVA software support.
+* to keep the instance at a sufficiently high level of reliability that
+  :ref:`continuous_integration` produces results which are themselves reliable
+  and useful to the developers. To deliver this reliability, administrators do need
+  to sometimes prevent users from making mistakes which are likely to take devices
+  offline.
+
+.. _best_admin_practices:
+
 Best practice
 *************
 
@@ -206,12 +266,18 @@ Best practice
 .. _`puppet`: https://github.com/puppetlabs/puppet
 .. _`ansible`: https://www.ansible.com/
 
+.. index:: admin triage
+
+.. _admin_triage:
+
 Triage
 ******
 
 When you come across problems with your LAVA instance, there are some
 basic information sources, methods and tools which will help you
 identify the problem(s).
+
+.. _admin_debug_information:
 
 Where to find debug information
 ===============================
@@ -286,6 +352,8 @@ TestJob data
     master are the complete log file (``output.yaml``) and the logs for
     each specific action within the job in a directory tree below the
     ``pipeline`` directory.
+
+.. _admin_adding_devices:
 
 Adding more devices
 *******************

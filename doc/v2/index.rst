@@ -141,7 +141,7 @@ Support
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
 
    first_steps.rst
    first-installation.rst
