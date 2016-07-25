@@ -1838,12 +1838,25 @@ def job_log_pipeline_incremental(request, pk):
 
     try:
         with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-            data = yaml.load(f_in)[first_line:]
+            # Manually skip the first lines
+            # This is working because:
+            # 1/ output.yaml is a list of dictionnaries
+            # 2/ each item in this list is represented as one line in output.yaml
+            count = 0
+            for _ in range(first_line):
+                count += len(f_in.next())
+            # Seeking is needed to switch from reading lines to reading bytes.
+            f_in.seek(count)
+            # Load the remaining as yaml
+            data = yaml.load(f_in)
+            # When reaching EOF, yaml.load does return None instead of []
+            if not data:
+                data = []
             if sys.version_info < (3, 0):
                 for line in data:
                     remove_broken_string(line)
 
-    except IOError:
+    except (IOError, StopIteration):
         data = []
 
     response = HttpResponse(
