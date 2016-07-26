@@ -24,9 +24,8 @@ import csv
 import simplejson
 import yaml
 from collections import OrderedDict
-from django.template import RequestContext
 from django.http.response import HttpResponse, StreamingHttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render, loader
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -78,19 +77,21 @@ def index(request):
         data.get_table_data(),
     )
     RequestConfig(request, paginate={"per_page": result_table.length}).configure(result_table)
-    return render_to_response(
-        "lava_results_app/index.html", {
+    template = loader.get_template("lava_results_app/index.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
             'result_table': result_table,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Query", parent=index)
 def query(request):
-    return render_to_response(
-        "lava_results_app/query_list.html", {
+    template = loader.get_template("lava_results_app/query_list.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Test job {job}", parent=index, needs=['job'])
@@ -137,8 +138,9 @@ def testjob(request, job):
             yaml_dict[str(data.name)] = str(data.value)
 
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
-    return render_to_response(
-        "lava_results_app/job.html", {
+    template = loader.get_template("lava_results_app/job.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(testjob, job=job.id),
             'job': job,
             'job_link': pklink(job),
@@ -151,7 +153,7 @@ def testjob(request, job):
             'available_content_types': simplejson.dumps(
                 QueryCondition.get_similar_job_content_types()
             ),
-        }, RequestContext(request))
+        }, request=request))
 
 
 def testjob_csv(request, job):
@@ -196,14 +198,15 @@ def suite(request, job, pk):
         data.get_table_data().filter(suite=test_suite)
     )
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
-    return render_to_response(
-        "lava_results_app/suite.html", {
+    template = loader.get_template("lava_results_app/suite.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(suite, pk=pk, job=job.id),
             'job': job,
             'job_link': pklink(job),
             'suite_name': pk,
             'suite_table': suite_table,
-        }, RequestContext(request))
+        }, request=request))
 
 
 def suite_csv(request, job, pk):
@@ -290,15 +293,16 @@ def testset(request, job, ts, pk, case):
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
     test_cases = TestCase.objects.filter(name=case, test_set=test_set)
-    return render_to_response(
-        "lava_results_app/case.html", {
+    template = loader.get_template("lava_results_app/case.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 testset, pk=pk, job=job.id, ts=ts, case=case),
             'job': job,
             'suite': test_suite,
             'job_link': pklink(job),
             'test_cases': test_cases,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Test case {case}", parent=suite, needs=['job', 'pk', 'case'])
@@ -314,11 +318,12 @@ def testcase(request, job, pk, case):
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
-    return render_to_response(
-        "lava_results_app/case.html", {
+    template = loader.get_template("lava_results_app/case.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(testcase, pk=pk, job=job.id, case=case),
             'job': job,
             'suite': test_suite,
             'job_link': pklink(job),
             'test_cases': test_cases,
-        }, RequestContext(request))
+        }, request=request))

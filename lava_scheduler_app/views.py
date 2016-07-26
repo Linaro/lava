@@ -10,15 +10,12 @@ import datetime
 import urllib2
 import sys
 
-import django
-from dateutil.relativedelta import relativedelta
 from django import forms
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
-from django.db.models import Count
 from django.http import (
     Http404,
     HttpResponse,
@@ -30,12 +27,10 @@ from django.http import (
 from django.shortcuts import (
     get_object_or_404,
     redirect,
-    render_to_response,
     render,
 )
-from django.template import RequestContext
-from django.db import models
-from django.db.models import Q
+from django.template import loader
+from django.db.models import Q, Count
 from django.utils import timezone
 
 from django_tables2 import (
@@ -65,7 +60,10 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app import utils
-from lava_scheduler_app.dbutils import initiate_health_check_job
+from lava_scheduler_app.dbutils import (
+    initiate_health_check_job,
+    device_type_summary
+)
 from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaView
@@ -74,7 +72,6 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
-    InvalidConditionsError
 )
 
 from lava_scheduler_app.template_helper import expand_template
@@ -118,6 +115,9 @@ from lava_scheduler_app.tables import (
     RunningTable,
 )
 
+# pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
+# pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
+
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
 
@@ -139,7 +139,7 @@ class JobTableView(LavaView):
     def __init__(self, request, **kwargs):
         super(JobTableView, self).__init__(request, **kwargs)
 
-    def device_query(self, term):
+    def device_query(self, term):  # pylint: disable=no-self-use
         visible = filter_device_types(self.request.user)
         device = list(Device.objects.filter(hostname__contains=term, device_type__in=visible))
         return Q(actual_device__in=device)
@@ -254,10 +254,9 @@ class WorkerView(JobTableView):
 
 def health_jobs_in_hr():
     return TestJob.objects.values('actual_device').filter(
-        health_check=True,
-        actual_device__isnull=False).exclude(
-        actual_device__status__in=[Device.RETIRED]).exclude(
-        status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
+        Q(health_check=True) & ~Q(actual_device=None)).exclude(
+            actual_device__status__in=[Device.RETIRED]).exclude(
+                status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
 
 
 def _online_total():
@@ -423,9 +422,8 @@ def reports(request):
     for week in reversed(range(10)):
         health_week_report.append(job_report(week * -7 - 7, week * -7, True))
         job_week_report.append(job_report(week * -7 - 7, week * -7, False))
-
-    return render_to_response(
-        "lava_scheduler_app/reports.html",
+    template = loader.get_template("lava_scheduler_app/reports.html")
+    return HttpResponse(template.render(
         {
             'health_week_report': health_week_report,
             'health_day_report': health_day_report,
@@ -433,7 +431,7 @@ def reports(request):
             'job_day_report': job_day_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Failure Report", parent=reports)
@@ -464,8 +462,8 @@ def device_list(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/alldevices.html",
+    template = loader.get_template("lava_scheduler_app/alldevices.html")
+    return HttpResponse(template.render(
         {
             'devices_table': ptable,
             "length": ptable.length,
@@ -474,7 +472,7 @@ def device_list(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_list),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Active Devices", parent=index)
@@ -483,8 +481,8 @@ def active_device_list(request):
     data = ActiveDeviceView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/activedevices.html",
+    template = loader.get_template("lava_scheduler_app/activedevices.html")
+    return HttpResponse(template.render(
         {
             'active_devices_table': ptable,
             "length": ptable.length,
@@ -493,7 +491,7 @@ def active_device_list(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Pipeline Devices", parent=index)
@@ -503,8 +501,8 @@ def pipeline_device_list(request):
     ptable = DeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(
         ptable)
-    return render_to_response(
-        "lava_scheduler_app/pipelinedevices.html",
+    template = loader.get_template("lava_scheduler_app/pipelinedevices.html")
+    return HttpResponse(template.render(
         {
             'pipeline_devices_table': ptable,
             "length": ptable.length,
@@ -514,7 +512,7 @@ def pipeline_device_list(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 pipeline_device_list),
         },
-        RequestContext(request))
+        request=request))
 
 
 class OnlineDeviceView(DeviceTableView):
@@ -530,8 +528,8 @@ def online_device_list(request):
     data = OnlineDeviceView(request, model=Device, table_class=OnlineDeviceTable)
     ptable = OnlineDeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/onlinedevices.html",
+    template = loader.get_template("lava_scheduler_app/onlinedevices.html")
+    return HttpResponse(template.render(
         {
             'online_devices_table': ptable,
             "length": ptable.length,
@@ -540,7 +538,7 @@ def online_device_list(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(online_device_list),
         },
-        RequestContext(request))
+        request=request))
 
 
 class PassingHealthTableView(JobTableView):
@@ -559,8 +557,8 @@ def passing_health_checks(request):
                                   table_class=PassingHealthTable)
     ptable = PassingHealthTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/passinghealthchecks.html",
+    template = loader.get_template("lava_scheduler_app/passinghealthchecks.html")
+    return HttpResponse(template.render(
         {
             'passing_health_checks_table': ptable,
             "length": ptable.length,
@@ -569,7 +567,7 @@ def passing_health_checks(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(passing_health_checks),
         },
-        RequestContext(request))
+        request=request))
 
 
 class MyDeviceView(DeviceTableView):
@@ -584,8 +582,8 @@ def mydevice_list(request):
     data = MyDeviceView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/mydevices.html",
+    template = loader.get_template("lava_scheduler_app/mydevices.html")
+    return HttpResponse(template.render(
         {
             'my_device_table': ptable,
             "length": ptable.length,
@@ -594,7 +592,7 @@ def mydevice_list(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_list)
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("My Device Type Health History", parent=index)
@@ -610,14 +608,13 @@ def mydevice_type_health_history_log(request):
     config = RequestConfig(request,
                            paginate={"per_page": mydthhistory_table.length})
     config.configure(mydthhistory_table)
-
-    return render_to_response(
-        "lava_scheduler_app/mydevice_type_health_history_log.html",
+    template = loader.get_template("lava_scheduler_app/mydevice_type_health_history_log.html")
+    return HttpResponse(template.render(
         {
             'mydthealthhistory_table': mydthhistory_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
         },
-        RequestContext(request))
+        request=request))
 
 
 def get_restricted_job(user, pk, request=None):
@@ -654,32 +651,6 @@ def filter_device_types(user):
     return visible
 
 
-# SQL Aggregates can be replaced by either of the following,
-#
-# Conditional Expressions:
-# https://docs.djangoproject.com/en/1.8/ref/models/conditional-expressions/
-#
-# or
-#
-# Query Expressions:
-# https://docs.djangoproject.com/en/1.8/ref/models/expressions/
-aggregate_cls = models.aggregates.Aggregate
-
-
-class SumIfSQL(aggregate_cls):
-    is_ordinal = True
-    sql_function = 'SUM'
-    sql_template = 'SUM((%(condition)s)::int)'
-
-
-class SumIf(models.Aggregate):
-    name = 'SumIf'
-
-    def add_to_query(self, query, alias, col, source, is_summary):
-        aggregate = SumIfSQL(col, source=source, is_summary=is_summary, **self.extra)
-        query.aggregates[alias] = aggregate
-
-
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
@@ -702,16 +673,7 @@ class DeviceTypeOverView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        devices = DeviceType.objects.filter(name__in=visible)\
-            .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
-                      offline=SumIf('device', condition='status in (%s,%s)' %
-                                                        (Device.OFFLINE, Device.OFFLINING)),
-                      busy=SumIf('device', condition='status in (%s,%s)' %
-                                                     (Device.RUNNING, Device.RESERVED)),
-                      restricted=SumIf('device', condition='is_public is False and status not in (%s)' %
-                                                           Device.RETIRED),
-                      ).order_by('name')
-        return devices
+        return device_type_summary(visible)
 
 
 class NoDTDeviceView(DeviceTableView):
@@ -785,9 +747,7 @@ def device_type_detail(request, pk):
         "Failed": weekly_failed,
     }, {"Duration": "Month",
         "Complete": monthly_complete,
-        "Failed": monthly_failed,
-        }
-    ]
+        "Failed": monthly_failed, }]
 
     prefix = 'no_dt_'
     no_dt_data = NoDTDeviceView(request, model=Device, table_class=NoDTDeviceTable)
@@ -850,9 +810,8 @@ def device_type_detail(request, pk):
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
-
-    return render_to_response(
-        "lava_scheduler_app/device_type.html",
+    template = loader.get_template("lava_scheduler_app/device_type.html")
+    return HttpResponse(template.render(
         {
             'device_type': dt,
             'arch_version': architecture_name,
@@ -887,7 +846,7 @@ def device_type_detail(request, pk):
             'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
             'health_freq': health_freq_str,
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
@@ -904,15 +863,14 @@ def device_type_health_history_log(request, pk):
     config = RequestConfig(request,
                            paginate={"per_page": dthhistory_table.length})
     config.configure(dthhistory_table)
-
-    return render_to_response(
-        "lava_scheduler_app/device_type_health_history_log.html",
+    template = loader.get_template("lava_scheduler_app/device_type_health_history_log.html")
+    return HttpResponse(template.render(
         {
             'device_type': device_type,
             'dthealthhistory_table': dthhistory_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("{pk} device type report", parent=device_type_detail, needs=['pk'])
@@ -933,9 +891,8 @@ def device_type_reports(request, pk):
         actual_device__in=Device.objects.filter(device_type=device_type),
         status__in=[TestJob.RUNNING,
                     TestJob.CANCELING]).order_by('start_time')[:5]
-
-    return render_to_response(
-        "lava_scheduler_app/devicetype_reports.html",
+    template = loader.get_template("lava_scheduler_app/devicetype_reports.html")
+    return HttpResponse(template.render(
         {
             'device_type': device_type,
             'health_week_report': health_week_report,
@@ -945,7 +902,7 @@ def device_type_reports(request, pk):
             'long_running': long_running,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_reports, pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("All Device Health", parent=index)
@@ -953,8 +910,8 @@ def lab_health(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)
     ptable = DeviceHealthTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/labhealth.html",
+    template = loader.get_template("lava_scheduler_app/labhealth.html")
+    return HttpResponse(template.render(
         {
             'device_health_table': ptable,
             "length": ptable.length,
@@ -963,7 +920,7 @@ def lab_health(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(lab_health),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
@@ -990,9 +947,8 @@ def health_job_list(request, pk):
 
     discrete_data = trans_table.prepare_discrete_data(trans_data)
     discrete_data.update(health_table.prepare_discrete_data(health_data))
-
-    return render_to_response(
-        "lava_scheduler_app/health_jobs.html",
+    template = loader.get_template("lava_scheduler_app/health_jobs.html")
+    return HttpResponse(template.render(
         {
             'device': device,
             "terms_data": terms_data,
@@ -1001,17 +957,21 @@ def health_job_list(request, pk):
             "times_data": times_data,
             'transition_table': trans_table,
             'health_job_table': health_table,
-            'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
+            'show_forcehealthcheck':
+                device.can_admin(request.user) and
+                device.status not in [Device.RETIRED] and
+                device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
-            'show_maintenance': device.can_admin(request.user) and
-            device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
+            'show_maintenance':
+                device.can_admin(request.user) and
+                device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'edit_description': device.can_admin(request.user),
-            'show_online': device.can_admin(request.user) and
-            device.status in [Device.OFFLINE, Device.OFFLINING],
+            'show_online':
+                device.can_admin(request.user) and
+                device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 class MyJobsView(JobTableView):
@@ -1068,9 +1028,8 @@ def job_list(request):
     data = AllJobsView(request, model=TestJob, table_class=JobTable)
     ptable = JobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-
-    return render_to_response(
-        "lava_scheduler_app/alljobs.html",
+    template = loader.get_template("lava_scheduler_app/alljobs.html")
+    return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
             'alljobs_table': ptable,
@@ -1080,7 +1039,7 @@ def job_list(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Submit Job", parent=index)
@@ -1118,10 +1077,9 @@ def job_submit(request):
 
             job_definition = _prepare_template(request)
             response_data["json_input"] = str(job_definition).replace("'", '"')
-
-            return render_to_response(
-                "lava_scheduler_app/job_submit.html",
-                response_data, RequestContext(request))
+            template = loader.get_template("lava_scheduler_app/job_submit.html")
+            return HttpResponse(template.render(
+                response_data, request=request))
 
         else:
             try:
@@ -1139,10 +1097,9 @@ def job_submit(request):
                         user=request.user, test_job=job)
                     testjob_user.is_favorite = True
                     testjob_user.save()
-
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(
+                    response_data, request=request))
 
             except (JSONDataError, ValueError, DevicesUnavailableException) \
                     as e:
@@ -1150,14 +1107,13 @@ def job_submit(request):
                 response_data["context_help"] = "lava scheduler submit job",
                 response_data["json_input"] = request.POST.get("json-input")
                 response_data["is_favorite"] = request.POST.get("is_favorite")
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(
+                    response_data, request=request))
 
     else:
-        return render_to_response(
-            "lava_scheduler_app/job_submit.html",
-            response_data, RequestContext(request))
+        template = loader.get_template("lava_scheduler_app/job_submit.html")
+        return HttpResponse(template.render(response_data, request=request))
 
 
 @BreadCrumb("Submit Job", parent=index)
@@ -1173,10 +1129,8 @@ def job_submit_wizard(request):
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
         'device_types': filter_device_types(request.user),
     }
-
-    return render_to_response(
-        "lava_scheduler_app/job_wizard.html",
-        response_data, RequestContext(request))
+    template = loader.get_template("lava_scheduler_app/job_wizard.html")
+    return HttpResponse(template.render(response_data, request=request))
 
 
 def _prepare_template(request):
@@ -1209,6 +1163,9 @@ def _prepare_template(request):
         action_config["ANDROID_BOOT"] = android_boot_template
 
     else:
+        image_template = None
+        image_config = None
+        deploy_command = None
         if boot_type == "linaro_image":
             image_template = copy.deepcopy(DEPLOY_IMAGE)
             deploy_command = "deploy_linaro_image"
@@ -1414,8 +1371,8 @@ def job_detail(request, pk):
                 'size_warning': job.size_limit,
                 'job_file_size': job_file_size,
             })
-            return render_to_response(
-                "lava_scheduler_app/job.html", data, RequestContext(request))
+            template = loader.get_template("lava_scheduler_app/job.html")
+            return HttpResponse(template.render(data, request=request))
 
         if not job.failure_comment:
             job_errors = getDispatcherErrors(job.output_file())
@@ -1447,7 +1404,8 @@ def job_detail(request, pk):
         data.update({
             'expand': True,
         })
-    return render_to_response(template, data, RequestContext(request))
+    template_obj = loader.get_template(template)
+    return HttpResponse(template_obj.render(data, request=request))
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
@@ -1455,8 +1413,8 @@ def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     description = description_data(job.id) if job.is_pipeline else {}
-    return render_to_response(
-        "lava_scheduler_app/job_definition.html",
+    template = loader.get_template("lava_scheduler_app/job_definition.html")
+    return HttpResponse(template.render(
         {
             'job': job,
             'pipeline': description.get('pipeline', []),
@@ -1465,7 +1423,7 @@ def job_definition(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
-        RequestContext(request))
+        request=request))
 
 
 def job_description_yaml(request, pk):
@@ -1495,8 +1453,8 @@ def job_definition_plain(request, pk):
 def expanded_job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    return render_to_response(
-        "lava_scheduler_app/expanded_job_definition.html",
+    template = loader.get_template("lava_scheduler_app/expanded_job_definition.html")
+    return HttpResponse(template.render(
         {
             'job': job,
             'job_file_present': bool(log_file),
@@ -1504,7 +1462,7 @@ def expanded_job_definition(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
-        RequestContext(request))
+        request=request))
 
 
 def expanded_job_definition_plain(request, pk):
@@ -1519,8 +1477,8 @@ def expanded_job_definition_plain(request, pk):
 def multinode_job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    return render_to_response(
-        "lava_scheduler_app/multinode_job_definition.html",
+    template = loader.get_template("lava_scheduler_app/multinode_job_definition.html")
+    return HttpResponse(template.render(
         {
             'job': job,
             'job_file_present': bool(log_file),
@@ -1528,7 +1486,7 @@ def multinode_job_definition(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
-        RequestContext(request))
+        request=request))
 
 
 def multinode_job_definition_plain(request, pk):
@@ -1544,8 +1502,8 @@ def multinode_job_definition_plain(request, pk):
 def vmgroup_job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    return render_to_response(
-        "lava_scheduler_app/vmgroup_job_definition.html",
+    template = loader.get_template("lava_scheduler_app/vmgroup_job_definition.html")
+    return HttpResponse(template.render(
         {
             'job': job,
             'job_file_present': bool(log_file),
@@ -1553,7 +1511,7 @@ def vmgroup_job_definition(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
-        RequestContext(request))
+        request=request))
 
 
 def vmgroup_job_definition_plain(request, pk):
@@ -1570,8 +1528,8 @@ def myjobs(request):
     data = MyJobsView(request, model=TestJob, table_class=JobTable)
     ptable = JobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/myjobs.html",
+    template = loader.get_template("lava_scheduler_app/myjobs.html")
+    return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(myjobs),
             'myjobs_table': ptable,
@@ -1580,7 +1538,7 @@ def myjobs(request):
             "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Longest Running Jobs", parent=reports)
@@ -1590,9 +1548,8 @@ def longest_jobs(request, username=None):
     ptable = LongestJobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(
         ptable)
-
-    return render_to_response(
-        "lava_scheduler_app/longestjobs.html",
+    template = loader.get_template("lava_scheduler_app/longestjobs.html")
+    return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(longest_jobs),
             'longestjobs_table': ptable,
@@ -1602,7 +1559,7 @@ def longest_jobs(request, username=None):
             "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Favorite Jobs", parent=index)
@@ -1615,8 +1572,8 @@ def favorite_jobs(request, username=None):
                             table_class=JobTable, user=user)
     ptable = JobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/favorite_jobs.html",
+    template = loader.get_template("lava_scheduler_app/favorite_jobs.html")
+    return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(favorite_jobs),
             'favoritejobs_table': ptable,
@@ -1626,7 +1583,7 @@ def favorite_jobs(request, username=None):
             "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
@@ -1651,9 +1608,8 @@ def job_complete_log(request, pk):
         if not log_data:
             default_section = 'deploy'
             log_data = utils.folded_logs(job, default_section, sections, summary=False)
-
-    return render_to_response(
-        "lava_scheduler_app/pipeline_complete.html",
+    template = loader.get_template("lava_scheduler_app/pipeline_complete.html")
+    return HttpResponse(template.render(
         {
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
@@ -1666,7 +1622,7 @@ def job_complete_log(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
             # 'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         },
-        RequestContext(request))
+        request=request))
 
 
 def job_section_log(request, job, log_name):
@@ -1724,13 +1680,14 @@ def job_pipeline_sections(request, pk):
     for action in pipeline:
         if 'section' in action:
             sections.append({action['section']: action['level']})
-    response = render_to_response(
-        "lava_scheduler_app/_section_logging.html", {
+    template = loader.get_template("lava_scheduler_app/_section_logging.html")
+    response = HttpResponse(template.render(
+        {
             'job': job,
             'pipeline_data': pipeline,
             'sections': sections,
             'default_section': 'any',
-        }, RequestContext(request))
+        }, request=request))
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response['X-Sections'] = '1'
     return response
@@ -1754,16 +1711,15 @@ def job_pipeline_incremental(request, pk):
         if not log_data:
             default_section = 'deploy'
             log_data = utils.folded_logs(job, default_section, sections, summary=summary)
-
-    response = render_to_response(
-        "lava_scheduler_app/_structured_logdata.html",
+    template = loader.get_template("lava_scheduler_app/_structured_logdata.html")
+    response = HttpResponse(template.render(
         {
             'job': TestJob.objects.get(pk=pk),
             'sections': sections,
             'default_section': 'any',
             'log_data': log_data,
         },
-        RequestContext(request))
+        request=request))
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response['X-Is-Finished'] = '1'
     return response
@@ -1788,9 +1744,8 @@ def job_log_file(request, pk):
         content = None
     else:
         content = formatLogFile(job.output_file())
-
-    return render_to_response(
-        "lava_scheduler_app/job_log_file.html",
+    template = loader.get_template("lava_scheduler_app/job_log_file.html")
+    return HttpResponse(template.render(
         {
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
@@ -1803,7 +1758,7 @@ def job_log_file(request, pk):
             'show_failure': job.can_annotate(request.user),
             'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         },
-        RequestContext(request))
+        request=request))
 
 
 def job_log_file_plain(request, pk):
@@ -1980,17 +1935,15 @@ def job_resubmit(request, pk):
                     response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(response_data, request=request))
 
             except (JSONDataError, ValueError, DevicesUnavailableException) \
                     as e:
                 response_data["error"] = str(e)
                 response_data["json_input"] = request.POST.get("json-input")
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(response_data, request=request))
         else:
             if request.is_ajax():
                 try:
@@ -2031,16 +1984,14 @@ def job_resubmit(request, pk):
 
             try:
                 response_data["json_input"] = definition
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(response_data, request=request))
             except (JSONDataError, ValueError, DevicesUnavailableException) \
                     as e:
                 response_data["error"] = str(e)
                 response_data["json_input"] = definition
-                return render_to_response(
-                    "lava_scheduler_app/job_submit.html",
-                    response_data, RequestContext(request))
+                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                return HttpResponse(template.render(response_data, request=request))
 
     else:
         return HttpResponseForbidden(
@@ -2092,14 +2043,13 @@ def job_annotate_failure(request, pk):
             return redirect(job)
     else:
         form = FailureForm(instance=job)
-
-    return render_to_response(
-        "lava_scheduler_app/job_annotate_failure.html",
+    template = loader.get_template("lava_scheduler_app/job_annotate_failure.html")
+    return HttpResponse(template.render(
         {
             'form': form,
             'job': job,
         },
-        RequestContext(request))
+        request=request))
 
 
 def job_json(request, pk):
@@ -2157,9 +2107,8 @@ def transition_detail(request, pk):
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
     config.configure(trans_table)
-
-    return render_to_response(
-        "lava_scheduler_app/transition.html",
+    template = loader.get_template("lava_scheduler_app/transition.html")
+    return HttpResponse(template.render(
         {
             'device': transition.device,
             'transition': transition,
@@ -2172,7 +2121,7 @@ def transition_detail(request, pk):
             'old_state': transition.get_old_state_display(),
             'new_state': transition.get_new_state_display(),
         },
-        RequestContext(request))
+        request=request))
 
 
 class RecentJobsView(JobTableView):
@@ -2292,6 +2241,7 @@ def device_detail(request, pk):
         .filter(device_type_id=device.device_type_id) \
         .only('hostname').order_by('hostname')
     previous_device = None
+    next_device = None
     devices_iter = iter(devices)
     for d in devices_iter:
         if d.hostname == device.hostname:
@@ -2343,9 +2293,8 @@ def device_detail(request, pk):
     overrides = None
     if device.is_pipeline:
         overrides = []
-
-    return render_to_response(
-        "lava_scheduler_app/device.html",
+    template = loader.get_template("lava_scheduler_app/device.html")
+    return HttpResponse(template.render(
         {
             'device': device,
             "times_data": times_data,
@@ -2355,13 +2304,16 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
-            'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
+            'show_forcehealthcheck':
+                device.can_admin(request.user) and
+                device.status not in [Device.RETIRED] and
+                device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
-            'show_maintenance': device.can_admin(request.user) and
-            device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
+            'show_maintenance':
+                device.can_admin(request.user) and
+                device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'edit_description': device.can_admin(request.user),
             'show_online': (device.can_admin(request.user) and
                             device.status in [Device.OFFLINE, Device.OFFLINING]),
@@ -2377,7 +2329,7 @@ def device_detail(request, pk):
             'previous_device': previous_device,
             'overrides': overrides,
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("{pk} device report", parent=device_detail, needs=['pk'])
@@ -2398,9 +2350,8 @@ def device_reports(request, pk):
         actual_device=device,
         status__in=[TestJob.RUNNING,
                     TestJob.CANCELING]).order_by('start_time')[:5]
-
-    return render_to_response(
-        "lava_scheduler_app/device_reports.html",
+    template = loader.get_template("lava_scheduler_app/device_reports.html")
+    return HttpResponse(template.render(
         {
             'device': device,
             'health_week_report': health_week_report,
@@ -2410,7 +2361,7 @@ def device_reports(request, pk):
             'long_running': long_running,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_reports, pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 @post_only
@@ -2518,15 +2469,14 @@ def device_health_history_log(request, pk):
     config = RequestConfig(request,
                            paginate={"per_page": hhistory_table.length})
     config.configure(hhistory_table)
-
-    return render_to_response(
-        "lava_scheduler_app/device_health_history_log.html",
+    template = loader.get_template("lava_scheduler_app/device_health_history_log.html")
+    return HttpResponse(template.render(
         {
             'device': device,
             'healthhistory_table': hhistory_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_health_history_log, pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])
@@ -2535,8 +2485,8 @@ def worker_detail(request, pk):
     data = DeviceTableView(request)
     ptable = NoWorkerDeviceTable(data.get_table_data().filter(worker_host=worker).order_by('hostname'))
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-    return render_to_response(
-        "lava_scheduler_app/worker.html",
+    template = loader.get_template("lava_scheduler_app/worker.html")
+    return HttpResponse(template.render(
         {
             'worker': worker,
             'worker_device_table': ptable,
@@ -2548,7 +2498,7 @@ def worker_detail(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(worker_detail,
                                                             pk=pk),
         },
-        RequestContext(request))
+        request=request))
 
 
 @post_only
@@ -2593,9 +2543,8 @@ def healthcheck(request):
     config = RequestConfig(request,
                            paginate={"per_page": health_check_ptable.length})
     config.configure(health_check_ptable)
-
-    return render_to_response(
-        "lava_scheduler_app/health_check_jobs.html",
+    template = loader.get_template("lava_scheduler_app/health_check_jobs.html")
+    return HttpResponse(template.render(
         {
             "times_data": health_check_ptable.prepare_times_data(health_check_data),
             "terms_data": health_check_ptable.prepare_terms_data(health_check_data),
@@ -2604,7 +2553,7 @@ def healthcheck(request):
             'health_check_table': health_check_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(healthcheck),
         },
-        RequestContext(request))
+        request=request))
 
 
 class PipelineJobsView(JobTableView):
@@ -2621,9 +2570,8 @@ def pipeline(request):
     config = RequestConfig(request,
                            paginate={"per_page": pipeline_ptable.length})
     config.configure(pipeline_ptable)
-
-    return render_to_response(
-        "lava_scheduler_app/pipelinejobs.html",
+    template = loader.get_template("lava_scheduler_app/pipelinejobs.html")
+    return HttpResponse(template.render(
         {
             "times_data": pipeline_ptable.prepare_times_data(pipeline_data),
             "terms_data": pipeline_ptable.prepare_terms_data(pipeline_data),
@@ -2632,7 +2580,7 @@ def pipeline(request):
             'pipeline_table': pipeline_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(pipeline),
         },
-        RequestContext(request))
+        request=request))
 
 
 class QueueJobsView(JobTableView):
@@ -2649,9 +2597,8 @@ def queue(request):
     )
     config = RequestConfig(request, paginate={"per_page": queue_ptable.length})
     config.configure(queue_ptable)
-
-    return render_to_response(
-        "lava_scheduler_app/queue.html",
+    template = loader.get_template("lava_scheduler_app/queue.html")
+    return HttpResponse(template.render(
         {
             "times_data": queue_ptable.prepare_times_data(queue_data),
             "terms_data": queue_ptable.prepare_terms_data(queue_data),
@@ -2660,7 +2607,7 @@ def queue(request):
             'queue_table': queue_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
         },
-        RequestContext(request))
+        request=request))
 
 
 class RunningView(LavaView):
@@ -2675,13 +2622,14 @@ def running(request):
     running_ptable = RunningTable(running_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": running_ptable.length})
     config.configure(running_ptable)
-    return render_to_response(
-        "lava_scheduler_app/running.html",
+
+    template = loader.get_template("lava_scheduler_app/running.html")
+    return HttpResponse(template.render(
         {
             'running_table': running_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(running),
         },
-        RequestContext(request))
+        request=request))
 
 
 def download_device_type_template(request, pk):

@@ -24,7 +24,7 @@
       <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>)</dt>
       <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a></dd>
       <dt>{% trans "Test Run UUID" %} (<abbr title="This is a globally unique identifier that was assigned by the log analyzer. Running the same test multiple times results in different values of this identifier.  The dashboard uses this identifier to refer to a particular test run. It is preserved across different LAVA installations, that is, if you pull test results (as bundles) from one system to another this identifier remains intact">?</abbr>)</dt>
-      <dd><small>{{ test_run.analyzer_assigned_uuid }}(<a href="{% url 'dashboard_app.views.redirect_to_test_run' test_run.analyzer_assigned_uuid %}">permalink</a>)</small></dd>
+      <dd><small>{{ test_run.analyzer_assigned_uuid }}(<a href="{% url 'lava_dashboard_redirect_to_test_run' test_run.analyzer_assigned_uuid %}">permalink</a>)</small></dd>
       <dt>{% trans "Bundle SHA1" %} (<abbr title="This is the SHA1 hash of the bundle that contains this test run.">?</abbr>)</dt>
       <dd><a href="{{ test_run.bundle.get_absolute_url }}"><small>{{ test_run.bundle.content_sha1 }}</small></a></dd>
       <dt>{% trans "Tags" %} (<abbr title="LAVA can store tags associated with a particular test run. Tags are simple strings like &quot;project-foo-prerelase-testing&quot; or &quot;linaro-image-2011-09-27&quot;. Tags can be used by the testing effort feature to group results together.">?</abbr>)</dt>

@@ -78,7 +78,7 @@
 $(document).ready(function () {
 
   $("#query").autocomplete({
-    source: '{% url 'lava_results_app.views.query.views.get_query_names' %}',
+    source: '{% url 'lava.results.get_query_names' %}',
     minLength: 1,
     select: function(event, ui) {
       $("#id_query").val(ui.item.id);

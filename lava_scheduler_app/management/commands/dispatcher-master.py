@@ -34,6 +34,7 @@ from zmq.auth.thread import ThreadAuthenticator
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.utils import mkdir
@@ -416,10 +417,8 @@ class Command(BaseCommand):
 
     def process_jobs(self, options):
         for job in TestJob.objects.filter(
-                status=TestJob.SUBMITTED,
-                is_pipeline=True,
-                actual_device__isnull=False).order_by(
-                    '-health_check', '-priority', 'submit_time', 'target_group', 'id'):
+                Q(status=TestJob.SUBMITTED) & Q(is_pipeline=True) & ~Q(actual_device=None))\
+                .order_by('-health_check', '-priority', 'submit_time', 'target_group', 'id'):
             if job.dynamic_connection:
                 # A secondary connection must be made from a dispatcher local to the host device
                 # to allow for local firewalls etc. So the secondary connection is started on the

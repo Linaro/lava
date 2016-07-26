@@ -12,7 +12,7 @@ import datetime
 import logging
 import simplejson
 from traceback import format_exc
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -390,7 +390,7 @@ def _validate_queue():
     """
     logger = logging.getLogger('dispatcher-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
-    jobs = jobs.filter(actual_device__isnull=False) \
+    jobs = jobs.filter(~Q(actual_device=None)) \
                .select_related('actual_device', 'actual_device__current_job')
     for job in jobs:
         if not job.actual_device.current_job:
@@ -512,7 +512,7 @@ def assign_jobs():
     logger.debug("[%d] devices available", len(devices))
     logger.debug("[%d] jobs in the queue", len(jobs))
     # a forced health check can be assigned even if the device is not in the list of idle devices.
-    for job in jobs:
+    for job in jobs:  # pylint: disable=too-many-nested-blocks
         # this needs to stay as a tight loop to cope with load
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
@@ -820,7 +820,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(pipeline_dump)
             if not map_metadata(pipeline_dump, check_job):
-                logger.warning("[%d] unable to map metadata" % check_job.id)
+                logger.warning("[%d] unable to map metadata", check_job.id)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:
@@ -837,3 +837,32 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
                 return None
 
     return device
+
+
+def device_type_summary(visible=None):
+    devices = Device.objects.filter(
+        ~Q(status=Device.RETIRED) & Q(device_type__in=visible)).only(
+            'status', 'is_public', 'device_type', 'hostname').values('device_type').annotate(
+                idle=Sum(
+                    Case(
+                        When(status=Device.IDLE, then=1), default=0, output_field=IntegerField()
+                    )
+                ),
+                busy=Sum(
+                    Case(
+                        When(status__in=[Device.RUNNING, Device.RESERVED], then=1),
+                        default=0, output_field=IntegerField()
+                    )
+                ),
+                offline=Sum(
+                    Case(
+                        When(status__in=[Device.OFFLINE, Device.OFFLINING], then=1),
+                        default=0, output_field=IntegerField()
+                    )
+                ),
+                restricted=Sum(
+                    Case(
+                        When(is_public=False, then=1), default=0, output_field=IntegerField()
+                    )
+                ),).order_by('device_type')
+    return devices

@@ -17,8 +17,8 @@
 # along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render, loader
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -62,11 +62,12 @@ def image_report_list(request):
         }
         imagesets_data.append(imageset_data)
     imagesets_data.sort(key=lambda d: d['name'])
-    return render_to_response(
-        "dashboard_app/image-reports.html", {
+    template = loader.get_template("dashboard_app/image-reports.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
             'imagesets': imagesets_data,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("{name}", parent=image_report_list, needs=['name'])
@@ -134,13 +135,13 @@ def image_report_detail(request, name):
                 )
             row_data.append(test_run_data)
         table_data[test_run_name] = row_data
-
-    return render_to_response(
-        "dashboard_app/image-report.html", {
+    template = loader.get_template("dashboard_app/image-report.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=image.name),
             'image': image,
             'chart_data': json.dumps(table_data),
             'test_names': json.dumps(test_run_names),
             'columns': json.dumps(cols),
-        }, RequestContext(request))
+        }, request=request))

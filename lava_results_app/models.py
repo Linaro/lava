@@ -607,10 +607,6 @@ class TestData(models.Model):
 
     attributes = fields.GenericRelation(NamedTestAttribute)
 
-    # Attachments
-
-    attachments = fields.GenericRelation('Attachment')
-
     def __unicode__(self):
         return _(u"TestJob {0}").format(self.testjob.id)
 
@@ -1090,7 +1086,7 @@ class Query(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return (
-            "lava_results_app.views.query.views.query_display",
+            "lava.results.query_display",
             [self.owner.username, self.name])
 
 
@@ -1214,7 +1210,7 @@ class QueryCondition(models.Model):
                     field = {}
 
                     field_object = content_type.model_class()._meta.\
-                        get_field_by_name(field_name)[0]
+                        get_field(field_name)
                     field['operators'] = cls._get_operators_for_field_type(
                         field_object)
                     field['type'] = field_object.__class__.__name__
@@ -1382,7 +1378,7 @@ class Chart(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("lava_results_app.views.chart.views.chart_display",
+        return ("lava.results.chart_display",
                 (), dict(name=self.name))
 
     def can_admin(self, user):
@@ -1659,7 +1655,7 @@ class ChartQuery(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("lava_results_app.views.chart.views.chart_query_edit",
+        return ("lava.results.chart_query_edit",
                 (), dict(name=self.chart.name, id=self.id))
 
 

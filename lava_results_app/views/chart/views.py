@@ -29,8 +29,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect
 )
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render, loader
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -159,9 +158,9 @@ def chart_list(request):
         terms_data.update(user_chart_table.prepare_terms_data(view))
     else:
         user_chart_table = None
-
-    return render_to_response(
-        'lava_results_app/chart_list.html', {
+    template = loader.get_template('lava_results_app/chart_list.html')
+    return HttpResponse(template.render(
+        {
             'user_chart_table': user_chart_table,
             'other_chart_table': other_chart_table,
             'search_data': search_data,
@@ -170,7 +169,7 @@ def chart_list(request):
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(chart_list),
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -189,15 +188,15 @@ def chart_display(request, name):
     for index, chart_query in enumerate(
             chart.chartquery_set.all().order_by('relative_index')):
         chart_data[index] = chart_query.get_data(request.user)
-
-    return render_to_response(
-        'lava_results_app/chart_display.html', {
+    template = loader.get_template('lava_results_app/chart_display.html')
+    return HttpResponse(template.render(
+        {
             'chart': chart,
             'chart_data': simplejson.dumps(chart_data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_display, name=name),
             'can_admin': chart.can_admin(request.user),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -240,15 +239,15 @@ def chart_custom(request):
     chart_data = {}
     chart_data[0] = chart_query.get_data(request.user, content_type,
                                          conditions)
-
-    return render_to_response(
-        'lava_results_app/chart_display.html', {
+    template = loader.get_template('lava_results_app/chart_display.html')
+    return HttpResponse(template.render(
+        {
             'chart': chart,
             'chart_data': simplejson.dumps(chart_data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_custom),
             'can_admin': False,
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -259,15 +258,15 @@ def chart_custom(request):
 def chart_detail(request, name):
 
     chart = get_object_or_404(Chart, name=name)
-
-    return render_to_response(
-        'lava_results_app/chart_detail.html', {
+    template = loader.get_template('lava_results_app/chart_detail.html')
+    return HttpResponse(template.render(
+        {
             'chart': chart,
             'chart_queries': chart.queries.all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_detail, name=name),
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -515,12 +514,12 @@ def chart_form(request, bread_crumb_trail, instance=None, query_id=None):
     else:
         form = ChartForm(request.user, instance=instance)
         form.fields['owner'].initial = request.user
-
-    return render_to_response(
-        'lava_results_app/chart_form.html', {
+    template = loader.get_template('lava_results_app/chart_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-        }, RequestContext(request))
+        }, request=request))
 
 
 def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
@@ -537,10 +536,10 @@ def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
     else:
         form = ChartQueryForm(request.user, instance=instance)
         form.fields['chart'].initial = chart
-
-    return render_to_response(
-        'lava_results_app/chart_query_form.html', {
+    template = loader.get_template('lava_results_app/chart_query_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
             'instance': instance
-        }, RequestContext(request))
+        }, request=request))

@@ -1168,7 +1168,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
-    public_state = True,
+    public_state = True
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
     param = job_data['visibility']
@@ -1513,6 +1513,11 @@ class TestJob(RestrictedResource):
     # This is set once the job starts or is reserved.
     actual_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
+
+    # compare with:
+    # current_job = models.OneToOneField(
+    #     "TestJob", blank=True, unique=True, null=True, related_name='+',
+    #     on_delete=models.SET_NULL)
 
     submit_time = models.DateTimeField(
         verbose_name=_(u"Submit time"),
@@ -2815,6 +2820,9 @@ class Notification(models.Model):
         verbose_name=_(u"Type"),
     )
 
+    # CommaSeparatedIntegerField has been deprecated in 1.10.
+    # Support for it (except in historical migrations) will be removed in Django 2.0.
+    # Use CharField(validators=[validate_comma_separated_integer_list]) instead.
     job_status_trigger = models.CommaSeparatedIntegerField(
         choices=TestJob.STATUS_CHOICES,
         max_length=30,
