@@ -1687,10 +1687,10 @@ def job_status(request, pk):
     response_dict = {'job_status': job.get_status_display()}
     if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
             job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response_dict['device'] = render_to_string(
-            "lava_scheduler_app/_device_refresh.html", {'job': job}, RequestContext(request))
-    response_dict['timing'] = render_to_string(
-        "lava_scheduler_app/_job_timing.html", {'job': job}, RequestContext(request))
+        response_dict['device'] = render_to_string("lava_scheduler_app/_device_refresh.html",
+                                                   {'job': job})
+    response_dict['timing'] = render_to_string("lava_scheduler_app/_job_timing.html",
+                                               {'job': job})
     if job.status == TestJob.SUBMITTED and not job.actual_device:
         response_dict['priority'] = job.priority
     if job.failure_comment:
