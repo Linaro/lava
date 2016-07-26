@@ -1,0 +1,8 @@
+{% extends 'juno-uboot.jinja2' %}
+
+{% set usb_label = SanDisk_Ultra %}
+{% set usb_uuid = usb-SanDisk_Ultra_20051536410F43008552-0:0 %}
+{% set mac_address = 00:02:F7:00:58:EB %}
+{% set connection_command = telnet localhost 7002 %}
+{% set power_off_command = /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02 %}
+{% set power_on_command = /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02 %}

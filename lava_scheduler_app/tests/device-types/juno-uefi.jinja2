@@ -1,0 +1,170 @@
+{% extends 'base.jinja2' %}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default('115200') %}
+{% set base_kernel_args = base_kernel_args | default('') %}
+
+{% set tftp_bootargs = tftp_bootargs | default('console=' + console_device + ',' + baud_rate + ' earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp') %}
+{% set nor_flash_bootargs = nor_flash_bootargs | default('dtb=board.dtb initrd=ramdisk.img console=' + console_device + ',' + baud_rate + ' androidboot.hardware=juno systemd.log_target=null rootwait root=/dev/sda1') %}
+
+{% if not hard_reset_command %}
+    {% if power_off_command and power_on_command %}
+        {% set hard_reset_command = power_off_command + '; sleep 10; ' + power_on_command %}
+    {% endif %}
+{% endif %}
+
+{% block body %}
+
+device_type: juno
+
+character-delays:
+  boot: 50
+
+actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      tftp:
+  boot:
+    # list of connection methods which this device supports
+    connections:
+      serial:
+    # list of boot methods which this device supports.
+    methods:
+      uefi-menu:
+        parameters:
+          character_delay: 300
+          interrupt_prompt: The default boot selection will start in
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Loaded: LinuxImage"
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        nor_flash:
+        -  select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'NOR Flash'
+            wait: "File path of the EFI Application or the kernel:"
+        - select:
+            enter: norkern
+            wait: "Is an EFI Application?"
+        - select:
+            enter: n
+            wait: "Has FDT support?"
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "{{ nor_flash_bootargs }}"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Update FDT path'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ mac_address }}'
+            wait: "File path of the FDT blob:"
+        - select:
+            enter: 'board.dtb'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - '{TEST_MENU_NAME}'
+        tftp:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ mac_address }}'
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: "Is an EFI Application?"
+        - select:
+            enter: n
+            wait: "Has FDT support?"
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "{{ tftp_bootargs }}"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Update FDT path'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ mac_address }}'
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the FDT blob :"
+        - select:
+            enter: '{DTB}'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - '{TEST_MENU_NAME}'
+{% endblock %}
+
+
+{% block vland %}
+parameters:
+  media:  # four USB slots.
+    usb:
+      UUID-required: True
+      {{ usb_label|default('Kingston_DataTraveler') }}:
+        uuid: "{{ usb_uuid }}"
+        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
+{% endblock %}
