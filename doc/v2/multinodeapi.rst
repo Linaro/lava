@@ -25,7 +25,9 @@ Prints the hostname of the current device.
            means that the LAVA hostname is always available via
            ``lava-group`` and ``lava-self``.
 
-Usage: ``lava-self``
+Usage:
+^^^^^^
+ ``lava-self``
 
 .. index:: lava-role
 
@@ -34,7 +36,9 @@ Usage: ``lava-self``
 lava-role
 ---------
 
-Usage: ``lava-role``
+Usage:
+^^^^^^
+ ``lava-role``
 
 Prints the role the current device is playing in a multi-node job.
 
@@ -43,7 +47,9 @@ involved in the test::
 
     $ ./run-$(lava-role)
 
-Usage: ``lava-role list``
+Usage:
+^^^^^^
+ ``lava-role list``
 
 Prints a list of all roles within this multi-node job, separated by
 whitespace.::
@@ -53,7 +59,7 @@ whitespace.::
         echo $role
     done
 
-.. seealso :ref:`use_case_four`
+.. comment FIXME: seealso :ref:`use_case_four`
 
 .. index:: lava-group
 
@@ -62,7 +68,9 @@ whitespace.::
 lava-group
 ----------
 
-Usage: ``lava-group``
+Usage:
+^^^^^^
+ ``lava-group``
 
 This command will produce in its standard output a representation of the
 device group that is participating in the multi-node test job.
@@ -76,7 +84,9 @@ by a TAB character::
     highbank02  backend
     highbank03  backend
 
-Usage: ``lava-group role``
+Usage:
+^^^^^^
+ ``lava-group role``
 
 This command will produce in its standard output a list of the
 device names assigned the specified role in the multi-node test job.
@@ -108,7 +118,7 @@ role::
         echo $device
     done
 
-.. seealso:: :ref:`use_case_four`
+.. comment FIXME: seealso:: :ref:`use_case_four`
 
 .. index:: lava-send
 
@@ -126,7 +136,9 @@ The message-id will be persistent for the lifetime of the target group
 managing the entire multinode test job. Re-sending a different message
 with an existing message-id is not supported.
 
-Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
+Usage:
+^^^^^^
+ ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
 
 Examples will be provided below, together with ``lava-wait`` and
 ``lava-wait-all``.
@@ -141,7 +153,9 @@ lava-wait
 Waits until any other device in the group sends a message with the given
 ID. This call will block until such message is sent.
 
-Usage: ``lava-wait <message-id>``
+Usage:
+^^^^^^
+ ``lava-wait <message-id>``
 
 If there was data passed in the message, the key-value pairs will be
 printed in the cache file (/tmp/lava_multi_node_cache.txt in default),
@@ -229,7 +243,9 @@ lava-sync
 Global synchronization primitive. Sends a message, and waits for the
 same message from all of the other devices.
 
-Usage: ``lava-sync <message>``
+Usage:
+^^^^^^
+ ``lava-sync <message>``
 
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
@@ -313,6 +329,7 @@ which have returned a fully qualified domain name in a format suitable for
  10.1.1.3	staging-kvm04
 
 Usage:
+^^^^^^
 
  broadcast: ``lava-network broadcast [interface]``
 
@@ -326,7 +343,7 @@ Usage:
 ``lava-network hosts`` support to use the role of each device in the
 group as an alias in the output.
 
-.. seealso:: :ref:`role_aliases` for more information on the
+.. comment FIXME: in use_case_four seealso:: :ref:`role_aliases` for more information on the
    limitations of using roles as aliases.
 
 The ``hostname`` used in a query of ``lava-network`` is the LAVA hostname
