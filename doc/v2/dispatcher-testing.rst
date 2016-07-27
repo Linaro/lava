@@ -3,7 +3,7 @@
 Testing the new design
 **********************
 
-To test the new design, use the increasing number of unit tests::
+To test the new design after making changes, use the unit tests::
 
  $ python -m unittest discover lava_dispatcher/pipeline/
 
@@ -13,6 +13,10 @@ without the call to ``discover``::
  $ python -m unittest lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
  $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+
+The call references the path to the python module, the class and then the test function within that
+class. To run all tests in a class, omit the function. To run all tests in a file, omit the class
+and the function.
 
 Sets of tests can also be executed from the :file:`./ci-run` script
 of ``lava-dispatcher`` as well::
@@ -30,6 +34,9 @@ inspect the output of the pipeline using the ``--validate`` switch to
    because the refactored dispatcher has no local configuration, so the
    master sends the entire device configuration to the dispatcher as a
    single YAML file.
+
+.. seealso:: :ref:`unit_tests` for information on running the full set of
+   unit tests on ``lava-server`` and ``lava-dispatcher``.
 
 The structure of any one job will be the same each time it is run (subject
 to changes in the developing codebase). Each different job will have a

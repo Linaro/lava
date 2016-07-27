@@ -1,8 +1,5 @@
 .. index:: development process
 
-Developer guides
-################
-
 .. _development_process:
 
 Development process
@@ -18,18 +15,50 @@ welcome third party contributions and new team members.
 
 Our team is spread geographically around the world, with members in
 multiple countries. We are usually talking on our IRC channel
-#linaro-lava on irc.freenode.net.
+``#linaro-lava`` on ``irc.freenode.net``.
+
+.. seealso:: :ref:`getting_support`
+
+.. _lava_release_process:
 
 Release process
 ^^^^^^^^^^^^^^^
 
-LAVA is developed on a monthly release schedule.
+LAVA is developed on an approximately monthly release schedule. Some
+months do not include a release, this can be due to conference attendance
+or other reasons. Subscribe to the :ref:`lava_announce` mailing list for
+updates.
 
-Release tarballs follow a YYYY.MM (year, month) pattern. Should we
-need to release an upgrade to any existing release (such as for a
-critical bug fix), we append a dash and a sequential number
-(YYYY.MM-NN).
+Releases are based on git tags named to follow a YYYY.MM (year, month) pattern.
+Should we need to release an upgrade to any existing release (such as for a
+critical bug fix), we use the ``post`` suffix and sequential number
+(YYYY.MM.postN).
 
+.. note:: There can be a delay between the upload of the next release to
+   Debian and the :ref:`lava_repositories` (production repo) and the
+   deployment of that same release onto ``validation.linaro.org``.
+   The actual version installed can be seen in the header of the
+   each page of the documentation.
+
+The process itself consists of testing the master branch deployments
+on ``staging.validation.linaro.org``, merging the master branch into
+the staging branch to create a *release candidate*, followed by merging
+the release candidate into the release branch and creating the git tags.
+
+During the testing of the release candidate, changes can continue to be
+merged into master. Changes which are intended to go into the release
+candidate are *cherry picked* using Gerrit into the staging branch.
+
+Releases
+^^^^^^^^
+
+Releases are made to Debian and announced on the :ref:`lava_announce`
+mailing list. A lot of information is directly accessible from the
+Debian Tracker pages for each project:
+
+``lava-server`` tracker: https://tracker.debian.org/pkg/lava-server
+
+``lava-dispatcher`` tracker: https://tracker.debian.org/pkg/lava-dispatcher
 
 Reporting Bugs
 ^^^^^^^^^^^^^^
@@ -48,15 +77,3 @@ If you were using our public LAVA instance, the one used by Linaro for
 daily activities (https://validation.linaro.org), try to include a
 link to a page that manifests the problem. That will make debugging
 easier.
-
-Patches, fixes and code
-^^^^^^^^^^^^^^^^^^^^^^^
-
-If you'd like to offer a patch (whether it is a bug fix, documentation
-update, new feature or even a simple typo fix) it is best to follow
-this simple check-list:
-
-1. Clone the master of the correct project.
-2. Add your code, change any existing files as needed.
-3. Create a patch from your changes.
-4. Send the patch to the `Linaro Code Review <https://review.linaro.org>`_ system.

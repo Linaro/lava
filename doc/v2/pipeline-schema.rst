@@ -252,13 +252,17 @@ obvious but include the architecture of the QEMU command and the console
 device and/or baud rate of other devices. It is also possible to override
 the NFS args and UEFI Menu selections. See :ref:`override_support`
 
+.. code-block:: yaml
+
   context:
     menu_interrupt_prompt: 'Default boot will start in'
 
 (The default values and which values can be overridden will be exposed
 in the next stages of development.)
 
-Some menu selections may embed device-specific information, e.g.::
+Some menu selections may embed device-specific information, e.g.:
+
+.. code-block:: yaml
 
  -  'TFTP on MAC Address: 00:01:73:69:5A:EF'
 
@@ -268,7 +272,9 @@ retained even if an update causes other elements of the menu to change.
 
 This is handled by asking the template to retain the MAC address
 specified for that device using a placeholder in the context specified
-in the job submission::
+in the job submission:
+
+.. code-block:: yaml
 
   context:
     mustang_menu_list:
