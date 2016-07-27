@@ -119,7 +119,7 @@ lava-server (2015.12-4) unstable; urgency=medium
 
 lava-server (2015.12-3) unstable; urgency=medium
 
-  * Conflict with python-django-auth-openid as 
+  * Conflict with python-django-auth-openid as
     python-django-auth-openid cannot support django1.9 which
     is now in unstable and testing. (Closes: #808313)
 
