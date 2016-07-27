@@ -5,19 +5,20 @@
 Writing Health Checks for device types
 **************************************
 
-The purpose of the health check is to ensure that the support systems
-of the device are suitable for running LAVA tests. To do this, the
-health check is run periodically and if the health check fails for
-any device, that device is automatically taken offline. Reports are
-available which show these failures and track the general health of
-the lab.
+A health check is a special type of test job, designed to validate
+that the a test device and the infrastructure around it are suitable
+for running LAVA tests. Health checks jobs are run periodically to
+check for equipment and/or infrastructure failures that may have
+happened. If a health check fails for any device, that device will be
+automatically taken offline. Reports are available which show these
+failures and track the general health of the lab.
 
-http://validation.linaro.org/scheduler/reports
+https://validation.linaro.org/scheduler/reports
 
 For any one day where at least one health check failed, there is
 also a table providing information on the failed checks:
 
-http://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
+https://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
 
 Health checks are defined in the admin interface for each device type
 and run as the lava-health user.
@@ -27,85 +28,17 @@ and run as the lava-health user.
 Pipeline YAML health checks
 ===========================
 
-.. note:: Before enabling a pipeline health check, ensure that all devices of the
-  specified type have been enabled as pipeline devices or the health check will
-  force any remaining devices **offline**.
+.. note:: Before enabling a pipeline health check, ensure that all
+  devices of the specified type have been enabled as pipeline devices
+  or the health check will force any remaining devices **offline**.
 
 It is recommended that the YAML health check follows these guidelines:
 
-* A job name describing the test as a health check
-* A minimal set of test definitions
-* Use :ref:`gold standard files <providing_gold_standard_files>`
+* It has a job name describing the test as a health check
+* It has a minimal set of test definitions
+* It uses :ref:`gold standard files <providing_gold_standard_files>`
 
 The rest of the job needs no changes.
-
-.. _json_health_checks:
-
-Deprecated JSON health checks
-=============================
-
-.. note:: A health check using the deprecated JSON dispatcher is **not** suitable if
-  **any** of the devices of this type are :term:`exclusive` to the pipeline
-  dispatcher. A :ref:`pipeline health check <yaml_health_checks>` should be used. Avoid
-  having exclusive devices unless all devices of that type have pipeline support -
-  if this is unavoidable, the health check may need to be omitted or some devices split
-  into a temporary device type.
-
-The required entry for a health check using the deprecated dispatcher
-is a JSON test file with the following change:
-
-* The health_check boolean set to ```true```
-
-In addition, it is recommended to use:
-
-* A job name describing the test as a health check.
-* A list of email addresses to be notified if the health check fails.
-* A minimal ``lava_test_shell`` definition.
-* A dedicated result bundle stream.
-* A logging level of DEBUG - the one place where you do want to know
-  why a job failed is when that job has taken a device offline.
-
-::
-
- {
-    "timeout": 900,
-    "job_name": "lab-health-beaglebone-black",
-    "logging_level": "DEBUG",
-    "health_check": true,
-    "actions": [
-        {
-            "command": "deploy_linaro_image",
-            "parameters": {
-                "image": "http://linaro-gateway/beaglebone/beaglebone_20130625-379.img.gz"
-            },
-            "metadata": {
-                "ubuntu.distribution": "quantal",
-                "ubuntu.build": "299",
-                "rootfs.type": "nano",
-                "ubuntu.name": "beaglebone-black"
-            }
-        },
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },
-        {
-            "command": "submit_results",
-            "parameters": {
-                "server": "http://localhost/RPC2/",
-                "stream": "/anonymous/lab-health/"
-            }
-        }
-    ]
- }
 
 Tasks within health checks
 ==========================
@@ -142,22 +75,7 @@ health checks, without making the health check unnecessarily long:
            path: ubuntu/smoke-tests-basic.yaml
            name: smoke-tests
 
-Or for :ref:`json_health_checks` ::
-
-    {
-        "command": "lava_test_shell",
-        "parameters": {
-            "testdef_repos": [
-                {
-                    "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                    "testdef": "ubuntu/smoke-tests-basic.yaml"
-                }
-            ],
-            "timeout": 900
-        }
-    }
-
-These tests run simple Ubuntu test commands to do with networking and
+These tests run simple Debian/Ubuntu test commands to do with networking and
 basic functionality - it is common for ``linux-linaro-ubuntu-lsusb``
 and/or ``linux-linaro-ubuntu-lsb_release`` to fail as individual test
 cases but these failed test cases will **not** cause the health check
@@ -176,3 +94,14 @@ Using ``lava_test_shell`` in all health checks has several benefits:
    tests to pick up common hardware issues
 
 See also :ref:`writing_tests`.
+
+Skipping health checks
+======================
+
+When a device is taken online in the web UI, there is an option to
+skip the manual health check. Health checks will still run in the
+following circumstances when "Skip Health check" has been selected:
+
+* When the health status of the device is in Unknown, Fail or Looping
+* When the device has been offline for long enough that a health
+   check is already overdue.

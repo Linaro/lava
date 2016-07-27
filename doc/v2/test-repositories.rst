@@ -3,71 +3,77 @@
 Test definitions in version control
 ###################################
 
-LAVA supports git and bazaar version control for use with test
-definitions and this is the recommended way to host and use
-test definitions for LAVA. When a repository is listed in the JSON,
-the entire repository is checked out into the test definition directory.
-This allows YAML files in the repository to reliably access scripts and
-other files which are part of the repository, inside the test image.::
+LAVA supports git and bzr version control for use with test
+definitions, and this is the recommended way to host and use test
+definitions for LAVA. When a repository is listed in a test
+definition, the entire repository is checked out. This allows YAML
+files in the repository to reliably access scripts and other files
+which are part of the repository, inside the test image.
 
- {
-    "command": "lava_test_shell",
-    "parameters": {
-        "testdef_repos": [
-            {
-                "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
-                "testdef": "multinode/multinode02.yaml"
-            }
-        ],
-        "timeout": 900
-    }
- }
+.. code-block:: yaml
+
+  - test:
+     role:
+     - server
+     - client
+     definitions:
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/multi-node/multinode02.yaml
+       name: multinode-intermediate
 
 When this test starts, the entire repository will be available in the
-current working directory of the test. Therefore, ``multinode/multinode02.yaml``
-can include instructions to execute ``multinode/get_ip.sh``.
+current working directory of the test. Therefore,
+``multinode/multinode02.yaml`` can include instructions to execute
+``multinode/get_ip.sh``.
 
-It is also useful to have the JSON files in the repository, this helps
-others who may want to use your test definitions but it is also useful
-when using the **Submit Job** support in the LAVA web interface. Simply
-enter the full path to the JSON file in your repository and LAVA will
-replace the URL with the contents of the file before submission.::
+Job definitions in version control
+**********************************
 
-  http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob_plain/HEAD:/singlenode/kvm-single-node.json
+It is normally recommended to also store your test job YAML files in
+the repository. This helps others who may want to use your test
+definitions.::
 
-(When copying and pasting this example, ensure you remove the
-trailing line ending and paste only a single line.)
+  https://git.linaro.org/lava-team/refactoring.git/blob_plain/HEAD:/panda-multinode.yaml
 
-There are numerous example test repositories in use, including:
+There are numerous test repositories in use daily in Linaro that may
+be good examples for you, including:
 
-* http://git.linaro.org/lava-team/lava-functional-tests.git
-* http://git.linaro.org/qa/test-definitions.git
+* https://git.linaro.org/lava-team/lava-functional-tests.git
+* https://git.linaro.org/qa/test-definitions.git
 
 Using specific revisions of a test definition
 *********************************************
 
-If a specific revision is specified as a parameter in the JSON, that
-revision will be used instead of HEAD.::
+If a specific revision is specified as a parameter in the job
+submission YAML, that revision of the repository will be used instead of
+HEAD.
 
- {
-    "command": "lava_test_shell",
-    "parameters": {
-        "testdef_repos": [
-            {
-                "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
-                "testdef": "multinode/multinode02.yaml",
-                "revision": "3d555378"
-            }
-        ],
-        "timeout": 900
-    }
- }
+.. code-block:: yaml
+
+ - test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    name: kvm-basic-singlenode
+    definitions:
+        - repository: git://git.linaro.org/qa/test-definitions.git
+          from: git
+          path: ubuntu/smoke-tests-basic.yaml
+          name: smoke-tests
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          revision: 441b61
 
 Sharing the contents of test definitions
 ****************************************
 
-A YAML file can clone another repository by specifying the address of the
-repository to clone::
+A YAML test definition file can clone another repository by specifying
+the address of the repository to clone
+
+.. code-block:: yaml
 
   install:
       bzr-repos:
@@ -90,14 +96,16 @@ Adding test definition dependencies
 ***********************************
 
 If your test depends on other tests to be executed before you run the
-current test, add an explicit dependency in the YAML::
+current test, add an explicit dependency in the test definition YAML:
+
+.. code-block:: yaml
 
  test-case-deps:
    - git-repo: git://git.linaro.org/qa/test-definitions.git
      testdef: common/passfail.yaml
    - bzr-repo: lp:~stylesen/lava-dispatcher/sampletestdefs-bzr
      testdef: testdef.yaml
-   - url: http://people.linaro.org/~senthil.kumaran/deps_sample.yaml
+   - url: https://people.linaro.org/~senthil.kumaran/deps_sample.yaml
 
 The test cases specified within ``test-case-deps`` section will be fetched
 from the given repositories or url and then executed in the same specified
@@ -110,4 +118,4 @@ LAVA regularly runs a set of test definitions to check for regressions
 and the set is available for others to use as a template for their
 own tests::
 
-* http://git.linaro.org/lava-team/lava-functional-tests.git
+* https://git.linaro.org/lava-team/lava-functional-tests.git

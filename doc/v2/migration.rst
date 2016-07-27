@@ -5,6 +5,8 @@
 Migrating to the Pipeline Dispatcher
 ####################################
 
+FIXME! Needs much more text
+
 Basics
 ******
 
@@ -70,7 +72,7 @@ ADB or other components.
 Viewing the available support
 -----------------------------
 
-XMLRPC: scheduler.get_pipeline_device_config
+XML-RPC: scheduler.get_pipeline_device_config
 Device type detail: Deployment, boot and protocol tabs.
 
 .. FIXME: needs expansion.

@@ -1,6 +1,28 @@
-.. _lava_v2:
+.. comment
 
-LAVA V2 - pipeline model
+   How the bootstrap theme works.
+
+   Any chapter sections (#####) in this file appear in the Site menu.
+   Same for any files included into this file.
+   Same for any files listed in a toctree in this file, including hidden.
+   Same for any files directly included into any file covered by the above.
+   No files listed in toctrees in any of the listed files, other than this
+     one will be listed in the Site menu. These will be used to create
+     the previous and next navigation entries instead.
+   Chapter sections in files not listed in the Site menu will show as
+     the top entry of the Page menu on that page.
+   The Site menu appears on all pages - use to provide gross navigation.
+   Pages still need to appear in toctrees for prev+next navigation.
+   conf.py adds permanent links to genindex - the navbar
+      gets folded into a menu by bootstrap on narrow screens.
+   Add a hidden toctree to pages which naturally follow the start page
+      linked from the Site menu.
+
+.. index:: Documentation Index
+
+.. _toc:
+
+LAVA V2 - Pipeline model
 ########################
 
 [ `Help Overview <../>`_]
@@ -10,99 +32,124 @@ LAVA V2 - pipeline model
 [ `Scheduler <../../../scheduler/>`_ ]
 [ `API <../../../api/help/>`_ ]
 
+LAVA V2 is the second major version of LAVA. The major user-visible
+features are:
 
-LAVA V2 is the collective name for the pipeline model for the dispatcher,
-YAML job submissions, Results, Queries and Charts. It includes major changes
-to the architecture of LAVA which will improve how a distributed LAVA instance
-is installed, configured and used for running test jobs.
+* The Pipeline model for the dispatcher
+* YAML job submissions
+* Results
+* Queries
+* Charts
+* Data export APIs
+
+The architecture has been significantly improved since V1, bringing
+major changes in terms of how a distributed LAVA instance is
+installed, configured and used for running test jobs.
 
 Migration to V2 started with the 2016.2 release.
 
-.. toctree::
-   :maxdepth: 2
+LAVA Overview
+#############
 
-   overview.rst
+.. include:: what-is-lava.rst
+
+
+Architecture
+************
+
+.. include:: architecture-v2.rsti
+
+Features
+********
+
+Deployment methods
+==================
+
+All test jobs involve a deployment step of some kind, even if that is
+just to prepare the overlay used to copy the test scripts onto the
+device or to setup the process of parsing the results when the test job
+starts.
+
+Boot methods
+============
+
+Hardware devices need to be instructed how to boot, emulated devices need
+to boot the emulator. For other devices, a ``boot`` can be simply establishing
+a connection to the device.
+
+Test methods
+============
+
+The principal test method in LAVA is the Lava Test Shell which requires
+a POSIX type environment to be running on the booted device. Other test
+methods available include executing tests using ADB.
+
+Multiple device testing
+=======================
+
+Some test jobs need to boot up multiple devices in a single, coordinated,
+group. For example, a server could be tested against multiple clients.
+LAVA supports starting these sub jobs as a group as well as passing
+messages between nodes via the dispatcher connection, without needing
+the devices to have a working network stack.
+
+Scheduling
+==========
+
+LAVA has advanced support for scheduling multiple jobs across multiple
+devices, whether those jobs use one device or several. Scheduling is
+ordered using these criteria, in this order:
+
+#. :term:`health checks <health check>`
+#. :term:`priority`
+#. submit time
+#. multinode group - see also :ref:`multinode`
+
+In addition, scheduling can be restricted to devices specified by the
+admin using:
+
+* :term:`device tags <device tag>`
+* user access limits - see :term:`restricted device` or
+  :term:`hidden device type`.
+
+Advanced use cases
+==================
+
+Advanced use cases expand on this support to include:
+
+* creating and deleting customised virtual networks, where suitable
+  hardware and software support exists.
+* extracting data from LAVA to manage job submission and result handling
+  to support developer-specific tasks like
+  `KernelCI <https://kernelci.org/>`_.
+
+Glossary
+********
+
+.. toctree::
+   :maxdepth: 1
+
    glossary.rst
+
+Support
+*******
+
+.. toctree::
+   :maxdepth: 1
+
    support.rst
-   installation.rst
-   migration.rst
-   writing-tests.rst
-   writing-multinode.rst
-   test-repositories.rst
-   healthchecks.rst
-   data-export.rst
-   process.rst
-   faq.rst
-
-LAVA Test Developer Guide
-#########################
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
 
+   first_steps.rst
+   first-installation.rst
    developing-tests.rst
-   pipeline-usecases.rst
-   pipeline-schema.rst
-   dispatcher-format.rst
-   lava_test_shell.rst
-   dispatcher-actions2.rst
-   hacking-session.rst
-   multinode.rst
-   multinodeapi.rst
-   multinode-usecases.rst
-   bootimages.rst
-   vland.rst
-
-LAVA Administrator Guide
-########################
-
-.. toctree::
-   :maxdepth: 2
-
-   pipeline-server.rst
+   results-intro.rst
+   simple-admin.rst
+   results-api.rst
    pipeline-admin.rst
-   pipeline-admin-example.rst
-   devicetypes.rst
-   hiddentypes.rst
-   pipeline-debug.rst
-   proxy.rst
-   pdudaemon.rst
-   nexus-deploy.rst
-   ipmi-pxe-deploy.rst
-   ipxe.rst
-   lxc-deploy.rst
-   hijack-user.rst
-   migrate-lava.rst
-   vland-admin.rst
-
-Other Topics
-############
-
-.. toctree::
-   :maxdepth: 2
-
-   usage.rst
-   device-capabilities.rst
-   packaging.rst
-   installing_on_debian.rst
-   lava-scheduler.rst
-   lava-scheduler-device-help.rst
-   lava-scheduler-device-type-help.rst
-   lava-scheduler-submit-job.rst
-   lava-scheduler-job.rst
-   lava-tool.rst
-
-Developer guides
-################
-
-.. toctree::
-   :maxdepth: 2
-
    development-intro.rst
-   development.rst
-   debugging.rst
-   debian.rst
-   dispatcher-design.rst
-   dispatcher-testing.rst
-   lava-queries-charts.rst
-
+   migration.rst
+   other.rst

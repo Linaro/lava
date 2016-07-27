@@ -103,7 +103,7 @@ In addition, the following advice is strongly recommended:
 
 * Admins need to keep the device dictionary data in VCS and keep those
   copies synchronised with the database.
-* Admins need to use the XMLRPC support to periodically **verify** that
+* Admins need to use the XML-RPC support to periodically **verify** that
   all the devices have the correct configuration.
 * Admins need to ensure that any locked ports are re-established should
   there be a power outage, maintenance window or other cause of switches
@@ -160,7 +160,7 @@ from the device itself:
 Viewing the network map
 =======================
 
-Device information can be viewed using ``XMLRPC`` using the
+Device information can be viewed using ``XML-RPC`` using the
 ``system.pipeline_network_map`` request. The function collates all the
 vland information from pipeline devices to create a complete map,
 then return YAML data for all switches or a specified switch.

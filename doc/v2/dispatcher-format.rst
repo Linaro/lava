@@ -1,11 +1,13 @@
 .. _dispatcher_yaml:
 
-Writing YAML files for the refactored dispatcher
-################################################
+Writing YAML files for the pipeline dispatcher
+##############################################
 
-To use the new features in the refactored dispatcher, a new submission
-format was required and as YAML supports comments, it was decided to
-adopt YAML as the new format.
+FIXME! Massive overlap here...
+
+To use the new features in the pipeline (v2) dispatcher, a new
+submission format was required and as YAML supports comments, it was
+decided to adopt YAML as the new format.
 
 `Online YAML`_ Parser.
 
@@ -16,10 +18,8 @@ change and errors in the content might not be picked up by the code,
 so take care when preparing new files.
 
 .. warning:: This code is in ongoing development and the formats may
-             change without notice. Only a very restricted set of
-             actions and device types are supported. Jobs using the
-             refactored code can only be submitted from the command
-             line (using XMLRPC or :ref:`lava_tool`).
+             change. Jobs using the refactored code can only be
+             submitted from the command line (using XML-RPC or :ref:`lava_tool`).
 
 .. _yaml_job:
 
@@ -78,7 +78,7 @@ preceding hyphen.
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
 
 This stanza describes a deployment strategy where the timeout for the
@@ -121,7 +121,7 @@ Sample JOB definition for a KVM
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -146,7 +146,7 @@ Sample JOB definition for a KVM
               from: git
               path: ubuntu/smoke-tests-basic.yaml
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
@@ -265,7 +265,9 @@ For a device dictionary containing::
  {% set console_device: '/dev/ttyO0' %}
 
 The job is unable to set an override using the same variable name, so this
-will fail to set :file:`/dev/ttyAMX0`::
+will fail to set :file:`/dev/ttyAMX0`:
+
+.. code-block:: yaml
 
  context:
    console_device: /dev/ttyAMX0
@@ -276,7 +278,9 @@ Example Two
 -----------
 
 If the device dictionary contains no setting for ``console_device``, then
-the job context value can override the device type template default::
+the job context value can override the device type template default:
+
+.. code-block:: yaml
 
  context:
    console_device: /dev/ttyAMX0
@@ -295,7 +299,9 @@ The device dictionary can set::
 
  {% set mac_address: '00:01:73:69:5A:EF' %}
 
-If the job context sets::
+If the job context sets:
+
+.. code-block:: yaml
 
  context:
    tftp_mac_address: 'FF:01:00:69:AA:CC'
@@ -373,7 +379,9 @@ for the complete content of `base.yaml`
 The above :term:`device dictionary` and the :term:`device type`
 template are combined together in order to form the device
 configuration which will look like the following for a nexus 10
-device::
+device:
+
+.. code-block:: yaml
 
  commands:
      connect: adb -s R32D300FRYP shell
@@ -447,7 +455,7 @@ As Admin
 #. See :ref:`viewing_device_dictionary_content`
 #. See also :ref:`updating_device_dictionary_using_xmlrpc`
 
-.. _dispatcher_actions:
+.. _mapping_dispatcher_actions:
 
 Dispatcher actions
 ******************
@@ -508,7 +516,7 @@ Supported methods
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -562,7 +570,7 @@ Example code block:
               from: git
               path: ubuntu/smoke-tests-basic.yaml
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced

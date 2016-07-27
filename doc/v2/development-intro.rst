@@ -91,7 +91,7 @@ amount of work - :ref:`talk to us <mailing_lists>` before spending time
 on code which relies on such modules or which relies on newer versions
 of the modules than are currently available in Debian testing.
 
-.. seealso:: :ref:`quick_fixes` and :ref:`testing_refactoring_code`
+.. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
 
 .. _naming_conventions:
 
@@ -240,3 +240,18 @@ https://github.com/Linaro
 
 It is worth sending an email to the :ref:`lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   process.rst
+   development.rst
+   dispatcher-design.rst
+   dispatcher-testing.rst
+   pipeline-design.rst
+   pipeline-schema.rst
+   debian.rst
+   packaging.rst
+   developer-example.rst

@@ -52,7 +52,7 @@ Results
 #. Results are part of the test job and cannot be manully created.
 #. Result analysis is primarily a task for other engines, results can
    be exported in full but the principle emphasis is on data generation.
-#. Results are posted in real time, whilst the job is still running. This means
+#. Results are posted in real time, while the job is still running. This means
    that a later failure in the test job cannot cause a loss of results.
 
 Job submission data
@@ -88,7 +88,7 @@ Job submission data
 Writing a new TestJob
 =====================
 
-See :ref:`new_dispatcher_actions` for details of the available actions
+See :ref:`dispatcher_actions` for details of the available actions
 and use the `sample jobs <https://git.linaro.org/lava-team/refactoring.git>`_
 as examples.
 
@@ -135,11 +135,15 @@ that device can use NFS - in this case, using tftp.
  actions:
   - deploy:
       to: tftp
-      kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+      kernel:
+        url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
       # nfsrootfs: file:///home/linaro/lava/nfsrootfs/jessie-rootfs.tar.gz
-      nfsrootfs: http://images.validation.linaro.org/pipeline/debian-jessie-rootfs.tar.gz
+      nfsrootfs:
+        url: https://images.validation.linaro.org/pipeline/debian-jessie-rootfs.tar.gz
+        compression: gz
       os: debian
-      dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+      dtb:
+        url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 .. note:: the use of comments here allows the writer to flip between a remote image
    and a local test version of that image - this would be suitable for running
@@ -157,14 +161,20 @@ simply provide a ramdisk instead of an nfsrootfs:
 
   - deploy:
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-     ramdisk-type: u-boot
+     kernel:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
+     ramdisk:
+       url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+       compression: gz
+       add-header: u-boot
      os: oe
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+       url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 .. note:: **ramdisk-type** must be explicitly set, despite the URL in this
    case happening to have a ``u-boot`` extension. This is not assumed.
    Without the ``ramdisk-type`` being set to ``u-boot`` in the job submission,
-   the UBoot header on the ramdisk would be mangled when the test definitions
+   the U-Boot header on the ramdisk would be mangled when the test definitions
    are applied, resulting in an invalid ramdisk.
+
+

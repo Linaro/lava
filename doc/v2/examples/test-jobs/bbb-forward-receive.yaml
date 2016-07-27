@@ -1,0 +1,173 @@
+job_name: bbb-use-case-example
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 10
+  test:
+    minutes: 3
+  connection:
+    minutes: 10
+
+visibility: public
+
+priority: medium
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: bbb-forward-receive.yaml
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: beaglebone-black
+        count: 1
+      server:
+        device_type: beaglebone-black
+        count: 1
+    timeout:
+      minutes: 6
+
+actions:
+- deploy:
+    role:
+    - client
+    - server
+    timeout:
+      minutes: 10
+    to: tftp
+    kernel:
+      url: http://people.linaro.org/~neil.williams/opentac/zImage
+    ramdisk:
+      url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+      compression: gz
+      header: u-boot
+      add-header: u-boot
+    os: oe
+    dtb:
+      url: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+
+- boot:
+    role:
+    - server
+    - client
+    timeout:
+      seconds: 60
+    method: u-boot
+    commands: ramdisk
+    type: bootz
+    prompts:
+    - 'linaro-test'
+
+- test:
+    role:
+    - client
+    timeout:
+      minutes: 5
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: forwarder
+          description: "MultiNode network test commands"
+        install:
+          deps:
+          - curl
+          - realpath
+          - lsb-release
+          - usbutils
+          - wget
+          - ntpdate
+          - apache2
+        run:
+          steps:
+          - lava-test-case multinode-role-output --shell lava-role
+          - lava-test-case multinode-sync --shell lava-sync running
+          - lava-test-case multinode-send-message --shell lava-send sending source=$(lava-self) role=$(lava-role) hostname=$(hostname -f) kernver=$(uname -r) kernhost=$(uname -n)
+          - lava-test-case multinode-group --shell lava-group
+          - lava-group
+          - lava-test-case linux-linaro-ubuntu-netstat --shell netstat -an
+          - lava-test-case linux-linaro-ubuntu-ifconfig-dump --shell ifconfig -a
+          - lava-test-case linux-linaro-ubuntu-route-dump-a --shell route
+          - lava-test-case linux-linaro-ubuntu-route-ifconfig-up-lo --shell ifconfig lo up
+          - lava-test-case linux-linaro-ubuntu-route-dump-b --shell route
+          - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
+          - lava-test-case multinode-wait --shell lava-wait-all sending
+          - cat /tmp/lava_multi_node_cache.txt
+          - lava-test-case multinode-network --shell lava-network broadcast eth0
+          - lava-test-case multinode-get-network --shell lava-network collect eth0
+          - lava-test-case multinode-broadcast-ipv4 --shell lava-network query $(lava-self) ipv4
+          - lava-test-case multinode-broadcast-ipv6 --shell lava-network query $(lava-self) ipv6
+          - lava-test-case multinode-broadcast-netmask --shell lava-network query $(lava-self) netmask
+          - lava-test-case multinode-broadcast-gateway --shell lava-network query $(lava-self) default-gateway
+          - lava-test-case multinode-broadcast-hostname --shell lava-network query $(lava-self) hostname
+          - lava-test-case multinode-broadcast-fqdn --shell lava-network query $(lava-self) hostname-full
+          - lava-test-case multinode-broadcast-dns1 --shell lava-network query $(lava-self) dns_1
+          - lava-test-case multinode-broadcast-dns2 --shell lava-network query $(lava-self) dns_2
+          - lava-test-case multinode-broadcast-dns3 --shell lava-network query $(lava-self) dns_3
+          - lava-test-case ntpdate-check --shell ntpdate-debian
+          - lava-test-case wget-file --shell wget -O /var/www/testfile http://images.validation.linaro.org/production-repo/services-trace.txt
+          - lava-test-case file-sync --shell lava-sync download
+          - lava-test-case done-sync --shell lava-sync received
+          - lava-test-case remove-tgz --shell rm /var/www/testfile
+      name: eth1-inline-client
+      path: inline/eth1.yaml
+
+- test:
+    role:
+    - server
+    timeout:
+      minutes: 5
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: receiver
+          description: "MultiNode network test commands"
+        install:
+          deps:
+          - curl
+          - realpath
+          - lsb-release
+          - usbutils
+          - wget
+          - ntpdate
+          - apache2
+        run:
+          steps:
+          - lava-test-case multinode-role-output --shell lava-role
+          - lava-test-case multinode-sync --shell lava-sync running
+          - lava-test-case multinode-send-message --shell lava-send sending source=$(lava-self) role=$(lava-role) hostname=$(hostname -f) kernver=$(uname -r) kernhost=$(uname -n)
+          - lava-test-case multinode-group --shell lava-group
+          - lava-group
+          - lava-test-case linux-linaro-ubuntu-netstat --shell netstat -an
+          - lava-test-case linux-linaro-ubuntu-ifconfig-dump --shell ifconfig -a
+          - lava-test-case linux-linaro-ubuntu-route-dump-a --shell route
+          - lava-test-case linux-linaro-ubuntu-route-ifconfig-up-lo --shell ifconfig lo up
+          - lava-test-case linux-linaro-ubuntu-route-dump-b --shell route
+          - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
+          - lava-test-case multinode-wait --shell lava-wait-all sending
+          - cat /tmp/lava_multi_node_cache.txt
+          - lava-test-case multinode-network --shell lava-network broadcast eth0
+          - lava-test-case multinode-get-network --shell lava-network collect eth0
+          - lava-test-case multinode-broadcast-ipv4 --shell lava-network query $(lava-self) ipv4
+          - lava-test-case multinode-broadcast-ipv6 --shell lava-network query $(lava-self) ipv6
+          - lava-test-case multinode-broadcast-netmask --shell lava-network query $(lava-self) netmask
+          - lava-test-case multinode-broadcast-gateway --shell lava-network query $(lava-self) default-gateway
+          - lava-test-case multinode-broadcast-hostname --shell lava-network query $(lava-self) hostname
+          - lava-test-case multinode-broadcast-fqdn --shell lava-network query $(lava-self) hostname-full
+          - lava-test-case multinode-broadcast-dns1 --shell lava-network query $(lava-self) dns_1
+          - lava-test-case multinode-broadcast-dns2 --shell lava-network query $(lava-self) dns_2
+          - lava-test-case multinode-broadcast-dns3 --shell lava-network query $(lava-self) dns_3
+          - lava-test-case ntpdate-check --shell ntpdate-debian
+          - lava-test-case file-sync --shell lava-sync download
+          - lava-test-case wget-from-group --shell ./file-get.sh
+          - lava-test-case get-sync --shell lava-sync received
+          - lava-test-case list-file --shell ls -l /tmp/testfile
+          - lava-test-case remove-file --shell rm /tmp/testfile
+      name: eth1-inline-server
+      path: inline/eth1-server.yaml
