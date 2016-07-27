@@ -590,6 +590,7 @@ class NamedTestAttribute(models.Model):
 
     class Meta:
         unique_together = (('object_id', 'name', 'content_type'))
+        verbose_name = "metadata"
 
 
 class TestData(models.Model):
@@ -1013,22 +1014,23 @@ class Query(models.Model):
 
         return conditions_objects
 
-    def serialize_conditions(self):
+    @classmethod
+    def serialize_conditions(cls, conditions):
         # Serialize conditions into string.
 
         conditions_list = []
-        for condition in self.querycondition_set.all():
+        for condition in conditions:
             conditions_list.append("%s%s%s%s%s%s%s" % (
                 condition.table.model,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.field,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.operator,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.value
             ))
 
-        return self.CONDITIONS_SEPARATOR.join(conditions_list)
+        return cls.CONDITIONS_SEPARATOR.join(conditions_list)
 
     @classmethod
     def get_content_type(cls, model_name):
@@ -1126,6 +1128,16 @@ class QueryCondition(models.Model):
         }
     }
 
+    # Allowed fields for condition entities.
+    FIELD_CHOICES = {
+        TestJob: [
+            "submitter", "start_time", "end_time", "status", "actual_device",
+            "health_check", "user", "group", "priority", "is_pipeline"],
+        TestSuite: ["name"],
+        TestCase: ["name", "result", "measurement"],
+        NamedTestAttribute: []
+    }
+
     query = models.ForeignKey(
         Query,
     )
@@ -1175,6 +1187,119 @@ class QueryCondition(models.Model):
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()
+
+    @classmethod
+    def get_condition_choices(cls, job=None):
+        # Create a dict with all possible operators based on the all available
+        # field types, used for validation.
+        # If job is supplied, return available metadata field names as well.
+
+        condition_choices = {}
+        for model in cls.FIELD_CHOICES:
+            condition_choice = {}
+            condition_choice['fields'] = {}
+            content_type = ContentType.objects.get_for_model(model)
+
+            if job and model == NamedTestAttribute:
+                testdata = TestData.objects.filter(testjob=job).first()
+                if testdata:
+                    for attribute in NamedTestAttribute.objects.filter(
+                            object_id=testdata.id,
+                            content_type=ContentType.objects.get_for_model(
+                                TestData)):
+                        condition_choice['fields'][attribute.name] = {}
+
+            else:
+                for field_name in cls.FIELD_CHOICES[model]:
+                    field = {}
+
+                    field_object = content_type.model_class()._meta.\
+                        get_field_by_name(field_name)[0]
+                    field['operators'] = cls._get_operators_for_field_type(
+                        field_object)
+                    field['type'] = field_object.__class__.__name__
+                    if field_object.choices:
+                        field['choices'] = [unicode(x) for x in dict(
+                            field_object.choices).values()]
+
+                    condition_choice['fields'][field_name] = field
+
+            condition_choices[content_type.id] = condition_choice
+            condition_choices['date_format'] = settings.\
+                DATETIME_INPUT_FORMATS[0]
+
+        return condition_choices
+
+    @classmethod
+    def get_similar_job_content_types(cls):
+        # Create a dict with all available content types.
+
+        available_content_types = {}
+        for model in [TestJob, NamedTestAttribute]:
+            content_type = ContentType.objects.get_for_model(model)
+            available_content_types[content_type.id] = content_type.name
+        return available_content_types
+
+    @classmethod
+    def _get_operators_for_field_type(cls, field_object):
+        # Determine available operators depending on the field type.
+        operator_dict = dict(cls.OPERATOR_CHOICES)
+
+        if field_object.choices:
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.DateTimeField):
+            operator_keys = [cls.GT]
+        elif isinstance(field_object, models.ForeignKey):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.BooleanField):
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL
+            ]
+        elif isinstance(field_object, models.IntegerField):
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS,
+                cls.GT,
+                cls.LT
+            ]
+        elif isinstance(field_object, models.CharField):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.TextField):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        else:  # Show all.
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS,
+                cls.GT,
+                cls.LT
+            ]
+
+        operators = dict([(i, operator_dict[i]) for i in operator_keys if i in operator_dict])
+
+        return operators
 
 
 def _get_foreign_key_model(model, fieldname):
@@ -1413,7 +1538,8 @@ class ChartQuery(models.Model):
                 data["query_updated"] = self.query.last_updated.strftime(
                     settings.DATETIME_INPUT_FORMATS[0])
             data["entity"] = self.query.content_type.model
-            data["conditions"] = self.query.serialize_conditions()
+            data["conditions"] = Query.serialize_conditions(
+                self.query.querycondition_set.all())
             data["has_omitted"] = QueryOmitResult.objects.filter(
                 query=self.query).exists()
 

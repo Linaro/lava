@@ -257,7 +257,8 @@ def query_display(request, username, name):
         'lava_results_app/query_display.html', {
             'query': query,
             'entity': query.content_type.model,
-            'conditions': query.serialize_conditions(),
+            'conditions': Query.serialize_conditions(
+                query.querycondition_set.all()),
             'omitted': omitted,
             'query_table': table,
             'terms_data': table.prepare_terms_data(view),
@@ -323,7 +324,8 @@ def query_custom(request):
 def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
-    query_conditions = query.serialize_conditions()
+    query_conditions = Query.serialize_conditions(
+        query.querycondition_set.all())
     view_exists = QueryMaterializedView.view_exists(query.id)
 
     return render_to_response(

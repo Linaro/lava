@@ -21,6 +21,7 @@ Views for the Results application
 Keep to just the response rendering functions
 """
 import csv
+import simplejson
 import yaml
 from collections import OrderedDict
 from django.template import RequestContext
@@ -40,7 +41,13 @@ from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
 from lava_results_app.utils import check_request_auth
-from lava_results_app.models import TestSuite, TestCase, TestSet, TestData
+from lava_results_app.models import (
+    QueryCondition,
+    TestSuite,
+    TestCase,
+    TestSet,
+    TestData
+)
 from lava.utils.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name
@@ -138,6 +145,12 @@ def testjob(request, job):
             'suite_table': suite_table,
             'metadata': yaml_dict,
             'failed_definitions': failed_definitions,
+            'condition_choices': simplejson.dumps(
+                QueryCondition.get_condition_choices(job)
+            ),
+            'available_content_types': simplejson.dumps(
+                QueryCondition.get_similar_job_content_types()
+            ),
         }, RequestContext(request))
 
 

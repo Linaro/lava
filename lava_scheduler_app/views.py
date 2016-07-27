@@ -14,7 +14,8 @@ import django
 from dateutil.relativedelta import relativedelta
 from django import forms
 
-from django.core.exceptions import PermissionDenied
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.db.models import Count
@@ -69,6 +70,12 @@ from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaView
 from lava_results_app.utils import description_data, description_filename
+from lava_results_app.models import (
+    NamedTestAttribute,
+    Query,
+    QueryCondition,
+    InvalidConditionsError
+)
 
 from lava_scheduler_app.template_helper import expand_template
 from lava_scheduler_app.job_templates import (
@@ -1337,6 +1344,12 @@ def job_detail(request, pk):
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         'is_favorite': is_favorite,
+        'condition_choices': simplejson.dumps(
+            QueryCondition.get_condition_choices(job)
+        ),
+        'available_content_types': simplejson.dumps(
+            QueryCondition.get_similar_job_content_types()
+        ),
     }
     if job.is_pipeline:
         description = description_data(job.id)
@@ -2683,3 +2696,78 @@ def download_device_type_template(request, pk):
     response['Content-Transfer-Encoding'] = 'quoted-printable'
     response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % device_type.name
     return response
+
+
+@post_only
+def similar_jobs(request, pk):
+    from lava_results_app.models import TestData
+
+    logger = logging.getLogger('lava_scheduler_app')
+    job = get_restricted_job(request.user, pk)
+    if not job.can_change_priority(request.user):
+        raise PermissionDenied()
+
+    entity = ContentType.objects.get_for_model(TestJob).model
+
+    tables = request.POST.getlist("table")
+    fields = request.POST.getlist("field")
+
+    conditions = []
+    for key, value in enumerate(tables):
+        table = ContentType.objects.get(pk=value)
+        operator = QueryCondition.EXACT
+        job_field_value = None
+        if table.model_class() == TestJob:
+            try:
+                field_obj = TestJob._meta.get_field(fields[key])
+                job_field_value = getattr(job, fields[key])
+                # Handle choice fields.
+                if field_obj.choices:
+                    job_field_value = dict(field_obj.choices)[job_field_value]
+
+            except FieldDoesNotExist:
+                logger.info(
+                    "Test job does not contain field '%s'." % fields[key])
+                continue
+
+            # Handle Foreign key values and dates
+            if job_field_value.__class__ == User:
+                job_field_value = job_field_value.username
+            elif job_field_value.__class__ == Device:
+                job_field_value = job_field_value.hostname
+
+            # For dates, use date of the job, not the exact moment in time.
+            try:
+                job_field_value = job_field_value.date()
+                operator = QueryCondition.ICONTAINS
+            except AttributeError:  # it's not a date.
+                pass
+
+        else:  # NamedTestAttribute
+            try:
+
+                testdata = TestData.objects.filter(testjob=job).first()
+                job_field_value = NamedTestAttribute.objects.get(
+                    object_id=testdata.id,
+                    content_type=ContentType.objects.get_for_model(TestData),
+                    name=fields[key]
+                ).value
+            except NamedTestAttribute.DoesNotExist:
+                # Ignore this condition.
+                logger.info("Named attribute %s does not exist for similar jobs search." % fields[key])
+                continue
+
+        if job_field_value:
+            condition = QueryCondition()
+            condition.table = table
+            condition.field = fields[key]
+            condition.operator = operator
+            condition.value = job_field_value
+            conditions.append(condition)
+
+    conditions = Query.serialize_conditions(conditions)
+
+    return HttpResponseRedirect(
+        "%s?entity=%s&conditions=%s" % (
+            reverse('lava.results.query_custom'),
+            entity, conditions))

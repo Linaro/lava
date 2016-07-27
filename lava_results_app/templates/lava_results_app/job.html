@@ -31,7 +31,7 @@
     {% endif %}
 
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-6">
     <h4 class="modal-header">Exports
         </h4>
     <dl class="dl-horizontal">
@@ -43,6 +43,14 @@
     <dt>Job metadata :</dt>
     <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
        title="Download metadata as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+    </dl>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <dl class="dl-horizontal">
+      <div class="btn-group">
+        <a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
+      </div>
     </dl>
   </div>
 </div>
@@ -135,7 +143,14 @@
   </div>
 </div>
 
+{% include "_similar_jobs.html" %}
+
 {% endblock %}
 {% block scripts %}
+<script type="text/javascript">
+  var condition_choices = JSON.parse($("#id_condition_choices").val());
+  var content_types = JSON.parse($("#id_available_content_types").val());
+</script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/similar-jobs.min.js"></script>
 {% endblock %}
