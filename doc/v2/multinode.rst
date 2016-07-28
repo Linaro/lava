@@ -32,7 +32,7 @@ devices can be allocated.
 Once each board has booted the test image, the MultiNode API will be available for use within
 the test definition in the default PATH.
 
-.. index:: timeout
+.. index:: multinode timeouts
 
 LAVA Multi-Node timeout behaviour
 *********************************
@@ -45,10 +45,12 @@ In Multi-Node LAVA, this timeout is also applied to individual polling operation
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
 response.
 
-.. _timeouts:
+.. _multinode_timeouts:
 
-Recommendations on timeouts
-===========================
+Recommendations on timeouts for multinode
+=========================================
+
+.. seealso:: :ref:`timeouts`
 
 MultiNode operations have implications for the timeout values used in YAML submissions. If one of the
 synchronisation primitives times out, the sync will fail and the job itself will then time out.

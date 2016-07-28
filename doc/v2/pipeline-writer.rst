@@ -64,6 +64,9 @@ Job submission data
    is ignored by the dispatcher. Locally, dispatchers only have configuration
    for the devices currently running test jobs.
 #. Default timeouts can be specified at the top of the file.
+
+   .. seealso:: :ref:`timeouts`
+
 #. priority can be specified, the default is medium.
 #. **Always** `check your YAML syntax <http://yaml-online-parser.appspot.com/?yaml=>`_
 #. The **actions** element in a pipeline job submission is a list of
@@ -77,7 +80,7 @@ Job submission data
    in the test shell and as a URL in the results, so underscores and
    hyphens need to be used in place of spaces.
 
-.. note:: :ref:`dispatcher_timeouts` are specified in human readable
+.. note:: :ref:`timeouts` are specified in human readable
     units, days, hours, minutes or seconds. Avoid specifying timeouts
     in smaller units when a larger unit is available: i.e. you should
     **never** use 120 seconds, always 2 minutes. Schema rules may be

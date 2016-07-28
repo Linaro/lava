@@ -206,6 +206,8 @@ otherwise valid.
 Timeouts
 --------
 
+.. seealso:: :ref:`timeouts`
+
 * ``timeouts``: dictionary
 * **Required**
 

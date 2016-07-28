@@ -272,8 +272,8 @@ Other MultiNode calls
 
 It is also possible for devices to retrieve data about the group itself,
 including the role or name of the current device as well as the names
-and roles of other devices in the group. See :ref:`multinode_api` and
-:ref:`multinode_use_cases` for more information.
+and roles of other devices in the group. See :ref:`multinode_api`
+for more information.
 
 .. _writing_multinode_protocol:
 

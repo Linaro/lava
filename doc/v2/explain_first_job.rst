@@ -29,6 +29,9 @@ Top level elements of a test job
   scheduling for the next test job. Timeouts at the top level include
   the job, the default timeout per action and can include the default
   timeout for the device to respond using a connection.
+
+  .. seealso:: :ref:`timeouts`
+
 * **priority** - supports values if ``high``, ``medium`` or ``low``. The
   scheduler considers the job priority when ordering the queue to consider
   which job should run next. **Do not abuse priority**.

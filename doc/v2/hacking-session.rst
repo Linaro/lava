@@ -102,8 +102,8 @@ Starting a Hacking Session
 It is possible to include multiple hacking sessions in the same job,
 even interleaved with other test actions.
 
-See :ref:`inactivity_termination` for clarification of the timeout
-support.
+.. seealso:: :ref:`inactivity_termination` and :ref:`timeouts` for clarification of the timeout
+   support.
 
 Connecting to a Hacking Session
 ===============================
@@ -199,6 +199,8 @@ in within one hour.
 
 The session will timeout, regardless of activity, when the top-level
 timeout specified in the job is reached.
+
+This support is *separate* from the :ref:`timeouts` handling of the test job.
 
 .. _continue_hacking:
 

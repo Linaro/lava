@@ -48,6 +48,8 @@ Other parameters commonly supported include:
 #. ``priority`` - not currently used as submission via the scheduler is
    not supported.
 
+.. seealso:: :ref:`timeouts`
+
 .. code-block:: yaml
 
  device_type: kvm

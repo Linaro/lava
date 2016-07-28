@@ -7,6 +7,8 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
+  connection:
+    minutes: 2
 priority: medium
 visibility: public
 

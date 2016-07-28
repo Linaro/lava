@@ -209,7 +209,7 @@ Glossary of terms
 
   MultiNode
      A single test job which runs across multiple devices. See
-     :ref:`multinode_api` and :ref:`multinode_use_cases`.
+     :ref:`multinode_api`.
 
   offline
     A status of a device which allows jobs to be submitted and reserved for

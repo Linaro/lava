@@ -254,6 +254,7 @@ not be rebooted between the definitions.
    writing-tests.rst
    pipeline-writer.rst
    test-repositories.rst
+   timeouts.rst
    dispatcher-format.rst
    dispatcher-actions2.rst
    lava_test_shell.rst
