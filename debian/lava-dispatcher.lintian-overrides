@@ -41,6 +41,11 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-self
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-tags
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-echo-config
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-network
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-send
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-sync
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-wait
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-wait-all
 
 # android specific
 #lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
