@@ -3,7 +3,53 @@
 Testing the new design
 **********************
 
-To test the new design after making changes, use the unit tests::
+To test the new design after making changes, use the :ref:`unit tests`. During development, it is
+useful to only run selected tests, although remember that **all** tests must pass before proposing
+the change as a review.
+
+In each case, ensure that your local packages are up to date and rebase your local development branch
+against master if ``git pull`` fetches new commits. If your branch needed to be updated, always build
+and install your local packages.
+
+.. seealso:: :ref:`developer_build_version`
+
+lava-server
+===========
+
+::
+
+ $ ./lava_server/manage test
+
+``lava-server`` has several components, see the contents of ``ci-run`` for the full list. Each component
+can be tested separately::
+
+ $ ./lava_server/manage test lava_scheduler_app
+
+To run particular tests in a specific file, add e.g. ``test_device.py`` to the command::
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device
+
+.. note:: the ``tests`` directory needs to be specified (instead of the test process discovering
+   all tests) and the filename lacks the ``.py`` suffix.
+
+Add the class name to run all tests within that class within the specified file.
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates
+
+Add a specific test function to run only that one unit test::
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
+
+The same path can also be passed to ``./ci-run``::
+
+ $ ./ci-run lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
+
+This adds the ``pep8`` check before running the test(s).
+
+lava-dispatcher
+===============
+
+::
 
  $ python -m unittest discover lava_dispatcher/pipeline/
 
