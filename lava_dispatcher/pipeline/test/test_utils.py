@@ -196,7 +196,7 @@ class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-metho
             uboot.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
         )
         self.assertIsInstance(uboot, UBootAction)
-        retry = uboot.internal_pipeline.actions[3]
+        retry = uboot.internal_pipeline.actions[4]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             retry.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)

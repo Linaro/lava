@@ -192,7 +192,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('type', boot_params)
         self.assertGreater(len(job.pipeline.actions), 1)
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
-        u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[1]
+        u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[2]
         self.assertIsNotNone(u_boot_action.get_common_data('u-boot', 'device'))
         self.assertEqual(u_boot_action.name, "uboot-overlay")
 

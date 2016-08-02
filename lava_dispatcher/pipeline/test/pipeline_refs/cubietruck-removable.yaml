@@ -48,6 +48,7 @@
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
+  - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
   - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
@@ -98,6 +99,7 @@
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
+  - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
   - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}

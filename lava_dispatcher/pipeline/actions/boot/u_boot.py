@@ -21,6 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import os.path
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -96,6 +97,7 @@ class UBootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
+        self.internal_pipeline.add_action(UBootPrepareKernelAction())
         self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(UBootCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
@@ -167,6 +169,8 @@ class UBootRetry(BootAction):
             self.data['boot-result'] = 'failed'
         else:
             self.data['boot-result'] = 'success'
+        self.logger.error(self.errors)
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
 
@@ -326,9 +330,15 @@ class UBootCommandOverlay(Action):
         substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
         if not self.get_common_data('tftp', 'ramdisk') and not self.get_common_data('file', 'ramdisk'):
             ramdisk_addr = '-'
-
+        bootcommand = self.parameters['type']
+        if self.parameters['type'] == 'uimage':
+            bootcommand = 'bootm'
+        elif self.parameters['type'] == 'zimage':
+            bootcommand = 'bootz'
+        elif self.parameters['type'] == 'image':
+            bootcommand = 'booti'
         substitutions['{BOOTX}'] = "%s %s %s %s" % (
-            self.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr)
+            bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
 
         substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
         substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
@@ -385,4 +395,76 @@ class UBootCommandsAction(Action):
         connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
+        return connection
+
+
+class UBootPrepareKernelAction(Action):
+    """
+    Convert kernels to uImage or append DTB, if needed
+    """
+    def __init__(self):
+        super(UBootPrepareKernelAction, self).__init__()
+        self.name = "uboot-prepare-kernel"
+        self.description = "convert kernel to uimage or append dtb"
+        self.summary = "prepare/convert kernel"
+        self.type = None
+
+    def create_uimage(self, kernel, load_addr, xip, arch, output):
+        load_addr = int(load_addr, 16)
+        uimage_path = '%s/%s' % (os.path.dirname(kernel), output)
+        if xip:
+            entry_addr = load_addr + 64
+        else:
+            entry_addr = load_addr
+        cmd = "mkimage -A %s -O linux -T kernel" \
+              " -C none -a 0x%x -e 0x%x" \
+              " -d %s %s" % (arch, load_addr,
+                             entry_addr, kernel,
+                             uimage_path)
+        if self.run_command(cmd.split(' ')):
+            return uimage_path
+        else:
+            raise InfrastructureError("uImage creation failed")
+
+    def validate(self):
+        super(UBootPrepareKernelAction, self).validate()
+        self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
+        self.kernel_type = self.get_common_data('type', 'kernel')
+        if 'type' in self.parameters:
+            self.type = str(self.parameters['type']).lower()
+        if self.type:
+            if self.type not in self.job.device['parameters']:
+                self.errors = "Requested kernel boot type '%s' not supported by this device." % self.type
+            if self.type == "bootm" or self.type == "bootz" or self.type == "booti":
+                self.logger.info("booti, bootm and bootz are being deprecated soon, please use 'image','uimage' or 'zimage'")
+        if self.kernel_type:
+            self.kernel_type = str(self.kernel_type).lower()
+            if self.type != self.kernel_type:
+                if 'mkimage_arch' not in self.params:
+                    self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
+                if self.type == 'zimage' and self.kernel_type == 'uimage':
+                    self.errors = "Can't convert a uimage to zimage"
+                elif self.type == 'zimage' and self.kernel_type == 'image':
+                    self.errors = "Can't convert an image to zimage"
+                elif self.type == 'image' and self.kernel_type == 'zimage':
+                    self.errors = "Can't convert a zimage to image"
+
+    def run(self, connection, args=None):
+        connection = super(UBootPrepareKernelAction, self).run(connection, args)
+        old_kernel = self.get_common_data('file', 'kernel')
+        filename = self.data['download_action']['kernel']['file']
+        load_addr = kernel_addr = self.job.device['parameters'][self.type]['kernel']
+        if 'text_offset' in self.job.device['parameters']:
+            load_addr = self.job.device['parameters']['text_offset']
+        arch = self.params['mkimage_arch']
+        if (self.type == "uimage" or self.type == "bootm") and self.kernel_type == "image":
+            self.logger.debug("Converting image to uimage")
+            self.create_uimage(filename, load_addr, False, arch, 'uImage')
+            new_kernel = os.path.dirname(old_kernel) + '/uImage'
+            self.set_common_data('file', 'kernel', new_kernel)
+        elif (self.type == "uimage" or self.type == "bootm") and self.kernel_type == "zimage":
+            self.logger.debug("Converting zimage to uimage")
+            self.create_uimage(filename, load_addr, False, arch, 'uImage')
+            new_kernel = os.path.dirname(old_kernel) + '/uImage'
+            self.set_common_data('file', 'kernel', new_kernel)
         return connection
