@@ -494,6 +494,45 @@ A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the
 complexity of the job and the ways to analyse the results.
 
+Write portable test definitions
+===============================
+
+``lava-test-shell`` is a useful helper but that can become a limitation.
+Avoid relying upon the helper for anything more than the automation
+by putting the logic and the parsing of your test into a more competent
+language. *Remember*: as test writer, **you** control which languages
+are available inside your test.
+
+``lava-test-shell`` has to try and get by with not much more than
+``busybox ash`` as the lowest common denominator.
+
+**Please don't expect lava-test-shell to do everything**.
+
+Let ``lava-test-shell`` provide you with a directory layout containing
+your scripts, some basic information about the job and a way of
+reporting test case results - that's about all it should be doing
+outside of the :ref:`multinode_api`.
+
+**Do not lock yourself out of your tests**
+
+#. Do not make your test code depend on the LAVA infrastructure
+   any more than is necessary for automation. Make sure you can
+   always run your tests by downloading the test code to a
+   target device using a clean environment, installing its
+   dependencies (the test code itself could do this), and running
+   a single script. Emulation can be used in most cases where access
+   to the device is difficult. Even if the values in the output change,
+   the format of the output from the underlying test operation should
+   remain the same, allowing a single script to parse the output in LAVA
+   and in local testing.
+
+#. Make the LAVA-specific part as small as possible, just enough
+   to, for example, gather any inputs that you get via LAVA, call the main
+   test program, and translate your regular output into ways to
+   tell lava how the test went (if needed).
+
+.. seealso:: :ref:`custom_scripts`
+
 Use different test definitions for different test areas
 =======================================================
 
