@@ -184,7 +184,6 @@ class ApplyOverlayTftp(Action):
             shutil.copy(overlay_file, tftp_dir)
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', 'overlay', os.path.join(suffix, os.path.basename(overlay_file)))
-        untar_file(overlay_file, directory)
         if nfs_url:
             subprocess.check_output(['umount', directory])
             os.rmdir(directory)  # fails if the umount fails
