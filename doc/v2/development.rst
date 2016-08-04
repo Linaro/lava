@@ -49,12 +49,20 @@ each clone of each source::
 
     git review -s
 
+.. _developer_topic_branches:
+
 Create a topic branch
 =====================
 
-We recommend never working off the master branch (unless you are a git
+We recommend **never** working off the master branch (unless you are a git
 expert and really know what you are doing). You should create a topic
 branch for each logically distinct change you work on.
+
+.. note:: Unless your change **directly** depends on changes made in an earlier
+   commit on a branch, this means making a fresh branch for each change with
+   **one commit** per branch.
+
+   .. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
 
 Before you start, make sure your master branch is up to date::
 
@@ -111,6 +119,8 @@ Make sure that your changes do not cause any failures in the unit tests::
 
 Wherever possible, always add new unit tests for new code.
 
+.. _developer_commit_for_review:
+
 Send your commits for review
 ============================
 
@@ -130,6 +140,9 @@ that:
    on master and this can become **much** more difficult when there are
    multiple commits on one local branch. It can become a **lot** of work
    to make the correct changes in the correct commit on a single branch.
+#. Fixes from comments or unit test failures in one review are **not**
+   acceptable as separate reviews, so don't be tempted to make another
+   commit at the top of the branch.
 
 Therefore the recommentations are:
 
@@ -142,6 +155,25 @@ Therefore the recommentations are:
    to resolve merge conflicts one change at a time instead of having multiple
    merge commits all in the one rebase operation.
 
+.. _developer_adding_reviewers:
+
+Adding reviewers
+================
+
+There is a convention within the LAVA software team that reviews which have
+no reviewers other than the automatic ``lavabot`` are ignored for review. This
+allows developers to share changes at an early stage when more than one developer
+is working on a single change or when another developer needs to base their changes
+on work being done by someone else.
+
+Therefore, until you add reviewers to your new review, it will not receive attention
+and is not going to be merged.
+
+There is a shortcut available in gerrit to add the complete team as reviewers, simply
+click **Add** in the *Reviewers* section and enter ``lava-team`` in the drop-down box
+and confirm by pressing **Add** in the drop-down box.
+
+.. _developer_submitting_new_version:
 
 Submitting a new version of a change
 ====================================
