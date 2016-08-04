@@ -195,7 +195,7 @@ class UBootInterrupt(Action):
             if self.job.device.connect_command is '':
                 self.errors = "Unable to connect to device %s" % hostname
         else:
-            self.logger.debug("%s may need manual intervention to reboot" % hostname)
+            self.logger.debug("%s may need manual intervention to reboot", hostname)
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
             self.errors = "Missing bootloader prompt for device"
@@ -358,7 +358,7 @@ class UBootCommandOverlay(Action):
 
         self.data.setdefault('u-boot', {})
         self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
+        self.logger.debug("Parsed boot commands: %s", '; '.join(self.data['u-boot']['commands']))
         return connection
 
 
@@ -408,8 +408,10 @@ class UBootPrepareKernelAction(Action):
         self.description = "convert kernel to uimage or append dtb"
         self.summary = "prepare/convert kernel"
         self.type = None
+        self.params = None
+        self.kernel_type = None
 
-    def create_uimage(self, kernel, load_addr, xip, arch, output):
+    def create_uimage(self, kernel, load_addr, xip, arch, output):  # pylint: disable=too-many-arguments
         load_addr = int(load_addr, 16)
         uimage_path = '%s/%s' % (os.path.dirname(kernel), output)
         if xip:
@@ -451,9 +453,11 @@ class UBootPrepareKernelAction(Action):
 
     def run(self, connection, args=None):
         connection = super(UBootPrepareKernelAction, self).run(connection, args)
+        if not self.kernel_type:
+            return connection  # idempotency
         old_kernel = self.get_common_data('file', 'kernel')
         filename = self.data['download_action']['kernel']['file']
-        load_addr = kernel_addr = self.job.device['parameters'][self.type]['kernel']
+        load_addr = self.job.device['parameters'][self.type]['kernel']
         if 'text_offset' in self.job.device['parameters']:
             load_addr = self.job.device['parameters']['text_offset']
         arch = self.params['mkimage_arch']
