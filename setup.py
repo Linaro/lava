@@ -116,10 +116,11 @@ setup(
         ('/etc/apache2/sites-available',
          ['etc/lava-server.conf']),
         ('/etc/logrotate.d',
-         ['etc/logrotate.d/lava-scheduler-log',
+         ['etc/logrotate.d/django-log',
           'etc/logrotate.d/lava-master-log',
-          'etc/logrotate.d/lava-server-uwsgi-log',
-          'etc/logrotate.d/django-log']),
+          'etc/logrotate.d/lava-publisher-log',
+          'etc/logrotate.d/lava-scheduler-log',
+          'etc/logrotate.d/lava-server-uwsgi-log']),
         ('/usr/share/lava-server',
          ['instance.template']),
         ('/usr/share/lava-server',
@@ -130,6 +131,7 @@ setup(
     scripts=[
         'lava_server/lava-daemon',
         'lava_server/lava-master',
+        'lava_server/lava-publisher',
         'share/lava-mount-masterfs',
     ],
     tests_require=[

@@ -1,0 +1,9 @@
+[Unit]
+Description=LAVA event publisher
+
+[Service]
+ExecStart=/usr/bin/lava-server manage lava-publisher --level DEBUG
+Type=simple
+
+[Install]
+WantedBy=network.target
