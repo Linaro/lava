@@ -6,7 +6,7 @@ Uploaders: Antonio Terceiro <terceiro@debian.org>,
  Neil Williams <codehelp@debian.org>,
  Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>,
  Senthil Kumaran S (stylesen) <stylesen@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), dh-python, dh-systemd,
+Build-Depends: debhelper (>= 8.0.0), dh-python,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev,
@@ -78,7 +78,7 @@ Package: lava-dev
 Architecture: all
 Section: devel
 Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
- debhelper (>= 8.0.0), dh-systemd, fakeroot, git, libdistro-info-perl,
+ debhelper (>= 8.0.0), fakeroot, git, libdistro-info-perl,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev, pep8 | python-pep8,
