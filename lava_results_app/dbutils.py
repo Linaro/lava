@@ -129,6 +129,9 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
         if 'units' in results:
             units = results['units']
             logger.debug("%s/%s %s%s", suite, name, measurement, units)
+        if result not in TestCase.RESULT_MAP:
+            logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
+            return False
         TestCase.objects.create(
             name=name,
             suite=suite,
