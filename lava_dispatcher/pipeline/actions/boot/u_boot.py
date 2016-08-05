@@ -169,8 +169,6 @@ class UBootRetry(BootAction):
             self.data['boot-result'] = 'failed'
         else:
             self.data['boot-result'] = 'success'
-        self.logger.error(self.errors)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
 
