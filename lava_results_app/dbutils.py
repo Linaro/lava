@@ -57,7 +57,7 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
-def map_scanned_results(results, job):  # pylint: disable=too-many-branches
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -129,6 +129,9 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches
         if 'units' in results:
             units = results['units']
             logger.debug("%s/%s %s%s", suite, name, measurement, units)
+        if result not in TestCase.RESULT_MAP:
+            logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
+            return False
         TestCase.objects.create(
             name=name,
             suite=suite,
@@ -291,11 +294,17 @@ def map_metadata(description, job):
     # get job-action metadata
     action_values = _get_job_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
+        if not key or not value:
+            logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
+            continue
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device
     device_values = _get_device_metadata(description_data['device'])
     for key, value in device_values.items():
+        if not key or not value:
+            logger.warning('[%s] Missing element in device. %s: %s', job.id, key, value)
+            continue
         testdata.attributes.create(name=key, value=value)
 
     # Add metadata from job submission data.

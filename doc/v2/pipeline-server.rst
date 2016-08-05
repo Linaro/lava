@@ -9,18 +9,15 @@ Initial considerations
 ======================
 
 #. The default setup of the LAVA packages and codebase is for the current
-   dispatcher and the V1 distributed deployment but this will change towards
-   the end of 2016 before the old code is removed. Until then, installations
+   dispatcher and the V1 distributed deployment but this will change during
+   2017 before the old code is removed. Until then, installations
    will continue to provide both models.
 #. A LAVA pipeline instance can have existing remote worker support
    alongside but uses a completely different mechanism to identify
    remote workers and run jobs on pipeline devices.
 #. If both systems are enabled, devices can support both pipeline and
-   current JSON submissions. It is not yet possible to disable JSON
-   submissions. If there is no relevant configuration for a device
-   other than pipeline support, a JSON submission would be accepted
-   but would stay in Submitted state until cancelled. See
-   :ref:`changing_existing_workers`.
+   current JSON submissions. Devices can be made :term:`exclusive` to
+   prevent JSON submissions.
 #. The default setup provides both mechanisms, the only step required
    to allow pipeline submissions to devices connected to ``http://localhost``
    is to have pipeline devices available.
@@ -153,6 +150,8 @@ Pipeline workers are enabled or disabled in the Django admin interface by changi
 it is also recommended that the devices would be made offline at the same time. (The django
 admin interface has support for selecting devices by worker and taking all selected devices
 offline in a single action.)
+
+..seealso:: :ref:`adding_qemu_v2_device`
 
 .. index::
    single: encrypt; ZMQ authentication; master slave configuration
@@ -330,6 +329,8 @@ logs::
 
 (This example does use authentication and encryption over localhost, but
 that is why the machine is called *playground*.)
+
+.. _adding_pipeline_devices_to_worker:
 
 Adding pipeline devices to a worker
 ===================================

@@ -28,7 +28,7 @@ from django.http import (
     HttpResponseRedirect
 )
 from django.shortcuts import render_to_response, render
-from django.template import loader, RequestContext
+from django.template import loader
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import requires_csrf_token
 
@@ -94,21 +94,11 @@ def server_error(request, template_name='500.html'):
         'exception_type': exc_type,
         'exception_value': value
     }
-    if django.VERSION > (1, 8):
-        template = loader.get_template(template_name)
-        return HttpResponseServerError(template.render(context_dict, request))
-    else:
-        return render_to_response(
-            template_name, context_dict, RequestContext(request)
-        )
+    template = loader.get_template(template_name)
+    return HttpResponseServerError(template.render(context_dict, request))
 
 
 @requires_csrf_token
 def permission_error(request, template_name='403.html'):
-    if django.VERSION > (1, 8):
-        template = loader.get_template(template_name)
-        return HttpResponseForbidden(template.render({}, request))
-    else:
-        return render_to_response(
-            template_name, {}, RequestContext(request)
-        )
+    template = loader.get_template(template_name)
+    return HttpResponseForbidden(template.render({}, request))

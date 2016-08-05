@@ -1,9 +1,55 @@
-.. _testing_refactoring_code:
+.. _testing_pipeline_code:
 
 Testing the new design
 **********************
 
-To test the new design, use the increasing number of unit tests::
+To test the new design after making changes, use the :ref:`unit tests`. During development, it is
+useful to only run selected tests, although remember that **all** tests must pass before proposing
+the change as a review.
+
+In each case, ensure that your local packages are up to date and rebase your local development branch
+against master if ``git pull`` fetches new commits. If your branch needed to be updated, always build
+and install your local packages.
+
+.. seealso:: :ref:`developer_build_version`
+
+lava-server
+===========
+
+::
+
+ $ ./lava_server/manage test
+
+``lava-server`` has several components, see the contents of ``ci-run`` for the full list. Each component
+can be tested separately::
+
+ $ ./lava_server/manage test lava_scheduler_app
+
+To run particular tests in a specific file, add e.g. ``test_device.py`` to the command::
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device
+
+.. note:: the ``tests`` directory needs to be specified (instead of the test process discovering
+   all tests) and the filename lacks the ``.py`` suffix.
+
+Add the class name to run all tests within that class within the specified file.
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates
+
+Add a specific test function to run only that one unit test::
+
+ $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
+
+The same path can also be passed to ``./ci-run``::
+
+ $ ./ci-run lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
+
+This adds the ``pep8`` check before running the test(s).
+
+lava-dispatcher
+===============
+
+::
 
  $ python -m unittest discover lava_dispatcher/pipeline/
 
@@ -13,6 +59,10 @@ without the call to ``discover``::
  $ python -m unittest lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
  $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+
+The call references the path to the python module, the class and then the test function within that
+class. To run all tests in a class, omit the function. To run all tests in a file, omit the class
+and the function.
 
 Sets of tests can also be executed from the :file:`./ci-run` script
 of ``lava-dispatcher`` as well::
@@ -30,6 +80,9 @@ inspect the output of the pipeline using the ``--validate`` switch to
    because the refactored dispatcher has no local configuration, so the
    master sends the entire device configuration to the dispatcher as a
    single YAML file.
+
+.. seealso:: :ref:`unit_tests` for information on running the full set of
+   unit tests on ``lava-server`` and ``lava-dispatcher``.
 
 The structure of any one job will be the same each time it is run (subject
 to changes in the developing codebase). Each different job will have a
@@ -327,7 +380,7 @@ be marked and retained until such time as either the new model replaces
 the old or the bug can be fixed in both models. Whereas the submission
 schema, log file structure and result bundle schema have thrown away any
 backwards compatibility, LavaTestShell will need to at least attempt to
-retain compatibility whilst improving the overall design and integrating
+retain compatibility while improving the overall design and integrating
 the test shell operations into the new classes.
 
 Current possible issues include:
@@ -533,10 +586,10 @@ Construct your pipeline to use Actions in the order:
 .. note:: There may be several Retry actions necessary within these
           steps.
 
-So, for a UBoot operation, this results in a pipeline like:
+So, for a U-Boot operation, this results in a pipeline like:
 
 * UBootCommandOverlay - substitutes dynamic and device-specific data
-  into the UBoot command list specified in the device configuration.
+  into the U-Boot command list specified in the device configuration.
 * ConnectDevice - establishes a serial connection to the device, as
   specified by the device configuration
 * UBootRetry - wraps the subsequent actions in a retry
@@ -544,7 +597,7 @@ So, for a UBoot operation, this results in a pipeline like:
  * UBootInterrupt - sets the ``Hit any key`` prompt in a new connection
  * ResetDevice - sends the reboot command to the device
  * ExpectShellSession - waits for the specified prompt to match
- * UBootCommandsAction - issues the commands to UBoot
+ * UBootCommandsAction - issues the commands to U-Boot
 
 .. _starting_connections:
 
@@ -711,7 +764,7 @@ the boot method or deployment method.
 #. Respect the directory structure - a strategies module should not need
    to import anything from outside that directory. Keep modules together
    with modules used in the same submission YAML stanza.
-#. Expose all configuration in the YAML, noy python. There are FIXMEs
+#. Expose all configuration in the YAML, not python. There are FIXMEs
    in the code to remedy situations where this is not yet happening but
    avoid adding code which makes this problem worse. Extend the device
    or submission YAML structure if new values are needed.
@@ -861,5 +914,5 @@ distribution release of a foreign architecture and running tests inside
 that chroot.
 
 Android tests may involve setting up a VM or a configured chroot to
-expose USB devices whilst retaining the ability to use different
+expose USB devices while retaining the ability to use different
 versions of tools for different tests.

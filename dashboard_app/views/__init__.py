@@ -43,7 +43,6 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.shortcuts import render_to_response, redirect, get_object_or_404
-from django.template import RequestContext
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -174,10 +173,11 @@ class SubscribedImageReportView(LavaView):
 
 @BreadCrumb("Dashboard", parent=lava_index)
 def index(request):
-    return render_to_response(
-        "dashboard_app/index.html", {
+    template = get_template("dashboard_app/index.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index)
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("My Bundle Streams", parent=index)
@@ -185,8 +185,8 @@ def mybundlestreams(request):
     data = MyBundleStreamView(request, model=BundleStream, table_class=BundleStreamTable)
     table = BundleStreamTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        "dashboard_app/mybundlestreams.html",
+    template = get_template("dashboard_app/mybundlestreams.html")
+    return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(mybundlestreams),
             "bundle_stream_table": table,
@@ -194,7 +194,7 @@ def mybundlestreams(request):
             "search_data": table.prepare_search_data(data),
             "discrete_data": table.prepare_discrete_data(data),
         },
-        RequestContext(request))
+        request=request))
 
 
 @BreadCrumb("Bundle Streams", parent=index)
@@ -273,8 +273,8 @@ def bundle_list(request, pathname):
     data = BundleView(request, bundle_stream, model=Bundle, table_class=BundleTable)
     table = BundleTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        "dashboard_app/bundle_list.html",
+    template = get_template("dashboard_app/bundle_list.html")
+    return HttpResponse(template.render(
         {
             'bundle_list': table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
@@ -286,7 +286,7 @@ def bundle_list(request, pathname):
             "times_data": table.prepare_times_data(data),
             "bundle_stream": bundle_stream,
         },
-        RequestContext(request))
+        request=request))
 
 
 def _remove_dir(path):
@@ -403,8 +403,8 @@ def bundle_detail(request, pathname, content_sha1):
     view = BundleDetailView(request, pathname=pathname, content_sha1=content_sha1, model=TestRun, table_class=BundleDetailTable)
     bundle_table = BundleDetailTable(view.get_table_data())
     RequestConfig(request, paginate={"per_page": bundle_table.length}).configure(bundle_table)
-    return render_to_response(
-        "dashboard_app/bundle_detail.html",
+    template = get_template("dashboard_app/bundle_detail.html")
+    return HttpResponse(template.render(
         {
             'bundle_table': bundle_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
@@ -421,7 +421,7 @@ def bundle_detail(request, pathname, content_sha1):
             "next_bundle": next_bundle,
             "previous_bundle": previous_bundle,
         },
-        RequestContext(request))
+        request=request))
 
 
 def bundle_export(request, pathname, content_sha1):
@@ -526,11 +526,12 @@ def ajax_bundle_viewer(request, pk):
         request.user,
         pk=pk
     )
-    return render_to_response(
-        "dashboard_app/_ajax_bundle_viewer.html", {
+    template = get_template("dashboard_app/_ajax_bundle_viewer.html")
+    return HttpResponse(template.render(
+        {
             "bundle": bundle
         },
-        RequestContext(request))
+        request=request))
 
 
 class TestRunView(BundleStreamView):
@@ -576,19 +577,19 @@ def test_run_list(request, pathname):
     view = TestRunView(request, bundle_stream, model=TestRun, table_class=TestRunTable)
     table = TestRunTable(view.get_table_data())
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        'dashboard_app/test_run_list.html', {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                test_run_list,
-                pathname=pathname),
-            "test_run_table": table,
-            "bundle_stream": bundle_stream,
-            "terms_data": table.prepare_terms_data(view),
-            "search_data": table.prepare_search_data(view),
-            "discrete_data": table.prepare_discrete_data(view),
-            "times_data": table.prepare_times_data(view),
-        }, RequestContext(request)
-    )
+    template = get_template('dashboard_app/test_run_list.html')
+    context_dict = {
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            test_run_list,
+            pathname=pathname),
+        "test_run_table": table,
+        "bundle_stream": bundle_stream,
+        "terms_data": table.prepare_terms_data(view),
+        "search_data": table.prepare_search_data(view),
+        "discrete_data": table.prepare_discrete_data(view),
+        "times_data": table.prepare_times_data(view),
+    }
+    return HttpResponse(template.render(context_dict, request=request))
 
 
 class TestRunDetailView(BundleStreamView):
@@ -616,8 +617,9 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
     ), analyzer_assigned_uuid, model=TestResult, table_class=TestTable)
     table = TestTable(view.get_table_data())
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        "dashboard_app/test_run_detail.html", {
+    template = get_template("dashboard_app/test_run_detail.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_detail,
                 pathname=pathname,
@@ -631,7 +633,7 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
             "discrete_data": table.prepare_discrete_data(view),
             "times_data": table.prepare_times_data(view),
             "test_table": table,
-        }, RequestContext(request))
+        }, request=request))
 
 
 def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
@@ -697,8 +699,9 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    return render_to_response(
-        "dashboard_app/test_run_software_context.html", {
+    template = get_template("dashboard_app/test_run_software_context.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_software_context,
                 pathname=pathname,
@@ -707,7 +710,7 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
             "packages": test_run.packages.all().order_by('name'),
             "sources": test_run.sources.all(),
             "half_packages_count": int(test_run.packages.count() / 2.0)
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb(
@@ -721,15 +724,16 @@ def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    return render_to_response(
-        "dashboard_app/test_run_hardware_context.html", {
+    template = get_template("dashboard_app/test_run_hardware_context.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_hardware_context,
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
             "test_run": test_run
-        }, RequestContext(request))
+        }, request=request))
 
 
 @login_required
@@ -803,8 +807,9 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         test_result = test_run.test_results.select_related('test_run').get(relative_index=relative_index)
     except TestResult.DoesNotExist:
         raise Http404
-    return render_to_response(
-        "dashboard_app/test_result_detail.html", {
+    template = get_template("dashboard_app/test_result_detail.html")
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_result_detail,
                 pathname=pathname,
@@ -812,7 +817,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
                 analyzer_assigned_uuid=analyzer_assigned_uuid,
                 relative_index=relative_index),
             "test_result": test_result
-        }, RequestContext(request))
+        }, request=request))
 
 
 @login_required
@@ -955,11 +960,11 @@ def attachment_view(request, pk):
         return HttpResponseBadRequest("Attachment %s not viewable" % pk)
     if not os.path.exists(attachment.content.path):
         raise Http404("Unable to find the attachment")
-
-    return render_to_response(
-        "dashboard_app/attachment_view.html", {
+    template = get_template("dashboard_app/attachment_view.html")
+    return HttpResponse(template.render(
+        {
             'attachment': attachment,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Subscriptions", parent=index)
@@ -993,9 +998,9 @@ def my_subscriptions(request):
     discrete_data.update(report_table.prepare_discrete_data(report_view))
     terms_data.update(report_table.prepare_terms_data(report_view))
     times_data.update(report_table.prepare_times_data(report_view))
-
-    return render_to_response(
-        'dashboard_app/subscribed_list.html', {
+    template = get_template('dashboard_app/subscribed_list.html')
+    return HttpResponse(template.render(
+        {
             'filters_table': filters_table,
             'report_table': report_table,
             "terms_data": terms_data,
@@ -1004,7 +1009,7 @@ def my_subscriptions(request):
             "discrete_data": discrete_data,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 my_subscriptions),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 

@@ -3,9 +3,12 @@
 Packaging lava-server for distributions
 ***************************************
 
-.. warning:: This chapter discusses a model of deployment
-   which is being superceded by the :term:`pipeline` model.
-   See :ref:`setting_up_pipeline_instance`.
+LAVA currently only has support for Debian packaging. Additional support
+for other distributions needs someone to maintain the packaging and to
+maintain a test instance, provide backports and manage migrations to
+new upstream releases of dependencies like ``python-django``.
+
+.. seealso :ref:`setting_up_pipeline_instance`.
 
 Apache distribution support
 ###########################
@@ -39,6 +42,7 @@ LAVA Components
 
 =============== =========================================
 lava            meta-package for single instance setup
+lava-dev        meta-package for developers to build LAVA
 lava-server     apache and WSGI settings and HTML content
 lava-dispatcher dispatches jobs to devices
 =============== =========================================
@@ -78,9 +82,11 @@ name to ``lavaserver``. ``lava-server manage`` can also be run as a
 normal user or by root. The system user is used just for the filesystem
 permissions.
 
+There are also daemons for the ``dispatcher-master`` and the ``lava-slave``.
+
 WSGI debugging help
 ===================
 
 https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
 
-If you get a 502 bad gateway, the uwsgi is probably not setup.
+If you get a 502 bad gateway, the uwsgi is probably not setup correctly.

@@ -12,9 +12,9 @@ automatically. The recommended proxy is Squid.
 Install Squid
 ^^^^^^^^^^^^^
 
-Squid is easy to install via apt-get::
+Squid is easy to install via apt::
 
-    sudo apt-get install squid
+    sudo apt install squid
 
 Or if you want a configurable squid, refer to the following link to compile
 and install manually: http://wiki.squid-cache.org/SquidFaq/CompilingSquid
@@ -127,7 +127,10 @@ Some bots will handle ``/robots.txt` but some do not (or mishandle
 options within the file). To handle this, django supports
 ``DISALLOWED_USER_AGENTS`` and this is exposed in ``/etc/lava-server/settings.conf``.
 
-.. code-block:: json
+.. comment JSON code blocks must be complete JSON, not snippets,
+   so this is a plain block.
+
+..
 
    "DISALLOWED_USER_AGENTS": ["yandex", "bing"],
 

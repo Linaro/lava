@@ -17,7 +17,7 @@ from lava_scheduler_app.views import (
     passing_health_checks, pipeline, pipeline_device_list, queue, reports, running,
     transition_detail, username_list_json, vmgroup_job_definition,
     vmgroup_job_definition_plain, worker_detail, workers,
-    download_device_type_template,)
+    download_device_type_template, similar_jobs,)
 
 
 urlpatterns = [
@@ -164,4 +164,6 @@ urlpatterns = [
         name='lava.scheduler.mydevice_type_health_history_log'),
     url(r'^devicetypeyaml/(?P<pk>[-_a-zA-Z0-9]+)', download_device_type_template,
         name='lava_scheduler_download_device_type_yaml'),
+    url(r'^job/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/similarjobs$', similar_jobs,
+        name='lava.scheduler.job.similar_jobs'),
 ]

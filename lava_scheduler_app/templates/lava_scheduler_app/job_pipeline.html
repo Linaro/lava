@@ -132,6 +132,8 @@
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
         </a></li>
+        <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a></li>
+
         {% endif %}
         </ul>
       </div>
@@ -467,11 +469,18 @@
   </div>
 </div>
 
+{% include "_similar_jobs.html" %}
+
 <div id="bottom"></div>
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+  var condition_choices = JSON.parse($("#id_condition_choices").val());
+  var content_types = JSON.parse($("#id_available_content_types").val());
+</script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/anchor-v3.2.0.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/similar-jobs.min.js"></script>
 <script type="text/javascript">
   $(document).ready(
     function() {
@@ -630,7 +639,7 @@
                     node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
                     node.append($('<br />'));
                   } else if(key == 'extra') {
-                    node.append($('<span>extra: ...<span><br />'));
+                    node.append($('<span>extra: ...</span><br />'));
                   } else {
                     for(k in d ['msg'][key]) {
                       node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));

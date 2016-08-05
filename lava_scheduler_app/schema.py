@@ -203,6 +203,7 @@ def _job_schema():
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
             'metadata': dict,
+            'secrets': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
@@ -261,6 +262,12 @@ def _device_schema():
     })
 
 
+def _validate_secrets(data_object):
+    if 'secrets' in data_object:
+        if data_object['visibility'] == 'public':
+            raise SubmissionException("When 'secrets' is used, 'visibility' shouldn't be 'public'")
+
+
 def validate_submission(data_object):
     """
     Validates a python object as a TestJob submission
@@ -272,6 +279,8 @@ def validate_submission(data_object):
         schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
+
+    _validate_secrets(data_object)
     return True
 
 
@@ -288,4 +297,5 @@ def validate_device(data_object):
         schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
+
     return True

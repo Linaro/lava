@@ -94,21 +94,12 @@ class QueryConditionForm(forms.ModelForm):
         widget=forms.HiddenInput
     )
 
-    FIELD_CHOICES = {
-        TestJob: [
-            "submitter", "start_time", "end_time", "status", "actual_device",
-            "health_check", "user", "group", "priority", "is_pipeline"],
-        TestSuite: ["name"],
-        TestCase: ["name", "result", "measurement"],
-        NamedTestAttribute: []
-    }
-
     def __init__(self, *args, **kwargs):
         super(QueryConditionForm, self).__init__(*args, **kwargs)
 
         if "query" in self.initial and \
            self.initial['query'].__class__ == Query:
-            condition_choices = self._get_condition_choices()
+            condition_choices = QueryCondition.get_condition_choices()
 
             self.fields['condition_choices'].initial = simplejson.dumps(
                 condition_choices)
@@ -121,7 +112,7 @@ class QueryConditionForm(forms.ModelForm):
 
         try:
             # Field validation.
-            field_choices = self.FIELD_CHOICES[
+            field_choices = QueryCondition.FIELD_CHOICES[
                 form_data["table"].model_class()]
             if field_choices:
                 if form_data["field"] not in field_choices:
@@ -157,94 +148,3 @@ class QueryConditionForm(forms.ModelForm):
     def clean_value(self):
         value = escape(self.cleaned_data['value'])
         return value
-
-    def _get_condition_choices(self):
-        # Create a dict with all possible operators based on the all available
-        # field types, used for cliend-side validation.
-
-        condition_choices = {}
-        for model in self.FIELD_CHOICES:
-            condition_choice = {}
-
-            content_type = ContentType.objects.get_for_model(model)
-            condition_choice['fields'] = {}
-            for field_name in self.FIELD_CHOICES[model]:
-                field = {}
-
-                field_object = content_type.model_class()._meta.\
-                    get_field_by_name(field_name)[0]
-                field['operators'] = _get_operators_for_field_type(
-                    field_object)
-                field['type'] = field_object.__class__.__name__
-                if field_object.choices:
-                    field['choices'] = [unicode(x) for x in dict(
-                        field_object.choices).values()]
-
-                condition_choice['fields'][field_name] = field
-
-            condition_choices[content_type.id] = condition_choice
-            condition_choices['date_format'] = settings.\
-                DATETIME_INPUT_FORMATS[0]
-
-        return condition_choices
-
-
-def _get_operators_for_field_type(field_object):
-    # Determine available operators depending on the field type.
-    operator_dict = dict(QueryCondition.OPERATOR_CHOICES)
-
-    if field_object.choices:
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS
-        ]
-    elif isinstance(field_object, models.DateTimeField):
-        operator_keys = [QueryCondition.GT]
-    elif isinstance(field_object, models.ForeignKey):
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.IEXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS
-        ]
-    elif isinstance(field_object, models.BooleanField):
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.NOTEQUAL
-        ]
-    elif isinstance(field_object, models.IntegerField):
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS,
-            QueryCondition.GT,
-            QueryCondition.LT
-        ]
-    elif isinstance(field_object, models.CharField):
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.IEXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS
-        ]
-    elif isinstance(field_object, models.TextField):
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.IEXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS
-        ]
-    else:  # Show all.
-        operator_keys = [
-            QueryCondition.EXACT,
-            QueryCondition.IEXACT,
-            QueryCondition.NOTEQUAL,
-            QueryCondition.ICONTAINS,
-            QueryCondition.GT,
-            QueryCondition.LT
-        ]
-
-    operators = dict([(i, operator_dict[i]) for i in operator_keys if i in operator_dict])
-
-    return operators

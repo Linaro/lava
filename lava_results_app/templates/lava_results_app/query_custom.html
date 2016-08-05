@@ -10,8 +10,8 @@
 {% block content %}
 
 <h2 class="modal-header">Custom Query Matches
-  <small><a href="{% url 'lava_results_app.views.query.views.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
-  <small><a href="{% url 'lava_results_app.views.query.views.query_export_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small></h2>
+  <small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
+  <small><a href="{% url 'lava.results.query_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small></h2>
 
 {% render_table query_table %}
 

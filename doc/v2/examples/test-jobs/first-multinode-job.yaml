@@ -1,0 +1,92 @@
+# Simplest multinode test job
+# Same job on two devices without synchronisation
+job_name: First Multinode Job
+
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 2
+  test:
+    minutes: 3
+  connection:
+   minutes: 4
+  actions:
+    multinode-test:
+      minutes: 5
+    lava-test-shell:
+      minutes: 2
+
+visibility: public
+priority: medium
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: writing-multinode
+  docs-filename: first-multinode-job.yaml
+
+# Very simple multinode definition for our example
+# START-BLOCK-1
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: qemu
+        context:
+          arch: amd64
+        count: 1
+      server:
+        device_type: qemu
+        context:
+          arch: amd64
+        count: 1
+    timeout:
+      minutes: 6
+# END-BLOCK-1
+
+# START-BLOCK-2
+actions:
+- deploy:
+    role:
+    - server
+    - client
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images: 
+        rootfs: 
+          image_arg: -drive format=raw,file={rootfs}
+          url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+          compression: gz
+    os: debian
+    root_partition: 1
+# END-BLOCK-2
+
+# START-BLOCK-3
+- boot:
+    role:
+    - server
+    - client
+    method: qemu
+    media: tmpfs
+    prompts:
+    - "root@debian:"
+# END-BLOCK-3
+
+# START-TEST-BLOCK
+- test:
+    role:
+    - server
+    - client
+    timeout:
+      minutes: 10
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/multi-node/multinode01.yaml
+      name: multinode-basic
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+# END-TEST-BLOCK

@@ -582,3 +582,47 @@ actions:
             self.assertIn('expected a dictionary for dictionary value', str(exc))
             self.assertIn('dtb', str(exc))
             self.assertNotIn('url', str(exc))
+
+    def test_secrets(self):
+        secrets = """
+job_name: kvm-test
+visibility: personal
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions:
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        url: //images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+    os: debian
+secrets:
+  foo: bar
+  username: secret
+"""
+        self.assertTrue(validate_submission(yaml.load(secrets)))
+        secrets = """
+job_name: kvm-test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions:
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        url: //images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+    os: debian
+secrets:
+  foo: bar
+  username: secret
+"""
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(secrets))

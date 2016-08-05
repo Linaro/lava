@@ -1,0 +1,30 @@
+# If you modify this file, change the docs which reference lines within
+# this file. Sphinx starts line numbers at zero.
+# https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/single-node/singlenode01.yaml
+
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: singlenode-basic-level
+    description: "Basic (level 1) single node test commands for Linux Linaro ubuntu Images"
+    maintainer:
+        - neil.williams@linaro.org
+    os:
+        - ubuntu
+    scope:
+        - functional
+    devices:
+        - kvm
+        - arndale
+        - panda
+        - beaglebone-black
+        - beagle-xm
+
+run:
+    steps:
+        - lava-test-case linux-linaro-ubuntu-netstat --shell netstat -an
+        - lava-test-case linux-linaro-ubuntu-ifconfig-dump --shell ifconfig -a
+        - lava-test-case linux-linaro-ubuntu-route-dump-a --shell route
+        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up-lo --shell ifconfig lo up
+        - lava-test-case linux-linaro-ubuntu-route-dump-b --shell route
+        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
+        - lava-test-case ping-test --shell ping -W1 -c1 validation.linaro.org

@@ -5,11 +5,8 @@
 Developing new classes for LAVA V2
 ##################################
 
-Where to start?
-***************
-
 Test with simple scripts
-========================
+************************
 
 #. Prove that your idea of a test job actually works on the hardware
 #. Build the requirements of automation into your tests
@@ -19,7 +16,7 @@ Test with simple scripts
    #. Write a simple script that covers all the steps.
 
 Start with new classes
-======================
+**********************
 
 For a completely new strategy, new classes are often best going
 into new files. Follow the example of existing files but concentrate
@@ -28,7 +25,7 @@ the summary and description elements should help you identify how to divide the
 work between the classes.
 
 Add support files for unit tests
-================================
+********************************
 
 #. Create a device configuration YAML file with the help of
    the `Online YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_
@@ -40,7 +37,7 @@ At each stage, consider which elements of the job and device configuration
 may need to be overridden by test writers and instance admins.
 
 Add unit tests
-==============
+**************
 
 It may seem strange to add one or more unit test files at this stage but it helps
 write the validate functions which come up next. Adapt an existing Factory
@@ -51,7 +48,7 @@ add checks to the unit test that the new data exists in the correct type
 and content. Re-run the unit test each time to spot regressions.
 
 Run all the unit tests
-======================
+**********************
 
 There are a number of unit tests which parse all jobs and devices in
 the test directories, so ensure that the new additions do not interfere
@@ -61,7 +58,7 @@ YAML. Make sure that there is sufficient differentiation between the new
 files and the existing files without causing duplication.
 
 Incorporate the test script into the classes
-============================================
+********************************************
 
 If the new classes are properly aligned with the workload of the test job,
 the sections of the test script will fall naturally into the classes in
@@ -92,7 +89,7 @@ the same sequence.
   ``DownloadAction`` to a ``populate`` function.
 
 Check the new classes
-=====================
+*********************
 
 ``pylint`` can be annoying but it is also useful - providing that some
 of the warnings and errors are disabled. Check similar files but do be
@@ -107,7 +104,7 @@ values being entered into the logs.
    check performed by ``./ci-run`` (which must also pass).
 
 Startup achieved
-================
+****************
 
 From this point, standard code development takes over. To get the code
 accepted, some guidelines must be followed:

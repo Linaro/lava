@@ -11,7 +11,7 @@
 
 <h2 class="modal-header">Query {{ query.name }} matches ({{ query.content_type.name }})
   {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
-  <small><a href="{% url 'lava_results_app.views.query.views.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
+  <small><a href="{% url 'lava.results.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
   {% endif %}
 </h2>
 
@@ -57,10 +57,10 @@
   </div>
   {% endif %}
 
-  <small><a href="{% url 'lava_results_app.views.query.views.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small>
-  <small><a href="{% url 'lava_results_app.views.query.views.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
-  <small><a href="{% url 'lava_results_app.views.chart.views.chart_custom' %}?entity={{ entity }}&conditions={{ conditions }}&type=pass/fail" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-align-left"></span> View Chart</a></small>
-  <small><a href="{% url 'lava_results_app.views.chart.views.chart_add' %}?query_id={{ query.id }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-plus"></span> Create New Chart</a></small>
+  <small><a href="{% url 'lava.results.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small>
+  <small><a href="{% url 'lava.results.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
+  <small><a href="{% url 'lava.results.chart_custom' %}?entity={{ entity }}&conditions={{ conditions }}&type=pass/fail" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-align-left"></span> View Chart</a></small>
+  <small><a href="{% url 'lava.results.chart_add' %}?query_id={{ query.id }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-plus"></span> Create New Chart</a></small>
 <h4>Last updated: {% if query.is_live %} Live query{% else %}{{ query.last_updated | default:"Never" }}{% endif %}</h4>
 
 {% render_table query_table %}

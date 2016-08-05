@@ -18,7 +18,7 @@ Serial console support is not enabled in the standard binaries from http://ipxe.
 a customised build is required.
 There is a pre-built binary for USB drives available here:
 
-http://images.validation.linaro.org/lava-masters/ipxe.usb
+https://images.validation.linaro.org/lava-masters/ipxe.usb
 
 iPXE has coloured text in the title prompt which can cause issues with the expect library
 that LAVA uses to communicate with the device. To avoid this issue the above USB binary has

@@ -1,12 +1,19 @@
+LAVA development
+################
+
+Before you start, ensure you've read the :ref:`development_pre_requisites`.
+
+.. seealso:: :ref:`contribute_upstream`
+
 .. _development_workflow:
 
 Patch Submissions and workflow
-==============================
+******************************
 
 This is a short guide on how to send your patches to LAVA. The LAVA team
 uses the gerrit_ code review system to review changes.
 
-.. _gerrit: http://review.linaro.org/
+.. _gerrit: https://review.linaro.org/
 
 If you do not already have a Linaro account, you will first need to
 :ref:`register`.
@@ -15,38 +22,47 @@ So the first step will be logging in to gerrit_ and uploading you SSH
 public key there.
 
 Obtaining the repository
-------------------------
+========================
 
 There are two main components to LAVA, ``lava-server`` and
 ``lava-dispatcher``.
 
 ::
 
-    git clone http://git.linaro.org/git/lava/lava-server.git
+    git clone https://git.linaro.org/git/lava/lava-server.git
     cd lava-server
 
-    git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+    git clone https://git.linaro.org/git/lava/lava-dispatcher.git
     cd lava-dispatcher
 
 There is also ``lava-tool`` which is gaining more support for
 operations involving the :ref:`dispatcher_design`::
 
-    git clone http://git.linaro.org/git/lava/lava-tool.git
+    git clone https://git.linaro.org/git/lava/lava-tool.git
     cd lava-tool
 
 Setting up git-review
----------------------
+=====================
 
-::
+If you have not done so already, ``git review`` needs to be setup for
+each clone of each source::
 
     git review -s
 
-Create a topic branch
----------------------
+.. _developer_topic_branches:
 
-We recommend never working off the master branch (unless you are a git
+Create a topic branch
+=====================
+
+We recommend **never** working off the master branch (unless you are a git
 expert and really know what you are doing). You should create a topic
 branch for each logically distinct change you work on.
+
+.. note:: Unless your change **directly** depends on changes made in an earlier
+   commit on a branch, this means making a fresh branch for each change with
+   **one commit** per branch.
+
+   .. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
 
 Before you start, make sure your master branch is up to date::
 
@@ -58,7 +74,7 @@ Now create your topic branch off master::
     git checkout -b my-change master
 
 Run the unit tests
-------------------
+==================
 
 Extra dependencies are required to run the tests. On Debian based distributions,
 you can install ``lava-dev``.
@@ -67,10 +83,10 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-See also :ref:`testing_refactoring_code`.
+See also :ref:`testing_pipeline_code`.
 
 Functional testing
-------------------
+==================
 
 Unit tests cannot replicate all tests required on LAVA code, some tests will need
 to be run with real devices under test. On Debian based distributions,
@@ -78,24 +94,24 @@ see :ref:`dev_builds`. See :ref:`writing_tests` for information on writing
 LAVA test jobs to test particular device functionality.
 
 Make your changes
------------------
+=================
 
 * Follow PEP8 style for Python code.
-* Make one commit per logical change.
+* Make one commit (and hence one review) per logical change.
 * Use one topic branch for each logical change.
 * Include unit tests in the commit of the change being tested.
-* Write good commit messages. Useful reads on that topic:
+* Write good commit messages. There are a number of useful guides:
 
- * `A note about git commit messages`_
- * `5 useful tips for a better commit message`_
+  * `A note about git commit messages`_
+  * `5 useful tips for a better commit message`_
 
 
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
-.. _`5 useful tips for a better commit message`: http://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
+.. _`5 useful tips for a better commit message`: https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
 Re-run the unit tests
----------------------
+=====================
 
 Make sure that your changes do not cause any failures in the unit tests::
 
@@ -103,8 +119,10 @@ Make sure that your changes do not cause any failures in the unit tests::
 
 Wherever possible, always add new unit tests for new code.
 
+.. _developer_commit_for_review:
+
 Send your commits for review
-----------------------------
+============================
 
 From each topic branch, just run::
 
@@ -112,17 +130,60 @@ From each topic branch, just run::
 
 If you have multiple commits in that topic branch, git review will warn
 you. It's OK to send multiple commits from the same branch, but note
-that 1) commits are review and approved individually and 2) later
-commits  will depend on earlier commits, so if a later commit is
-approved and the one before it is not, the later commit will not be
-merged until the earlier one is approved.
+that:
+
+#. commits are review and approved individually and
+#. later commits  will depend on earlier commits, so if a later
+   commit is approved and the one before it is not, the later commit will
+   not be merged until the earlier one is approved.
+#. you are responsible for **rebasing** your branch(es) against updates
+   on master and this can become **much** more difficult when there are
+   multiple commits on one local branch. It can become a **lot** of work
+   to make the correct changes in the correct commit on a single branch.
+#. Fixes from comments or unit test failures in one review are **not**
+   acceptable as separate reviews, so don't be tempted to make another
+   commit at the top of the branch.
+
+Therefore the recommentations are:
+
+#. **Always** use a separate local branch per commit
+#. Think carefully about whether to base one local branch on another local
+   branch. This is recommended when one change logically extends an earlier
+   change and makes it a lot easier than having multiple commits on a single
+   branch.
+#. Keep all your branches up to date with master **regularly**. It is much better
+   to resolve merge conflicts one change at a time instead of having multiple
+   merge commits all in the one rebase operation.
+
+.. _developer_adding_reviewers:
+
+Adding reviewers
+================
+
+There is a convention within the LAVA software team that reviews which have
+no reviewers other than the automatic ``lavabot`` are ignored for review. This
+allows developers to share changes at an early stage when more than one developer
+is working on a single change or when another developer needs to base their changes
+on work being done by someone else.
+
+Therefore, until you add reviewers to your new review, it will not receive attention
+and is not going to be merged.
+
+There is a shortcut available in gerrit to add the complete team as reviewers, simply
+click **Add** in the *Reviewers* section and enter ``lava-team`` in the drop-down box
+and confirm by pressing **Add** in the drop-down box.
+
+.. _developer_submitting_new_version:
 
 Submitting a new version of a change
-------------------------------------
+====================================
 
 When reviewers make comments on your change, you should amend the
 original commit to address the comments, and **not** submit a new change
 addressing the comments while leaving the original one untouched.
+
+Gerrit handles this by adding a ChangeId to your commit message. Keep
+this Id unchanged when amending commit messages.
 
 Locally, you can make a separate commit addressing the reviewer
 comments, it's not a problem. But before you resubmit your branch for
@@ -181,7 +242,7 @@ still contains the same ``Change-Id``, gerrit will know it is a new version
 of a previously submitted change.
 
 Handling your local branches
-----------------------------
+============================
 
 After placing a few reviews, there will be a number of local branches.
 To keep the list of local branches under control, the local branches can
@@ -204,7 +265,7 @@ if the review of this branch was abandoned, use the `-D` option
 instead of `-d` and repeat the command.
 
 Reviewing changes in clean branches
------------------------------------
+===================================
 
 If you haven't got a clone handy on the instance to be used for the
 review, prepare a clone as usual.
@@ -240,8 +301,8 @@ Handle the local branch as normal. If the reviewed change needs
 modification and a new patch set is added, revert the local change and
 apply the new patch set.
 
-Other considerations
-====================
+Future proofing
+***************
 
 All developers are encouraged to write code with futuristic changes in
 mind, so that it is easy to do a technology upgrade, which includes
@@ -249,10 +310,23 @@ watching for errors and warnings generated by dependency packages as
 well as upgrading and migrating to newer APIs as a normal part of
 development.
 
+This is particularly true for Django where the ``lava-server`` package
+needs to retain support for multiple django versions as well as monitoring
+for deprecation warnings in the newest django version. Where necessary,
+write code for different versions and separate with:
+
+.. code-block:: python
+
+ import django
+ if django.VERSION > (1, 8):
+     pass  # newer code
+ else:
+     pass  # older compatibility code
+
 .. _database_migrations:
 
 Database migrations
--------------------
+*******************
 
 LAVA recommends Debian Jessie but also supports testing and unstable which
 have a newer version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
@@ -286,7 +360,7 @@ See `django docs <https://docs.djangoproject.com/en/1.8/topics/migrations/>`_
 for more information.
 
 Python 3.x
-----------
+**********
 
 LAVA dispatcher now supports python3 testing but **only** for the
 pipeline unit tests. Code changes to the V2 dispatcher code (i.e. in
@@ -323,7 +397,7 @@ Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
 going to support python3.
 
 Pylint
-------
+******
 
 `Pylint`_ is a tool that checks for errors in Python code, tries to
 enforce a coding standard and looks for bad code smells. We encourage
@@ -361,7 +435,7 @@ and whilst it improves the pylint output for the ``lava-server`` codebase,
 it still has a high level of false indications.
 
 pep8
-----
+****
 
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
@@ -370,10 +444,13 @@ recommended::
 
 `pep8` can be installed in debian based systems as follows::
 
-  $ apt-get install pep8
+  $ apt install pep8
+
+.. _unit_tests:
 
 Unit-tests
-----------
+**********
+
 LAVA has set of unit tests which the developers can run on a regular
 basis for each change they make in order to check for regressions if
 any. Most of the LAVA components such as ``lava-server``,
@@ -386,19 +463,23 @@ To run the tests, use the ci-run / ci-build scripts::
 
   $ ./ci-run
 
-.. _`Pylint`: http://www.pylint.org/
+.. _`Pylint`: https://www.pylint.org/
 .. _`refactoring book`: http://www.refactoring.com/
-.. _`PEP 008`: http://www.python.org/dev/peps/pep-0008/
-.. _`Guido's style guide`: http://www.python.org/doc/essays/styleguide.html
+.. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
+.. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
+
+.. seealso:: :ref:`testing_pipeline_code` for examples of how to run
+   individual unit tests or all unit tests within a class or module.
 
 LAVA database model visualization
----------------------------------
+*********************************
+
 LAVA database models can be visualized with the help of
 `django_extensions`_ along with tools such as `pydot`_. In debian
 based systems install the following packages to get the visualization
 of LAVA database models::
 
-  $ apt-get install python-django-extensions python-pydot
+  $ apt install python-django-extensions python-pydot
 
 Once the above packages are installed successfully, use the following
 command to get the visualization of ``lava-server`` models in PNG
@@ -407,7 +488,7 @@ format::
   $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
 
 More documentation about graph models is available in
-http://django-extensions.readthedocs.org/en/latest/graph_models.html
+https://django-extensions.readthedocs.org/en/latest/graph_models.html
 
 Other useful features from `django_extensions`_ are as follows:
 
@@ -425,14 +506,15 @@ Other useful features from `django_extensions`_ are as follows:
 
 .. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
 .. _`pydot`: https://pypi.python.org/pypi/pydot
-.. _`shell_plus`: http://django-extensions.readthedocs.org/en/latest/shell_plus.html
-.. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
-.. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
+.. _`shell_plus`: https://django-extensions.readthedocs.org/en/latest/shell_plus.html
+.. _`validate_templates`: https://django-extensions.readthedocs.org/en/latest/validate_templates.html
+.. _`runscript`: https://django-extensions.readthedocs.org/en/latest/runscript.html
 
 .. _developer_access_to_django_shell:
 
 Developer access to django shell
---------------------------------
+********************************
+
 Default configurations use a side-effect of the logging behaviour to restrict access to the
 ``lava-server manage`` operations which typical Django apps expose through the ``manage.py``
 interface. This is because ``lava-server manage shell`` provides read-write access to the database,

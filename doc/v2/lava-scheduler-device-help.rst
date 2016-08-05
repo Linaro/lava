@@ -53,7 +53,7 @@ See also :ref:`device_capabilities`
 
   **Pipeline**
     A :term:`pipeline` device can accept jobs using the dispatcher :term:`refactoring`
-    over the `XMLRPC API </api/help>`_. If **False**, the device only accepts JSON jobs. Some
+    over the `XML-RPC API </api/help>`_. If **False**, the device only accepts JSON jobs. Some
     pipeline devices can support JSON and pipeline jobs and will be indicated as such
     here. Some pipeline devices are only supported by the changes
     within the refactoring, these are shown as **Exclusive**.
@@ -210,4 +210,4 @@ setting the *exclusive* flag in the :term:`device dictionary` for that device::
  {% set exclusive = 'True' %}
 
 Whether a device supports the pipeline and / or is exclusive to the pipeline can
-also be queried using `XMLRPC </api/help/#system.user_can_view_devices>`_
+also be queried using `XML-RPC </api/help/#system.user_can_view_devices>`_

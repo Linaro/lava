@@ -39,15 +39,15 @@ class BundleStreamTests(TestCaseWithScenarios):
     scenarios = [
         ('anonymous-no-slug', {
             'pathname': '/anonymous/',
-            'is_public': "true",
-            'is_anonymous': "true",
+            'is_public': True,
+            'is_anonymous': True,
             'username': "user",
         }),
         ('anonymous-with-slug', {
             'name': _NAME,
             'slug': _SLUG,
-            'is_public': "true",
-            'is_anonymous': "true",
+            'is_public': True,
+            'is_anonymous': True,
             'pathname': '/anonymous/slug/',
             'username': "user",
         }),
