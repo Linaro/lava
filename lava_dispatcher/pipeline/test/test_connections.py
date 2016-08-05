@@ -288,9 +288,9 @@ class TestTimeouts(unittest.TestCase):
         self.assertEqual(test_shell.connection_timeout.duration, 240)  # job specifies 4 minutes
         self.assertEqual(test_shell.timeout.duration, 420)  # job specifies 7 minutes
         self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
-        self.assertEqual(deploy.connection_timeout.duration, Timeout.default_duration())
+        self.assertNotEqual(deploy.connection_timeout.duration, Timeout.default_duration())
+        self.assertNotEqual(deploy.connection_timeout.duration, test_shell.connection_timeout)
         self.assertEqual(test_action.timeout.duration, 300)
-        self.assertEqual(test_action.connection_timeout.duration, Timeout.default_duration())
 
     def test_job_connection_timeout(self):
         """
@@ -308,6 +308,10 @@ class TestTimeouts(unittest.TestCase):
                         # lava-test-shell and uboot-retry have overrides in this sample job
                         # lava-test-shell from the job, uboot-retry from the device
                         self.assertEqual(check_action.connection_timeout.duration, 20)
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+        self.assertEqual(test_shell.connection_timeout.duration, 20)
 
     def test_action_connection_timeout(self):
         """
@@ -316,6 +320,8 @@ class TestTimeouts(unittest.TestCase):
         with open(os.path.join(
                 os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
             data = yaml.load(uboot_ramdisk)
+        connection_timeout = Timeout.parse(data['timeouts']['connection'])
+        self.assertEqual(connection_timeout, 240)
         data['timeouts']['connections'] = {'uboot-retry': {}}
         data['timeouts']['connections']['uboot-retry'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))

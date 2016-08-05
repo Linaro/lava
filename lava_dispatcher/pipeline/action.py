@@ -566,8 +566,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             # preserve existing overrides
             if self.timeout.duration == Timeout.default_duration():
                 self.timeout.duration = Timeout.parse(self.parameters['timeout'])
-                if self.name == 'uboot-retry':
-                    print(self.name, self.timeout.duration)
         if 'connection_timeout' in self.parameters:
             self.connection_timeout.duration = Timeout.parse(self.parameters['connection_timeout'])
 

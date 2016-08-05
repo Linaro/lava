@@ -123,6 +123,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("Cleaning up temporary tree.")
             shutil.rmtree(nested_tmp_dir)
         self.data['download_action'][self.key]['file'] = ''
+        super(DownloadHandler, self).cleanup()
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
@@ -137,13 +138,6 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         else:
             filename = os.path.join(path, '.'.join(parts[:-1]))
         return filename, suffix
-
-    def cleanup(self):
-        nested_tmp_dir = os.path.join(self.path, self.key)
-        if os.path.exists(nested_tmp_dir):
-            self.logger.info("%s %s cleanup", self.name, nested_tmp_dir)
-            shutil.rmtree(nested_tmp_dir)
-        super(DownloadHandler, self).cleanup()
 
     @contextlib.contextmanager
     def _decompressor_stream(self):  # pylint: disable=too-many-branches
@@ -211,7 +205,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.data['download_action'][self.key]['image_arg'] = image_arg
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
-            compression = self.parameters[self.key].get('compression', False)
+            compression = self.parameters[self.key].get('compression', None)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.data['download_action'][self.key] = {'file': fname}
@@ -221,6 +215,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if compression:
             if compression not in ['gz', 'bz2', 'xz']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
+        # pass kernel type to boot Action
+        if self.key == 'kernel':
+            self.set_common_data('type', self.key, self.parameters[self.key].get('type', None))
 
     def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_size, last_value):

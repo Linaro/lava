@@ -93,6 +93,16 @@ class OverlayAction(DeployAction):
         # Distro-specific scripts override the generic ones
         distro = self.parameters['deployment_data']['distro']
         distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            self.action_namespaces.append(namespace)
+            self.set_common_data(namespace, 'lava_test_results_dir',
+                                 lava_test_results_dir)
+            lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+            self.set_common_data(namespace, 'lava_test_sh_cmd',
+                                 lava_test_sh_cmd)
         for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
             self.scripts_to_copy.append(script)
         for script in glob.glob(os.path.join(self.lava_v2_test_dir, 'lava-*')):
@@ -162,6 +172,16 @@ class OverlayAction(DeployAction):
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
+
+        # Generate the file containing the secrets
+        if 'secrets' in self.job.parameters:
+            self.logger.debug("Creating %s/secrets", lava_path)
+            with open(os.path.join(lava_path, 'secrets'), 'w') as fout:
+                for key, value in self.job.parameters['secrets'].items():
+                    if key == 'yaml_line':
+                        continue
+                    fout.write("%s=%s\n" % (key, value))
+
         connection = super(OverlayAction, self).run(connection, args)
         return connection
 
@@ -205,7 +225,7 @@ class MultinodeOverlayAction(OverlayAction):
         for script in glob.glob(os.path.join(self.lava_v2_multi_node_test_dir, 'lava-*')):
             self.v2_scripts_to_copy.append(script)
 
-    def run(self, connection, args=None):
+    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection

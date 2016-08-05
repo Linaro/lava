@@ -1,0 +1,81 @@
+# Sample JOB definition for a juno u-boot removable media job
+
+device_type: juno
+
+job_name: juno-uboot-removable
+timeouts:
+  job:
+    minutes: 15
+  action:
+   minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     namespace: master-image
+     kernel:
+         url: http://images.validation.linaro.org/juno/kernel/Image
+     os: oe
+     dtb:
+         url: http://images.validation.linaro.org/juno/kernel/juno.dtb
+     nfsrootfs:
+         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
+         compression: gz
+
+  - boot:
+     method: u-boot
+     namespace: master-image
+     commands: tftp
+     type: booti
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+     prompts:
+       - '/ #'
+       - 'linaro-test'
+       - 'root@debian:~#'
+       - 'root@genericarmv8:~#'
+
+  - deploy:
+     timeout:
+       minutes: 10
+     to: usb
+     namespace: test-image
+     os: oe
+     # do NOT use the name image as this breaks during download action
+     image:
+         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/lt-vexpress64-openembedded_minimal-armv8-gcc-5.2_20160121-736.img.gz
+         compression: gz
+     device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+     download:
+         tool: /usr/bin/wget
+         options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
+
+  - boot:
+     method: u-boot
+     namespace: test-image
+     commands: use-defaults
+     type: booti
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+     prompts:
+       - '/ #'
+       - 'linaro-test'
+       - 'root@debian:~#'
+       - 'root@genericarmv8:~#'
+
+  - test:
+     namespace: test-image
+     failure_retry: 3
+     name: juno-basics
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: openembedded/smoke-tests-basic.yaml
+           name: smoke-tests
