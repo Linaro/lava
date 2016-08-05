@@ -4,4 +4,9 @@ lava-server: script-not-executable etc/lava-server/lava-server.wsgi
 lava-server: image-file-in-usr-lib *
 # deprecated support never to be documented
 lava-server: binary-without-manpage usr/sbin/lava-mount-masterfs
+# no docs available yet
+lava-server: binary-without-manpage usr/bin/lava-publisher
+# not ready yet
+lava-server: systemd-no-service-for-init-script lava-master
+lava-server: systemd-no-service-for-init-script lava-server
 

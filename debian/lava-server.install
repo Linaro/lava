@@ -10,3 +10,5 @@ etc/uwsgi.ini ./etc/lava-server/
 etc/uwsgi.reload ./etc/lava-server/
 etc/logrotate.d/* ./etc/logrotate.d/
 etc/env.yaml ./etc/lava-server/
+etc/lava-publisher.service ./lib/systemd/system/
+etc/lava-publisher.init ./usr/share/lava-server/
