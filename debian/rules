@@ -26,7 +26,7 @@ PYTHON2:=$(shell pyversions -r)
 install_dir=$(call py_libdir, $(PYTHON2))
 
 %:
-	dh $@ --with sphinxdoc,python2
+	dh $@ --with sphinxdoc,python2,systemd
 
 override_dh_auto_build:
 	dh_auto_build
@@ -53,6 +53,9 @@ override_dh_auto_install:
 	$(RM) debian/lava-server/usr/lib/python2.7/dist-packages/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
+
+override_dh_systemd_enable:
+	[ ! -f etc/lava-publisher.service ] || dh_systemd_enable -p lava-server --no-enable --name lava-publisher lava-publisher.service
 
 override_dh_auto_clean:
 	dh_auto_clean
