@@ -477,7 +477,8 @@ class Command(BaseCommand):
                                 [str(worker_host.hostname),
                                  'START', str(group_job.id), self.export_definition(group_job),
                                  str(device_configuration),
-                                 str(open(options['env'], 'r').read())])
+                                 get_env_string(options['env']),
+                                 get_env_string(options['env_dut'])])
 
                 self.controler.send_multipart(
                     [str(worker_host.hostname),
