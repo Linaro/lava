@@ -18,7 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import grp
 import logging
+import os
+import pwd
 import threading
 import zmq
 
@@ -57,6 +60,32 @@ class Command(BaseCommand):
                             default='DEBUG',
                             help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
 
+        parser.add_argument('-u', '--user',
+                            default='lavaserver',
+                            help="Run the process under this user. It should be the same user as the wsgi process.")
+
+        parser.add_argument('-g', '--group',
+                            default='lavaserver',
+                            help="Run the process under this group. It should be the same group as the wsgi process.")
+
+    def drop_priviledges(self, user, group):
+        try:
+            user_id = pwd.getpwnam(user)[2]
+            group_id = grp.getgrnam(group)[2]
+        except KeyError:
+            self.logger.error("Unable to lookup the user or the group")
+            return False
+        self.logger.debug("Switching to (%s(%d), %s(%d))", user, user_id, group, group_id)
+
+        try:
+            os.setgid(group_id)
+            os.setuid(user_id)
+        except OSError:
+            self.logger.error("Unable to the set (user, group)=(%s, %s)", user, group)
+            return False
+
+        return True
+
     def handle(self, *args, **options):
         if options['level'] == 'ERROR':
             self.logger.setLevel(logging.ERROR)
@@ -69,6 +98,11 @@ class Command(BaseCommand):
 
         if not settings.EVENT_NOTIFICATION:
             self.logger.error("'EVENT_NOTIFICATION' is set to False, LAVA won't generated any events")
+
+        self.logger.info("Dropping priviledges")
+        if not self.drop_priviledges(options['user'], options['group']):
+            self.logger.error("Unable to drop priviledges")
+            return
 
         self.logger.info("Creating the ZMQ proxy")
         context = zmq.Context.instance()
