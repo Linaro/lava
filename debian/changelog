@@ -1,3 +1,151 @@
+lava-server (2016.8-1) unstable; urgency=medium
+
+  * 2016.8-1 New production release
+    lava-master: use also get_env_string for multinode
+    Handle unrecognised result messages.
+    Publisher: drop privileges at startup
+    Add lava-publisher init scripts
+    Update mustang jinja template
+    Similar jobs feature.
+    Django1.10 fixes
+    v2: include a 'secrets' field in the job def
+    Adding device-type templates for juno
+    Fix a deprecation warning with render_to_string
+    events: add more details and use a useful username
+    Ensure failed health checks go directly to offline.
+    Faster loading of yaml logs
+    Add a u-boot-commands timeout just for panda
+    Improve error handling in result metadata
+    use job.id inside a not job.is_multinode conditional
+    Fix multinode link from definition back to the job.
+    Allow parentheses in test case names
+    Allow the d02 debian installer grub device to be overridden
+     in device-dictionary
+    Allow for creating devices already offline.
+    Device state transition validation.
+    Open context-sensitive help in a new browser tab
+    Unavailable qemu command should not fail unit tests.
+    LAVA-719 - support branding of source and bugs URL
+    Ensure logging to django logs is info or higher
+    Fix e1d66f to use pk when not multinode.
+    Create and display measurements with units
+    result: don't crash when parsing an invalid result
+    Implement notification blacklist.
+    results: handle skip result
+    Simple notification list.
+    Add 'name' to testcase export.
+    Use the right syntax for character delays
+    First device configuration for ST b2120h410
+    Fix bug #2278 - inconsistent multinode job id / alias usage
+    Fix HTTP500 by allowing for + in test case names
+    Show job sub_id for multinode jobs.
+    Implement IRC notifications.
+    Fix bug #2263 - parameters and params reference in job def and test def
+    LAVA-708 - Device path should be a list
+    Fix a crash when viewing a query for the first time
+    result: show the metadata as a list (and sublists)
+    Rename conflicting notification properties.
+    log: don't show 'extra' result data
+    log: add a link to each line using AnchorJS
+    log: skip broken strings
+    log: add an icon for the download button
+    log: add link from the result page back to the log
+    Results: improve admin page
+    TestResults: order by job_ids then name
+    Simplify a bit the result page
+    Remove unnecessary loading of django-tables
+    log: redirect complete_log to the job_detail page
+    log: add a link to the result page for each result
+    log: fix HTML syntax errors
+    log: improve rendering of errors and exceptions
+    Update load addresses for larger multiplatform kernels
+    Fix result table
+    log: fix a bug when the page is reloaded
+    Protect from admin error in health check submission
+    Fix default value for device_path to be None and not 'None'.
+    Add missing device_path to nexus jinja templates.
+    log: adapt the result parser to the new log stream
+    mustang UBoot needs 32bit header
+    logs: update job status and device information
+    log: change the arrow when clicking on the affix
+    Fix handling of context with multinode
+    Fix metadata handling for multinode and dynamic connections
+    Fix hidden-device-type listings in JobTable
+    job: remove redudant information
+    Events: add a monitoring thread
+    Initial notifications for v2.
+    lava-master: save the logs in output.yaml
+    job: add a new template for the new log format
+    LAVA-262 Allow admins to expire user accounts
+    log: better formatting of tracebacks
+    Remove support for Django < 1.8
+    Improve scheduler debug with device details.
+    .
+    Documentation updates
+    Add links and notes to developer branch guide
+    Add notes on making Lava Test Shell portable
+    Add notes on running lava-server unit tests
+    Add timeout documentation.
+    Update the developer guide
+    Document the 'secrets' dictionary
+    Ensure V2 documentation examples are available.
+    update local user account image
+    tidy up api docs
+    Remove multinode use cases
+    tidy up the writing-multinode page
+    expand simple-admin for admin roles
+    tidy up hidden toctree listings for previous/next markup
+    Update chapters for theme
+    Switch to the bootstrap theme
+    updates for multinode and simple administration
+    Major update to the docs for writing multinode tests
+    move all examples into one directory and add test definitions
+    move lava tool issues to a separate file
+    fold the FAQ into the lava-tool docs
+    update the multinode use cases
+    port the mustang example to a separate yaml file
+    use rst macros for see also
+    Add publishing API ref doc
+    initial content for a results intro
+    Move doc yaml to a directory
+    WIP rewrite of the multinode doc
+    Start thinking about how to grow a lab
+    Re-org some early admin stuff
+    Split out the completed YAML jobs
+    Query omit documentation updates.
+    Fix documentation for test definition name handling
+    add instruction for -t jessie-backports
+    move example YAML to an rtsi for easier checking
+    add notes on setting up the first device and device type
+    fix whitespace in migration example
+    Update the scheduling ordering with links
+    Add notes on LAVA being developer focused
+    Update other examples for deploy change
+    fixup deploy action
+    add example of first qemu V2 device
+    start the pipeline design page
+    Minor wording tweaks
+    Rework the hacking session doc
+    expand notes on first installation
+    tweaks and updates for writing tests
+    Fix definition link to log for pipeline
+    Updates for test repositories
+    update multinode docs for V2
+    fix build messages and errors
+    update examples of params support and custom scripts for parsing
+    complete fixme in advanced-installation
+    add background on CI and LAVA
+    add notes and images for first job submission and results
+    explain the first job and tidy up the example YAML
+    Clean up health check docs
+    add notes for first job
+    Significant cleanup of wording around lava-test-shell
+    Add lots of code-block:: yaml directives
+    Add details of features and architecture.
+    Add content to the what-is section
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Aug 2016 08:16:14 +0100
+
 lava-server (2016.6-2) unstable; urgency=medium
 
   * Add git to the test suite dependencies
