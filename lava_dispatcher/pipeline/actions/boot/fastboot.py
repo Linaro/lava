@@ -19,8 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-import tarfile
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -28,11 +26,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
-from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.constants import ANDROID_TMP_DIR
 
 
 class BootFastboot(Boot):
@@ -133,6 +127,9 @@ class WaitForAdbDevice(Action):
         connection = super(WaitForAdbDevice, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['adb_serial_number']
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
+        self.logger.debug("Starting adb daemon")
+        self.run_command(adb_cmd)
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                    '-s', serial_number, 'wait-for-device']
         self.logger.debug("%s: Waiting for device", serial_number)

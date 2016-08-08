@@ -63,7 +63,9 @@ actions:
             url: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
             compression: gz
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
-        download: /usr/bin/wget
+        download:
+          tool: /usr/bin/wget
+          options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
 
   - boot:
         method: u-boot

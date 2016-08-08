@@ -26,7 +26,6 @@ import base64
 import hashlib
 import tarfile
 import shutil
-from uuid import uuid4
 from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
@@ -39,6 +38,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_V1_FIXUP, DEFAULT_V1_PATTERN
 
 
 def identify_test_definitions(parameters):
@@ -133,13 +133,9 @@ class RepoAction(Action):
         self.summary = "repo base class"
         self.vcs = None
         self.runner = None
-        self.default_pattern = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
-        self.default_fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
-        # FIXME: sort out a genuinely unique ID based on the *database* JobID and pipeline level for reproducibility
-        # {DB-JobID}-{PipelineLevel}, e.g. 15432.0-3.5.4
-        # delay until jobs can be scheduled from the UI.
-        # allows individual testcase results to be at a predictable URL
-        self.uuid = str(uuid4())
+        self.default_pattern = DEFAULT_V1_PATTERN
+        self.default_fixupdict = DEFAULT_V1_FIXUP
+        self.uuid = None
 
     @classmethod
     def select(cls, repo_type):
@@ -168,7 +164,18 @@ class RepoAction(Action):
                 raise RuntimeError("RepoAction validate called super without setting the vcs")
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
+        # a genuinely unique ID based on the *database* JobID and pipeline level for reproducibility
+        # and tracking - {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
+        self.uuid = "%s_%s" % (self.job.job_id, self.level)
         super(RepoAction, self).validate()
+        # list of levels involved in the repo actions for this overlay
+        uuid_list = self.get_common_data('repo-action', 'uuid-list')
+        if uuid_list:
+            if self.uuid not in uuid_list:
+                uuid_list.append(self.uuid)
+        else:
+            uuid_list = [self.uuid]
+        self.set_common_data('repo-action', 'uuid-list', uuid_list)
 
     def run(self, connection, args=None):
         """
@@ -178,6 +185,7 @@ class RepoAction(Action):
         unpack an overlay.tgz after mounting.
         """
         connection = super(RepoAction, self).run(connection, args)
+        # FIXME: standardise on set_common_data and get_common_data
         self.data.setdefault('test', {})
         self.data['test'].setdefault(self.uuid, {})
         self.data['test'][self.uuid].setdefault('runner_path', {})
@@ -242,9 +250,14 @@ class RepoAction(Action):
 
         if 'parse' in testdef:
             pattern = testdef['parse'].get('pattern', '')
+            fixup = testdef['parse'].get('fixupdict', '')
         else:
             pattern = self.default_pattern
-        self.data['test'][self.uuid]['testdef_pattern'] = {'pattern': pattern}
+            fixup = self.default_fixupdict
+        self.data['test'][self.uuid].setdefault('testdef_pattern', {})
+        self.data['test'][self.uuid]['testdef_pattern'].update({'pattern': pattern})
+        self.data['test'][self.uuid]['testdef_pattern'].update({'fixupdict': fixup})
+        self.logger.debug("uuid=%s testdef=%s" % (self.uuid, self.data['test'][self.uuid]['testdef_pattern']))
 
 
 class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
@@ -298,6 +311,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         if os.path.exists(runner_path):
             shutil.rmtree(runner_path)
 
+        self.logger.info("Fetching tests from %s", self.parameters['repository'])
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
@@ -306,8 +320,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             'repository': self.parameters['repository'], 'path': self.parameters['path']}
 
         # now read the YAML to create a testdef dict to retrieve metadata
-        self.logger.debug(os.path.join(runner_path, self.parameters['path']))
         yaml_file = os.path.join(runner_path, self.parameters['path'])
+        self.logger.debug("Tests stored (tmp) in %s", yaml_file)
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
         with open(yaml_file, 'r') as test_file:
@@ -567,16 +581,16 @@ class TestDefinitionAction(TestAction):
         files are created by TestOverlayAction. More complex scripts like the
         install:deps script and the main run script have custom Actions.
         """
-        index = {}
+        index = OrderedDict()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.test_list = identify_test_definitions(self.job.parameters)
         if not self.test_list:
             return
+        self.set_common_data(self.name, 'test_list', self.test_list[0])
         for testdefs in self.test_list:
             for testdef in testdefs:
-                # FIXME: only run the tests defined for this test action, not all the jobs for this deployment/job
-                # This includes only running the install steps for the relevant deployment as the next deployment
-                # could be a different OS.
+                # namespace support allows only running the install steps for the relevant
+                # deployment as the next deployment could be a different OS.
                 handler = RepoAction.select(testdef['from'])()
 
                 # set the full set of job YAML parameters for this handler as handler parameters.
@@ -584,6 +598,8 @@ class TestDefinitionAction(TestAction):
                 handler.parameters = testdef
                 # store the correct test_name before incrementing the local index dict
                 handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
+                self.internal_pipeline.add_action(handler)
+                handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
 
                 # copy details into the overlay, one per handler but the same class each time.
                 overlay = TestOverlayAction()
@@ -607,12 +623,12 @@ class TestDefinitionAction(TestAction):
                 runsh.test_uuid = handler.uuid
 
                 index[len(list(index.keys()))] = handler.parameters['name']
-                self.internal_pipeline.add_action(handler)
 
                 # add overlay handlers to the pipeline
                 self.internal_pipeline.add_action(overlay)
                 self.internal_pipeline.add_action(installer)
                 self.internal_pipeline.add_action(runsh)
+                self.set_common_data(self.name, 'testdef_index', index)
 
     def validate(self):
         """
@@ -693,30 +709,42 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
-        test_list = identify_test_definitions(self.job.parameters)
-        for testdef in test_list[0]:
+        test_list = self.get_common_data('test-definition', 'test_list')
+        for testdef in test_list:
             if 'parameters' in testdef:  # optional
                 if not isinstance(testdef['parameters'], dict):
                     self.errors = "Invalid test definition parameters"
 
     def handle_parameters(self, testdef):
 
-        ret_val = ['###default parameters from yaml###\n']
+        ret_val = ['###default parameters from test definition###\n']
         if 'params' in testdef:
             for def_param_name, def_param_value in list(testdef['params'].items()):
                 if def_param_name is 'yaml_line':
                     continue
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
+        if 'parameters' in testdef:
+            for def_param_name, def_param_value in list(testdef['parameters'].items()):
+                if def_param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
         ret_val.append('######\n')
         # inject the parameters that were set in job submission.
-        ret_val.append('###test parameters from json###\n')
+        ret_val.append('###test parameters from job submission###\n')
         if 'parameters' in self.parameters and self.parameters['parameters'] != '':
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['parameters'].items()):
                 if param_name is 'yaml_line':
                     continue
                 ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
-                self.logger.debug('%s=\'%s\'' % (param_name, param_value))
+                self.logger.debug("%s='%s'", param_name, param_value)
+        if 'params' in self.parameters and self.parameters['params'] != '':
+            # turn a string into a local variable.
+            for param_name, param_value in list(self.parameters['params'].items()):
+                if param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
+                self.logger.debug("%s='%s'", param_name, param_value)
         ret_val.append('######\n')
         return ret_val
 
@@ -751,7 +779,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
         self.results = {
             'success': self.test_uuid,
-            'name': testdef['metadata']['name'],
+            'name': self.parameters['name'],
             'path': self.parameters['path'],
             'from': self.parameters['from'],
         }
@@ -807,7 +835,6 @@ class TestInstallAction(TestOverlayAction):
             self.results = {'skipped %s' % self.name: self.test_uuid}
             return
 
-        # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
         content = self.handle_parameters(testdef)
 
@@ -860,6 +887,25 @@ class TestRunnerAction(TestOverlayAction):
         self.name = "test-runscript-overlay"
         self.description = "overlay run script onto image"
         self.summary = "applying LAVA test run script"
+        self.testdef_levels = {}  # allow looking up the testname from the level of this action
+
+    def validate(self):
+        testdef_index = self.get_common_data('test-definition', 'testdef_index')
+        if not testdef_index:
+            self.errors = "Unable to identify test definition index"
+        # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
+        # to self.testdef_levels {'1.3,4,1': '0_smoke-tests', ...}
+        for count, name in testdef_index.items():
+            if self.parameters['name'] == name:
+                self.testdef_levels[self.level] = "%s_%s" % (count, name)
+        if not self.testdef_levels:
+            self.errors = "Unable to identify test definition names"
+        current = self.get_common_data(self.name, 'testdef_levels')
+        if current:
+            current.update(self.testdef_levels)
+        else:
+            current = self.testdef_levels
+        self.set_common_data(self.name, 'testdef_levels', current)
 
     def run(self, connection, args=None):
         connection = super(TestRunnerAction, self).run(connection, args)
@@ -869,6 +915,7 @@ class TestRunnerAction(TestOverlayAction):
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
 
+        testdef_levels = self.get_common_data('test-runscript-overlay', 'testdef_levels')
         with open(yaml_file, 'r') as test_file:
             testdef = yaml.safe_load(test_file)
 
@@ -876,19 +923,18 @@ class TestRunnerAction(TestOverlayAction):
         content = self.handle_parameters(testdef)
 
         # the 'lava' testdef name is reserved
-        if testdef['metadata']['name'] == 'lava':
+        if self.parameters['name'] == 'lava':
             raise TestError('The "lava" test definition name is reserved.')
 
         with open(filename, 'a') as runsh:
             for line in content:
                 runsh.write(line)
             runsh.write('set -e\n')
-            runsh.write('export TESTRUN_ID=%s\n' % testdef['metadata']['name'])
+            # use the testdef_index value for the testrun name to handle repeats at source
+            runsh.write('export TESTRUN_ID=%s\n' % testdef_levels[self.level])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            runsh.write('#wait for an ack from the dispatcher\n')
-            runsh.write('read\n')
             steps = testdef['run'].get('steps', [])
             if steps:
                 for cmd in steps:
@@ -896,13 +942,11 @@ class TestRunnerAction(TestOverlayAction):
                         cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                     runsh.write('%s\n' % cmd)
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
-            runsh.write('#wait for an ack from the dispatcher\n')
-            runsh.write('read\n')
 
         self.results = {
             'success': self.test_uuid,
             "filename": filename,
-            'name': testdef['metadata']['name'],
+            'name': self.parameters['name'],
             'path': self.parameters['path'],
             'from': self.parameters['from'],
         }

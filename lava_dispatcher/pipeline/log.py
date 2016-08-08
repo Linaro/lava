@@ -19,7 +19,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import datetime
 import logging
+import sys
 import yaml
 import zmq
 import zmq.auth
@@ -82,16 +84,18 @@ class YAMLLogger(logging.Logger):
             self.handler.setMetadata(level, name)
 
     def log_message(self, level, level_name, message, *args, **kwargs):
-        # If the received message is a dictionary then we look for specific log
-        # parameters such as timestamp, else we assume the log message is a
-        # string and dump the message.
-        if isinstance(message, dict) and 'ts' in message:
-            self._log(level, yaml.dump([{'ts': message['ts'],
-                                         level_name: message['msg']}])[:-1],
-                      args, kwargs)
+        # Build the dictionnary
+        data = {'dt': datetime.datetime.utcnow().isoformat(),
+                'lvl': level_name}
+
+        if isinstance(message, str) and args:
+            data['msg'] = message % args
         else:
-            self._log(level, yaml.dump([{level_name: message}])[:-1], args,
-                      kwargs)
+            data['msg'] = message
+        # Set width to a really large value in order to always get one line.
+        self._log(level, yaml.dump(data, default_flow_style=True,
+                                   default_style='"',
+                                   width=sys.maxint)[:-1], ())
 
     def exception(self, exc, *args, **kwargs):
         self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
@@ -113,25 +117,3 @@ class YAMLLogger(logging.Logger):
 
     def results(self, results, *args, **kwargs):
         self.log_message(logging.INFO, 'results', results, *args, **kwargs)
-
-
-class StdLogger(object):  # pylint: disable=too-few-public-methods
-
-    def __init__(self, name, filename):
-        """
-        Output for stdout (which is redirected to the oob_file by the
-        scheduler) should use the ASCII logger.
-        """
-        self.name = name
-        self.description = "std logger"
-        self.log = logging.getLogger("%s" % name)
-        self.log.setLevel(logging.INFO)
-        self.handler = logging.StreamHandler(filename)
-        self.formatter = logging.Formatter('"%(asctime)s":\n - %(message)s')
-        self.handler.setFormatter(self.formatter)
-
-    def info(self, message):
-        self.log.info(message)
-
-    def debug(self, message):
-        self.log.debug(message)

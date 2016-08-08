@@ -25,7 +25,10 @@ import tarfile
 import tempfile
 import guestfs
 from configobj import ConfigObj
+
+from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.constants import LXC_PATH
+from lava_dispatcher.pipeline.utils.compression import decompress_file
 
 
 def rmtree(directory):
@@ -181,6 +184,29 @@ def copy_out_files(image, filenames, destination):
         with open(os.path.join(destination, os.path.basename(filename)), 'wb') as out:
             out.write(file_buf)
     guest.shutdown()
+
+
+def copy_in_overlay(image, root_partition, overlay):
+    """
+    Mounts test image partition as specified by the test
+    writer and extracts overlay at the root
+    """
+    guest = guestfs.GuestFS(python_return_dict=True)
+    guest.add_drive(image)
+    guest.launch()
+    partitions = guest.list_partitions()
+    if not partitions:
+        raise RuntimeError("Unable to prepare guestfs")
+    guest_partition = partitions[root_partition]
+    guest.mount(guest_partition, '/')
+    # FIXME: max message length issues when using tar_in
+    # on tar.gz.  Works fine with tar so decompressing
+    # overlay first.
+    if os.path.exists(overlay[:-3]):
+        os.unlink(overlay[:-3])
+    decompressed_overlay = decompress_file(overlay, 'gz')
+    guest.tar_in(decompressed_overlay, '/')
+    guest.umount(guest_partition)
 
 
 def copy_to_lxc(lxc_name, src):

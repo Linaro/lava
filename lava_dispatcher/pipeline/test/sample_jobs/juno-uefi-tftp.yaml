@@ -1,0 +1,39 @@
+# Sample JOB definition for a juno uefi tftp job
+
+device_type: juno
+
+job_name: juno-uefi-tftp
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+  uefi-menu-selector:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel:
+         url: http://images.validation.linaro.org/juno/kernel/Image
+     dtb:
+         url: http://images.validation.linaro.org/juno/kernel/juno.dtb
+     nfsrootfs:
+         url: http://releases.linaro.org/openembedded/juno-lsk/15.09/linaro-image-minimal-genericarmv8-20150921-770.rootfs.tar.gz
+         compression: gz
+     os: oe
+
+  - boot:
+     method: uefi-menu
+     commands: tftp
+     prompts:
+       - '/ #'
+       - 'linaro-test'
+       - 'root@debian:~#'

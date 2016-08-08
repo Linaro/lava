@@ -270,7 +270,7 @@ class FinalizeAction(Action):
             protocol.finalise_protocol(self.job.device)
         if self.errors:
             self.results = {'status': self.errors}
-            self.logger.debug('status: %s' % self.errors)
+            self.logger.error('status: %s', self.errors)
         elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
             self.errors = "Incomplete"
@@ -279,7 +279,7 @@ class FinalizeAction(Action):
                 'Errors': self.job.pipeline.errors})
         else:
             self.results = {'success': "Complete"}
-            self.logger.debug("Status: Complete")
+            self.logger.info("Status: Complete")
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
             results.write(yaml.dump(self.job.pipeline.describe()))
         # from meliae import scanner

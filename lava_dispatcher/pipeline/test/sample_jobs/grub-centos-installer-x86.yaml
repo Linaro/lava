@@ -1,0 +1,62 @@
+device_type: grub-x86
+
+job_name: grub-x86-debian-preseed
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 10
+     to: tftp
+     kernel:
+        url: http://mirror.centos.org/altarch/7/os/i386/images/pxeboot/vmlinuz
+     ramdisk:
+         url: http://mirror.centos.org/altarch/7/os/i386/images/pxeboot/initrd.img
+         compression: xz
+     preseed:
+         url: http://ironhide.bounceme.net/centos/installer/centos-ks-lab-i386.cfg
+     os: centos_installer
+
+  - boot:
+     method: grub
+     commands: centos-installer
+     expect_shell: False
+     timeout:
+       minutes: 50
+     boot_finished:
+     - 'Restarting system.'
+     - 'dracut Warning: Killing all remaining processes'
+
+  - boot:
+      method: grub
+      os: centos
+      commands: centos-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro
+      timeout:
+          minutes: 5
+      prompts:
+       - 'root@centos ~'
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

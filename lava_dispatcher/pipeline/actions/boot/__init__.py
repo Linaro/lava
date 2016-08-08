@@ -109,7 +109,7 @@ class AutoLoginAction(Action):
         # use lazy logging or the string will not be quoted correctly.
         def check_prompt_characters(prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
-                self.logger.warning(self.check_prompt_characters_warning % prompt)  # pylint: disable=logging-not-lazy
+                self.logger.warning(self.check_prompt_characters_warning, prompt)
 
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         # Skip auto login if the configuration is not found

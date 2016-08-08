@@ -32,7 +32,6 @@ from lava_dispatcher.pipeline.menus.menus import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
-from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction

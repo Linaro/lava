@@ -1,0 +1,24 @@
+device_type: grub-x86
+
+job_name: grub-x86-centos-installed
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+
+actions:
+  - boot:
+      method: grub
+      os: centos
+      commands: centos-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro
+      timeout:
+          minutes: 5
+      prompts:
+       - 'root@centos ~'

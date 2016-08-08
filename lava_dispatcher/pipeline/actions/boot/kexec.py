@@ -112,7 +112,7 @@ class KexecAction(Action):
         connection = super(KexecAction, self).run(connection, args)
         if 'kernel-config' in self.parameters:
             cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters['kernel-config']
-            self.logger.debug("Checking for kexec: %s" % cmd)
+            self.logger.debug("Checking for kexec: %s", cmd)
             connection.sendline(cmd)
         connection.sendline(self.load_command)
         self.wait(connection)

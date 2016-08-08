@@ -39,12 +39,13 @@
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
-    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
+    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
+  - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
   - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}

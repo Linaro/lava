@@ -38,8 +38,8 @@
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
-    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
+    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action

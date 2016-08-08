@@ -1,0 +1,46 @@
+# Sample JOB definition for a juno u-boot NFS job
+
+device_type: juno
+
+job_name: juno-uboot-nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+   minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+     timeout:
+       minutes: 2
+     to: nfs
+     os: oe
+     nfsrootfs:
+         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
+         compression: gz
+
+  - boot:
+     method: u-boot
+     commands: nfs
+     type: booti
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+     prompts:
+       - '/ #'
+       - 'linaro-test'
+       - 'root@debian:~#'
+       - 'root@genericarmv8:~#'
+
+  - test:
+     failure_retry: 3
+     name: juno-basics
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: openembedded/smoke-tests-basic.yaml
+           name: smoke-tests

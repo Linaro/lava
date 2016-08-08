@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#lava-network
+#-----------------
+#Helper script to broadcast IP data from the test image, wait for data
+#to be received by the rest of the group (or one role within the group)
+#and then provide an interface to retrieve IP data about the group on
+#the command line.
+#
+#Raising a suitable network interface is a job left for the designer of
+#the test definition / image but once a network interface is available,
+#lava-network can be asked to broadcast this information to the rest of
+#the group. At a later stage of the test, before the IP details of the
+#group need to be used, call lava-network collect to receive the same
+#information about the rest of the group.
+#
+#All usage of lava-network needs to use a broadcast (which wraps a call
+#to lava-send) and a collect (which wraps a call to lava-wait-all). As
+#a wrapper around lava-wait-all, collect will block until the rest of
+#the group (or devices in the group with the specified role) has made a
+#broadcast.
+#
+#After the data has been collected, it can be queried for any board
+#specified in the output of lava-group:
+#
+#lava-network query server
+#192.168.3.56
+#
+#Usage:
+#	broadcast network info:
+#		lava-network broadcast [interface]
+#	collect network info:
+#		lava-network collect [interface] <role>
+#	query specific host info:
+#		lava-network query [hostname] [info]
+#	export hosts file:
+#		lava-network hosts [path of hosts]
+#
+#So interface would be mandatory for broadcast and collect, hostname
+#would be mandatory for query, "path of hosts" would be mandatory for
+#hosts, role is optional for collect.
+
+
+LAVA_MULTI_NODE_API="LAVA_NETWORK"
+#MESSAGE_TIMEOUT=5
+MESSAGE_NEED_ACK=
+
+_LAVA_NETWORK_ID="network_info"
+_LAVA_NETWORK_ARG_MIN=2
+
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
+LAVA_MULTI_NODE_NETWORK_CACHE="/tmp/lava_multi_node_network_cache.txt"
+
+_lava_multi_node_debug "$LAVA_MULTI_NODE_API checking arguments..."
+if [ $# -lt $_LAVA_NETWORK_ARG_MIN ]; then
+	_lava_multi_node_debug "$FUNCNAME Not enough arguments."
+	exit $LAVA_MULTI_NODE_EXIT_ERROR
+fi
+
+_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle sub-command..."
+case "$1" in
+	"broadcast")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle broadcast command..."
+	LAVA_MULTI_NODE_API="LAVA_SEND"
+	MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}"
+	export MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
+	export MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE"
+	export MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
+	export MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
+	NETWORK_INFO_STREAM=`lava_multi_node_get_network_info $2`
+	lava_multi_node_send $_LAVA_NETWORK_ID $NETWORK_INFO_STREAM
+	;;
+
+	"collect")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle collect command..."
+	LAVA_MULTI_NODE_API="LAVA_WAIT_ALL"
+	MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}"
+	export MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
+	export MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE"
+	export MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
+	export MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
+	lava_multi_node_send $_LAVA_NETWORK_ID $3 
+	lava_multi_node_wait_for_message $LAVA_MULTI_NODE_NETWORK_CACHE
+	;;
+
+	"query")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle query command..."
+	lava_multi_node_check_cache $LAVA_MULTI_NODE_NETWORK_CACHE
+	lava_multi_node_print_host_info $2 $3
+	;;
+
+	"hosts")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle hosts command..."
+	lava_multi_node_check_cache $LAVA_MULTI_NODE_NETWORK_CACHE
+	lava_multi_node_make_hosts $2
+	;;
+
+	"alias-hosts")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle aliased hosts command..."
+	lava_multi_node_check_cache $LAVA_MULTI_NODE_NETWORK_CACHE
+	lava_multi_node_make_aliased_hosts $2
+	;;
+
+	*)
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API command $1 is not supported."
+	exit $LAVA_MULTI_NODE_EXIT_ERROR
+	;;
+esac

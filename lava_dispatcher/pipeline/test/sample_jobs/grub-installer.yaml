@@ -25,19 +25,28 @@ actions:
 
   - boot:
      method: grub
-     expect-shell: false
+     expect_shell: False
      commands: debian-installer
      timeout:
        minutes: 50
-     boot-finished: 'reboot: Restarting system'
+     boot_finished:
+     - 'reboot: Restarting system'
+     - 'reboot: System halted'
+     - 'Requesting system halt'
 
   - boot:
       method: grub
       commands: debian-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro123
       timeout:
           minutes: 5
       prompts:
        - 'root@debian:~#'
+       - 'root@d02:~#'
 
   - test:
      failure_retry: 3

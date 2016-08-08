@@ -54,6 +54,7 @@ actions:
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
+              revision: 441b61
 
 context:
   arch: amd64

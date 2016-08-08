@@ -1,7 +1,7 @@
 device_type: nexus10
 adb_serial_number: R32D300FRYP
 fastboot_serial_number: R32D300FRYP
-device_path: /dev/bus/usb/004
+device_path: ['/dev/bus/usb/004']
 
 actions:
   deploy:
