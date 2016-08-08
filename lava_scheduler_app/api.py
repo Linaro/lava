@@ -817,6 +817,7 @@ class SchedulerAPI(ExposedAPI):
         [superuser only]
         Import or update the device dictionary key value store for a
         pipeline device.
+        This action will be logged.
 
         Arguments
         ---------
@@ -836,7 +837,7 @@ class SchedulerAPI(ExposedAPI):
                 "User '%s' is not superuser." % self.user.username
             )
         try:
-            Device.objects.get(hostname=hostname)
+            device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(
                 404, "Device '%s' was not found." % hostname
@@ -868,6 +869,7 @@ class SchedulerAPI(ExposedAPI):
         element.parameters = device_data
         element.save()
         msg += "Device dictionary updated for %s\n" % hostname
+        device.log_admin_entry(self.user, msg)
         return msg
 
     def export_device_dictionary(self, hostname):

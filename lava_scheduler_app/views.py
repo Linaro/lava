@@ -2398,6 +2398,7 @@ def device_force_health_check(request, pk):
         job = initiate_health_check_job(device)
         if not job:
             raise Http404
+        device.log_admin_entry(request.user, "forced a health check")
         return redirect(job)
     else:
         return HttpResponseForbidden(
@@ -2409,6 +2410,7 @@ def device_edit_description(request, pk):
     if device.can_admin(request.user):
         device.description = request.POST.get('desc')
         device.save()
+        device.log_admin_entry(request.user, "changed description")
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -2419,12 +2421,10 @@ def device_edit_description(request, pk):
 def device_restrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        message = "Restriction added: %s" % request.POST.get('reason')
+        message = "added a restriction: %s" % request.POST.get('reason')
         device.is_public = False
-        DeviceStateTransition.objects.create(
-            created_by=request.user, device=device, old_state=device.status,
-            new_state=device.status, message=message, job=None).save()
-        device.save()
+        device.save(update_fields=['is_public'])
+        device.log_admin_entry(request.user, message)
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -2435,12 +2435,10 @@ def device_restrict_device(request, pk):
 def device_derestrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        message = "Restriction removed: %s" % request.POST.get('reason')
+        message = "removed restriction: %s" % request.POST.get('reason')
         device.is_public = True
-        DeviceStateTransition.objects.create(
-            created_by=request.user, device=device, old_state=device.status,
-            new_state=device.status, message=message, job=None).save()
-        device.save()
+        device.save(update_fields=['is_public'])
+        device.log_admin_entry(request.user, message)
         return redirect(device)
     else:
         return HttpResponseForbidden(

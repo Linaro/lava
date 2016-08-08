@@ -1,6 +1,8 @@
 import os
 import yaml
 import jinja2
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.models import LogEntry
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -23,6 +25,7 @@ from lava_dispatcher.pipeline.action import Timeout
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
 # python3 needs print to be a function, so disable pylint
 # pylint: disable=superfluous-parens
+# pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
 
 
 class ModelFactory(object):
@@ -478,6 +481,29 @@ class DeviceTypeTest(TestCaseWithFactory):
             self.assertIsInstance(yaml_data, dict)
 
 
+class TestLogEntry(TestCaseWithFactory):
+
+    def test_create_logentry(self):
+        foo = DeviceType(name='foo')
+        device = Device(device_type=foo, hostname='foo01', status=Device.OFFLINE)
+        device.save()
+
+        # only unit tests should call these functions with None, None
+        # if that is made a requirement of the device status functions, fix this test.
+        device.put_into_looping_mode(None, None)
+        self.assertEqual(device.status, Device.IDLE, "should be IDLE")
+        self.assertEqual(device.health_status, Device.HEALTH_LOOPING, "should be LOOPING")
+        device_ct = ContentType.objects.get_for_model(Device)
+        self.assertEqual(0, len(LogEntry.objects.filter(content_type=device_ct, action_flag=2).order_by('-action_time')))
+
+        user = self.factory.make_user()
+        device.put_into_maintenance_mode(user, 'test_create_logentry')
+        self.assertEqual(device.status, Device.OFFLINE, "should be OFFLINE")
+        self.assertEqual(device.health_status, Device.HEALTH_UNKNOWN, "should be UNKNOWN")
+        # the device state transition also creates a log entry
+        self.assertEqual(2, len(LogEntry.objects.filter(content_type=device_ct, action_flag=2).order_by('-action_time')))
+
+
 class TestTemplates(TestCaseWithFactory):
 
     # When adding or modifying a jinja2 template, add or update the test here.
@@ -526,16 +552,16 @@ class TestTemplates(TestCaseWithFactory):
         depth = 0
         # check configured commands blocks for trailing commas inherited from JSON V1 configuration.
         # reduce does not help as the top level dictionary also contains lists, integers and strings
-        for block, action_value in template_dict['actions'].items():
+        for _, action_value in template_dict['actions'].items():
             if 'methods' in action_value:
                 depth = 1 if depth < 1 else depth
-                for method_key, method_value in action_value.items():
+                for _, method_value in action_value.items():
                     depth = 2 if depth < 2 else depth
                     for item_key, item_value in method_value.items():
                         depth = 3 if depth < 3 else depth
                         if isinstance(item_value, dict):
                             depth = 4 if depth < 4 else depth
-                            for command_key, command_value in method_value[item_key].items():
+                            for _, command_value in method_value[item_key].items():
                                 depth = 5 if depth < 5 else depth
                                 if isinstance(command_value, dict):
                                     depth = 6 if depth < 6 else depth
