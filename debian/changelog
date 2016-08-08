@@ -1,3 +1,44 @@
+lava-dispatcher (2016.8-1) unstable; urgency=medium
+
+  * New production release
+    Only require conversion parameters if using conversion.
+    Support some basic kernel conversion tasks
+    Export the 'secrets' dictionary to the overlay
+    uboot: only log self.errors when it's not empty
+    Enabling NFS only deployment
+    Fix connection_timeout handling for lava-test-shell
+    validate needs to set errors, not raise
+    Fixes for multinode without needing ACK
+    Device environment: fix a crash if env_dut is None
+    Unavailable qemu command should not fail unit tests.
+    Use character_delays instead of character-delays
+    Tests: Use the name defined in the job definition
+    Show when a revision is being applied for VCS
+    Fix bug #2263 - parameters and params reference in job def and test def
+    Improve logging and use lazy logging
+    Log more test results metadata
+    LAVA-708 - Device path should be a list
+    Support kickstart installations on grub, and centos distro type
+    Allow for a prefix with nfsrootfs
+    Finalize: send the job status with the right level
+    log: send the full exception untouched
+    beaglebone-black: update load addresses for larger multiplatform kernels
+    Take into account, device_path that is unset.
+    Fix YAML formatting of wait string log
+    change the result logging format
+    Add sample nexus9 device dictionary.
+    LAVA-701 - Support vendor flashing using fastboot.
+    utils/messages.py: fix out of index error
+    Add support for fixup dictionary and patterns
+    Ensure guest command is available in multinode
+    Stop V2 test shells needing an ACK from the dispatcher
+    logging: add datetime and a better structure
+    Upgrade the failure test case for lavabot
+    First batch of VExpress changes
+    Handle ValueError while waiting
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Aug 2016 08:27:31 +0100
+
 lava-dispatcher (2016.6-2) unstable; urgency=medium
 
   * Align architecture list with guestfs support, also dropping armel
