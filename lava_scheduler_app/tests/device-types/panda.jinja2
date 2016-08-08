@@ -75,3 +75,17 @@ actions:
           - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
           - boot
 {% endblock %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    u-boot-commands:
+      minutes: 2
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60
+{% endblock %}

@@ -75,10 +75,10 @@
 #       'fail_count': int,
 # }
 
-import django
 import datetime
 
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.aggregates import Aggregate
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -91,25 +91,14 @@ from dashboard_app.models import (
     TestRun,
 )
 
-# SQL Aggregates can be replaced by either of the following,
-#
-# Conditional Expressions:
-# https://docs.djangoproject.com/en/1.8/ref/models/conditional-expressions/
-#
-# or
-#
-# Query Expressions:
-# https://docs.djangoproject.com/en/1.8/ref/models/expressions/
-#
-# But both the above are available only in django >=1.8, hence there isn't
-# a simple way of replacing SQL Aggregates that will work both in django
-# 1.7 and 1.8, hence this check is available.
-#
-# FIXME: Remove this check when support for django 1.7 ceases.
-if django.VERSION >= (1, 8):
-    from django.db.models.aggregates import Aggregate as SQLAggregate
-else:
-    from django.db.models.sql.aggregates import Aggregate as SQLAggregate
+
+class ArrayAgg(Aggregate):
+    function = 'ARRAY_AGG'
+
+    def convert_value(self, value, expression, connection, context):
+        if not value:
+            return []
+        return value
 
 
 class FilterMatch(object):
@@ -363,26 +352,6 @@ class MatchMakingQuerySet(object):
         return self._makeMatches(data)
 
 
-class SQLArrayAgg(SQLAggregate):
-    sql_function = 'array_agg'
-
-
-class ArrayAgg(models.Aggregate):
-    name = 'ArrayAgg'
-
-    def add_to_query(self, query, alias, col, source, is_summary):
-        aggregate = SQLArrayAgg(
-            col, source=source, is_summary=is_summary, **self.extra)
-        # For way more detail than you want about what this next line is for,
-        # see
-        # http://voices.canonical.com/michael.hudson/2012/09/02/using-postgres-array_agg-from-django/
-        try:
-            aggregate.field = models.DecimalField()  # vomit
-        except AttributeError:
-            pass
-        query.aggregates[alias] = aggregate
-
-
 # given filter:
 # select from testrun
 #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles
@@ -445,14 +414,15 @@ def evaluate_filter(user, filter_data, prefetch_related=None, descending=True):
             .extra(
                 select={'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")', },
                 where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL'])\
-            .extra(order_by=ob,).values('build_number').annotate(ArrayAgg('id'))
+            .extra(order_by=ob,).values('build_number').annotate(
+                id__arrayagg=ArrayAgg('id'))
     else:
         if descending:
             ob = '-bundle__uploaded_on'
         else:
             ob = 'bundle__uploaded_on'
         testruns = testruns.order_by(ob).values(
-            'bundle__uploaded_on').annotate(ArrayAgg('id'))
+            'bundle__uploaded_on').annotate(id__arrayagg=ArrayAgg('id'))
 
     return MatchMakingQuerySet(testruns, filter_data, prefetch_related)
 

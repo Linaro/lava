@@ -38,8 +38,8 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect
 )
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext, defaultfilters
+from django.shortcuts import get_object_or_404, render, loader
+from django.template import defaultfilters
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -205,9 +205,9 @@ def query_list(request):
         terms_data.update(user_query_table.prepare_terms_data(view))
     else:
         user_query_table = None
-
-    return render_to_response(
-        'lava_results_app/query_list.html', {
+    template = loader.get_template('lava_results_app/query_list.html')
+    return HttpResponse(template.render(
+        {
             'user_query_table': user_query_table,
             'other_query_table': other_query_table,
             'search_data': search_data,
@@ -216,7 +216,7 @@ def query_list(request):
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_list),
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -252,12 +252,13 @@ def query_display(request, username, name):
             "administrator.")
 
     omitted = [result.content_object for result in QueryOmitResult.objects.filter(query=query)]
-
-    return render_to_response(
-        'lava_results_app/query_display.html', {
+    template = loader.get_template('lava_results_app/query_display.html')
+    return HttpResponse(template.render(
+        {
             'query': query,
             'entity': query.content_type.model,
-            'conditions': query.serialize_conditions(),
+            'conditions': Query.serialize_conditions(
+                query.querycondition_set.all()),
             'omitted': omitted,
             'query_table': table,
             'terms_data': table.prepare_terms_data(view),
@@ -266,7 +267,7 @@ def query_display(request, username, name):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_display, username=username, name=name),
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -301,9 +302,9 @@ def query_custom(request):
 
     config = RequestConfig(request, paginate={"per_page": table.length})
     config.configure(table)
-
-    return render_to_response(
-        'lava_results_app/query_custom.html', {
+    template = loader.get_template('lava_results_app/query_custom.html')
+    return HttpResponse(template.render(
+        {
             'query_table': table,
 
             'terms_data': table.prepare_terms_data(view),
@@ -312,7 +313,7 @@ def query_custom(request):
 
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_custom),
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -323,11 +324,12 @@ def query_custom(request):
 def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
-    query_conditions = query.serialize_conditions()
+    query_conditions = Query.serialize_conditions(
+        query.querycondition_set.all())
     view_exists = QueryMaterializedView.view_exists(query.id)
-
-    return render_to_response(
-        'lava_results_app/query_detail.html', {
+    template = loader.get_template('lava_results_app/query_detail.html')
+    return HttpResponse(template.render(
+        {
             'query': query,
             'query_conditions': query_conditions,
             'view_exists': view_exists,
@@ -337,7 +339,7 @@ def query_detail(request, username, name):
             'condition_form': QueryConditionForm(
                 instance=None,
                 initial={'query': query, 'table': query.content_type}),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -664,15 +666,15 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
     if is_copy:
         query_name = instance.name
         instance.name = None
-
-    return render_to_response(
-        'lava_results_app/query_form.html', {
+    template = loader.get_template('lava_results_app/query_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'is_copy': is_copy,
             'query_name': query_name,
             'form': form,
             'context_help': ['lava-queries-charts'],
-        }, RequestContext(request))
+        }, request=request))
 
 
 def query_condition_form(request, query,

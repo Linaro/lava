@@ -95,20 +95,33 @@ def _job_actions_schema():
 
 
 def _job_notify_schema():
-    from lava_scheduler_app.models import TestJob
     return Schema({
-        Required('method'): Any(TestJob.NOTIFY_EMAIL_METHOD,
-                                TestJob.NOTIFY_IRC_METHOD),
         Required('criteria'): _notify_criteria_schema(),
-        'recipients': [str],
+        'recipients': _recipient_schema(),
         'verbosity': Any('verbose', 'quiet', 'status-only'),
         'compare': _notify_compare_schema()
     }, extra=True)
 
 
+def _recipient_schema():
+    from lava_scheduler_app.models import NotificationRecipient
+    return Schema([
+        {
+            Required('to'): {
+                Required('method'): Any(NotificationRecipient.EMAIL_STR,
+                                        NotificationRecipient.IRC_STR),
+                'user': str,
+                'email': str,
+                'server': str,
+                'handle': str
+            }
+        }
+    ])
+
+
 def _notify_criteria_schema():
     return Schema({
-        Required('status'): Any('complete', 'incomplete'),
+        Required('status'): Any('complete', 'incomplete', 'canceled'),
         'type': Any('progression', 'regression')
     }, extra=True)
 
@@ -190,6 +203,7 @@ def _job_schema():
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
             'metadata': dict,
+            'secrets': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
@@ -240,11 +254,18 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),
         'timeouts': _device_timeouts_schema()
     })
+
+
+def _validate_secrets(data_object):
+    if 'secrets' in data_object:
+        if data_object['visibility'] == 'public':
+            raise SubmissionException("When 'secrets' is used, 'visibility' shouldn't be 'public'")
 
 
 def validate_submission(data_object):
@@ -258,6 +279,8 @@ def validate_submission(data_object):
         schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
+
+    _validate_secrets(data_object)
     return True
 
 
@@ -274,4 +297,5 @@ def validate_device(data_object):
         schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
+
     return True

@@ -8,15 +8,16 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    DeviceStateTransition,
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
     DeviceDictionary,
 )
 from lava_scheduler_app.views import (
-    SumIf,
     get_restricted_job
 )
+from lava_scheduler_app.dbutils import device_type_summary
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja2_to_devicedictionary,
@@ -300,24 +301,19 @@ class SchedulerAPI(ExposedAPI):
 
         device_type_names = []
         all_device_types = []
-        keys = ['busy', 'name', 'idle', 'offline']
+        keys = ['busy', 'idle', 'offline']
 
         for dev_type in DeviceType.objects.all():
             if dev_type.num_devices_visible_to(self.user) == 0:
                 continue
             device_type_names.append(dev_type.name)
 
-        device_types = DeviceType.objects.filter(display=True).annotate(
-            idle=SumIf('device', condition='status=%s' % Device.IDLE),
-            offline=SumIf('device', condition='status in (%s,%s)'
-                          % (Device.OFFLINE, Device.OFFLINING)),
-            busy=SumIf('device', condition='status in (%s,%s)'
-                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name').filter(name__in=device_type_names)
+        device_types = device_type_summary(device_type_names)
 
         for dev_type in device_types:
-            device_type = {}
+            device_type = {'name': dev_type['device_type']}
             for key in keys:
-                device_type[key] = getattr(dev_type, key)
+                device_type[key] = dev_type[key]
             all_device_types.append(device_type)
 
         return all_device_types
@@ -382,7 +378,7 @@ class SchedulerAPI(ExposedAPI):
                         device_dict["offline_since"] = str(last_transition.created_on)
                         if last_transition.created_by:
                             device_dict["offline_by"] = last_transition.created_by.username
-                except Device.DoesNotExist:
+                except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
                     pass
         else:
             raise xmlrpclib.Fault(

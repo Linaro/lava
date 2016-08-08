@@ -1,0 +1,45 @@
+# If you modify this file, change the docs which reference lines within
+# this file. Sphinx starts line numbers at zero.
+# https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/single-node/singlenode03.yaml
+
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: singlenode-advanced
+    description: "Advanced (level 3): single node test commands for Linux Images"
+    maintainer:
+        - neil.williams@linaro.org
+    os:
+        - ubuntu
+    scope:
+        - functional
+    devices:
+        - kvm
+        - arndale
+        - panda
+        - beaglebone-black
+        - beagle-xm
+
+install:
+    deps:
+        - curl
+        - realpath
+        - ntpdate
+        - lsb-release
+        - usbutils
+
+run:
+    steps:
+        - lava-test-case linux-linaro-ubuntu-netstat --shell netstat -an
+        - lava-test-case linux-linaro-ubuntu-ifconfig-dump --shell ifconfig -a
+        - lava-test-case linux-linaro-ubuntu-route-dump-a --shell route
+        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up-lo --shell ifconfig lo up
+        - lava-test-case linux-linaro-ubuntu-route-dump-b --shell route
+        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
+        - lava-test-case ping-test --shell ping -W1 -c1 git.linaro.org
+        - pwd
+        - lava-test-case realpath-check --shell realpath2 ../multi-node/check_ip.sh
+        - lava-test-case realpath-check --shell realpath ./multi-node/check_ip.sh
+        - lava-test-case ntpdate-check --shell ntpdate-debian
+        - lava-test-case curl-http --shell curl -o img.tar.gz http://images.validation.linaro.org/lava-masters/dynamic/cubietruck/cbtruck_img.tar.gz
+        - lava-test-case tar-tgz --shell tar -tzf img.tar.gz
+        - lava-test-case remove-tgz --shell rm img.tar.gz

@@ -29,7 +29,6 @@ import logging
 import os
 import simplejson
 import traceback
-import django
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
@@ -1526,12 +1525,9 @@ def file_cleanup(sender, instance, **kwargs):
     if instance is None or sender not in (Bundle, Attachment):
         return
 
-    if django.VERSION < (1, 8):
-        interest = sender._meta.get_all_field_names()
-    else:
-        # we just want the FileField's, not all the fields
-        interest = [field.name for field in sender._meta.get_fields()
-                    if isinstance(field, models.FileField)]
+    # we just want the FileField's, not all the fields
+    interest = [field.name for field in sender._meta.get_fields()
+                if isinstance(field, models.FileField)]
 
     for field_name in interest:
 
@@ -1540,11 +1536,6 @@ def file_cleanup(sender, instance, **kwargs):
             field_meta = sender._meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
-
-        if django.VERSION < (1, 8):
-            # we just want the FileField's, not all the fields
-            if not isinstance(field_meta, models.FileField):
-                continue
 
         # the field itself is a FieldFile instance, proxied by FileField
         field = getattr(instance, field_name)

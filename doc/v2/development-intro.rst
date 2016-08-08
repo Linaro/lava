@@ -1,6 +1,8 @@
 LAVA developer guide
 ####################
 
+.. _development_pre_requisites:
+
 Pre-requisites to start with development
 ****************************************
 
@@ -91,12 +93,12 @@ amount of work - :ref:`talk to us <mailing_lists>` before spending time
 on code which relies on such modules or which relies on newer versions
 of the modules than are currently available in Debian testing.
 
-.. seealso:: :ref:`quick_fixes` and :ref:`testing_refactoring_code`
+.. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
 
 .. _naming_conventions:
 
 Naming conventions and LAVA V2 architecture
-===========================================
+*******************************************
 
 Certain terms used in LAVA V2 have specific meanings, please be
 consistent in the use of the following terms:
@@ -178,13 +180,27 @@ LAVA online documentation is written with RST_ format. You can use the command
 below to generate html format files for LAVA V2::
 
  $ cd lava-server/
+ $ make -C doc/v2 clean
  $ make -C doc/v2 html
- $ iceweasel doc/v2/_build/html/index.html
+ $ firefox doc/v2/_build/html/index.html
  (or whatever browser you prefer)
 
 We welcome contributions to improve the documentation. If you are considering
 adding new features to LAVA or changing current behaviour, ensure that the
 changes include updates for the documentation.
+
+Wherever possible, all new sections of documentation should come with worked
+examples.
+
+* Add a testjob submission YAML file to ``doc/v2/examples/test-jobs``
+* If the change relates to or includes particular test definitions to demonstrate the
+  new support, add a test definition YAML file to ``doc/v2/examples/test-definitions``
+* Use the `include options <http://docutils.sourceforge.net/docs/ref/rst/directives.html#include>`_
+  supported in RST to quote snippets of the test job or test definition YAML, following the
+  examples of the existing examples.
+* Use comments **liberally** in the examples and link to existing terms and sections.
+* Read the comments in the ``doc/v2/index.rst`` file if you are adding new pages or altering
+  section headings.
 
 .. _RST: http://sphinx-doc.org/rest.html
 
@@ -202,6 +218,68 @@ Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
 
 Community contributions
 =======================
+
+The LAVA software team use ``git review`` to manage contributions.
+Each review is automatically tested against all the unit tests.
+**All reviews must pass all unit tests** before being considered for
+merging into the master branch. The contributor is responsible for
+making the changes necessary to allow the unit tests to pass and to
+keep the review up to date with other changes in the master branch.
+
+To setup ``git review`` for the first time, install the package and
+setup the local git configuration. (This can take a little time.)::
+
+ $ apt -y install git-review
+ $ cd lava-server/
+ $ git review -s
+
+.. important:: **All** changes need to support both Debian unstable
+   **and** Debian stable - currently Jessie. This often includes multiple
+   versions of django and other supporting packages. Automated unit tests
+   are run on stable (with backports).
+
+The master branch may be significantly ahead of the latest packages
+available from Debian (unstable or stable backports) which are based
+on the release branch. Use the :ref:`lava_repositories` and/or
+:ref:`developer_build_version` to ensure that your instance is up to date
+with master.
+
+.. seealso:: :ref:`lava_release_process`.
+
+Patches, fixes and code
+-----------------------
+
+If you'd like to offer a patch (whether it is a bug fix, documentation
+update, new feature or even a simple typo fix) it is best to follow
+this simple check-list:
+
+#. Clone the master branch of the correct project.
+#. Create a new, clean, local branch based on master::
+
+    $ git checkout -b fixupbranch
+
+#. Add your code, change any existing files as needed.
+#. Commit your changes on the local branch.
+#. Checkout the master branch and ``git pull``
+#. Checkout your existing local branch::
+
+    $ git checkout fixupbranch
+
+#. *rebase* your local branch against updated master::
+
+    $ git rebase master
+
+#. Fix any merge conficts.
+#. Send the patch to the `Linaro Code Review <https://review.linaro.org>`_ system (gerrit)::
+
+    $ git review
+
+#. If successful, you will get a link to a review.
+#. Login to gerrit and add the ``lava-team`` as reviewers.
+#. The unit tests will automatically start and you will be notified by email
+   of the results and a link to the output which is useful if the tests fail.
+
+.. seealso:: :ref:`development_workflow` for detailed information.
 
 Contributing via your distribution
 ----------------------------------
@@ -234,9 +312,27 @@ to us on IRC::
 Contributing via GitHub
 -----------------------
 
-You can use GitHub to fork the LAVA packages and make pull requests.
+You can use GitHub to fork the LAVA packages and make pull requests
 
 https://github.com/Linaro
 
 It is worth sending an email to the :ref:`lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
+
+.. note:: You will need to respond to comments on the review and the
+   process of updating the review is **not** linked to the github
+   pull request process.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   process.rst
+   development.rst
+   pipeline-design.rst
+   dispatcher-design.rst
+   pipeline-schema.rst
+   dispatcher-testing.rst
+   debian.rst
+   packaging.rst
+   developer-example.rst

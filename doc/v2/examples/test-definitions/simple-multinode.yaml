@@ -1,0 +1,21 @@
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: multinode-introduction
+    description: "Introduction to MultiNode test commands"
+    maintainer:
+        - neil.williams@linaro.org
+    os:
+        - ubuntu
+    scope:
+        - functional
+    devices:
+        - panda
+        - beaglebone-black
+
+run:
+    steps:
+        - lava-test-case multinode-role-output --shell lava-role
+        - lava-test-case multinode-send-message --shell lava-send sending source=$(lava-self) role=$(lava-role) hostname=$(hostname -f) kernver=$(uname -r) kernhost=$(uname -n)
+        - lava-test-case multinode-wait-message --shell lava-wait-all sending
+        - lava-test-case multinode-sync --shell lava-sync running
+        - lava-test-case multinode-group --shell lava-group

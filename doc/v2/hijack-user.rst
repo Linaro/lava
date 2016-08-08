@@ -4,7 +4,7 @@ Switch / Hijack User
 ====================
 
 The superuser in LAVA can be enabled to hijack or switch and work on
-behalf of other users without knowing their credentials. This comes
+behalf of other users without knowing their credentials. This comes in
 handy when users report problems in their login and the superuser
 wants to reproduce it. This functionality is enabled by django-hijack
 module.

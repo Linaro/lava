@@ -27,8 +27,7 @@ from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render, loader
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -180,9 +179,9 @@ def image_report_list(request):
         terms_data.update(user_image_table.prepare_terms_data(view))
     else:
         user_image_table = None
-
-    return render_to_response(
-        'dashboard_app/image_report_list.html', {
+    template = loader.get_template('dashboard_app/image_report_list.html')
+    return HttpResponse(template.render(
+        {
             'user_image_table': user_image_table,
             'other_image_table': other_image_table,
             'search_data': search_data,
@@ -191,7 +190,7 @@ def image_report_list(request):
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
             'context_help': BreadCrumbTrail.leading_to(image_report_list),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -213,14 +212,14 @@ def image_report_display(request, name):
             image_report.imagereportchart_set.all().order_by(
                 'relative_index')):
         chart_data[index] = chart.get_chart_data(request.user)
-
-    return render_to_response(
-        'dashboard_app/image_report_display.html', {
+    template = loader.get_template('dashboard_app/image_report_display.html')
+    return HttpResponse(template.render(
+        {
             'image_report': image_report,
             'chart_data': simplejson.dumps(chart_data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -230,14 +229,14 @@ def image_report_display(request, name):
 def image_report_detail(request, name):
 
     image_report = get_object_or_404(ImageReport, name=name)
-
-    return render_to_response(
-        'dashboard_app/image_report_detail.html', {
+    template = loader.get_template('dashboard_app/image_report_detail.html')
+    return HttpResponse(template.render(
+        {
             'image_report': image_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
             'context_help': BreadCrumbTrail.leading_to(image_report_list),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -284,13 +283,13 @@ def image_report_publish(request, name):
 
     image_report.is_published = True
     image_report.save()
-
-    return render_to_response(
-        'dashboard_app/image_report_detail.html', {
+    template = loader.get_template('dashboard_app/image_report_detail.html')
+    return HttpResponse(template.render(
+        {
             'image_report': image_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -301,13 +300,13 @@ def image_report_unpublish(request, name):
     image_report = get_object_or_404(ImageReport, name=name)
     image_report.is_published = False
     image_report.save()
-
-    return render_to_response(
-        'dashboard_app/image_report_detail.html', {
+    template = loader.get_template('dashboard_app/image_report_detail.html')
+    return HttpResponse(template.render(
+        {
             'image_report': image_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -325,12 +324,12 @@ def image_report_form(request, bread_crumb_trail, instance=None):
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
         form.fields['user'].initial = request.user
-
-    return render_to_response(
-        'dashboard_app/image_report_form.html', {
+    template = loader.get_template('dashboard_app/image_report_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Image chart", parent=image_report_detail,
@@ -348,14 +347,14 @@ def image_chart_detail(request, name, id):
             image_chart.xaxis_attribute = None
             image_chart.save()
             xaxis_attribute_changed = True
-
-    return render_to_response(
-        'dashboard_app/image_report_chart_detail.html', {
+    template = loader.get_template('dashboard_app/image_report_chart_detail.html')
+    return HttpResponse(template.render(
+        {
             'image_chart': image_chart,
             'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_detail, name=name, id=id),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -649,12 +648,12 @@ def image_chart_form(request, bread_crumb_trail, instance=None,
     else:
         form = ImageReportChartForm(request.user, instance=instance)
         form.fields['image_report'].initial = image_report
-
-    return render_to_response(
-        'dashboard_app/image_report_chart_form.html', {
+    template = loader.get_template('dashboard_app/image_report_chart_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Add filter", parent=image_chart_detail,
@@ -694,14 +693,14 @@ def image_chart_filter_detail(request, name, id, slug):
             image_chart.xaxis_attribute = None
             image_chart.save()
             xaxis_attribute_changed = True
-
-    return render_to_response(
-        'dashboard_app/image_chart_filter_detail.html', {
+    template = loader.get_template('dashboard_app/image_chart_filter_detail.html')
+    return HttpResponse(template.render(
+        {
             'chart_filter': chart_filter,
             'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_filter_detail, name=name, id=id, slug=slug),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -797,14 +796,14 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
     else:
         form = ImageChartFilterForm(request.user, instance=instance,
                                     initial={'image_chart': chart_instance})
-
-    return render_to_response(
-        'dashboard_app/image_chart_filter_form.html', {
+    template = loader.get_template('dashboard_app/image_chart_filter_form.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'image_chart': chart_instance,
             'instance': instance,
             'form': form,
-        }, RequestContext(request))
+        }, request=request))
 
 
 def _get_image_chart_test(chart_filter_id, chart_test_id):

@@ -2,7 +2,8 @@
 Tests for the Bundle model
 """
 import hashlib
-
+import unittest
+import django
 from django.core.files.base import ContentFile
 from django.test import TestCase
 from django_testscenarios.ubertest import TestCaseWithScenarios
@@ -35,6 +36,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             content = ContentFile("file content")
             content_filename = "file.txt"
 
+    @unittest.skipIf(django.VERSION > (1, 10), "V1 support")
     def test_construction(self):
         dummy, bundle = self.make_and_get_dummy(Bundle)
         bundle.content.save(bundle.content_filename, dummy.content)

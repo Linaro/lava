@@ -6,11 +6,10 @@
    the item in the contents list. All terms are automatically
    added to the Sphinx index.
 
+FIXME - need to add many more terms here
+
 Glossary of terms
 =================
-
-Contents
---------
 
 [ :term:`action level` ]
 [ :term:`device dictionary` ]
@@ -18,8 +17,9 @@ Contents
 [ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
 [ :term:`distributed deployment`] [ :term:`DUT` ]
 [ :term:`exclusive` ]
+[ :term:`frontend` ]
 [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
-[ :term:`interface tag` ]
+[ :term:`inline` ] [ :term:`interface tag` ]
 [ :term:`messageID` ]
 [ :term:`MultiNode` ]
 [ :term:`job definition` ]
@@ -142,6 +142,14 @@ Contents
     relevant device type before enabling exclusive pipeline support,
     especially if the device type has a :ref:`yaml_health_checks`
 
+  frontend
+    ``lava-server`` provides a generic `frontend` consisting of the Results,
+    Queries, Job tables, Device tables and Charts. Many projects will need
+    to customise this data to make it directly relevant to the developers.
+    This is supported using the :ref:`xml_rpc` and REST API support.
+
+    .. seealso:: :ref:`what_is_lava_not`
+
   hacking session
     A test job which uses a particular type of test definition to allow users to
     connect to a test device and interact with the test environment directly.
@@ -159,7 +167,7 @@ Contents
 
   hidden device type
     A device type can be hidden by the LAVA administrators. Devices of
-    a `hidden_device_type` will only be visible to owners of at
+    a :ref:`v2_hidden_device_type` will only be visible to owners of at
     least once device of this type. Other users will not be able to
     access the job output, device status transition pages or bundle streams
     of devices of a hidden type. Devices of a hidden type will be shown
@@ -170,6 +178,12 @@ Contents
   hostname
     The unique name of this device in this LAVA instance, used to link all
     jobs, results and device information to a specific device configuration.
+
+  inline
+    A type of test definition which is contained within the job submission instead
+    of being fetched from a URL. These are useful for debugging tests and are recommended
+    for the synchronisation support within :term:`multinode` test jobs.
+    See :ref:`inline_test_definitions`
 
   interface tag
      An interface tag is similar to :term:`device tag` but operate **solely** within
@@ -195,7 +209,7 @@ Contents
 
   MultiNode
      A single test job which runs across multiple devices. See
-     :ref:`multinode_api` and :ref:`multinode_use_cases`.
+     :ref:`multinode_api`.
 
   offline
     A status of a device which allows jobs to be submitted and reserved for
@@ -224,7 +238,7 @@ Contents
     like fail-early, error identification, avoid defaults, fail and
     diagnose later, as well as giving test writers more rope to make
     LAVA more transparent. See :ref:`dispatcher_design` and
-    :ref:`refactoring_use_cases`.
+    :ref:`pipeline_use_cases`.
 
   priority
     A job has a default priority of ``Medium``. This means that the job
@@ -232,7 +246,7 @@ Contents
     of jobs of the same priority. Every :term:`health check` has a higher
     priority than any submitted job and if a health check is required, it
     will **always** run before any other jobs. Priority only has any
-    effect whilst the job is queued as ``Submitted``.
+    effect while the job is queued as ``Submitted``.
 
   remote worker
     A dispatcher with devices attached which does not have a web frontend
@@ -243,7 +257,7 @@ Contents
     Within LAVA, the process of developing the :term:`pipeline` code
     in parallel with the existing code, resulting in new elements
     alongside old code - possibly disabled on some instances.
-    See :ref:`dispatcher_design` and :ref:`refactoring_use_cases`.
+    See :ref:`dispatcher_design` and :ref:`pipeline_use_cases`.
 
   restricted device
     A restricted device can only accept job submissions from the device
@@ -256,7 +270,7 @@ Contents
     ``Query`` to replace `filter`. This code is in ongoing
     development but includes support for:
 
-    * viewing results so far whilst the test job is still running
+    * viewing results so far while the test job is still running
     * retaining results from earlier actions even if the test job
       fails later
     * allowing any action in the pipeline to generate results

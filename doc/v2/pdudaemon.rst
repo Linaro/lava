@@ -1,9 +1,9 @@
-.. _pdudaemon:
+.. _pdu_daemon:
 
 PDU Daemon
 **********
 
-APC PDUs (Power Distribution Unit) only support one control session at a time. 
+APC PDUs (Power Distribution Unit) only support one control session at a time.
 In a :term:`distributed deployment` LAVA installation with multiple
 :term:`remote worker` machines there is a possibility that more than one
 dispatcher may attempt to access a PDU simultaneously. In this case the
@@ -13,7 +13,7 @@ first.
 Multinode jobs are more likely to trigger this issue as they cause many jobs
 to be started at the same time.
 
-To solve this problem we use a project called 
+To solve this problem we use a project called
 `pdudaemon <https://github.com/Linaro/pdudaemon>`_.
 Instead of each dispatcher accessing the PDUs directly, dispatchers make
 requests to a queueing daemon which executes them sequentially.
@@ -34,7 +34,7 @@ Example config file for lavapdu server::
    "dbpass": "pdudaemon",
    "dbname": "lavapdu"
  }
- 
+
 Hostname is the interface IP address that PDU Daemon will attempt to bind to.
 
 Example invocation of pduclient::

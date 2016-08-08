@@ -1,0 +1,45 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: b2120h410
+
+{% set console_device = console_device | default('ttyUSB0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+
+{# adds the parameters: top level block #}
+{% block vland %}
+{{ super() }}
+{% endblock %}
+  bootm:
+   kernel: '{{ bootm_kernel_addr|default('0x41000000') }}'
+   ramdisk: '{{ bootm_ramdisk_addr|default('0x45000000') }}'
+   dtb: '{{ bootm_dtb_addr|default('0x47000000') }}'
+
+actions:
+  deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('B2120') }}
+          boot_message: {{ boot_message|default('Starting kernel') }}
+        nfs:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }} consoleblank=0 ip=::::stiH410::dhcp kmac=dev:eth0,addr:${ethaddr} mem=1071644672@0x40000000 vmalloc=256m video=HDMI-A-1:1920x1080 snd-usb-audio.index=-2 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} earlyprintk'"
+          - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
+{% endblock %}

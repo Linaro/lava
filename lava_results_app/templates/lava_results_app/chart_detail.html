@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<h1>Chart {{ chart.name }} <small><a href="{% url 'lava_results_app.views.chart.views.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
+<h1>Chart {{ chart.name }} <small><a href="{% url 'lava.results.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
 
 <div class="row">
   <div class="col-md-6">
@@ -35,11 +35,11 @@
 
       {% if chart.chart_group %}
       <div id="group_link" class="group-link">
-	<a href="{% url 'lava_results_app.views.chart.views.chart_list' %}#{{ chart.chart_group|iriencode }}">Group link</a>
+	<a href="{% url 'lava.results.chart_list' %}#{{ chart.chart_group|iriencode }}">Group link</a>
       </div>
       {% else %}
       <div id="group_link" class="group-link" style="display: none;">
-	<a href="{% url 'lava_results_app.views.chart.views.chart_list' %}#">Group link</a>
+	<a href="{% url 'lava.results.chart_list' %}#">Group link</a>
       </div>
       {% endif %}
       &nbsp;&nbsp;
@@ -98,7 +98,7 @@
 <h3>Queries</h3>
 
 <div class="fields-container">
-  <a href="{% url 'lava_results_app.views.chart.views.chart_query_add' chart.name %}">
+  <a href="{% url 'lava.results.chart_query_add' chart.name %}">
     Add query
   </a>
 </div>
@@ -108,7 +108,8 @@
   <div id="{{ chart_query.id }}" class="sortable-placeholder">
     <div class="chart-title">
       <a href="{{ chart_query.query.get_absolute_url }}">{{ chart_query.query.owner_name }}</a>
-      <a class="chart-title-link" href="{% url 'lava_results_app.views.chart.views.chart_query_remove' chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
+      <a class="chart-title-link" href="{% url 'lava.results.chart_query_remove'
+      chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
         remove
       </a>
       <a class="chart-title-link" href="{{ chart_query.get_absolute_url }}">
@@ -156,7 +157,7 @@
   $("#queries").on("sortstop", function(event, ui) {
     var chart_query_order = $("#queries").sortable("toArray").join();
     $.ajax({
-      url: "{% url 'lava_results_app.views.chart.views.chart_query_order_update' name=chart.name %}",
+      url: "{% url 'chart_query_order_update' name=chart.name %}",
       type: "POST",
       data: {
         csrfmiddlewaretoken: '{{csrf_token}}',
@@ -172,7 +173,7 @@
 {% if chart.is_published %}
 <script>
   $("#chart_group").editable(
-  "{% url 'lava_results_app.views.chart.views.chart_add_group' name=chart.name %}",
+  "{% url 'chart_add_group' name=chart.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -195,14 +196,14 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.chart.views.chart_group_list' %}',
+        source: '{% url 'chart_group_list' %}',
         minLength: 2,
       });
   });
 
 
   $("#group").editable(
-  "{% url 'lava_results_app.views.chart.views.chart_select_group' name=chart.name %}",
+  "{% url 'chart_select_group' name=chart.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -216,7 +217,7 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.chart.views.get_chart_group_names' %}',
+        source: '{% url 'lava.results.get_chart_group_names' %}',
         minLength: 1,
       });
   });

@@ -590,6 +590,7 @@ class NamedTestAttribute(models.Model):
 
     class Meta:
         unique_together = (('object_id', 'name', 'content_type'))
+        verbose_name = "metadata"
 
 
 class TestData(models.Model):
@@ -605,10 +606,6 @@ class TestData(models.Model):
     # Attributes
 
     attributes = fields.GenericRelation(NamedTestAttribute)
-
-    # Attachments
-
-    attachments = fields.GenericRelation('Attachment')
 
     def __unicode__(self):
         return _(u"TestJob {0}").format(self.testjob.id)
@@ -813,7 +810,7 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    def get_results(self, user, limit=None):
+    def get_results(self, user, limit=None, order_by=['-id']):
         """ Used to get query results for persistant queries.
 
         Limit parameter should not be used in views where django tables are
@@ -827,7 +824,8 @@ class Query(models.Model):
             return Query.get_queryset(
                 self.content_type,
                 self.querycondition_set.all(),
-                limit).exclude(id__in=omitted_list).visible_by_user(user)
+                limit, order_by=order_by).exclude(
+                    id__in=omitted_list).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -837,10 +835,12 @@ class Query(models.Model):
                 view = TestSuiteViewFactory(self)
 
             return view.__class__.objects.all().exclude(
-                id__in=omitted_list).visible_by_user(user)[:limit]
+                id__in=omitted_list).order_by(*order_by).visible_by_user(
+                    user)[:limit]
 
     @classmethod
-    def get_queryset(cls, content_type, conditions, limit=None):
+    def get_queryset(cls, content_type, conditions, limit=None,
+                     order_by=['-id']):
         """ Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
@@ -926,7 +926,7 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct().extra(select={
+            **filters).distinct().order_by(*order_by).extra(select={
                 '%s_ptr_id' % content_type.model:
                 '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
@@ -1010,22 +1010,23 @@ class Query(models.Model):
 
         return conditions_objects
 
-    def serialize_conditions(self):
+    @classmethod
+    def serialize_conditions(cls, conditions):
         # Serialize conditions into string.
 
         conditions_list = []
-        for condition in self.querycondition_set.all():
+        for condition in conditions:
             conditions_list.append("%s%s%s%s%s%s%s" % (
                 condition.table.model,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.field,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.operator,
-                self.CONDITION_DIVIDER,
+                cls.CONDITION_DIVIDER,
                 condition.value
             ))
 
-        return self.CONDITIONS_SEPARATOR.join(conditions_list)
+        return cls.CONDITIONS_SEPARATOR.join(conditions_list)
 
     @classmethod
     def get_content_type(cls, model_name):
@@ -1085,7 +1086,7 @@ class Query(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return (
-            "lava_results_app.views.query.views.query_display",
+            "lava.results.query_display",
             [self.owner.username, self.name])
 
 
@@ -1121,6 +1122,16 @@ class QueryCondition(models.Model):
             NamedTestAttribute:
                 'suite__job__testdata__attributes',
         }
+    }
+
+    # Allowed fields for condition entities.
+    FIELD_CHOICES = {
+        TestJob: [
+            "submitter", "start_time", "end_time", "status", "actual_device",
+            "health_check", "user", "group", "priority", "is_pipeline"],
+        TestSuite: ["name"],
+        TestCase: ["name", "result", "measurement"],
+        NamedTestAttribute: []
     }
 
     query = models.ForeignKey(
@@ -1172,6 +1183,119 @@ class QueryCondition(models.Model):
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()
+
+    @classmethod
+    def get_condition_choices(cls, job=None):
+        # Create a dict with all possible operators based on the all available
+        # field types, used for validation.
+        # If job is supplied, return available metadata field names as well.
+
+        condition_choices = {}
+        for model in cls.FIELD_CHOICES:
+            condition_choice = {}
+            condition_choice['fields'] = {}
+            content_type = ContentType.objects.get_for_model(model)
+
+            if job and model == NamedTestAttribute:
+                testdata = TestData.objects.filter(testjob=job).first()
+                if testdata:
+                    for attribute in NamedTestAttribute.objects.filter(
+                            object_id=testdata.id,
+                            content_type=ContentType.objects.get_for_model(
+                                TestData)):
+                        condition_choice['fields'][attribute.name] = {}
+
+            else:
+                for field_name in cls.FIELD_CHOICES[model]:
+                    field = {}
+
+                    field_object = content_type.model_class()._meta.\
+                        get_field(field_name)
+                    field['operators'] = cls._get_operators_for_field_type(
+                        field_object)
+                    field['type'] = field_object.__class__.__name__
+                    if field_object.choices:
+                        field['choices'] = [unicode(x) for x in dict(
+                            field_object.choices).values()]
+
+                    condition_choice['fields'][field_name] = field
+
+            condition_choices[content_type.id] = condition_choice
+            condition_choices['date_format'] = settings.\
+                DATETIME_INPUT_FORMATS[0]
+
+        return condition_choices
+
+    @classmethod
+    def get_similar_job_content_types(cls):
+        # Create a dict with all available content types.
+
+        available_content_types = {}
+        for model in [TestJob, NamedTestAttribute]:
+            content_type = ContentType.objects.get_for_model(model)
+            available_content_types[content_type.id] = content_type.name
+        return available_content_types
+
+    @classmethod
+    def _get_operators_for_field_type(cls, field_object):
+        # Determine available operators depending on the field type.
+        operator_dict = dict(cls.OPERATOR_CHOICES)
+
+        if field_object.choices:
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.DateTimeField):
+            operator_keys = [cls.GT]
+        elif isinstance(field_object, models.ForeignKey):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.BooleanField):
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL
+            ]
+        elif isinstance(field_object, models.IntegerField):
+            operator_keys = [
+                cls.EXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS,
+                cls.GT,
+                cls.LT
+            ]
+        elif isinstance(field_object, models.CharField):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        elif isinstance(field_object, models.TextField):
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS
+            ]
+        else:  # Show all.
+            operator_keys = [
+                cls.EXACT,
+                cls.IEXACT,
+                cls.NOTEQUAL,
+                cls.ICONTAINS,
+                cls.GT,
+                cls.LT
+            ]
+
+        operators = dict([(i, operator_dict[i]) for i in operator_keys if i in operator_dict])
+
+        return operators
 
 
 def _get_foreign_key_model(model, fieldname):
@@ -1254,7 +1378,7 @@ class Chart(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("lava_results_app.views.chart.views.chart_display",
+        return ("lava.results.chart_display",
                 (), dict(name=self.name))
 
     def can_admin(self, user):
@@ -1406,10 +1530,12 @@ class ChartQuery(models.Model):
             data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
             data["query_live"] = self.query.is_live
-            data["query_updated"] = self.query.last_updated.strftime(
-                settings.DATETIME_INPUT_FORMATS[0])
+            if self.query.last_updated is not None:
+                data["query_updated"] = self.query.last_updated.strftime(
+                    settings.DATETIME_INPUT_FORMATS[0])
             data["entity"] = self.query.content_type.model
-            data["conditions"] = self.query.serialize_conditions()
+            data["conditions"] = Query.serialize_conditions(
+                self.query.querycondition_set.all())
             data["has_omitted"] = QueryOmitResult.objects.filter(
                 query=self.query).exists()
 
@@ -1529,7 +1655,7 @@ class ChartQuery(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("lava_results_app.views.chart.views.chart_query_edit",
+        return ("lava.results.chart_query_edit",
                 (), dict(name=self.chart.name, id=self.id))
 
 

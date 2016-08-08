@@ -361,14 +361,17 @@ Restart ``lava-server`` and ``apache2`` services if this is changed.
 LAVA server branding support
 ============================
 
-The icon, link and alt text of the LAVA link on each page can be changed in the
-settings ``/etc/lava-server/settings.conf`` (JSON syntax)::
+The icon, link, alt text, bug URL and source code URL of the LAVA link on each
+page can be changed in the settings ``/etc/lava-server/settings.conf`` (JSON syntax)::
 
    "BRANDING_URL": "http://www.example.org",
    "BRANDING_ALT": "Example site",
    "BRANDING_ICON": "https://www.example.org/logo/logo.png",
    "BRANDING_HEIGHT": 26,
-   "BRANDING_WIDTH": 32
+   "BRANDING_WIDTH": 32,
+   "BRANDING_BUG_URL": "http://bugs.example.org/lava",
+   "BRANDING_SOURCE_URL": "https://github.com/example/lava-server",
+
 
 If the icon is available under the django static files location, this location
 can be specified instead of a URL::

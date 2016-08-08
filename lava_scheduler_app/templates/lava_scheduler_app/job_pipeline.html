@@ -1,0 +1,688 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load utils %}
+{% load django_tables2 %}
+
+{% block styles %}
+  <style>
+    code {
+      margin: 0px;
+      padding-top: 0px;
+      padding-bottom: 0px;
+      border: 0px;
+      color: black;
+      white-space: pre-wrap;
+      display: block;
+    }
+    .results {
+      border: 1px solid black;
+      white-space: normal;
+    }
+    .exception {
+      border: 1px solid red;
+    }
+
+    .failure_comment {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .btn-keyboard {
+      color: #fff;
+      background-color: #333;
+    }
+
+    .affix {
+      position: absolute;
+      right: 0px;
+      overflow: auto;
+      background-color: #eee;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 3px;
+      z-index: 1;
+      max-height: 80vh;
+    }
+    .fix-affix {
+      position: fixed;
+      right: 0px;
+      top: 70px;
+    }
+    #affix-full {
+      display: none;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="row" id="top">
+  <div class="col-md-4">
+    <h4 class="modal-header">Job information</h4>
+    <dl class="dl-horizontal">
+      <dt>Description</dt>
+      <dd>{{job.description|default:"<i>not set</i>" }}</dd>
+      <dt>Status<dt>
+      <dd id="jobstatusdef">{{ job.get_status_display }}</dd>
+      <dt>Priority</dt>
+      <dd>{{ job.get_priority_display }}</dd>
+      <dt>Submitter</dt>
+      <dd>{{ job.submitter }}</dd>
+      <dt>Visibility</dt>
+      <dd>{{ job.get_visibility_display }}</dd>
+      {% if job.visibility == 2 %}
+      <dt>Visibility groups</dt>
+      <dd>
+	{% for group in job.viewing_groups.all %}
+	{{ group }}&nbsp;
+	{% endfor %}
+      </dd>
+      {% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Device</h4>
+    <div id="statusblock">
+{% include 'lava_scheduler_app/_device_refresh.html' %}
+    </div>
+  </div>
+  <div class="col-md-4" id="jobtiming">
+{% include 'lava_scheduler_app/_job_timing.html' %}
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Logs</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
+        class="glyphicon glyphicon-fast-forward"></span></a></li>
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
+        {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
+        {% elif expand %}
+          <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
+        {% endif %}
+        </ul>
+      <hr/>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-download"></span></a></li>
+        {% if job.results_link and not job.archived_bundle %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_cancel %}
+          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+        {% endif %}
+        {% if show_resubmit and not job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
+            {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
+        </a></li>
+        <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a></li>
+
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        {% if show_failure %}
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+        {% if user.is_authenticated and user.is_superuser %}
+        <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
+            Admin this TestJob
+        </a></li>
+        {% endif %}
+        </ul>
+        {% endif %}
+        {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
+        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
+          {% csrf_token %}
+          <button id="priority-button" class="btn btn-default">Set priority</button><br />
+          {{ job.priority|get_priority_select }}
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if job.is_multinode or job.is_vmgroup %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Sub jobs</h4>
+    <div class="row">
+    <dl class="dl-horizontal">
+    {% for subjob in job.sub_jobs_list %}
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
+            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+        {% endif %}
+      </dt>
+        <dd>
+    {% if subjob.actual_device.hostname %}
+      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
+      as: {{ subjob.device_role }}
+    {% else %}
+      No device assigned as {{ subjob.device_role }}.
+    {% endif %}
+        </dd>
+    {% endfor %}
+    </dl>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
+  <li><a href="#Description" data-toggle="tab">Job description</a></li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane active" id="Log">
+    {% if job.archived_job_file %}
+    <div class="alert alert-info">
+      <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>
+    </div>
+    {% endif %}
+    {% if job.failure_comment %}
+    <div id="failure_block">
+      <h4 class="modal-header">Job failure comment</h4>
+      <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
+    </div>
+    {% endif %}
+
+    <div class="affix">
+      <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
+      <div id="affix-full">
+        <ul class="list-unstyled">
+          {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=pipeline_data %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="btn-group" data-toggle="buttons" id="logbuttons">
+      <label class="btn btn-default" id="debug_label" for="debug"><input type="checkbox" id="debug" autocomplete="off">debug</label>
+      <label class="btn btn-info" id="info_label" for="info"><input type="checkbox" id="info" autocomplete="off">info</label>
+      <label class="btn btn-warning" id="warning_label" for="warning"><input type="checkbox" id="warning" autocomplete="off">warning</label>
+      <label class="btn btn-danger" id="error_label" for="error"><input type="checkbox" id="error" autocomplete="off">error</label>
+      <label class="btn btn-default btn-keyboard" id="keyboard_label" for="keyboard"><input type="checkbox" id="keyboard" autocomplete="off">input</label>
+      <label class="btn btn-success" id="target_label" for="target"><input type="checkbox" id="target" autocomplete="off">output</label>
+      <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
+    </div>
+
+    <div class="row" id="sectionlogs">
+      <div class="col-md-12">
+        {% for line in log_data %}
+          {% if line.lvl == "debug" %}
+            {% if "sending" in line.msg %}
+        <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
+            {% else %}
+              {% get_action_id line.msg as act_id %}
+        <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
+            {% endif %}
+          {% elif line.lvl == "target" %}
+        <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+          {% elif line.lvl == "results" %}
+        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+          {% for key, value in line.msg.items %}
+            {% if value.items %}
+              {% if key == "extra" %}
+                extra: ...<br />
+              {% else %}
+                {% for k, v in value.items %}
+                  {{ k }}: {{ v }}<br />
+                {% endfor %}
+              {% endif %}
+            {% else %}
+                {{ key }}: {{ value }}<br />
+            {% endif %}
+          {% endfor %}
+        </code></a>
+          {% elif line.lvl == "error" or line.lvl == "exception" %}
+        <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+          {% else %}
+            {% get_action_id line.msg as act_id %}
+        <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
+          {% endif %}
+        {% endfor %}
+        {% if job.status <= job.RUNNING %}
+        <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="Description">
+    <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
+      <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
+    <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+     the job definition to generate a descriptive YAML file when the pipeline is validated.
+     The file represents the data sent to the dispatcher at the start of the job, including
+     details of the device as well as the job parameters and the details of the parameters
+     sent to each of the deploy, boot and test actions in the job pipeline.</p>
+     <p>Click on the Device or Job Actions headings below to see some of the information
+     from the description file for this job or download the complete file as YAML using
+     the link above.</p>
+    <div class="panel-group" id="job_accordion">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#device_collapse">Device</a></h4>
+        </div>
+        <div id="device_collapse" class="panel-collapse collapse{% if 'section' not in request.GET %} in{% endif %}">
+          <div class="panel-body">
+            <dl class="dl-horizontal">
+              <dt>device type</dt>
+              <dd>{{ device_data.device_type }}</dd>
+              <dt>hostname</dt>
+              <dd>{{ device_data.hostname }}</dd>
+              <dt>timeouts</dt>
+              <dd>
+                <ul>
+                  {% for key, value in device_data.timeouts.items %}
+                  <li>{{ key }}: {{ value.values|join:'' }} {{ value.keys|join:'' }}</li>
+                  {% endfor %}
+                </ul>
+              </dd>
+              <dt>device action methods</dt>
+              <dd>
+                {% for key, value in device_data.actions.items %}
+                {{ key }}:
+                <ul>
+                  {% for itemkey, itemvalue in value.methods.items %}
+                  <li>{{ itemkey }}:
+                    <ul>
+                      {% for paramkey, paramvalue in itemvalue.parameters.items %}
+                      <li>{{ paramkey }}: {{ paramvalue }}</li>
+                      {% endfor %}
+                    </ul>
+                  </li>
+                {% endfor %}
+                </ul>
+                {% endfor %}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#job_actions">Job Actions</a></h4>
+        </div>
+        <div id="job_actions" class="panel-collapse collapse{% if 'section' in request.GET %} in{% endif %}">
+          <div class="panel-body">
+
+            <!-- Here we insert another nested accordion -->
+            <dl class="dl-horizontal">
+              <dt>target</dt>
+              <dd>{{ job_data.target|default:'...' }}</dd>
+              <dt>timeouts</dt>
+              <dd>
+                {% if job_data.timeouts %}
+                <ul>
+                  {% for key, value in job_data.timeouts.items %}
+                  <li>{{ key }}: {{ value }}</li>
+                  {% endfor %}
+                </ul>
+                {% else %}...
+                {% endif %}
+              </dd>
+            </dl>
+            <div class="panel-group" id="action_list">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerOne">Deploy</a></h4>
+                </div>
+                <div id="collapseInnerOne" class="panel-collapse collapse{% if 'section' in request.GET and request.GET.section == 'deploy' %} in{% endif %}">
+                  <div class="panel-body">
+                    <ol>
+                      {% for entry in deploy_list %}
+                      <li><br/>
+                        <dl class="dl-horizontal">
+                          {% for key, value in entry.items %}
+                          {% if key == 'timeout' %}
+                          <dt>Timeout</dt>
+                          <dd>
+                            <ul>
+                              {% for timekey, timevalue in value.items %}
+                              {% if timekey == 'yaml_line' %}
+                              <li>{{ timekey }} {{ timevalue }}</li>
+                              {% else %}
+                              <li>{{ timevalue }} {{ timekey }}</li>
+                              {% endif %}
+                              {% endfor %}
+                            </ul>
+                          </dd>
+                          {% else %}
+                          <dt>{{ key }}</dt>
+                          <dd>{{ value }}</dd>
+                          {% endif %}
+                          {% endfor %}
+                        </dl>
+                      </li>
+                      {% endfor %}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerTwo">Boot</a></h4>
+                </div>
+                <div id="collapseInnerTwo" class="panel-collapse collapse{%if 'section' in request.GET and request.GET.section == 'boot' %} in{% endif %}">
+                  <div class="panel-body">
+                    <ol>
+                    {% for entry in boot_list %}
+                      <li><br/>
+                        <dl class="dl-horizontal">
+                          {% for key, value in entry.items %}
+                          {% if key == 'timeout' %}
+                          <dt>Timeout</dt>
+                          <dd>
+                            <ul>
+                              {% for timekey, timevalue in value.items %}
+                              {% if timekey == 'yaml_line' %}
+                              <li>{{ timekey }} {{ timevalue }}</li>
+                              {% else %}
+                              <li>{{ timevalue }} {{ timekey }}</li>
+                              {% endif %}
+                              {% endfor %}
+                            </ul>
+                          </dd>
+                          {% else %}
+                          <dt>{{ key }}</dt>
+                          <dd>{{ value }}</dd>
+                          {% endif %}
+                          {% endfor %}
+                        </dl>
+                      </li>
+                    {% endfor %}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerThree">Test</a></h4>
+                </div>
+                <div id="collapseInnerThree" class="panel-collapse collapse{% if 'section' in request.GET and request.GET.section == 'test' %} in{% endif %}">
+                  <div class="panel-body">
+                    <ol>
+                      {% for entry in test_list %}
+                      <li><br/>
+                        <dl class="dl-horizontal">
+                          {% for key, value in entry.items %}
+                          {% if key == 'timeout' %}
+                          <dt>Timeout</dt>
+                          <dd>
+                            <ul>
+                              {% for timekey, timevalue in value.items %}
+                              {% if timekey == 'yaml_line' %}
+                              <li>{{ timekey }} {{ timevalue }}</li>
+                              {% else %}
+                              <li>{{ timevalue }} {{ timekey }}</li>
+                              {% endif %}
+                              {% endfor %}
+                            </ul>
+                          </dd>
+                          {% elif key == 'definitions' %}
+                          <dt>Definitions</dt>
+                          <dd>
+                            {% for item in value %}
+                            <ul>
+                              {% for elem_key, elem_value in item.items %}
+                              <li>{{ elem_key }} {{ elem_value }}</li>
+                              {% endfor %}
+                            </ul>
+                            {% endfor %}
+                          </dd>
+                          {% else %}
+                          <dt>{{ key }}</dt>
+                          <dd>{{ value }}</dd>
+                          {% endif %}
+                          {% endfor %}
+                        </dl>
+                      </li>
+                      {% endfor %}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Inner accordion ends here -->
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "_similar_jobs.html" %}
+
+<div id="bottom"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+  var condition_choices = JSON.parse($("#id_condition_choices").val());
+  var content_types = JSON.parse($("#id_available_content_types").val());
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/anchor-v3.2.0.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/similar-jobs.min.js"></script>
+<script type="text/javascript">
+  $(document).ready(
+    function() {
+      // Create a new CSS sheet and use it
+      var sheet = (function() {
+        var style = document.createElement("style");
+        // WebKit hack :(
+        style.appendChild(document.createTextNode(""));
+        document.head.appendChild(style);
+        return style.sheet;
+      })();
+
+      // Create the list of styles
+      var styles = {
+        'debug': sheet.insertRule('.debug { display: block}', 0),
+        'keyboard': sheet.insertRule('.keyboard { display: block}', 1),
+        'info': sheet.insertRule('.info{ display: block}', 2),
+        'warning': sheet.insertRule('.warning { display: block}', 3),
+        'error': sheet.insertRule('.error { display: block}', 4),
+        'target': sheet.insertRule('.target { display: block}', 5),
+        'results': sheet.insertRule('.results { display: block}', 6),
+      };
+
+      // Handle click events on buttons
+      $("#logbuttons label").click(function(e) {
+        var label = e.target.htmlFor;
+        var input = $('input#' + label);
+        var rule;
+        if (input.is(':checked')) {
+          rule = '.' + label + ' { display: block }';
+          $('label#' + label + '_label').css('text-decoration', 'None');
+        } else {
+          rule = '.' + label + ' { display: none }';
+          $('label#' + label + '_label').css('text-decoration', 'line-through');
+        }
+        // Remove old style and insert the new one
+        var index = styles[label];
+        sheet.deleteRule(index);
+        sheet.insertRule(rule, index);
+      });
+
+      // Open the affix if the user click on the button
+      var affix_toggle = true;
+      $('.affix h4').click(function() {
+        if(affix_toggle) {
+          $('#affix-full').css('display', 'block');
+          $('.affix span').removeClass('glyphicon-arrow-down');
+          $('.affix span').addClass('glyphicon-arrow-up');
+        } else {
+          $('#affix-full').css('display', 'none');
+          $('.affix span').removeClass('glyphicon-arrow-up');
+          $('.affix span').addClass('glyphicon-arrow-down');
+        }
+        affix_toggle = !affix_toggle;
+      });
+
+      // Move the affix
+      var affix = $('.affix');
+      var affix_top = window.scrollY +
+                      $('.affix h4')[0].getBoundingClientRect().top - 70;
+      // Place it correctly if the page is reloaded while not at the top
+      if (document.body.scrollTop > affix_top ||
+          document.documentElement.scrollTop > affix_top) {
+        affix.addClass("fix-affix");
+      }
+      $(window).scroll(function(e) {
+        if (document.body.scrollTop > affix_top ||
+            document.documentElement.scrollTop > affix_top) {
+          affix.addClass("fix-affix");
+        } else {
+          affix.removeClass("fix-affix");
+        }
+      });
+    });
+
+    // A the links
+    anchors.options.placement = 'left';
+    anchors.add('code');
+
+  // Add a timer for the log updates
+{% if job.status <= job.RUNNING %}
+  pollTimer = setTimeout(poll, 5000);
+{% endif %}
+
+  var poll_status = 1;
+  var poll_logs = 1;
+  var position = {{ log_data|length }};
+  var progressNode = $('#log-messages');
+  var action_id_regexp = /^start: ([\d.]+) [\w_-]+ /;
+  function poll() {
+    // Update job status
+    if(poll_status) {
+      $.ajax({
+        url: '{% url 'lava.scheduler.job_status' pk=job.pk %}',
+        success: function(data, success, xhr) {
+          $('#jobstatusdef').html(data['job_status']);
+          $('#statusblock').html(data['device']);
+          $('#jobtiming').html(data['timing']);
+          if(!('priority' in data)) {
+            $('#priority-choice').css('display', 'none')
+          }
+          if('failure_comment' in data) {
+            $('#failure_comment').html(data['failure_comment']);
+            $('#failure_block').css('display', 'block');
+          }
+          if ('X-JobStatus' in data) {
+            poll_status = 0;
+          }
+        }
+      });
+    }
+
+    // Update logs
+    if(poll_logs) {
+      $.ajax({
+        url: '{% url 'lava.scheduler.job.log_pipeline_incremental' pk=job.pk %}?line=' + position,
+        success: function(data, success, xhr) {
+          // Do we have to scroll down ?
+          var scroll_down = false;
+          if((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            scroll_down = true;
+          }
+
+          // Loop on all new code blocks
+          for(var i = 0; i < data.length; i++) {
+              var d = data[i];
+              var level = d['lvl'];
+              var id = "L" + (position + i);
+
+              var node;
+              if(level == 'debug') {
+                if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
+                  $('<code class="keyboard" id="' + id + '"></code>')
+                    .append($('<kbd></kbd>')
+                    .text(d['msg']['sending']))
+                    .insertBefore(progressNode);
+                } else {
+                  var action_id = action_id_regexp.exec(d['msg']);
+                  if(action_id) {
+                    id = 'action_' + action_id[1].replace(/\./g, '-');
+                  }
+                  $('<code class="debug" id="' + id + '"></code>')
+                    .text(d['msg'])
+                    .insertBefore(progressNode);
+                }
+              } else if(level == 'target') {
+                $('<code class="target bg-success" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
+              } else if(level == 'results') {
+                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
+                var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
+                var node = $('<code class="results bg-primary" id="' + id + '"></code>');
+                for(key in d['msg']) {
+                  if(typeof(d['msg'][key]) == 'string') {
+                    node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
+                    node.append($('<br />'));
+                  } else if(key == 'extra') {
+                    node.append($('<span>extra: ...</span><br />'));
+                  } else {
+                    for(k in d ['msg'][key]) {
+                      node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
+                      node.append($('<br />'));
+                    }
+                  }
+                }
+                link.append(node);
+                link.insertBefore(progressNode);
+              } else if (level == 'error' || level == 'exception' ) {
+                $('<code class="' + level + ' bg-danger" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
+              } else {
+                var action_id = action_id_regexp.exec(d['msg']);
+                if(action_id) {
+                  id = 'action_' + action_id[1].replace(/\./g, '-');
+                }
+                $('<code class="' + level + ' bg-' + level + '" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
+              }
+              // Add the anchor
+              anchors.add('#' + id);
+          }
+          // Relaunch the timer
+          if(xhr.getResponseHeader('X-Is-Finished')) {
+            $('#log-messages').css('display', 'none');
+            poll_logs = 0;
+          } else {
+            position += data.length
+          }
+
+          // Scroll down
+          if (scroll_down) {
+            document.getElementById('bottom').scrollIntoView();
+          }
+        }
+      });
+    }
+    if(poll_status || poll_logs) {
+      pollTimer = setTimeout(poll, 5000);
+    }
+  };
+</script>
+{% endblock scripts %}

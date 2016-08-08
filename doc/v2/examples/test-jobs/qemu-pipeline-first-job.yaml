@@ -1,0 +1,54 @@
+# Your first LAVA JOB definition for an x86_64 QEMU
+device_type: qemu
+job_name: QEMU pipeline, first job
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+# context allows specific values to be overridden or included
+context:
+  # tell the qemu template which architecture is being tested
+  # the template uses that to ensure that qemu-system-x86_64 is executed.
+  arch: amd64
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: first-job
+  docs-filename: qemu-pipeline-first-job.yaml
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

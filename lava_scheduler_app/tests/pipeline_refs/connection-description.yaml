@@ -1,0 +1,755 @@
+compatibility: 2
+device: !!python/object/new:lava_dispatcher.pipeline.device.PipelineDevice
+  dictitems:
+    actions:
+      boot:
+        connections: {serial: null, ssh: null}
+        methods:
+          kexec: null
+          ssh: null
+          u-boot:
+            nfs:
+              commands: [setenv autoload no, setenv initrd_high '0xffffffff', setenv
+                  fdt_high '0xffffffff', 'setenv kernel_addr_r ''{KERNEL_ADDR}''',
+                'setenv initrd_addr_r ''{RAMDISK_ADDR}''', 'setenv fdt_addr_r ''{DTB_ADDR}''',
+                'setenv loadkernel ''tftp ${kernel_addr_r} {KERNEL}''', 'setenv loadinitrd
+                  ''tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}''',
+                'setenv loadfdt ''tftp ${fdt_addr_r} {DTB}''', 'setenv nfsargs ''setenv
+                  bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp''',
+                'setenv bootcmd ''dhcp; setenv serverip {SERVER_IP}; run loadkernel;
+                  run loadinitrd; run loadfdt; run nfsargs; {BOOTX}''', boot]
+            parameters: {boot_message: Booting Linux, bootloader_prompt: =>, send_char: false}
+            ramdisk:
+              commands: [setenv autoload no, setenv initrd_high '0xffffffff', setenv
+                  fdt_high '0xffffffff', 'setenv kernel_addr_r ''{KERNEL_ADDR}''',
+                'setenv initrd_addr_r ''{RAMDISK_ADDR}''', 'setenv fdt_addr_r ''{DTB_ADDR}''',
+                'setenv loadkernel ''tftp ${kernel_addr_r} {KERNEL}''', 'setenv loadinitrd
+                  ''tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}''',
+                'setenv loadfdt ''tftp ${fdt_addr_r} {DTB}''', 'setenv bootargs ''console=ttyO0,115200n8
+                  root=/dev/ram0  ip=dhcp''', 'setenv bootcmd ''dhcp; setenv serverip
+                  {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}''',
+                boot]
+            usb:
+              commands: [usb start, usb info, setenv autoload no, setenv initrd_high
+                  '0xffffffff', setenv fdt_high '0xffffffff', 'setenv kernel_addr_r
+                  ''{KERNEL_ADDR}''', 'setenv initrd_addr_r ''{RAMDISK_ADDR}''', 'setenv
+                  fdt_addr_r ''{DTB_ADDR}''', 'setenv loadkernel ''load usb 0:{ROOT_PART}
+                  ${kernel_addr_r} {KERNEL}''', 'setenv loadinitrd ''load usb 0:{ROOT_PART}
+                  ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}''', 'setenv
+                  loadfdt ''load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}''', 'setenv
+                  bootargs ''console=ttyO0,115200n8 root={ROOT}  ip=dhcp''', 'setenv
+                  bootcmd ''run loadkernel; run loadinitrd; run loadfdt; {BOOTX}''',
+                boot]
+      deploy:
+        methods:
+          ssh:
+            host: 10.15.0.151
+            identity_file: device/dynamic_vm_keys/lava
+            options: [-o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL]
+            port: '22'
+            user: root
+          tftp: null
+          usb: null
+        parameters: {add_header: u-boot, mkimage_arch: arm}
+    commands: {connect: telnet localhost 6004}
+    device_type: beaglebone-black
+    hostname: !!python/unicode 'black02'
+    parameters:
+      bootm: {dtb: '0x815f0000', kernel: '0x80200000', ramdisk: '0x81600000'}
+      bootz: {dtb: '0x81f00000', kernel: '0x81000000', ramdisk: '0x82000000'}
+      media:
+        usb:
+          SanDisk_Ultra: {device_id: 0, uuid: null}
+      pass: null
+    power_state: 'off'
+    timeouts:
+      actions:
+        apply-overlay-image: {seconds: 120}
+        lava-test-shell: {seconds: 30}
+        power_off: {seconds: 5}
+        umount-retry: {seconds: 45}
+      connections:
+        uboot-retry: {seconds: 60}
+  state: {target: !!python/unicode 'black02'}
+job: &id006
+  actions:
+  - deploy:
+      connection: ssh
+      default_action_timeout: 180.0
+      default_connection_timeout: 300.0
+      default_test_timeout: 30
+      deployment_data: !!python/object:lava_dispatcher.pipeline.deployment_data.deployment_data_dict
+        __data__: &id002 {TESTER_PS1: 'linaro-test [rc=$(echo \$?)]# ', TESTER_PS1_INCLUDES_RC: true,
+          TESTER_PS1_PATTERN: 'linaro-test \[rc=(\d+)\]# ', boot_cmds: boot_cmds,
+          distro: debian, lava_test_dir: /lava-%s, lava_test_results_dir: /lava-%s,
+          lava_test_results_part_attr: root_part, lava_test_sh_cmd: /bin/bash, lava_test_shell_file: ~/.bashrc,
+          tar_flags: --warning no-timestamp}
+      lava-multinode: &id001
+        expect_role: host
+        group_size: 4
+        request: lava-start
+        role: guest
+        roles: {black02: host, yaml_line: 49}
+        sub_id: 1
+        target_group: 6e3d058f-9f51-46b9-81e3-1eb753b1ac34
+        timeout: {minutes: 15, yaml_line: 52}
+        yaml_line: 44
+      os: debian
+      protocols:
+        lava-multinode:
+        - action: prepare-scp-overlay
+          message: {ipaddr: $ipaddr, yaml_line: 8}
+          messageID: ipv4
+          request: lava-wait
+          yaml_line: 7
+        timeout: {minutes: 5, yaml_line: 11}
+        yaml_line: 5
+      role: guest
+      timeout: {seconds: 30, yaml_line: 13}
+      to: ssh
+      yaml_line: 43
+  - boot:
+      default_action_timeout: 180.0
+      default_connection_timeout: 300.0
+      default_test_timeout: 30
+      lava-multinode: *id001
+      method: ssh
+      parameters: {hostID: ipv4, host_key: ipaddr, yaml_line: 17}
+      prompts: ['root@linaro:']
+      role: guest
+      timeout: {minutes: 3, yaml_line: 20}
+      yaml_line: 43
+  - test:
+      default_action_timeout: 180.0
+      default_connection_timeout: 300.0
+      default_test_timeout: 30
+      definitions: &id004
+      - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git',
+        yaml_line: 24}
+      - from: inline
+        name: ssh-client
+        path: inline/ssh-client.yaml
+        repository:
+          metadata:
+            description: client complete
+            format: Lava-Test Test Definition 1.0
+            name: client-ssh
+            os: [debian]
+            scope: [functional]
+            yaml_line: 28
+          run:
+            steps: [df -h, free, lava-sync clients]
+            yaml_line: 34
+          yaml_line: 27
+        yaml_line: 24
+      lava-multinode: *id001
+      role: guest
+      timeout: {minutes: 5, yaml_line: 37}
+      yaml_line: 43
+  connection: ssh
+  env_dut: null
+  host_role: host
+  job_name: bbb-guest-ssh
+  metadata: {path: bbb-ssh-guest.yaml, source: 'https://git.linaro.org/lava-team/refactoring.git',
+    yaml_line: 41}
+  output_dir: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722'
+  priority: medium
+  protocols:
+    lava-multinode: *id001
+    yaml_line: 43
+  target: !!python/unicode 'black02'
+  timeouts:
+    action: {minutes: 3, yaml_line: 54}
+    connection: {minutes: 5, yaml_line: 55}
+    job: {minutes: 30, yaml_line: 56}
+    yaml_line: 53
+  visibility: public
+  yaml_line: 1
+pipeline:
+- connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 300.0,
+    name: deploy, protected: false}
+  data: &id003
+    auto-login-action: {}
+    common:
+      environment:
+        env_dict: {LANG: C, LC_ALL: C.UTF-8}
+      prepare-scp-overlay:
+        overlay: &id005 [ipv4]
+      scp-overlay: {tar_flags: --warning no-timestamp}
+      ssh-connection: {host: true}
+    compress-overlay: {}
+    expect-shell-connection: {}
+    extract-modules: {}
+    extract-rootfs: {}
+    finalize: {}
+    git-repo-action: {}
+    inline-repo-action: {}
+    lava-multinode-overlay: {}
+    lava-overlay: {}
+    lava-vland-overlay: {}
+    lava_test_results_dir: /lava-9722
+    login-ssh: {}
+    multinode-test: {}
+    persistent-nfs-overlay: {}
+    power_off: {}
+    prepare-scp-overlay: {}
+    scp-deploy: {}
+    scp-overlay: {}
+    scp-overlay-unpack: {}
+    ssh-authorize: {}
+    ssh-connection: {}
+    test-definition: {}
+  description: prepare overlay and scp to device
+  items: [firmware, kernel, dtb, rootfs, modules]
+  level: '1'
+  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1-scp-overlay.log'
+  max_retries: 1
+  name: scp-overlay
+  parameters:
+    deployment_data: *id002
+  pipeline:
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: deploy, protected: false}
+    data: *id003
+    description: add lava scripts during deployment for test shell use
+    lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+    lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell
+    level: '1.1'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1-lava-overlay.log'
+    max_retries: 1
+    name: lava-overlay
+    parameters:
+      deployment_data: *id002
+    pipeline:
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: null, protected: false}
+      data: *id003
+      description: include public key in overlay and authorize root user
+      level: 1.1.1
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.1-ssh-authorize.log'
+      max_retries: 1
+      name: ssh-authorize
+      parameters:
+        deployment_data: *id002
+      section: deploy
+      summary: add public key to authorized_keys
+      timeout: {duration: 30.0, name: ssh-authorize}
+      valid: true
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: deploy, protected: false}
+      data: *id003
+      description: Populate specific vland scripts for tests to lookup vlan data.
+      lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+      lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell
+      lava_vland_cache_file: /tmp/lava_vland_cache.txt
+      lava_vland_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/vland
+      level: 1.1.2
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.2-lava-vland-overlay.log'
+      max_retries: 1
+      name: lava-vland-overlay
+      parameters:
+        deployment_data: *id002
+      protocol: lava-vland
+      scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+      section: deploy
+      summary: Add files detailing vlan configuration.
+      timeout: {duration: 30.0, name: lava-vland-overlay}
+      v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-case,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-runner]
+      valid: true
+      xmod: 493
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: deploy, protected: false}
+      data: *id003
+      description: add lava scripts during deployment for multinode test shell use
+      lava_multi_node_cache_file: /tmp/lava_multi_node_cache.txt
+      lava_multi_node_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node
+      lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+      lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell
+      level: 1.1.3
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.3-lava-multinode-overlay.log'
+      max_retries: 1
+      name: lava-multinode-overlay
+      parameters:
+        deployment_data: *id002
+      protocol: lava-multinode
+      role: guest
+      scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+      section: deploy
+      summary: overlay the lava multinode scripts
+      timeout: {duration: 30.0, name: lava-multinode-overlay}
+      v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-case,
+        /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-runner]
+      valid: true
+      xmod: 493
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: test, protected: false}
+      data: *id003
+      description: load test definitions into image
+      level: 1.1.4
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4-test-definition.log'
+      max_retries: 1
+      name: test-definition
+      parameters:
+        deployment_data: *id002
+      pipeline:
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: null, protected: false}
+        data: *id003
+        default_fixupdict: {FAIL: fail, PASS: pass, SKIP: skip, UNKNOWN: unknown}
+        default_pattern: (?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))
+        description: apply git repository of tests to the test image
+        level: 1.1.4.1
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.1-git-repo-action.log'
+        max_retries: 1
+        name: git-repo-action
+        parameters:
+          deployment_data: *id002
+        priority: 1
+        section: deploy
+        summary: clone git test repo
+        timeout: {duration: 30.0, name: git-repo-action}
+        uuid: a042a252-e4a7-4553-adc9-846869de9f2e
+        valid: true
+        vcs: git://git.linaro.org/qa/test-definitions.git
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay test support files onto image
+        level: 1.1.4.2
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.2-test-overlay.log'
+        max_retries: 1
+        name: test-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        summary: applying LAVA test overlay
+        test_uuid: a042a252-e4a7-4553-adc9-846869de9f2e
+        timeout: {duration: 30.0, name: test-overlay}
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay dependency installation support files onto image
+        level: 1.1.4.3
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.3-test-install-overlay.log'
+        max_retries: 1
+        name: test-install-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        skip_list: [keys, sources, deps, steps, all]
+        summary: applying LAVA test install scripts
+        test_uuid: a042a252-e4a7-4553-adc9-846869de9f2e
+        timeout: {duration: 30.0, name: test-install-overlay}
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay run script onto image
+        level: 1.1.4.4
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.4-test-runscript-overlay.log'
+        max_retries: 1
+        name: test-runscript-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        summary: applying LAVA test run script
+        test_uuid: a042a252-e4a7-4553-adc9-846869de9f2e
+        timeout: {duration: 30.0, name: test-runscript-overlay}
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: null, protected: false}
+        data: *id003
+        default_fixupdict: {FAIL: fail, PASS: pass, SKIP: skip, UNKNOWN: unknown}
+        default_pattern: (?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))
+        description: apply inline test defintion to the test image
+        level: 1.1.4.5
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.5-inline-repo-action.log'
+        max_retries: 1
+        name: inline-repo-action
+        parameters:
+          deployment_data: *id002
+        priority: 1
+        section: deploy
+        summary: exctract inline test definition
+        timeout: {duration: 30.0, name: inline-repo-action}
+        uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay test support files onto image
+        level: 1.1.4.6
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.6-test-overlay.log'
+        max_retries: 1
+        name: test-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        summary: applying LAVA test overlay
+        test_uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
+        timeout: {duration: 30.0, name: test-overlay}
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay dependency installation support files onto image
+        level: 1.1.4.7
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.7-test-install-overlay.log'
+        max_retries: 1
+        name: test-install-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        skip_list: [keys, sources, deps, steps, all]
+        summary: applying LAVA test install scripts
+        test_uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
+        timeout: {duration: 30.0, name: test-install-overlay}
+        valid: true
+      - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+          duration: 300.0, name: test, protected: false}
+        data: *id003
+        description: overlay run script onto image
+        level: 1.1.4.8
+        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.8-test-runscript-overlay.log'
+        max_retries: 1
+        name: test-runscript-overlay
+        parameters:
+          deployment_data: *id002
+        section: deploy
+        summary: applying LAVA test run script
+        test_uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
+        timeout: {duration: 30.0, name: test-runscript-overlay}
+        valid: true
+      section: deploy
+      summary: loading test definitions
+      test_list:
+      - *id004
+      timeout: {duration: 30.0, name: test-definition}
+      valid: true
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: null, protected: false}
+      data: *id003
+      description: Create a lava overlay tarball and store alongside the job
+      level: 1.1.5
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.5-compress-overlay.log'
+      max_retries: 1
+      name: compress-overlay
+      parameters:
+        deployment_data: *id002
+      section: deploy
+      summary: Compress the lava overlay files
+      timeout: {duration: 30.0, name: compress-overlay}
+      valid: true
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: null, protected: false}
+      data: *id003
+      description: unpack overlay into persistent NFS
+      level: 1.1.6
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.6-persistent-nfs-overlay.log'
+      max_retries: 1
+      name: persistent-nfs-overlay
+      parameters:
+        deployment_data: *id002
+      section: deploy
+      summary: add test overlay to NFS
+      timeout: {duration: 30.0, name: persistent-nfs-overlay}
+      valid: true
+    scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+    section: deploy
+    summary: overlay the lava support scripts
+    timeout: {duration: 30.0, name: lava-overlay}
+    v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-case,
+      /usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-runner]
+    valid: true
+    xmod: 493
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: copy the overlay over an existing ssh connection
+    host_keys: *id005
+    level: '1.2'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2-prepare-scp-overlay.log'
+    max_retries: 1
+    name: prepare-scp-overlay
+    parameters:
+      deployment_data: *id002
+    pipeline:
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: null, protected: false}
+      data: *id003
+      description: unpack rootfs
+      extra_compression: [xz]
+      file_key: root
+      level: 1.2.1
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.1-extract-rootfs.log'
+      max_retries: 1
+      name: extract-rootfs
+      param_key: rootfs
+      parameters:
+        deployment_data: *id002
+      section: deploy
+      summary: unpack rootfs, ready to apply lava overlay
+      timeout: {duration: 30.0, name: extract-rootfs}
+      use_tarfile: true
+      valid: true
+    - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+        duration: 300.0, name: null, protected: false}
+      data: *id003
+      description: extract supplied kernel modules
+      level: 1.2.2
+      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.2-extract-modules.log'
+      max_retries: 1
+      name: extract-modules
+      parameters:
+        deployment_data: *id002
+      section: deploy
+      summary: extract kernel modules
+      timeout: {duration: 30.0, name: extract-modules}
+      valid: true
+    section: deploy
+    summary: scp the overlay to the remote device
+    timeout: {duration: 30.0, name: prepare-scp-overlay}
+    valid: true
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: deploy device environment
+    level: '1.3'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.3-deploy-device-env.log'
+    max_retries: 1
+    name: deploy-device-env
+    parameters:
+      deployment_data: *id002
+    section: deploy
+    summary: deploy device environment
+    timeout: {duration: 30.0, name: deploy-device-env}
+    valid: true
+  scp_dir: /var/lib/lava/dispatcher/tmp/tmpN0ackC
+  section: deploy
+  summary: copy overlay to device
+  timeout: {duration: 30.0, name: scp-overlay}
+  valid: true
+- connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 300.0,
+    name: null, protected: false}
+  data: *id003
+  description: connect over ssh and ensure a shell is found
+  level: '2'
+  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2-login-ssh.log'
+  max_retries: 1
+  name: login-ssh
+  pipeline:
+  - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava,
+      -p, '22']
+    connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: copy a file to a known device using scp
+    host: 10.15.0.151
+    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+    key: overlay
+    level: '2.1'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.1-scp-deploy.log'
+    max_retries: 1
+    name: scp-deploy
+    scp: [scp, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL]
+    scp_port: [-P, '22']
+    section: boot
+    ssh_port: [-p, '22']
+    ssh_user: root
+    summary: scp over the ssh connection
+    timeout: {duration: 180.0, name: scp-deploy}
+    valid: true
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: determine which address to use for primary or secondary connections
+    level: '2.2'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.2-prepare-ssh.log'
+    max_retries: 1
+    name: prepare-ssh
+    section: boot
+    summary: set the host address of the ssh connection
+    timeout: {duration: 180.0, name: prepare-ssh}
+    valid: true
+  - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava,
+      -p, '22']
+    connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: login to a known device using ssh
+    host: 10.15.0.151
+    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+    level: '2.3'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.3-ssh-connection.log'
+    max_retries: 1
+    name: ssh-connection
+    primary: true
+    scp_port: [-P, '22']
+    section: boot
+    ssh_port: [-p, '22']
+    ssh_user: root
+    summary: make an ssh connection to a device
+    timeout: {duration: 180.0, name: ssh-connection}
+    valid: true
+  - check_prompt_characters_warning: The string '%s' does not look like a typical
+      prompt and could match status messages instead. Please check the job log files
+      and use a prompt string which matches the actual prompt string more closely.
+    connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: automatically login after boot using job parameters
+    level: '2.4'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.4-auto-login-action.log'
+    max_retries: 1
+    name: auto-login-action
+    section: boot
+    summary: Auto-login after boot
+    timeout: {duration: 180.0, name: auto-login-action}
+    valid: true
+  - compatibility: 2
+    connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: Wait for a shell
+    level: '2.5'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.5-expect-shell-connection.log'
+    max_retries: 1
+    name: expect-shell-connection
+    section: boot
+    summary: Expect a shell prompt
+    timeout: {duration: 180.0, name: expect-shell-connection}
+    valid: true
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: Exports environment variables to the device
+    env: [echo export LANG=\'C\' >> None, echo export LC_ALL=\'C.UTF-8\' >> None]
+    level: '2.6'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.6-export-device-env.log'
+    max_retries: 1
+    name: export-device-env
+    section: boot
+    summary: Exports environment variables action
+    timeout: {duration: 180.0, name: export-device-env}
+    valid: true
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: unpack the overlay over an existing ssh connection
+    level: '2.7'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.7-scp-overlay-unpack.log'
+    max_retries: 1
+    name: scp-overlay-unpack
+    section: boot
+    summary: unpack the overlay on the remote device
+    timeout: {duration: 180.0, name: scp-overlay-unpack}
+    valid: true
+  section: boot
+  sleep: 1
+  summary: login over ssh
+  timeout: {duration: 180.0, name: login-ssh}
+  valid: true
+- connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 300.0,
+    name: test, protected: false}
+  data: *id003
+  description: Executing lava-test-runner
+  level: '3'
+  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/3/3-multinode-test.log'
+  max_retries: 1
+  name: multinode-test
+  protocols:
+    lava-multinode:
+      blocks: 4096
+      delayed_start: true
+      job_id: 9722
+      name: lava-multinode
+      parameters: *id006
+      poll_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 30,
+        name: lava-multinode, protected: false}
+      system_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 900.0,
+        name: system, protected: false}
+      valid: true
+  section: test
+  summary: Multinode Lava Test Shell
+  timeout: {duration: 300.0, name: multinode-test}
+  valid: true
+- connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {duration: 30,
+    name: null, protected: false}
+  data: *id003
+  description: finish the process and cleanup
+  level: '4'
+  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/4/4-finalize.log'
+  max_retries: 1
+  name: finalize
+  pipeline:
+  - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
+      duration: 300.0, name: null, protected: false}
+    data: *id003
+    description: discontinue power to device
+    level: '4.1'
+    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/4/4.1-power_off.log'
+    max_retries: 1
+    name: power_off
+    section: finalize
+    summary: send power_off command
+    timeout: {duration: 5.0, name: power_off}
+    valid: true
+  section: finalize
+  summary: finalize the job
+  timeout: {duration: 30, name: finalize}
+  valid: true

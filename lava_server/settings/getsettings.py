@@ -251,33 +251,11 @@ class Settings(object):
         default = "/{mount_point}static/".format(mount_point=self.mount_point)
         return self._settings.get("STATIC_URL", default)
 
-    if django.VERSION > (1, 8):
-        @property
-        def TEMPLATES(self):
-            from django.conf import settings
-            default = settings.TEMPLATES
-            return self._settings.get('TEMPLATES', default)
-    else:
-        @property
-        def TEMPLATE_DIRS(self):
-            """
-            See: http://docs.djangoproject.com/en/1.2/ref/settings/#template-dirs
-
-            Bridge for the settings file TEMPLATE_DIRS property.
-
-            By default it produces two directories:
-
-                * ``"/etc/{appname}/templates"``
-                * ``"/usr/lib/python2.7/dist-packages/{appname}/templates"``
-
-            The first one is provided for administrators that may wish to override
-            one or more templates in a local installation for any purpose. The
-            second one is to gain access to standard package templates.
-            """
-            default = (
-                "/etc/{appname}/templates/".format(appname=self._appname),
-                "/usr/lib/python2.7/dist-packages/{appname}/templates/".format(appname=self._appname))
-            return self._settings.get("TEMPLATE_DIRS", default)
+    @property
+    def TEMPLATES(self):
+        from django.conf import settings
+        default = settings.TEMPLATES
+        return self._settings.get('TEMPLATES', default)
 
     @property
     def STATICFILES_DIRS(self):

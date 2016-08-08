@@ -16,11 +16,11 @@ Prerequisite
 Ensure that LXC is installed in your LAVA dispatcher host, if not use
 the following command to install LXC in Debian / Ubuntu::
 
-  $ sudo apt-get install lxc
+  $ sudo apt install lxc
 
 For enabling networking bridge-utils should be installed as follows::
 
-  $ sudo apt-get install bridge-utils
+  $ sudo apt install bridge-utils
 
 Refer https://wiki.debian.org/LXC/SimpleBridge to enable networking
 for LXC devices.

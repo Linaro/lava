@@ -1,8 +1,10 @@
 import datetime
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from lava_scheduler_app.models import (
     Device,
+    DeviceStateTransition,
     DeviceType,
     TestJob,
     Tag,
@@ -353,8 +355,10 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         """
         self.panda.health_check_job = self.factory.make_job_json(health_check='true')
         self.panda.save()
-        self.panda01.state_transition_to(Device.OFFLINE)
-        self.panda02.state_transition_to(Device.IDLE)
+        # Check that the return value is correct.
+        self.assertTrue(self.panda01.state_transition_to(Device.OFFLINE))
+        # Already in IDLE state.
+        self.assertFalse(self.panda02.state_transition_to(Device.IDLE))
         self.assertEqual(self.panda01.status, Device.OFFLINE)
         self.assertEqual(self.panda02.status, Device.IDLE)
         self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
@@ -920,3 +924,11 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
         self.assertEqual(TestJob.objects.filter(status=TestJob.SUBMITTED).count(), 10)
         self.cleanup(self.whoami())
+
+    def test_same_state_transition(self):
+        self.assertRaises(
+            ValidationError,
+            DeviceStateTransition.objects.create,
+            created_by=self.user, device=self.panda01, old_state=Device.IDLE,
+            new_state=Device.IDLE)
+        self.assertFalse(self.panda02.state_transition_to(Device.IDLE))

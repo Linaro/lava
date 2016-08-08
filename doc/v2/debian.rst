@@ -6,7 +6,6 @@ Developing LAVA on Debian
 #########################
 
 LAVA no longer supports development on Ubuntu.
-See :ref:`ubuntu_install`.
 
 Packages for LAVA are available for:
 
@@ -139,19 +138,19 @@ Jessie (using sbuild) using the
 `lava-buildd scripts <https://git.linaro.org/lava/lava-buildd.git>`_.
 
 .. _pep440: https://www.python.org/dev/peps/pep-0440/
-.. _python-setuptools: http://tracker.debian.org/pkg/python-setuptools
+.. _python-setuptools: https://tracker.debian.org/pkg/python-setuptools
 
 Example
 =======
 
 The helper supports ``lava-server`` and ``lava-dispatcher``::
 
- $ sudo apt-get install lava-dev
- $ git clone http://git.linaro.org/git/lava/lava-server.git
+ $ sudo apt install lava-dev
+ $ git clone https://git.linaro.org/git/lava/lava-server.git
  $ cd lava-server
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
- $ git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+ $ git clone https://git.linaro.org/git/lava/lava-dispatcher.git
  $ cd lava-dispatcher
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher
 
@@ -180,7 +179,7 @@ hash to identify the latest git commit in the branch upon which this
 build is based. The git short hash can be looked up on the ``git.linaro.org``
 site, irrespective of which release tag is the current. For example,
 build version ``2015.07.5333.1521ddb-1`` relates directly to
-``http://git.linaro.org/lava/lava-server.git/1521ddb``
+``https://git.linaro.org/lava/lava-server.git/1521ddb``
 
 From August 2015, LAVA uses git tags without a leading zero on the month
 number, in accordance with PEP440, so the git tag will be ``2015.8``
@@ -240,7 +239,7 @@ is installed::
  postgresql-8.2 installed and want to upgrade to 8.3, you first install
  postgresql-8.3:
 
-  apt-get install postgresql-8.3
+  apt install postgresql-8.3
 
  Then drop the default 8.3 cluster:
 
@@ -251,7 +250,7 @@ is installed::
   pg_upgradecluster 8.2 main
 
 See also
-http://askubuntu.com/questions/66194/how-do-i-migrate-my-postgres-data-from-8-4-to-9-1
+https://askubuntu.com/questions/66194/how-do-i-migrate-my-postgres-data-from-8-4-to-9-1
 
 Check your existing clusters::
 
@@ -322,7 +321,7 @@ Drop the old cluster::
 
 Now the old database package can be removed::
 
- $ sudo apt-get remove postgresql-9.3
+ $ sudo apt remove postgresql-9.3
 
 .. index:: javascript
 

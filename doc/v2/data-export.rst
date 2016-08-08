@@ -5,6 +5,20 @@
 Exporting data out of LAVA
 ##########################
 
+LAVA supports two methods of extracting data and results are available
+whilst the job is running, XML-RPC and the REST API.
+
+.. FIXME: include details of the publisher for events as well as notifications.
+
+.. index:: rest api
+
+.. _rest_api:
+
+REST API
+********
+
+.. include:: restapi.rsti
+
 .. index:: xmlrpc
 
 .. _xml_rpc:
@@ -21,7 +35,7 @@ in LAVA.
              ``http://`` connections to a remote XML-RPC server will
              transmit the token in plaintext. Not all servers have
              ``https://`` configured. If a token becomes compromised,
-             login to that LAVA instance and delete the token before
+             log in to that LAVA instance and delete the token before
              creating a new one.
 
 The general structure of an XML-RPC call can be shown in this python

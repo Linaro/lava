@@ -1,7 +1,7 @@
 .. _device_types:
 
 Identifying device types
-########################
+************************
 
 When adding devices, there is a decision to be made about what qualifies
 as a device type and what does not. A different type of device can
@@ -78,7 +78,7 @@ as a device type, some factors include:
 **LAVA support**
   There are some considerations which are constrained by LAVA support -
   for example the current dispatcher has a ``kvm`` device type but the
-  :term:`refactoring` has made this unnecessary as the only difference
+  :term:`pipeline` has made this unnecessary as the only difference
   between ``kvm`` and ``qemu`` device types were command line options.
   So the new dispatcher uses ``qemu`` for both and the architecture is
   specified in the device dictionary. ``qemu01`` could be ``x86_64``
@@ -95,6 +95,8 @@ as a device type, some factors include:
    devices of the same device type.
 
 See also :ref:`device_type_metadata`.
+
+.. _naming_device_types:
 
 Choosing a name for a device type
 =================================
@@ -124,14 +126,62 @@ Examples
   were constructed. As it turned out, no such difference was actually
   exploited by the test writers.
 
-* The ``mustang`` device can support UBoot and UEFI bootloaders but not on
+* The ``mustang`` device can support U-Boot and UEFI bootloaders but not on
   the same machine. The bootloader can be changed but this is a custom
   process which may or may not be manageable during a test job. Whereas
-  the :term:`refactoring` could distinguish between the two boot methods,
+  the :term:`pipeline` could distinguish between the two boot methods,
 
 * UEFI menu and UEFI shell are usually the same device type as the initial
   state of the one bootloader can determine how the subsequent operations
   proceed.
 
 * ``panda`` devices can support operating systems like Debian as well as
-  supporting Android deployments using a single bootloader - UBoot.
+  supporting Android deployments using a single bootloader - U-Boot.
+
+.. _device_type_elements:
+
+Elements of a device type
+=========================
+
+**Name**
+   - see :ref:`naming_device_types`. Needs to match the name of a
+     jinja template in ``/etc/lava-server/dispatcher-config/device-types/``,
+     without the ``.jinja2`` suffix.
+
+**Has health check**
+   - see :term:`health check`
+
+**Display**
+   Enabled by default - can be disabled to hide the data about the
+   device type from the UI, without deleting the object and associated
+   data. The device type remains accessible in the django administrative
+   interface.
+
+**Owners only**
+   Disabled by default - enable to create a :term:`hidden device type`.
+
+**Health check frequency**
+
+   Each device type can run health checks at a specified frequency which
+   can be based on time intervals or numbers of test jobs.
+
+The device type also includes descriptive fields which would typically
+be empty for emulated device types:
+
+**Architecture name**
+  e.g. ARMv7, ARMv8
+
+**Processor name**
+  e.g. AM335X
+
+**CPU model name**
+  e.g. OMAP 4430 / OMAP4460
+
+**List of cores**
+  The number of cores on the device and the type of CPUs.
+  In the admin interface, cores can be added and the number of
+  each core specified.
+  e.g. 4 x Cortex-A9
+
+**Bit count**
+  e.g. 32 or 64

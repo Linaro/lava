@@ -25,8 +25,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render, loader
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.db.models import Q
@@ -128,9 +127,9 @@ def filters_list(request):
         search_data.update(user_filters_table.prepare_search_data(user_view))
         discrete_data.update(user_filters_table.prepare_discrete_data(user_view))
         terms_data.update(user_filters_table.prepare_terms_data(user_view))
-
-    return render_to_response(
-        'dashboard_app/filters_list.html', {
+    template = loader.get_template('dashboard_app/filters_list.html')
+    return HttpResponse(template.render(
+        {
             'user_filters_table': user_filters_table,
             'public_filters_table': public_filters_table,
             "terms_data": terms_data,
@@ -139,7 +138,7 @@ def filters_list(request):
             "discrete_data": discrete_data,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filters_list),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -200,8 +199,9 @@ def filter_detail(request, username, name):
     else:
         table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        'dashboard_app/filter_detail.html', {
+    template = loader.get_template('dashboard_app/filter_detail.html')
+    return HttpResponse(template.render(
+        {
             'filter': qfilter,
             'subscription': subscription,
             'filter_table': table,
@@ -210,7 +210,7 @@ def filter_detail(request, username, name):
             "discrete_data": table.prepare_discrete_data(view),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name, username=username),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -238,14 +238,15 @@ def filter_subscribe(request, username, name):
     else:
         form = TestRunFilterSubscriptionForm(
             filter, request.user, instance=subscription)
-    return render_to_response(
-        'dashboard_app/filter_subscribe.html', {
+    template = loader.get_template('dashboard_app/filter_subscribe.html')
+    return HttpResponse(template.render(
+        {
             'filter': filter,
             'form': form,
             'subscription': subscription,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_subscribe, name=name, username=username),
-        }, RequestContext(request)
+        }, request=request)
     )
 
 
@@ -271,12 +272,13 @@ def filter_form(request, bread_crumb_trail, instance=None, is_copy=False):
                 else:
                     table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
                 RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-                return render_to_response(
-                    'dashboard_app/filter_preview.html', {
+                template = loader.get_template('dashboard_app/filter_preview.html')
+                return HttpResponse(template.render(
+                    {
                         'bread_crumb_trail': bread_crumb_trail,
                         'form': form,
                         'table': table,
-                    }, RequestContext(request))
+                    }, request=request))
     else:
         form = TestRunFilterForm(request.user, instance=instance,
                                  is_copy=is_copy)
@@ -285,14 +287,14 @@ def filter_form(request, bread_crumb_trail, instance=None, is_copy=False):
     if is_copy:
         filter_name = instance.name
         instance.name = None
-
-    return render_to_response(
-        'dashboard_app/filter_add.html', {
+    template = loader.get_template('dashboard_app/filter_add.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
             'is_copy': is_copy,
             'filter_name': filter_name,
-        }, RequestContext(request))
+        }, request=request))
 
 
 @BreadCrumb("Add new filter", parent=filters_list)
@@ -351,11 +353,12 @@ def filter_delete(request, username, name):
             return HttpResponseRedirect(reverse(filters_list))
         else:
             return HttpResponseRedirect(filter.get_absolute_url())
-    return render_to_response(
-        'dashboard_app/filter_delete.html', {
+    template = loader.get_template('dashboard_app/filter_delete.html')
+    return HttpResponse(template.render(
+        {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_delete, name=name, username=username),
             'filter': filter,
-        }, RequestContext(request))
+        }, request=request))
 
 
 def filter_add_cases_for_test_json(request):
@@ -561,8 +564,9 @@ def compare_matches(request, username, name, tag1, tag2):
             raise PermissionDenied()
     filter_data = filter.as_data()
     test_run_info = compare_filter_matches(request, filter_data, tag1, tag2)
-    return render_to_response(
-        "dashboard_app/filter_compare_matches.html", {
+    template = loader.get_template("dashboard_app/filter_compare_matches.html")
+    return HttpResponse(template.render(
+        {
             'test_run_info': test_run_info,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_matches,
@@ -570,4 +574,4 @@ def compare_matches(request, username, name, tag1, tag2):
                 username=username,
                 tag1=tag1,
                 tag2=tag2),
-        }, RequestContext(request))
+        }, request=request))

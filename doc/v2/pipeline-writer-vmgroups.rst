@@ -47,7 +47,7 @@ tests first.
 Structure of an example job for a mustang
 =========================================
 
-This job uses an nfsrootfs for the host device on a mustang (using the UBoot pipeline support
+This job uses an nfsrootfs for the host device on a mustang (using the U-Boot pipeline support
 for the mustang) as the host role. The NFS is a base Debian Jessie arm64, so the initial
 lava test shell operation on the host is to install ``openssh-server`` and then use the ``lava-echo-ipv4``
 helper to declare the IPv4 address of the host machine.
@@ -116,7 +116,7 @@ Notes
   definition in the position where images could be downloaded and QEMU started.
 * **Use inlines** - this example keeps all of the :ref:`multinode_api` calls to the inline
   definitions. This is a recommended practice and future developments will make it easier to match up
-  the synchronisation calls from inline definitions. So, to adapt this job to do other tasks whilst the
+  the synchronisation calls from inline definitions. So, to adapt this job to do other tasks while the
   secondary connections jobs are running those test shells, move the final ``lava-sync clients`` to another
   inline definition and do the other calls in between.
 
@@ -135,10 +135,13 @@ https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/mustang-ssh-guest.ya
     - deploy:
         role: [host]
         authorize: ssh
-        dtb: http://images-internal/mustang/mustang.dtb_1.11
-        kernel: http://images-internal/mustang/uImage_1.11
-        nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-        rootfs_compression: gz
+        dtb:
+          url: http://images-internal/mustang/mustang.dtb_1.11
+        kernel:
+          url: http://images-internal/mustang/uImage_1.11
+        nfsrootfs:
+          url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+          compression: gz
         os: debian
         timeout: {minutes: 5}
         to: tftp
@@ -266,7 +269,7 @@ in, there are some things test writers need to consider to be able to automate t
    to the console of that VM at the point within the test shell where the call to QEMU is made.
 #. Make sure you know if the image being used has a serial console configured.
 #. If the image being launched stops at a ``login:`` prompt, the test definition will need to handle that prompt
-   or login to the VM in some other way. e.g. by having one of the other secondary connections set up a configuration
+   or log in to the VM in some other way. e.g. by having one of the other secondary connections set up a configuration
    to use ``ssh`` to log in to the VM - the keys needed for this login will need to be handled by the test writer.
 #. The test shell will **pause**, waiting for QEMU to return, unless QEMU is configured to do otherwise or a
    wrapper like ``pexpect`` is used. (The LAVA QEMU devices run a QEMU command using ``pexpect.spawn`` but this

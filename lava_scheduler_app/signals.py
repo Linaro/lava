@@ -2,8 +2,6 @@ import datetime
 from django.conf import settings
 from django.db.models.signals import post_init, post_save
 import json
-import os
-import pwd
 import threading
 import uuid
 import zmq
@@ -16,17 +14,15 @@ from lava_scheduler_app.models import Device, TestJob
 thread_local = threading.local()
 
 
-def send_event(topic, data):
+def send_event(topic, user, data):
     # Get back the thread local storage
     try:
         context = thread_local.context
         socket = thread_local.socket
-        user = thread_local.user
     except AttributeError:
         # Create the context and socket
         thread_local.context = context = zmq.Context.instance()
         thread_local.socket = socket = context.socket(zmq.PUSH)
-        thread_local.user = user = pwd.getpwuid(os.geteuid()).pw_name
         socket.connect(settings.INTERNAL_EVENT_SOCKET)
 
     try:
@@ -43,7 +39,7 @@ def send_event(topic, data):
         socket.send_multipart(msg, zmq.DONTWAIT)
     except (TypeError, ValueError, zmq.ZMQError):
         # The event can't be send, just skip it
-        pass
+        print("Unable to send the zmq event %s" % (settings.EVENT_TOPIC + topic))
 
 
 def device_init_handler(sender, **kwargs):
@@ -67,14 +63,16 @@ def device_post_handler(sender, **kwargs):
         # Create the message
         data = {
             "status": instance.STATUS_CHOICES[instance.status][1],
+            "health_status": instance.HEALTH_CHOICES[instance.health_status][1],
             "device": instance.hostname,
             "device_type": instance.device_type.name,
+            "pipeline": instance.is_pipeline,
         }
         if instance.current_job:
             data["job"] = instance.current_job.display_id
 
         # Send the event
-        send_event(".device", data)
+        send_event(".device", "lavaserver", data)
 
 
 def testjob_init_handler(sender, **kwargs):
@@ -99,8 +97,12 @@ def testjob_post_handler(sender, **kwargs):
         data = {
             "status": instance.STATUS_CHOICES[instance.status][1],
             "job": instance.display_id,
+            "description": instance.description,
             "priority": instance.priority,
             "submit_time": instance.submit_time.isoformat(),
+            "submitter": str(instance.submitter),
+            "visibility": instance.VISIBLE_CHOICES[instance.visibility][1],
+            "pipeline": instance.is_pipeline,
         }
         if instance.health_check:
             data['health_check'] = True
@@ -116,7 +118,7 @@ def testjob_post_handler(sender, **kwargs):
             data["device"] = instance.actual_device.hostname
 
         # Send the event
-        send_event(".testjob", data)
+        send_event(".testjob", str(instance.submitter), data)
 
 
 post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")

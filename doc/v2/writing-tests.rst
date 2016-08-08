@@ -3,10 +3,11 @@
 Writing a LAVA test definition
 ##############################
 
-A LAVA Test Job comprises of
+A LAVA Test Job comprises
 
-#. the actions and parameters to setup the test(s)
-#. the instructions to run as part of the test(s)
+#. Metadata describing the test job
+#. The actions and parameters to set up the test(s)
+#. The instructions to run as part of the test(s)
 
 For certain tests, the instructions can be included inline with the
 actions. For more complex tests or to share test definitions across
@@ -18,9 +19,9 @@ repository of YAML files.
 Writing a test definition YAML file
 ***********************************
 
-The YAML is downloaded from the repository (or handled as an inline) and
-installed into the test image, either as a single file or as part of
-a git or bzr repository. (See :ref:`test_repos`)
+The YAML is downloaded from the repository (or handled inline)
+and installed into the test image, either as a single file or as part
+of a git or bzr repository. (See :ref:`test_repos`)
 
 Each test definition YAML file contains metadata and instructions.
 Metadata includes:
@@ -29,7 +30,7 @@ Metadata includes:
 #. A short name of the purpose of the file
 #. A description of the instructions contained in the file.
 
-::
+.. code-block:: yaml
 
   metadata:
       format: Lava-Test Test Definition 1.0
@@ -37,15 +38,16 @@ Metadata includes:
       description: "Advanced (level 3): single node test commands for Linux Linaro ubuntu Images"
 
 
-.. note:: the short name of the purpose of the test definition, i.e., value of field **name**,
-          should not contain any non-ascii characters and special characters
-          from the following list, including white space(s): ``$& "'`()<>/\|;``
+.. note:: the short name of the purpose of the test definition, i.e.,
+          value of field **name**, must not contain any non-ascii
+          characters or special characters from the following list,
+          including white space(s): ``$& "'`()<>/\|;``
 
 If the file is not under version control (i.e. not in a git or bzr
-repository), the version of the file must also be specified in the
+repository), the **version** of the file must also be specified in the
 metadata:
 
-::
+.. code-block:: yaml
 
   metadata:
       format: Lava-Test Test Definition 1.0
@@ -60,7 +62,7 @@ There are also optional metadata fields:
 #. A list of devices which are expected to be able to run these
    instructions.
 
-::
+.. code-block:: yaml
 
       maintainer:
           - user.user@linaro.org
@@ -77,7 +79,9 @@ There are also optional metadata fields:
 
 The instructions within the YAML file can include installation
 requirements for images based on supported distributions (currently,
-Ubuntu or Debian)::
+Ubuntu or Debian):
+
+.. code-block:: yaml
 
   install:
       deps:
@@ -88,53 +92,60 @@ Ubuntu or Debian)::
           - usbutils
 
 
-.. note:: the test **must** raise a usable network interface without
-          running any instructions from the rest of the YAML file or
-          the installation will fail. If this is not always possible,
-          raise a network interface manually as a run step and install
-          or build the components directly.
+.. note:: for an `install` step to work, the test **must** first raise
+          a usable network interface without running any instructions
+          from the rest of the YAML file. If this is not possible,
+          raise a network interface manually as a `run` step and
+          install or build the components directly then.
 
 When an external PPA or package repository (specific to debian based
-distros) is required for installation of packages, it could be
-added in the `install` section as follows::
+distros) is required for installation of packages, it can be added in
+the `install` section as follows:
+
+.. code-block:: yaml
 
   install:
       keys:
           - 7C751B3F
           - 6CCD4038
       sources:
-          - http://security.debian.org
+          - https://security.debian.org
           - ppa:linaro-maintainers/tools
       deps:
           - curl
           - ntpdate
           - lava-tool
 
-`keys` refer to the gpg keys that needs to be imported in order to
-trust a repository that is getting added in the `sources`
-section. `keys` could be either debian keyring packages or gpg security
-keys (the key server used for importing is `pgp.mit.edu`) For PPAs
-(referred from `launchpad.net`) the keys are automatically imported.
+Debian and Ubuntu repositories must be signed for the apt package
+management tool to trust them as package sources. To tell the system
+to trust extra repositories listed here, add references to the PGP
+keys used in the `keys` list. These may be either the names of Debian
+keyring packages (already available in the standard Debian archive),
+or PGP key IDs. If using key IDs, LAVA will import them from a key
+server (`pgp.mit.edu`). PPA keys will be automatically imported using
+data from `launchpad.net`. For more information, see the documentation
+of ``apt-add-repository``,
+`man 1 apt-add-repository <https://manpages.debian.org/cgi-bin/man.cgi?query=apt-add-repository&apropos=0&sektion=0&manpath=Debian+8+jessie&format=html&locale=en>`_
 
 See `Debian apt source addition
 <https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob_plain/92406804035c450fd7f3b0ab305ab9d2c0bf94fe:/debian/ppa.yaml>`_
 and `Ubuntu PPA addition <https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob_plain/92406804035c450fd7f3b0ab305ab9d2c0bf94fe:/ubuntu/ppa.yaml>`_
 
 .. note:: When a new source is added and there are no 'deps' in the
-          'install' section, then it is the users responsibility to
-          run 'apt-get update' before attempting an 'apt-get \*'
-          operation, elsewhere in the test definition.
+          'install' section, then it is the test writer's
+          responsibility to run `apt update` before attempting any
+          other `apt` operation elsewhere in the test definition.
 
 .. note:: When `keys` are not added for an apt source repository
-          referred in `sources` section the packages may fail to
-          install, if the repository is not trusted. We do not
-          `--force-yes` during `apt-get` operation though we pass `-y`
-          option to `apt-get`. Hence the user must add the appropriate
-          `keys` in order to trust the new apt source repository that is
-          added.
+          listed in the `sources` section, packages may fail to
+          install if the repository is not trusted. LAVA does not add
+          the `--force-yes` option during `apt` operations which would
+          over-ride the trust check.
 
-The principle purpose of the YAML is to run commands on the device
-and these are specified in the run steps::
+The principal purpose of the test definitions in the YAML file is to
+run commands on the device. These are specified in the run steps:
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -142,22 +153,22 @@ and these are specified in the run steps::
 .. _writing_test_commands:
 
 Writing commands to run on the device
-######################################
+*************************************
 
-#. All commands need to be executables available on the device.
-   This is why the metadata includes an "os" flag, so that commands
+#. All commands need to be executables available on the device. This
+   is why the metadata section includes an "os" flag, so that commands
    specific to that operating system can be accessed.
-#. All tests run in a dedicated working directory. If a repository is
-   used, all files in the repository copy on the device will be in
-   the same directory structure as the repository inside this working
-   directory.
-#. Avoid assumptions about the base system - if a test needs a particular
-   interpreter, executable or environment, ensure that this is available
-   either by using the installation step in the YAML or by building or
-   installing the components as a series of commands in the run steps.
-   Many images will not contain any servers or compilers, many will only
-   have a limited range of interpreters installed and some of those may
-   have reduced functionality.
+#. All tests will be run in a dedicated working directory. If a test
+   repository is used, the local checkout of that repository will also
+   be located within that same directory.
+#. Avoid assumptions about the base system - if a test needs a
+   particular interpreter, executable or environment, ensure that this
+   is available. That can be done either by using the `install` step
+   in the test definition, or by building or installing the components
+   as a series of commands in the `run` steps. Many images will not
+   contain any servers or compilers and many will only have a limited
+   range of interpreters pre-installed. Some of those may also have
+   reduced functionality compared to versions on other systems.
 #. Keep the YAML files relatively small and clean to promote easier
    reuse in other tests or devices. It is often better to have many
    YAML files to be run in sequence than to have a large overly complex
@@ -169,12 +180,16 @@ Writing commands to run on the device
 #. Avoid use of redirects and pipes inside the run steps. If the command
    needs to use redirection and/or pipes, use a custom script in your
    repository and execute that script instead. See :ref:`custom_scripts`
-#. Take care with YAML syntax. These lines will fail with wrong syntax::
+#. Take care with YAML syntax. These lines will fail with wrong syntax:
+
+.. code-block:: yaml
 
     - echo "test1: pass"
     - echo test2: fail
 
-   When this syntax will pass::
+   While this syntax will pass:
+
+.. code-block:: yaml
 
     - echo "test1:" "pass"
     - echo "test2:" "fail"
@@ -185,14 +200,49 @@ Writing commands to run on the device
           multiple repositories. The copy of the script executed will be
           the one below the working directory of the current test.
 
+.. index:: inline test definition
+
+.. _inline_test_definitions:
+
+Using inline test definitions
+*****************************
+
+An inline test definition is included into the test job submission test action:
+
+.. include:: examples/test-jobs/second-multinode-job.yaml
+     :code: yaml
+     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
+     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
+
+An inline test definition **must**:
+
+#. Use the ``from: inline`` method.
+#. Provide a path to which the definition will be written
+#. Specify the metadata, at least:
+
+   #. ``format: Lava-Test Test Definition 1.0``
+   #. ``name``
+   #. ``description``
+
+Inline test definitions are **single files**, so if the test
+definition needs to call any scripts or programs, those need
+to be downloaded or installed before being called in the inline
+test definition.
+
 .. _custom_scripts:
 
 Writing custom scripts to support tests
 ***************************************
 
+.. note:: Custom scripts are not available in an :term:`inline` definition,
+   *unless* the definition itself downloads the script and makes it
+   executable.
+
 When multiple actions are necessary to get usable output, write a
 custom script to go alongside the YAML and execute that script as a
-run step::
+run step:
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -205,6 +255,18 @@ Take care when using ``cd`` inside custom scripts - always store the
 initial return value or the value of ``pwd`` before the call and change
 back to that directory at the end of the script.
 
+Example of a custom script wrapping the output:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/unittests.sh
+
+The script is simply called directly from the test shell definition:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/server-pipeline-unit-tests.yaml
+
+Example V2 job using this support:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/qemu-server-pipeline.yaml
+
 .. _interpreters_scripts:
 
 Script interpreters
@@ -213,14 +275,15 @@ Script interpreters
 #. **shell** - consider running the script with ``set -x`` to see the
    operation of the script in the LAVA log files. Ensure that if your
    script expects ``bash``, use the bash shebang line ``#!/bin/bash``
-   and ensure that ``bash`` is installed in the test image. The default
-   shell may be ``busybox``, so take care with non-POSIX constructs in
-   your shell scripts if you use ``#!/bin/sh``.
+   and ensure that ``bash`` is installed in the test image. The
+   default shell may be ``busybox`` or ``dash``, so take care with
+   non-POSIX constructs in your shell scripts if you use
+   ``#!/bin/sh``.
 #. **python** - ensure that python is installed in the test image. Add
    all the python dependencies necessary for your script.
 #. **perl** - ensure that any modules required by your script are
-   available, bearing in mind that some images may only have the base
-   perl install or a limited selection of modules.
+   available, bearing in mind that some images may only have a basic
+   perl installation with a limited selection of modules.
 
 If your YAML file does not reside in a repository, the YAML *run steps*
 will need to ensure that a network interface is raised, install a
@@ -242,7 +305,9 @@ passes and failures in the result bundle which can be easily tracked
 over time.
 
 To use the exit value, simply precede the command with a call to
-``lava-test-case`` with a test-case name (no spaces)::
+``lava-test-case`` with a test-case name (no spaces):
+
+.. code-block:: yaml
 
   run:
       steps:
@@ -250,20 +315,36 @@ To use the exit value, simply precede the command with a call to
           - lava-test-case test-ls-fail --shell ls /user/somewhere/else/
 
 Use subshells instead of backticks to execute a command as an argument
-to another command::
+to another command:
+
+.. code-block:: yaml
 
   - lava-test-case pointless-example --shell ls $(pwd)
 
-For more on the contents of the YAML file and how to construct YAML
-for your own tests, see the :ref:`test_developer`.
+For more details on the contents of the YAML file and how to construct
+YAML for your own tests, see the :ref:`test_developer`.
 
 .. _parsing_output:
 
 Parsing command outputs
 ***********************
 
+.. comment This duplicates lava_test_shell.rst Advanced Parsing
+
+.. warning:: Parse patterns and fixup dictionaries are confusing and
+   hard to debug. The syntax is Python and the support remains for
+   compatibility with existing Lava Test Shell Definitions. With LAVA
+   V2, it is recommended to move parsing into a
+   :ref:`custom script <custom_scripts>` contained within the
+   test definition repository. The script can simply call
+   ``lava-test-case`` directly with the relevant options once the
+   data is parsed. This has the advantage that the log output from
+   LAVA can be tested directly as input for the script.
+
 If the test involves parsing the output of a command rather than simply
-relying on the exit value, LAVA can use a pass/fail/skip/unknown output::
+relying on the exit value, LAVA can use a pass/fail/skip/unknown output:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -275,12 +356,16 @@ relying on the exit value, LAVA can use a pass/fail/skip/unknown output::
 The quotes are required to ensure correct YAML parsing.
 
 The parse section can supply a parser to convert the output into
-test case results::
+test case results:
+
+.. code-block:: yaml
 
   parse:
       pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-The result of the above test would be a result bundle::
+The result of the above test would be a set of results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -293,7 +378,9 @@ Recording test case results
 ***************************
 
 ``lava-test-case`` can also be used with a parser with the extra
-support for checking the exit value of the call::
+support for checking the exit value of the call:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -302,7 +389,9 @@ support for checking the exit value of the call::
         - lava-test-case echo1 --shell echo "test3:" "pass"
         - lava-test-case echo2 --shell echo "test4:" "fail"
 
-This syntax will result in extra test results::
+This syntax will result in extra test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -315,7 +404,9 @@ Note that ``echo2`` **passed** because the ``echo "test4:" "fail"`` returned
 an exit code of zero.
 
 Alternatively, the ``--result`` command can be used to output the value
-to be picked up by the parser::
+to be picked up by the parser:
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -324,7 +415,9 @@ to be picked up by the parser::
         - lava-test-case test5 --result pass
         - lava-test-case test6 --result fail
 
-This syntax will result in the test results::
+This syntax will result in the test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -340,9 +433,12 @@ Recording test case measurements and units
 Various tests require measurements and ``lava-test-case`` supports
 measurements and units per test at a precision of 10 digits.
 
-``--result`` must always be specified.
+``--result`` must always be specified and only numbers can be recorded
+as measurements (to support charts based on measurement trends).
 
-::
+.. seealso:: :ref:`recording_test_result_data`
+
+.. code-block:: yaml
 
   run:
      steps:
@@ -351,7 +447,9 @@ measurements and units per test at a precision of 10 digits.
         - lava-test-case test5 --result pass --measurement 99 --units bottles
         - lava-test-case test6 --result fail --measurement 0 --units mugs
 
-This syntax will result in the test results::
+This syntax will result in the test results:
+
+.. code-block:: yaml
 
   test1 -> pass
   test2 -> fail
@@ -361,53 +459,105 @@ This syntax will result in the test results::
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
 
+.. _recording_test_result_data:
 
-.. _overwriting_units:
+Recording test case data
+************************
 
-Overwriting units in existing test cases
-****************************************
+Simple strings
+==============
 
-Each time a units is passed to the lava-test-case in this fashion
-:ref:`recording_test_measurements`, the units get overwritten for the test
-cases if test case with the same name already exists in system. This will cause
-all previous test results to have the updated units string. To counteract this,
-you can set the units manually on the test result details page. Setting this
-unit manually will raise a warning, since this affects all the other test
-results in the system.
+A version string or similar can be recorded as a ``lava-test-case``
+name::
+
+ lava-test-case ${VERSION} --result pass
+
+Version strings need specific handling to compare for newer, older etc.
+so LAVA does not support comparing or ordering of such strings beyond
+simple alphanumeric sorting. A custom :term:`frontend` would be the
+best way to handle such results.
+
+Files
+=====
+
+``lava-test-case-attach`` is :ref:`not supported in V2 <test_attach>`.
+
+.. FIXME: add details of the publishing API
+
 
 .. _best_practices:
 
-Best practices for writing a LAVA job
-#####################################
+Best practices for writing a LAVA test job
+******************************************
 
-A LAVA job can consist of several LAVA test definitions and multiple
-deployments but this flexibility needs to be balanced against the
+A test job may consist of several LAVA test definitions and multiple
+deployments, but this flexibility needs to be balanced against the
 complexity of the job and the ways to analyse the results.
 
-Use different test definitions for different test areas
-*******************************************************
+Write portable test definitions
+===============================
 
-Follow the standard UNIX model of *Make each program do one thing well*
-by making a set of test definitions, each of which tests one area of
-functionality and tests that one area thoroughly.
+``lava-test-shell`` is a useful helper but that can become a limitation.
+Avoid relying upon the helper for anything more than the automation
+by putting the logic and the parsing of your test into a more competent
+language. *Remember*: as test writer, **you** control which languages
+are available inside your test.
+
+``lava-test-shell`` has to try and get by with not much more than
+``busybox ash`` as the lowest common denominator.
+
+**Please don't expect lava-test-shell to do everything**.
+
+Let ``lava-test-shell`` provide you with a directory layout containing
+your scripts, some basic information about the job and a way of
+reporting test case results - that's about all it should be doing
+outside of the :ref:`multinode_api`.
+
+**Do not lock yourself out of your tests**
+
+#. Do not make your test code depend on the LAVA infrastructure
+   any more than is necessary for automation. Make sure you can
+   always run your tests by downloading the test code to a
+   target device using a clean environment, installing its
+   dependencies (the test code itself could do this), and running
+   a single script. Emulation can be used in most cases where access
+   to the device is difficult. Even if the values in the output change,
+   the format of the output from the underlying test operation should
+   remain the same, allowing a single script to parse the output in LAVA
+   and in local testing.
+
+#. Make the LAVA-specific part as small as possible, just enough
+   to, for example, gather any inputs that you get via LAVA, call the main
+   test program, and translate your regular output into ways to
+   tell lava how the test went (if needed).
+
+.. seealso:: :ref:`custom_scripts`
+
+Use different test definitions for different test areas
+=======================================================
+
+Follow the standard UNIX model of *Make each program do one thing
+well*. Make a set of separate test definitions. Each definition should
+concentrate on one area of functionality and test that one area
+thoroughly.
 
 Use different jobs for different test environments
-**************************************************
+==================================================
 
-Whilst it is supported to reboot from one distribution and boot into a
-different one, the usefulness of this is limited because if the first
+While it is supported to reboot from one distribution and boot into a
+different one, the usefulness of this is limited. If the first
 environment fails, the subsequent tests might not run at all.
 
 Use a limited number of test definitions per job
-************************************************
+================================================
 
-Whilst LAVA tries to ensure that all tests are run, endlessly adding
-test repositories to a single LAVA job only increases the risk that
+While LAVA tries to ensure that all tests are run, adding more and
+more test repositories to a single LAVA job increases the risk that
 one test will fail in a way that prevents the results from all tests
 being collected.
 
 Overly long sets of test definitions also increase the complexity of
-the log files which can make it hard to identify why a particular job
+the log files, which can make it hard to identify why a particular job
 failed.
 
 Splitting a large job into smaller chunks also means that the device can

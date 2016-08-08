@@ -50,6 +50,10 @@ class RestrictedIDLinkColumn(IDLinkColumn):
         elif device_type.owners_only:
             if device_type.num_devices_visible_to(user) == 0:
                 return "Unavailable"
+            elif record.is_accessible_by(user):
+                return pklink(record)
+            else:
+                return "Private"
         elif record.is_accessible_by(user):
             return pklink(record)
         else:
@@ -63,13 +67,12 @@ def pklink(record):
     suffix = ''
     if isinstance(record, TestJob):
         if record.is_pipeline:
-            suffix = 'complete_log?debug=on#bottom'
-        elif record.sub_jobs_list:
-            job_id = record.sub_id
-            suffix = 'log_file#bottom'
+            suffix = '#bottom'
         else:
-            suffix = 'log_file#bottom'
-        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of complete log" href="%s/%s">' % (record.get_absolute_url(), suffix)
+            suffix = '/log_file#bottom'
+        if record.sub_jobs_list:
+            job_id = record.sub_id
+        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of log" href="%s%s">' % (record.get_absolute_url(), suffix)
         button = '<span class="glyphicon glyphicon-fast-forward"></span></a>'
     return mark_safe(
         '<a href="%s" title="job summary">%s</a>&nbsp;%s%s' % (
@@ -474,31 +477,37 @@ class DeviceTypeTable(LavaTable):
         self.length = 50
 
     def render_idle(self, record):  # pylint: disable=no-self-use
-        return record.idle if record.idle > 0 else ""
+        return record['idle'] if record['idle'] > 0 else ""
 
     def render_offline(self, record):  # pylint: disable=no-self-use
-        return record.offline if record.offline > 0 else ""
+        return record['offline'] if record['offline'] > 0 else ""
 
     def render_busy(self, record):  # pylint: disable=no-self-use
-        return record.busy if record.busy > 0 else ""
+        return record['busy'] if record['busy'] > 0 else ""
 
     def render_restricted(self, record):  # pylint: disable=no-self-use
-        return record.restricted if record.restricted > 0 else ""
+        return record['restricted'] if record['restricted'] > 0 else ""
+
+    def render_name(self, record):  # pylint: disable=no-self-use
+        return pklink(DeviceType.objects.get(name=record['device_type']))
 
     def render_queue(self, record):  # pylint: disable=no-self-use
         count = TestJob.objects.filter(
             Q(status=TestJob.SUBMITTED),
-            Q(requested_device_type=record.name) |
-            Q(requested_device__in=Device.objects.filter(device_type=record.name))).count()
+            Q(requested_device_type=record['device_type']) |
+            Q(requested_device__in=Device.objects.filter(device_type=record['device_type'])))\
+            .only('status', 'requested_device_type', 'requested_device').count()
         return count if count > 0 else ""
 
-    name = IDLinkColumn("name")
+    name = tables.Column(accessor='idle', verbose_name='Name')
+    # the change in the aggregation breaks the accessor.
+    name.orderable = False
     idle = tables.Column()
     offline = tables.Column()
     busy = tables.Column()
     restricted = tables.Column()
     # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
-    queue = tables.Column(accessor="name", verbose_name="queue", orderable=False)
+    queue = tables.Column(accessor="idle", verbose_name="Queue", orderable=False)
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = DeviceType

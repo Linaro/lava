@@ -54,11 +54,11 @@
 
   {% if image_report.image_report_group %}
   <div id="group_link" class="group-link">
-    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
+    <a href="{% url 'lava_dashboard_image_report_report_list' %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
   </div>
   {% else %}
   <div id="group_link" class="group-link" style="display: none;">
-    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#">Group link</a>
+    <a href="{% url 'lava_dashboard_image_report_report_list' %}#">Group link</a>
   </div>
   {% endif %}
   &nbsp;&nbsp;
@@ -144,7 +144,7 @@
   $("#charts").on("sortstop", function(event, ui) {
   var chart_id_order = $("#charts").sortable("toArray").join();
     $.ajax({
-      url: "{% url 'dashboard_app.views.image_reports.views.image_report_order_update' name=image_report.name %}",
+      url: "{% url 'image_report_order_update' name=image_report.name %}",
       type: "POST",
       data: {
         csrfmiddlewaretoken: '{{csrf_token}}',
@@ -157,7 +157,7 @@
 {% if image_report.is_published %}
 <script>
   $("#image_report_group").editable(
-  "{% url 'dashboard_app.views.image_reports.views.image_report_add_group' name=image_report.name %}",
+  "{% url 'image_report_add_group' name=image_report.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -180,14 +180,14 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'dashboard_app.views.image_reports.views.image_report_group_list' %}',
+        source: '{% url 'image_report_group_list' %}',
         minLength: 2,
       });
   });
 
 
   $("#group").editable(
-  "{% url 'dashboard_app.views.image_reports.views.image_report_select_group' name=image_report.name %}",
+  "{% url 'image_report_select_group' name=image_report.name %}",
   {
     onblur: "submit",
     width: 200,

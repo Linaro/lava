@@ -68,7 +68,9 @@ debian:
       favorite-jobs.js: favorite-jobs.min.js
       jquery.details.js: jquery.details.min.js
       job-wizard.js: job-wizard.min.js
+      similar-jobs.js: similar-jobs.min.js
       jquery.jeditable.js: jquery.jeditable.min.js
+      anchor-v3.2.0.js: anchor-v3.2.0.min.js
   - uglify:
     lava_directory: dashboard_app/static/dashboard_app/js/
     destination: dashboard_app/static/dashboard_app/js/

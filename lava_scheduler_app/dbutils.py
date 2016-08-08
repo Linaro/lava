@@ -11,22 +11,22 @@ import jinja2
 import datetime
 import logging
 import simplejson
-import django
 from traceback import format_exc
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.models import (
-    DeviceDictionary,
     Device,
+    DeviceDictionary,
+    DevicesUnavailableException,
     DeviceType,
+    is_deprecated_json,
+    JSONDataError,
     TestJob,
     TemporaryDevice,
-    JSONDataError,
     validate_job,
-    is_deprecated_json,
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -91,7 +91,12 @@ def initiate_health_check_job(device):
             device.put_into_maintenance_mode(
                 user, "target must not be defined in health check definitions.")
             return None
-    return testjob_submission(job_data, user, check_device=device)
+    try:
+        job = testjob_submission(job_data, user, check_device=device)
+    except DevicesUnavailableException as exc:
+        logger.error("[%s] failed to submit health check - %s", device.device_type.name, exc)
+        return None
+    return job
 
 
 def submit_health_check_jobs():
@@ -125,12 +130,13 @@ def submit_health_check_jobs():
         else:
             if time_denominator:
                 if not run_health_check:
-                    logger.debug("checking time since last health check")
+                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
                     logger.debug("%s needs to run_health_check", device)
-                    logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
+                    logger.debug("[%d] health_check_end=%s",
+                                 device.last_health_report_job.id, device.last_health_report_job.end_time)
                     logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
                     logger.debug("time_diff=%s", (
                         timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)))
@@ -384,7 +390,7 @@ def _validate_queue():
     """
     logger = logging.getLogger('dispatcher-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
-    jobs = jobs.filter(actual_device__isnull=False) \
+    jobs = jobs.filter(~Q(actual_device=None)) \
                .select_related('actual_device', 'actual_device__current_job')
     for job in jobs:
         if not job.actual_device.current_job:
@@ -411,11 +417,8 @@ def _validate_idle_device(job, device):
     """
     # FIXME: do this properly in the dispatcher master.
     # FIXME: isolate forced health check requirements
-    if django.VERSION >= (1, 8):
-        # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
-        device.refresh_from_db()
-    else:
-        device = Device.objects.get(hostname=device.hostname)
+    # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
+    device.refresh_from_db()
 
     logger = logging.getLogger('dispatcher-master')
     # to be valid for reservation, no queued TestJob can reference this device
@@ -509,7 +512,7 @@ def assign_jobs():
     logger.debug("[%d] devices available", len(devices))
     logger.debug("[%d] jobs in the queue", len(jobs))
     # a forced health check can be assigned even if the device is not in the list of idle devices.
-    for job in jobs:
+    for job in jobs:  # pylint: disable=too-many-nested-blocks
         # this needs to stay as a tight loop to cope with load
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
@@ -609,7 +612,7 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
         end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
 
 
-def handle_health(job, new_device_status):
+def handle_health(job):
     """
     LOOPING = no change
     job is not health check = no change
@@ -620,14 +623,20 @@ def handle_health(job, new_device_status):
     should not be saved.
     """
     device = job.actual_device
-    device.status = new_device_status
     if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
         return device
     device.last_health_report_job = job
     if job.status == TestJob.INCOMPLETE:
         device.health_status = Device.HEALTH_FAIL
         user = User.objects.get(username='lava-health')
-        device.put_into_maintenance_mode(user, "Health Check Job Failed")
+        # Cannot use device.put_into_maintenance_mode() here as
+        # that puts the device into offlining if there are validation errors.
+        # The next step here is to clear current_job. If
+        # device.put_into_online_mode is then called, the device
+        # would go into running with no current job, so we need OFFLINE
+        # so that put_into_online_mode goes to IDLE.
+        # FIXME: once V1 code is removed, standardise this state machine.
+        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job)
     elif job.status == TestJob.COMPLETE:
         device.health_status = Device.HEALTH_PASS
     elif job.status == TestJob.CANCELED:
@@ -655,8 +664,11 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         job.save()
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    # Transition device only if it's not in OFFLINE/ING mode
+    # (by failed health check job which already transitions it)
+    if device.status not in [Device.OFFLINE, Device.OFFLINING]:
+        device.state_transition_to(Device.IDLE, message=msg, job=job)
     device.current_job = None
     # Save the result
     job.save()
@@ -670,8 +682,8 @@ def cancel_job(job):
         job.save()
         return
     msg = "Job %d cancelled" % job.id
-    device = handle_health(job, Device.IDLE)
-    device.state_transition_to(device.status, message=msg, job=job)
+    device = handle_health(job)
+    device.state_transition_to(Device.IDLE, message=msg, job=job)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
@@ -777,12 +789,12 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
 
     validate_list = job.sub_jobs_list if job.is_multinode else [job]
     for check_job in validate_list:
-        parser_device = None if job.dynamic_connection else device_object
+        # dynamic connections still get the device config of the host
         try:
             logger.info("[%d] Parsing definition", check_job.id)
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
-                check_job.definition, parser_device,
+                check_job.definition, device_object,
                 check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
@@ -807,7 +819,8 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(pipeline_dump)
-            map_metadata(pipeline_dump, job)
+            if not map_metadata(pipeline_dump, check_job):
+                logger.warning("[%d] unable to map metadata", check_job.id)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:
@@ -824,3 +837,32 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
                 return None
 
     return device
+
+
+def device_type_summary(visible=None):
+    devices = Device.objects.filter(
+        ~Q(status=Device.RETIRED) & Q(device_type__in=visible)).only(
+            'status', 'is_public', 'device_type', 'hostname').values('device_type').annotate(
+                idle=Sum(
+                    Case(
+                        When(status=Device.IDLE, then=1), default=0, output_field=IntegerField()
+                    )
+                ),
+                busy=Sum(
+                    Case(
+                        When(status__in=[Device.RUNNING, Device.RESERVED], then=1),
+                        default=0, output_field=IntegerField()
+                    )
+                ),
+                offline=Sum(
+                    Case(
+                        When(status__in=[Device.OFFLINE, Device.OFFLINING], then=1),
+                        default=0, output_field=IntegerField()
+                    )
+                ),
+                restricted=Sum(
+                    Case(
+                        When(is_public=False, then=1), default=0, output_field=IntegerField()
+                    )
+                ),).order_by('device_type')
+    return devices

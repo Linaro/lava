@@ -10,6 +10,9 @@ timeouts:
     minutes: 3
 visibility: public
 
+context:
+  arch: amd64
+
 protocols:
   lava-multinode:
     target_group: arbitrary-group-id  # only for unittest support
@@ -26,6 +29,9 @@ protocols:
       seconds: 60
 
 priority: medium
+
+metadata:
+  source: lava_scheduler_app unit tests
 
 actions:
 
@@ -63,9 +69,12 @@ context:
   arch: amd64
 
 notify:
-  method: email
   criteria:
     status: complete
+  recipients:
+    - to:
+        user: admin
+        method: email
   compare:
     query:
       entity: testjob

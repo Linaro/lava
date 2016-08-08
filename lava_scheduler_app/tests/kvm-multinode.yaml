@@ -16,17 +16,24 @@ protocols:
     roles:
       client:
         device_type: qemu
+        context:
+          arch: amd64
         count: 1
         tags:
         - usb-flash
         - usb-eth
       server:
         device_type: qemu
+        context:
+          arch: amd64
         count: 1
     timeout:
       seconds: 60
 
 priority: medium
+
+metadata:
+  source: lava_scheduler_app unit tests
 
 actions:
 
@@ -80,13 +87,13 @@ actions:
         - server
         - client
 
-context:
-  arch: amd64
-
 notify:
-  method: email
   criteria:
     status: complete
+  recipients:
+    - to:
+        user: admin
+        method: email
   compare:
     query:
       entity: testjob

@@ -27,10 +27,12 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.test.test_defs import check_missing_path
+from lava_dispatcher.pipeline.action import JobError, InfrastructureError
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from django_restricted_resource.managers import RestrictedResourceQuerySet
+from unittest import TestCase
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
@@ -788,8 +790,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                         output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
-                if os.path.exists('/dev/loop0'):  # rather than skipping the entire test, just the validation.
-                    self.assertRaises(JobError, pipeline_job.pipeline.validate_actions)
+                with TestCase.assertRaises(self, (JobError, InfrastructureError)) as check:
+                    pipeline_job.pipeline.validate_actions()
+                    check_missing_path(self, check, 'qemu-system-x86_64')
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
@@ -901,6 +904,48 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertIn(fakeqemu4, allowed_devices)
         self.assertNotIn(fakeqemu2, allowed_devices)
         self.assertNotIn(fakeqemu1, allowed_devices)
+
+    def test_multinode_v2_metadata(self):
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        client_submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode-client.yaml'), 'r'))
+        job_ctx = client_submission.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        parser_device = PipelineDevice(device_config, device.hostname)
+        parser = JobParser()
+        pipeline_job = parser.parse(
+            yaml.dump(client_submission), parser_device,
+            4212, None, None, None, output_dir='/tmp/test')
+        pipeline = pipeline_job.describe()
+        from lava_results_app.dbutils import _get_job_metadata
+        self.assertEqual(
+            {
+                'test.0.definition.name': 'multinode-basic',
+                'test.0.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
+                'test.0.definition.from': 'git',
+                'boot.0.method': 'qemu',
+                'test.0.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
+            },
+            _get_job_metadata(pipeline['job']['actions'])
+        )
+        # simulate dynamic connection
+        dynamic = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
+        self.assertEqual(
+            _get_job_metadata(dynamic['job']['actions']),
+            {
+                'omitted.1.inline.name': 'ssh-client',
+                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.definition.name': 'smoke-tests',
+                'boot.0.method': 'ssh',
+                'omitted.1.inline.path': 'inline/ssh-client.yaml',
+                'test.0.definition.from': 'git',
+                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml'
+            }
+        )
 
 
 class VlanInterfaces(TestCaseWithFactory):

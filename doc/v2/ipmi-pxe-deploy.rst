@@ -52,7 +52,7 @@ Installing ipmitool
 The first configuration step is to get ipmitool installed. On Ubuntu,
 this is very easy to do::
 
-  $ apt-get install ipmitool
+  $ apt install ipmitool
 
 Other systems might have ipmitool already available in their package
 repositories. If yours doesn't, you can always `install from source`_.

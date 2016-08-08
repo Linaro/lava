@@ -61,7 +61,7 @@ import yaml
 import argparse
 from jinja2 import Environment, FileSystemLoader
 
-# pylint: disable=superfluous-parens,star-args,maybe-no-member
+# pylint: disable=superfluous-parens,maybe-no-member
 
 
 def main():

@@ -30,7 +30,7 @@ Job Submission Schema
 *********************
 
 The Job Submission Schema exists to act as an initial filter on strings
-submitted over XMLRPC. Only a simple, fast, check is made on YAML
+submitted over XML-RPC. Only a simple, fast, check is made on YAML
 syntax and basic object structure. Once this test passes, the YAML is
 entered into the database and a JobID is returned to the submitter.
 
@@ -70,7 +70,7 @@ An example pipeline job for a QEMU device looks like:
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         compression: gz
         os: debian
         # if root_partition partition is not present:
@@ -96,12 +96,8 @@ An example pipeline job for a QEMU device looks like:
             - repository: git://git.linaro.org/qa/test-definitions.git
               from: git
               path: ubuntu/smoke-tests-basic.yaml
-              # name: if not present, use the name from the YAML. The name can
-              # also be overriden from the actual commands being run by
-              # calling the lava-test-suite-name API call (e.g.
-              # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+            - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
@@ -210,6 +206,8 @@ otherwise valid.
 Timeouts
 --------
 
+.. seealso:: :ref:`timeouts`
+
 * ``timeouts``: dictionary
 * **Required**
 
@@ -256,13 +254,17 @@ obvious but include the architecture of the QEMU command and the console
 device and/or baud rate of other devices. It is also possible to override
 the NFS args and UEFI Menu selections. See :ref:`override_support`
 
+.. code-block:: yaml
+
   context:
     menu_interrupt_prompt: 'Default boot will start in'
 
 (The default values and which values can be overridden will be exposed
 in the next stages of development.)
 
-Some menu selections may embed device-specific information, e.g.::
+Some menu selections may embed device-specific information, e.g.:
+
+.. code-block:: yaml
 
  -  'TFTP on MAC Address: 00:01:73:69:5A:EF'
 
@@ -272,7 +274,9 @@ retained even if an update causes other elements of the menu to change.
 
 This is handled by asking the template to retain the MAC address
 specified for that device using a placeholder in the context specified
-in the job submission::
+in the job submission:
+
+.. code-block:: yaml
 
   context:
     mustang_menu_list:

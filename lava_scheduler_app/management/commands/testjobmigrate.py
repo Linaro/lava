@@ -11,8 +11,6 @@ class Command(BaseCommand):
 
     help = "Fill out results_bundle on old testjobs."
 
-    option_list = BaseCommand.option_list
-
     def handle(self, *args, **options):
         count = 0
         query = TestJob.objects.filter(

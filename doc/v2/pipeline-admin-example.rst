@@ -43,10 +43,21 @@ The device configuration will become a device dictionary.
 However, initially, we need a single YAML file which contains the data
 that the pipeline will send to the dispatcher - a combination of the
 device type and device information. You can see examples of such content
-when validating pipeline jobs. (This example has been edited slightly to
-take out some of the noise.)::
+when validating pipeline jobs. (This is example and has been edited
+slightly to take out some of the noise.)::
 
  $ sudo lava-dispatch --target devices/bbb-01.yaml bbb-uboot-ramdisk.yaml --validate --output-dir=/tmp/test/
+
+Don't worry about running this example yourself at this stage. The files
+themselves may be useful for reference. The device YAML file comes from
+the lava-dispatcher unit tests:
+
+https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipeline/devices/bbb-01.yaml
+
+The job submission YAML used in the example comes from the lava-team
+refactoring repository of functional tests:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/bbb-uboot-ramdisk.yaml
 
 .. code-block:: yaml
 
@@ -232,8 +243,8 @@ we need to specify.
      ramdisk: '0x4004000000'
      dtb: '0x4003000000'
 
-Only add ``bootz`` support if you know that the UBoot ``bootz`` command
-is present in the UBoot version on the board and that it works with zImage
+Only add ``bootz`` support if you know that the U-Boot ``bootz`` command
+is present in the U-Boot version on the board and that it works with zImage
 kernels. The eventual templates will exist on the server and can be used
 to declare the detailed device support so that test writers know in advance
 what kind of images the device can use.
@@ -384,8 +395,8 @@ Writing a job submission in YAML
 
 .. warning:: Do **not** be tempted into writing a script to convert
    the JSON to YAML. You need to understand what the job is doing and
-   why. e.g. the original job gives no clue that ``u-boot`` is involved
-   nor that the required ``u-boot`` parameters for this job are ``bootm``
+   why. e.g. the original job gives no clue that ``U-Boot`` is involved
+   nor that the required ``U-Boot`` parameters for this job are ``bootm``
    and not ``bootz``. Any such attempts would re-introduce assumptions
    that the refactoring is deliberately removing. Just because a file
    has a particular name or suffix does not mean that the job can make
@@ -407,7 +418,7 @@ Existing JSON::
                 "dtb": "http://images-internal/mustang/mustang.dtb_1.11",
                 "kernel": "http://images-internal/mustang/uImage_1.11",
                 "login_prompt": "login:",
-                "nfsrootfs": "http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz",
+                "nfsrootfs": "https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz",
                 "target_type": "ubuntu",
                 "username": "root"
             }
@@ -420,7 +431,7 @@ Existing JSON::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://git.linaro.org/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode03.yaml"
                     }
                 ],
@@ -470,9 +481,13 @@ Deploy
  actions:
    - deploy:
        to: tftp
-       kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-       dtb: http://images-internal/mustang/mustang.dtb_1.11
+       kernel:
+         url: http://images-internal/mustang/uImage_1.11
+       nfsrootfs:
+         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         compression: gz
+       dtb:
+         url: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
 
 Boot
@@ -507,7 +522,7 @@ have  a name, separate from the content of the YAML file.
        minutes: 5
      name: singlenode-mustang-demo
      definitions:
-       - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
+       - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
          from: git
          path: singlenode/singlenode03.yaml
          name: singlenode-advanced
@@ -515,39 +530,8 @@ have  a name, separate from the content of the YAML file.
 Complete YAML submission
 ========================
 
-.. code-block:: yaml
-
- device_type: mustang
- job_name: mustang-singlenode-jessie
- timeouts:
-   job:
-     minutes: 15
- actions:
-   - deploy:
-       to: tftp
-       kernel: http://images-internal/mustang/uImage_1.11
-       nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-       dtb: http://images-internal/mustang/mustang.dtb_1.11
-       os: debian
-   - boot:
-     prompts:
-       - 'linaro-test'
-       - 'root@debian:~#'
-     method: u-boot
-     commands: nfs
-     type: bootm
-     auto_login:
-       login_prompt: "login:"
-       username: root
-   - test:
-     timeout:
-       minutes: 5
-     name: singlenode-mustang-demo
-     definitions:
-       - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
-         from: git
-         path: singlenode/singlenode03.yaml
-         name: singlenode-advanced
+.. include:: examples/test-jobs/mustang-admin-example-job-yaml
+   :code: yaml
 
 Writing a device type template
 ******************************
