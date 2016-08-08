@@ -1686,3 +1686,23 @@ class ChartQueryUser(models.Model):
     is_delta = models.BooleanField(
         default=False,
         verbose_name='Delta reporting')
+
+
+class BugLink(models.Model):
+
+    class Meta:
+        unique_together = (('object_id', 'url', 'content_type'))
+
+    url = models.URLField(
+        max_length=1024,
+        blank=False,
+        null=False,
+        verbose_name=_(u"Bug Link URL"),
+    )
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def __unicode__(self):
+        return unicode(self.url)

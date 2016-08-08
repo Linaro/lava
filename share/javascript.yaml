@@ -96,6 +96,7 @@ debian:
       query.js: query.min.js
       chart.js: chart.min.js
       bootbox.data.toggle.js: bootbox.data.toggle.min.js
+      bug-links.js: bug-links.min.js
   - uglify:
     lava_directory: lava_server/lava-server/js/
     destination: lava_server/lava-server/js/

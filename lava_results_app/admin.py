@@ -21,9 +21,11 @@ Administration interface of the LAVA Results application.
 """
 
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 
 from lava_results_app.models import (
     ActionData,
+    BugLink,
     Query,
     TestCase,
     TestSet,
@@ -66,8 +68,21 @@ class TestSuiteAdmin(admin.ModelAdmin):
         return testsuite.job.pk
 
 
+class BugLinkAdmin(admin.ModelAdmin):
+    list_display = ('url', 'content_type', 'content_object')
+
+    def content_type(self, buglink):
+        return ContentType.objects.get_for_id(buglink.content_type_id)
+
+    def content_object(self, buglink):
+        return ContentType.objects.get_for_id(
+            buglink.content_type_id).get_object_for_this_type(
+                pk=buglink.object_id).get_absolute_url()
+
+
 admin.site.register(ActionData, ActionDataAdmin)
 admin.site.register(Query, QueryAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestSet, TestSetAdmin)
 admin.site.register(TestSuite, TestSuiteAdmin)
+admin.site.register(BugLink, BugLinkAdmin)

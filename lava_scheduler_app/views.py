@@ -21,7 +21,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseNotAllowed,
     HttpResponseRedirect,
 )
 from django.shortcuts import (
@@ -43,6 +42,7 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
+from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.logfile_helper import (
     formatLogFile,
     getDispatcherErrors,
@@ -120,14 +120,6 @@ from lava_scheduler_app.tables import (
 
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
-
-
-def post_only(func):
-    def decorated(request, *args, **kwargs):
-        if request.method != 'POST':
-            return HttpResponseNotAllowed('Only POST here')
-        return func(request, *args, **kwargs)
-    return decorated
 
 
 def _str_to_bool(string):
