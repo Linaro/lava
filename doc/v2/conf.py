@@ -114,6 +114,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_theme_options = {
     'navbar_links': [
         ("Index", "genindex"),
+        ("Contents", "contents"),
     ],
 }
 
