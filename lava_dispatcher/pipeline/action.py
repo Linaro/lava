@@ -776,8 +776,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # noinspection PySetFunctionToLiteral
         for attr in attrs - set([
                 'internal_pipeline', 'job', 'logger', 'pipeline',
+                'default_fixupdict', 'pattern',
                 'parameters', 'SignalDirector', 'signal_director']):
             if attr == 'timeout':
+                data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
+            elif attr == 'connection_timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
                 data['url'] = self.url.geturl()  # pylint: disable=no-member
@@ -794,6 +797,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     for protocol_attr in protocol_attrs:
                         if protocol_attr not in ['logger']:
                             data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
+            elif isinstance(getattr(self, attr), OrderedDict):
+                data[attr] = dict(getattr(self, attr))
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
