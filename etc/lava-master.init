@@ -14,18 +14,17 @@
 # One day, this daemon will replace scheduler-monitor
 
 # example command:
-# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{{filename}}.conf dispatcher-master
+# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{filename}.conf dispatcher-master
 . /etc/lava-server/instance.conf
-INST_TMPL="--instance-template=/etc/lava-server/{{filename}}.conf"
-INSTANCE="--instance=$LAVA_INSTANCE"
-LOGLEVEL="--loglevel=info"
+INST_TMPL="--instance-template=/etc/lava-server/{filename}.conf"
+LOGLEVEL="--loglevel=debug"
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-server manage dispatcher-master"          # short description
 NAME=lava-master                                     # short server's name
 DAEMON="/usr/bin/lava-master"                        # server's location
-DAEMON_ARGS="manage ${INST_TMPL} $INSTANCE dispatcher-master"  # Arguments to run the daemon with
+DAEMON_ARGS="manage ${INST_TMPL} dispatcher-master"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-master.pid
 SCRIPTNAME=/etc/init.d/lava-master
 

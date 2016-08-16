@@ -12,10 +12,9 @@
 # Author: Neil Williams <codehelp@debian.org>
 
 # example command:
-# /usr/bin/lava-daemon manage --instance-template=/etc/lava-server/{{filename}}.conf --instance=default scheduler --logfile /var/log/lava-server/lava-scheduler.log --loglevel=info
+# /usr/bin/lava-daemon manage --instance-template=/etc/lava-server/{filename}.conf scheduler --logfile /var/log/lava-server/lava-scheduler.log --loglevel=info
 . /etc/lava-server/instance.conf
-INST_TMPL="--instance-template=/etc/lava-server/{{filename}}.conf"
-INSTANCE="--instance=$LAVA_INSTANCE"
+INST_TMPL="--instance-template=/etc/lava-server/{filename}.conf"
 LOGFILE="--logfile /var/log/lava-server/lava-scheduler.log"
 LOGLEVEL="--loglevel=info"
 
@@ -24,7 +23,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-server manage scheduler"          # short description
 NAME=lava-daemon                             # short server's name
 DAEMON="/usr/bin/lava-daemon"                # server's location
-DAEMON_ARGS="manage ${INST_TMPL} $INSTANCE scheduler $LOGFILE $LOGLEVEL"  # Arguments to run the daemon with
+DAEMON_ARGS="manage ${INST_TMPL} scheduler $LOGFILE $LOGLEVEL"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-server.pid
 SCRIPTNAME=/etc/init.d/lava-server
 

@@ -185,7 +185,12 @@ class Settings(object):
 
         """
         pathname = self._get_pathname("instance")
-        config = ConfigFile.load(pathname)
+        try:
+            config = ConfigFile.load(pathname)
+        except IOError as exc:
+            print("[Error] Unable to read '%s'" % pathname)
+            print("[Error] Your init script is maybe outdated - extra {} brackets in the INST_TMPL variable")
+            raise exc
         pgengine = "django.db.backends.postgresql_psycopg2"  # FIXME
         dbname = config.LAVA_DB_NAME if hasattr(config, 'LAVA_DB_NAME') else ''
         dbuser = config.LAVA_DB_USER if hasattr(config, 'LAVA_DB_USER') else ''
