@@ -57,7 +57,6 @@ setup(
     author_email="lava-team@linaro.org",
     namespace_packages=['lava', ],
     packages=find_packages(),
-    entry_points=open('entry_points.ini', 'r').read(),
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
     description="LAVA Server",
