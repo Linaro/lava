@@ -1,6 +1,8 @@
 import os
+import re
 import yaml
 import decimal
+import django
 from django.core.exceptions import MultipleObjectsReturned
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
@@ -9,6 +11,7 @@ from lava_scheduler_app.models import (
 )
 from lava_results_app.dbutils import (
     map_metadata,
+    map_scanned_results,
     _get_job_metadata, _get_device_metadata,  # pylint: disable=protected-access
     testcase_export_fields,
     export_testcase,
@@ -18,6 +21,12 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 
+if django.VERSION > (1, 10):
+    from django.urls.exceptions import NoReverseMatch
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
+    from django.core.urlresolvers import NoReverseMatch
 
 # pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
 
@@ -94,6 +103,44 @@ class TestMetaTypes(TestCaseWithFactory):
         action_data.timeout = 300
         action_data.save(update_fields=['timeout'])
         self.assertEqual(action_data.timeout, 300)
+
+    def test_case_as_url(self):
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), self.user)
+        test_dict = {
+            'definition': 'unit-test',
+            'case': 'unit-test',
+            # list of numbers, generates a much longer YAML string than just the count
+            'result': 'pass'
+        }
+        pattern = '[-_a-zA-Z0-9.\\(\\)]+'
+        matches = re.search(pattern, test_dict['case'])
+        self.assertIsNotNone(matches)  # passes
+        self.assertEqual(matches.group(0), test_dict['case'])
+        suite, _ = TestSuite.objects.get_or_create(name=test_dict["definition"], job=job)
+        self.assertIsNotNone(reverse('lava.results.testcase', args=[job.id, suite.name, test_dict['case']]))
+        self.assertTrue(map_scanned_results(test_dict, job))
+        # now break the reverse pattern
+        test_dict['case'] = 'unit-test\r\n'
+        pattern = '-_a-zA-Z0-9.\\(\\)+'
+        matches = re.search(pattern, test_dict['case'])
+        self.assertIsNone(matches)  # fails
+        self.assertRaises(NoReverseMatch, reverse, 'lava.results.testcase', args=[job.id, suite.name, test_dict['case']])
+        self.assertFalse(map_scanned_results(test_dict, job))
+
+    def test_length(self):
+        field = TestCase._meta.get_field('metadata')
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), self.user)
+        # artificially inflate the dict to represent a failed parser
+        test_dict = {
+            'definition': 'unit-test',
+            'case': 'unit-test',
+            # list of numbers, generates a much longer YAML string than just the count
+            'result': range(int(field.max_length / 2))
+        }
+        self.assertGreater(len(yaml.dump(test_dict)), field.max_length)
+        self.assertFalse(map_scanned_results(test_dict, job))
 
     def test_repositories(self):  # pylint: disable=too-many-locals
         job = TestJob.from_yaml_and_user(
