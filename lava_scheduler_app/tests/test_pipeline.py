@@ -1044,7 +1044,7 @@ class VlanInterfaces(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M']},
             'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
         }
         device_dict.save()
@@ -1059,7 +1059,7 @@ class VlanInterfaces(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
             'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
         }
         device_dict.save()
@@ -1077,7 +1077,7 @@ class VlanInterfaces(TestCaseWithFactory):
                     'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
                 },
                 'mac_addr': {'eth1': '00:24:d7:9b:c0:8c', 'eth0': 'f0:de:f1:46:8c:21'},
-                'tags': {'eth1': ['1G'], 'eth0': ['1G', '10G']}}
+                'tags': {'eth1': ['RJ45', '10M'], 'eth0': []}}
         }
         self.assertEqual(chk, device_dict.to_dict())
         submission = yaml.load(open(self.filename, 'r'))
@@ -1103,9 +1103,9 @@ class VlanInterfaces(TestCaseWithFactory):
         client_job = job_roles['client']
         server_job = job_roles['server']
         self.assertIn('vlan_one', client_job['protocols']['lava-vland'])
-        self.assertIn('10G', client_job['protocols']['lava-vland']['vlan_one']['tags'])
+        self.assertIn('10M', client_job['protocols']['lava-vland']['vlan_one']['tags'])
         self.assertIn('vlan_two', server_job['protocols']['lava-vland'])
-        self.assertIn('1G', server_job['protocols']['lava-vland']['vlan_two']['tags'])
+        self.assertIn('100M', server_job['protocols']['lava-vland']['vlan_two']['tags'])
         client_tags = client_job['protocols']['lava-vland']['vlan_one']
         client_dict = DeviceDictionary.get('bbb-01').to_dict()
         for interface, tags in client_dict['parameters']['tags'].iteritems():

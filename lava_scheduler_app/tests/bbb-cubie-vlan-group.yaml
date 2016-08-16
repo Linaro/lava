@@ -29,11 +29,13 @@ protocols:
     client:
       vlan_one:
         tags:
-        - 10G
+        - RJ45
+        - 10M
     server:
       vlan_two:
         tags:
-        - 1G
+        - RJ45
+        - 100M
 
 priority: medium
 

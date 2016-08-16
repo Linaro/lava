@@ -43,19 +43,24 @@ def match_vlan_interface(device, job_def):
         return False
     interfaces = []
     logger = logging.getLogger('dispatcher-master')
+    device_dict = DeviceDictionary.get(device.hostname).to_dict()
+    if 'tags' not in device_dict['parameters']:
+        logger.error("%s has no tags in the device dictionary parameters", device.hostname)
+        return False
     for vlan_name in job_def['protocols']['lava-vland']:
         tag_list = job_def['protocols']['lava-vland'][vlan_name]['tags']
-        device_dict = DeviceDictionary.get(device.hostname).to_dict()
-        if 'tags' not in device_dict['parameters']:
-            return False
         for interface, tags in device_dict['parameters']['tags'].iteritems():
+            logger.info(
+                "Job requests %s for %s, device %s provides %s for %s",
+                tag_list, vlan_name, device.hostname, tags, interface)
             # tags & job tags must equal job tags
             # device therefore must support all job tags, not all job tags available on the device need to be specified
             if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                logger.debug("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
+                logger.info("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
                 break
+    logger.info("Matched: %s" % (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
     return len(interfaces) == len(job_def['protocols']['lava-vland'].keys())
 
 
@@ -520,8 +525,9 @@ def assign_jobs():
             if job.is_pipeline:
                 job_dict = yaml.load(job.definition)
                 if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+                    logger.info("[%d] checking vlan interface support", job.id)
                     if not match_vlan_interface(device, job_dict):
-                        logger.debug("%s does not match vland tags", str(device.hostname))
+                        logger.info("%s does not match vland tags", str(device.hostname))
                         if device in devices:
                             devices.remove(device)
                         continue
