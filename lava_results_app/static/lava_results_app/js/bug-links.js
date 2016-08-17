@@ -1,6 +1,6 @@
 $(document).ready(function() {
     isValidUrl = function(url) {
-        return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
+        return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>%"\,\{\}\\|\\\^\[\]`]+)?$/);
     }
 
     $(".buglink").on("click", function() {

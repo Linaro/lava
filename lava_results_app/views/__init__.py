@@ -86,6 +86,7 @@ def index(request):
     return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
+            'content_type_id': ContentType.objects.get_for_model(TestSuite).id,
             'result_table': result_table,
         }, request=request))
 
