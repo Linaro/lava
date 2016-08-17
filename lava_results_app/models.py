@@ -34,6 +34,7 @@ import yaml
 
 from datetime import timedelta
 from django.conf import settings
+from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -1724,6 +1725,17 @@ class BugLink(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def log_admin_entry(self, user, reason):
+        buglink_ct = ContentType.objects.get_for_model(BugLink)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=buglink_ct.pk,
+            object_id=self.pk,
+            object_repr=unicode(self),
+            action_flag=ADDITION,
+            change_message=reason
+        )
 
     def __unicode__(self):
         return unicode(self.url)

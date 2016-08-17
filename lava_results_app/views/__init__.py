@@ -389,6 +389,13 @@ def add_bug_link(request):
         if not created:
             error_msg = "duplicate"
             success = False
+        else:
+            msg = "Adding bug link for content type %s, object id %s" % (
+                ContentType.objects.get_for_id(
+                    request.POST.get("content_type_id")).model,
+                request.POST.get("object_id")
+            )
+            bug_link.log_admin_entry(request.user, msg)
 
     return HttpResponse(simplejson.dumps([success, error_msg]),
                         content_type='application/json')
