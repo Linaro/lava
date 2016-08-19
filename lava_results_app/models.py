@@ -1150,7 +1150,8 @@ class QueryCondition(models.Model):
     FIELD_CHOICES = {
         TestJob: [
             "submitter", "start_time", "end_time", "status", "actual_device",
-            "health_check", "user", "group", "priority", "is_pipeline"],
+            "requested_device_type", "health_check", "user", "group",
+            "priority", "is_pipeline"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
         NamedTestAttribute: []
