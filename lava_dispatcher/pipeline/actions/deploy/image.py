@@ -121,6 +121,43 @@ class DeployMonitoredQEMU(Deployment):
         return True
 
 
+class DeployMonitoredPyOCD(Deployment):
+    """
+    Strategy class for a PyOCD deployment not using
+    the POSIX Lava Test Shell overlays.
+    """
+    compatibility = 4
+
+    def __init__(self, parent, parameters):
+        super(DeployMonitoredPyOCD, self).__init__(parent)
+        self.action = DeployMonitoredAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        """
+        As a classmethod, this cannot set data
+        in the instance of the class.
+        This is *not* the same as validation of the action
+        which can use instance data.
+        """
+        if device['device_type'] not in ['nrf52-nitrogen', 'nxp-k64f']:
+            return False
+        if parameters['to'] != 'tmpfs':
+            return False
+        # lookup if the job parameters match the available device methods
+        if 'images' not in parameters:
+            # python3 compatible
+            # FIXME: too broad
+            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
+            return False
+        if 'type' not in parameters.keys():
+            return False
+        return True
+
+
 # FIXME: needs to be renamed to DeployPosixImages
 class DeployImages(Deployment):
     """
