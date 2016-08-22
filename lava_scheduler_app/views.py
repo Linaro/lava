@@ -1328,7 +1328,7 @@ def job_detail(request, pk):
             template = "lava_scheduler_app/job_pipeline.html"
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    log_data = yaml.load(f_in)
+                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
 
                     if sys.version_info < (3, 0):
                         for line in log_data:
@@ -1808,7 +1808,7 @@ def job_log_pipeline_incremental(request, pk):
             # Seeking is needed to switch from reading lines to reading bytes.
             f_in.seek(count)
             # Load the remaining as yaml
-            data = yaml.load(f_in)
+            data = yaml.load(f_in, Loader=yaml.CLoader)
             # When reaching EOF, yaml.load does return None instead of []
             if not data:
                 data = []
