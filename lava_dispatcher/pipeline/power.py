@@ -74,7 +74,7 @@ class RebootDevice(Action):
         if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
             command = self.job.device['commands']['soft_reset']
             if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s command failed" % command)
+                raise InfrastructureError("Command '%s' failed" % command)
             self.results = {"success": self.job.device.power_state}
         else:
             connection = super(RebootDevice, self).run(connection, args)
@@ -154,7 +154,7 @@ class PowerOn(Action):
             if not command:
                 return connection
             if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s command failed" % command)
+                raise InfrastructureError("Command '%s' failed" % command)
             self.results = {'success': self.name}
             self.job.device.power_state = 'on'
         return connection
@@ -233,7 +233,7 @@ class PowerOff(Action):
         if self.job.device.power_state is 'on':  # allow for '' and skip
             command = self.job.device['commands']['power_off']
             if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s command failed" % command)
+                raise InfrastructureError("Command '%s' failed" % command)
             self.results = {'status': 'success'}
             self.job.device.power_state = 'off'
         return connection
