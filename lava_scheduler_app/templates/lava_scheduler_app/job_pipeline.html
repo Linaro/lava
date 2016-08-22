@@ -556,9 +556,11 @@
       });
     });
 
-    // A the links
+    // Add the links only for non-running jobs
+    {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
     anchors.add('code');
+    {% endif %}
 
   // Add a timer for the log updates
 {% if job.status <= job.RUNNING %}
@@ -662,8 +664,6 @@
                   .text(d['msg'])
                   .insertBefore(progressNode);
               }
-              // Add the anchor
-              anchors.add('#' + id);
           }
           // Relaunch the timer
           if(xhr.getResponseHeader('X-Is-Finished')) {
