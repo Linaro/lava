@@ -236,7 +236,8 @@
           {% elif line.lvl == "target" %}
         <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+        {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% if key == "extra" %}
