@@ -60,7 +60,8 @@ def _inline_schema():
     return Schema({
         'metadata': dict,
         'install': dict,
-        'run': dict
+        'run': dict,
+        'parse': dict
     })
 
 
