@@ -930,6 +930,7 @@ class SchedulerAPI(ExposedAPI):
         Validate that the device dictionary and device-type template
         together create a valid YAML file which matches the pipeline
         device schema.
+        Retired devices are ignored.
 
         See also get_pipeline_device_config
 
@@ -952,9 +953,11 @@ class SchedulerAPI(ExposedAPI):
 
         """
         if not hostname:
-            devices = Device.objects.filter(is_pipeline=True)
+            devices = Device.objects.filter(
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
         else:
-            devices = Device.objects.filter(is_pipeline=True, hostname=hostname)
+            devices = Device.objects.filter(
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED & Q(hostname=hostname)))
         if not devices and hostname:
             raise xmlrpclib.Fault(
                 404, "No pipeline device found with hostname %s" % hostname
