@@ -152,12 +152,11 @@ class Job(object):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
         err_file = os.path.join(self.base_dir, "err")
-        env_dut_tmp_path = None
+        env_dut = os.path.join(self.base_dir, "env.dut.yaml")
 
         # Dump the environment variables in the tmp file.
         if self.env_dut:
-            env_dut_file_handle, env_dut_tmp_path = tempfile.mkstemp()
-            with os.fdopen(env_dut_file_handle, 'w') as f:
+            with open(env_dut, 'w') as f:
                 f.write(self.env_dut)
 
         try:
@@ -177,8 +176,8 @@ class Job(object):
                 args.extend(["--master-cert", self.master_cert,
                              "--slave-cert", self.slave_cert])
 
-            if self.env_dut and env_dut_tmp_path:
-                args.append("--env-dut-path=%s" % env_dut_tmp_path)
+            if self.env_dut:
+                args.append("--env-dut-path=%s" % env_dut)
 
             self.proc = subprocess.Popen(
                 args,
