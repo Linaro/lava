@@ -72,9 +72,9 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
 class FileHandler(object):  # pylint: disable=too-few-public-methods
 
-    def __init__(self, name, path):
+    def __init__(self, name):
         self.filename = name
-        self.fd = open(path, 'a+')  # pylint: disable=invalid-name
+        self.fd = open(name, 'a+')  # pylint: disable=invalid-name
         self.last_usage = time.time()
 
     def close(self):
@@ -206,26 +206,21 @@ class Command(BaseCommand):
         if '/' in level or '/' in name:
             self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
             return
-        filename = "%s/job-%s/pipeline/%s/%s-%s.log" % (options['output_dir'],
-                                                        job_id, level.split('.')[0],
-                                                        level, name)
+        filename = "%s/job-%s/pipeline/%s/%s-%s.yaml" % (options['output_dir'],
+                                                         job_id, level.split('.')[0],
+                                                         level, name)
 
         # Find the handler (if available)
         if job_id in self.logs:
             if filename != self.logs[job_id].filename:
                 # Close the old file handler
                 self.logs[job_id].close()
-
-                path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
-                                    job_id, filename)
-                mkdir(os.path.dirname(path))
-                self.logs[job_id] = FileHandler(filename, path)
+                mkdir(os.path.dirname(filename))
+                self.logs[job_id] = FileHandler(filename)
         else:
             self.logger.info("[%s] Receiving logs from a new job", job_id)
-            path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
-                                job_id, filename)
-            mkdir(os.path.dirname(path))
-            self.logs[job_id] = FileHandler(filename, path)
+            mkdir(os.path.dirname(filename))
+            self.logs[job_id] = FileHandler(filename)
 
         # Mark the file handler as used
         # TODO: try to use a more pythonnic way
@@ -241,6 +236,7 @@ class Command(BaseCommand):
         f_handler.write('\n')
         f_handler.flush()
 
+        # TODO: keep the file handler to avoid calling open for each line
         filename = os.path.join(options['output_dir'],
                                 "job-%s" % job_id,
                                 'output.yaml')
@@ -649,7 +645,7 @@ class Command(BaseCommand):
 
                 # Check dispatchers status
                 now = time.time()
-                for hostname in list(self.dispatchers.keys()):
+                for hostname in self.dispatchers.keys():
                     dispatcher = self.dispatchers[hostname]
                     if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
                         self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
