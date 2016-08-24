@@ -24,7 +24,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
-from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
+from lava_scheduler_app.schema import validate_submission, validate_device
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_defs import check_missing_path

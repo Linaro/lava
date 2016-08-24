@@ -28,7 +28,7 @@ support will be removed in Django1.10. Equally, always provide a name if the URL
 needs to be reversed elsewhere in the code, e.g. the view. (Best practice is to
 use a name for all new urls, even if not yet used elsewhere.)
 """
-from django.conf.urls import *
+from django.conf.urls import url
 from dashboard_app.views import (
     attachment_download,
     attachment_view,
@@ -95,7 +95,6 @@ from dashboard_app.views.image_reports.views import (
     image_chart_filter_delete,
     image_chart_filter_edit,
     image_chart_filter_type_check,
-    image_report_detail,
     image_report_list,
     image_report_display,
     image_report_detail,

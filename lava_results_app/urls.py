@@ -19,7 +19,7 @@
 """
 URL mappings for the LAVA Results application
 """
-from django.conf.urls import *
+from django.conf.urls import url
 from lava_results_app.views import (
     add_bug_link,
     delete_bug_link,

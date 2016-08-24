@@ -42,7 +42,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
 )
-from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,

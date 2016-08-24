@@ -1,7 +1,6 @@
 import os
 import yaml
 import logging
-from collections import OrderedDict
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from lava_results_app.models import (

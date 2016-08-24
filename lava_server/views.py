@@ -17,7 +17,6 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import django
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -27,7 +26,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect
 )
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render
 from django.template import loader
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import requires_csrf_token

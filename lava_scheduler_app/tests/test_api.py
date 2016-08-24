@@ -11,7 +11,6 @@ from django.contrib.auth.models import Permission, User
 from django.utils import timezone
 from lava_scheduler_app.models import (
     Device,
-    DeviceStateTransition,
     Tag,
     TestJob,
     TemporaryDevice,
