@@ -812,7 +812,7 @@ class Device(RestrictedResource):
                 created_by=user, device=self, old_state=self.status,
                 new_state=new_status, message=message, job=job)
         except ValidationError as e:
-            logger.error("Cannot create DeviceStateTransition object. %s" % e)
+            logger.error("Cannot create DeviceStateTransition object. %s", e)
             return False
         self.status = new_status
         self.save()
@@ -2625,7 +2625,6 @@ class TestJob(RestrictedResource):
     def send_notifications(self):
         logger = logging.getLogger('lava_scheduler_app')
         notification = self.notification
-        irc_recipients = {}
         # Prep template args.
         kwargs = self.get_notification_args()
         irc_message = self.create_irc_notification()
@@ -2648,15 +2647,15 @@ class TestJob(RestrictedResource):
                             recipient.save()
                     except (smtplib.SMTPRecipientsRefused,
                             smtplib.SMTPSenderRefused, socket.error):
-                        logger.warn("failed to send email notification to %s",
-                                    recipient.email_address)
+                        logger.warning("failed to send email notification to %s",
+                                       recipient.email_address)
             else:  # IRC method
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     if recipient.irc_server_name:
 
-                        logger.info("sending IRC notification to %s on %s" %
-                                    (recipient.irc_handle_name,
-                                     recipient.irc_server_name))
+                        logger.info("sending IRC notification to %s on %s",
+                                    recipient.irc_handle_name,
+                                    recipient.irc_server_name)
                         try:
                             utils.send_irc_notification(
                                 Notification.DEFAULT_IRC_HANDLE,
@@ -2665,12 +2664,12 @@ class TestJob(RestrictedResource):
                                 server=recipient.irc_server_name)
                             recipient.status = NotificationRecipient.SENT
                             recipient.save()
-                            logger.info("IRC notification sent to %s" %
+                            logger.info("IRC notification sent to %s",
                                         recipient.irc_handle_name)
                         except Exception as e:
-                            logger.warn(
-                                "IRC notification not sent. Reason: %s - %s" %
-                                (e.__class__.__name__, str(e)))
+                            logger.warning(
+                                "IRC notification not sent. Reason: %s - %s",
+                                e.__class__.__name__, str(e))
 
     def create_irc_notification(self):
         kwargs = {}
@@ -2787,7 +2786,8 @@ class TestJob(RestrictedResource):
                         except TestCase.DoesNotExist:
                             continue  # No matching TestCase, move on.
                         except TestCase.MultipleObjectsReturned:
-                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare" % old_suite)
+                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare",
+                                         old_suite)
 
                 kwargs["query"]["testcases_changed"] = testcases_changed
 
