@@ -1,11 +1,5 @@
 {% extends "layouts/content-bootstrap.html" %}
 
-{% block styles %}
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeLAVA.css" rel="stylesheet" type="text/css" />
-{% endblock styles %}
-
 {% block content %}
 <h2>Expanded job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
@@ -112,17 +106,6 @@ This job has repeated actions. Resubmit action will use Original Definition.
 
 
 <h4 class="modal-header">Definition</h4>
-<pre class="brush: js">{{ job.definition }}</pre>
+<pre>{{ job.definition }}</pre>
 
 {% endblock content %}
-
-{% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
-
-<script type="text/javascript">
-  $(function() {
-     SyntaxHighlighter.all();
-  });
-</script>
-{% endblock scripts %}
