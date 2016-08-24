@@ -154,16 +154,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
-        # create a log handler just for this action.
-        if self.job and self.job.parameters['output_dir']:
-            log_level_dir = action.level.split('.')[0]
-            yaml_filename = os.path.join(
-                self.job.parameters['output_dir'], log_level_dir,
-                "%s-%s.log" % (action.level, action.name)
-            )
-            if not os.path.exists(os.path.dirname(yaml_filename)):
-                os.makedirs(os.path.dirname(yaml_filename))
-            action.log_filename = yaml_filename
 
         # Use the pipeline parameters if the function was walled without
         # parameters.
@@ -431,7 +421,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.__parameters__ = {}
         self.__errors__ = []
         self.elapsed_time = None
-        self.log_filename = None
         self.job = None
         self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
