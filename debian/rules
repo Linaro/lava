@@ -22,6 +22,9 @@ export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+# only python2.7 supported currently
+PYTHONDIR=/usr/lib/python2.7/dist-packages/
+
 PYTHON2:=$(shell pyversions -r)
 install_dir=$(call py_libdir, $(PYTHON2))
 
@@ -46,11 +49,12 @@ override_dh_auto_install:
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	[ ! -f man/_build/man/lava-master.1 ] || dh_installman -plava-server man/_build/man/lava-master.1
+	[ -f debian/lava-server/usr/bin/lava-server ] || cp debian/lava-server/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	# move ssfs script to /usr/sbin
 	mkdir debian/lava-server/usr/sbin/
 	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
 	# skip unwanted licence file specified in copyright
-	$(RM) debian/lava-server/usr/lib/python2.7/dist-packages/google_analytics/LICENSE
+	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
 
