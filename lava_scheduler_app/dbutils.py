@@ -817,30 +817,30 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.error({device: exc})
             fail_job(check_job, fail_msg=exc)
             return None
-        if pipeline_job:
-            pipeline = pipeline_job.describe()
-            # write the pipeline description to the job output directory.
-            if not os.path.exists(check_job.output_dir):
-                os.makedirs(check_job.output_dir)
-            pipeline_dump = yaml.dump(pipeline)
-            with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-                describe_yaml.write(pipeline_dump)
-            if not map_metadata(pipeline_dump, check_job):
-                logger.warning("[%d] unable to map metadata", check_job.id)
-            # add the compatibility result from the master to the definition for comparison on the slave.
-            if 'compatibility' in pipeline:
-                try:
-                    compat = int(pipeline['compatibility'])
-                except ValueError:
-                    logger.error("[%d] Unable to parse job compatibility: %s",
-                                 check_job.id, pipeline['compatibility'])
-                    compat = 0
-                check_job.pipeline_compatibility = compat
-                check_job.save(update_fields=['pipeline_compatibility'])
-            else:
-                logger.error("[%d] Unable to identify job compatibility.", check_job.id)
-                fail_job(check_job, fail_msg='Unknown compatibility')
-                return None
+
+        # write the pipeline description to the job output directory.
+        pipeline = pipeline_job.describe()
+        if not os.path.exists(check_job.output_dir):
+            os.makedirs(check_job.output_dir)
+        pipeline_dump = yaml.dump(pipeline)
+        with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+            describe_yaml.write(pipeline_dump)
+        if not map_metadata(pipeline_dump, check_job):
+            logger.warning("[%d] unable to map metadata", check_job.id)
+        # add the compatibility result from the master to the definition for comparison on the slave.
+        if 'compatibility' in pipeline:
+            try:
+                compat = int(pipeline['compatibility'])
+            except ValueError:
+                logger.error("[%d] Unable to parse job compatibility: %s",
+                             check_job.id, pipeline['compatibility'])
+                compat = 0
+            check_job.pipeline_compatibility = compat
+            check_job.save(update_fields=['pipeline_compatibility'])
+        else:
+            logger.error("[%d] Unable to identify job compatibility.", check_job.id)
+            fail_job(check_job, fail_msg='Unknown compatibility')
+            return None
 
     return device
 
