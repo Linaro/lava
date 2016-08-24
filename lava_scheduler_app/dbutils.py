@@ -793,8 +793,9 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             device_object.target = device.hostname
         device_object['hostname'] = device.hostname
 
-    validate_list = job.sub_jobs_list if job.is_multinode else [job]
-    for check_job in validate_list:
+    # write the pipeline description to the job output directory.
+    describe_list = job.sub_jobs_list if job.is_multinode else [job]
+    for check_job in describe_list:
         # dynamic connections still get the device config of the host
         try:
             logger.info("[%d] Parsing definition", check_job.id)
@@ -809,16 +810,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.error('[%d] parser error: %s', check_job.id, exc)
             fail_job(check_job, fail_msg=exc)
             return None
-        try:
-            logger.info("[%d] Validating actions", check_job.id)
-            pipeline_job.pipeline.validate_actions()
-        except (AttributeError, JobError, KeyError, TypeError, RuntimeError) as exc:
-            exc = format_exc(exc)
-            logger.error({device: exc})
-            fail_job(check_job, fail_msg=exc)
-            return None
 
-        # write the pipeline description to the job output directory.
         pipeline = pipeline_job.describe()
         if not os.path.exists(check_job.output_dir):
             os.makedirs(check_job.output_dir)
@@ -827,6 +819,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             describe_yaml.write(pipeline_dump)
         if not map_metadata(pipeline_dump, check_job):
             logger.warning("[%d] unable to map metadata", check_job.id)
+
         # add the compatibility result from the master to the definition for comparison on the slave.
         if 'compatibility' in pipeline:
             try:
