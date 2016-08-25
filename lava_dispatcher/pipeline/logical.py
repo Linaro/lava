@@ -205,8 +205,7 @@ class Deployment(object):
                 "No deployment strategy available for the given "
                 "device '%s'. %s" % (device['hostname'], cls))
 
-        willing.sort(key=lambda x: x.priority)
-        willing.reverse()
+        willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
 
@@ -247,8 +246,7 @@ class Boot(object):
             )
 
         # higher priority first
-        willing.sort(key=lambda x: x.priority)
-        willing.reverse()
+        willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
 
@@ -291,8 +289,7 @@ class LavaTest(object):
             raise NotImplementedError(msg)
 
         # higher priority first
-        willing.sort(key=lambda x: x.priority)
-        willing.reverse()
+        willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
 

@@ -149,8 +149,7 @@ class RepoAction(Action):
                 " '%s'." % repo_type)
 
         # higher priority first
-        willing.sort(key=lambda x: x.priority)
-        willing.reverse()
+        willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
     def validate(self):
