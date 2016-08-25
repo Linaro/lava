@@ -366,9 +366,11 @@ class HttpDownloadAction(DownloadHandler):
     def validate(self):
         super(HttpDownloadAction, self).validate()
         try:
+            self.logger.debug("Validating that %s exists", self.url.geturl())
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 # try using (the slower) get for services with broken redirect support
+                self.logger.debug("Using GET because HEAD is not supported properly")
                 res = requests.get(
                     self.url.geturl(), allow_redirects=True, stream=True,
                     timeout=HTTP_DOWNLOAD_TIMEOUT)

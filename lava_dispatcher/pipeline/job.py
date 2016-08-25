@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import time
 import yaml
 
 from lava_dispatcher.pipeline.action import Action, JobError
@@ -63,14 +64,18 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.timeout = None
         self.protocols = []
         self.compatibility = 2
-        # TODO: we are now able to create the logger when the job is started,
+        # We are now able to create the logger when the job is started,
         # allowing the functions that are called before run() to log.
-        # Do we want to do something with this?
-        # Taking into account that the validate() function will be called on
-        # the LAVA server when the job is submitted.
-        # For the moment, we create the logger without the ZMQ handler that
-        # will be added when running the job.
+        # The validate() function is no longer called on the master so we can
+        # safelly add the ZMQ handler. This way validate can log errors that
+        # test writter will see.
         self.logger = logging.getLogger('dispatcher')
+        if socket_addr is not None:
+            self.logger.addZMQHandler(socket_addr, master_cert, slave_cert,
+                                      job_id)
+            self.logger.setMetadata("0", "validate")
+        else:
+            self.logger.addHandler(logging.StreamHandler())
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -107,6 +112,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Then needs to validate the context
         Finally expose the context so that actions can see it.
         """
+        self.logger.info("start: 0 validate")
+        start = time.time()
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
@@ -125,7 +132,14 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
         # FIXME: validate the device config
         # FIXME: pretty output of exception messages needed.
-        self.pipeline.validate_actions()
+        try:
+            self.pipeline.validate_actions()
+        except JobError as exc:
+            self.logger.error(exc)
+            # This should be re-raised to end the job
+            raise
+        finally:
+            self.logger.info("validate duration: %.02f", time.time() - start)
 
     def run(self):
         """
@@ -134,13 +148,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        # Add the ZMQ handler now
-        if self.socket_addr is not None:
-            self.logger.addZMQHandler(self.socket_addr, self.master_cert,
-                                      self.slave_cert, self.job_id)  # pylint: disable=maybe-no-member
-        else:
-            self.logger.addHandler(logging.StreamHandler())
-
         for protocol in self.protocols:
             try:
                 protocol.set_up()
