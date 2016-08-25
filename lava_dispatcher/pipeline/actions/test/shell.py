@@ -303,7 +303,6 @@ class TestShellAction(TestAction):
                 self.start = time.time()
                 self.logger.debug("Starting test definition: %s" % self.definition)
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
-                self.start = time.time()
                 # set the pattern for this run from pattern_dict
                 testdef_index = self.get_common_data('test-definition', 'testdef_index')
                 uuid_list = self.get_common_data('repo-action', 'uuid-list')
