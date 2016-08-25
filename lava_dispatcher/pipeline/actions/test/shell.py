@@ -327,6 +327,9 @@ class TestShellAction(TestAction):
                 uuid = params[1]
                 # remove the pattern for this run from pattern_dict
                 self._reset_patterns()
+                # catch error in ENDRUN being handled without STARTRUN
+                if not self.start:
+                    self.start = time.time()
                 self.logger.info("Ending use of test pattern.")
                 self.logger.info("Ending test lava.%s (%s), duration %.02f",
                                  self.definition, uuid,
