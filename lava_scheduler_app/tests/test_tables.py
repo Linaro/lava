@@ -105,8 +105,14 @@ class TestTestJobTable(TestCase):
         view = TestJobView(None, model=TestJob, table_class=TestJobTable)
         table = TestJobTable(view.get_table_data())
         logging.debug("Passing a model and table_class to get search data")
-        self.assertEqual(table.prepare_search_data(view),
-                         {'search': ['Description', 'device', 'ID', 'status', 'submitter']})
+        proxied = {}
+        for key, value in table.prepare_search_data(view).items():
+            proxied[key] = []
+            if isinstance(value, list):
+                for item in value:
+                    proxied[key].append(str(item))
+        self.assertEqual(proxied,
+                         {'search': ['Description', 'device', 'ID', 'status', 'Sub ID', 'submitter']})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
         self.assertEqual(table.prepare_times_data(view), {'times': ['End time (hours)', 'Submit time (hours)']})
 
@@ -126,8 +132,15 @@ class TestPrefixJobTable(TestCase):
         view = TestJobView(None, model=TestJob, table_class=TestJobTable)
         table = TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
         logging.debug("Testing a view with a model and a prefix")
-        self.assertEqual(table.prepare_search_data(view),
-                         {self.prefix: ['Description', 'device', 'ID', 'status', 'submitter']})
+        proxied = {}
+        for key, value in table.prepare_search_data(view).items():
+            proxied[key] = []
+            if isinstance(value, list):
+                for item in value:
+                    proxied[key].append(str(item))
+
+        self.assertEqual(proxied,
+                         {self.prefix: ['Description', 'device', 'ID', 'status', 'Sub ID', 'submitter']})
         self.assertEqual(table.prepare_terms_data(view), {self.prefix: {}})
         self.assertEqual(table.prepare_times_data(view), {self.prefix: ['End time (hours)', 'Submit time (hours)']})
 

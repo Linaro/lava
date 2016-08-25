@@ -602,11 +602,19 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
+        job_status = {'job_id': job.id}
+
+        if job.is_multinode:
+            job_status.update({
+                'sub_id': job.sub_id
+            })
+
         if job.is_pipeline:
-            return {
+            job_status.update({
                 'job_status': job.get_status_display(),
                 'bundle_sha1': ""
-            }
+            })
+            return job_status
 
         # DEPRECATED
         bundle_sha1 = ""
@@ -616,10 +624,10 @@ class SchedulerAPI(ExposedAPI):
             except IndexError:
                 pass
 
-        job_status = {
+        job_status.update({
             'job_status': job.get_status_display(),
             'bundle_sha1': bundle_sha1
-        }
+        })
 
         return job_status
 

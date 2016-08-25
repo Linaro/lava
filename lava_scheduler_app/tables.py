@@ -252,6 +252,7 @@ class JobTable(LavaTable):
         # note the enums cannot be searched this way.
         searches = {
             'id': 'contains',
+            'sub_id': 'contains',
             'description': 'contains'
         }
         # dedicated time-based search fields

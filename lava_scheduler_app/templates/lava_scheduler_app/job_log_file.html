@@ -183,6 +183,7 @@
         {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
             <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
         {% endif %}
+      ({{ subjob.id }})
       </dt>
         <dd>
     {% if subjob.actual_device.hostname %}
