@@ -205,6 +205,8 @@ class TestShellAction(TestAction):
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         connection.timeout = self.connection_timeout
+        # force an initial prompt - not all shells will respond without an excuse.
+        connection.sendline(connection.check_char)
         self.wait(connection)
 
         # use the string instead of self.name so that inheriting classes (like multinode)
