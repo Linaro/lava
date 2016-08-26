@@ -277,7 +277,7 @@ class VlandProtocol(Protocol):
         self.logger.debug({"lookup_switch": msg})
         response = self._call_vland(msg)
         if not response or response == '':
-            return None
+            raise JobError("Switch_id for switch name: %s not found", switch_name)
         reply = json.loads(response)
         return reply['data']
 
@@ -293,7 +293,7 @@ class VlandProtocol(Protocol):
         self.logger.debug({"lookup_port_id": msg})
         response = self._call_vland(msg)
         if not response or response == '':
-            return None
+            raise JobError("Port_id for port: %s not found", port)
         reply = json.loads(response)
         return reply['data']
 
