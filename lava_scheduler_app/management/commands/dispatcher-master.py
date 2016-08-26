@@ -81,19 +81,6 @@ class FileHandler(object):  # pylint: disable=too-few-public-methods
         self.fd.close()
 
 
-def send_status(hostname, socket, logger):
-    """
-    The master crashed, send a STATUS message to get the current state of jobs
-    """
-    jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
-                                  is_pipeline=True,
-                                  status=TestJob.RUNNING)
-    for job in jobs:
-        logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
-                    job.actual_device.hostname)
-        socket.send_multipart([hostname, 'STATUS', str(job.id)])
-
-
 def get_env_string(filename):
     """
     Returns the string after checking for YAML errors which would cause issues later.
@@ -164,6 +151,28 @@ class Command(BaseCommand):
                             default='/var/lib/lava-server/default/media/job-output',
                             help="Directory where to store job outputs. "
                                  "Default: /var/lib/lava-server/default/media/job-output")
+
+    def send_status(self, hostname):
+        """
+        The master crashed, send a STATUS message to get the current state of jobs
+        """
+        jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
+                                      is_pipeline=True,
+                                      status=TestJob.RUNNING)
+        for job in jobs:
+            self.logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
+                             job.actual_device.hostname)
+            self.controler.send_multipart([hostname, 'STATUS', str(job.id)])
+
+    def dispatcher_alive(self, hostname):
+        if hostname not in self.dispatchers:
+            # The server crashed: send a STATUS message
+            self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
+            self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
+            self.send_status(hostname)
+
+        # Mark the dispatcher as alive
+        self.dispatchers[hostname].alive()
 
     def logging_socket(self, options):
         msg = self.pull_socket.recv_multipart()
@@ -253,38 +262,29 @@ class Command(BaseCommand):
         # 2: the action
         action = msg[1]
         # Handle the actions
-        if action == 'HELLO':
+        if action == 'HELLO' or action == 'HELLO_RETRY':
             self.logger.info("%s => %s", hostname, action)
             self.controler.send_multipart([hostname, 'HELLO_OK'])
             # If the dispatcher is known and sent an HELLO, means that
             # the slave has restarted
             if hostname in self.dispatchers:
-                self.logger.warning("Dispatcher <%s> has RESTARTED", hostname)
+                if action == 'HELLO':
+                    self.logger.warning("Dispatcher <%s> has RESTARTED",
+                                        hostname)
+                else:
+                    # Assume the HELLO command was received, and the
+                    # action succeeded.
+                    self.logger.warning("Dispatcher <%s> was not confirmed",
+                                        hostname)
             else:
+                # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
+                # message.
                 self.logger.warning("New dispatcher <%s>", hostname)
                 self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-            # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
-            # as well as handling unexpected crashes.
-            self._cancel_slave_dispatcher_jobs(hostname)
 
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
-
-        elif action == "HELLO_RETRY":
-            self.logger.info("%s => HELLO_RETRY", hostname)
-            self.controler.send_multipart([hostname, "HELLO_OK"])
-
-            if hostname in self.dispatchers:
-                # Assume the HELLO command was received, and the
-                # action succeeded.
-                self.logger.warning(
-                    "Dispatcher <%s> was not confirmed", hostname)
-            else:
-                # No dispatcher, treat it as a normal HELLO message.
-                self.logger.warning("New dispatcher <%s>", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(
-                    hostname, online=True)
-
+            if action == 'HELLO':
+                # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
+                # as well as handling unexpected crashes.
                 self._cancel_slave_dispatcher_jobs(hostname)
 
             # Mark the dispatcher as alive
@@ -294,15 +294,7 @@ class Command(BaseCommand):
             self.logger.debug("%s => PING", hostname)
             # Send back a signal
             self.controler.send_multipart([hostname, 'PONG'])
-
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == "ERROR":
             try:
@@ -313,8 +305,7 @@ class Command(BaseCommand):
                 return False
             self.logger.error("[%d] Error: %s", job_id, error_msg)
 
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == 'END':
             status = TestJob.COMPLETE
@@ -342,15 +333,7 @@ class Command(BaseCommand):
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
             self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
-
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == 'START_OK':
             try:
@@ -367,14 +350,7 @@ class Command(BaseCommand):
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
 
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         else:
             self.logger.error("<%s> sent unknown action=%s, args=(%s)",
@@ -463,6 +439,9 @@ class Command(BaseCommand):
                 device_configuration = None \
                     if job.dynamic_connection else device.load_device_configuration(job_ctx)
 
+                env_str = get_env_string(options['env'])
+                env_dut_str = get_env_string(options['env_dut'])
+
                 if job.is_multinode:
                     for group_job in job.sub_jobs_list:
                         if group_job.dynamic_connection:
@@ -473,14 +452,13 @@ class Command(BaseCommand):
                                 [str(worker_host.hostname),
                                  'START', str(group_job.id), self.export_definition(group_job),
                                  str(device_configuration),
-                                 get_env_string(options['env']),
-                                 get_env_string(options['env_dut'])])
+                                 env_str, env_dut_str])
 
                 self.controler.send_multipart(
                     [str(worker_host.hostname),
                      'START', str(job.id), self.export_definition(job),
                      str(device_configuration),
-                     get_env_string(options['env']), get_env_string(options['env_dut'])])
+                     env_str, env_dut_str])
 
             except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
                 if isinstance(exc, jinja2.TemplateNotFound):
