@@ -576,10 +576,15 @@ class Command(BaseCommand):
         (pipe_r, pipe_w) = os.pipe()
         flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
         fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-        signal.set_wakeup_fd(pipe_w)
-        signal.signal(signal.SIGINT, lambda x, y: None)
-        signal.signal(signal.SIGTERM, lambda x, y: None)
-        signal.signal(signal.SIGQUIT, lambda x, y: None)
+
+        def signal_to_pipe(signum, frame):
+            # Send the signal number on the pipe
+            os.write(pipe_w, chr(signum))
+
+        signal.signal(signal.SIGHUP, signal_to_pipe)
+        signal.signal(signal.SIGINT, signal_to_pipe)
+        signal.signal(signal.SIGTERM, signal_to_pipe)
+        signal.signal(signal.SIGQUIT, signal_to_pipe)
         poller.register(pipe_r, zmq.POLLIN)
 
         if os.path.exists('/etc/lava-server/worker.conf'):
@@ -601,8 +606,13 @@ class Command(BaseCommand):
                     continue
 
                 if sockets.get(pipe_r) == zmq.POLLIN:
-                    self.logger.info("[POLL] Received a signal, leaving")
-                    break
+                    signum = ord(os.read(pipe_r, 1))
+                    if signum == signal.SIGHUP:
+                        self.logger.info("[POLL] SIGHUP received, restarting loggers")
+                        self.logging_support()
+                    else:
+                        self.logger.info("[POLL] Received a signal, leaving")
+                        break
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
@@ -637,13 +647,9 @@ class Command(BaseCommand):
                     last_db_access = now
                     # Dispatch jobs
                     # TODO: make this atomic
-                    not_allocated = 0
                     # only pick up pipeline jobs with devices in Reserved state
                     if not self.process_jobs(options):
                         continue
-
-                    if not_allocated > 0:
-                        self.logger.info("%d jobs not allocated yet", not_allocated)
 
                     # Handle canceling jobs
                     self.handle_canceling()
