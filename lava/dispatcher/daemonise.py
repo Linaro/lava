@@ -36,13 +36,17 @@ from subprocess import Popen
 child = None
 
 
-def signal_handler(sig, frame):  # pylint: disable=unused-argument
+def signal_handler(signum, frame):  # pylint: disable=unused-argument
     global child  # pylint: disable=global-statement
     try:
-        logging.info("Closing daemon and child %d" % child.pid)  # pylint: disable=logging-not-lazy
-        child.send_signal(sig)
-        child = None
-        sys.exit(os.EX_OK)
+        if signum == signal.SIGHUP:
+            logging.info("Forwarding a SIGHUP to the child")
+            child.send_signal(signum)
+        else:
+            logging.info("Closing daemon and child %d" % child.pid)
+            child.send_signal(signum)
+            child = None
+            sys.exit(os.EX_OK)
     except Exception as e:
         raise Exception('Error in signal handler: ' + str(e))
 

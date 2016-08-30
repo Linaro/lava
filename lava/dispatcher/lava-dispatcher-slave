@@ -275,16 +275,21 @@ def create_zmq_context(master_uri, hostname, send_queue, encrypt,
     # Mask signals and create a pipe that will receive a bit for each signal
     # received. Poll the pipe along with the zmq socket so that we can only be
     # interrupted while reading data.
-    (read_pipe, write_pipe) = os.pipe()
-    flags = fcntl.fcntl(write_pipe, fcntl.F_GETFL, 0) | os.O_NONBLOCK
-    fcntl.fcntl(write_pipe, fcntl.F_SETFL, flags)
-    signal.set_wakeup_fd(write_pipe)
-    signal.signal(signal.SIGINT, lambda x, y: None)
-    signal.signal(signal.SIGTERM, lambda x, y: None)
-    signal.signal(signal.SIGQUIT, lambda x, y: None)
-    poller.register(read_pipe, zmq.POLLIN)
+    (pipe_r, pipe_w) = os.pipe()
+    flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
+    fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-    return context, sock, poller, read_pipe, write_pipe
+    def signal_to_pipe(signum, frame):
+        # Send the signal number on the pipe
+        os.write(pipe_w, chr(signum))
+
+    signal.signal(signal.SIGHUP, signal_to_pipe)
+    signal.signal(signal.SIGINT, signal_to_pipe)
+    signal.signal(signal.SIGTERM, signal_to_pipe)
+    signal.signal(signal.SIGQUIT, signal_to_pipe)
+    poller.register(pipe_r, zmq.POLLIN)
+
+    return context, sock, poller, pipe_r, pipe_w
 
 
 def destroy_zmq_context(context, sock, read_pipe, write_pipe):
@@ -395,8 +400,21 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
         return
 
     if sockets.get(pipe_r) == zmq.POLLIN:
-        LOG.info("Received a signal, leaving")
-        sys.exit(0)
+        signum = ord(os.read(pipe_r, 1))
+        if signum == signal.SIGHUP:
+            LOG.info("SIGHUP received, restarting loggers")
+            handler = LOG.handlers[0]
+            if isinstance(handler, logging.FileHandler):
+                # Keep the filename and remove the handler
+                log_file = handler.baseFilename
+                LOG.removeHandler(handler)
+                # Re-create the handler
+                handler = logging.FileHandler(log_file, "a")
+                handler.setFormatter(logging.Formatter(FORMAT))
+                LOG.addHandler(handler)
+        else:
+            LOG.info("Received a signal, leaving")
+            sys.exit(0)
 
     if sockets.get(sock) == zmq.POLLIN:
         msg = sock.recv_multipart()
