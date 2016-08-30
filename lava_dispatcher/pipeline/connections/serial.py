@@ -59,7 +59,7 @@ class ConnectDevice(Action):
         self.errors = infrastructure_error(exe)
 
     def run(self, connection, args=None):
-        if connection:
+        if isinstance(connection, SimpleSession):
             self.logger.debug("Already connected")
             if not connection.prompt_str:
                 # prompt_str can be a list or str

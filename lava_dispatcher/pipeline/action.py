@@ -657,10 +657,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     self.errors = exc.output.strip().decode('utf-8')
                 else:
                     self.errors = str(exc)
-                self.logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': str(exc),
-                    'output': str(exc).split('\n')})
+                self.logger.exception(
+                    '[%s] command %s\nmessage %s\noutput %s\n',
+                    self.name,
+                    [i.strip() for i in exc.cmd],
+                    str(exc),
+                    str(exc).split('\n'))
             else:
                 if exc.output:
                     self.errors = exc.output.strip()
@@ -668,18 +670,19 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     self.errors = exc.message
                 else:
                     self.errors = str(exc)
-                self.logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': [i.strip() for i in exc.message],
-                    'output': exc.output.split('\n')})
+                self.logger.exception(
+                    "[%s] command %s\nmessage %s\noutput %s\nexit code %s",
+                    self.name,
+                    [i.strip() for i in exc.cmd],
+                    [i.strip() for i in exc.message],
+                    exc.output.split('\n'), exc.returncode)
 
         # allow for commands which return no output
         if not log and allow_silent:
-            self.logger.debug({'command': command_list})
+            self.logger.debug('command %s', command_list)
             return self.errors == []
         else:
-            self.logger.debug({'command': command_list,
-                               'output': log})
+            self.logger.debug('command %s output %s', command_list, log)
             return log
 
     def call_protocols(self):
@@ -823,8 +826,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt. %s seconds",
-                          self.name, int(self.connection_timeout.duration))
+        self.logger.debug("%s: Wait for prompt %s. %s seconds",
+                          self.name, connection.prompt_str, int(self.connection_timeout.duration))
         return connection.wait()
 
 

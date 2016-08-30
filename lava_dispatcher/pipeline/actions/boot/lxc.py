@@ -72,9 +72,8 @@ class BootLxcAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(LxcStartAction())
         self.internal_pipeline.add_action(ConnectLxc())
-        # Add AutoLoginAction unconditionally as this action does nothing if
-        # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
+        # Skip AutoLoginAction unconditionally as this action tries to parse kernel message
+        # self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
 

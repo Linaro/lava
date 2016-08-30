@@ -117,15 +117,19 @@ class WaitForAdbDevice(Action):
         self.prompts = []
 
     def validate(self):
-        super(WaitForAdbDevice, self).validate()
-        if 'adb_serial_number' not in self.job.device:
-            self.errors = "device adb serial number missing"
+        if 'adb_serial_number' in self.job.device:
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
+        super(WaitForAdbDevice, self).validate()
 
     def run(self, connection, args=None):
+        if 'lxc' not in self.job.device['actions']['boot']['methods']:
+            return connection
         connection = super(WaitForAdbDevice, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
+        if not lxc_name:
+            self.logger.debug("No LXC device requested")
+            return connection
         serial_number = self.job.device['adb_serial_number']
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
         self.logger.debug("Starting adb daemon")

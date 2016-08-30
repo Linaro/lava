@@ -21,6 +21,7 @@
 import re
 import sys
 import time
+import yaml
 import logging
 import pexpect
 from collections import OrderedDict
@@ -235,7 +236,7 @@ class TestShellAction(TestAction):
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
 
-        self.logger.debug(self.report)
+        self.logger.debug(yaml.dump(self.report))
         return connection
 
     def parse_v2_case_result(self, data, fixupdict=None):

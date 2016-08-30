@@ -31,11 +31,14 @@ from lava_dispatcher.pipeline.menus.menus import (
     MenuReset
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.power import ResetDevice, FastBootRebootAction
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
+from lava_dispatcher.pipeline.actions.boot.fastboot import WaitForAdbDevice
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_UEFI_LABEL_CLASS
 
 
 class UefiMenu(Boot):
@@ -110,8 +113,7 @@ class UefiMenuSelector(SelectorMenuAction):
         """
         params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
         if ('item_markup' not in params or
-                'item_class' not in params or 'separator' not in params or
-                'label_class' not in params):
+                'item_class' not in params or 'separator' not in params):
             self.errors = "Missing device parameters for UEFI menu operations"
         if 'commands' not in self.parameters:
             self.errors = "Missing commands in action parameters"
@@ -121,13 +123,22 @@ class UefiMenuSelector(SelectorMenuAction):
         self.selector.item_markup = params['item_markup']
         self.selector.item_class = params['item_class']
         self.selector.separator = params['separator']
-        self.selector.label_class = params['label_class']
+        if 'label_class' in params:
+            self.selector.label_class = params['label_class']
+        else:
+            # label_class is problematic via jinja and yaml templating.
+            self.selector.label_class = DEFAULT_UEFI_LABEL_CLASS
         self.selector.prompt = params['bootloader_prompt']  # initial prompt
         self.boot_message = params['boot_message']  # final prompt
         self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, args=None):
+        if self.job.device.pre_os_command:
+            self.logger.info("Running pre OS command.")
+            command = self.job.device.pre_os_command
+            if not self.run_command(command.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % command)
         if not connection:
             return connection
         connection.prompt_str = self.selector.prompt
@@ -201,11 +212,23 @@ class UefiMenuAction(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(UefiSubstituteCommands())
-        self.internal_pipeline.add_action(MenuConnect())
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(UEFIMenuInterrupt())
-        self.internal_pipeline.add_action(UefiMenuSelector())
-        self.internal_pipeline.add_action(MenuReset())
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        if 'commands' in parameters and 'fastboot' in parameters['commands']:
+            self.internal_pipeline.add_action(UefiSubstituteCommands())
+            self.internal_pipeline.add_action(MenuConnect())
+            self.internal_pipeline.add_action(FastBootRebootAction())
+            self.internal_pipeline.add_action(UEFIMenuInterrupt())
+            self.internal_pipeline.add_action(UefiMenuSelector())
+            self.internal_pipeline.add_action(MenuReset())
+            self.internal_pipeline.add_action(ConnectLxc())
+            self.internal_pipeline.add_action(WaitForAdbDevice())
+        else:
+            self.internal_pipeline.add_action(UefiSubstituteCommands())
+            self.internal_pipeline.add_action(MenuConnect())
+            self.internal_pipeline.add_action(ResetDevice())
+            self.internal_pipeline.add_action(UEFIMenuInterrupt())
+            self.internal_pipeline.add_action(UefiMenuSelector())
+            self.internal_pipeline.add_action(MenuReset())
+            self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            self.internal_pipeline.add_action(ConnectLxc())
+            self.internal_pipeline.add_action(WaitForAdbDevice())

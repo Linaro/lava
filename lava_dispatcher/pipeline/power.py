@@ -150,6 +150,11 @@ class PowerOn(Action):
     def run(self, connection, args=None):
         connection = super(PowerOn, self).run(connection, args)
         if self.job.device.power_state is 'off':
+            if self.job.device.pre_power_command:
+                command = self.job.device.pre_power_command
+                self.logger.info("Running pre power command")
+                if not self.run_command(command.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % command)
             command = self.job.device.power_command
             if not command:
                 return connection
@@ -157,6 +162,33 @@ class PowerOn(Action):
                 raise InfrastructureError("Command '%s' failed" % command)
             self.results = {'success': self.name}
             self.job.device.power_state = 'on'
+        return connection
+
+
+class FastBootRebootAction(Action):
+    """
+    This action calls fastboot reboot
+    """
+    def __init__(self):
+        super(FastBootRebootAction, self).__init__()
+        self.name = "reboot-fastboot"
+        self.summary = "attempt to fastboot soft reboot"
+        self.description = "soft reboot using fastboot"
+        self.command = ''
+
+    def validate(self):
+        super(FastBootRebootAction, self).validate()
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, args=None):
+        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
+            command = self.job.device['commands']['soft_reset']
+            if not self.run_command(command.split(' '), allow_silent=True):
+                raise InfrastructureError("Command '%s' failed" % command)
+            self.results = {"success": self.job.device.power_state}
         return connection
 
 
@@ -274,9 +306,7 @@ class FinalizeAction(Action):
         elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
             self.errors = "Incomplete"
-            self.logger.error({
-                'Status': 'Incomplete',
-                'Errors': self.job.pipeline.errors})
+            self.logger.error('Status: Incomplete\nErrors %s', self.job.pipeline.errors)
         else:
             self.results = {'success': "Complete"}
             self.logger.info("Status: Complete")

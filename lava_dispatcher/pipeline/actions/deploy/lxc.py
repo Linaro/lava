@@ -205,8 +205,8 @@ class LxcAddDeviceAction(Action):
 
             if device_path:
                 # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
-                self.logger.info("Wait %d seconds for usb device to show up",
-                                 USB_SHOW_UP_TIMEOUT)
+                self.logger.info("[%s] Wait %d seconds for usb device to show up",
+                                 self.name, USB_SHOW_UP_TIMEOUT)
                 sleep(USB_SHOW_UP_TIMEOUT)
 
                 for path in device_path:
@@ -217,10 +217,15 @@ class LxcAddDeviceAction(Action):
                         devices = [path]
 
                     for device in devices:
+                        self.logger.debug('adding %s at %s', device, path)
                         device = os.path.join(path, device)
                         lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                        self.run_command(lxc_cmd)
+                        log = self.run_command(lxc_cmd)
+                        self.logger.debug(log)
                         self.logger.debug("%s: devices added from %s", lxc_name,
                                           path)
             else:
-                self.logger.debug("device_path is None")
+                self.logger.warning("device_path is None")
+        else:
+            self.logger.error("No device path defined for this device.")
+        return connection

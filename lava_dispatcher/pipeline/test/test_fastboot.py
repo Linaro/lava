@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootAction
+from lava_dispatcher.pipeline.power import FastBootRebootAction
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -47,14 +48,23 @@ class Factory(object):  # pylint: disable=too-few-public-methods
                                output_dir=output_dir)
         return job
 
+    def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
+        return job
+
 
 class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestFastbootDeploy, self).setUp()
-        factory = Factory()
-        self.job = factory.create_fastboot_job('sample_jobs/fastboot.yaml',
-                                               mkdtemp())
+        self.factory = Factory()
+        self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml',
+                                                    mkdtemp())
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -66,6 +76,17 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
     def test_pipeline(self):
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+    def test_fastboot_lxc(self):
+        job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
+                                            mkdtemp())
+        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
+        self.assertIn('commands', uefi_menu.parameters)
+        self.assertIn('fastboot', uefi_menu.parameters['commands'])
+        self.assertEqual(
+            job.device.pre_power_command,
+            '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
+        self.assertIn(FastBootRebootAction, [obj.__class__ for obj in uefi_menu.internal_pipeline.actions])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
                      'lxc-create not installed')

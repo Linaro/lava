@@ -20,7 +20,7 @@
 
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.power import FastBootRebootAction, PowerOn
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
@@ -119,7 +119,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
                 self.internal_pipeline.add_action(ConnectDevice())
-                self.internal_pipeline.add_action(ResetDevice())
+                self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         image_keys = list(parameters['images'].keys())

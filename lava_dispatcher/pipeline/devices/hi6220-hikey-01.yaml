@@ -1,23 +1,29 @@
 commands:
-    connect: telnet 192.168.1.200 8001
-    hard_reset: /home/stylesen/work/pdu/pdu-control-reset.sh 0 5 1 5
-    soft_reset: fastboot -s usb:2-1.2 reboot
-    power_off: /home/stylesen/work/pdu/pdu-control-off.sh 5
-    power_on: /home/stylesen/work/pdu/pdu-control-on.sh 5
-    fastboot_command: fastboot -s usb:2-1.2
+    connect: telnet localhost 7019
+    hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
+    soft_reset: fastboot -u -s 96B0201601000691 reboot
+    power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
+    power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 08
+    pre_os_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m off -u 06
+    pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
+    adb_command: adb -s 96B0201601000691
+    fastboot_command: fastboot -u -s 96B0201601000691
 device_type: hi6220-hikey
-adb_serial_number: 0123456789
-fastboot_serial_number: usb:2-1.2
-
+adb_serial_number: 96B0201601000691
+fastboot_serial_number: 96B0201601000691
+device_path: ['/dev/hikey01']
 
 actions:
   deploy:
     methods:
+      lxc:
       fastboot:
     connections:
+      lxc:
       serial:
   boot:
     connections:
+      lxc:
       serial:
     methods:
       uefi-menu:
