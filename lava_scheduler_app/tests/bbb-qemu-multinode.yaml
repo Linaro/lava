@@ -1,0 +1,92 @@
+job_name: panda bbb multinode
+visibility: public
+priority: medium
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+
+protocols:
+  lava-multinode:
+    roles:
+      server:
+        device_type: beaglebone-black
+        count: 1
+      client:
+        context:
+          arch: amd64
+        device_type: qemu
+        count: 1
+
+actions:
+- deploy:
+    role:
+    - client
+    to: tmpfs
+    images:
+        rootfs:
+          image_arg: -drive format=raw,file={rootfs}
+          url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+          compression: gz
+    os: debian
+    root_partition: 1
+
+- deploy:
+    role:
+    - server
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+    ramdisk:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+      compression: gz
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+    modules:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
+
+- boot:
+    role:
+    - client
+    method: qemu
+    media: tmpfs
+    prompts:
+    - "root@debian:"
+
+- boot:
+    role:
+    - server
+    method: u-boot
+    commands: nfs
+    type: bootz
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
+
+- test:
+    role:
+    - client
+    - server
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests

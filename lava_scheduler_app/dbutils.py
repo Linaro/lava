@@ -794,46 +794,45 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         device_object['hostname'] = device.hostname
 
     # write the pipeline description to the job output directory.
-    describe_list = job.sub_jobs_list if job.is_multinode else [job]
-    for check_job in describe_list:
-        # dynamic connections still get the device config of the host
+    # Can only validate this job for this device, even with multinode
+    # dynamic connections still get the device config of the host
+    try:
+        logger.info("[%d] Parsing definition", job.id)
+        # pass (unused) output_dir just for validation as there is no zmq socket either.
+        pipeline_job = parser.parse(
+            job.definition, device_object,
+            job.id, None, None, None, output_dir=job.output_dir)
+    except (
+            AttributeError, JobError, NotImplementedError,
+            KeyError, TypeError, RuntimeError) as exc:
+        exc = format_exc(exc)
+        logger.error('[%d] parser error: %s', job.id, exc)
+        fail_job(job, fail_msg=exc)
+        return None
+
+    pipeline = pipeline_job.describe()
+    if not os.path.exists(job.output_dir):
+        os.makedirs(job.output_dir)
+    pipeline_dump = yaml.dump(pipeline)
+    with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+        describe_yaml.write(pipeline_dump)
+    if not map_metadata(pipeline_dump, job):
+        logger.warning("[%d] unable to map metadata", job.id)
+
+    # add the compatibility result from the master to the definition for comparison on the slave.
+    if 'compatibility' in pipeline:
         try:
-            logger.info("[%d] Parsing definition", check_job.id)
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
-            pipeline_job = parser.parse(
-                check_job.definition, device_object,
-                check_job.id, None, None, None, output_dir=check_job.output_dir)
-        except (
-                AttributeError, JobError, NotImplementedError,
-                KeyError, TypeError, RuntimeError) as exc:
-            exc = format_exc(exc)
-            logger.error('[%d] parser error: %s', check_job.id, exc)
-            fail_job(check_job, fail_msg=exc)
-            return None
-
-        pipeline = pipeline_job.describe()
-        if not os.path.exists(check_job.output_dir):
-            os.makedirs(check_job.output_dir)
-        pipeline_dump = yaml.dump(pipeline)
-        with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-            describe_yaml.write(pipeline_dump)
-        if not map_metadata(pipeline_dump, check_job):
-            logger.warning("[%d] unable to map metadata", check_job.id)
-
-        # add the compatibility result from the master to the definition for comparison on the slave.
-        if 'compatibility' in pipeline:
-            try:
-                compat = int(pipeline['compatibility'])
-            except ValueError:
-                logger.error("[%d] Unable to parse job compatibility: %s",
-                             check_job.id, pipeline['compatibility'])
-                compat = 0
-            check_job.pipeline_compatibility = compat
-            check_job.save(update_fields=['pipeline_compatibility'])
-        else:
-            logger.error("[%d] Unable to identify job compatibility.", check_job.id)
-            fail_job(check_job, fail_msg='Unknown compatibility')
-            return None
+            compat = int(pipeline['compatibility'])
+        except ValueError:
+            logger.error("[%d] Unable to parse job compatibility: %s",
+                         job.id, pipeline['compatibility'])
+            compat = 0
+        job.pipeline_compatibility = compat
+        job.save(update_fields=['pipeline_compatibility'])
+    else:
+        logger.error("[%d] Unable to identify job compatibility.", job.id)
+        fail_job(job, fail_msg='Unknown compatibility')
+        return None
 
     return device
 

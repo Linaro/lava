@@ -1035,6 +1035,71 @@ class TestYamlMultinode(TestCaseWithFactory):
             }
         )
 
+    def test_multinode_mixed_deploy(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        bbb_type = self.factory.make_device_type('beaglebone-black')
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-01')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'bbb-qemu-multinode.yaml'), 'r'))
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+
+        for job in job_object_list:
+            definition = yaml.load(job.definition)
+            self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            if job.requested_device_type.name == 'qemu':
+                job.actual_device = Device.objects.get(hostname='fakeqemu1')
+            elif job.requested_device_type.name == 'beaglebone-black':
+                job.actual_device = Device.objects.get(hostname='bbb-01')
+            else:
+                self.fail('Unrecognised device type: %s' % job.requested_device_type)
+            job_def = yaml.load(job.definition)
+            job_ctx = job_def.get('context', {})
+            parser = JobParser()
+            device_object = None
+            if not job.dynamic_connection:
+                device = job.actual_device
+
+                try:
+                    device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+                except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+                    # FIXME: report the exceptions as useful user messages
+                    self.fail("[%d] jinja2 error: %s" % (job.id, exc))
+                if not device_config or not isinstance(device_config, dict):
+                    # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+                    msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+                    self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
+
+                device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+                # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+                if 'target' not in device_object:
+                    device_object.target = device.hostname
+                device_object['hostname'] = device.hostname
+
+            self.assertNotEqual(job.device_role, 'Error')
+            parser_device = None if job.dynamic_connection else device_object
+            try:
+                # pass (unused) output_dir just for validation as there is no zmq socket either.
+                pipeline_job = parser.parse(
+                    job.definition, parser_device,
+                    job.id, None, None, None,
+                    output_dir=job.output_dir)
+            except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
+                self.fail('[%s] parser error: %s' % (job.sub_id, exc))
+            pipeline_job.pipeline.validate_actions()
+
+        for job in job_object_list:
+            job = TestJob.objects.get(id=job.id)
+            self.assertNotEqual(job.sub_id, '')
+
 
 class VlanInterfaces(TestCaseWithFactory):
 
