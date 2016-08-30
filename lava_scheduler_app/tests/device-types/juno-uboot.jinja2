@@ -29,7 +29,7 @@ device_type: juno
 
 {% set base_nfs_uboot_bootcmd = base_nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
 
-
+{% block parameters -%}
 parameters:
   booti:
     kernel: '{{ booti_kernel_addr|default('0x80080000') }}'
@@ -41,6 +41,7 @@ parameters:
       {{ usb_label|default('SanDisk_Ultra') }}:
         uuid: "{{ usb_uuid }}"
         device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
+{% endblock -%}
 
 actions:
   deploy:
@@ -104,4 +105,4 @@ actions:
         use-defaults:
           commands:
           - boot
-{% endblock %}
+{% endblock -%}
