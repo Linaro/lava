@@ -403,6 +403,7 @@ class VlandProtocol(Protocol):
                 if set(device_info['tags']) & set(self.params[vlan_name]['tags']) == set(self.params[vlan_name]['tags']):
                     self.params[vlan_name]['switch'] = device_info['switch']
                     self.params[vlan_name]['port'] = device_info['port']
+                    self.params[vlan_name]['iface'] = iface
                     self.nodes_seen.append(' '.join([device_info['switch'], str(device_info['port'])]))
                     break
         self.logger.debug("[%s] vland params: %s", device['hostname'], self.params)
@@ -443,7 +444,8 @@ class VlandProtocol(Protocol):
             params = self.params[friendly_name]
             switch_id = self._lookup_switch_id(params['switch'])
             port_id = self._lookup_port_id(switch_id, params['port'])
-            self.logger.info("Setting switch %s port %s to vlan %s", params['switch'], params['port'], friendly_name)
+            self.logger.info("Setting switch %s port %s to vlan %s on %s",
+                             params['switch'], params['port'], friendly_name, params['iface'])
             self._set_port_onto_vlan(self.vlans[friendly_name], port_id)
             self.ports.append(port_id)
 
