@@ -204,6 +204,52 @@ examples.
 
 .. _RST: http://sphinx-doc.org/rest.html
 
+.. _developer_code_locations:
+
+Code locations
+**************
+
+The ongoing migration complicates some of the workflow when it comes to finding all of the V2 code. When
+the V1 code is removed, the organisation of the code will be tidied up.
+
+* **lava-server** includes the ``lava_scheduler_app``, ``lava_results_app``, ``lava_server``, ``lava`` and
+  ``linaro_django_xmlrpc`` components of LAVA V2.
+* **lava-dispatcher** includes the ``lava_dispatcher`` and ``lava_test_shell`` components. All LAVA
+  V2 dispatcher code lives in ``lava_dispatcher/pipeline``. Some ``lava_test_shell`` scripts remain in
+  the top level ``lava_test_shell`` directory with overrides in ``pipeline/lava_test_shell``.
+
+There are also locations which provide device configurations to support the unit tests. Only the Jinja2
+support is used by the installed packages,
+
+Jinja2 support
+==============
+
+The Jinja2 templates can be found in ``lava_scheduler_app/tests/device-types`` in the ``lava-server`` codebase. The
+reason for this is that all template changes are checked in the unit-tests. When the package is installed, the
+``device-types`` directory is installed into ``/etc/lava-server/dispatcher-config/device-types/``. The
+contents of ``lava_scheduler_app/tests/devices`` is ignored by the packaging, these files exist solely to support
+the unit tests.
+
+Device dictionaries
+===================
+
+Individual instances will each have their own locations for the device dictionaries of real devices. To allow the
+unit tests to run, some device dictionaries are exported into ``lava_scheduler_app/tests/devices`` but there is
+**no** guarantee that any of these would work with any real devices, even of the declared :term:`device-type`.
+
+For example, the Cambridge lab stores each :term:`device dictionary`` in git at https://git.linaro.org/lava/lava-lab.git
+and you can look at the configuration of ``staging`` as a reference:
+https://git.linaro.org/lava/lava-lab.git/tree/HEAD:/staging.validation.linaro.org/lava/pipeline/devices
+
+Dispatcher device configurations
+================================
+
+The ``lava-dispatcher`` codebase also has local device configuration files in order to support the dispatcher
+unit tests. These are **not** Jinja2 format, these are YAML - the same YAML as would be sent to the dispatcher
+by the relevant master after rendering the Jinja2 templates on that master. There is **no** guarantee that any
+of the device-type or device configurations in the ``lava-dispatcher`` codebase would work with any real devices,
+even of the declared :term:`device-type`.
+
 .. _contribute_upstream:
 
 Contributing Upstream
