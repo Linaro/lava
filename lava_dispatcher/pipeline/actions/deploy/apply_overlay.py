@@ -361,7 +361,6 @@ class ExtractRamdisk(Action):
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
-        self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
