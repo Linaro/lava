@@ -152,14 +152,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 compression = self.parameters[self.key].get('compression', False)
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
-
         if os.path.exists(fname):
-            nested_tmp_dir = os.path.join(self.path, self.key)
-            if os.path.exists(nested_tmp_dir):
-                self.logger.warning("Cleaning up existing directory: %s", nested_tmp_dir)
-                shutil.rmtree(nested_tmp_dir)
-            os.makedirs(nested_tmp_dir)
-            fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
+            os.remove(fname)
 
         decompressor = None
         if compression:
