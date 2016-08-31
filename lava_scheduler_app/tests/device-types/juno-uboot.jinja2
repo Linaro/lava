@@ -20,11 +20,11 @@ device_type: juno
           - setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'") -%}
 
 {% set base_uboot_bootcmd = uboot_bootcmd | default(
-"          - setenv bootcmd 'run loadkernel; run loadfdt; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
+"          - setenv bootcmd 'run loadkernel; run loadfdt; {BOOTX}'
           - boot") -%}
 
 {% set base_tftp_uboot_bootcmd = tftp_uboot_bootcmd | default(
-"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; {BOOTX}'
           - boot") -%}
 
 {% set base_nfs_uboot_bootcmd = nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
