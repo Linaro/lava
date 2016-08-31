@@ -313,7 +313,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
                 action.logger.error(msg)
                 action.errors = msg
-                final = self.actions[-1]
+                final = self.job.pipeline.actions[-1]
                 if final.name == "finalize":
                     final.run(connection, None)
                 else:
