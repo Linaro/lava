@@ -135,7 +135,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         try:
             self.pipeline.validate_actions()
         except JobError as exc:
-            self.logger.error(exc)
+            self.logger.error("Invalid job definition")
+            self.logger.exception(str(exc))
             # This should be re-raised to end the job
             raise
         finally:
