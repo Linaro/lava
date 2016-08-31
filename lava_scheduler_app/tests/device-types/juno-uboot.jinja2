@@ -7,27 +7,27 @@ device_type: juno
 {% set base_kernel_args = extra_kernel_args | default(
            'rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9') %}
 
-{% set base_uboot_commands = base_uboot_commands | default(
+{% set base_uboot_commands = uboot_commands | default(
 "          - setenv autoload no
           - setenv initrd_high '0xffffffffffffffff'
           - setenv fdt_high '0xffffffffffffffff'
           - setenv bootdelay 1
           - setenv ethact smc911x-0") -%}
 
-{% set base_load_commands = base_load_commands | default(
+{% set base_load_commands = load_commands | default(
 "          - setenv loadkernel 'afs load ${kernel_name} {KERNEL_ADDR}'
           - setenv loadfdt 'afs load ${fdtfile} {DTB_ADDR} ; fdt addr {DTB_ADDR}; fdt resize'
           - setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'") -%}
 
-{% set base_uboot_bootcmd = base_uboot_bootcmd | default(
+{% set base_uboot_bootcmd = uboot_bootcmd | default(
 "          - setenv bootcmd 'run loadkernel; run loadfdt; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
           - boot") -%}
 
-{% set base_tftp_uboot_bootcmd = base_tftp_uboot_bootcmd | default(
+{% set base_tftp_uboot_bootcmd = tftp_uboot_bootcmd | default(
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
           - boot") -%}
 
-{% set base_nfs_uboot_bootcmd = base_nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
+{% set base_nfs_uboot_bootcmd = nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
 
 {% block parameters -%}
 parameters:

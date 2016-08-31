@@ -631,3 +631,20 @@ class TestTemplates(TestCaseWithFactory):
         template_dict = yaml.load(rendered)
         self.assertIn('u-boot-commands', template_dict['timeouts']['actions'])
         self.assertEqual(120.0, Timeout.parse(template_dict['timeouts']['actions']['u-boot-commands']))
+
+    def test_juno_uboot_template(self):
+        data = """{% extends 'juno-uboot.jinja2' %}
+{% set connection_command = 'telnet serial4 7001' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
+{% set usb_label = 'SanDiskCruzerBlade' %}
+{% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
+{% set usb_device_id = 0 %}
+{% set nfs_uboot_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") %}"""
+        self.assertTrue(self.validate_data('staging-juno-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
