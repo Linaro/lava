@@ -132,7 +132,7 @@ oe = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': None,
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 fedora = deployment_data_dict({  # pylint: disable=invalid-name
@@ -148,7 +148,7 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': None,
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 centos = deployment_data_dict({  # pylint: disable=invalid-name
@@ -164,7 +164,7 @@ centos = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': None,
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
@@ -192,7 +192,7 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': None,
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
@@ -209,5 +209,5 @@ centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': None,
+    'lava_test_shell_file': '~/.bashrc',
 })
