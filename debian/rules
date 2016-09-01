@@ -58,6 +58,9 @@ override_dh_auto_install:
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
 
+override_dh_compress:
+	dh_compress -Xexamples/
+
 override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
