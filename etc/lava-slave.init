@@ -14,27 +14,30 @@
 # example command:
 # python dispatcher-slave.py --master tcp://localhost:5556 --socket-addr tcp://localhost:5555 --level DEBUG
 
-MASTER="--master tcp://localhost:5556"
-LOG_SOCKET="--socket-addr tcp://localhost:5555"
-LOGLEVEL="--level=DEBUG"
+# Default variables
+MASTER_URL="tcp://localhost:5556"
+LOGGER_URL="tcp://localhost:5555"
+LOGLEVEL="DEBUG"
+ENCRYPT=""
+MASTER_CERT=""
+SLAVE_CERT=""
+
+# Read configuration variable files if present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+# This script fragment can overwrite the variables defined above
+[ -r /etc/lava-dispatcher/lava-slave ] && . /etc/lava-dispatcher/lava-slave
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-slave"                            # short description
 NAME=lava-slave                              # short server's name
 DAEMON="/usr/bin/lava-slave"                 # server's location
-DAEMON_ARGS="${MASTER} ${LOG_SOCKET} $LOGLEVEL"  # Arguments to run the daemon with
+DAEMON_ARGS="--master $MASTER_URL --socket-addr $LOGGER_URL --level $LOGLEVEL $ENCRYPT $MASTER_CERT $SLAVE_CERT"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-slave.pid
 SCRIPTNAME=/etc/init.d/lava-slave
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
-
-# Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
-
-# Load the VERBOSE setting and other rcS variables
-#. /lib/init/vars.sh
 
 # Define LSB log_* functions.
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
