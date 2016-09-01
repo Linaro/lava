@@ -26,7 +26,7 @@ export DH_OPTIONS
 	dh $@ --with python2
 
 override_dh_auto_build:
-	[ ! -f etc/lava-slave.init ] || cp etc/lava-slave.init debian/lava-dispatcher.lava-slave.init
+	cp etc/lava-slave.init debian/lava-dispatcher.lava-slave.init
 	dh_auto_build
 	python setup.py build
 	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
@@ -34,9 +34,8 @@ override_dh_auto_build:
 override_dh_auto_install:
 	dh_auto_install
 	dh_installman -plava-dispatcher man/_build/man/lava-dispatch.1
-	[ -f man/_build/man/lava-slave.8 ] && dh_installman -plava-dispatcher man/_build/man/lava-slave.8
-	# support the optional slave init daemon
-	[ ! -f debian/lava-dispatcher.lava-slave.init ] || dh_installinit --name lava-slave
+	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
+	dh_installinit --name lava-slave
 	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 	$(RM) debian/lava-dispatcher/etc/init.d/lava-slave.init
 	mv -v debian/lava-dispatcher/usr/bin/lava-dispatch debian/lava-dispatcher/usr/sbin/
