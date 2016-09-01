@@ -59,7 +59,7 @@ override_dh_auto_install:
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
 
 override_dh_compress:
-	dh_compress -Xexamples/
+	dh_compress -X.yaml
 
 override_dh_auto_clean:
 	dh_auto_clean
