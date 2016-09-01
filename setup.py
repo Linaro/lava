@@ -85,7 +85,6 @@ setup(
         'django-tables2 >= 1.2',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
-        'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'psycopg2',
         'markupsafe',
