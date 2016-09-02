@@ -17,6 +17,8 @@ protocols:
   lava-multinode:
     target_group: arbitrary-group-id  # only for unittest support
     role: server
+    tags:
+    - testtag
 #    roles:
 #      kvm01: client
 #      kvm02: server

@@ -290,13 +290,16 @@ class TestPipelineSubmit(TestCaseWithFactory):
         # kvm-multinode.yaml contains notification settings for admin
         user = self.factory.ensure_user('admin', 'admin@test.com', 'admin')
         device1 = Device.objects.get(hostname='fakeqemu1')
-        tag_list = [
+        client_tag_list = [
             self.factory.ensure_tag('usb-flash'),
             self.factory.ensure_tag('usb-eth')
         ]
-        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=tag_list)
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=client_tag_list)
         self.assertTrue(device1.is_pipeline)
-        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
+        server_tag_list = [
+            self.factory.ensure_tag('testtag')
+        ]
+        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2', tags=server_tag_list)
         self.factory.make_fake_qemu_device(hostname="fakeqemu2")
         self.assertTrue(device2.is_pipeline)
         submission = yaml.load(open(
@@ -313,8 +316,8 @@ class TestPipelineSubmit(TestCaseWithFactory):
                 server_job = job
             else:
                 self.fail("Unrecognised role in job")
-        self.assertEqual(set(client_job.tags.all()), set(tag_list))
-        self.assertEqual(list(server_job.tags.all()), [])
+        self.assertEqual(set(client_job.tags.all()), set(client_tag_list))
+        self.assertEqual(set(server_job.tags.all()), set(server_tag_list))
         self.assertIsNone(client_job.actual_device)
         self.assertIsNone(server_job.actual_device)
         device_list = Device.objects.filter(device_type=device1.device_type)
@@ -709,15 +712,20 @@ class TestYamlMultinode(TestCaseWithFactory):
         # specified tags do not exist
         self.assertRaises(yaml.YAMLError, _pipeline_protocols, submission, user)
 
-        tag_list = [
+        client_tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
         ]
-        self.factory.make_device(device_type, 'fakeqemu2')
+        server_tag_list = [
+            self.factory.ensure_tag('testtag')
+        ]
+        self.factory.make_device(device_type, 'fakeqemu2',
+                                 tags=server_tag_list)
         # no devices which have the required tags applied
         self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
-        self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu3',
+                                 tags=client_tag_list)
         job_object_list = _pipeline_protocols(submission, user)
         self.assertEqual(len(job_object_list), 2)
         for job in job_object_list:
@@ -728,11 +736,12 @@ class TestYamlMultinode(TestCaseWithFactory):
                     check['protocols']['lava-multinode']['tags'],
                     ['usb-flash', 'usb-eth'])
                 self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
-                self.assertEqual(set(tag_list), set(job.tags.all()))
+                self.assertEqual(set(client_tag_list), set(job.tags.all()))
             if check['protocols']['lava-multinode']['role'] == 'server':
-                self.assertNotIn('tags', check['protocols']['lava-multinode'])
+                self.assertEqual(
+                    check['protocols']['lava-multinode']['tags'], ['testtag'])
                 self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
-                self.assertEqual(set([]), set(job.tags.all()))
+                self.assertEqual(set(['testtag']), set(job.tags.all().values_list("name", flat=True)))
 
     def test_multinode_group(self):
         user = self.factory.make_user()
@@ -742,7 +751,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu1')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu2', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
@@ -784,7 +794,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu2')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, None)
@@ -807,7 +818,8 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu1')
         self.factory.make_device(device_type, 'fakeqemu2')
