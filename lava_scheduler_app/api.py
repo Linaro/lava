@@ -965,7 +965,7 @@ class SchedulerAPI(ExposedAPI):
                 Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
         else:
             devices = Device.objects.filter(
-                Q(is_pipeline=True) & ~Q(status=Device.RETIRED & Q(hostname=hostname)))
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=hostname))
         if not devices and hostname:
             raise xmlrpclib.Fault(
                 404, "No pipeline device found with hostname %s" % hostname
