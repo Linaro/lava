@@ -1,0 +1,70 @@
+# Zephyr JOB definition for QEMU
+device_type: qemu
+job_name: luvos-qemu-monitor
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 5
+  actions:
+    auto-login-action:
+      seconds: 300
+    lava-test-monitor:
+      seconds: 300
+    lava-test-shell:
+      seconds: 300
+    lava-test-retry:
+      seconds: 300
+  connections:
+    lava-test-retry:
+      seconds: 300
+    lava-test-monitor:
+      seconds: 300
+    lava-test-shell:
+      seconds: 300
+    bootloader-action:
+      seconds: 300
+    bootloader-retry:
+      seconds: 300
+
+priority: medium
+visibility: public
+context:
+  arch: aarch64
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    type: monitor
+    images:
+        hdimg:
+          image_arg: -drive if=none,file={hdimg},id=hd0,format=raw -device virtio-blk-device,drive=hd0
+          url: http://ironhide.bounceme.net/luvos/luv-live-image.img
+        bios:
+          image_arg: -bios {bios}
+          url: http://ironhide.bounceme.net/luvos/QEMU_EFI.fd
+
+- boot:
+    method: monitor
+    timeout:
+      minutes: 2
+
+- test:
+    monitors:
+    - name: booting
+      start: Booting Linux on
+      end: Unpacking initramfs
+      pattern: '\[\+\] (?P<test_case_id>.*)\.\.\. [0-9]? ?(?P<result>(passed|skipped|failures))'
+    - name: luvos
+      start: Running tests...
+      end: '(0-9)* testsuites and (0-9)*'
+      pattern: '\[\+\] (?P<test_case_id>.*)\.\.\. [0-9]? ?(?P<result>(passed|skipped|failures))'
+      fixupdict:
+        passed: pass
+        failures: fail
+        skipped: skip
+
+

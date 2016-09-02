@@ -68,7 +68,10 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        return True
+        if ('definition' in parameters) or ('definitions' in parameters):
+            return True
+        else:
+            return False
 
 
 class TestShellRetry(RetryAction):
