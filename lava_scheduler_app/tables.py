@@ -581,6 +581,7 @@ class DeviceTable(LavaTable):
             'device_status_query': 'status',
             'health_status_query': 'health_status',
             'restriction_query': 'restrictions',
+            'tags_query': 'tags'
         }
 
 

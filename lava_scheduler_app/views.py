@@ -52,6 +52,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
+    Tag,
     TestJob,
     TestJobUser,
     JSONDataError,
@@ -135,6 +136,10 @@ class JobTableView(LavaView):
         visible = filter_device_types(self.request.user)
         device = list(Device.objects.filter(hostname__contains=term, device_type__in=visible))
         return Q(actual_device__in=device)
+
+    def tags_query(self, term):
+        tagnames = list(Tag.objects.filter(name__icontains=term))
+        return Q(tags__in=tagnames)
 
     def owner_query(self, term):
         owner = list(User.objects.filter(username__contains=term))

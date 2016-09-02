@@ -167,7 +167,9 @@ class TestForDeviceTable(TestCase):
                                      'health_status',
                                      u'Hostname',
                                      'restrictions',
-                                     'status']})
+                                     'status',
+                                     'tags'
+                                     ]})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
         self.assertEqual(table.prepare_times_data(view), {'times': []})
 
@@ -187,7 +189,9 @@ class TestForDeviceTable(TestCase):
                                      'health_status',
                                      u'Hostname',
                                      'restrictions',
-                                     'status']})
+                                     'status',
+                                     'tags',
+                                     ]})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
         self.assertEqual(table.prepare_times_data(view), {'times': []})
 
