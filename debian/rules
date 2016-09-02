@@ -45,10 +45,10 @@ override_dh_auto_install:
 	dh_auto_install
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
 	# dispatcher-master zeromq support, lava-server.init handled by auto_install.
-	[ ! -f etc/lava-master.init ] || dh_installinit --name lava-master
+	dh_installinit --name lava-master
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
-	[ ! -f man/_build/man/lava-master.1 ] || dh_installman -plava-server man/_build/man/lava-master.1
+	dh_installman -plava-server man/_build/man/lava-master.1
 	[ -f debian/lava-server/usr/bin/lava-server ] || cp debian/lava-server/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	# move ssfs script to /usr/sbin
 	mkdir debian/lava-server/usr/sbin/

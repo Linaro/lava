@@ -85,7 +85,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python-guestfs, python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-nose, python-netifaces, python-setuptools,
  python-sphinx-bootstrap-theme,
- python-versiontools, python-zmq, python-yaml, python-voluptuous,
+ python-zmq, python-yaml, python-voluptuous,
  docbook-xsl, xsltproc, python-mock,  django-testscenarios,
  ${python:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot
