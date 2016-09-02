@@ -39,6 +39,7 @@ include doc/v1/linaro_dashboard_bundle/*
 include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf
+include etc/lava-master
 include etc/lava-master.init
 include etc/lava-master.service
 include etc/lava-publisher.init
