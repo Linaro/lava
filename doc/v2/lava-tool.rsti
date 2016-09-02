@@ -34,11 +34,11 @@ Installing lava-tool
 --------------------
 
 ``lava-tool`` is installed alongside LAVA by default, when the top
-level ``lava`` package is installed on a
-:ref:`debian_installation`. ``lava-tool`` can also be installed on any
-remote machine running a Debian-based distribution, without needing
-the rest of LAVA. This allows a remote user to interact with any LAVA
-instance on which the user has an account.::
+level ``lava`` package is installed on a :ref:`Debian-based
+distribution <debian_installation>`. ``lava-tool`` can also be
+installed on any remote machine running a Debian-based distribution,
+without needing the rest of LAVA. This allows a remote user to
+interact with any LAVA instance on which the user has an account.::
 
   $ sudo apt update
   $ sudo apt install lava-tool
