@@ -3,12 +3,14 @@
 Testing the new design
 **********************
 
-To test the new design after making changes, use the :ref:`unit tests`. During development, it is
-useful to only run selected tests, although remember that **all** tests must pass before proposing
-the change as a review.
+To test the new design after making changes, use the
+:ref:`unit_tests`. During development, it is useful to only run
+selected tests, although remember that **all** tests must pass before
+proposing the change as a review.
 
-In each case, ensure that your local packages are up to date and rebase your local development branch
-against master if ``git pull`` fetches new commits. If your branch needed to be updated, always build
+In each case, ensure that your local packages are up to date and
+rebase your local development branch against master if ``git pull``
+fetches new commits. If your branch needed to be updated, always build
 and install your local packages.
 
 .. seealso:: :ref:`developer_build_version`
