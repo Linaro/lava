@@ -212,11 +212,13 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
             namespace = block.get('namespace', None)
             definitions = [reduce(dict.get, ['definitions'], block)][0]
             if not definitions:
-                monitor = [reduce(dict.get, ['monitor'], block)][0]
-                if monitor:
-                    prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                    retval['%s.monitor.name' % prefix] = monitor['name']
-                    count += 1
+                monitors = [reduce(dict.get, ['monitors'], block)][0]
+                if monitors:
+                    if isinstance(monitors, list):
+                        for monitor in monitors:
+                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                            retval['%s.monitor.name' % prefix] = monitor['name']
+                            count += 1
             else:
                 for definition in definitions:
                     if definition['from'] == 'inline':

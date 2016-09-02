@@ -549,7 +549,7 @@ class MetaType(models.Model):
             return 'method'
         elif section_type == MetaType.TEST_TYPE:
             if name == 'lava-test-monitor':
-                return 'monitor'
+                return 'monitors'
             else:
                 return 'definitions'
         else:
