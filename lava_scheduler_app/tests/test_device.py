@@ -617,7 +617,12 @@ class TestTemplates(TestCaseWithFactory):
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
+        self.assertIsNotNone(data)
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
 
     def test_panda_template(self):
         data = """{% extends 'panda.jinja2' %}
