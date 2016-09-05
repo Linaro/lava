@@ -428,6 +428,5 @@ class TestStrategySelector(unittest.TestCase):
 
     def test_willing(self):
         willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
-        willing.sort(key=lambda x: x.priority)
-        willing.reverse()
+        willing.sort(key=lambda x: x.priority, reverse=True)
         self.assertIsInstance(willing[0], TestStrategySelector.Third)

@@ -318,6 +318,7 @@ class VlandOverlayAction(OverlayAction):
         self.params = {}
         self.sysfs = []
         self.tags = []
+        self.names = []
         self.protocol = VlandProtocol.name
 
     def populate(self, parameters):
@@ -343,20 +344,26 @@ class VlandOverlayAction(OverlayAction):
         # same as the parameters of the protocol itself.
         self.params = self.job.parameters['protocols'][self.protocol]
         device_params = self.job.device['parameters']['interfaces']
+        vprotocol = [vprotocol for vprotocol in self.job.protocols if vprotocol.name == self.protocol][0]
+        # needs to be the configured interface for each vlan.
+        for key, _ in self.params.items():
+            if key == 'yaml_line' or key not in vprotocol.params:
+                continue
+            self.names.append(",".join([key, vprotocol.params[key]['iface']]))
         for interface in device_params:
-            self.sysfs.extend(
+            self.sysfs.append(",".join(
                 [
-                    device_params[interface]['sysfs'],
+                    interface,
                     device_params[interface]['mac'],
-                    interface
-                ]
+                    device_params[interface]['sysfs'],
+                ])
             )
         for interface in device_params:
             if not device_params[interface]['tags']:
                 # skip primary interface
                 continue
             for tag in device_params[interface]['tags']:
-                self.tags.extend([interface, tag])
+                self.tags.append(",".join([interface, tag]))
 
     # pylint: disable=anomalous-backslash-in-string
     def run(self, connection, args=None):
@@ -405,10 +412,17 @@ class VlandOverlayAction(OverlayAction):
                         fout.write(r'LAVA_VLAND_SELF="')
                         for line in self.sysfs:
                             fout.write(r"%s\n" % line)
+                    elif foutname == 'lava-vland-names':
+                        fout.write(r'LAVA_VLAND_NAMES="')
+                        for line in self.names:
+                            fout.write(r"%s\n" % line)
                     elif foutname == 'lava-vland-tags':
                         fout.write(r'LAVA_VLAND_TAGS="')
-                        for line in self.tags:
-                            fout.write(r"%s\n" % line)
+                        if not self.tags:
+                            fout.write(r"\n")
+                        else:
+                            for line in self.tags:
+                                fout.write(r"%s\n" % line)
                     fout.write('"\n\n')
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)

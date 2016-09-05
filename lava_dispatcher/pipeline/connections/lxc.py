@@ -45,6 +45,8 @@ class ConnectLxc(Action):
         self.shell_class = ShellCommand
 
     def validate(self):
+        if 'lxc' not in self.job.device['actions']['boot']['methods']:
+            return
         super(ConnectLxc, self).validate()
         self.errors = infrastructure_error('lxc-attach')
         if 'prompts' not in self.parameters:
@@ -52,34 +54,9 @@ class ConnectLxc(Action):
 
     def run(self, connection, args=None):
         lxc_name = self.get_common_data('lxc', 'name')
-
-        # Attach usb device to lxc
-        if 'device_path' in list(self.job.device.keys()):
-            device_path = self.job.device['device_path']
-            if not isinstance(device_path, list):
-                raise JobError("device_path should be a list")
-
-            if device_path:
-                # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
-                self.logger.info("Wait %d seconds for usb device to show up",
-                                 USB_SHOW_UP_TIMEOUT)
-                sleep(USB_SHOW_UP_TIMEOUT)
-
-                for path in device_path:
-                    path = os.path.realpath(path)
-                    if os.path.isdir(path):
-                        devices = os.listdir(path)
-                    else:
-                        devices = [path]
-
-                    for device in devices:
-                        device = os.path.join(path, device)
-                        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                        self.run_command(lxc_cmd)
-                        self.logger.debug("%s: devices added from %s", lxc_name,
-                                          path)
-            else:
-                self.logger.debug("device_path is None")
+        if not lxc_name:
+            self.logger.debug("No LXC device requested")
+            return connection
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)

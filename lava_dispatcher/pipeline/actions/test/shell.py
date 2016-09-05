@@ -21,6 +21,7 @@
 import re
 import sys
 import time
+import yaml
 import logging
 import pexpect
 from collections import OrderedDict
@@ -67,7 +68,10 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        return True
+        if ('definition' in parameters) or ('definitions' in parameters):
+            return True
+        else:
+            return False
 
 
 class TestShellRetry(RetryAction):
@@ -205,6 +209,8 @@ class TestShellAction(TestAction):
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         connection.timeout = self.connection_timeout
+        # force an initial prompt - not all shells will respond without an excuse.
+        connection.sendline(connection.check_char)
         self.wait(connection)
 
         # use the string instead of self.name so that inheriting classes (like multinode)
@@ -233,7 +239,7 @@ class TestShellAction(TestAction):
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
 
-        self.logger.debug(self.report)
+        self.logger.debug(yaml.dump(self.report))
         return connection
 
     def parse_v2_case_result(self, data, fixupdict=None):
@@ -303,7 +309,6 @@ class TestShellAction(TestAction):
                 self.start = time.time()
                 self.logger.debug("Starting test definition: %s" % self.definition)
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
-                self.start = time.time()
                 # set the pattern for this run from pattern_dict
                 testdef_index = self.get_common_data('test-definition', 'testdef_index')
                 uuid_list = self.get_common_data('repo-action', 'uuid-list')
@@ -327,6 +332,9 @@ class TestShellAction(TestAction):
                 uuid = params[1]
                 # remove the pattern for this run from pattern_dict
                 self._reset_patterns()
+                # catch error in ENDRUN being handled without STARTRUN
+                if not self.start:
+                    self.start = time.time()
                 self.logger.info("Ending use of test pattern.")
                 self.logger.info("Ending test lava.%s (%s), duration %.02f",
                                  self.definition, uuid,
@@ -481,7 +489,7 @@ class TestShellAction(TestAction):
                     raise KeyboardInterrupt
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
-                    self.logger.exception(exc)
+                    self.logger.exception(str(exc))
                 except JobError as exc:
                     self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False

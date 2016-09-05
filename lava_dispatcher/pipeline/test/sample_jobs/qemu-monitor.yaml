@@ -1,0 +1,39 @@
+# Non-POSIX test action support
+
+device_type: qemu
+
+job_name: qemu-monitoring
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+context:
+  arch: amd64
+
+actions:
+  - deploy:
+      to: tmpfs
+      type: monitor
+      images:
+        rootfs:
+          url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+          image_arg: -drive format=raw,file={rootfs}
+          compression: gz
+
+  - boot:
+      method: monitor
+      media: tmpfs
+      failure_retry: 2
+
+  - test:
+      monitors:
+      - name: Test AES128
+        start: tc_start()
+        end: PROJECT EXECUTION
+        pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
+        fixupdict:
+          PASS: pass
+          FAIL: fail

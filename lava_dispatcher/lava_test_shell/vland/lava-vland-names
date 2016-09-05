@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# This file is for Vland test
+#
+# Prints the vlan names for this device
+#
+# Usage: ``lava-vland-names``
+
+echo -e ${LAVA_VLAND_NAMES}

@@ -621,3 +621,17 @@ class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.job.validate()
         self.assertIn('-L', execute.sub_command)
         self.assertIn(uefi_dir, execute.sub_command)
+
+
+class TestMonitor(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestMonitor, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml', mkdtemp())
+
+    def test_qemu_monitor(self):
+        self.assertIsNotNone(self.job)
+        self.assertIsNotNone(self.job.pipeline)
+        self.assertIsNotNone(self.job.pipeline.actions)
+        self.job.validate()

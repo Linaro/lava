@@ -55,6 +55,8 @@ class ExportDeviceEnvironment(Action):
 
         for line in self.env:
             connection.sendline(line, delay=self.character_delay)
-        connection.sendline('. %s' % shell_file, delay=self.character_delay)
+
+        if shell_file:
+            connection.sendline('. %s' % shell_file, delay=self.character_delay)
 
         return connection
