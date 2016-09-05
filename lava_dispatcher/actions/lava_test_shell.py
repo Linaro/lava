@@ -1174,8 +1174,11 @@ class cmd_lava_test_shell(BaseAction):
                 logging.warning(
                     "Ignoring malformed parameter for signal: \"%s\". " % param)
 
-        test_result = parse_testcase_result(data)
-        self._current_test_run['test_results'].append(test_result)
+        if self._current_test_run is not None:
+            test_result = parse_testcase_result(data)
+            self._current_test_run['test_results'].append(test_result)
+        else:
+            logging.warning("LAVA Missed the testrun call, so can't perform testcase.")
 
     def _handle_parsed_testcase(self, data):
         test_result = parse_testcase_result(data,
