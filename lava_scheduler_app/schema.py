@@ -175,27 +175,6 @@ def vlan_name(value):
         raise Invalid(value)
 
 
-def lxc_protocol_schema():
-    return Schema({
-        str: {
-            'name': str,
-            'distribution': str,
-            'release': str,
-            'arch': str,
-            'template': str,
-            'mirror': str,
-            'security_mirror': str
-        },
-        'name': str,
-        'distribution': str,
-        'release': str,
-        'arch': str,
-        'template': str,
-        'mirror': str,
-        'security_mirror': str
-    })
-
-
 def _job_protocols_schema():
     return Schema({
         'lava-multinode': {
@@ -211,7 +190,7 @@ def _job_protocols_schema():
                 }
             }
         },
-        'lava-lxc': lxc_protocol_schema()
+        'lava-lxc': dict
     })
 
 
