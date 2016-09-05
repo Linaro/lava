@@ -1,3 +1,5 @@
+.. index:: debian, installation, install
+
 .. _debian_installation:
 
 Debian-based distributions
@@ -103,6 +105,31 @@ staging repository::
 This repository uses the same key as the production repository and
 uses ``sid`` in the same way.
 
+.. _lava_archive_signing_key:
+
+LAVA Archive signing key
+------------------------
+
+::
+
+ pub  2048R/C77102A9 2014-06-06 LAVA build daemon (Staging) <lava-lab@linaro.org>
+      Key fingerprint = 45AD 50DC 41AE D421 FF5B  33D4 ECF3 C05C C771 02A9
+ uid                  LAVA build daemon (Staging) <lava-lab@linaro.org>
+
+Each of the support archives on ``images.validation.linaro.org`` is
+signed using the same key, 0x33D4ECF3C05CC77102A9, which can be downloaded_ and added to
+apt::
+
+ $ wget https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+ $ sudo apt-key add staging-repo.key.asc
+ OK
+
+Then update to locate the required dependencies::
+
+ $ sudo apt update
+
+.. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+
 .. _production_releases:
 
 Production releases
@@ -110,7 +137,7 @@ Production releases
 
 .. seealso:: :ref:`setting_up_pipeline_instance`.
 
-LAVA is currently packaged for Debian unstable using Django1.7 and
+LAVA is currently packaged for Debian unstable using Django1.8 and
 Postgresql. LAVA packages are now available from official Debian
 mirrors for Debian unstable. e.g. to install the master, use::
 
@@ -183,17 +210,40 @@ Extra dependencies
 The ``lava`` metapackage brings in extra dependencies which may be
 useful on some instances.
 
+.. index:: backports
+
 .. _install_debian_jessie:
 
 Installing on Debian Jessie
----------------------------
+===========================
 
 Debian Jessie was released on April 25th, 2015, containing a full set
-of packages to install LAVA.
+of packages to install LAVA at version 2014.9. Debian stable releases
+of LAVA do not receive updates to LAVA directly, so a simple install on
+Jessie will only get you ``2014.9``. All admins of LAVA instances are
+**strongly** advised to update all software on the instance on a regular
+basis to receive security updates to the base system.
 
-Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
+For packages which need larger changes, the official Debian method is to
+provide those updates using ``backports``. Backports **do not install automatically**
+even after the apt source is added - this is because backports are rebuilt from the
+current ``testing`` suite, so automatic upgrades would move the base system
+to testing as well. Instead, the admin selects which backported packages to add
+to the base stable system. Only those packages (and dependencies, if not available
+in stable already) will then be installed from backports.
 
-Create an apt source for backports (use your preferred Debian mirror)::
+The ``lava-server`` backports and dependencies are **fully supported** by the
+LAVA software team and admins of **all** LAVA instances need to update the
+base ``2014.9`` to the version available in current backports. Subscribe to
+the :ref:`lava_announce` mailing list for details of when new releases are
+made. Backports will be available about a week after the initial release.
+
+Updates for LAVA on Debian Jessie are uploaded to `jessie-backports <http://backports.debian.org/>`_
+
+Create an apt source for backports, either
+by editing ``/etc/apt/sources.list`` or adding a file with a ``.list``
+suffix into ``/etc/apt/sources.list.d/``. Create a line like the one below
+(using your preferred Debian mirror)::
 
  deb http://http.debian.net/debian jessie-backports main
 
@@ -201,38 +251,23 @@ Remember to update your apt cache whenever add a new apt source::
 
  $ sudo apt update
 
-Then upgrade or install ``lava-server`` from ``jessie-backports`` using
-the ``-t`` option::
+Then install ``lava-server`` from ``jessie-backports`` using the ``-t`` option::
 
  $ sudo apt -t jessie-backports install lava-server
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
 
-.. _lava_archive_signing_key:
-
-LAVA Archive signing key
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
- pub  2048R/C77102A9 2014-06-06 LAVA build daemon (Staging) <lava-lab@linaro.org>
-      Key fingerprint = 45AD 50DC 41AE D421 FF5B  33D4 ECF3 C05C C771 02A9
- uid                  LAVA build daemon (Staging) <lava-lab@linaro.org>
-
-Each of the support archives on ``images.validation.linaro.org`` is
-signed using same key, 0xC77102A9, which can be downloaded_ and added to
-apt::
-
- $ wget https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
- $ sudo apt-key add staging-repo.key.asc
- OK
-
-Then update to locate the required dependencies::
-
- $ sudo apt update
-
-.. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+Once backports are enabled, the packages which the admin has selected from
+backports (using the ``-t`` switch) will continue to upgrade using backports.
+Other packages will only be added from backports if the existing backports
+require updates from backports. For example, when ``lava-server 2016.8``
+moved to requiring Django1.8, new installations and updates to ``2016.8`` using
+backports automatically bring in Django1.8 and associated support, also from
+backports.
 
 Installing just lava-server
-===========================
+---------------------------
 
 The ``lava-server`` package is the main LAVA scheduler and frontend.
 
@@ -258,7 +293,7 @@ Other packages to consider:
   which use hardware packs from Linaro
 
 Installing the full lava set
-============================
+----------------------------
 
 Production installs of LAVA will rarely use the full ``lava`` set as
 it includes tools more commonly used by developers and test labs. These
@@ -285,19 +320,10 @@ one set.
 ::
 
  $ sudo apt install postgresql
- $ sudo apt install lava
+ $ sudo apt -t jessie-backports install lava
  $ sudo a2dissite 000-default
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
-
-Upgrading LAVA packages on Jessie
-=================================
-
-Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
-
-::
-
- deb http://http.debian.net/debian jessie-backports main
 
 Setting up a reverse proxy
 ==========================

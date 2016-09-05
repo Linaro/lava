@@ -11,7 +11,6 @@ from django.contrib.auth.models import Permission, User
 from django.utils import timezone
 from lava_scheduler_app.models import (
     Device,
-    DeviceStateTransition,
     Tag,
     TestJob,
     TemporaryDevice,
@@ -19,7 +18,7 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
-from lava_scheduler_app.dbutils import(
+from lava_scheduler_app.dbutils import (
     testjob_submission, get_job_queue,
     find_device_for_job,
     get_available_devices,

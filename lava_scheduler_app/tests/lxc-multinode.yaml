@@ -1,0 +1,59 @@
+device_type: lxc
+job_name: lxc-pipeline
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+visibility: public
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        count: 1
+        device_type: lxc
+      server:
+        count: 1
+        device_type: qemu
+  lava-lxc:
+    client:
+      name: pipeline-lxc-test
+      template: debian
+      distribution: debian
+      release: sid
+      arch: amd64
+      mirror: http://ftp.us.debian.org/debian/
+      security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    role:
+    - client
+    to: lxc
+    os: debian
+
+- boot:
+    role:
+    - client
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- test:
+    role:
+    - client
+    - server
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: common/dmidecode.yaml
+      name: dmidecode

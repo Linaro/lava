@@ -422,10 +422,11 @@ Definitions
   * **git** - a remote git repository which needs to be cloned by the
     dispatcher.
   * **inline** - a simple test definition present in the same file as
-    the job submission, allowing tests to run based on a single file.
-    When combined with ``file://`` URLs to the ``deploy`` parameters,
-    this allows tests to run without needing external access. See
-    :ref:`inline_test_definition_example`.
+    the job submission, instead of from a separate file or VCS
+    repository. This allows tests to be run based on a single
+    file. When combined with ``file://`` URLs to the ``deploy``
+    parameters, this allows tests to run without needing external
+    access. See :ref:`inline_test_definition_example`.
 
 * **path** - the path within that repository to the YAML file containing
   the test definition.

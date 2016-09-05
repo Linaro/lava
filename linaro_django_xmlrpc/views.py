@@ -162,7 +162,7 @@ def tokens(request):
         {
             "token_list": token_list,
             "unused": unused,
-            "context_help": ["lava-tool"],
+            "context_help": ["first_steps"],
         },
         request=request))
 

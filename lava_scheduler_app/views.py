@@ -21,7 +21,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseNotAllowed,
     HttpResponseRedirect,
 )
 from django.shortcuts import (
@@ -43,6 +42,7 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
+from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.logfile_helper import (
     formatLogFile,
     getDispatcherErrors,
@@ -52,6 +52,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
+    Tag,
     TestJob,
     TestJobUser,
     JSONDataError,
@@ -122,14 +123,6 @@ from lava_scheduler_app.tables import (
 # referenced in urls.py - other support functions can go in tables.py or similar.
 
 
-def post_only(func):
-    def decorated(request, *args, **kwargs):
-        if request.method != 'POST':
-            return HttpResponseNotAllowed('Only POST here')
-        return func(request, *args, **kwargs)
-    return decorated
-
-
 def _str_to_bool(string):
     return string.lower() in ['1', 'true', 'yes']
 
@@ -143,6 +136,10 @@ class JobTableView(LavaView):
         visible = filter_device_types(self.request.user)
         device = list(Device.objects.filter(hostname__contains=term, device_type__in=visible))
         return Q(actual_device__in=device)
+
+    def tags_query(self, term):
+        tagnames = list(Tag.objects.filter(name__icontains=term))
+        return Q(tags__in=tagnames)
 
     def owner_query(self, term):
         owner = list(User.objects.filter(username__contains=term))
@@ -1336,7 +1333,7 @@ def job_detail(request, pk):
             template = "lava_scheduler_app/job_pipeline.html"
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    log_data = yaml.load(f_in)
+                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
 
                     if sys.version_info < (3, 0):
                         for line in log_data:
@@ -1816,7 +1813,7 @@ def job_log_pipeline_incremental(request, pk):
             # Seeking is needed to switch from reading lines to reading bytes.
             f_in.seek(count)
             # Load the remaining as yaml
-            data = yaml.load(f_in)
+            data = yaml.load(f_in, Loader=yaml.CLoader)
             # When reaching EOF, yaml.load does return None instead of []
             if not data:
                 data = []
@@ -2406,6 +2403,7 @@ def device_force_health_check(request, pk):
         job = initiate_health_check_job(device)
         if not job:
             raise Http404
+        device.log_admin_entry(request.user, "forced a health check")
         return redirect(job)
     else:
         return HttpResponseForbidden(
@@ -2417,6 +2415,7 @@ def device_edit_description(request, pk):
     if device.can_admin(request.user):
         device.description = request.POST.get('desc')
         device.save()
+        device.log_admin_entry(request.user, "changed description")
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -2427,12 +2426,10 @@ def device_edit_description(request, pk):
 def device_restrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        message = "Restriction added: %s" % request.POST.get('reason')
+        message = "added a restriction: %s" % request.POST.get('reason')
         device.is_public = False
-        DeviceStateTransition.objects.create(
-            created_by=request.user, device=device, old_state=device.status,
-            new_state=device.status, message=message, job=None).save()
-        device.save()
+        device.save(update_fields=['is_public'])
+        device.log_admin_entry(request.user, message)
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -2443,12 +2440,10 @@ def device_restrict_device(request, pk):
 def device_derestrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        message = "Restriction removed: %s" % request.POST.get('reason')
+        message = "removed restriction: %s" % request.POST.get('reason')
         device.is_public = True
-        DeviceStateTransition.objects.create(
-            created_by=request.user, device=device, old_state=device.status,
-            new_state=device.status, message=message, job=None).save()
-        device.save()
+        device.save(update_fields=['is_public'])
+        device.log_admin_entry(request.user, message)
         return redirect(device)
     else:
         return HttpResponseForbidden(

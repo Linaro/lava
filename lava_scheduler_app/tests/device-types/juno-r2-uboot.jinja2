@@ -1,0 +1,4 @@
+{% extends 'juno-uboot.jinja2' %}
+{% set sky2_mac_address = sky2_mac_address | default('sky2_mac_address') %}
+{% set base_kernel_args = extra_kernel_args | default(
+           'rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 sky2.mac_address={{ sky2_mac_address }}') %}

@@ -15,7 +15,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.dbutils import find_device_for_job
+from lava_scheduler_app.dbutils import find_device_for_job, assign_jobs
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
@@ -31,11 +31,12 @@ class VlandFactory(YamlFactory):
         super(VlandFactory, self).__init__()
         self.bbb1 = None
         self.cubie1 = None
+        self.bbb_type = None
 
     def setUp(self):  # pylint: disable=invalid-name
-        bbb_type = self.make_device_type(name='bbb')
+        self.bbb_type = self.make_device_type(name='bbb')
         cubie_type = self.make_device_type(name='cubietruck')
-        self.bbb1 = self.make_device(bbb_type, hostname='bbb1')
+        self.bbb1 = self.make_device(self.bbb_type, hostname='bbb1')
         self.cubie1 = self.make_device(cubie_type, hostname='cubie1')
 
     def make_vland_job(self, **kw):
@@ -73,8 +74,8 @@ class TestVlandSplit(TestCaseWithFactory):
         server_vlan = server_job['protocols']['lava-vland']
         self.assertIn('vlan_one', client_vlan)
         self.assertIn('vlan_two', server_vlan)
-        self.assertEqual(['10G'], client_vlan.values()[0]['tags'])
-        self.assertEqual(['1G'], server_vlan.values()[0]['tags'])
+        self.assertEqual(['RJ45', '10M'], client_vlan.values()[0]['tags'])
+        self.assertEqual(['RJ45', '100M'], server_vlan.values()[0]['tags'])
 
 
 class TestVlandDevices(TestCaseWithFactory):
@@ -153,6 +154,130 @@ class TestVlandDevices(TestCaseWithFactory):
 
     def test_match_devices_with_map(self):
         devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
+        device_dict = DeviceDictionary(hostname=self.factory.bbb1.hostname)
+        device_dict.parameters = {  # client, RJ45 10M only
+            'extends': 'beaglebone-black.jinja2',
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M']},
+            'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
+        }
+        device_dict.save()
+        device_dict = DeviceDictionary(hostname=self.factory.cubie1.hostname)
+        device_dict.parameters = {  # server includes 100M
+            'extends': 'cubietruck.jinja2',
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
+            'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
+        }
+        device_dict.save()
+        user = self.factory.make_user()
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+        with open(sample_job_file, 'r') as test_support:
+            data = yaml.load(test_support)
+        del(data['protocols']['lava-multinode']['roles']['client']['tags'])
+        del(data['protocols']['lava-multinode']['roles']['server']['tags'])
+
+        interfaces = []
+        job_dict = split_multinode_yaml(data, 'abcdefg123456789')
+        client_job = job_dict['client'][0]
+        device_dict = DeviceDictionary.get(self.factory.bbb1.hostname).to_dict()
+        self.assertIsNotNone(device_dict)
+        tag_list = client_job['protocols']['lava-vland']['vlan_one']['tags']
+        for interface, tags in device_dict['parameters']['tags'].iteritems():
+            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
+                interfaces.append(interface)
+                break
+        self.assertEqual(['eth1'], interfaces)
+        self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
+
+        interfaces = []
+        server_job = job_dict['server'][0]
+        device_dict = DeviceDictionary.get(self.factory.cubie1.hostname).to_dict()
+        self.assertIsNotNone(device_dict)
+        tag_list = server_job['protocols']['lava-vland']['vlan_two']['tags']
+        for interface, tags in device_dict['parameters']['tags'].iteritems():
+            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
+                interfaces.append(interface)
+                break
+        self.assertEqual(['eth1'], interfaces)
+        self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
+
+        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
+
+        # vlan_one: client role. RJ45 10M. bbb device type
+        # vlan_two: server role. RJ45 100M. cubie device type.
+
+        assignments = {}
+        for job in vlan_job:
+            device = find_device_for_job(job, devices)
+            self.assertEqual(device.device_type, job.requested_device_type)
+            # map has been defined
+            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
+            assignments[job.device_role] = device
+        self.assertEqual(assignments['client'].hostname, self.factory.bbb1.hostname)
+        self.assertEqual(assignments['server'].hostname, self.factory.cubie1.hostname)
+
+    def test_same_type_devices_with_map(self):
+        device_dict = DeviceDictionary(hostname=self.factory.bbb1.hostname)
+        device_dict.parameters = {  # client, RJ45 10M 100M
+            'extends': 'beaglebone-black.jinja2',
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:22", 'eth1': "00:24:d7:9b:c0:8b"},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
+            'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
+        }
+        device_dict.save()
+        bbb2 = self.factory.make_device(self.factory.bbb_type, hostname='bbb2')
+        device_dict = DeviceDictionary(hostname=bbb2.hostname)
+        device_dict.parameters = {  # server, RJ45 10M 100M
+            'extends': 'beaglebone-black.jinja2',
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
+            'map': {'eth0': {'192.168.0.2': 7}, 'eth1': {'192.168.0.2': 9}}
+        }
+        device_dict.save()
+        devices = list(Device.objects.filter(status=Device.IDLE).order_by('is_public'))
+        user = self.factory.make_user()
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-bbb-vland-group.yaml')
+        with open(sample_job_file, 'r') as test_support:
+            data = yaml.load(test_support)
+        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
+        assignments = {}
+        for job in vlan_job:
+            device = find_device_for_job(job, devices)
+            self.assertEqual(device.device_type, job.requested_device_type)
+            # map has been defined
+            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
+            assignments[job.device_role] = device
+            if device in devices:
+                devices.remove(device)
+        assign_jobs()
+        self.factory.bbb1.refresh_from_db()
+        bbb2.refresh_from_db()
+        self.assertIsNotNone(self.factory.bbb1.current_job)
+        self.assertIsNotNone(bbb2.current_job)
+        self.assertIsNotNone(self.factory.bbb1.current_job.actual_device)
+        self.assertIsNotNone(bbb2.current_job.actual_device)
+        self.assertNotEqual(self.factory.bbb1.current_job, bbb2.current_job)
+        self.assertNotEqual(self.factory.bbb1.current_job.actual_device, bbb2.current_job.actual_device)
+
+    def test_match_devices_with_map_and_tags(self):
+        devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
         self.factory.ensure_tag('usb-eth')
         self.factory.ensure_tag('sata')
         self.factory.bbb1.tags = Tag.objects.filter(name='usb-eth')
@@ -166,7 +291,7 @@ class TestVlandDevices(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M']},
             'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
         }
         device_dict.save()
@@ -177,7 +302,7 @@ class TestVlandDevices(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '100M']},
             'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
         }
         device_dict.save()

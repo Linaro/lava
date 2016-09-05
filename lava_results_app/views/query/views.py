@@ -38,7 +38,7 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect
 )
-from django.shortcuts import get_object_or_404, render, loader
+from django.shortcuts import get_object_or_404, loader
 from django.template import defaultfilters
 
 from lava_server.bread_crumbs import (

@@ -72,26 +72,13 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
 class FileHandler(object):  # pylint: disable=too-few-public-methods
 
-    def __init__(self, name, path):
+    def __init__(self, name):
         self.filename = name
-        self.fd = open(path, 'a+')  # pylint: disable=invalid-name
+        self.fd = open(name, 'a+')  # pylint: disable=invalid-name
         self.last_usage = time.time()
 
     def close(self):
         self.fd.close()
-
-
-def send_status(hostname, socket, logger):
-    """
-    The master crashed, send a STATUS message to get the current state of jobs
-    """
-    jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
-                                  is_pipeline=True,
-                                  status=TestJob.RUNNING)
-    for job in jobs:
-        logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
-                    job.actual_device.hostname)
-        socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
 def get_env_string(filename):
@@ -165,6 +152,28 @@ class Command(BaseCommand):
                             help="Directory where to store job outputs. "
                                  "Default: /var/lib/lava-server/default/media/job-output")
 
+    def send_status(self, hostname):
+        """
+        The master crashed, send a STATUS message to get the current state of jobs
+        """
+        jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
+                                      is_pipeline=True,
+                                      status=TestJob.RUNNING)
+        for job in jobs:
+            self.logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
+                             job.actual_device.hostname)
+            self.controler.send_multipart([hostname, 'STATUS', str(job.id)])
+
+    def dispatcher_alive(self, hostname):
+        if hostname not in self.dispatchers:
+            # The server crashed: send a STATUS message
+            self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
+            self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
+            self.send_status(hostname)
+
+        # Mark the dispatcher as alive
+        self.dispatchers[hostname].alive()
+
     def logging_socket(self, options):
         msg = self.pull_socket.recv_multipart()
         try:
@@ -206,26 +215,21 @@ class Command(BaseCommand):
         if '/' in level or '/' in name:
             self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
             return
-        filename = "%s/job-%s/pipeline/%s/%s-%s.log" % (options['output_dir'],
-                                                        job_id, level.split('.')[0],
-                                                        level, name)
+        filename = "%s/job-%s/pipeline/%s/%s-%s.yaml" % (options['output_dir'],
+                                                         job_id, level.split('.')[0],
+                                                         level, name)
 
         # Find the handler (if available)
         if job_id in self.logs:
             if filename != self.logs[job_id].filename:
                 # Close the old file handler
                 self.logs[job_id].close()
-
-                path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
-                                    job_id, filename)
-                mkdir(os.path.dirname(path))
-                self.logs[job_id] = FileHandler(filename, path)
+                mkdir(os.path.dirname(filename))
+                self.logs[job_id] = FileHandler(filename)
         else:
             self.logger.info("[%s] Receiving logs from a new job", job_id)
-            path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
-                                job_id, filename)
-            mkdir(os.path.dirname(path))
-            self.logs[job_id] = FileHandler(filename, path)
+            mkdir(os.path.dirname(filename))
+            self.logs[job_id] = FileHandler(filename)
 
         # Mark the file handler as used
         # TODO: try to use a more pythonnic way
@@ -241,6 +245,7 @@ class Command(BaseCommand):
         f_handler.write('\n')
         f_handler.flush()
 
+        # TODO: keep the file handler to avoid calling open for each line
         filename = os.path.join(options['output_dir'],
                                 "job-%s" % job_id,
                                 'output.yaml')
@@ -257,38 +262,29 @@ class Command(BaseCommand):
         # 2: the action
         action = msg[1]
         # Handle the actions
-        if action == 'HELLO':
+        if action == 'HELLO' or action == 'HELLO_RETRY':
             self.logger.info("%s => %s", hostname, action)
             self.controler.send_multipart([hostname, 'HELLO_OK'])
             # If the dispatcher is known and sent an HELLO, means that
             # the slave has restarted
             if hostname in self.dispatchers:
-                self.logger.warning("Dispatcher <%s> has RESTARTED", hostname)
+                if action == 'HELLO':
+                    self.logger.warning("Dispatcher <%s> has RESTARTED",
+                                        hostname)
+                else:
+                    # Assume the HELLO command was received, and the
+                    # action succeeded.
+                    self.logger.warning("Dispatcher <%s> was not confirmed",
+                                        hostname)
             else:
+                # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
+                # message.
                 self.logger.warning("New dispatcher <%s>", hostname)
                 self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-            # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
-            # as well as handling unexpected crashes.
-            self._cancel_slave_dispatcher_jobs(hostname)
 
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
-
-        elif action == "HELLO_RETRY":
-            self.logger.info("%s => HELLO_RETRY", hostname)
-            self.controler.send_multipart([hostname, "HELLO_OK"])
-
-            if hostname in self.dispatchers:
-                # Assume the HELLO command was received, and the
-                # action succeeded.
-                self.logger.warning(
-                    "Dispatcher <%s> was not confirmed", hostname)
-            else:
-                # No dispatcher, treat it as a normal HELLO message.
-                self.logger.warning("New dispatcher <%s>", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(
-                    hostname, online=True)
-
+            if action == 'HELLO':
+                # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
+                # as well as handling unexpected crashes.
                 self._cancel_slave_dispatcher_jobs(hostname)
 
             # Mark the dispatcher as alive
@@ -298,15 +294,7 @@ class Command(BaseCommand):
             self.logger.debug("%s => PING", hostname)
             # Send back a signal
             self.controler.send_multipart([hostname, 'PONG'])
-
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == "ERROR":
             try:
@@ -317,8 +305,7 @@ class Command(BaseCommand):
                 return False
             self.logger.error("[%d] Error: %s", job_id, error_msg)
 
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == 'END':
             status = TestJob.COMPLETE
@@ -346,15 +333,7 @@ class Command(BaseCommand):
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
             self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
-
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == 'START_OK':
             try:
@@ -371,14 +350,7 @@ class Command(BaseCommand):
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
 
-            if hostname not in self.dispatchers:
-                # The server crashed: send a STATUS message
-                self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                send_status(hostname, self.controler, self.logger)
-
-            # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         else:
             self.logger.error("<%s> sent unknown action=%s, args=(%s)",
@@ -467,6 +439,9 @@ class Command(BaseCommand):
                 device_configuration = None \
                     if job.dynamic_connection else device.load_device_configuration(job_ctx)
 
+                env_str = get_env_string(options['env'])
+                env_dut_str = get_env_string(options['env_dut'])
+
                 if job.is_multinode:
                     for group_job in job.sub_jobs_list:
                         if group_job.dynamic_connection:
@@ -477,14 +452,13 @@ class Command(BaseCommand):
                                 [str(worker_host.hostname),
                                  'START', str(group_job.id), self.export_definition(group_job),
                                  str(device_configuration),
-                                 get_env_string(options['env']),
-                                 get_env_string(options['env_dut'])])
+                                 env_str, env_dut_str])
 
                 self.controler.send_multipart(
                     [str(worker_host.hostname),
                      'START', str(job.id), self.export_definition(job),
                      str(device_configuration),
-                     get_env_string(options['env']), get_env_string(options['env_dut'])])
+                     env_str, env_dut_str])
 
             except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
                 if isinstance(exc, jinja2.TemplateNotFound):
@@ -602,10 +576,15 @@ class Command(BaseCommand):
         (pipe_r, pipe_w) = os.pipe()
         flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
         fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-        signal.set_wakeup_fd(pipe_w)
-        signal.signal(signal.SIGINT, lambda x, y: None)
-        signal.signal(signal.SIGTERM, lambda x, y: None)
-        signal.signal(signal.SIGQUIT, lambda x, y: None)
+
+        def signal_to_pipe(signum, frame):
+            # Send the signal number on the pipe
+            os.write(pipe_w, chr(signum))
+
+        signal.signal(signal.SIGHUP, signal_to_pipe)
+        signal.signal(signal.SIGINT, signal_to_pipe)
+        signal.signal(signal.SIGTERM, signal_to_pipe)
+        signal.signal(signal.SIGQUIT, signal_to_pipe)
         poller.register(pipe_r, zmq.POLLIN)
 
         if os.path.exists('/etc/lava-server/worker.conf'):
@@ -627,8 +606,13 @@ class Command(BaseCommand):
                     continue
 
                 if sockets.get(pipe_r) == zmq.POLLIN:
-                    self.logger.info("[POLL] Received a signal, leaving")
-                    break
+                    signum = ord(os.read(pipe_r, 1))
+                    if signum == signal.SIGHUP:
+                        self.logger.info("[POLL] SIGHUP received, restarting loggers")
+                        self.logging_support()
+                    else:
+                        self.logger.info("[POLL] Received a signal, leaving")
+                        break
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
@@ -649,7 +633,7 @@ class Command(BaseCommand):
 
                 # Check dispatchers status
                 now = time.time()
-                for hostname in list(self.dispatchers.keys()):
+                for hostname in self.dispatchers.keys():
                     dispatcher = self.dispatchers[hostname]
                     if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
                         self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
@@ -663,13 +647,9 @@ class Command(BaseCommand):
                     last_db_access = now
                     # Dispatch jobs
                     # TODO: make this atomic
-                    not_allocated = 0
                     # only pick up pipeline jobs with devices in Reserved state
                     if not self.process_jobs(options):
                         continue
-
-                    if not_allocated > 0:
-                        self.logger.info("%d jobs not allocated yet", not_allocated)
 
                     # Handle canceling jobs
                     self.handle_canceling()

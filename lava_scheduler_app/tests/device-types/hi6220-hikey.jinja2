@@ -3,32 +3,53 @@
 device_type: hi6220-hikey
 adb_serial_number: {{ adb_serial_number|default('0000000000') }}
 fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
-
+{% if device_path %}
+{# admins need to ensure that the device dictionary sets this as a list #}
+device_path: {{ device_path }}
+{% endif -%}
 {% block vland %}
-{# skip the parameters dict at top level #}
+{#  #}
+{% endblock %}
+
+{% block commands %}
+{{ super() }}
+{% if pre_power_command %}
+    pre_power_command: {{ pre_power_command }}
+{% endif -%}
+{% if pre_os_command %}
+    pre_os_command: {{ pre_os_command }}
+{% endif -%}
 {% endblock %}
 
 actions:
   deploy:
     methods:
+      lxc:
       fastboot:
     connections:
+      lxc:
       serial:
   boot:
     connections:
-      adb:
+      lxc:
       serial:
     methods:
       uefi-menu:
+        parameters:
+          interrupt_prompt: {{ interrupt_prompt|default("Android Fastboot mode") }}
+          interrupt_string: {{ interrupt_string|default(' ') }}
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          bootloader_prompt: "{{ bootloader_prompt|default('Start:') }}"
+          boot_message: {{ boot_message|default("Booting Linux Kernel...") }}
+          send_char: True
+          character_delay: 10
+        fastboot:
+        - select:
+            items:
+             - {{ fastboot_select_item|default('boot from eMMC') }}
 
-timeouts:
-  actions:
-    apply-overlay-image:
-      seconds: 120
-    umount-retry:
-      seconds: 45
-    lava-test-shell:
-      seconds: 600
-    power_off:
-      seconds: 10
-{% endblock %}
+{% endblock %} {# end body block #}

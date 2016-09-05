@@ -26,7 +26,7 @@ on your system. The style changed substantially in django 1.9, so images
 of the interface itself are not included here.
 
 Administative interface site links
-***********************************
+**********************************
 
 The django administrative interface offers links back to your LAVA
 instance *if* the ``Sites`` element is modified. (The default django
@@ -120,7 +120,8 @@ Create a device in the database
 Adding your first QEMU device
 -----------------------------
 
-For the first device, a simple :term:`device dictionary` can be used:
+For the first device, a simple :term:`device dictionary` can be used
+to provide the device-specific details on top of the template:
 
 .. code-block:: jinja
 
@@ -130,8 +131,10 @@ For the first device, a simple :term:`device dictionary` can be used:
   {% set memory = '1024' %}
 
 * The device dictionary **must** ``extend`` an existing template.
-* The QEMU template specifies that the ``arch`` variable must be set
-  to start the correct QEMU system binary
+* For this first device, the device dictionary specifies the ``arch``
+  variable which must be set to start the correct QEMU system binary.
+  Later sections will cover how to use this template to emulate more
+  than one architecture.
 * The MAC address needs to differ for each device of this type.
 * The available memory for the virtual machine is set in megabytes.
 * Line ordering within the device dictionary is irrelevant, although
@@ -147,7 +150,8 @@ means that this device would not support a hacking session inside the
 virtual machine. Setting up a bridge is out of scope for this documentation.
 
 .. seealso:: :ref:`create_device_dictionary`,
-   :ref:`updating_device_dictionary` and :ref:`checking_templates`
+   :ref:`updating_device_dictionary`, :ref:`checking_templates` and
+   :ref:`device_type_templates`.
 
 Once updated, the device dictionary is added to the Device view in the
 administrative interface under the Advanced Properties section at the

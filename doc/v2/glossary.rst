@@ -49,10 +49,12 @@ Glossary of terms
     See also :ref:`pipeline_construction`
 
   device dictionary
-    A key:value store within the LAVA server database which admins can
-    modify to set configuration values for specific devices, specific
-    to the :term:`pipeline` design. See :ref:`create_device_dictionary`
-    and :ref:`viewing_device_dictionary_content`.
+    The device dictionary holds data which is specific to one device within
+    a group of devices of the same device type. For example, the power control
+    commands which reference a single port number. The dictionary itself is a
+    key:value store within the LAVA server database which admins can modify
+    to set configuration values according to the :term:`pipeline` design.
+    See :ref:`create_device_dictionary` and :ref:`viewing_device_dictionary_content`.
 
   device group
     A set of devices, defined in the JSON of an individual test job,

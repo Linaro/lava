@@ -252,6 +252,7 @@ class JobTable(LavaTable):
         # note the enums cannot be searched this way.
         searches = {
             'id': 'contains',
+            'sub_id': 'contains',
             'description': 'contains'
         }
         # dedicated time-based search fields
@@ -580,6 +581,7 @@ class DeviceTable(LavaTable):
             'device_status_query': 'status',
             'health_status_query': 'health_status',
             'restriction_query': 'restrictions',
+            'tags_query': 'tags'
         }
 
 

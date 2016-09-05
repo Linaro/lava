@@ -28,7 +28,7 @@ support will be removed in Django1.10. Equally, always provide a name if the URL
 needs to be reversed elsewhere in the code, e.g. the view. (Best practice is to
 use a name for all new urls, even if not yet used elsewhere.)
 """
-from django.conf.urls import *
+from django.conf.urls import url
 from dashboard_app.views import (
     attachment_download,
     attachment_view,
@@ -95,7 +95,6 @@ from dashboard_app.views.image_reports.views import (
     image_chart_filter_delete,
     image_chart_filter_edit,
     image_chart_filter_type_check,
-    image_report_detail,
     image_report_list,
     image_report_display,
     image_report_detail,
@@ -229,7 +228,8 @@ urlpatterns = [
         name='dashboard_app.views.image_reports.views.get_group_names'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+export$', image_chart_export),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+add-filter$', image_chart_filter_add),
-    url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)$', image_chart_filter_detail),
+    url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)$', image_chart_filter_detail,
+        name='dashboard_app.views.image_reports.views.image_chart_filter_detail'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)/\+edit$', image_chart_filter_edit),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)/\+delete$', image_chart_filter_delete),
     url(r'^api/link-bug-to-testrun', link_bug_to_testrun, name='lava_dashboard_link_bug_to_testrun'),

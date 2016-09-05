@@ -24,4 +24,30 @@
   {% endif %}
 {% endfor %}
 
+<div class="panel-group" id="buglinks_accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4><a data-toggle="collapse" data-parent="#buglinks_accordion" href="#buglinks_collapse">
+        Bug links
+      </a>
+      </h4>
+    </div>
+  {% spaceless %}
+    <div id="buglinks_collapse" class="panel-collapse collapse">
+      <div class="panel-body">
+        <dl class="dl-horizontal">
+          {% for bug_link in bug_links %}
+          <dt>URL</dt>
+          <dd><a href="{{ bug_link.url }}" target="_blank">{{ bug_link.url }}</a></dd>
+          <br/>
+          {% empty %}
+          No bug links for this test case.
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+  {% endspaceless %}
+  </div>
+</div>
+
 {% endblock %}

@@ -26,58 +26,58 @@ metadata:
   docs-filename: first-multinode-job.yaml
 
 # Very simple multinode definition for our example
-# START-BLOCK-1
+# START-PROTOCOLS-BLOCK
 protocols:
   lava-multinode:
     roles:
-      client:
+      foo:
         device_type: qemu
         context:
           arch: amd64
         count: 1
-      server:
+      bar:
         device_type: qemu
         context:
           arch: amd64
         count: 1
     timeout:
       minutes: 6
-# END-BLOCK-1
+# END-PROTOCOLS-BLOCK
 
-# START-BLOCK-2
+# START-DEPLOY-BLOCK
 actions:
 - deploy:
     role:
-    - server
-    - client
+    - foo
+    - bar
     timeout:
       minutes: 5
     to: tmpfs
-    images: 
-        rootfs: 
+    images:
+        rootfs:
           image_arg: -drive format=raw,file={rootfs}
           url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
           compression: gz
     os: debian
     root_partition: 1
-# END-BLOCK-2
+# END-DEPLOY-BLOCK
 
-# START-BLOCK-3
+# START-BOOT-BLOCK
 - boot:
     role:
-    - server
-    - client
+    - foo
+    - bar
     method: qemu
     media: tmpfs
     prompts:
     - "root@debian:"
-# END-BLOCK-3
+# END-BOOT-BLOCK
 
 # START-TEST-BLOCK
 - test:
     role:
-    - server
-    - client
+    - foo
+    - bar
     timeout:
       minutes: 10
     definitions:

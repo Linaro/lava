@@ -1,7 +1,6 @@
 import os
 import yaml
 import jinja2
-import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -25,6 +24,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
+from lava_scheduler_app.schema import validate_submission, validate_device
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_defs import check_missing_path
@@ -36,6 +36,9 @@ from unittest import TestCase
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
+
+# set to True to see extra processing details
+DEBUG = False
 
 
 class YamlFactory(ModelFactory):
@@ -69,8 +72,9 @@ class YamlFactory(ModelFactory):
         self.make_fake_qemu_device(hostname)
         if tags:
             device.tags = tags
-        logging.debug("making a device of type %s %s %s with tags '%s'",
-                      device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
+        if DEBUG:
+            print("making a device of type %s %s %s with tags '%s'",
+                  device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
         device.save()
         return device
 
@@ -131,10 +135,21 @@ class PipelineDeviceTags(TestCaseWithFactory):
             self.factory.make_user())
 
     def test_yaml_device_tags(self):
-        data = yaml.load(self.factory.make_job_yaml(tags=['usb', 'controller']))
+        Tag.objects.all().delete()
+        tag_list = [
+            self.factory.ensure_tag('usb'),
+            self.factory.ensure_tag('sata')
+        ]
+        data = yaml.load(self.factory.make_job_yaml(tags=['usb', 'sata']))
+        validate_submission(data)
+        device = self.factory.make_device(self.device_type, 'fakeqemu4', tags=tag_list)
+        job_ctx = data.get('context', {})
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        validate_device(device_config)
         self.assertIn('tags', data)
         self.assertEqual(type(data['tags']), list)
         self.assertIn('usb', data['tags'])
+        self.assertEqual(set(Tag.objects.all()), set(device.tags.all()))
 
     def test_undefined_tags(self):
         Tag.objects.all().delete()
@@ -270,6 +285,48 @@ class TestPipelineSubmit(TestCaseWithFactory):
             if count > 100:
                 break
         self.assertGreater(count, 100)
+
+    def test_multinode_tags_assignment(self):
+        # kvm-multinode.yaml contains notification settings for admin
+        user = self.factory.ensure_user('admin', 'admin@test.com', 'admin')
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        client_tag_list = [
+            self.factory.ensure_tag('usb-flash'),
+            self.factory.ensure_tag('usb-eth')
+        ]
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=client_tag_list)
+        self.assertTrue(device1.is_pipeline)
+        server_tag_list = [
+            self.factory.ensure_tag('testtag')
+        ]
+        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2', tags=server_tag_list)
+        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
+        self.assertTrue(device2.is_pipeline)
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        job_list = testjob_submission(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        client_job = None
+        server_job = None
+        for job in job_list:
+            job_def = yaml.load(job.definition)
+            if job_def['protocols'][MultinodeProtocol.name]['role'] == 'client':
+                client_job = job
+            elif job_def['protocols'][MultinodeProtocol.name]['role'] == 'server':
+                server_job = job
+            else:
+                self.fail("Unrecognised role in job")
+        self.assertEqual(set(client_job.tags.all()), set(client_tag_list))
+        self.assertEqual(set(server_job.tags.all()), set(server_tag_list))
+        self.assertIsNone(client_job.actual_device)
+        self.assertIsNone(server_job.actual_device)
+        device_list = Device.objects.filter(device_type=device1.device_type)
+        assigned = find_device_for_job(client_job, device_list)
+        self.assertEqual(assigned, device1)
+        self.assertEqual(set(device1.tags.all()), set(client_job.tags.all()))
+        assigned = find_device_for_job(server_job, device_list)
+        self.assertEqual(assigned, device2)
+        self.assertEqual(set(device2.tags.all()), set(server_job.tags.all()))
 
     def test_invalid_device(self):
         user = self.factory.make_user()
@@ -619,6 +676,49 @@ class TestYamlMultinode(TestCaseWithFactory):
                 if role == 'server':
                     self.assertEqual(job, yaml.load(open(server_check, 'r')))
 
+    def test_multinode_tags(self):
+        Tag.objects.all().delete()
+        self.factory.ensure_tag('tap'),
+        self.factory.ensure_tag('virtio')
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        roles_dict = submission['protocols'][MultinodeProtocol.name]['roles']
+        roles_dict['client']['tags'] = ['tap']
+        roles_dict['server']['tags'] = ['virtio']
+        submission['protocols'][MultinodeProtocol.name]['roles'] = roles_dict
+        target_group = 'arbitrary-group-id'  # for unit tests only
+        jobs = split_multinode_yaml(submission, target_group)
+        self.assertEqual(len(jobs), 2)
+        for role, job_list in jobs.items():
+            for job in job_list:
+                if role == 'server':
+                    self.assertEqual(job['protocols']['lava-multinode']['tags'], ['virtio'])
+                elif role == 'client':
+                    self.assertEqual(job['protocols']['lava-multinode']['tags'], ['tap'])
+                else:
+                    self.fail('unexpected role')
+
+    def test_multinode_lxc(self):
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'lxc-multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        protocol_data = {
+            'lava-lxc': {
+                'name': 'pipeline-lxc-test', 'template': 'debian',
+                'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+        }
+        for role, _ in jobs.iteritems():
+            if role == 'server':
+                self.assertNotIn('lava-lxc', jobs[role][0]['protocols'])
+            elif role == 'client':
+                self.assertIn('lava-lxc', jobs[role][0]['protocols'])
+                self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], protocol_data['lava-lxc'])
+            else:
+                self.fail('Unrecognised role: %s' % role)
+
     def test_multinode_protocols(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
@@ -633,15 +733,20 @@ class TestYamlMultinode(TestCaseWithFactory):
         # specified tags do not exist
         self.assertRaises(yaml.YAMLError, _pipeline_protocols, submission, user)
 
-        tag_list = [
+        client_tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
         ]
-        self.factory.make_device(device_type, 'fakeqemu2')
+        server_tag_list = [
+            self.factory.ensure_tag('testtag')
+        ]
+        self.factory.make_device(device_type, 'fakeqemu2',
+                                 tags=server_tag_list)
         # no devices which have the required tags applied
         self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
-        self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu3',
+                                 tags=client_tag_list)
         job_object_list = _pipeline_protocols(submission, user)
         self.assertEqual(len(job_object_list), 2)
         for job in job_object_list:
@@ -652,11 +757,12 @@ class TestYamlMultinode(TestCaseWithFactory):
                     check['protocols']['lava-multinode']['tags'],
                     ['usb-flash', 'usb-eth'])
                 self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
-                self.assertEqual(set(tag_list), set(job.tags.all()))
+                self.assertEqual(set(client_tag_list), set(job.tags.all()))
             if check['protocols']['lava-multinode']['role'] == 'server':
-                self.assertNotIn('tags', check['protocols']['lava-multinode'])
+                self.assertEqual(
+                    check['protocols']['lava-multinode']['tags'], ['testtag'])
                 self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
-                self.assertEqual(set([]), set(job.tags.all()))
+                self.assertEqual(set(['testtag']), set(job.tags.all().values_list("name", flat=True)))
 
     def test_multinode_group(self):
         user = self.factory.make_user()
@@ -666,7 +772,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu1')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu2', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
@@ -708,7 +815,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu2')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, None)
@@ -731,7 +839,8 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
+            self.factory.ensure_tag('usb-eth'),
+            self.factory.ensure_tag('testtag')
         ]
         self.factory.make_device(device_type, 'fakeqemu1')
         self.factory.make_device(device_type, 'fakeqemu2')
@@ -947,6 +1056,71 @@ class TestYamlMultinode(TestCaseWithFactory):
             }
         )
 
+    def test_multinode_mixed_deploy(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        bbb_type = self.factory.make_device_type('beaglebone-black')
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-01')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'bbb-qemu-multinode.yaml'), 'r'))
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+
+        for job in job_object_list:
+            definition = yaml.load(job.definition)
+            self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            if job.requested_device_type.name == 'qemu':
+                job.actual_device = Device.objects.get(hostname='fakeqemu1')
+            elif job.requested_device_type.name == 'beaglebone-black':
+                job.actual_device = Device.objects.get(hostname='bbb-01')
+            else:
+                self.fail('Unrecognised device type: %s' % job.requested_device_type)
+            job_def = yaml.load(job.definition)
+            job_ctx = job_def.get('context', {})
+            parser = JobParser()
+            device_object = None
+            if not job.dynamic_connection:
+                device = job.actual_device
+
+                try:
+                    device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+                except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+                    # FIXME: report the exceptions as useful user messages
+                    self.fail("[%d] jinja2 error: %s" % (job.id, exc))
+                if not device_config or not isinstance(device_config, dict):
+                    # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+                    msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+                    self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
+
+                device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+                # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+                if 'target' not in device_object:
+                    device_object.target = device.hostname
+                device_object['hostname'] = device.hostname
+
+            self.assertNotEqual(job.device_role, 'Error')
+            parser_device = None if job.dynamic_connection else device_object
+            try:
+                # pass (unused) output_dir just for validation as there is no zmq socket either.
+                pipeline_job = parser.parse(
+                    job.definition, parser_device,
+                    job.id, None, None, None,
+                    output_dir=job.output_dir)
+            except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
+                self.fail('[%s] parser error: %s' % (job.sub_id, exc))
+            pipeline_job.pipeline.validate_actions()
+
+        for job in job_object_list:
+            job = TestJob.objects.get(id=job.id)
+            self.assertNotEqual(job.sub_id, '')
+
 
 class VlanInterfaces(TestCaseWithFactory):
 
@@ -968,7 +1142,7 @@ class VlanInterfaces(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M']},
             'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
         }
         device_dict.save()
@@ -983,7 +1157,7 @@ class VlanInterfaces(TestCaseWithFactory):
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
                 'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
             'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
             'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
         }
         device_dict.save()
@@ -1001,7 +1175,7 @@ class VlanInterfaces(TestCaseWithFactory):
                     'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
                 },
                 'mac_addr': {'eth1': '00:24:d7:9b:c0:8c', 'eth0': 'f0:de:f1:46:8c:21'},
-                'tags': {'eth1': ['1G'], 'eth0': ['1G', '10G']}}
+                'tags': {'eth1': ['RJ45', '10M'], 'eth0': []}}
         }
         self.assertEqual(chk, device_dict.to_dict())
         submission = yaml.load(open(self.filename, 'r'))
@@ -1027,9 +1201,9 @@ class VlanInterfaces(TestCaseWithFactory):
         client_job = job_roles['client']
         server_job = job_roles['server']
         self.assertIn('vlan_one', client_job['protocols']['lava-vland'])
-        self.assertIn('10G', client_job['protocols']['lava-vland']['vlan_one']['tags'])
+        self.assertIn('10M', client_job['protocols']['lava-vland']['vlan_one']['tags'])
         self.assertIn('vlan_two', server_job['protocols']['lava-vland'])
-        self.assertIn('1G', server_job['protocols']['lava-vland']['vlan_two']['tags'])
+        self.assertIn('100M', server_job['protocols']['lava-vland']['vlan_two']['tags'])
         client_tags = client_job['protocols']['lava-vland']['vlan_one']
         client_dict = DeviceDictionary.get('bbb-01').to_dict()
         for interface, tags in client_dict['parameters']['tags'].iteritems():

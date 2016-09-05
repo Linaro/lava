@@ -602,11 +602,19 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
+        job_status = {'job_id': job.id}
+
+        if job.is_multinode:
+            job_status.update({
+                'sub_id': job.sub_id
+            })
+
         if job.is_pipeline:
-            return {
+            job_status.update({
                 'job_status': job.get_status_display(),
                 'bundle_sha1': ""
-            }
+            })
+            return job_status
 
         # DEPRECATED
         bundle_sha1 = ""
@@ -616,10 +624,10 @@ class SchedulerAPI(ExposedAPI):
             except IndexError:
                 pass
 
-        job_status = {
+        job_status.update({
             'job_status': job.get_status_display(),
             'bundle_sha1': bundle_sha1
-        }
+        })
 
         return job_status
 
@@ -817,6 +825,7 @@ class SchedulerAPI(ExposedAPI):
         [superuser only]
         Import or update the device dictionary key value store for a
         pipeline device.
+        This action will be logged.
 
         Arguments
         ---------
@@ -836,7 +845,7 @@ class SchedulerAPI(ExposedAPI):
                 "User '%s' is not superuser." % self.user.username
             )
         try:
-            Device.objects.get(hostname=hostname)
+            device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(
                 404, "Device '%s' was not found." % hostname
@@ -868,6 +877,7 @@ class SchedulerAPI(ExposedAPI):
         element.parameters = device_data
         element.save()
         msg += "Device dictionary updated for %s\n" % hostname
+        device.log_admin_entry(self.user, msg)
         return msg
 
     def export_device_dictionary(self, hostname):
@@ -928,6 +938,7 @@ class SchedulerAPI(ExposedAPI):
         Validate that the device dictionary and device-type template
         together create a valid YAML file which matches the pipeline
         device schema.
+        Retired devices are ignored.
 
         See also get_pipeline_device_config
 
@@ -950,9 +961,11 @@ class SchedulerAPI(ExposedAPI):
 
         """
         if not hostname:
-            devices = Device.objects.filter(is_pipeline=True)
+            devices = Device.objects.filter(
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
         else:
-            devices = Device.objects.filter(is_pipeline=True, hostname=hostname)
+            devices = Device.objects.filter(
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=hostname))
         if not devices and hostname:
             raise xmlrpclib.Fault(
                 404, "No pipeline device found with hostname %s" % hostname

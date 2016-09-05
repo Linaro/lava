@@ -190,7 +190,7 @@ function update_filter_link() {
 
 function update_tooltips() {
     // Update tooltips on the remaining td's for the test names.
-    $(document).tooltip({items: "td"});
+    $("#outer-table").tooltip({items: "td"});
 }
 
 function store_filters() {

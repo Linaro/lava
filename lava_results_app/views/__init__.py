@@ -24,6 +24,9 @@ import csv
 import simplejson
 import yaml
 from collections import OrderedDict
+from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, loader
 from lava_server.views import index as lava_index
@@ -35,12 +38,14 @@ from django.shortcuts import get_object_or_404
 from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testcase, testcase_export_fields
+from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
 from lava_results_app.utils import check_request_auth
 from lava_results_app.models import (
+    BugLink,
     QueryCondition,
     TestSuite,
     TestCase,
@@ -81,6 +86,7 @@ def index(request):
     return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
+            'content_type_id': ContentType.objects.get_for_model(TestSuite).id,
             'result_table': result_table,
         }, request=request))
 
@@ -146,6 +152,7 @@ def testjob(request, job):
             'job_link': pklink(job),
             'suite_table': suite_table,
             'metadata': yaml_dict,
+            'content_type_id': ContentType.objects.get_for_model(TestSuite).id,
             'failed_definitions': failed_definitions,
             'condition_choices': simplejson.dumps(
                 QueryCondition.get_condition_choices(job)
@@ -204,8 +211,14 @@ def suite(request, job, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(suite, pk=pk, job=job.id),
             'job': job,
             'job_link': pklink(job),
+            'content_type_id': ContentType.objects.get_for_model(TestCase).id,
             'suite_name': pk,
             'suite_table': suite_table,
+            'bug_links': BugLink.objects.filter(
+                object_id=test_suite.id,
+                content_type_id=ContentType.objects.get_for_model(
+                    TestSuite).id,
+            )
         }, request=request))
 
 
@@ -326,4 +339,74 @@ def testcase(request, job, pk, case):
             'suite': test_suite,
             'job_link': pklink(job),
             'test_cases': test_cases,
+            'bug_links': BugLink.objects.filter(
+                object_id__in=test_cases.values_list('id', flat=True),
+                content_type_id=ContentType.objects.get_for_model(
+                    TestCase).id,
+            )
         }, request=request))
+
+
+@login_required
+@post_only
+def get_bug_links_json(request):
+    """Return all bug links related to content type.
+
+    Content type id and object id are passed through request.
+    """
+
+    data = None
+    if not request.POST.get('content_type_id', None) or \
+       not request.POST.get('object_id', None):
+        data = False
+
+    else:
+        bug_links = BugLink.objects.filter(
+            content_type_id=request.POST.get('content_type_id'),
+            object_id=request.POST.get('object_id')
+        )
+        data = serializers.serialize('json', bug_links)
+
+    return HttpResponse(data, content_type='application/json')
+
+
+@login_required
+@post_only
+def add_bug_link(request):
+
+    success = True
+    error_msg = None
+
+    if not request.POST.get('content_type_id', None) or \
+       not request.POST.get('object_id', None):
+        success = False
+
+    else:
+        bug_link, created = BugLink.objects.get_or_create(
+            url=request.POST.get("url"),
+            content_type_id=request.POST.get("content_type_id"),
+            object_id=request.POST.get("object_id"))
+
+        if not created:
+            error_msg = "duplicate"
+            success = False
+        else:
+            msg = "Adding bug link for content type %s, object id %s" % (
+                ContentType.objects.get_for_id(
+                    request.POST.get("content_type_id")).model,
+                request.POST.get("object_id")
+            )
+            bug_link.log_admin_entry(request.user, msg)
+
+    return HttpResponse(simplejson.dumps([success, error_msg]),
+                        content_type='application/json')
+
+
+@login_required
+@post_only
+def delete_bug_link(request):
+
+    bug_link = get_object_or_404(BugLink, pk=request.POST.get("bug_link_id"))
+    bug_link.delete()
+    return HttpResponse(simplejson.dumps(["success"]),
+                        content_type='application/json')

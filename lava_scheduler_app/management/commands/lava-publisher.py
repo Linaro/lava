@@ -84,6 +84,9 @@ class Command(BaseCommand):
             self.logger.error("Unable to the set (user, group)=(%s, %s)", user, group)
             return False
 
+        # Set a restrictive umask (rw-rw-r--)
+        os.umask(0o113)
+
         return True
 
     def handle(self, *args, **options):

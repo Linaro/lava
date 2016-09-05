@@ -275,6 +275,9 @@ class Mapper(object):
 
     def __init__(self):
         self.registered = {}
+        # logging output goes to lava-server.log
+        logging.basicConfig()
+        self.logger = logging.getLogger("linaro-django-xmlrpc-mapper")
 
     def register(self, cls, name=None):
         """
@@ -316,7 +319,7 @@ class Mapper(object):
             obj = cls(context)
         except:
             # TODO: Perhaps this should be an APPLICATION_ERROR?
-            logging.exception("unable to instantiate API class %r", cls)
+            self.logger.exception("unable to instantiate API class %r", cls)
             obj = None
         meth = getattr(obj, meth_name, None)
         if not inspect.ismethod(meth):
@@ -379,7 +382,9 @@ class Dispatcher(object):
     def __init__(self, mapper, allow_none=True):
         self.mapper = mapper
         self.allow_none = allow_none
-        self.logger = logging.getLogger()
+        # logging output goes to lava-server.log
+        logging.basicConfig()
+        self.logger = logging.getLogger("linaro-django-xmlrpc-dispatcher")
 
     def decode_request(self, data):
         """
@@ -444,8 +449,6 @@ class Dispatcher(object):
             # Forward XML-RPC Faults to the client
             raise
         except Exception as exc:
-            # the traceback goes into the apache virtual host log file
-            self.logger.exception(traceback.format_exc())
             # Call a helper than can do more
             if self.handle_internal_error(method_name, params) is None:
                 # If there is no better handler we should log the problem
@@ -456,7 +459,7 @@ class Dispatcher(object):
             # TODO: figure out a way to get the error id from Raven if that is around
             raise xmlrpclib.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
-                "Internal Server Error (details hidden :) %s" % exc)
+                "Internal Server Error (contact server administrator for details): %s" % exc)
 
     def handle_internal_error(self, method_name, params):
         """
