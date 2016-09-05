@@ -22,7 +22,7 @@ import logging
 import time
 import yaml
 
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, JobError, InfrastructureError
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
@@ -134,7 +134,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # FIXME: pretty output of exception messages needed.
         try:
             self.pipeline.validate_actions()
-        except JobError as exc:
+        except (JobError, InfrastructureError) as exc:
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
