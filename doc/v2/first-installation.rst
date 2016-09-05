@@ -26,9 +26,9 @@ Software Requirements
 
 See :ref:`debian_installation` for instructions.
 
-We currently recommend installing LAVA on `Debian`_ unstable, stretch or
-jessie. Installations using jessie (the current Debian stable release) should
-use updates available in ``jessie-backports``.
+We currently recommend installing LAVA on `Debian`_ jessie, stretch or
+unstable. Installations using jessie (the current Debian stable
+release) should use updates available in ``jessie-backports``.
 
 Contributions to support other distributions are welcome.
 
@@ -62,29 +62,29 @@ Devices you wish to deploy in LAVA need to be:
 
 .. _multinode_hardware_requirements:
 
-Multi-Node hardware requirements
-================================
+MultiNode hardware requirements
+===============================
 
 If the instance is going to be sent any job submissions from third parties or
-if your own job submissions are going to use Multi-Node, there are additional
+if your own job submissions are going to use MultiNode, there are additional
 considerations for hardware requirements.
 
-Multi-Node is explicitly designed to synchronise test operations across
-multiple test devices and running Multi-Node jobs on a particular instance will
+MultiNode is explicitly designed to synchronise test operations across
+multiple test devices and running MultiNode jobs on a particular instance will
 have implications for the workload of that instance. This can become a
 particular problem if the instance is running on virtualised hardware with
 shared I/O, a limited amount of RAM or a limited number of available cores.
 
 .. note:: Downloading, preparing and deploying test images can result in a lot
    of synchronous I/O and if a single machine is running both the LAVA server
-   and dispatcher, running synchronised Multi-Node jobs can cause the load on
+   and dispatcher, running synchronised MultiNode jobs can cause the load on
    that machine to rise significantly, possibly causing the server to become
-   unresponsive. For this reason, it is strongly recommended that Multi-Node
+   unresponsive. For this reason, it is strongly recommended that MultiNode
    instances use a separate dispatcher running on non-virtualised hardware so
    that the (possibly virtualised) server can continue to operate.
 
 Also, consider the number of test devices connected to any one dispatcher.
-Multi-Node jobs will commonly compress and decompress several large test image
+MultiNode jobs will commonly compress and decompress several large test image
 files in parallel. Even with a powerful multi-core machine, this can cause high
 load. It is worth considering matching the number of devices to the number of
 cores for parallel decompression, and matching the amount of available RAM to
@@ -302,12 +302,12 @@ If the value is not set or set to ``true``, the Results app will be displayed.
 LAVA Coordinator setup
 ======================
 
-Multi-Node LAVA requires a LAVA Coordinator which manages the messaging within
-a group of nodes involved in a Multi-Node job set according to this API. The
+MultiNode LAVA requires a LAVA Coordinator which manages the messaging within
+a group of nodes involved in a MultiNode job set according to this API. The
 LAVA Coordinator is a singleton to which nodes need to connect over a TCP port
 (default: 3079). A single LAVA Coordinator can manage groups from multiple
 instances. If the network configuration uses a firewall, ensure that this port
-is open for connections from Multi-Node dispatchers.
+is open for connections from MultiNode dispatchers.
 
 If multiple coordinators are necessary on a single machine (e.g. to test
 different versions of the coordinator during development), each coordinator

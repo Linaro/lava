@@ -178,7 +178,7 @@ the same level as ``job_name``, ``timeouts``, ``metadata`` and ``device_type``:
       docs-filename: qemu-pipeline-first-job.yaml
 
 For :term:`multinode` test jobs, the tags are defined as part of the
-Multinode protocol:
+MultiNode protocol:
 
 .. code-block:: yaml
 

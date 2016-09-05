@@ -3,10 +3,13 @@
 MultiNode API
 =============
 
-The LAVA MultiNode API provides a simple way to pass messages using the serial port connection which
-is already available through LAVA. The API is not intended for transfers of large amounts of data. Test
-definitions which need to transfer files, long messages or other large amounts of data need to set up their
-own network configuration, access and download methods and do the transfer in the test definition.
+The LAVA MultiNode API provides a simple way to pass messages using
+the serial port connection which is already available through
+LAVA. The API is not intended for transfers of large amounts of
+data. Test definitions which need to transfer files, long messages or
+other large amounts of data need to set up their own network
+configuration, access and download methods and do the transfer in the
+test definition.
 
 .. index:: lava-self
 
@@ -17,13 +20,13 @@ lava-self
 
 Prints the hostname of the current device.
 
-.. note:: The LAVA hostname of a device is the name of the device within
-           LAVA - as visible via the web frontend. The same name is used
-           whether the device itself has a network connection or not.
-           There is no requirement that the LAVA hostname matches anything
-           related to any network connection or network service. This
-           means that the LAVA hostname is always available via
-           ``lava-group`` and ``lava-self``.
+.. note:: The LAVA hostname of a device is the name of the device
+          within LAVA - as visible via the web frontend. The same name
+          is used whether the device itself has a network connection
+          or not. There is no requirement that the LAVA hostname
+          matches anything related to any network connection or
+          network service. This means that the LAVA hostname is always
+          available via ``lava-group`` and ``lava-self``.
 
 Usage:
 ^^^^^^
@@ -40,7 +43,7 @@ Usage:
 ^^^^^^
  ``lava-role``
 
-Prints the role the current device is playing in a multi-node job.
+Prints the role the current device is playing in a MultiNode job.
 
 *Example.* In a directory with several scripts, one for each role
 involved in the test::
@@ -51,7 +54,7 @@ Usage:
 ^^^^^^
  ``lava-role list``
 
-Prints a list of all roles within this multi-node job, separated by
+Prints a list of all roles within this MultiNode job, separated by
 whitespace.::
 
     #!/bin/sh
@@ -72,12 +75,12 @@ Usage:
 ^^^^^^
  ``lava-group``
 
-This command will produce in its standard output a representation of the
-device group that is participating in the multi-node test job.
+This command will produce in its standard output a representation of
+the device group that is participating in the MultiNode test job.
 
 The output format contains one line per device, and each line contains
-the hostname and the role that device is playing in the test, separated
-by a TAB character::
+the hostname and the role that device is playing in the test,
+separated by a TAB character::
 
     panda01     client
     highbank01  loadbalancer
@@ -88,11 +91,11 @@ Usage:
 ^^^^^^
  ``lava-group role``
 
-This command will produce in its standard output a list of the
-device names assigned the specified role in the multi-node test job.
+This command will produce in its standard output a list of the device
+names assigned the specified role in the MultiNode test job.
 
-The output format contains one line per device assigned to the specified
-role with no whitespace. The matched role is not output.::
+The output format contains one line per device assigned to the
+specified role with no whitespace. The matched role is not output.::
 
     $ lava-group client
     panda01
@@ -161,12 +164,13 @@ If there was data passed in the message, the key-value pairs will be
 printed in the cache file (/tmp/lava_multi_node_cache.txt in default),
 each in one line. If no key values were passed, nothing is printed.
 
-The message ID data is persistent for the life of the MultiNode group.
-The data can be retrieved at any later stage using ``lava-wait`` and as
-the data is already available, there will be no waiting time for repeat
-calls. If devices continue to send data with the associated message ID,
-that data will continue to be added to the data for that message ID and
-will be returned by subsequent calls to ``lava-wait`` for that message
+The message ID data is persistent for the life of the MultiNode
+group. The data can be retrieved at any later stage using
+``lava-wait`` and as the data is already available, there will be no
+waiting time for repeat calls. If devices continue to send data with
+the associated message ID, that data will continue to be added to the
+data for that message ID and will be returned by subsequent calls to
+``lava-wait`` for that message
 ID. Use a different message ID to collate different message data.
 
 .. seealso:: :ref:`flow_tables`
@@ -178,38 +182,41 @@ ID. Use a different message ID to collate different message data.
 lava-wait-all
 -------------
 
-``lava-wait-all`` operates in two distinct ways - with or without a role.
+``lava-wait-all`` operates in two distinct ways - with or without a
+role.
 
 ``lava-wait-all <message-id> [<role>]``
 
 If data was sent by the other devices with the message, the key-value
-pairs will be printed in the cache file (/tmp/lava_multi_node_cache.txt
-in default), each in one line, prefixed with the target name and
-a colon.
+pairs will be printed in the cache file
+(/tmp/lava_multi_node_cache.txt in default), each in one line,
+prefixed with the target name and a colon.
 
-Some examples for ``lava-send``, ``lava-wait`` and
-``lava-wait-all`` are given below.
+Some examples for ``lava-send``, ``lava-wait`` and ``lava-wait-all``
+are given below.
 
 The message returned can include data from other devices which sent a
 message with the relevant message ID, only the wait is dependent on
 particular devices with a specified role.
 
-As with ``lava-wait``, the message ID is persistent for the duration of
-the MultiNode group.
+As with ``lava-wait``, the message ID is persistent for the duration
+of the MultiNode group.
 
 lava-wait-all <message-id>
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``lava-wait-all <message-id>``
 
-``lava-wait-all`` waits until **all** other devices in the group send a message
-with the given message ID. Every device in the group **must** use ``lava-send``
-with the same message ID before entering ``lava-wait-all`` or any device using
-that test definition will wait forever (and eventually timeout, failing the job).
+``lava-wait-all`` waits until **all** other devices in the group send
+a message with the given message ID. Every device in the group
+**must** use ``lava-send`` with the same message ID before entering
+``lava-wait-all`` or any device using that test definition will wait
+forever (and eventually timeout, failing the job).
 
-Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
-makes all boards in the group run at the speed of the slowest board in
-the group up to the point where the sync or wait is called.
+Using ``lava-sync`` or ``lava-wait-all`` in a test definition
+effectively makes all boards in the group run at the speed of the
+slowest board in the group up to the point where the sync or wait is
+called.
 
 .. seealso:: :ref:`flow_tables`
 
@@ -218,18 +225,21 @@ lava-wait-all <message-id> <role>
 
 ``lava-wait-all <message-id> <role>``
 
-If ``<role>`` is used, only wait until all devices with that given role
-send a message with the matching message ID. Devices of the given role do **not**
-enter ``lava-wait``, but just send the message and continue the test definition.
-Ensure the test continues for long enough for the devices using ``lava-wait-all``
-to pick up the message and act on it. Typically, this involves using a ``lava-sync``
-after the ``lava-send`` on devices with the given role and after the completion of
-the task on the devices which were waiting for the message.
+If ``<role>`` is used, only wait until all devices with that given
+role send a message with the matching message ID. Devices of the given
+role do **not** enter ``lava-wait``, but just send the message and
+continue the test definition. Ensure the test continues for long
+enough for the devices using ``lava-wait-all`` to pick up the message
+and act on it. Typically, this involves using a ``lava-sync`` after
+the ``lava-send`` on devices with the given role and after the
+completion of the task on the devices which were waiting for the
+message.
 
-Not all roles in the group need to send a message or wait for a message. One role
-will act as a sender, at least one role will act as a receiver and any other roles
-can continue as normal. This level of complexity is not usually needed. It is advisable
-to draw out the sequence in a table to ensure that the correct calls are made.
+Not all roles in the group need to send a message or wait for a
+message. One role will act as a sender, at least one role will act as
+a receiver and any other roles can continue as normal. This level of
+complexity is not usually needed. It is advisable to draw out the
+sequence in a table to ensure that the correct calls are made.
 
 .. seealso:: :ref:`flow_tables`
 
@@ -259,20 +269,21 @@ by ``lava-wait-all foo``.
 lava-network
 ------------
 
-Helper script to broadcast IP data from the test image, wait for data to be
-received by the rest of the group (or one role within the group) and then provide
-an interface to retrieve IP data about the group on the command line.
+Helper script to broadcast IP data from the test image, wait for data
+to be received by the rest of the group (or one role within the group)
+and then provide an interface to retrieve IP data about the group on
+the command line.
 
-Raising a suitable network interface is a job left for the designer of the test
-definition / image but once a network interface is available, ``lava-network``
-can be asked to broadcast this information to the rest of the group. At a later
-stage of the test, before the IP details of the group need to be used, call
-``lava-network collect`` to receive the same information about the rest of
-the group.
+Raising a suitable network interface is a job left for the designer of
+the test definition / image but once a network interface is available,
+``lava-network`` can be asked to broadcast this information to the
+rest of the group. At a later stage of the test, before the IP details
+of the group need to be used, call ``lava-network collect`` to receive
+the same information about the rest of the group.
 
-The key-value pairs will be printed in the cache
-file (/tmp/lava_multi_node_network_cache.txt in default),
-each in one line, prefixed with the target name and a colon.
+The key-value pairs will be printed in the cache file
+(/tmp/lava_multi_node_network_cache.txt in default), each in one line,
+prefixed with the target name and a colon.
 
 The information broadcast about each interface is:
 
@@ -286,14 +297,15 @@ The information broadcast about each interface is:
 * ipv6 address (if any)
 * default-gateway
 
-All usage of lava-network needs to use a broadcast (which wraps a call to
-``lava-send``) and a collect (which wraps a call to ``lava-wait-all``). As a
-wrapper around ``lava-wait-all``, collect will block until the rest of the group
-(or devices in the group with the specified role) has made a broadcast.
+All usage of lava-network needs to use a broadcast (which wraps a call
+to ``lava-send``) and a collect (which wraps a call to
+``lava-wait-all``). As a wrapper around ``lava-wait-all``, collect
+will block until the rest of the group (or devices in the group with
+the specified role) has made a broadcast.
 
-After the data has been collected, it can be queried for any board specified in
-the output of ``lava-group`` by specifying the parameter to query (as used in the
-broadcast)::
+After the data has been collected, it can be queried for any board
+specified in the output of ``lava-group`` by specifying the parameter
+to query (as used in the broadcast)::
 
  lava-network query panda19 ipv4
  192.168.3.56
@@ -319,9 +331,9 @@ broadcast)::
  lava-network query panda06 mac
  52:54:30:10:34:56
 
-``lava-network hosts`` can be used to output the list of all boards in the group
-which have returned a fully qualified domain name in a format suitable for
-``/etc/hosts``, appending to the specified file::
+``lava-network hosts`` can be used to output the list of all boards in
+the group which have returned a fully qualified domain name in a
+format suitable for ``/etc/hosts``, appending to the specified file::
 
  10.1.1.2	staging-kvm01
  10.1.1.6	staging-kvm02.localdomain
@@ -339,20 +351,20 @@ Usage:
 
  hosts:     ``lava-network hosts [file]``
 
-``lava-network alias-hosts`` is an optional extension which extends the
-``lava-network hosts`` support to use the role of each device in the
-group as an alias in the output.
+``lava-network alias-hosts`` is an optional extension which extends
+the ``lava-network hosts`` support to use the role of each device in
+the group as an alias in the output.
 
-.. comment FIXME: in use_case_four seealso:: :ref:`role_aliases` for more information on the
-   limitations of using roles as aliases.
+.. comment FIXME: in use_case_four seealso:: :ref:`role_aliases` for
+   more information on the limitations of using roles as aliases.
 
-The ``hostname`` used in a query of ``lava-network`` is the LAVA hostname
-which may differ from the network hostname of the device (which is why
-``lava-network`` supports querying the LAVA hostname to return the
-network hostname). See the note under :ref:`lava_self`.
+The ``hostname`` used in a query of ``lava-network`` is the LAVA
+hostname which may differ from the network hostname of the device
+(which is why ``lava-network`` supports querying the LAVA hostname to
+return the network hostname). See the note under :ref:`lava_self`.
 
-Example 1: simple client-server multi-node test
------------------------------------------------
+Example 1: simple client-server MultiNode test
+----------------------------------------------
 
 Two devices, with roles ``client``, ``server``
 
@@ -363,7 +375,8 @@ LAVA Test Shell test definition (say, ``example1.yaml``)::
             - ./run-`lava-role`.sh
 
 The test image or the test definition would then provide two scripts,
-with only one being run on each device, according to the role specified.
+with only one being run on each device, according to the role
+specified.
 
 ``run-server.sh``::
 
@@ -373,9 +386,8 @@ with only one being run on each device, according to the role specified.
 
 Notes:
 
-* To make use of the server-ready message, some kind of client
-  needs to do a ``lava-wait server-ready``
-
+* To make use of the server-ready message, some kind of client needs
+  to do a ``lava-wait server-ready``
 
 ``run-client.sh``::
 
@@ -402,7 +414,8 @@ LAVA Test Shell test definition (say, ``example1.yaml``)::
             - ./run-`lava-role`.sh
 
 The test image or the test definition would then provide two scripts,
-with only one being run on each device, according to the role specified.
+with only one being run on each device, according to the role
+specified.
 
 ``run-server.sh``::
 
@@ -416,17 +429,17 @@ with only one being run on each device, according to the role specified.
 
 Notes:
 
-* iperf server process needs to be run in the background to wait
-  for the connection from the client and the process id will be stored
+* iperf server process needs to be run in the background to wait for
+  the connection from the client and the process id will be stored
   somewhere for later use.
-* To make use of the server-ready message, some kind of client
-  needs to do a ``lava-wait server-ready``
-* There needs to be a support on a client to do the
-  ``lava-send client-done`` or the wait will fail on the server.
+* To make use of the server-ready message, some kind of client needs
+  to do a ``lava-wait server-ready``
+* There needs to be a support on a client to do the ``lava-send
+  client-done`` or the wait will fail on the server.
 * If there was more than one client, the server could call
   ``lava-wait-all client-done`` instead.
-* iperf server process must be killed after getting client-done message,
-  otherwise the test job will not proceed.
+* iperf server process must be killed after getting client-done
+  message, otherwise the test job will not proceed.
 
 
 ``run-client.sh``::
@@ -537,8 +550,9 @@ useful to do but to demonstrate that it will spend most of it's time
 in ``lava-sync fin``.
 
 All roles will wait in ``lava-sync start`` until all deploy and boot
-operations (or whatever other tasks are put ahead of the call to ``lava-sync``)
-are complete. The flow table does not include this delay.
+operations (or whatever other tasks are put ahead of the call to
+``lava-sync``) are complete. The flow table does not include this
+delay.
 
 The Server role runs a script to start a service, sending ready when
 the script returns.
@@ -547,10 +561,10 @@ The Client role waits until all devices with the Server role have
 completed ``lava-send ready`` - Observer is unaffected and Server
 moves directly into the ``lava-sync fin``. Once the Client completes
 ``lava-wait-all ready server``, the Client can run the client tasks
-script. That script finally puts the devices with the Client role
-into ``lava-sync fin`` at which point, the Client role receives the
-message that everyone else is already in that sync, the sync completes
-and the flow table ends.
+script. That script finally puts the devices with the Client role into
+``lava-sync fin`` at which point, the Client role receives the message
+that everyone else is already in that sync, the sync completes and the
+flow table ends.
 
 Tables like this also help visualize how long the timeouts need to be
 to allow the Observer role to wait for all the server tasks and all
