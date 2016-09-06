@@ -20,7 +20,6 @@
 
 import re
 import logging
-import os
 import sys
 import copy
 import time
@@ -648,6 +647,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
+        self.logger.info("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
             log = log.decode('utf-8')
@@ -679,10 +679,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
         # allow for commands which return no output
         if not log and allow_silent:
-            self.logger.debug('command %s', command_list)
             return self.errors == []
         else:
-            self.logger.debug('command %s output %s', command_list, log)
+            self.logger.debug('command output %s', log)
             return log
 
     def call_protocols(self):
