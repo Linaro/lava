@@ -83,7 +83,7 @@ class YAMLLogger(logging.Logger):
         if isinstance(self.handler, ZMQPushHandler):
             self.handler.setMetadata(level, name)
 
-    def log_message(self, level, level_name, message, *args, **kwargs):
+    def log_message(self, level, level_name, message, *args, **kwargs):  # pylint: disable=unused-argument
         # Build the dictionnary
         data = {'dt': datetime.datetime.utcnow().isoformat(),
                 'lvl': level_name}

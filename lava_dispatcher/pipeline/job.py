@@ -27,7 +27,7 @@ import time
 import os
 import yaml
 
-from lava_dispatcher.pipeline.action import Action, JobError, InfrastructureError
+from lava_dispatcher.pipeline.action import JobError, InfrastructureError
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
@@ -52,7 +52,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, socket_addr, master_cert, slave_cert, parameters):
+    def __init__(self, job_id, socket_addr, master_cert, slave_cert, parameters):  # pylint: disable=too-many-arguments
         self.job_id = job_id
         self.socket_addr = socket_addr
         self.master_cert = master_cert
@@ -79,6 +79,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # test writter will see.
         self.logger = logging.getLogger('dispatcher')
         if socket_addr is not None:
+            # pylint: disable=no-member
             self.logger.addZMQHandler(socket_addr, master_cert, slave_cert,
                                       job_id)
             self.logger.setMetadata("0", "validate")

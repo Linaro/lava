@@ -123,26 +123,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
 
-    def _override_action_timeout(self, action, override):
-        if not isinstance(override, dict):
-            return
-        action.timeout = Timeout(
-            action.name,
-            Timeout.parse(
-                override[action.name]
-            )
-        )
-
-    def _override_connection_timeout(self, action, override):
-        if not isinstance(override, dict):
-            return
-        action.connection_timeout = Timeout(
-            action.name,
-            Timeout.parse(
-                override[action.name]
-            )
-        )
-
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
         self.actions.append(action)
@@ -167,18 +147,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             # some action handlers do not need to pass all parameters to their children.
             action.connection_timeout.duration = parameters['default_connection_timeout']
         # Set the timeout
+        # pylint: disable=protected-access
         # FIXME: only the last test is really useful. The first ones are only
         # needed to run the tests that do not use a device and job.
         if self.job is not None and self.job.device is not None:
             # set device level overrides
             overrides = self.job.device.get('timeouts', {})
             if 'actions' in overrides and action.name in overrides['actions']:
-                self._override_action_timeout(action, overrides['actions'])
+                action._override_action_timeout(overrides['actions'])
             elif action.name in overrides:
-                self._override_action_timeout(action, overrides)
+                action._override_action_timeout(overrides)
                 parameters['timeout'] = overrides[action.name]
             if 'connections' in overrides and action.name in overrides['connections']:
-                self._override_connection_timeout(action, overrides['connections'])
+                action._override_connection_timeout(overrides['connections'])
         # Set the parameters after populate so the sub-actions are also
         # getting the parameters.
         # Also set the parameters after the creation of the default timeout
@@ -188,14 +169,14 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             overrides = self.job.parameters['timeouts']
             if 'actions' in overrides and action.name in overrides['actions']:
                 # set job level overrides
-                self._override_action_timeout(action, overrides['actions'])
+                action._override_action_timeout(overrides['actions'])
             elif action.name in overrides:
-                self._override_action_timeout(action, overrides)
+                action._override_action_timeout(overrides)
                 parameters['timeout'] = overrides[action.name]
             elif 'timeout' in parameters:
                 action.timeout.duration = Timeout.parse(parameters['timeout'])
             if 'connections' in overrides and action.name in overrides['connections']:
-                self._override_connection_timeout(action, overrides['connections'])
+                action._override_connection_timeout(overrides['connections'])
         action.parameters = parameters
 
     def describe(self, verbose=True):
@@ -278,24 +259,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def _log_action_results(self, action):
-        if action.results and isinstance(action.logger, YAMLLogger):
-            action.logger.results({
-                "definition": "lava",
-                "case": action.name,
-                "level": action.level,
-                "duration": action.elapsed_time,
-                "result": "fail" if action.errors else "pass",
-                "extra": action.results})
-            action.results.update(
-                {
-                    'level': action.level,
-                    'duration': action.elapsed_time,
-                    'timeout': action.timeout.duration,
-                    'connection-timeout': action.connection_timeout.duration
-                }
-            )
-
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
         def cancelling_handler(*args):  # pylint: disable=unused-argument
@@ -352,7 +315,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 except (ValueError, KeyError, NameError, SyntaxError, OSError,
                         TypeError, RuntimeError, AttributeError):
                     action.elapsed_time = time.time() - start
-                    msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+                    msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
                     action.logger.exception(traceback.format_exc())
                     action.errors = msg
                     action.cleanup()
@@ -369,7 +332,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
-                self._log_action_results(action)
+                action.log_action_results()
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -386,7 +349,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
-                self._log_action_results(action)
+                action.log_action_results()
                 action.logger.exception(str(exc))
                 self._diagnose(connection)
                 action.cleanup()
@@ -406,7 +369,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             action.post_process()
 
 
-class Action(object):  # pylint: disable=too-many-instance-attributes
+class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     def __init__(self):
         """
@@ -605,7 +568,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # Basic checks
         if not self.name:
             self.errors = "%s action has no name set" % self
-        if ' ' in self.name:
+        # have already checked that self.name is not None, but pylint gets confused.
+        if ' ' in self.name:  # pylint: disable=unsupported-membership-test
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
         if not self.summary:
@@ -661,7 +625,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.logger.info("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
-            log = log.decode('utf-8')
+            log = log.decode('utf-8')  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:
             if sys.version > '3':
                 if exc.output:
@@ -842,6 +806,50 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
     def mkdtemp(self):
         return self.job.mkdtemp(self.name)
+
+    def _override_action_timeout(self, override):
+        """
+        Only to be called by the Pipeline object, add_action().
+        """
+        if not isinstance(override, dict):
+            return
+        self.timeout = Timeout(
+            self.name,
+            Timeout.parse(
+                override[self.name]
+            )
+        )
+
+    def _override_connection_timeout(self, override):
+        """
+        Only to be called by the Pipeline object, add_action().
+        """
+        if not isinstance(override, dict):
+            return
+        self.connection_timeout = Timeout(
+            self.name,
+            Timeout.parse(
+                override[self.name]
+            )
+        )
+
+    def log_action_results(self):
+        if self.results and isinstance(self.logger, YAMLLogger):
+            self.logger.results({
+                "definition": "lava",
+                "case": self.name,
+                "level": self.level,
+                "duration": self.elapsed_time,
+                "result": "fail" if self.errors else "pass",
+                "extra": self.results})
+            self.results.update(
+                {
+                    'level': self.level,
+                    'duration': self.elapsed_time,
+                    'timeout': self.timeout.duration,
+                    'connection-timeout': self.connection_timeout.duration
+                }
+            )
 
 
 class Timeout(object):

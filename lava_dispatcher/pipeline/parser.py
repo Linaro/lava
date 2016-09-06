@@ -37,7 +37,7 @@ from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.connection import Protocol
 # Bring in the strategy subclass lists, ignore pylint warnings.
-# pylint: disable=unused-import
+# pylint: disable=unused-import,too-many-arguments,too-many-nested-blocks,too-many-branches
 from lava_dispatcher.pipeline.actions.commands import CommandsAction
 import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies

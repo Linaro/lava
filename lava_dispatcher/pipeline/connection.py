@@ -63,7 +63,7 @@ class BaseSignalHandler(object):
 
 class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
-    def match(self, data, fixupdict=None):
+    def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
         if not fixupdict:
             fixupdict = {}
 
@@ -289,13 +289,13 @@ class Protocol(object):
     def set_up(self):
         raise NotImplementedError()
 
-    def configure(self, device, job):
+    def configure(self, device, job):  # pylint: disable=unused-argument
         self.configured = True
 
     def finalise_protocol(self, device=None):
         raise NotImplementedError()
 
-    def check_timeout(self, duration, data):
+    def check_timeout(self, duration, data):  # pylint: disable=unused-argument,no-self-use
         """
         Use if particular protocol calls can require a connection timeout
         larger than the default_connection_duration.
@@ -306,12 +306,12 @@ class Protocol(object):
         """
         return False
 
-    def _api_select(self, data):
+    def _api_select(self, data):  # pylint: disable=no-self-use
         if not data:
             return None
         raise NotImplementedError()
 
-    def __call__(self, args):
+    def __call__(self, args):  # pylint: disable=no-self-use
         """ Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
@@ -320,5 +320,5 @@ class Protocol(object):
         """
         return self._api_select(args)
 
-    def collate(self, reply_dict, params_dict):
+    def collate(self, reply_dict, params_dict):  # pylint: disable=unused-argument,no-self-use
         return None
