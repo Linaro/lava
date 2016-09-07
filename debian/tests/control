@@ -1,4 +1,4 @@
 Tests: testsuite
 Depends: lava-server, django-testscenarios, python-tz, tftpd-hpa, git,
- qemu-system-x86
+ qemu-system-x86, nfs-kernel-server, u-boot-tools
 Restrictions: allow-stderr
