@@ -1,3 +1,43 @@
+lava-dispatcher (2016.9-1) unstable; urgency=medium
+
+  * 2016.9 production release
+    Catch the edge case where serial line corruption means we miss the testrun
+    Add support for alternative Test actions
+    Update manpage of lava-slave for configuration change.
+    Allow configuring the slave from file
+    git: use -C instead of --git-dir
+    Allow setting the envrionment on most systems
+    Handle exceptions from subprocess from compression
+    download: don't expand the path when retrying
+    Grab finalize from the root pipeline
+    Log exception as strings and not objects
+    LAVA-740 - export vlan names and interface names
+    Reopen log file when rotating the logs
+    LAVA-699 - Support hi6220-hikey board with lxc
+    Init: remove the right lock file and simplify
+    pipeline:vland: raise JobError if switch_id or port_id is None
+    Remove redundant assignation
+    Allow logging at the validate stage
+    Force the shell to produce an initial prompt
+    Handle errors if the testrun start is omitted.
+    Pipeline parser: sort and reverse in one call
+    logs: remove unused support for local logs
+    slave: put all tmp files into the same directory
+    Power: improve logging message
+    Exclude patterns from description
+    Port lava-slave to Python3
+    ApplyOverlayTftp: remove duplicated untar_file
+    ExportDeviceEnvironment: only source valid shell_file's
+    add LEDE to available distributions
+    Always log the command to be run beforehand.
+  * Update lava-slave file handling
+    The daemon is no longer optional, so remove the
+    old conditions. Add support for the option file in
+    /etc/lava-dispatcher/lava-slave
+  * Add override for new lava-vland-names test helper
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 Sep 2016 07:35:09 +0100
+
 lava-dispatcher (2016.8-1) unstable; urgency=medium
 
   * New production release
