@@ -14,29 +14,32 @@
 # One day, this daemon will replace scheduler-monitor
 
 # example command:
-# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{{filename}}.conf dispatcher-master
-. /etc/lava-server/instance.conf
-INST_TMPL="--instance-template=/etc/lava-server/{{filename}}.conf"
-INSTANCE="--instance=$LAVA_INSTANCE"
-LOGLEVEL="--loglevel=info"
+# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{filename}.conf dispatcher-master
+INST_TMPL="--instance-template=/etc/lava-server/{filename}.conf"
+MASTER_SOCKET=""
+LOGGER_SOCKET=""
+LOGLEVEL="DEBUG"
+ENCRYPT=""
+MASTER_CERT=""
+SLAVES_CERTS=""
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+# This script fragment can overwrite the variables defined above
+[ -r /etc/lava-server/lava-master ] && . /etc/lava-server/lava-master
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-server manage dispatcher-master"          # short description
 NAME=lava-master                                     # short server's name
 DAEMON="/usr/bin/lava-master"                        # server's location
-DAEMON_ARGS="manage ${INST_TMPL} $INSTANCE dispatcher-master"  # Arguments to run the daemon with
+OPTIONS="$MASTER_SOCKET $LOGGER_SOCKET $ENCRYPT $MASTER_CERTS $SLAVES_CERTS"
+DAEMON_ARGS="manage ${INST_TMPL} dispatcher-master --level $LOGLEVEL $OPTIONS"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-master.pid
 SCRIPTNAME=/etc/init.d/lava-master
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
-
-# Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
-
-# Load the VERBOSE setting and other rcS variables
-#. /lib/init/vars.sh
 
 # Define LSB log_* functions.
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
@@ -86,9 +89,7 @@ do_stop()
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
 	# clear the old pid lockfile
-    if [ -f /var/run/lava-server.pid.lock ]; then
-        rm -f /var/run/lava-server.pid.lock
-    fi
+  rm -f $PIDFILE.lock
 	return "$RETVAL"
 }
 
@@ -127,15 +128,11 @@ case "$1" in
   status)
 	   status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
 	   ;;
-  #reload|force-reload)
-	#
-	# If do_reload() is not implemented then leave this commented out
-	# and leave 'force-reload' as an alias for 'restart'.
-	#
-	#log_daemon_msg "Reloading $DESC" "$NAME"
-	#do_reload
-	#log_end_msg $?
-	#;;
+  reload|force-reload)
+	  log_daemon_msg "Reloading $DESC" "$NAME"
+	  do_reload
+	  log_end_msg $?
+	;;
   restart|force-reload)
 	#
 	# If the "reload" option is implemented then remove the
@@ -160,7 +157,7 @@ case "$1" in
 	;;
   *)
 	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+	echo "Usage: $SCRIPTNAME {start|stop|status|reload|restart|force-reload}" >&2
 	exit 3
 	;;
 esac

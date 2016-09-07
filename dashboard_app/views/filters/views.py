@@ -390,12 +390,12 @@ def get_tests_json(request):
 
 
 def get_test_cases_json(request):
-    if not request.GET.get('test_id', None) or not request.GET.get('id', None):
+    if not request.GET.get('test_id', None):
         raise Http404
 
     test_cases = TestCase.objects.filter(
-        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id'],
-        test__id=request.GET['test_id']).distinct('test_case_id').order_by('test_case_id')
+        test__id=request.GET['test_id']).distinct('test_case_id').order_by(
+            'test_case_id')
 
     data = serializers.serialize('json', test_cases)
     return HttpResponse(data, content_type='application/json')

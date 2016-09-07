@@ -1,0 +1,30 @@
+<div id="refresh_loading_dialog" style="display: none;"><img src="/static/dashboard_app/images/ajax-progress.gif" alt="Loading..." /></div>
+<!-- Modal HTML -->
+<div id="bug_link_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3 id="bug_link_title" class="modal-title">Bug links</h3>
+      </div>
+      <div class="modal-body">
+        <div>Bug(s) linked:</div>
+        <div id="existing_bug_links"></div>
+        <hr/>
+	<div id="bug_link_errors" class="errorlist" style="color: red;"></div>
+	<form id="bug_link_form" class="well" method="post" action="{% url 'lava.results.add_bug_link' %}">
+          {% csrf_token %}
+          <input type="hidden" id="id_content_type" name="content_type" />
+          <input type="hidden" id="id_object" name="object" />
+          <div>Link new bug</div>
+          <input class="col-sm-12" type="text" name="url" id="id_url" />
+          <hr/>
+	</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button id="submit_bug_link" type="button" class="btn btn-primary">Link</button>
+      </div>
+    </div>
+  </div>
+</div>

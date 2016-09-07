@@ -27,6 +27,8 @@ protocols:
         context:
           arch: amd64
         count: 1
+        tags:
+        - testtag
     timeout:
       seconds: 60
 

@@ -19,6 +19,7 @@
 import yaml
 import urllib
 import logging
+import django
 from django.db import transaction
 from lava_results_app.models import (
     TestSuite,
@@ -31,6 +32,13 @@ from lava_results_app.models import (
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.pipeline.action import Timeout
 # pylint: disable=no-member
+
+if django.VERSION > (1, 10):
+    from django.urls.exceptions import NoReverseMatch
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
+    from django.core.urlresolvers import NoReverseMatch
 
 
 def _check_for_testset(result_dict, suite):
@@ -57,6 +65,14 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
+def append_failure_comment(job, msg):
+    logger = logging.getLogger('dispatcher-master')
+    if not job.failure_comment:
+        job.failure_comment = ''
+    job.failure_comment += msg[:256]
+    logger.error(msg)
+
+
 def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements
     """
     Sanity checker on the logged results dictionary
@@ -67,11 +83,16 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
     logger = logging.getLogger('dispatcher-master')
 
     if not isinstance(results, dict):
-        logger.debug("%s is not a dictionary", results)
+        append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
         return False
 
-    if not set(["definition", "case", "result"]).issubset(set(results.keys())):
-        logger.error("Missing some keys (\"definition\", \"case\" or \"result\") in %s", results)
+    if not {"definition", "case", "result"}.issubset(set(results.keys())):
+        append_failure_comment(job, "Missing some keys (\"definition\", \"case\" or \"result\") in %s" % results)
+        return False
+
+    metadata_check = yaml.dump(results)
+    if len(metadata_check) > 4096:  # bug 2471 - test_length unit test
+        append_failure_comment(job, "[%d] Error in handling results metadata %s" % (job.id, metadata_check))
         return False
 
     suite, created = TestSuite.objects.get_or_create(name=results["definition"], job=job)
@@ -80,6 +101,13 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
     testset = _check_for_testset(results, suite)
 
     name = results["case"]
+    try:
+        reverse('lava.results.testcase', args=[job.id, suite.name, name])
+    except NoReverseMatch:
+        append_failure_comment(
+            job,
+            "[%d] Unable to parse test case name as URL %s in suite %s" % (job.id, name, suite.name))
+        return False
     if suite.name == "lava":
         match_action = None
         if "level" in results:
@@ -95,7 +123,7 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
         try:
             result_val = TestCase.RESULT_MAP[results['result']]
         except KeyError:
-            logger.error("Unable to MAP result \"%s\"", results['result'])
+            logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
             return False
 
         try:
@@ -183,24 +211,33 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                 continue
             namespace = block.get('namespace', None)
             definitions = [reduce(dict.get, ['definitions'], block)][0]
-            for definition in definitions:
-                if definition['from'] == 'inline':
-                    # an inline repo without test cases will not get reported.
-                    if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
-                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+            if not definitions:
+                monitors = [reduce(dict.get, ['monitors'], block)][0]
+                if monitors:
+                    if isinstance(monitors, list):
+                        for monitor in monitors:
+                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                            retval['%s.monitor.name' % prefix] = monitor['name']
+                            count += 1
+            else:
+                for definition in definitions:
+                    if definition['from'] == 'inline':
+                        # an inline repo without test cases will not get reported.
+                        if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        else:
+                            # store the fact that an inline exists but would not generate any testcases
+                            prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
+                        retval['%s.inline.name' % prefix] = definition['name']
+                        retval['%s.inline.path' % prefix] = definition['path']
                     else:
-                        # store the fact that an inline exists but would not generate any testcases
-                        prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
-                    retval['%s.inline.name' % prefix] = definition['name']
-                    retval['%s.inline.path' % prefix] = definition['path']
-                else:
-                    prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                    # FIXME: what happens with remote definition without lava-test-case?
-                    retval['%s.definition.name' % prefix] = definition['name']
-                    retval['%s.definition.path' % prefix] = definition['path']
-                    retval['%s.definition.from' % prefix] = definition['from']
-                    retval['%s.definition.repository' % prefix] = definition['repository']
-                count += 1
+                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        # FIXME: what happens with remote definition without lava-test-case?
+                        retval['%s.definition.name' % prefix] = definition['name']
+                        retval['%s.definition.path' % prefix] = definition['path']
+                        retval['%s.definition.from' % prefix] = definition['from']
+                        retval['%s.definition.repository' % prefix] = definition['repository']
+                    count += 1
     return retval
 
 
@@ -225,7 +262,7 @@ def build_action(action_data, testdata, submission):
         logger.debug("Unrecognised metatype in action_data: %s", action_data['section'])
         return
     # lookup the type from the job definition.
-    type_name = MetaType.get_type_name(action_data['section'], submission)
+    type_name = MetaType.get_type_name(action_data, submission)
     if not type_name:
         logger.debug(
             "type_name failed for %s metatype %s",

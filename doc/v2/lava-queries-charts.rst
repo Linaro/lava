@@ -130,6 +130,74 @@ admin section of LAVA. If user tries to create a query with the same name and
 owner (himself) which was already archived, system will inform the user that
 it's already in the system.
 
+.. _lava_query_use_cases:
+
+LAVA Query use cases
+====================
+
+#. Incomplete jobs submitted from kernel-ci:
+
+   * Condition 1:
+
+     * Condition model: test job
+     * Field name: status
+     * Operator: Exact match
+     * Field value: Incomplete
+
+   * Condition 2:
+
+     * Condition model: test job
+     * Field name: submitter
+     * Operator: Exact match
+     * Field value: kernel-ci
+
+#. Completed jobs that have at least one failed test case on panda NFS using LSK:
+
+   * Condition 1:
+
+     * Condition model: test job
+     * Field name: status
+     * Operator: Exact match
+     * Field value: Complete
+
+   * Condition 2:
+
+     * Condition model: test job
+     * Field name: requested_device_type
+     * Operator: Exact match
+     * Field value: panda
+
+   * Condition 3:
+
+     * Condition model: test case
+     * Field name: result
+     * Operator: Exact match
+     * Field value: Test failed
+
+   * Condition 4:
+
+     * Condition model: metadata
+     * Field name: kernel.version
+     * Operator: Contains
+     * Field value: lsk
+
+#. List of jobs on vexpress TC2 using LSK 3.14 where boot time exceeds 40 seconds:
+
+   * Condition 1:
+
+     * Condition model: metadata
+     * Field name: android.name
+     * Operator: Contains
+     * Field value: vexpress-lsk-3.14
+
+   * Condition 2:
+
+     * Condition model: test case
+     * Field name: measurement
+     * Operator: Greater than
+     * Field value: 40
+
+
 .. _lava_charts:
 
 LAVA Charts

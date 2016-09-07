@@ -21,10 +21,15 @@
 
 
 import django_tables2 as tables
+from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from lava.utils.lavatable import LavaTable
 from lava_scheduler_app.tables import DateColumn, RestrictedIDLinkColumn
-from lava_results_app.models import TestCase
+from lava_results_app.models import (
+    TestCase,
+    BugLink,
+    TestSuite
+)
 from markupsafe import escape
 
 
@@ -135,6 +140,33 @@ class ResultsTable(LavaTable):
             suite=record,
         )[0].logged
 
+    def render_buglinks(self, record, table=None):
+
+        suite_links_count = BugLink.objects.filter(
+            content_type=ContentType.objects.get_for_model(TestSuite),
+            object_id=record.id).count()
+        case_links_count = BugLink.objects.filter(
+            content_type=ContentType.objects.get_for_model(TestCase),
+            object_id__in=TestCase.objects.filter(
+                suite=record)).count()
+
+        user = table.context.get('request').user
+        if not user.is_anonymous():
+            return mark_safe(
+                '<a href="#" class="buglink" id="buglink_%s">[%s]</a> (%s)' % (
+                    record.id,
+                    suite_links_count,
+                    case_links_count
+                )
+            )
+        else:
+            return mark_safe(
+                '[%s] (%s)' % (
+                    suite_links_count,
+                    case_links_count
+                )
+            )
+
     job_id = JobRestrictionColumn(verbose_name='Test Job')
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
@@ -142,6 +174,7 @@ class ResultsTable(LavaTable):
     fails = tables.Column(accessor='job', verbose_name='Fails')
     total = tables.Column(accessor='job', verbose_name='Totals')
     logged = tables.Column(accessor='job', verbose_name='Logged')
+    buglinks = tables.Column(accessor='job', verbose_name='Bug Links')
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {
@@ -179,6 +212,7 @@ class SuiteTable(LavaTable):
     measurement = tables.Column()
     units = tables.Column()
     logged = DateColumn()
+    buglinks = tables.Column(accessor='suite', verbose_name='Bug Links')
 
     def render_name(self, record):  # pylint: disable=no-self-use
         return mark_safe(
@@ -205,6 +239,25 @@ class SuiteTable(LavaTable):
             '<a href="%s"><span class="glyphicon glyphicon-%s"></span> %s</a>' % (
                 record.get_absolute_url(), icon, code)
         )
+
+    def render_buglinks(self, record, table=None):
+        case_links_count = BugLink.objects.filter(
+            content_type=ContentType.objects.get_for_model(TestCase),
+            object_id=record.id).count()
+
+        user = table.context.get('request').user
+        if not user.is_anonymous():
+            return mark_safe(
+                '<a href="#" class="buglink" id="buglink_%s">[%s]</a>' % (
+                    record.id,
+                    case_links_count
+                ))
+        else:
+            return mark_safe(
+                '[%s]' % (
+                    case_links_count
+                )
+            )
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {

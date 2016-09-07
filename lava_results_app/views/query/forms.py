@@ -21,18 +21,13 @@ import simplejson
 
 from django import forms
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.html import escape
 
 from lava_results_app.models import (
     Query,
     QueryCondition,
-    TestCase,
-    TestSuite,
-    NamedTestAttribute
 )
-from lava_scheduler_app.models import TestJob
 
 
 class QueryForm(forms.ModelForm):

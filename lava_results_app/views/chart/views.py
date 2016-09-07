@@ -29,7 +29,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect
 )
-from django.shortcuts import get_object_or_404, render, loader
+from django.shortcuts import get_object_or_404, loader
 
 from lava_server.bread_crumbs import (
     BreadCrumb,

@@ -60,7 +60,8 @@ def _inline_schema():
     return Schema({
         'metadata': dict,
         'install': dict,
-        'run': dict
+        'run': dict,
+        'parse': dict
     })
 
 
@@ -82,6 +83,25 @@ def _job_test_schema():
     }, extra=True)
 
 
+def _job_monitor_schema():
+    return Schema({
+        Required('monitors'): _monitor_def_schema(),
+        Optional('timeouts'): _timeout_schema()
+    }, extra=True)
+
+
+def _monitor_def_schema():
+    return Schema([
+        {
+            Required('name'): str,
+            Required('start'): str,
+            Required('end'): str,
+            Required('pattern'): str,
+            Optional('fixupdict'): dict
+        }
+    ])
+
+
 def _job_actions_schema():
     return Schema([
         {
@@ -89,7 +109,8 @@ def _job_actions_schema():
                 _deploy_tftp_schema(),
                 _job_deploy_schema()),
             'boot': _job_boot_schema(),
-            'test': _job_test_schema(),
+            'test': Any(_job_monitor_schema(),
+                        _job_test_schema())
         }
     ])
 
@@ -169,15 +190,7 @@ def _job_protocols_schema():
                 }
             }
         },
-        'lava-lxc': {
-            'name': str,
-            'distribution': str,
-            'release': str,
-            'arch': str,
-            'template': str,
-            'mirror': str,
-            'security_mirror': str
-        }
+        'lava-lxc': dict
     })
 
 
@@ -204,6 +217,7 @@ def _job_schema():
             'context': _simple_params(),
             'metadata': dict,
             'secrets': dict,
+            'tags': [str],
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),

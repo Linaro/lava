@@ -96,7 +96,7 @@ def testjob_post_handler(sender, **kwargs):
         # Create the message
         data = {
             "status": instance.STATUS_CHOICES[instance.status][1],
-            "job": instance.display_id,
+            "job": instance.id,
             "description": instance.description,
             "priority": instance.priority,
             "submit_time": instance.submit_time.isoformat(),
@@ -104,6 +104,8 @@ def testjob_post_handler(sender, **kwargs):
             "visibility": instance.VISIBLE_CHOICES[instance.visibility][1],
             "pipeline": instance.is_pipeline,
         }
+        if instance.is_multinode:
+            data['sub_id'] = instance.sub_id
         if instance.health_check:
             data['health_check'] = True
         if instance.requested_device:

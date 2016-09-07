@@ -207,12 +207,14 @@ Writing commands to run on the device
 Using inline test definitions
 *****************************
 
-An inline test definition is included into the test job submission test action:
+Rather than refer to a separate file or VCS repository, it is also
+possible to create a test definition directly inside the test action
+of a job submission. This is called an ``inline test definition``:
 
-.. include:: examples/test-jobs/second-multinode-job.yaml
+.. include:: examples/test-jobs/inline-test-definition-example.yaml
      :code: yaml
-     :start-after: # START-TEST-CLIENT-INLINE-BLOCK
-     :end-before: # END-TEST-CLIENT-INLINE-BLOCK
+     :start-after: # START-INLINE-TEST-BLOCK
+     :end-before: # END-INLINE-TEST-BLOCK
 
 An inline test definition **must**:
 
@@ -224,10 +226,10 @@ An inline test definition **must**:
    #. ``name``
    #. ``description``
 
-Inline test definitions are **single files**, so if the test
-definition needs to call any scripts or programs, those need
-to be downloaded or installed before being called in the inline
-test definition.
+Inline test definitions will be written out as **single files**, so if
+the test definition needs to call any scripts or programs, those need
+to be downloaded or installed before being called in the inline test
+definition.
 
 .. _custom_scripts:
 

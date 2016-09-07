@@ -170,6 +170,7 @@
         {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
             <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
         {% endif %}
+      ({{ subjob.id }})
       </dt>
         <dd>
     {% if subjob.actual_device.hostname %}
@@ -236,7 +237,8 @@
           {% elif line.lvl == "target" %}
         <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        <a href="{% url 'lava.results.testcase' job.id line.msg.definition line.msg.case %}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+        {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% if key == "extra" %}
@@ -556,9 +558,11 @@
       });
     });
 
-    // A the links
+    // Add the links only for non-running jobs
+    {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
     anchors.add('code');
+    {% endif %}
 
   // Add a timer for the log updates
 {% if job.status <= job.RUNNING %}
@@ -662,8 +666,6 @@
                   .text(d['msg'])
                   .insertBefore(progressNode);
               }
-              // Add the anchor
-              anchors.add('#' + id);
           }
           // Relaunch the timer
           if(xhr.getResponseHeader('X-Is-Finished')) {

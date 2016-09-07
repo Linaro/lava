@@ -14,6 +14,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
@@ -51,7 +52,6 @@ from dashboard_app.models import (
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
-
 from linaro_django_xmlrpc.models import AuthToken
 
 
@@ -793,21 +793,37 @@ class Device(RestrictedResource):
             return True
         return self.is_owned_by(user)
 
+    def log_admin_entry(self, user, reason):
+        device_ct = ContentType.objects.get_for_model(Device)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=device_ct.pk,
+            object_id=self.pk,
+            object_repr=unicode(self),
+            action_flag=CHANGE,
+            change_message=reason
+        )
+
     def state_transition_to(self, new_status, user=None, message=None,
                             job=None):
         logger = logging.getLogger('dispatcher-master')
         try:
-            DeviceStateTransition.objects.create(
+            dst_obj = DeviceStateTransition.objects.create(
                 created_by=user, device=self, old_state=self.status,
                 new_state=new_status, message=message, job=job)
         except ValidationError as e:
-            logger.error("Cannot create DeviceStateTransition object. %s" % e)
+            logger.error("Cannot create DeviceStateTransition object. %s", e)
             return False
         self.status = new_status
         self.save()
+        if user:
+            self.log_admin_entry(user, "DeviceStateTransition [%d] %s" % (dst_obj.id, message))
+        else:
+            logger.warning("Empty user passed to state_transition_to() with message %s" % message)
         return True
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
+        logger = logging.getLogger('dispatcher-master')
         if self.status in [self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
         elif self.status == self.RUNNING:
@@ -821,8 +837,13 @@ class Device(RestrictedResource):
         if self.health_status == Device.HEALTH_LOOPING:
             self.health_status = Device.HEALTH_UNKNOWN
         self.state_transition_to(new_status, user=user, message=reason)
+        if user:
+            self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
+        else:
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
+        logger = logging.getLogger('dispatcher-master')
         if self.status == Device.OFFLINING:
             new_status = self.RUNNING
         else:
@@ -832,20 +853,32 @@ class Device(RestrictedResource):
             self.health_status = Device.HEALTH_UNKNOWN
 
         self.state_transition_to(new_status, user=user, message=reason)
+        if user:
+            self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
+        else:
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
             return
-
+        logger = logging.getLogger('dispatcher-master')
         self.health_status = Device.HEALTH_LOOPING
 
         self.state_transition_to(self.IDLE, user=user, message=reason)
+        if user:
+            self.log_admin_entry(user, "put into looping mode: %s: %s" % (self.HEALTH_CHOICES[self.health_status][1], reason))
+        else:
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
 
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
             return
-
+        logger = logging.getLogger('dispatcher-master')
         self.state_transition_to(self.IDLE, user=user, message=reason)
+        if user:
+            self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
+        else:
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
 
     def too_long_since_last_heartbeat(self):
         """This is same as worker heartbeat.
@@ -1694,6 +1727,17 @@ class TestJob(RestrictedResource):
             return Bundle.objects.get(content_sha1=sha1)
         except Bundle.DoesNotExist:
             return None
+
+    def log_admin_entry(self, user, reason):
+        testjob_ct = ContentType.objects.get_for_model(TestJob)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=testjob_ct.pk,
+            object_id=self.pk,
+            object_repr=unicode(self),
+            action_flag=CHANGE,
+            change_message=reason
+        )
 
     def __unicode__(self):
         job_type = self.health_check and 'health check' or 'test'
@@ -2581,7 +2625,6 @@ class TestJob(RestrictedResource):
     def send_notifications(self):
         logger = logging.getLogger('lava_scheduler_app')
         notification = self.notification
-        irc_recipients = {}
         # Prep template args.
         kwargs = self.get_notification_args()
         irc_message = self.create_irc_notification()
@@ -2604,15 +2647,15 @@ class TestJob(RestrictedResource):
                             recipient.save()
                     except (smtplib.SMTPRecipientsRefused,
                             smtplib.SMTPSenderRefused, socket.error):
-                        logger.warn("failed to send email notification to %s",
-                                    recipient.email_address)
+                        logger.warning("failed to send email notification to %s",
+                                       recipient.email_address)
             else:  # IRC method
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     if recipient.irc_server_name:
 
-                        logger.info("sending IRC notification to %s on %s" %
-                                    (recipient.irc_handle_name,
-                                     recipient.irc_server_name))
+                        logger.info("sending IRC notification to %s on %s",
+                                    recipient.irc_handle_name,
+                                    recipient.irc_server_name)
                         try:
                             utils.send_irc_notification(
                                 Notification.DEFAULT_IRC_HANDLE,
@@ -2621,12 +2664,12 @@ class TestJob(RestrictedResource):
                                 server=recipient.irc_server_name)
                             recipient.status = NotificationRecipient.SENT
                             recipient.save()
-                            logger.info("IRC notification sent to %s" %
+                            logger.info("IRC notification sent to %s",
                                         recipient.irc_handle_name)
                         except Exception as e:
-                            logger.warn(
-                                "IRC notification not sent. Reason: %s - %s" %
-                                (e.__class__.__name__, str(e)))
+                            logger.warning(
+                                "IRC notification not sent. Reason: %s - %s",
+                                e.__class__.__name__, str(e))
 
     def create_irc_notification(self):
         kwargs = {}
@@ -2743,7 +2786,8 @@ class TestJob(RestrictedResource):
                         except TestCase.DoesNotExist:
                             continue  # No matching TestCase, move on.
                         except TestCase.MultipleObjectsReturned:
-                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare" % old_suite)
+                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare",
+                                         old_suite)
 
                 kwargs["query"]["testcases_changed"] = testcases_changed
 

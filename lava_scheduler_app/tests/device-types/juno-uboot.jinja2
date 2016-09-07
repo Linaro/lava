@@ -1,21 +1,47 @@
 {% extends 'base.jinja2' %}
+{% block body %}
+device_type: juno
 
 {% set console_device = console_device | default('ttyAMA0') %}
 {% set baud_rate = baud_rate | default('115200') %}
-{% set base_kernel_args = base_kernel_args | default('') %}
+{% set base_kernel_args = extra_kernel_args | default(
+           'rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9') %}
 
-{% if not hard_reset_command %}
-    {% if power_off_command and power_on_command %}
-        {% set hard_reset_command = power_off_command + '; sleep 10; ' + power_on_command %}
-    {% endif %}
-{% endif %}
+{% set base_uboot_commands = uboot_commands | default(
+"          - setenv autoload no
+          - setenv initrd_high '0xffffffffffffffff'
+          - setenv fdt_high '0xffffffffffffffff'
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0") -%}
 
-{% set base_bootargs = 'console=' + console_device + ',' + baud_rate +'n8 rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ' + base_kernel_args %}
-{% set local_root_bootargs = base_bootargs + ' root=/dev/sda2' %}
-{% set nfs_root_bootargs = base_bootargs + ' root=/dev/nfs nfsroot={SERVER_IP}:{NFSROOTFS} ip=dhcp' %}
+{% set base_load_commands = load_commands | default(
+"          - setenv loadkernel 'afs load ${kernel_name} {KERNEL_ADDR}'
+          - setenv loadfdt 'afs load ${fdtfile} {DTB_ADDR} ; fdt addr {DTB_ADDR}; fdt resize'
+          - setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'") -%}
 
-{% block body %}
-device_type: juno
+{% set base_uboot_bootcmd = uboot_bootcmd | default(
+"          - setenv bootcmd 'run loadkernel; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_tftp_uboot_bootcmd = tftp_uboot_bootcmd | default(
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_nfs_uboot_bootcmd = nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
+
+{% block parameters -%}
+parameters:
+  booti:
+    kernel: '{{ booti_kernel_addr|default('0x80080000') }}'
+    ramdisk: '{{ booti_ramdisk_addr|default('0x84000000') }}'
+    dtb: '{{ booti_dtb_addr|default('0x83000000') }}'
+  media:  # four USB slots.
+    usb:
+      UUID-required: True
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: "{{ usb_uuid }}"
+        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
+{% endblock -%}
 
 actions:
   deploy:
@@ -46,65 +72,37 @@ actions:
         ramdisk:
           commands:
 {{ base_uboot_commands }}
-          - setenv bootdelay 1
-          - setenv ethact smc911x-0
           - setenv fdtfile board.dtb
           - setenv initrd_name ramdisk.img
           - setenv kernel_name norkern
-          - setenv bootargs '{{ local_root_bootargs }}'
-          - setenv bootcmd 'afs load ${kernel_name} {KERNEL_ADDR} ; afs load ${fdtfile} {DTB_ADDR} ; fdt addr {DTB_ADDR}; fdt resize; if afs load ${initrd_name} {RAMDISK_ADDR} ; then setenv initrd_param {RAMDISK_ADDR}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
-          - boot
+{{ base_load_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ base_kernel_args }}'
+{{ base_uboot_bootcmd }}
         nfs:
           commands:
 {{ base_uboot_commands }}
-          - setenv bootdelay 1
-          - setenv ethact smc911x-0
           - setenv fdtfile board.dtb
           - setenv initrd_name ramdisk.img
           - setenv kernel_name norkern
-          - setenv bootargs '{{ nfs_root_bootargs }}'
-          - setenv bootcmd 'afs load ${kernel_name} {KERNEL_ADDR} ; afs load ${fdtfile} {DTB_ADDR} ; fdt addr {DTB_ADDR}; fdt resize; if afs load ${initrd_name} {RAMDISK_ADDR} ; then setenv initrd_param {RAMDISK_ADDR}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
-          - boot
+{{ base_load_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }}'
+{{ base_nfs_uboot_bootcmd }}
         ramdisk-tftp:
           commands:
 {{ base_uboot_commands }}
-          - setenv bootdelay 1
-          - setenv ethact smc911x-0
-          - setenv initrd_name ramdisk.cpio
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
-          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}'
-          - setenv bootargs '{{ local_root_bootargs }}'
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; fdt addr {DTB_ADDR}; fdt resize; if run loadinitrd; then setenv initrd_param {RAMDISK_ADDR}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
-          - boot
+{{ base_tftp_commands}}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ base_kernel_args }}'
+{{ base_tftp_uboot_bootcmd }}
         tftp:
           commands:
 {{ base_uboot_commands }}
-          - setenv bootdelay 1
-          - setenv ethact smc911x-0
           - setenv initrd_name ramdisk.img
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv bootargs '{{ nfs_root_bootargs }}'
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; fdt addr {DTB_ADDR}; fdt resize; if afs load  ${initrd_name} {RAMDISK_ADDR} ; then   setenv initrd_param {RAMDISK_ADDR};   else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
-          - boot
+          - setenv loadinitrd 'afs load ramdisk.img {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }}'
+{{ base_tftp_uboot_bootcmd }}
         use-defaults:
           commands:
           - boot
-
-{% endblock %}
-
-
-{% block vland %}
-parameters:
-  booti:
-    kernel: '0x80080000'
-    ramdisk: '0x84000000'
-    dtb: '0x83000000'
-  media:  # four USB slots.
-    usb:
-      UUID-required: True
-      {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: "{{ usb_uuid }}"
-        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
-{% endblock %}
+{% endblock -%}

@@ -1,10 +1,5 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load utils %}
-{% block styles %}
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeLAVA.css" rel="stylesheet" type="text/css" />
-{% endblock styles %}
 
 {% block content %}
 <h2>Job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
@@ -126,7 +121,7 @@
 
   <div class="tab-pane active" id="YAML">
 <h4 class="modal-header">Definition</h4>
-<pre class="brush: js">{{ job.display_definition }}</pre>
+<pre>{{ job.display_definition }}</pre>
  </div>
   <div class="tab-pane" id="pipeline">
       <h2>Pipeline Description <a
@@ -205,17 +200,6 @@ timeouts:
 </div>
 {% else %}
 <h4 class="modal-header">Definition</h4>
-<pre class="brush: js">{{ job.display_definition }}</pre>
+<pre>{{ job.display_definition }}</pre>
 {% endif %}
 {% endblock content %}
-
-{% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.min.js"></script>
-
-<script type="text/javascript">
-  $(function() {
-     SyntaxHighlighter.all();
-  });
-</script>
-{% endblock scripts %}

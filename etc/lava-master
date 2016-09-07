@@ -1,0 +1,15 @@
+# Configuration for lava-master daemon
+
+# Socket addresses of the master and logger
+# MASTER_SOCKET="tcp://*:5556"
+# LOGGER_SOCKET="tcp://*:5555"
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# LOGLEVEL="DEBUG"
+
+# Encryption
+# If set, will activate encryption using the master public and the slave
+# private keys
+# ENCRYPT="--encrypt"
+# MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
+# SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d/"

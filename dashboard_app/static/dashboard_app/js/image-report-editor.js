@@ -190,7 +190,7 @@ update_events = function(filter_id) {
     });
 
     $('#test_select').change(function() {
-       test_changed(filter_id, $(this).val());
+       test_changed($(this).val());
     });
 
     $('#tests_input').keyup(function() {
@@ -231,7 +231,7 @@ add_selected_options = function() {
     });
 }
 
-test_changed = function(filter_id, test_id) {
+test_changed = function(test_id) {
     // When the test in the drop down is changed, retrieve relevant test
     // cases for the available test cases select box.
 
@@ -240,7 +240,7 @@ test_changed = function(filter_id, test_id) {
 
         $.ajax({
             url: url,
-            data: {"id": filter_id, "test_id": test_id},
+            data: {"test_id": test_id},
             beforeSend: function () {
                 $('#loading_dialog').dialog('open');
                 $("#available_tests option").remove();

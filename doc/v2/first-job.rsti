@@ -5,21 +5,22 @@
 Submitting your first job
 =========================
 
-A job defines what software should be deployed on the ``device under
-test`` (DUT) and what actions should be performed there. Jobs are
-defined in *YAML* files.
+A job defines what software should be deployed on the ``device under test``
+(DUT) and what actions should be performed there. Jobs are defined in *YAML*
+files.
 
 .. _first_job_definition:
 
 Job Definition
 ==============
 
-Here's an example minimal job that you should be able to use right
-away if you have user access to an appropriately-configured LAVA
-installation.
+Here's an example minimal job that you should be able to use right away if you
+have user access to an appropriately-configured LAVA installation.
 
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
      :code: yaml
+
+`Download / view <examples/test-jobs/qemu-pipeline-first-job.yaml>`_
 
 .. seealso:: :ref:`explain_first_job`.
 

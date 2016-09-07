@@ -82,10 +82,7 @@ do_stop()
 	[ "$?" = 2 ] && return 2
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
-	# clear the old pid lockfile
-    if [ -f /var/run/lava-publisher.pid.lock ]; then
-        rm -f /var/run/lava-publisher.pid.lock
-    fi
+  rm -f $PIDFILE.lock
 	return "$RETVAL"
 }
 

@@ -153,3 +153,4 @@ Support
    development-intro.rst
    migration.rst
    other.rst
+   contents.rst

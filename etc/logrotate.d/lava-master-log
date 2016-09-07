@@ -6,4 +6,9 @@
 	missingok
 	notifempty
 	create 644 root root
+  postrotate
+    if /etc/init.d/lava-master status > /dev/null ; then \
+      /etc/init.d/lava-master reload > /dev/null; \
+    fi;
+  endscript
 }

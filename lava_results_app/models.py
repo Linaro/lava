@@ -34,6 +34,7 @@ import yaml
 
 from datetime import timedelta
 from django.conf import settings
+from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -515,14 +516,6 @@ class MetaType(models.Model):
         'unknown': UNKNOWN_TYPE,
     }
 
-    # the YAML keys which determine the type as per the Strategy class.
-    # FIXME: lookup with classmethods?
-    section_names = {
-        DEPLOY_TYPE: 'to',
-        BOOT_TYPE: 'method',
-        TEST_TYPE: 'definitions',
-    }
-
     name = models.CharField(max_length=256)
     metatype = models.PositiveIntegerField(
         verbose_name=_(u"Type"),
@@ -548,22 +541,51 @@ class MetaType(models.Model):
         return MetaType.TYPE_MAP[section]
 
     @classmethod
-    def get_type_name(cls, section, definition):
+    def get_section_type(cls, name, section):
+        section_type = MetaType.TYPE_MAP[section]
+        if section_type == MetaType.DEPLOY_TYPE:
+            return 'to'
+        elif section_type == MetaType.BOOT_TYPE:
+            return 'method'
+        elif section_type == MetaType.TEST_TYPE:
+            if name == 'lava-test-monitor':
+                return 'monitors'
+            else:
+                return 'definitions'
+        else:
+            return None
+
+    @classmethod
+    def get_type_name(cls, action_data, definition):
+        """
+        Return the section_name to lookup metadata for the associated action.
+        """
         logger = logging.getLogger('dispatcher-master')
+        section = action_data['section']
+        level = action_data['level'].split('.')[0]
+        name = action_data['name']
+        if level.isdigit():
+            level = int(level) - 1  # levels start at one.
+        else:
+            # should be a logical error
+            logger.warning('get_type_name: unrecognised level %s', level)
+            return None
         retval = None
         data = [action for action in definition['actions'] if section in action]
         if not data:
             logger.debug('get_type_name: skipping %s' % section)
             return None
-        data = data[0][section]
+        if level > len(definition['actions']) or section not in definition['actions'][level]:
+            logger.warning('get_type_name: unrecognised level %s for section %s', level, section)
+            return None
+        data = definition['actions'][level][section]
         if section in MetaType.TYPE_MAP:
-            if MetaType.TYPE_MAP[section] in MetaType.section_names:
-                retval = data[MetaType.section_names[MetaType.TYPE_MAP[section]]]
-        if isinstance(retval, list):
-            # No simple way to collapse a long list of definitions into 255 characters
-            return MetaType.section_names[MetaType.TYPE_MAP[section]]
-        else:
-            return retval
+            section_type = MetaType.get_section_type(name, section)
+            if section_type:
+                retval = data[section_type]
+            if isinstance(retval, list):
+                return section_type
+        return retval
 
 
 class NamedTestAttribute(models.Model):
@@ -1128,7 +1150,8 @@ class QueryCondition(models.Model):
     FIELD_CHOICES = {
         TestJob: [
             "submitter", "start_time", "end_time", "status", "actual_device",
-            "health_check", "user", "group", "priority", "is_pipeline"],
+            "requested_device_type", "health_check", "user", "group",
+            "priority", "is_pipeline"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
         NamedTestAttribute: []
@@ -1686,3 +1709,34 @@ class ChartQueryUser(models.Model):
     is_delta = models.BooleanField(
         default=False,
         verbose_name='Delta reporting')
+
+
+class BugLink(models.Model):
+
+    class Meta:
+        unique_together = (('object_id', 'url', 'content_type'))
+
+    url = models.URLField(
+        max_length=1024,
+        blank=False,
+        null=False,
+        verbose_name=_(u"Bug Link URL"),
+    )
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def log_admin_entry(self, user, reason):
+        buglink_ct = ContentType.objects.get_for_model(BugLink)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=buglink_ct.pk,
+            object_id=self.pk,
+            object_repr=unicode(self),
+            action_flag=ADDITION,
+            change_message=reason
+        )
+
+    def __unicode__(self):
+        return unicode(self.url)

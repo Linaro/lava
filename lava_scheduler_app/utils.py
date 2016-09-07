@@ -873,6 +873,15 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     # populate the lava-vland protocol metadata
     if 'lava-vland' in submission['protocols']:
         _split_multinode_vland(submission, jobs)
+
+    # populate the lava-lxc protocol data
+    if 'lava-lxc' in submission['protocols']:
+        for role, _ in jobs.iteritems():
+            if role not in submission['protocols']['lava-lxc']:
+                continue
+            # populate the lava-vland protocol metadata
+            jobs[role][0]['protocols'].update({'lava-lxc': submission['protocols']['lava-lxc'][role]})
+
     return jobs
 
 

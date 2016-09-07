@@ -1,0 +1,9 @@
+{% extends 'juno-r1-uboot.jinja2' %}
+{% set connection_command = 'telnet serial4 7001' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
+{% set usb_label = 'SanDiskCruzerBlade' %}
+{% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
+{% set usb_device_id = 0 %}
+{% set sky2_mac_address = '0x00,0x02,0xF7,0x00,0x68,0x15' %}

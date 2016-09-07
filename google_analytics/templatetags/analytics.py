@@ -1,5 +1,4 @@
 from django import template
-from django.db import models
 from django.contrib.sites.models import Site
 from django.apps import apps
 from django.template import Context, loader
