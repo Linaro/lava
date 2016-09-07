@@ -307,7 +307,6 @@ class TestShellAction(TestAction):
                 self.definition = params[0]
                 uuid = params[1]
                 self.start = time.time()
-                self.logger.debug("Starting test definition: %s" % self.definition)
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
                 # set the pattern for this run from pattern_dict
                 testdef_index = self.get_common_data('test-definition', 'testdef_index')
@@ -367,31 +366,24 @@ class TestShellAction(TestAction):
                     calc['measurement'] = res['measurement']
                 if 'measurement' in res and 'units' in res:
                     calc['units'] = res['units']
+
                 # turn the result dict inside out to get the unique
                 # test_case_id/testset_name as key and result as value
+                res_data = {
+                    'definition': self.definition,
+                    'case': res["test_case_id"],
+                    'result': res["result"]
+                }
+                res_data.update(calc)
                 if self.testset_name:
-                    res_data = {
-                        'definition': self.definition,
-                        'case': res["test_case_id"],
+                    res_data['set'] = self.testset_name
+                    self.report[res['test_case_id']] = {
                         'set': self.testset_name,
-                        'result': res["result"]
+                        'result': res['result']
                     }
-                    res_data.update(calc)
-                    self.logger.results(res_data)
-                    self.report.update({
-                        "set": self.testset_name,
-                        "case": res["test_case_id"],
-                        "result": res["result"]})
                 else:
-                    res_data = {
-                        'definition': self.definition,
-                        'case': res["test_case_id"],
-                        'result': res["result"]}
-                    res_data.update(calc)
-                    self.logger.results(res_data)
-                    self.report.update({
-                        res["test_case_id"]: res["result"]
-                    })
+                    self.report[res['test_case_id']] = res['result']
+
             elif name == "TESTSET":
                 action = params.pop(0)
                 if action == "START":
