@@ -347,9 +347,14 @@ class TestShellAction(TestAction):
                 })
                 self.start = None
             elif name == "TESTCASE":
-                data = handle_testcase(params)
-                # get the fixup from the pattern_dict
-                res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
+                try:
+                    data = handle_testcase(params)
+                    # get the fixup from the pattern_dict
+                    res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
+                except (JobError, TestError) as exc:
+                    self.logger.error(str(exc))
+                    return True
+
                 p_res = self.data["test"][
                     self.signal_director.test_uuid
                 ].setdefault("results", OrderedDict())
@@ -412,6 +417,7 @@ class TestShellAction(TestAction):
                 res = self.signal_match.match(match.groupdict())
                 self.logger.debug("outer_loop_result: %s" % res)
                 ret_val = True
+
         elif event == 'test_case_result':
             res = test_connection.match.groupdict()
             if res:
