@@ -69,22 +69,25 @@ class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
         res = {}
         for key in data:
-            res[key] = data[key]
-
+            # Special cases for 'measurement'
             if key == 'measurement':
                 try:
-                    res[key] = decimal.Decimal(res[key])
+                    res['measurement'] = decimal.Decimal(data['measurement'])
                 except decimal.InvalidOperation:
-                    ret = res['measurement']
-                    del res['measurement']
-                    raise TestError("Invalid measurement %s", ret)
+                    raise TestError("Invalid measurement %s", data['measurement'])
 
+            # and 'result'
             elif key == 'result':
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
+                res['result'] = data['result']
+                if data['result'] in fixupdict:
+                    res['result'] = fixupdict[data['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    raise TestError('Bad test result: %s', res['result'])
+                    raise TestError('Bad test result: %s' % data['result'])
+
+            # or just copy the data
+            else:
+                res[key] = data[key]
 
         if 'test_case_id' not in res:
             raise TestError("Test case results without test_case_id (probably a sign of an "
