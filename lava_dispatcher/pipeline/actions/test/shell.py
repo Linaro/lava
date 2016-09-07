@@ -360,13 +360,6 @@ class TestShellAction(TestAction):
                     raise JobError(
                         "Duplicate test_case_id in results: %s",
                         res["test_case_id"])
-                # check for measurements
-                calc = {}
-                if 'measurement' in res:
-                    calc['measurement'] = res['measurement']
-                if 'measurement' in res and 'units' in res:
-                    calc['units'] = res['units']
-
                 # turn the result dict inside out to get the unique
                 # test_case_id/testset_name as key and result as value
                 res_data = {
@@ -374,7 +367,12 @@ class TestShellAction(TestAction):
                     'case': res["test_case_id"],
                     'result': res["result"]
                 }
-                res_data.update(calc)
+                # check for measurements
+                if 'measurement' in res:
+                    res_data['measurement'] = res['measurement']
+                    if 'units' in res:
+                        res_data['units'] = res['units']
+
                 if self.testset_name:
                     res_data['set'] = self.testset_name
                     self.report[res['test_case_id']] = {
@@ -383,6 +381,8 @@ class TestShellAction(TestAction):
                     }
                 else:
                     self.report[res['test_case_id']] = res['result']
+                # Send the results back
+                self.logger.results(res_data)
 
             elif name == "TESTSET":
                 action = params.pop(0)
@@ -415,22 +415,19 @@ class TestShellAction(TestAction):
         elif event == 'test_case_result':
             res = test_connection.match.groupdict()
             if res:
-                # FIXME: make this a function
-                # check for measurements
-                calc = {}
-                if 'measurement' in res:
-                    calc['measurement'] = res['measurement']
-                if 'measurement' in res and 'units' in res:
-                    calc['units'] = res['units']
                 res_data = {
                     'definition': self.definition,
                     'case': res["test_case_id"],
-                    'result': res["result"]}
-                res_data.update(calc)
+                    'result': res["result"]
+                }
+                # check for measurements
+                if 'measurement' in res:
+                    res_data['measurement'] = res['measurement']
+                    if 'units' in res:
+                        res_data['units'] = res['units']
+
                 self.logger.results(res_data)
-                self.report.update({
-                    res["test_case_id"]: res["result"]
-                })
+                self.report[res["test_case_id"]] = res["result"]
             ret_val = True
 
         return ret_val
