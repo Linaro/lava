@@ -1,4 +1,5 @@
-from collections import defaultdict
+# pylint: disable=too-many-lines,invalid-name
+from collections import defaultdict, OrderedDict
 import copy
 import yaml
 import json
@@ -32,7 +33,6 @@ from django.shortcuts import (
 from django.template import loader
 from django.db.models import Q, Count
 from django.utils import timezone
-
 from django_tables2 import (
     RequestConfig,
 )
@@ -51,6 +51,7 @@ from lava_scheduler_app.logfile_helper import (
 )
 from lava_scheduler_app.models import (
     Device,
+    DeviceDictionary,
     DeviceType,
     DeviceStateTransition,
     Tag,
@@ -2394,6 +2395,51 @@ def device_detail(request, pk):
             'next_device': next_device,
             'previous_device': previous_device,
             'overrides': overrides,
+        },
+        request=request))
+
+
+@BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
+def device_dictionary(request, pk):
+    # Find the device and raise 404 if we are not allowed to see it
+    try:
+        device = Device.objects.select_related('device_type', 'user').get(pk=pk)
+    except Device.DoesNotExist:
+        raise Http404()
+
+    # Any user that can access to a device_type can
+    # see all the devices even if they are for owners_only
+    if device.device_type.owners_only:
+        if device.device_type.num_devices_visible_to(request.user) == 0:
+            raise Http404('No device matches the given query.')
+
+    if not device.is_pipeline:
+        raise Http404
+    device_dict = DeviceDictionary.get(device.hostname)
+    if device_dict:
+        device_dict = device_dict.to_dict()
+    dictionary = OrderedDict()
+    vland = OrderedDict()
+    extra = {}
+    sequence = utils.device_dictionary_sequence()
+    for item in sequence:
+        if item in device_dict['parameters'].keys():
+            dictionary[item] = device_dict['parameters'][item]
+    vlan_sequence = utils.device_dictionary_vlan()
+    for item in vlan_sequence:
+        if item in device_dict['parameters'].keys():
+            vland[item] = yaml.dump(device_dict['parameters'][item], default_flow_style=False)
+    for item in set(device_dict['parameters'].keys()) - set(sequence) - set(vlan_sequence):
+        extra[item] = device_dict['parameters'][item]
+    template = loader.get_template("lava_scheduler_app/devicedictionary.html")
+    return HttpResponse(template.render(
+        {
+            'device': device,
+            'dictionary': dictionary,
+            'vland': vland,
+            'extra': extra,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_dictionary, pk=pk),
+            'context_help': ['lava-scheduler-device-dictionary'],
         },
         request=request))
 

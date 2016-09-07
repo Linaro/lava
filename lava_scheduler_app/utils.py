@@ -950,3 +950,32 @@ def send_irc_notification(nick, recipient, message,
             if NO_SUCH_NICK_ERROR in line:
                 raise IRCHandleNotFoundError(line)
     proc.wait()
+
+
+def device_dictionary_sequence():
+    return [
+        'extends',
+        'exclusive',
+        'connection_command',
+        'power_on_command',
+        'power_off_command',
+        'soft_reset_command',
+        'hard_reset_command',
+        'pre_power_command',
+        'pre_os_command',
+        'device_path',
+        'adb_command',
+        'adb_serial_number',
+        'fastboot_command',
+        'fastboot_serial_number',
+    ]
+
+
+def device_dictionary_vlan():
+    return [
+        'interfaces',
+        'tags',
+        'map',
+        'mac_addr',
+        'sysfs',
+    ]
