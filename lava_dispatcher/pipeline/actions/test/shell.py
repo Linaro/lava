@@ -239,7 +239,7 @@ class TestShellAction(TestAction):
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
 
-        self.logger.debug(yaml.dump(self.report))
+        self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
 
     def parse_v2_case_result(self, data, fixupdict=None):
