@@ -184,7 +184,6 @@ class ApplyOverlayTftp(Action):
             shutil.copy(overlay_file, tftp_dir)
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', 'overlay', os.path.join(suffix, os.path.basename(overlay_file)))
-        untar_file(overlay_file, directory)
         if nfs_url:
             subprocess.check_output(['umount', directory])
             os.rmdir(directory)  # fails if the umount fails
@@ -362,7 +361,6 @@ class ExtractRamdisk(Action):
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
-        self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)

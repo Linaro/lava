@@ -154,9 +154,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         bbb2['parameters']['interfaces']['eth1']['port'] = '4'
         self.assertEqual(
             vprotocol.params, {
-                'vlan_one': {
-                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']
-                }
+                'vlan_one': {'switch': '192.168.0.1', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
             }
         )
         # already configured the vland protocol in the same job
@@ -164,7 +162,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(
             vprotocol.params, {
                 'vlan_one': {
-                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
+                    'switch': '192.168.0.1', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
             }
         )
         self.assertTrue(vprotocol.valid)
@@ -201,6 +199,15 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn('switch', vprotocol.params[vlan_name])
             self.assertIn('port', vprotocol.params[vlan_name])
+            self.assertIn('iface', vprotocol.params[vlan_name])
+        params = job.parameters['protocols'][vprotocol.name]
+        names = []
+        for key, value in params.items():
+            if key == 'yaml_line':
+                continue
+            names.append(",".join([key, vprotocol.params[key]['iface']]))
+        # this device only has one interface with interface tags
+        self.assertEqual(names, ['vlan_one,eth1'])
 
     def test_job_no_tags(self):
         with open(self.filename) as yaml_data:

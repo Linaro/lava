@@ -34,7 +34,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
-class DeployImagesAction(DeployAction):
+class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
 
     def __init__(self):
         super(DeployImagesAction, self).__init__()
@@ -52,6 +52,7 @@ class DeployImagesAction(DeployAction):
             self.internal_pipeline.add_action(download)
             # uefi option of QEMU needs a directory, not the filename
             self.set_common_data('image', 'uefi_dir', uefi_path)  # just the path, not the filename
+            # alternatively use the -bios option and standard image args
         for image in parameters['images'].keys():
             if image != 'yaml_line':
                 download = DownloaderAction(image, path)
@@ -65,7 +66,62 @@ class DeployImagesAction(DeployAction):
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
 
-# FIXME: may need to be renamed if it can only deal with QEMU image deployment
+class DeployMonitoredAction(DeployAction):
+
+    def __init__(self):
+        super(DeployMonitoredAction, self).__init__()
+        self.name = 'deploy-monitor'
+        self.description = "deploy images without POSIX"
+        self.summary = "deploy without requiring POSIX"
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        path = mkdtemp()
+        for image in parameters['images'].keys():
+            if image != 'yaml_line':
+                download = DownloaderAction(image, path)
+                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+                self.internal_pipeline.add_action(download)
+
+
+class DeployMonitoredQEMU(Deployment):
+    """
+    Strategy class for a QEMU deployment not using
+    the POSIX Lava Test Shell overlays.
+    """
+    compatibility = 4
+
+    def __init__(self, parent, parameters):
+        super(DeployMonitoredQEMU, self).__init__(parent)
+        self.action = DeployMonitoredAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        """
+        As a classmethod, this cannot set data
+        in the instance of the class.
+        This is *not* the same as validation of the action
+        which can use instance data.
+        """
+        if device['device_type'] != 'qemu':
+            return False
+        if parameters['to'] != 'tmpfs':
+            return False
+        # lookup if the job parameters match the available device methods
+        if 'images' not in parameters:
+            # python3 compatible
+            # FIXME: too broad
+            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
+            return False
+        if 'type' not in parameters.keys():
+            return False
+        return True
+
+
+# FIXME: needs to be renamed to DeployPosixImages
 class DeployImages(Deployment):
     """
     Strategy class for an Image based Deployment.
@@ -107,5 +163,7 @@ class DeployImages(Deployment):
             # python3 compatible
             # FIXME: too broad
             print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
+            return False
+        if 'type' in parameters:
             return False
         return True

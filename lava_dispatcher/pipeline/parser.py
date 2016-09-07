@@ -45,7 +45,7 @@ import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
 
 
-def parse_action(job_data, name, device, pipeline):
+def parse_action(job_data, name, device, pipeline, test_action):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -57,8 +57,11 @@ def parse_action(job_data, name, device, pipeline):
         Boot.select(device, job_data[name])(pipeline, parameters)
     elif name == 'test':
         LavaTest.select(device, job_data[name])(pipeline, parameters)
-    elif name == 'deploy':
+    elif name == 'deploy' and test_action and 'type' not in job_data[name]:
         parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
+        Deployment.select(device, job_data[name])(pipeline, parameters)
+    elif name == 'deploy' and 'type' in job_data[name]:
+        parameters.update({'test_action': test_action})
         Deployment.select(device, job_data[name])(pipeline, parameters)
 
 
@@ -145,6 +148,12 @@ class JobParser(object):
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
+        # some special handling is needed to tell the overlay classes about the presence or absence of a test action
+        test_action = True
+        test_list = [action for action in data['actions'] if 'test' in action]
+        if test_list and 'test' not in test_list[0]:
+            test_action = False
+
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
         for action_data in data['actions']:
@@ -154,7 +163,7 @@ class JobParser(object):
                     action_data[name].update(self._map_context_defaults())
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
-                    parse_action(action_data, name, device, pipeline)
+                    parse_action(action_data, name, device, pipeline, test_action)
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
@@ -164,7 +173,7 @@ class JobParser(object):
                                 if repeat_action == 'yaml_line':
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
-                                parse_action(repeating, repeat_action, device, pipeline)
+                                parse_action(repeating, repeat_action, device, pipeline, test_action)
 
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects

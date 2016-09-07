@@ -140,3 +140,6 @@ DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': '
 
 # Message for notifying completion of secondary deployment
 SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
+
+# fallback UEFI menu label class
+DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'

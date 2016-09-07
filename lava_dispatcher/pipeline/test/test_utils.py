@@ -70,6 +70,20 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
+        subprocess.check_output(['git', 'checkout', '-b', 'testing'])
+        with open('third.txt', 'w') as datafile:
+            datafile.write("333")
+        subprocess.check_output(['git', 'add', 'third.txt'])
+        subprocess.check_output(['git', 'commit', 'third.txt', '-m', 'Third commit'],
+                                env={'GIT_COMMITTER_DATE': 'Thu Sep  1 10:14:29 CEST 2016',
+                                     'GIT_AUTHOR_DATE': 'Thu Sep  1 10:14:29 CEST 2016',
+                                     'GIT_AUTHOR_NAME': 'Foo Bar',
+                                     'GIT_AUTHOR_EMAIL': 'foo@example.com',
+                                     'GIT_COMMITTER_NAME': 'Foo Bar',
+                                     'GIT_COMMITTER_EMAIL': 'foo@example.com'})
+
+        subprocess.check_output(['git', 'checkout', 'master'])
+
         # Go into the tempdir
         os.chdir('..')
 
@@ -106,6 +120,10 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def test_invalid_commit(self):
         git = vcs.GitHelper('git')
         self.assertRaises(InfrastructureError, git.clone, 'foo.bar', 'badhash')
+
+    def test_branch(self):
+        git = vcs.GitHelper('git')
+        self.assertEqual(git.clone('git.clone1', 'testing'), 'f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d')
 
 
 @unittest.skipIf(infrastructure_error('bzr'), "bzr not installed")

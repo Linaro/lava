@@ -59,10 +59,22 @@ class PipelineDevice(dict):
         return ''
 
     @property
+    def pre_os_command(self):
+        if 'commands' in self and 'pre_os_command' in self['commands']:
+            return self['commands']['pre_os_command']
+        return None
+
+    @property
+    def pre_power_command(self):
+        if 'commands' in self and 'pre_power_command' in self['commands']:
+            return self['commands']['pre_power_command']
+        return None
+
+    @property
     def power_command(self):
         if 'commands' in self and 'power_on' in self['commands']:
             return self['commands']['power_on']
-        return self.hard_reset_command
+        return ''
 
     @property
     def connect_command(self):

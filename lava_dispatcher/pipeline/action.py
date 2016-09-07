@@ -20,7 +20,6 @@
 
 import re
 import logging
-import os
 import sys
 import copy
 import time
@@ -154,16 +153,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
-        # create a log handler just for this action.
-        if self.job and self.job.parameters['output_dir']:
-            log_level_dir = action.level.split('.')[0]
-            yaml_filename = os.path.join(
-                self.job.parameters['output_dir'], log_level_dir,
-                "%s-%s.log" % (action.level, action.name)
-            )
-            if not os.path.exists(os.path.dirname(yaml_filename)):
-                os.makedirs(os.path.dirname(yaml_filename))
-            action.log_filename = yaml_filename
 
         # Use the pipeline parameters if the function was walled without
         # parameters.
@@ -323,7 +312,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
                 action.logger.error(msg)
                 action.errors = msg
-                final = self.actions[-1]
+                final = self.job.pipeline.actions[-1]
                 if final.name == "finalize":
                     final.run(connection, None)
                 else:
@@ -431,7 +420,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.__parameters__ = {}
         self.__errors__ = []
         self.elapsed_time = None
-        self.log_filename = None
         self.job = None
         self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
@@ -659,6 +647,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
+        self.logger.info("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
             log = log.decode('utf-8')
@@ -668,10 +657,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     self.errors = exc.output.strip().decode('utf-8')
                 else:
                     self.errors = str(exc)
-                self.logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': str(exc),
-                    'output': str(exc).split('\n')})
+                self.logger.exception(
+                    '[%s] command %s\nmessage %s\noutput %s\n',
+                    self.name,
+                    [i.strip() for i in exc.cmd],
+                    str(exc),
+                    str(exc).split('\n'))
             else:
                 if exc.output:
                     self.errors = exc.output.strip()
@@ -679,18 +670,18 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     self.errors = exc.message
                 else:
                     self.errors = str(exc)
-                self.logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': [i.strip() for i in exc.message],
-                    'output': exc.output.split('\n')})
+                self.logger.exception(
+                    "[%s] command %s\nmessage %s\noutput %s\nexit code %s",
+                    self.name,
+                    [i.strip() for i in exc.cmd],
+                    [i.strip() for i in exc.message],
+                    exc.output.split('\n'), exc.returncode)
 
         # allow for commands which return no output
         if not log and allow_silent:
-            self.logger.debug({'command': command_list})
             return self.errors == []
         else:
-            self.logger.debug({'command': command_list,
-                               'output': log})
+            self.logger.debug('command output %s', log)
             return log
 
     def call_protocols(self):
@@ -776,8 +767,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # noinspection PySetFunctionToLiteral
         for attr in attrs - set([
                 'internal_pipeline', 'job', 'logger', 'pipeline',
+                'default_fixupdict', 'pattern',
                 'parameters', 'SignalDirector', 'signal_director']):
             if attr == 'timeout':
+                data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
+            elif attr == 'connection_timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
                 data['url'] = self.url.geturl()  # pylint: disable=no-member
@@ -794,6 +788,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                     for protocol_attr in protocol_attrs:
                         if protocol_attr not in ['logger']:
                             data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
+            elif isinstance(getattr(self, attr), OrderedDict):
+                data[attr] = dict(getattr(self, attr))
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
@@ -829,8 +825,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt. %s seconds",
-                          self.name, int(self.connection_timeout.duration))
+        self.logger.debug("%s: Wait for prompt %s. %s seconds",
+                          self.name, connection.prompt_str, int(self.connection_timeout.duration))
         return connection.wait()
 
 

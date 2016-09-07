@@ -1,0 +1,15 @@
+# Configuration for lava-slave daemon
+
+# URL to the master and the logger
+# MASTER_URL="tcp://<lava-master-dns>:5556"
+# LOGGER_URL="tcp://<lava-master-dns>:5555"
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# LOGLEVEL="DEBUG"
+
+# Encryption
+# If set, will activate encryption using the master public and the slave
+# private keys
+# ENCRYPT="--encrypt"
+# MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
+# SLAVE_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/<slave.key_secret>"

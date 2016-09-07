@@ -25,3 +25,4 @@
 
 from lava_dispatcher.pipeline.actions.test.shell import TestShell
 from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestShell
+from lava_dispatcher.pipeline.actions.test.monitor import TestMonitor

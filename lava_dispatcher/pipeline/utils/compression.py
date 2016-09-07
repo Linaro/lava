@@ -49,7 +49,7 @@ def compress_file(infile, compression):
         log = subprocess.check_output(cmd, shell=True)
         os.chdir(pwd)
         return "%s.%s" % (infile, compression)
-    except OSError as exc:
+    except (OSError, subprocess.CalledProcessError) as exc:
         raise RuntimeError('unable to compress file %s: %s' % (infile, exc))
 
 
@@ -67,7 +67,7 @@ def decompress_file(infile, compression):
         # safe to use shell=True here, no external arguments
         log = subprocess.check_output(cmd, shell=True)
         return outfile
-    except OSError as exc:
+    except (OSError, subprocess.CalledProcessError) as exc:
         raise RuntimeError('unable to decompress file %s: %s' % (infile, exc))
 
 

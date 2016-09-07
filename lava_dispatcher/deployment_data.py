@@ -116,6 +116,19 @@ oe = deployment_data_dict({
     'lava_test_results_dir': '/lava-%s',
 })
 
+lede = deployment_data_dict({
+    'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds_lede',
+
+    # for lava-test-shell
+    'distro': 'lede',
+    'lava_test_sh_cmd': '/bin/sh',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+})
 
 fedora = deployment_data_dict({
     'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",

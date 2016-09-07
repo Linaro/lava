@@ -107,19 +107,20 @@ class GitHelper(VCSHelper):
     def clone(self, dest_path, revision=None):
         logger = logging.getLogger('dispatcher')
         try:
-            logger.debug("Running '%s clone %s'", self.binary, self.url)
-            subprocess.check_output([self.binary, 'clone', self.url, dest_path],
+            logger.debug("Running '%s clone %s %s'", self.binary, self.url,
+                         dest_path)
+            subprocess.check_output([self.binary, 'clone', self.url,
+                                     dest_path],
                                     stderr=subprocess.STDOUT)
 
             if revision is not None:
-                logger.debug("Running '%s checkout %s", self.binary, str(revision))
-                subprocess.check_output([self.binary, '--git-dir',
-                                         os.path.join(dest_path, '.git'),
+                logger.debug("Running '%s checkout %s", self.binary,
+                             str(revision))
+                subprocess.check_output([self.binary, '-C', dest_path,
                                          'checkout', str(revision)],
                                         stderr=subprocess.STDOUT)
 
-            commit_id = subprocess.check_output([self.binary, '--git-dir',
-                                                 os.path.join(dest_path, '.git'),
+            commit_id = subprocess.check_output([self.binary, '-C', dest_path,
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:

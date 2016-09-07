@@ -46,6 +46,7 @@ import traceback
 import yaml
 import zmq
 import zmq.auth
+from zmq.utils.strtypes import b, u
 
 # pylint: disable=no-member
 # pylint: disable=too-few-public-methods
@@ -151,12 +152,11 @@ class Job(object):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
         err_file = os.path.join(self.base_dir, "err")
-        env_dut_tmp_path = None
+        env_dut = os.path.join(self.base_dir, "env.dut.yaml")
 
         # Dump the environment variables in the tmp file.
         if self.env_dut:
-            env_dut_file_handle, env_dut_tmp_path = tempfile.mkstemp()
-            with os.fdopen(env_dut_file_handle, 'wb') as f:
+            with open(env_dut, 'w') as f:
                 f.write(self.env_dut)
 
         try:
@@ -176,8 +176,8 @@ class Job(object):
                 args.extend(["--master-cert", self.master_cert,
                              "--slave-cert", self.slave_cert])
 
-            if self.env_dut and env_dut_tmp_path:
-                args.append("--env-dut-path=%s" % env_dut_tmp_path)
+            if self.env_dut:
+                args.append("--env-dut-path=%s" % env_dut)
 
             self.proc = subprocess.Popen(
                 args,
@@ -217,6 +217,15 @@ def get_fqdn():
         raise exc
 
 
+def send_multipart_u(sock, data):
+    """ Wrapper around send_multipart that encode data as bytes.
+
+    :param sock: The socket to use
+    :param data: Data to convert to byte strings
+    """
+    return sock.send_multipart([b(d) for d in data])
+
+
 def create_zmq_context(master_uri, hostname, send_queue, encrypt,
                        master_cert, slave_cert):
     """Create the ZMQ context and necessary accessories.
@@ -237,7 +246,7 @@ def create_zmq_context(master_uri, hostname, send_queue, encrypt,
     # Connect to the master dispatcher.
     context = zmq.Context()
     sock = context.socket(zmq.DEALER)
-    sock.setsockopt(zmq.IDENTITY, hostname)
+    sock.setsockopt(zmq.IDENTITY, b(hostname))
     sock.setsockopt(zmq.SNDHWM, send_queue)
 
     # If needed, load certificates
@@ -266,16 +275,21 @@ def create_zmq_context(master_uri, hostname, send_queue, encrypt,
     # Mask signals and create a pipe that will receive a bit for each signal
     # received. Poll the pipe along with the zmq socket so that we can only be
     # interrupted while reading data.
-    (read_pipe, write_pipe) = os.pipe()
-    flags = fcntl.fcntl(write_pipe, fcntl.F_GETFL, 0) | os.O_NONBLOCK
-    fcntl.fcntl(write_pipe, fcntl.F_SETFL, flags)
-    signal.set_wakeup_fd(write_pipe)
-    signal.signal(signal.SIGINT, lambda x, y: None)
-    signal.signal(signal.SIGTERM, lambda x, y: None)
-    signal.signal(signal.SIGQUIT, lambda x, y: None)
-    poller.register(read_pipe, zmq.POLLIN)
+    (pipe_r, pipe_w) = os.pipe()
+    flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
+    fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-    return context, sock, poller, read_pipe, write_pipe
+    def signal_to_pipe(signum, frame):
+        # Send the signal number on the pipe
+        os.write(pipe_w, chr(signum))
+
+    signal.signal(signal.SIGHUP, signal_to_pipe)
+    signal.signal(signal.SIGINT, signal_to_pipe)
+    signal.signal(signal.SIGTERM, signal_to_pipe)
+    signal.signal(signal.SIGQUIT, signal_to_pipe)
+    poller.register(pipe_r, zmq.POLLIN)
+
+    return context, sock, poller, pipe_r, pipe_w
 
 
 def destroy_zmq_context(context, sock, read_pipe, write_pipe):
@@ -348,7 +362,7 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
         msg = sock.recv_multipart()
 
         try:
-            message = msg[0]
+            message = u(msg[0])
             LOG.debug("The master replied: %s", msg)
         except (IndexError, TypeError):
             LOG.error("Invalid message from the master: %s", msg)
@@ -362,7 +376,7 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
                 LOG.info("Unexpected message from the master: %s", message)
 
     LOG.debug("Sending new %s message to the master", retry_msg)
-    sock.send_multipart([retry_msg])
+    send_multipart_u(sock, [retry_msg])
     return False
 
 
@@ -386,15 +400,28 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
         return
 
     if sockets.get(pipe_r) == zmq.POLLIN:
-        LOG.info("Received a signal, leaving")
-        sys.exit(0)
+        signum = ord(os.read(pipe_r, 1))
+        if signum == signal.SIGHUP:
+            LOG.info("SIGHUP received, restarting loggers")
+            handler = LOG.handlers[0]
+            if isinstance(handler, logging.FileHandler):
+                # Keep the filename and remove the handler
+                log_file = handler.baseFilename
+                LOG.removeHandler(handler)
+                # Re-create the handler
+                handler = logging.FileHandler(log_file, "a")
+                handler.setFormatter(logging.Formatter(FORMAT))
+                LOG.addHandler(handler)
+        else:
+            LOG.info("Received a signal, leaving")
+            sys.exit(0)
 
     if sockets.get(sock) == zmq.POLLIN:
         msg = sock.recv_multipart()
 
         # 1: the action
         try:
-            action = msg[0]
+            action = u(msg[0])
         except (IndexError, TypeError):
             LOG.error("Invalid message from the master: %s", msg)
             return
@@ -414,10 +441,10 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
         elif action == "START":
             try:
                 job_id = int(msg[1])
-                job_definition = msg[2]
-                device_definition = msg[3]
-                env = msg[4]
-                env_dut = msg[5] if len(msg) == 6 else None
+                job_definition = u(msg[2])
+                device_definition = u(msg[3])
+                env = u(msg[4])
+                env_dut = u(msg[5]) if len(msg) == 6 else None
             except (IndexError, ValueError) as exc:
                 LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
                 return
@@ -435,16 +462,16 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                 if jobs[job_id].is_running:
                     LOG.info(
                         "[%d] Job has already been started", job_id)
-                    sock.send_multipart(["START_OK", str(job_id)])
+                    send_multipart_u(sock, ["START_OK", str(job_id)])
                 else:
                     LOG.warning("[%d] Job has already ended", job_id)
-                    sock.send_multipart(["END", str(job_id), "0"])
+                    send_multipart_u(sock, ["END", str(job_id), "0"])
             else:
                 jobs[job_id] = Job(job_id, job_definition, device_definition,
                                    env, socket_addr, master_cert, slave_cert,
                                    env_dut=env_dut)
                 jobs[job_id].start()
-                sock.send_multipart(["START_OK", str(job_id)])
+                send_multipart_u(sock, ["START_OK", str(job_id)])
 
             # Mark the master as alive
             master.received_msg()
@@ -471,7 +498,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
             # Send the END message anyway
-            sock.send_multipart(["END", str(job_id), "0"])
+            send_multipart_u(sock, ["END", str(job_id), "0"])
 
             # Mark the master as alive
             master.received_msg()
@@ -501,17 +528,17 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
             if job_id in jobs:
                 if jobs[job_id].is_running:
                     # The job is still running
-                    sock.send_multipart(["START_OK", str(job_id)])
+                    send_multipart_u(sock, ["START_OK", str(job_id)])
                 else:
                     # The job has already ended
-                    sock.send_multipart(["END", str(job_id), "0"])
+                    send_multipart_u(sock, ["END", str(job_id), "0"])
             else:
                 # Unknown job: return END anyway
                 LOG.debug(
                     "[%d] Unknown job, sending END after STATUS", job_id)
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
-                sock.send_multipart(["END", str(job_id), "0"])
+                send_multipart_u(sock, ["END", str(job_id), "0"])
 
             # Mark the master as alive
             master.received_msg()
@@ -540,10 +567,10 @@ def check_job_status(jobs, sock):
                 LOG.info("[%d] Job returned non-zero", job_id)
                 errs = jobs[job_id].log_errors()
                 if errs:
-                    sock.send_multipart(["ERROR", str(job_id), str(errs)])
+                    send_multipart_u(sock, ["ERROR", str(job_id), str(errs)])
 
             jobs[job_id].is_running = False
-            sock.send_multipart(["END", str(job_id), str(job_status)])
+            send_multipart_u(sock, ["END", str(job_id), str(job_status)])
 
 
 def ping_master(master, sock, timeout):
@@ -566,7 +593,7 @@ def ping_master(master, sock, timeout):
             "Sending PING to the master (last message %ss ago)",
             int(now - master.last_msg))
 
-        sock.send_multipart(["PING"])
+        send_multipart_u(sock, ["PING"])
         master.last_ping = now
 
 
@@ -644,7 +671,7 @@ def main():
 
     hello_msg = "HELLO"
     LOG.debug("Greeting the master => '%s'", hello_msg)
-    sock.send_multipart([hello_msg])
+    send_multipart_u(sock, [hello_msg])
 
     while not connect_to_master(master, poller, pipe_r, sock, timeout):
         pass

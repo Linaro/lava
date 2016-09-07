@@ -152,14 +152,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 compression = self.parameters[self.key].get('compression', False)
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
-
         if os.path.exists(fname):
-            nested_tmp_dir = os.path.join(self.path, self.key)
-            if os.path.exists(nested_tmp_dir):
-                self.logger.warning("Cleaning up existing directory: %s", nested_tmp_dir)
-                shutil.rmtree(nested_tmp_dir)
-            os.makedirs(nested_tmp_dir)
-            fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
+            os.remove(fname)
 
         decompressor = None
         if compression:
@@ -177,8 +171,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             if decompressor:
                 try:
                     buff = decompressor.decompress(buff)
-                except zlib.error as exc:
-                    self.logger.exception(exc)
+                except (IOError, lzma.error, zlib.error) as exc:
+                    self.logger.exception(str(exc))
                     raise JobError(exc)
             dwnld_file.write(buff)
 
@@ -366,9 +360,11 @@ class HttpDownloadAction(DownloadHandler):
     def validate(self):
         super(HttpDownloadAction, self).validate()
         try:
+            self.logger.debug("Validating that %s exists", self.url.geturl())
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 # try using (the slower) get for services with broken redirect support
+                self.logger.debug("Using GET because HEAD is not supported properly")
                 res = requests.get(
                     self.url.geturl(), allow_redirects=True, stream=True,
                     timeout=HTTP_DOWNLOAD_TIMEOUT)
