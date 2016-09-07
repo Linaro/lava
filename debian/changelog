@@ -1,3 +1,75 @@
+lava-server (2016.9-1) unstable; urgency=medium
+
+  * 2016.9 production release
+    Show measurements and units of testcase detail page
+    Drop lxc schema - no support for alternatives
+    Configure logging for linaro_django_xmlpc calls
+    Fix link to lava-tool context-help
+    Fix the "Debian-based distribution" link grammar
+    Improve monitor test type, allow multiple tests
+    LAVA-494 allow searching for device tags in tables
+    Add support for LXC with multinode
+    Fix broken ref link for unit_test
+    Fix NoReverseMatch from ImageReports2.0 editing.
+    Fix typo in ./share/validate.py --hostname
+    Update hikey jinja2 templates for LXC
+    Fix occasionally failing multinode tests.
+    Add a configuration file for lava-master
+    Update lava-slave and lava-master docs
+    LAVA-374 - drop versiontools
+    Tidy up some build errors and reformat consistently.
+    Improve documentation describing inline test definitions
+    Major improvements for the "Writing MultiNode" page
+    Add docs for the lava-vland-names change
+    Using BOOTX in Juno bootcmds
+    Correcting default uboot commands in juno device template
+    Document the code locations for developers
+    Ensure multinode description is generated correctly
+    Allowing overrides to connection and action timeouts
+    master: Fix log rotations
+    Remove filtering by filter id for available testcases in image reports.
+    Init: remove the right lock file and simplify
+    Adding uboot jinja2 templates for all Juno flavours
+    LAVA-739 - declare sub_id and job.id for multinode
+    master: don't validate jobs on the master
+    select_device only accepts pipeline jobs
+    Remove legacy SyntaxHighlighter from job definition pages.
+    lava-master: simplify log file handling
+    Fix title disappearance on image reports.
+    Ignore retired devices in validate call
+    Don't add anchors to logs for running jobs
+    Don't crash when log contains invalid test names
+    Schema: accept 'parse' for inline test definitions
+    Use libYAML when loading logs
+    LAVA queries use cases.
+    Bug link fix for url regex.
+    Add LogEntry for BugLinks.
+    Update the init scripts
+    Remove the entry point as it's no longer needed
+    Ensure test-case name is valid
+    Extend vland unit tests to cover assignment
+    Expand on the device dictionary and templates
+    Expand the notes on using jessie-backports
+    Add a Contents page
+    Rewrite lava-server command line from scratch
+    events: set umask to a restrictive value
+    Bug links port.
+    LAVA-200 - track admin actions made in the UI
+    Add device tags support to V2
+    Allow the monitor test type
+    Update qemu command line options for arm64
+  * Add support for lava-master options
+  * Ensure examples are not compressed
+    YAML Files in lava-server-doc/html/v2/examples/ are provided as
+    download links and are intended to be viewable in the browser
+    alongside the help. Prevent all yaml files being compressed.
+  * Handle rewrite of lava-server/manage.py
+    With the removal of entrypoints, the /usr/bin/lava-server script
+    will not be created by setuptools. Adjust packaging to replace
+    entrypoints handling with the actual lava-server/manage.py script.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 Sep 2016 07:30:16 +0100
+
 lava-server (2016.8-1) unstable; urgency=medium
 
   * 2016.8-1 New production release

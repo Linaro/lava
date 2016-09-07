@@ -33,7 +33,7 @@ Depends: apache2, adduser, diffstat, fuse, iproute2,
  libjs-jquery, libjs-jquery-ui, python-django (>= 1.8),
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
- lava-dispatcher (>= 2016.8),
+ lava-dispatcher (>= 2016.9),
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
 Suggests: python-django-hijack, python-django-debug-toolbar
