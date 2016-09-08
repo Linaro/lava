@@ -1,7 +1,7 @@
 .. _testing_pipeline_code:
 
 Testing the new design
-**********************
+######################
 
 To test the new design after making changes, use the
 :ref:`unit_tests`. During development, it is useful to only run
@@ -16,7 +16,7 @@ and install your local packages.
 .. seealso:: :ref:`developer_build_version`
 
 lava-server
-===========
+***********
 
 ::
 
@@ -34,7 +34,7 @@ To run particular tests in a specific file, add e.g. ``test_device.py`` to the c
 .. note:: the ``tests`` directory needs to be specified (instead of the test process discovering
    all tests) and the filename lacks the ``.py`` suffix.
 
-Add the class name to run all tests within that class within the specified file.
+Add the class name to run all tests within that class within the specified file.::
 
  $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates
 
@@ -48,8 +48,39 @@ The same path can also be passed to ``./ci-run``::
 
 This adds the ``pep8`` check before running the test(s).
 
+Jinja2 templates
+================
+
+#. All jinja2 templates in ``lava_scheduler_app/tests/device-types/`` will be
+   tested using a basic check in
+   ``lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates``
+   for YAML syntax. This renders the template without a device dictionary and
+   checks that the output is valid YAML. This test will fail with syntax errors
+   in variables, jinja2 blocks, inheritance and whitespace indent errors.
+
+#. Add a new unit test to the ``TestTemplates`` class in the same unit test
+   file when any jinja2 template fails to parse. Change the ``DEBUG`` setting
+   to ``True`` to see the rendered output and use the `Online YAML Parser
+   <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to identify the
+   problems with the YAML output. Once the basic validation passes, add an
+   initial device dictionary, following the examples and identify specific
+   values in the output which can be asserted
+
+#. Compare the output of the template with a realistic device dictionary, using
+   the unit test, with the test YAML used when developing the underlying
+   support. If this is a fix for an existing template, you can generate the
+   relevant output on the master branch and verify against the changes in the
+   local branch.
+
+#. Completed templates need to be installed into
+   ``/etc/lava-server/dispatcher-config/device-types/`` before testjobs can be
+   submitted through XML-RPC. The ``lava-master`` daemon does **not** need to
+   be restarted, the next submitted testjob will use the modified template(s).
+
+.. seealso:: :ref:`adding_known_device`.
+
 lava-dispatcher
-===============
+***************
 
 ::
 

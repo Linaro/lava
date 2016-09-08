@@ -55,13 +55,13 @@ access devices and debug test jobs.
 Developer workflows
 ===================
 
-.. note:: LAVA is developed using Debian packaging to ensure that
-   daemons and system-wide configuration is correctly updated with changes in
-   the codebase. There is **no support for pypi or python virtual environments
-   or installing directly from a git directory**. ``python-setuptools`` is used
-   but only  with ``sdist`` to create the tarballs to be used for the Debian
-   packaging, not for ``install``. Some dependencies of LAVA are not available
-   with pypi, for example ``python-guestfs``.
+.. note:: LAVA is developed using Debian packaging to ensure that daemons and
+   system-wide configuration is correctly updated with changes in the codebase.
+   There is **no support for pypi or python virtual environments or installing
+   directly from a git directory**. ``python-setuptools`` is used but only
+   with ``sdist`` to create the tarballs to be used for the Debian packaging,
+   not for ``install``. Some dependencies of LAVA are not available with pypi,
+   for example ``python-guestfs``.
 
 .. seealso:: :ref:`lava_on_debian` and a summary of the
   `Debian LAVA team activity <https://qa.debian.org/developer.php?email=pkg-linaro-lava-devel%40lists.alioth.debian.org>`_
@@ -98,8 +98,8 @@ Debian testing.
 Naming conventions and LAVA V2 architecture
 *******************************************
 
-Certain terms used in LAVA V2 have specific meanings, please be
-consistent in the use of the following terms:
+Certain terms used in LAVA V2 have specific meanings, please be consistent in
+the use of the following terms:
 
 **board**
   The physical hardware sitting in a rack or on a desk.
@@ -187,14 +187,19 @@ Wherever possible, all new sections of documentation should come with worked
 examples.
 
 * Add a testjob submission YAML file to ``doc/v2/examples/test-jobs``
+
 * If the change relates to or includes particular test definitions to
   demonstrate the new support, add a test definition YAML file to
   ``doc/v2/examples/test-definitions``
-* Use the `include options <http://docutils.sourceforge.net/docs/ref/rst/directives.html#include>`_
+
+* Use the `include options
+  <http://docutils.sourceforge.net/docs/ref/rst/directives.html#include>`_
   supported in RST to quote snippets of the test job or test definition YAML,
   following the examples of the existing examples.
+
 * Use comments **liberally** in the examples and link to existing terms and
   sections.
+
 * Read the comments in the ``doc/v2/index.rst`` file if you are adding new
   pages or altering section headings.
 
@@ -211,6 +216,7 @@ will be tidied up.
 
 * **lava-server** includes the ``lava_scheduler_app``, ``lava_results_app``,
   ``lava_server``, ``lava`` and ``linaro_django_xmlrpc`` components of LAVA V2.
+
 * **lava-dispatcher** includes the ``lava_dispatcher`` and ``lava_test_shell``
   components. All LAVA V2 dispatcher code lives in
   ``lava_dispatcher/pipeline``. Some ``lava_test_shell`` scripts remain in the
@@ -230,6 +236,9 @@ changes are checked in the unit-tests. When the package is installed, the
 ``/etc/lava-server/dispatcher-config/device-types/``. The contents of
 ``lava_scheduler_app/tests/devices`` is ignored by the packaging, these files
 exist solely to support the unit tests.
+
+.. seealso:: :ref:`unit_tests` and :ref:`testing_pipeline_code` for examples of
+   how to run individual unit tests or all unit tests within a class or module.
 
 Device dictionaries
 ===================

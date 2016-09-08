@@ -73,6 +73,8 @@ Now create your topic branch off master::
 
     git checkout -b my-change master
 
+.. _running_all_unit_tests:
+
 Run the unit tests
 ==================
 
@@ -396,6 +398,48 @@ current master or if you want to help with more python3 support in LAVA V2.
 Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
 going to support python3.
 
+XML-RPC changes
+***************
+
+Each of the installed django apps in ``lava-server`` are able to expose
+functionality using :ref:`XML-RPC <xml_rpc>`.
+
+.. code-block:: python
+
+ from linaro_django_xmlrpc.models import ExposedAPI
+
+ class SomeAPI(ExposedAPI):
+
+#. The ``docstring`` **must** include the full user-facing documentation of each
+   function exposed through the API.
+
+#. Authentication should be supported using the base class support:
+
+   .. code-block:: python
+
+    self._authenticate()
+
+#. Catch exceptions for all errors, ``SubmissionException``, ``DoesNotExist``
+   and others, then re-raise as ``xmlrpclib.Fault``.
+
+#. Move as much of the work into the relevant app as possible, either in
+   ``models.py`` or in ``dbutils.py``. Wherever possible, re-use existing
+   functions with wrappers for error handling in the API code.
+
+Instance settings
+*****************
+
+``/etc/lava-server/instance.conf`` is principally for V1 configuration. V2 uses
+this file only for the database connection settings on the master, instance
+name and the ``lavaserver`` user.
+
+Most settings for the instance are handled inside django using
+``/etc/lava-server/settings.conf``. (For historical reasons, this file uses
+**JSON** syntax.)
+
+.. seealso:: :ref:`branding`, :ref:`django_debug_toolbar` and
+   :ref:`developer_access_to_django_shell`
+
 Pylint
 ******
 
@@ -477,32 +521,39 @@ LAVA database model visualization
 LAVA database models can be visualized with the help of
 `django_extensions`_ along with tools such as `pydot`_. In debian
 based systems install the following packages to get the visualization
-of LAVA database models::
+of LAVA database models:
 
-  $ apt install python-django-extensions python-pydot
+.. code-block:: shell
+
+ $ apt install python-django-extensions python-pydot
 
 Once the above packages are installed successfully, use the following
 command to get the visualization of ``lava-server`` models in PNG
-format::
+format:
 
-  $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
+.. code-block:: shell
+
+ $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
 
 More documentation about graph models is available in
 https://django-extensions.readthedocs.org/en/latest/graph_models.html
 
 Other useful features from `django_extensions`_ are as follows:
 
-* `shell_plus`_ - similar to the built-in "shell" but autoloads all
-   models
+* `shell_plus`_ - similar to the built-in "shell" but autoloads all models
 
-* `validate_templates`_ - check templates for rendering errors
+* `validate_templates`_ - check templates for rendering errors:
 
-    $ sudo lava-server manage validate_templates
+  .. code-block:: shell
+
+   $ sudo lava-server manage validate_templates
 
 * `runscript`_ - run arbitrary scripts inside ``lava-server``
-  environment
+  environment:
 
-    $ sudo lava-server manage runscript fix_user_names --script-args=all
+  .. code-block:: shell
+
+   $ sudo lava-server manage runscript fix_user_names --script-args=all
 
 .. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
 .. _`pydot`: https://pypi.python.org/pypi/pydot
