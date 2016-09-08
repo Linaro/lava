@@ -22,7 +22,7 @@ Glossary of terms
 [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
 [ :term:`inline` ] [ :term:`interface tag` ]
 [ :term:`master` ] [ :term:`messageID` ] [ :term:`MultiNode` ]
-[ :term:`job definition` ]
+[ :term:`jinja2`] [ :term:`job definition` ]
 [ :term:`offline` ]
 [ :term:`pipeline` ] [ :term:`prompts` ]
 [ :term:`PDU` ][ :term:`physical access` ] [ :term:`priority` ]
@@ -214,6 +214,14 @@ Glossary of terms
      also embed information about that link.
 
      .. seealso:: :ref:`vland_device_tags`.
+
+  jinja2
+    Jinja2 is a templating language for Python, modelled after Django’s
+    templates. It is used in LAVA for device-type configuration, as it allows
+    conditional logic and variable substitution when generating device
+    configuration for the dispatcher.
+
+    .. seealso:: http://jinja.pocoo.org/docs/dev/
 
   job definition
     The original YAML submitted to create a job in LAVA is retained in the
