@@ -116,6 +116,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
         self.assertIn('context', data)
+        self.assertIn('priority', data)
         self.assertEqual(data['context']['arch'], self.conf['arch'])
 
     def test_make_device(self):
@@ -133,6 +134,13 @@ class PipelineDeviceTags(TestCaseWithFactory):
         TestJob.from_yaml_and_user(
             self.factory.make_job_json(),
             self.factory.make_user())
+
+    def test_priority(self):
+        self.factory.make_device(self.device_type, 'fakeqemu3')
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(),
+            self.factory.make_user())
+        self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
         Tag.objects.all().delete()

@@ -1201,6 +1201,14 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
+    priorities = dict([(j.upper(), i) for i, j in TestJob.PRIORITY_CHOICES])
+    priority = TestJob.MEDIUM
+    if 'priority' in job_data:
+        priority_key = job_data['priority'].upper()
+        if priority_key not in priorities:
+            raise SubmissionException("Invalid job priority: %r" % priority_key)
+        priority = priorities[priority_key]
+
     public_state = True
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
@@ -1226,6 +1234,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   health_check=False,
                   user=user, is_public=public_state,
                   visibility=visibility,
+                  priority=priority,
                   is_pipeline=True)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.

@@ -46,6 +46,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
+        self.assertIn('priority', data)
 
     def test_menu_device(self):
         job_ctx = {}
