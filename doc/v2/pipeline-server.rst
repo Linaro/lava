@@ -3,6 +3,53 @@
 Setting up a LAVA pipeline instance
 ###################################
 
+.. _pipeline_install:
+
+What is the Pipeline?
+*********************
+
+.. note:: Linaro production systems in the Cambridge lab began to
+   migrate to the V2 Pipeline model with the 2016.2 production
+   release, while retaining support for the deprecated V1 model until
+   the migration is complete. The V1 support is due to be removed
+   in 2017.
+
+The :term:`dispatcher refactoring <refactoring>` in the V2 (Pipeline)
+model introduces changes and new elements which should not be confused
+with the previous production models. It is supported to install LAVA
+using solely the new design but there are some
+:ref:`pipeline_install_considerations` regarding your current device
+usage. Submission requirements and device support can change before
+and during a migration to the new design.
+
+This documentation includes notes on the new design, so to make things
+clearer, the following terms refer exclusively to the new design and
+have no bearing on `single_instance` or `distributed_instance`
+installation methods from V1 LAVA which are being used for current
+production instances in the Cambridge lab.
+
+#. :term:`pipeline`
+#. :term:`refactoring`
+#. :term:`device dictionary`
+#. :term:`ZMQ`
+
+The pipeline model also changes the way that results are gathered,
+exported and queried, replacing the `bundle stream`, `result bundle`
+and `filter` dashboard objects. This new :term:`results` functionality
+only operates on pipeline test jobs and is ongoing development, so
+some features are incomplete and likely to change in future
+releases. Admins can choose to not show the new results app, for
+example until pipeline devices are supported on that instance, by
+setting the ``PIPELINE`` to ``false`` in
+:file:`/etc/lava-server/settings.conf` - make sure the file validates
+as JSON before restarting apache::
+
+ "PIPELINE": false
+
+If the value is not set or set to ``true``, the Results app will be displayed.
+
+.. seealso:: :ref:`setting_up_pipeline_instance`
+
 .. _pipeline_install_considerations:
 
 Initial considerations

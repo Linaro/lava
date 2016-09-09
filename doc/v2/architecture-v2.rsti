@@ -1,31 +1,44 @@
+Architecture
+============
 
 .. image:: images/arch-overview.png
 
-LAVA installations consist of two primary components - a master and a
-worker. The master has all the code required to run a worker and can
-support multiple remote workers to increase the number of devices
-available on any one instance.
+A LAVA ``instance`` consists of two primary components - a ``master``
+and a ``worker``. The simplest possible configuration is to run the
+master and worker components on a single machine, but a larger
+instance can also be configured to support multiple workers
+controlling a larger number of attached devices.
 
-Elements of the master
-**********************
+Elements of the Master
+----------------------
 
-* **web interface** - apache and uwsgi interfacing with django as well as
-  providing XML-RPC access and REST API.
-* **database** - postgresql, local to the master with no external access.
-* **dispatcher-master daemon** - controls messages from the master to the
-  worker(s) using :abbr:`ZMQ (zero MQ)`.
+* **Web interface** - This is built using the Apache web server, the
+  uWSGI application server and the Django web framework. It also
+  provides XML-RPC access and the REST API.
 
-Elements of the slave
-*********************
+* **Database** - This uses PostgreSQL locally on the master, with no
+  external access.
 
-* **lava-slave daemon** - receives control messages from the master and
-  sends logs and results to the master, optionally uses authentication
-  and encryption using :abbr:`ZMQ (zero MQ)`.
+* **Scheduler** - This is the piece that causes jobs to be run -
+  periodically this will scan the database to check for queued test
+  jobs and available test devices, starting jobs when the needed
+  resources become available.
 
-* **dispatcher** - the ``lava-dispatch`` process, started by the
-  ``lava-slave`` when instructed to do so by the master. This process
-  manages all the operations on the device under test, according to the
-  job submission and device parameters sent by the master.
+* **Dispatcher-master daemon** - This communicates with the worker(s)
+  using :abbr:`ZMQ (zero MQ)`.
 
-* **device under test**. Note that all the configuration for how the
-  dispatcher interacts with the device is sent from the server.
+Elements of the Worker
+----------------------
+
+* **Lava-slave daemon** - This receives control messages from the
+  master and sends logs and results back to the master using
+  :abbr:`ZMQ (zero MQ)`.
+
+* **Dispatcher** - This manages all the operations on the device under
+  test, according to the job submission and device parameters sent by
+  the master.
+
+* **Device Under Test (DUT)**
+
+.. note:: Although the Dispatcher interacts directly with the DUT, all
+   the device configuration is sent from the server.
