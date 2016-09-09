@@ -31,7 +31,7 @@ from lava_dispatcher.pipeline.menus.menus import (
     MenuReset
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.power import ResetDevice, FastBootRebootAction
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
@@ -215,7 +215,7 @@ class UefiMenuAction(BootAction):
         if 'commands' in parameters and 'fastboot' in parameters['commands']:
             self.internal_pipeline.add_action(UefiSubstituteCommands())
             self.internal_pipeline.add_action(MenuConnect())
-            self.internal_pipeline.add_action(FastBootRebootAction())
+            self.internal_pipeline.add_action(ResetDevice())
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(UefiMenuSelector())
             self.internal_pipeline.add_action(MenuReset())
@@ -230,5 +230,3 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(MenuReset())
             self.internal_pipeline.add_action(AutoLoginAction())
             self.internal_pipeline.add_action(ExportDeviceEnvironment())
-            self.internal_pipeline.add_action(ConnectLxc())
-            self.internal_pipeline.add_action(WaitForAdbDevice())

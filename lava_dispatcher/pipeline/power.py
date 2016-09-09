@@ -165,33 +165,6 @@ class PowerOn(Action):
         return connection
 
 
-class FastBootRebootAction(Action):
-    """
-    This action calls fastboot reboot
-    """
-    def __init__(self):
-        super(FastBootRebootAction, self).__init__()
-        self.name = "reboot-fastboot"
-        self.summary = "attempt to fastboot soft reboot"
-        self.description = "soft reboot using fastboot"
-        self.command = ''
-
-    def validate(self):
-        super(FastBootRebootAction, self).validate()
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
-            command = self.job.device['commands']['soft_reset']
-            if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("Command '%s' failed" % command)
-            self.results = {"success": self.job.device.power_state}
-        return connection
-
-
 # FIXME: Unused action, but can give fine grained control.
 class LxcStop(Action):
     """

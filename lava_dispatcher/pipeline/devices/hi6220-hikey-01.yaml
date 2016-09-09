@@ -1,15 +1,13 @@
 commands:
     connect: telnet localhost 7019
     hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
-    soft_reset: fastboot -u -s 96B0201601000691 reboot
     power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
     power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 08
-    pre_os_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m off -u 06
     pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
-    adb_command: adb -s 96B0201601000691
+    adb_command: adb -s 0123456789
     fastboot_command: fastboot -u -s 96B0201601000691
 device_type: hi6220-hikey
-adb_serial_number: 96B0201601000691
+adb_serial_number: 0123456789
 fastboot_serial_number: 96B0201601000691
 device_path: ['/dev/hikey01']
 

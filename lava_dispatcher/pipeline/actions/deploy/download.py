@@ -40,6 +40,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import RetryAction
+from lava_dispatcher.pipeline.utils.compression import untar_file
 from lava_dispatcher.pipeline.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
@@ -190,6 +191,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             image = self.parameters['images'][self.key]
             self.url = lavaurl.urlparse(image['url'])
             compression = image.get('compression', None)
+            archive = image.get('archive', None)
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
             image_arg = image.get('image_arg', None)
             overlay = image.get('overlay', False)
@@ -200,6 +202,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
             compression = self.parameters[self.key].get('compression', None)
+            archive = self.parameters[self.key].get('archive', None)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.data['download_action'][self.key] = {'file': fname}
@@ -209,6 +212,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if compression:
             if compression not in ['gz', 'bz2', 'xz']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
+        if archive:
+            if archive not in ['tar']:
+                self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
         if self.key == 'kernel':
             self.set_common_data('type', self.key, self.parameters[self.key].get('type', None))
@@ -275,6 +281,27 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.data['download_action'][self.key]['file'] = fname
         self.data['download_action'][self.key]['md5'] = md5.hexdigest()
         self.data['download_action'][self.key]['sha256'] = sha256.hexdigest()
+
+        # handle archive files
+        archive = False
+        if 'images' in self.parameters and self.key in self.parameters['images']:
+            archive = self.parameters['images'][self.key].get('archive', False)
+        else:
+            archive = self.parameters[self.key].get('archive', None)
+        if archive:
+            origin = fname
+            target_fname = os.path.basename(origin).rstrip('.' + archive)
+            target_fname_path = os.path.join(os.path.dirname(origin),
+                                             target_fname)
+            if os.path.exists(target_fname_path):
+                os.remove(target_fname_path)
+
+            if archive == 'tar':
+                untar_file(origin, None, member=target_fname,
+                           outfile=target_fname_path)
+                self.data['download_action'][self.key]['file'] = target_fname_path
+                self.set_common_data('file', self.key, target_fname)
+            self.logger.debug("Using %s archive" % archive)
 
         if md5sum is not None:
             if md5sum != self.data['download_action'][self.key]['md5']:

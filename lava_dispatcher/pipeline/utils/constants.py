@@ -113,7 +113,7 @@ BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
 
 # Timeout for USB devices to settle and show up
-USB_SHOW_UP_TIMEOUT = 20
+USB_SHOW_UP_TIMEOUT = 30
 
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string

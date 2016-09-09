@@ -58,8 +58,6 @@
   - {class: menus.menus.MenuReset, name: menu-reset}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
-  - {class: connections.lxc.ConnectLxc, name: connect-lxc}
-  - {class: actions.boot.fastboot.WaitForAdbDevice, name: wait-for-adb-device}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

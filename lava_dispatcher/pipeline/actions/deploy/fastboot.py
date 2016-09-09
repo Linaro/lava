@@ -20,7 +20,7 @@
 
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.power import FastBootRebootAction, PowerOn
+from lava_dispatcher.pipeline.power import PowerOn
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
