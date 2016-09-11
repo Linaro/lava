@@ -36,6 +36,7 @@ First steps
    :maxdepth: 3
 
    first_steps.rst
+   standard-qemu-jessie.rst
    first-installation.rst
 
 .. _contents_writing_tests:

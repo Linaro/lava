@@ -1,0 +1,78 @@
+# Standard Jessie amd64 JOB definition for QEMU
+device_type: qemu
+job_name: qemu amd64 standard build, Debian Jessie
+
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 2
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: doc/v2/examples/test-jobs/qemu-amd64-standard-jessie.yaml
+  build-readme: http://snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/6/debian-jessie-amd64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stable-amd64-vm/6/console
+  build-log: http://snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/6/vmdebootstrap.log
+
+# CONTEXT_BLOCK
+context:
+  arch: amd64
+  # comment out or change to user if the dispatcher does not support bridging.
+  netdevice: tap
+
+# ACTIONS_BLOCK
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tmpfs
+    images:
+        rootfs:
+          image_arg: -drive format=raw,file={rootfs}
+          url: http://images.validation.linaro.org/kvm/standard/large-stable-6.img.gz
+          sha256sum: 8c305938e973dcfe4b4d2cf4da242c2cc036dd2ea6c867cb21b967ae2d9a52d7
+          compression: gz
+    os: debian
+    root_partition: 1
+
+# BOOT_BLOCK
+- boot:
+    method: qemu
+    media: tmpfs
+    timeout:
+      minutes: 2
+    prompts:
+    - "root@debian:"
+    auto_login:
+      login_prompt: "login:"
+      username: root
+
+# TEST_BLOCK
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: smoke-tests-basic
+          description: "Basic system test command for Debian images"
+        run:
+          steps:
+          - printenv
+      from: inline
+      name: env-dut-inline
+      path: inline/env-dut.yaml
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced
