@@ -202,13 +202,13 @@ class UBootInterrupt(Action):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
         connection = super(UBootInterrupt, self).run(connection, args)
-        self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
+        device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
-        # command = self.job.device['commands'].get('interrupt', '\n')
+        interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
+        self.logger.debug("Changing prompt to '%s'", interrupt_prompt)
+        connection.prompt_str = interrupt_prompt
         self.wait(connection)
         connection.sendline(' \n')
-        device_methods = self.job.device['actions']['boot']['methods']
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.wait(connection)
         return connection
