@@ -1,7 +1,7 @@
 Architecture
 ============
 
-.. image:: images/arch-overview.png
+.. image:: images/arch-overview.svg
 
 A LAVA ``instance`` consists of two primary components - a ``master``
 and a ``worker``. The simplest possible configuration is to run the
