@@ -93,6 +93,8 @@ LAVA supports starting these sub jobs as a group as well as passing
 messages between nodes via the dispatcher connection, without needing
 the devices to have a working network stack.
 
+.. _scheduling:
+
 Scheduling
 ==========
 

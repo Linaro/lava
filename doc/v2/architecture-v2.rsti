@@ -3,42 +3,39 @@ Architecture
 
 .. image:: images/arch-overview.svg
 
-A LAVA ``instance`` consists of two primary components - a ``master``
-and a ``worker``. The simplest possible configuration is to run the
-master and worker components on a single machine, but a larger
-instance can also be configured to support multiple workers
-controlling a larger number of attached devices.
+A LAVA ``instance`` consists of two primary components - a :term:`master` and a
+:term:`worker`. The simplest possible configuration is to run the master and
+worker components on a single machine, but a larger instance can also be
+configured to support multiple workers controlling a larger number of attached
+devices.
 
 Elements of the Master
 ----------------------
 
-* **Web interface** - This is built using the Apache web server, the
-  uWSGI application server and the Django web framework. It also
-  provides XML-RPC access and the REST API.
+* **Web interface** - This is built using the Apache web server, the uWSGI
+  application server and the Django web framework. It also provides XML-RPC
+  access and the REST API.
 
-* **Database** - This uses PostgreSQL locally on the master, with no
-  external access.
+* **Database** - This uses PostgreSQL locally on the master, with no external
+  access.
 
-* **Scheduler** - This is the piece that causes jobs to be run -
-  periodically this will scan the database to check for queued test
-  jobs and available test devices, starting jobs when the needed
-  resources become available.
+* **Scheduler** - This is the piece that causes jobs to be run - periodically
+  this will scan the database to check for queued test jobs and available test
+  devices, starting jobs when the needed resources become available.
 
-* **Dispatcher-master daemon** - This communicates with the worker(s)
-  using :abbr:`ZMQ (zero MQ)`.
+* **Dispatcher-master daemon** - This communicates with the worker(s) using
+  :abbr:`ZMQ (zero MQ)`.
 
 Elements of the Worker
 ----------------------
 
-* **Lava-slave daemon** - This receives control messages from the
-  master and sends logs and results back to the master using
-  :abbr:`ZMQ (zero MQ)`.
+* **Lava-slave daemon** - This receives control messages from the master and
+  sends logs and results back to the master using :abbr:`ZMQ (zero MQ)`.
 
-* **Dispatcher** - This manages all the operations on the device under
-  test, according to the job submission and device parameters sent by
-  the master.
+* **Dispatcher** - This manages all the operations on the device under test,
+  according to the job submission and device parameters sent by the master.
 
 * **Device Under Test (DUT)**
 
-.. note:: Although the Dispatcher interacts directly with the DUT, all
+.. note:: Although the Dispatcher interacts directly with the :term:`DUT`, all
    the device configuration is sent from the server.

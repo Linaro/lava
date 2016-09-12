@@ -25,6 +25,8 @@ appearance of the menu is determined by the version of django installed
 on your system. The style changed substantially in django 1.9, so images
 of the interface itself are not included here.
 
+.. _django_admin_interface:
+
 Administative interface site links
 **********************************
 

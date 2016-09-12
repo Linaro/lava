@@ -461,6 +461,23 @@ This syntax will result in the test results:
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
 
+.. _test_action_parameters:
+
+Test shell parameters
+*********************
+
+The test action in the job definition supports parameters which are passed to
+the test shell. These parameters can be used to allow different job definitions
+to use a single test shell definition in multiple ways. A common example of
+this is a :term:`hacking session`.
+
+The parameters themselves are inserted into the ``lava-test-runner`` and will
+be available to **all** Lava Test Shell Definitions used in that test job. The
+parameters are **not** exported. The test shell definition needs to support
+using the parameter and can then use that information to change how external
+programs behave. This may include using ``export``, it may include changing the
+command line options.
+
 .. _recording_test_result_data:
 
 Recording test case data

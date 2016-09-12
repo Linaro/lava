@@ -1,3 +1,7 @@
+.. index:: jinja2, developer, developer guide, develop, contribute
+
+.. _developer_guide:
+
 LAVA developer guide
 ####################
 
@@ -110,9 +114,14 @@ the use of the following terms:
   Connections will typically require a POSIX_ type shell.
 
 **device**
-  A database object in LAVA which stores configuration, information and status
-  relating to a single board. The device information can be represented in
-  export formats like YAML for use when the database is not accessible.
+  In ``lava-server``, a device is a database object in LAVA which stores
+  configuration, information and status relating to a single board. The device
+  information can be represented in export formats like YAML for use when the
+  database is not accessible.
+
+  In ``lava-dispatcher``, the database is not accessible so the scheduler
+  prepares a simple dictionary of values derived from the database and the
+  template to provide the information about the device.
 
 **device-type**
   A database object which collates similar devices into a group for purposes of
@@ -130,6 +139,20 @@ the use of the following terms:
 **dispatcher-master** or simply **master**
   A singleton process which starts and monitors test jobs running on one or
   more dispatchers by communicating with the slave using ZMQ.
+
+**dynamic data** - the Action base class provides access to dynamic data stores
+  which other actions can access. This provides the way for action classes to
+  share information like temporary paths of downloaded and / or modified files
+  and other data which is generated or calculated during the operation of the
+  pipeline. Use ``self.set_common_data`` to set the namespace, key and value
+  and ``self.get_common_data`` to retrieve the value using the namespace and
+  the key.
+
+**parameters**
+  A static, read-only, dictionary of values and available for the job and the
+  device. Parameters must not be modified by the codebase - use the
+  ``common_data`` primitives of the Action base class to copy parameters and
+  store the modified values as dynamic data.
 
 **pipeline**
   The name for the design of LAVA V2, based on how the actions to be executed
@@ -225,6 +248,8 @@ will be tidied up.
 
 There are also locations which provide device configurations to support the
 unit tests. Only the Jinja2 support is used by the installed packages,
+
+.. _developer_jinja2_support:
 
 Jinja2 support
 ==============
