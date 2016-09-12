@@ -8,7 +8,6 @@ the UI.
    :maxdepth: 1
 
    lava-scheduler.rst
-   lava-scheduler.rst
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst

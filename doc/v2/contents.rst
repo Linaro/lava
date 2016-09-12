@@ -12,10 +12,10 @@ overview to help you know where to look for particular help.
 * :ref:`contents_writing_tests` - this guide takes you through how to design,
   write and debug the tests to be run using LAVA. Worked examples are available
   of an increasing range of deployments and test methods.
-* :ref:`contents_results` - LAVA results provide a generic view of how the tests
-  performed. This guide also covers how to export result data from LAVA into a
-  customised frontend which helps make the raw data more relevant to particular
-  teams of developers.
+* :ref:`contents_results` - LAVA results provide a generic view of how the
+  tests performed. This guide also covers how to export result data from LAVA
+  into a customised frontend which helps make the raw data more relevant to
+  particular teams of developers.
 * :ref:`contents_admin_guide` - this guide steps through the complex task of
   administering a LAVA instance, from a single emulated device to a large
   test lab with dozens of devices.
@@ -23,6 +23,9 @@ overview to help you know where to look for particular help.
   contributions are welcome from the community. This guide introduces the code
   structure and design requirements as well as how to contribute patches for
   review.
+* :ref:`contents_context_help` - some pages in the UI have a ``Help`` link in
+  the context-menu section at the top of the page. These pages are listed in
+  this section for reference and easier navigation.
 
 .. _contents_first_steps:
 
@@ -54,7 +57,6 @@ Introduction to Results
    :maxdepth: 3
 
    results-intro.rst
-   results-api.rst
 
 .. _contents_admin_guide:
 
@@ -77,4 +79,13 @@ LAVA Developer guide
 
    development-intro.rst
    migration.rst
+
+.. _contents_context_help:
+
+LAVA context help
+*****************
+
+.. toctree::
+   :maxdepth: 3
+
    other.rst

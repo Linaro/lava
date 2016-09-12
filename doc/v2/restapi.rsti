@@ -1,29 +1,25 @@
-LAVA V2 makes the test results available directly from the instance,
-without needing to go through ``lava-tool``. Currently, the results
-for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
-and YAML format.
+LAVA makes the test results available directly from the instance, without
+needing to go through ``lava-tool``. The results for any test job which the
+user can view can be downloaded as :abbr:`CSV (comma-separated value)` and YAML
+format.
 
-For example, the results for test job number 123 are available as
-CSV using::
+For example, the results for test job number 123 are available as CSV using:
+``https://validation.linaro.org/results/123/csv``. The same results for job
+number 123 are available as YAML using:
+``https://validation.linaro.org/results/123/yaml``
 
- https://validation.linaro.org/results/123/csv
+If you know the test definition name, you can download the results for that
+specific test definition only in the same way.
+``https://validation.linaro.org/results/123/singlenode-advanced/csv`` for the
+data in CSV format and
+``https://validation.linaro.org/results/123/singlenode-advanced/yaml`` for the
+YAML format.
 
-The same results for job number 123 are available as YAML using::
-
- https://validation.linaro.org/results/123/yaml
-
-If you know the test definition name, you can download the results for
-that specific test definition only in the same way::
-
- https://validation.linaro.org/results/123/singlenode-advanced/csv
- https://validation.linaro.org/results/123/singlenode-advanced/yaml
-
-Some test jobs can be restricted to particular users or groups of
-users. The results of these test jobs are restricted in the same
-way. To download these results, you will need to specify your username
-and one of your :ref:`authentication_tokens` - remember to quote the
-URL if using it on the command line or the & will likely be
-interpreted by your shell::
+Some test jobs can be restricted to particular users or groups of users. The
+results of these test jobs are restricted in the same way. To download these
+results, you will need to specify your username and one of your
+:ref:`authentication_tokens` - remember to quote the URL if using it on the
+command line or the & will likely be interpreted by your shell::
 
  'https://validation.linaro.org/results/123/csv?user=user.name&token=yourtokentextgoeshereononeverylongline'
 
