@@ -8,6 +8,7 @@ import simplejson
 import StringIO
 import datetime
 import urllib2
+import re
 import sys
 
 from django import forms
@@ -1688,6 +1689,74 @@ def job_pipeline_sections(request, pk):
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response['X-Sections'] = '1'
     return response
+
+
+@BreadCrumb("Job timing", parent=job_detail, needs=['pk'])
+def job_pipeline_timing(request, pk):
+    job = get_restricted_job(request.user, pk)
+
+    def dump_levels(conf):
+        lvls = []
+        for action in conf['pipeline']:
+            # In-depth first as that's the order when parsing the log file
+            if 'pipeline' in action:
+                lvls.extend(dump_levels({'pipeline': action['pipeline']}))
+            lvls.append((action['name'], action['level']))
+        return lvls
+
+    try:
+        description = yaml.load(open(os.path.join(job.output_dir, 'description.yaml')))
+        logs = yaml.load(open(os.path.join(job.output_dir, 'output.yaml')))
+    except IOError:
+        raise Http404
+
+    # Add the validation that is not part of the description file
+    levels = [('validate', '0')]
+    levels.extend(dump_levels(description))
+    # Pattern for the logs
+    pattern = re.compile('^(?P<action>[\\w_-]+) duration: (?P<duration>\\d+\\.\\d+)$')
+
+    index = 0
+    data = {}
+    for line in logs:
+        try:
+            match = pattern.match(line['msg'])
+        except TypeError:
+            continue
+        if match is not None:
+            d = match.groupdict()
+            try:
+                data[levels[index][1]] = (d['action'], float(d['duration']))
+            except ValueError:
+                # Set it to 0 if this is not a float
+                data[levels[index][1]] = (d['action'], 0.0)
+            index += 1
+
+    # Build the data objects for the template
+    # max, mean and summary and the completed (sorted) pipeline
+    actions = data.keys()
+    actions.sort()
+    pipeline = []
+    total_duration = 0
+    max_duration = 0
+    summary = []
+    for action in actions:
+        duration = data[action][1]
+        max_duration = max(max_duration, duration)
+        pipeline.append((action, data[action][0], duration))
+        if '.' not in action:
+            total_duration += duration
+            summary.append([data[action][0], duration, 0])
+
+    for index, action in enumerate(summary):
+        summary[index][2] = action[1] / total_duration * 100
+
+    return render(request, 'lava_scheduler_app/job_pipeline_timing.html',
+                  {'job': job, 'pipeline': pipeline, 'summary': summary,
+                   'total_duration': total_duration,
+                   'mean_duration': total_duration / len(actions),
+                   'max_duration': max_duration,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk)})
 
 
 def job_pipeline_incremental(request, pk):

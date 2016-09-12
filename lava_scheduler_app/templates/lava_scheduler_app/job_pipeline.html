@@ -190,6 +190,7 @@
 <ul class="nav nav-tabs">
   <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
   <li><a href="#Description" data-toggle="tab">Job description</a></li>
+  <li><a href="{% url "lava.scheduler.job_pipeline_timing" job.pk %}">Timing</a></li>
 </ul>
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
