@@ -118,31 +118,15 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_common_data('tftp', 'tftp_dir', self.tftp_dir)
-        if 'ramdisk' in parameters:
-            download = DownloaderAction('ramdisk', path=self.tftp_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.set_common_data('tftp', 'ramdisk', True)
-        if 'kernel' in parameters:
-            download = DownloaderAction('kernel', path=self.tftp_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-        if 'dtb' in parameters:
-            download = DownloaderAction('dtb', path=self.tftp_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-        if 'nfsrootfs' in parameters:
-            download = DownloaderAction('nfsrootfs', path=self.download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-        if 'modules' in parameters:
-            download = DownloaderAction('modules', path=self.tftp_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-        if 'preseed' in parameters:
-            download = DownloaderAction('preseed', path=self.tftp_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+
+        for key in ['ramdisk', 'kernel', 'dtb', 'nfsrootfs', 'modules', 'preseed']:
+            if key in parameters:
+                download = DownloaderAction(key, path=self.tftp_dir)
+                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+                self.internal_pipeline.add_action(download)
+                if key == 'ramdisk':
+                    self.set_common_data('tftp', 'ramdisk', True)
+
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
