@@ -122,42 +122,22 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(LxcAddDeviceAction())
+
         image_keys = list(parameters['images'].keys())
-        if 'image' in image_keys:
-            download = DownloaderAction('image', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(FastbootUpdateAction())
-        if 'ptable' in image_keys:
-            download = DownloaderAction('ptable', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyPtableAction())
-        if 'boot' in image_keys:
-            download = DownloaderAction('boot', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyBootAction())
-        if 'cache' in image_keys:
-            download = DownloaderAction('cache', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyCacheAction())
-        if 'userdata' in image_keys:
-            download = DownloaderAction('userdata', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyUserdataAction())
-        if 'system' in image_keys:
-            download = DownloaderAction('system', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplySystemAction())
-        if 'vendor' in image_keys:
-            download = DownloaderAction('vendor', self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyVendorAction())
+        # Add the required actions
+        checks = [('image', FastbootUpdateAction),
+                  ('ptable', ApplyPtableAction),
+                  ('boot', ApplyBootAction),
+                  ('cache', ApplyCacheAction),
+                  ('userdata', ApplyUserdataAction),
+                  ('system', ApplySystemAction),
+                  ('vendor', ApplyVendorAction)]
+        for (key, cls) in checks:
+            if key in image_keys:
+                download = DownloaderAction(key, self.fastboot_dir)
+                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(cls())
 
 
 class EnterFastbootAction(DeployAction):
