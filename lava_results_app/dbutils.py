@@ -73,7 +73,7 @@ def append_failure_comment(job, msg):
     logger.error(msg)
 
 
-def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -171,7 +171,15 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
     return True
 
 
-def _get_job_metadata(data):  # pylint: disable=too-many-branches
+def _add_parameter_metadata(prefix, definition, dictionary, label):
+    if 'parameters' in definition:
+        for paramkey, paramvalue in definition['parameters'].items():
+            if paramkey == 'yaml_line':
+                continue
+            dictionary['%s.%s.parameters.%s' % (prefix, label, paramkey)] = paramvalue
+
+
+def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
     if not isinstance(data, list):
         return None
     retval = {}
@@ -229,6 +237,8 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                             # store the fact that an inline exists but would not generate any testcases
                             prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
                         retval['%s.inline.name' % prefix] = definition['name']
+                        _add_parameter_metadata(prefix=prefix, definition=definition,
+                                                dictionary=retval, label='inline')
                         retval['%s.inline.path' % prefix] = definition['path']
                     else:
                         prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
@@ -237,6 +247,8 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                         retval['%s.definition.path' % prefix] = definition['path']
                         retval['%s.definition.from' % prefix] = definition['from']
                         retval['%s.definition.repository' % prefix] = definition['repository']
+                        _add_parameter_metadata(prefix=prefix, definition=definition,
+                                                dictionary=retval, label='definition')
                     count += 1
     return retval
 

@@ -81,28 +81,38 @@
           the job.
       </p>
       <p>Metadata submitted as part of the job submission is also included, if present.</p>
-        <dl class="dl-horizontal">
+       <div class="row">
+       <div class="col-xs-6">
+        <ul>
           {% for key, value in metadata.items %}
               {% if 'target' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ key|markup_metadata:value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ key|markup_metadata:value }}</li>
               {% elif 'deploy' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ value }}</li>
               {% elif 'omit.' in key %}
                   <!-- inline without test cases -->
               {% elif 'boot' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ value }}</li>
               {% elif 'test' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ key|markup_metadata:value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ key|markup_metadata:value }}</li>
+              {% elif 'parameters' in key %}
+                  <li><b>{{ key|metadata_key }}</b>:
+                  <ul>{% for paramkey, paramvalue in value.items %}
+                      <li>{{ paramkey }}: {{ paramvalue }}</li>
+                      {% endfor %}
+                  </ul></li>
               {% else %}
-                  <dt>{{ key }}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key }}</b>:
+                  {{ value }}</li>
               {% endif %}
           {% endfor %}
-        </dl>
+        </ul>
+        </div>
+        </div>
       </div>
     </div>
   {% endspaceless %}
