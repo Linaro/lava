@@ -238,7 +238,6 @@ class ExtractNfsRootfs(ExtractRootfs):
         self.summary = "unpack nfsrootfs, ready to apply lava overlay"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
-        self.rootdir = DISPATCHER_DOWNLOAD_DIR
 
     def validate(self):
         super(ExtractNfsRootfs, self).validate()
@@ -261,19 +260,17 @@ class ExtractNfsRootfs(ExtractRootfs):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
         connection = super(ExtractNfsRootfs, self).run(connection, args)
-        root = self.data['download_action'][self.param_key]['file']
-        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        untar_file(root, root_dir)
+
         if 'prefix' in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]['prefix']
             self.logger.warning("Adding '%s' prefix, any other content will not be visible." % prefix)
-            self.rootdir = os.path.join(root_dir, prefix)
-        else:
-            self.rootdir = root_dir
-        # sets the directory into which the overlay is unpacked and
-        # which is used in the substitutions into the bootloader command string.
-        self.set_common_data('file', self.file_key, self.rootdir)
-        self.logger.debug("Extracted %s to %s", self.file_key, self.rootdir)
+
+            # Grab the path already defined in super().run() and add the prefix
+            root_dir = self.get_common_data('file', self.file_key)
+            root_dir = os.path.join(root_dir, prefix)
+            # sets the directory into which the overlay is unpacked and which
+            # is used in the substitutions into the bootloader command string.
+            self.set_common_data('file', self.file_key, root_dir)
         return connection
 
 
