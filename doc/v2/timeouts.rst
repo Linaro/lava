@@ -129,7 +129,7 @@ take to inform other users who may be waiting for their jobs to start on the bus
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
    :start-after: job_name: QEMU pipeline, first job
-   :end-before: action:
+   :end-before: # ACTION_BLOCK
 
 .. _default_action_timeouts:
 

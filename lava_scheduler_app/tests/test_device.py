@@ -653,3 +653,31 @@ class TestTemplates(TestCaseWithFactory):
         test_template = prepare_jinja_template('staging-juno-01', data, system_path=False)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+
+    def test_qemu_cortex_a57(self):
+        data = """{% extends 'qemu.jinja2' %}
+{% set memory = 2048 %}
+{% set mac_addr = '52:54:00:12:34:59' %}
+{% set arch = 'arm64' %}
+{% set base_guest_fs_size = 2048 %}
+        """
+        job_ctx = {
+            'arch': 'amd64',
+            'boot_root': '/dev/vda',
+            'extra_options': ['-global', 'virtio-blk-device.scsi=off', '-smp', 1, '-device', 'virtio-scsi-device,id=scsi']
+        }
+        self.assertTrue(self.validate_data('staging-qemu-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data, system_path=False)
+        rendered = test_template.render(**job_ctx)
+        self.assertIsNotNone(rendered)
+        template_dict = yaml.load(rendered)
+        options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
+        self.assertIn('-cpu cortex-a57', options)
+        self.assertNotIn('-global', options)
+        extra = template_dict['actions']['boot']['methods']['qemu']['parameters']['extra']
+        self.assertIn('-global', extra)
+        self.assertNotIn('-cpu cortex-a57', extra)
+        options.extend(extra)
+        self.assertIn('-global', options)
+        self.assertIn('-cpu cortex-a57', options)

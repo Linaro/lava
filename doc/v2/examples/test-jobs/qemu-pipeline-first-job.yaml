@@ -23,6 +23,7 @@ metadata:
   docs-source: first-job
   docs-filename: qemu-pipeline-first-job.yaml
 
+# ACTION_BLOCK
 actions:
 - deploy:
     timeout:
@@ -35,6 +36,7 @@ actions:
         compression: gz
     os: debian
 
+# BOOT_BLOCK
 - boot:
     method: qemu
     media: tmpfs

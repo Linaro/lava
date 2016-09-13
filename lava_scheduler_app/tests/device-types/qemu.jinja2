@@ -32,6 +32,7 @@ actions:
 {% elif arch == 'i386' %}
             qemu-system-x86
 {% endif %}
+          # used by installers to relate to the empty target device
           boot_options:
 {% if arch == 'arm64' or arch == 'aarch64' %}
             {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
@@ -48,12 +49,12 @@ actions:
 {% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
           - -cpu {{ cpu|default('cortex-a57') }}
           - -machine {{ machine|default('virt') }}
-    {% if vga %}
+{% if vga %}
           - {{ vga }}
-    {% endif %}
-    {% if serial %}
+{% endif %}
+{% if serial %}
           - {{ serial }}
-    {% endif %}
+{% endif %}
 {% else %}
           - -cpu host
           - -enable-kvm
@@ -62,5 +63,8 @@ actions:
           - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
           - -m {{ memory|default(512) }}
           - -monitor {{ monitor|default('none') }}
+{% if extra_options %}
+          extra: {{ extra_options }}
+{% endif %}
 {% endblock -%}
 {% endblock %}

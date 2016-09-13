@@ -68,6 +68,8 @@ Each test job needs a list of actions, comprising of ``deploy``, ``boot`` and
 * **test** - specify the repositories to clone which will provide the scripts
   which will run the test you want to execute for this job.
 
+.. _first_deploy_action_qemu:
+
 Deploy action for QEMU
 ======================
 
@@ -83,8 +85,9 @@ image which will be substituted into the option.
 
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
-   :start-after: docs-filename: qemu-pipeline-first-job.yaml
-   :end-before: - boot:
+   :start-after: ACTION_BLOCK
+   :end-before: BOOT_BLOCK
+
 
 The other role of a deploy action is to prepare the overlay which will contain
 the test shell scripts and repositories. These will be added to the booted

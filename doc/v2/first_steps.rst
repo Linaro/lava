@@ -14,6 +14,7 @@ First Steps Using LAVA V2
    :maxdepth: 1
 
    standard-qemu-jessie.rst
+   qemu_options.rst
    first-installation.rst
    installing_on_debian.rst
    first-devices.rst
