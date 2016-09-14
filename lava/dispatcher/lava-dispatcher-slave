@@ -60,6 +60,7 @@ from zmq.utils.strtypes import b, u
 # timeouts (in seconds)
 # zmq socket send high water mark
 TIMEOUT = 5
+JOBS_CHECK_INTERVAL = 5
 SEND_QUEUE = 10
 
 # FIXME: This is a temporary fix until the overlay is sent to the master
@@ -547,28 +548,41 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
             # anything.
 
 
-def check_job_status(jobs, sock):
+def check_job_status(jobs, sock, last_jobs_check):
     """Look for finished jobs
 
     :param jobs: the list of jobs
     :param sock: the zmq socket
+    :param last_jobs_check: the last time the job where checked
     """
-    # Loop on all running jobs
-    for job_id in [i for i in jobs.keys() if jobs[i].is_running]:
-        ret = jobs[job_id].proc.poll()
-        # Job has finished
-        if ret is not None:
-            LOG.info("[%d] Job END", job_id)
-            job_status = jobs[job_id].proc.returncode
-            errs = ''
-            if job_status:
-                LOG.info("[%d] Job returned non-zero", job_id)
-                errs = jobs[job_id].errors()
-                if errs:
-                    LOG.exception(errs)
+    now = time.time()
+    if now - last_jobs_check < JOBS_CHECK_INTERVAL:
+        return last_jobs_check
 
-            jobs[job_id].is_running = False
+    # Loop on all running jobs
+    for job_id in jobs.keys():
+        if jobs[job_id].is_running:
+            ret = jobs[job_id].proc.poll()
+            # Job has finished
+            if ret is not None:
+                LOG.info("[%d] Job END", job_id)
+                job_status = jobs[job_id].proc.returncode
+                errs = jobs[job_id].errors()
+                if job_status:
+                    LOG.info("[%d] Job returned non-zero", job_id)
+                    if errs:
+                        LOG.exception(errs)
+
+                jobs[job_id].is_running = False
+                send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+
+        else:
+            # Re-send the END message (the server hasn't answered yet)
+            job_status = jobs[job_id].proc.returncode
+            errs = jobs[job_id].errors()
+            LOG.info("[%d] Job END (resend)", job_id)
             send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+    return now
 
 
 def ping_master(master, sock, timeout):
@@ -656,6 +670,7 @@ def main():
     # Collect every server data and list of jobs
     master = Master()
     jobs = {}
+    last_jobs_check = time.time()
 
     # Connect to the master and wait for the reply
     LOG.info("Connecting to master as <%s>", host_name)
@@ -679,7 +694,7 @@ def main():
     while True:
         listen_to_master(master, jobs, poller, pipe_r, args.socket_addr,
                          args.master_cert, args.slave_cert, sock, timeout)
-        check_job_status(jobs, sock)
+        last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
         ping_master(master, sock, timeout)
 
 
