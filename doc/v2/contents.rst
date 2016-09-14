@@ -57,6 +57,7 @@ Introduction to Results
    :maxdepth: 3
 
    results-intro.rst
+   lava-queries-charts.rst
 
 .. _contents_admin_guide:
 
