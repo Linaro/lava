@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, check_ssh_identity_file
+from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.network import rpcinfo_nfs
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
@@ -131,7 +131,7 @@ class OverlayAction(DeployAction):
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
-        tmp_dir = mkdtemp()
+        tmp_dir = self.mkdtemp()
         namespace = self.parameters.get('namespace', None)
         if namespace:
             if namespace not in get_test_action_namespaces(self.job.parameters):

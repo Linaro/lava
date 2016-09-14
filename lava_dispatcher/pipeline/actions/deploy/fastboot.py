@@ -31,7 +31,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, copy_to_lxc
+from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.utils.constants import (
     DISPATCHER_DOWNLOAD_DIR,
     FASTBOOT_REBOOT_TIMEOUT,
@@ -93,11 +93,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.name = "fastboot-deploy"
         self.description = "download files and deploy using fastboot"
         self.summary = "fastboot deployment"
-        self.fastboot_dir = DISPATCHER_DOWNLOAD_DIR
-        try:
-            self.fastboot_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        except OSError:
-            pass
 
     def validate(self):
         super(FastbootAction, self).validate()
@@ -124,6 +119,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.internal_pipeline.add_action(LxcAddDeviceAction())
 
         image_keys = list(parameters['images'].keys())
+        fastboot_dir = self.mkdtemp()
         # Add the required actions
         checks = [('image', FastbootUpdateAction),
                   ('ptable', ApplyPtableAction),
@@ -134,7 +130,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                   ('vendor', ApplyVendorAction)]
         for (key, cls) in checks:
             if key in image_keys:
-                download = DownloaderAction(key, self.fastboot_dir)
+                download = DownloaderAction(key, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
                 self.internal_pipeline.add_action(download)
                 self.internal_pipeline.add_action(cls())

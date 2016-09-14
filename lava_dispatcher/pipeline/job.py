@@ -18,8 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import atexit
 import logging
+import errno
+import shutil
+import tempfile
 import time
+import os
 import yaml
 
 from lava_dispatcher.pipeline.action import Action, JobError, InfrastructureError
@@ -27,6 +32,7 @@ from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-im
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -64,6 +70,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.timeout = None
         self.protocols = []
         self.compatibility = 2
+        # Root directory for the job tempfiles
+        self.tmp_dir = None
         # We are now able to create the logger when the job is started,
         # allowing the functions that are called before run() to log.
         # The validate() function is no longer called on the master so we can
@@ -105,6 +113,39 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 'job': self.parameters,
                 'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
+
+    def mkdtemp(self, action_name):
+        """
+        Create a tmp directory in DISPATCHER_DOWNLOAD_DIR/{job_id}/ because
+        this directory will be removed when the job finished, making cleanup
+        easier.
+        """
+        if self.tmp_dir is not None:
+            # Use the cached version
+            base_dir = self.tmp_dir
+        else:
+            # Try to create the directory.
+            base_dir = os.path.join(DISPATCHER_DOWNLOAD_DIR, str(self.job_id))
+            try:
+                os.makedirs(base_dir, mode=0o755)
+
+                def clean():
+                    self.logger.info("Cleanup: removing %s" % base_dir)
+                    shutil.rmtree(base_dir)
+                self.logger.info("Root tmp directory created at %s", base_dir)
+                atexit.register(clean)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    # When running unit tests
+                    base_dir = tempfile.mkdtemp(prefix='pipeline-')
+                    atexit.register(shutil.rmtree, base_dir)
+            # Save the path for the next calls
+            self.tmp_dir = base_dir
+
+        # Create the sub-directory
+        tmp_dir = tempfile.mkdtemp(prefix=action_name + '-', dir=base_dir)
+        os.chmod(tmp_dir, 0o755)
+        return tmp_dir
 
     def validate(self, simulate=False):
         """

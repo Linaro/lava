@@ -92,13 +92,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
-        # allow root to compare the path (with the mkdtemp added)
-        paths = {action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')}
         self.assertNotIn('=', tftpd_dir())
-        self.assertIn(
-            tftpd_dir(),
-            [item for item in paths][0]
-        )
 
     def test_device_bbb(self):
         factory = Factory()

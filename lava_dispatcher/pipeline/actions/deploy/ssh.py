@@ -22,7 +22,6 @@
 import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import Pipeline, Action
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
@@ -79,11 +78,6 @@ class ScpOverlay(DeployAction):
         self.description = "prepare overlay and scp to device"
         self.section = 'deploy'
         self.items = []
-        try:
-            self.scp_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        except OSError:
-            # allows for unit tests to operate as normal user.
-            self.suffix = '/'
 
     def validate(self):
         super(ScpOverlay, self).validate()
@@ -100,7 +94,7 @@ class ScpOverlay(DeployAction):
         self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
-                download = DownloaderAction(item, path=self.scp_dir)
+                download = DownloaderAction(item, path=self.mkdtemp())
                 download.max_retries = 3
                 self.internal_pipeline.add_action(download, parameters)
                 self.set_common_data('scp', item, True)

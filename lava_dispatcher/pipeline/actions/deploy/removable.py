@@ -41,7 +41,6 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import (
-    mkdtemp,
     tftpd_dir,
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
@@ -206,12 +205,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.description = "Deploy image to mass storage"
         self.summary = "write image to storage"
         self.suffix = None
-        try:
-            self.image_path = mkdtemp(basedir=tftpd_dir())
-        except OSError:
-            self.suffix = '/'
-            self.image_path = mkdtemp()  # unit test support
-        self.suffix = os.path.basename(self.image_path)
+        self.image_path = None
 
     def validate(self):
         super(MassStorage, self).validate()
@@ -225,8 +219,6 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
-        if self.suffix:
-            self.data[self.name].setdefault('suffix', self.suffix)
         self.data[self.name].setdefault('suffix', os.path.basename(self.image_path))
 
     def populate(self, parameters):
@@ -238,6 +230,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         This also allows the use of local file:// locations which are visible to the dispatcher
         but not the device.
         """
+        self.image_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef

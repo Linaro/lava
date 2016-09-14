@@ -32,7 +32,10 @@ from collections import OrderedDict
 from contextlib import contextmanager
 
 from lava_dispatcher.pipeline.log import YAMLLogger
-from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION, ACTION_TIMEOUT
+from lava_dispatcher.pipeline.utils.constants import (
+    ACTION_TIMEOUT,
+    OVERRIDE_CLAMP_DURATION
+)
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -834,6 +837,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.logger.debug("%s: Wait for prompt %s. %s seconds",
                           self.name, connection.prompt_str, int(self.connection_timeout.duration))
         return connection.wait()
+
+    def mkdtemp(self):
+        return self.job.mkdtemp(self.name)
 
 
 class Timeout(object):

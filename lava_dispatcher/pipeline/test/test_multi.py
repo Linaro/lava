@@ -160,11 +160,3 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(self.job)
         description_ref = pipeline_reference('uboot-multiple.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
-        deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        downloads = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']
-        for download in downloads:
-            if download.key == 'nfsrootfs':
-                # if using root, the path would be appended.
-                self.assertIn(DISPATCHER_DOWNLOAD_DIR, download.path)
-            else:
-                self.assertIn(tftpd_dir(), download.path)

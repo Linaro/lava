@@ -72,7 +72,7 @@ class ApplyOverlayGuest(Action):
     def run(self, connection, args=None):
         if not self.data['compress-overlay'].get('output'):
             raise RuntimeError("Unable to find the overlay")
-        guest_dir = mkdtemp()
+        guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_common_data('guest', 'filename', guest_file)
         blkid = prepare_guestfs(
@@ -163,6 +163,8 @@ class ApplyOverlayTftp(Action):
             overlay_file = self.data['compress-overlay'].get('output')
             self.logger.info("Applying overlay to persistent NFS")
             # need to mount the persistent NFS here.
+            # We can't use self.mkdtemp() here because this directory should
+            # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
             try:
                 subprocess.check_output(['mount', '-t', 'nfs', nfs_url, directory])
@@ -222,7 +224,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
             return connection
         connection = super(ExtractRootfs, self).run(connection, args)
         root = self.data['download_action'][self.param_key]['file']
-        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        root_dir = self.mkdtemp()
         untar_file(root, root_dir)
         self.set_common_data('file', self.file_key, root_dir)
         self.logger.debug("Extracted %s to %s", self.file_key, root_dir)
@@ -342,7 +344,7 @@ class ExtractRamdisk(Action):
             return connection
         connection = super(ExtractRamdisk, self).run(connection, args)
         ramdisk = self.data['download_action']['ramdisk']['file']
-        ramdisk_dir = mkdtemp()
+        ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk, 0o755)
         compression = self.parameters['ramdisk'].get('compression', None)

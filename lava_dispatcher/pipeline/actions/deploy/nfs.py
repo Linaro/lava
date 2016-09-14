@@ -33,7 +33,6 @@ from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
     ApplyOverlayTftp,
 )
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
@@ -88,12 +87,6 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.name = "nfs-deploy"
         self.description = "deploy nfsrootfs"
         self.summary = "NFS deployment"
-        self.download_dir = DISPATCHER_DOWNLOAD_DIR
-        try:
-            self.download_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        except OSError:
-            # allows for unit tests to operate as normal user.
-            self.suffix = '/'
 
     def validate(self):
         super(NfsAction, self).validate()
@@ -105,13 +98,14 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
 
     def populate(self, parameters):
+        download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'nfsrootfs' in parameters:
-            download = DownloaderAction('nfsrootfs', path=self.download_dir)
+            download = DownloaderAction('nfsrootfs', path=download_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         if 'modules' in parameters:
-            download = DownloaderAction('modules', path=self.download_dir)
+            download = DownloaderAction('modules', path=download_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay

@@ -31,7 +31,6 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
@@ -44,9 +43,9 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        path = mkdtemp()
+        path = self.mkdtemp()
         if 'uefi' in parameters:
-            uefi_path = mkdtemp()
+            uefi_path = self.mkdtemp()
             download = DownloaderAction('uefi', uefi_path)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
@@ -76,7 +75,7 @@ class DeployMonitoredAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        path = mkdtemp()
+        path = self.mkdtemp()
         for image in parameters['images'].keys():
             if image != 'yaml_line':
                 download = DownloaderAction(image, path)
