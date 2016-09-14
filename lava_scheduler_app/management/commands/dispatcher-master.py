@@ -296,29 +296,20 @@ class Command(BaseCommand):
             self.controler.send_multipart([hostname, 'PONG'])
             self.dispatcher_alive(hostname)
 
-        elif action == "ERROR":
-            try:
-                job_id = int(msg[2])
-                error_msg = str(msg[3])
-            except (IndexError, ValueError):
-                self.logger.error("Invalid message from <%s> '%s'", hostname, msg[:50])
-                return False
-            self.logger.error("[%d] Error: %s", job_id, error_msg)
-
-            self.dispatcher_alive(hostname)
-
         elif action == 'END':
-            status = TestJob.COMPLETE
             try:
                 job_id = int(msg[2])
                 job_status = int(msg[3])
+                error_msg = msg[4]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
             if job_status:
-                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
                 status = TestJob.INCOMPLETE
+                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
+                self.logger.error("[%d] Error: %s", job_id, error_msg)
             else:
+                status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
             try:
                 with transaction.atomic():
