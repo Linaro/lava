@@ -922,7 +922,7 @@ class Query(models.Model):
 
                 # Handle conditions with choice fields.
                 condition_field_obj = condition.table.model_class()._meta.\
-                    get_field_by_name(condition.field)[0]
+                    get_field(condition.field)
                 if condition_field_obj.choices:
                     choices_reverse = dict(
                         (value, key) for key, value in dict(
@@ -1323,10 +1323,10 @@ class QueryCondition(models.Model):
 
 def _get_foreign_key_model(model, fieldname):
     """ Returns model if field is a foreign key, otherwise None. """
-    # FIXME: RemovedInDjango110Warning: 'get_field_by_name is an unofficial API
-    # that has been deprecated. You may be able to replace it with 'get_field()'
-    field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
-    if not m2m and direct and isinstance(field_object, models.ForeignKey):
+    field_object = model._meta.get_field(fieldname)
+    direct = not field_object.auto_created or field_object.concrete
+    if not field_object.many_to_many and direct and \
+       isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
     return None
 

@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<h1>Query {{ query.name }} <small><a href="{% url 'lava_results_app.views.query.views.query_display' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Results</a></small></h1>
+<h1>Query {{ query.name }} <small><a href="{% url 'lava.results.query_display' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Results</a></small></h1>
 
 <div class="row">
   <div class="col-md-6">
@@ -53,11 +53,11 @@
 
       {% if query.query_group %}
       <div id="group_link" class="group-link">
-	<a href="{% url 'lava_results_app.views.query.views.query_list' %}#{{ query.query_group|iriencode }}">Group link</a>
+	<a href="{% url 'lava.results.query_list' %}#{{ query.query_group|iriencode }}">Group link</a>
       </div>
       {% else %}
       <div id="group_link" class="group-link" style="display: none;">
-	<a href="{% url 'lava_results_app.views.query.views.query_list' %}#">Group link</a>
+	<a href="{% url 'lava.results.query_list' %}#">Group link</a>
       </div>
       {% endif %}
       &nbsp;&nbsp;
@@ -165,7 +165,7 @@
 	</a>
       </td>
       <td>
-	<a class="glyphicon glyphicon-remove" aria-hidden="true" href="{% url 'lava_results_app.views.query.views.query_remove_condition' query.owner.username query.name condition.id %}">
+	<a class="glyphicon glyphicon-remove" aria-hidden="true" href="{% url 'lava.results.query_remove_condition' query.owner.username query.name condition.id %}">
 	</a>
       </td>
     </tr>
@@ -226,7 +226,7 @@
 {% if query.is_published %}
 <script>
   $("#query_group").editable(
-  "{% url 'lava_results_app.views.query.views.query_add_group' username=query.owner.username name=query.name %}",
+  "{% url 'lava.results.query_add_group' username=query.owner.username name=query.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -249,14 +249,14 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.query.views.query_group_list' %}',
+        source: '{% url 'lava.results.query_group_list' %}',
         minLength: 2,
       });
   });
 
 
   $("#group").editable(
-  "{% url 'lava_results_app.views.query.views.query_select_group' username=query.owner.username name=query.name %}",
+  "{% url 'lava.results.query_select_group' username=query.owner.username name=query.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -270,7 +270,7 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.query.views.get_query_group_names' %}',
+        source: '{% url 'lava.results.get_query_group_names' %}',
         minLength: 1,
       });
   });
