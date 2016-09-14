@@ -546,6 +546,16 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC structures of job details, provided
         the user is authenticated with an username and token.
+
+        The elements available in XML-RPC structure include:
+        _results_link, _state, submitter_id, submit_token_id, is_pipeline,
+        id, failure_comment, multinode_definition, user_id, vmgroup_definition,
+        priority, _actual_device_cache, vm_group, original_definition,
+        status, health_check, description, admin_notifications, start_time,
+        target_group, visibility, requested_device_id, pipeline_compatibility,
+        submit_time, is_public, _old_status, actual_device_id, definition,
+        sub_id, requested_device_type_id, _results_bundle_id, end_time,
+        group_id
         """
         self._authenticate()
         if not job_id:
