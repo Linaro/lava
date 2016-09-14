@@ -139,14 +139,11 @@ class Job(object):
         environ.update(conf.get("overrides", {}))
         return environ
 
-    def log_errors(self):
-        err_file = os.path.join(self.base_dir, "err")
-        msg = None
-        if os.stat(err_file).st_size != 0:
-            with open(err_file, 'r') as errlog:
-                msg = errlog.read()
-            LOG.exception(msg)
-        return msg
+    def errors(self):
+        try:
+            return open(os.path.join(self.base_dir, "err"), 'r').read()
+        except IOError:
+            return ''
 
     def start(self):
         """Start the process."""
@@ -563,14 +560,15 @@ def check_job_status(jobs, sock):
         if ret is not None:
             LOG.info("[%d] Job END", job_id)
             job_status = jobs[job_id].proc.returncode
+            errs = ''
             if job_status:
                 LOG.info("[%d] Job returned non-zero", job_id)
-                errs = jobs[job_id].log_errors()
+                errs = jobs[job_id].errors()
                 if errs:
-                    send_multipart_u(sock, ["ERROR", str(job_id), str(errs)])
+                    LOG.exception(errs)
 
             jobs[job_id].is_running = False
-            send_multipart_u(sock, ["END", str(job_id), str(job_status)])
+            send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
 
 
 def ping_master(master, sock, timeout):
