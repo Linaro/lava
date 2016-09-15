@@ -224,6 +224,12 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b(d) for d in data])
 
 
+def send_end(sock, job_id, job):
+    job_status = job.proc.returncode if job.proc is not None else 0
+    errs = job.errors()
+    send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+
+
 def create_zmq_context(master_uri, hostname, send_queue, encrypt,
                        master_cert, slave_cert):
     """Create the ZMQ context and necessary accessories.
@@ -245,6 +251,7 @@ def create_zmq_context(master_uri, hostname, send_queue, encrypt,
     context = zmq.Context()
     sock = context.socket(zmq.DEALER)
     sock.setsockopt(zmq.IDENTITY, b(hostname))
+    # TODO: find a better way as this does block the loop!
     sock.setsockopt(zmq.SNDHWM, send_queue)
 
     # If needed, load certificates
@@ -463,7 +470,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                     send_multipart_u(sock, ["START_OK", str(job_id)])
                 else:
                     LOG.warning("[%d] Job has already ended", job_id)
-                    send_multipart_u(sock, ["END", str(job_id), "0"])
+                    send_end(sock, job_id, jobs[job_id])
             else:
                 jobs[job_id] = Job(job_id, job_definition, device_definition,
                                    env, socket_addr, master_cert, slave_cert,
@@ -496,7 +503,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
             # Send the END message anyway
-            send_multipart_u(sock, ["END", str(job_id), "0"])
+            send_end(sock, job_id, jobs[job_id])
 
             # Mark the master as alive
             master.received_msg()
@@ -529,14 +536,14 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                     send_multipart_u(sock, ["START_OK", str(job_id)])
                 else:
                     # The job has already ended
-                    send_multipart_u(sock, ["END", str(job_id), "0"])
+                    send_end(sock, job_id, jobs[job_id])
             else:
                 # Unknown job: return END anyway
                 LOG.debug(
                     "[%d] Unknown job, sending END after STATUS", job_id)
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
-                send_multipart_u(sock, ["END", str(job_id), "0"])
+                send_end(sock, job_id, jobs[job_id])
 
             # Mark the master as alive
             master.received_msg()
@@ -578,10 +585,8 @@ def check_job_status(jobs, sock, last_jobs_check):
 
         else:
             # Re-send the END message (the server hasn't answered yet)
-            job_status = jobs[job_id].proc.returncode
-            errs = jobs[job_id].errors()
             LOG.info("[%d] Job END (resend)", job_id)
-            send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+            send_end(sock, job_id, jobs[job_id])
     return now
 
 
