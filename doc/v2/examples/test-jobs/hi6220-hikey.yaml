@@ -1,0 +1,110 @@
+device_type: hi6220-hikey
+job_name: lxc-hi6220-hikey
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: hi6220-hikey.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-hikey-test
+    template: debian
+    distribution: debian
+    release: sid
+    arch: amd64
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'hikey:/ $'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 15
+    to: fastboot
+    namespace: droid
+    connection: lxc
+    images:
+      ptable:
+        url: http://builds.96boards.org/snapshots/reference-platform/components/uefi/latest/release/hikey/ptable-aosp-8g.img
+      boot:
+        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/boot.img.tar.xz
+        compression: xz
+        archive: tar
+      cache:
+        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/cache.img.tar.xz
+        compression: xz
+        archive: tar
+      userdata:
+        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/userdata.img.tar.xz
+        compression: xz
+        archive: tar
+      system:
+        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/system.img.tar.xz
+        compression: xz
+        archive: tar
+    os: debian
+
+- boot:
+    namespace: droid
+    connection: serial
+    prompts:
+    - 'root@(.*):/#'
+    - 'hikey:/ $'
+    timeout:
+      minutes: 15
+    method: uefi-menu
+    commands: fastboot
+
+- test:
+    namespace: tlxc
+    connection: lxc
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: check-devices
+          description: "LXC dev list"
+        install:
+          deps:
+          - nmap
+          - gawk
+        run:
+          steps:
+          - /sbin/ifconfig
+          - nmap -n -sn 10.15.63.0/24
+      name: lxc-dev-inline
+      path: inline/lxc-dev.yaml
+    - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+      from: git
+      path: debian/get-adb-serial.yaml
+      name: get-adb-serial

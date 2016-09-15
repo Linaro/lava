@@ -444,6 +444,8 @@ Most settings for the instance are handled inside django using
 .. seealso:: :ref:`branding`, :ref:`django_debug_toolbar` and
    :ref:`developer_access_to_django_shell`
 
+.. _pylint_tool:
+
 Pylint
 ******
 
@@ -457,14 +459,8 @@ all the LAVA component code.
 
 ``pylint`` does need to be used with some caution, the messages produced
 should not be followed blindly. It can be very useful for spotting unused
-imports, unused variables and other issues. One notable problem is with
-``logging-not-lazy`` as there can be times when lazy logging can result
-in out of date or invalid information being logged. This is a particular
-problem when passing variables like dictionaries and lists to the logger
-in the dispatcher as these later need to be turned into YAML.
-
-To simplify the pylint output, some warnings are recommended to be
-disabled::
+imports, unused variables and other issues. To simplify the pylint output,
+some warnings are recommended to be disabled::
 
  $ pylint -d line-too-long -d missing-docstring
 

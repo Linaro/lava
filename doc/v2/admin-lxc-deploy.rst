@@ -1,3 +1,5 @@
+.. index:: admin deploy lxc
+
 .. _lxc_deploy:
 
 Deploying LXC devices

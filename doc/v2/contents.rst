@@ -53,6 +53,7 @@ First steps using LAVA V2
    explain_first_job
    lava-tool
    standard-qemu-jessie
+   standard-qemu-kernel
    standard-armmp-ramdisk-bbb
 
 .. _contents_first_steps_installing:
@@ -104,7 +105,8 @@ Writing tests for LAVA
    healthchecks
    hacking-session
    qemu_options
-   dispatcher-actions2
+   dispatcher-actions
+   deploy-lxc
    multinode
    writing-multinode
    multinodeapi
@@ -150,10 +152,10 @@ LAVA administration guide
    hiddentypes
    bootimages
    pdudaemon
+   admin-lxc-deploy
    nexus-deploy
    ipmi-pxe-deploy
    ipxe
-   lxc-deploy
    proxy
    hijack-user
    migrate-lava

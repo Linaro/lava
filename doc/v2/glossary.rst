@@ -124,6 +124,15 @@ Glossary of terms
     :term:`health check` defined. Devices with the same device type will run
     the same health check at regular intervals. See :ref:`device_types`.
 
+  developer image
+    A build of Android which, when deployed to a device, means that the device
+    **is visible** to ``adb``. Devices configured this way will be able to have
+    the image replaced using any machine, just be connecting a suitable cable,
+    so these images are not typically deployed onto hardware which will be sold
+    to the customer without having this image replaced with a production image.
+
+    .. seealso:: :ref:`lava_lxc_protocol_android`
+
   dispatcher
     A machine to which multiple devices are connected. The dispatcher has
     ``lava-dispatcher`` installed and passes the commands to the device and
@@ -317,6 +326,13 @@ Glossary of terms
     submitted job and if a health check is required, it will **always** run
     before any other jobs. Priority only has any effect while the job is queued
     as ``Submitted``.
+
+  production image
+    A build of Android which, when deployed to a device, means that the device is
+    **not** visible to ``adb``. This is typically how a device is configured when
+    first sold to the consumer.
+
+    .. seealso:: :ref:`lava_lxc_protocol_android`
 
   prompts
    A list of prompt strings which the test writer needs to specify in advance

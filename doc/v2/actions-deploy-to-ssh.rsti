@@ -1,0 +1,33 @@
+.. index:: deploy to ssh
+
+.. _deploy_to_ssh:
+
+to: ssh
+*******
+
+SSH methods can support two types of deployment.
+
+.. seealso:: :ref:`primary_connection` and :ref:`ssh_as_the_primary_connection`
+   as an example of the primary connection.
+
+.. seealso:: :ref:`secondary_connection`
+
+.. index:: deploy to ssh connection
+
+.. _deploy_to_ssh_connection:
+
+connection
+==========
+
+.. index:: deploy to ssh protocols
+
+.. _deploy_to_ssh_protocols:
+
+protocols
+=========
+
+
+.. include:: examples/test-jobs/mustang-ssh-guest.yaml
+   :code: yaml
+   :start-after: DEPLOY_SSH_BLOCK
+   :end-before: # BOOT_HOST_BLOCK

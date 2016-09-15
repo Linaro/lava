@@ -235,4 +235,3 @@ fixed IP address, e.g. for LAVA installations on laptops and other devices
 which change network configuration between jobs. The interfaces in the
 list should include the interface which a remote worker can use to
 serve files to all devices connected to this worker.
-

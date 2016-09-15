@@ -1,0 +1,393 @@
+.. index:: deploy to tftp
+
+.. _deploy_to_tftp:
+
+to: tftp
+********
+
+Used to support TFTP deployments, e.g. using U-Boot. Files are downloaded to a
+temporary directory in the TFTP tree and the filenames are substituted into the
+bootloader commands specified in the device configuration or overridden in the
+job. The files to download typically include a kernel but can also include any
+file which the substitution commands need for this deployment. URL support is
+handled by the python ``requests`` module.
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: actions:
+     :end-before: kernel:
+
+.. _deploy_to_tftp_kernel:
+
+kernel
+======
+
+To deploy images using TFTP, arguments will be downloaded to a configured tftp
+directory.
+
+.. _deploy_to_tftp_kernel_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: to: tftp
+     :end-before: ramdisk:
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_tftp_dtb:
+
+dtb
+===
+
+(Device Tree Blob).
+
+.. _deploy_to_tftp_dtb_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: os: oe
+     :end-before: # BOOT_BLOCK
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_tftp_modules:
+
+modules
+=======
+
+A tarball of kernel modules for the supplied kernel. The file **must** be a tar
+file and the compression method **must** be specified. If the kernel requires
+these modules to be able to locate the rootfs, e.g. when using NFS or if
+certain required filesystem drivers are only available as modules, the ramdisk
+can be unpacked and the modules added. Modules may also be required to run
+tests within the ramdisk itself.
+
+.. _deploy_to_tftp_modules_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: add-header: u-boot
+     :end-before: # despite this being
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_tftp_modules_compression:
+
+compression
+-----------
+
+The compression method **must** be specified so that the modules can be
+unpacked.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_tftp_ramdisk:
+
+ramdisk
+=======
+
+The ramdisk needs to be unpacked and modified in either of the following two
+use cases:
+
+* the lava test shell is expected to run inside the ramdisk, or
+
+* the deployment needs modules to be added to the ramdisk, for example to allow
+  the device to load the network driver to be able to locate the NFS.
+
+To unpack the ramdisk, the test writer needs to specify details about how the
+ramdisk is prepared and used. If these details are not provided, the ramdisk
+will not be unpacked (potentially causing the test to fail in the above two use
+cases).
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: vmlinuz
+     :end-before: modules:
+
+.. _deploy_to_tftp_ramdisk_url:
+
+url
+---
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
+     :code: yaml
+     :start-after: add-header: u-boot
+     :end-before: # despite this being
+
+.. _deploy_to_tftp_ramdisk_compression:
+
+compression
+-----------
+
+The compression method **must** be specified so that the modules can be
+unpacked.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. index:: ramdisk header
+
+.. _deploy_to_tftp_ramdisk_header:
+
+header
+------
+
+If a header is already applied, the ``header`` value **must** specify the type
+of header, e.g. ``u-boot``. This header will be removed before unpacking, ready
+for the LAVA overlay files.
+
+.. index:: ramdisk add-header
+
+.. _deploy_to_tftp_ramdisk_add_header:
+
+add-header
+----------
+
+If a header needs to be applied after any LAVA overlay files are added to the
+ramdisk, the ``add-header`` value must specify the type of header to add, e.g.
+``u-boot``.
+
+.. _deploy_to_tftp_nfsrootfs:
+
+nfsrootfs
+=========
+
+.. include:: examples/test-jobs/standard-armmp-nfs-bbb.yaml
+     :code: yaml
+     :start-after: to: tftp
+     :end-before: os: debian
+
+.. _deploy_to_tftp_nfsrootfs_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_tftp_nfsrootfs_compression:
+
+compression
+-----------
+
+The NFS is unpacked into a temporary directory onto the dispatcher in a
+location supported by NFS exports. The compression method **must** be specified
+so that the NFS can be unpacked.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_tftp_nfs_url:
+
+nfs_url
+=======
+
+A persistent NFS URL can be used instead of a compressed tarball. See
+:ref:`persistence` for the limitations of persistent storage. The creation and
+maintenance of the persistent location is **solely** the responsibility of the
+test writer. The ``nfs_url`` **must** include the IP address of the NFS server
+and the full path to the directory which contains the root filesystem,
+separated by a single colon. In the YAML, all values containing a colon
+**must** be quoted::
+
+ nfs_url: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
+
+.. warning:: LAVA does not shut down the device or attempt to unmount the NFS
+   filesystem when the job finishes; the device is simply powered off. The test
+   writer needs to ensure that any background processes started by the test
+   have been stopped before the test finishes.
+
+.. index:: deploy to tmpfs
+
+.. _deploy_to_tmpfs:
+
+to: tmpfs
+*********
+
+Used to support QEMU device types which run on a dispatcher. The file is
+downloaded to a temporary directory and made available as one or more images,
+appending specified arguments to a predetermined QEMU command line:
+
+.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+     :code: yaml
+     :start-after: actions:
+     :end-before: # BOOT_BLOCK
+
+.. _deploy_to_tmpfs_images:
+
+images
+======
+
+To deploy images using QEMU, arguments need to be prepared and then modified to
+include the downloaded location of the image files. The test writer needs to
+specify the format of the image and other image-specific arguments for QEMU
+along with a placeholder **label** which is unique for this test job.
+
+.. _deploy_to_tmpfs_images_label:
+
+label
+-----
+
+The label is arbitrary text, used to match the other parameters to the
+placeholder so that the final value can be substituted in place of the
+placeholder.
+
+In the example, the label is ``rootfs`` and the ``url`` includes the matching
+placeholder ``{rootfs}``. If the final location of the downloaded image
+is ``/tmp/tmp.rG542e/large-stable-6.img`` then the final argument passed to
+QEMU would include ``-drive format=raw,file=/tmp/tmp.rG542e/large-stable-6.img``.
+
+.. note:: Take note of the syntax. Single brace before and after the label and
+   **no whitespace**. This is test job syntax, not Jinja.
+
+.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+     :code: yaml
+     :start-after: to: tmpfs
+     :end-before: url:
+
+.. index:: image_arg
+
+.. _deploy_to_tmpfs_images_image_arg:
+
+image_arg
+^^^^^^^^^
+
+The ``image_arg`` determines how QEMU handles the image. The arguments **must**
+include a placeholder :ref:`deploy_to_tmpfs_images_label` which exactly matches
+the key of the same block in the list of images. The actual location of the
+downloaded file will then replace the placeholder. Multiple images can be
+supplied but the test writer is responsible for ensuring that the ``image_arg``
+make sense to QEMU.
+
+.. _deploy_to_tmpfs_images_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_tmpfs_images_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified if any
+``test`` actions are defined in the job.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_tmpfs_images_md5sum:
+
+md5sum
+^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.
+
+.. _deploy_to_tmpfs_images_sha256sum:
+
+sha256sum
+^^^^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+
+.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+     :code: yaml
+     :start-after: rootfs:
+     :end-before: os: debian
+

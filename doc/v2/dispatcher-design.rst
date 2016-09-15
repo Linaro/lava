@@ -1270,6 +1270,8 @@ There are fewer requirements of a device supporting secondary connections:
    the connection and turn off password authentication on the connection, for
    example.
 
+.. _ssh_as_the_primary_connection:
+
 SSH as the primary connection
 -----------------------------
 
