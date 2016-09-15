@@ -34,6 +34,7 @@ import atexit
 import errno
 import fcntl
 import logging
+import lzma
 import os
 import re
 import signal
@@ -146,6 +147,17 @@ class Job(object):
         except IOError:
             return ''
 
+    def description(self):
+        try:
+            filename = os.path.join(self.base_dir, "logs",
+                                    "description.yaml")
+            data = open(filename, 'r').read()
+            return lzma.compress(data)
+        except (IOError, lzma.error) as exc:
+            LOG.error("Unable to read 'description.yaml'")
+            LOG.exception(exc)
+            return ''
+
     def start(self):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
@@ -226,8 +238,9 @@ def send_multipart_u(sock, data):
 
 def send_end(sock, job_id, job):
     job_status = job.proc.returncode if job.proc is not None else 0
-    errs = job.errors()
-    send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+    send_multipart_u(sock, ["END", str(job_id),
+                            str(job_status), job.errors(),
+                            job.description()])
 
 
 def create_zmq_context(master_uri, hostname, send_queue, encrypt,
@@ -581,7 +594,9 @@ def check_job_status(jobs, sock, last_jobs_check):
                         LOG.exception(errs)
 
                 jobs[job_id].is_running = False
-                send_multipart_u(sock, ["END", str(job_id), str(job_status), errs])
+                send_multipart_u(sock, ["END", str(job_id),
+                                        str(job_status), errs,
+                                        jobs[job_id].description()])
 
         else:
             # Re-send the END message (the server hasn't answered yet)
