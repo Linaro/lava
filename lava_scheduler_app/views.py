@@ -1695,6 +1695,8 @@ def job_pipeline_sections(request, pk):
 @BreadCrumb("Job timing", parent=job_detail, needs=['pk'])
 def job_pipeline_timing(request, pk):
     job = get_restricted_job(request.user, pk)
+    if job.status == TestJob.SUBMITTED:
+        raise Http404
 
     def dump_levels(conf):
         lvls = []

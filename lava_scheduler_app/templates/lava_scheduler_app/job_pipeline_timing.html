@@ -4,7 +4,7 @@
 {% if job.status != job.COMPLETE %}
 <div class="alert alert-warning alert-dismissible" role="alert">
   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-  <strong>Warning!</strong> The job is incomplete so the timings can be wrong.
+  <strong>Warning!</strong> Job {{ job.id }} is {{ job.get_status_display }}, some timings are not available.
 </div>
 {% endif %}
 
