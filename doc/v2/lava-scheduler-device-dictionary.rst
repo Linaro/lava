@@ -5,8 +5,8 @@
 Detailed device dictionary information in LAVA Scheduler
 ########################################################
 
-Each :term:`device_type` in LAVA defines a template to describe the features of
-that device type, and how LAVA can use it. A :term:`device_dictionary`
+Each :term:`device type` in LAVA defines a template to describe the features of
+that device type, and how LAVA can use it. A :term:`device dictionary`
 customises that template to include the data for one specific instance of that
 device. This includes details like the specific serial port connection for this
 device, commands to operate remote power control, device serial numbers and
