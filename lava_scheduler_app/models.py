@@ -840,7 +840,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
@@ -856,7 +856,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
@@ -868,7 +868,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into looping mode: %s: %s" % (self.HEALTH_CHOICES[self.health_status][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
@@ -878,7 +878,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def too_long_since_last_heartbeat(self):
         """This is same as worker heartbeat.
