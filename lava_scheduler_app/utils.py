@@ -153,7 +153,7 @@ def split_multi_job(json_jobdata, target_group):  # pylint: disable=too-many-bra
     for clients in json_jobdata["device_group"]:
         group_count += int(clients["count"])
     if group_count <= 1:
-        raise models.JSONDataError("Only one device requested in a MultiNode job submission.")
+        raise ValueError("Only one device requested in a MultiNode job submission.")
     for clients in json_jobdata["device_group"]:
         role = str(clients["role"])
         count = int(clients["count"])
