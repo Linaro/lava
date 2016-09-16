@@ -35,8 +35,10 @@ First steps
 .. toctree::
    :maxdepth: 3
 
+   lava_ci.rst
    first_steps.rst
    standard-qemu-jessie.rst
+   tables.rst
    first-installation.rst
 
 .. _contents_writing_tests:
@@ -59,6 +61,7 @@ Introduction to Results
 
    results-intro.rst
    lava-queries-charts.rst
+   custom-result-handling.rst
 
 .. _contents_admin_guide:
 

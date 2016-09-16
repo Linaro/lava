@@ -9,8 +9,6 @@ First Steps Using LAVA V2
 
 .. include:: lava-tool.rsti
 
-.. include:: ../tables.rst
-
 .. toctree::
    :hidden:
    :maxdepth: 1
@@ -22,5 +20,3 @@ First Steps Using LAVA V2
    devicetypes.rst
    growing_your_lab.rst
    authentication.rst
-   overview.rst
-   lava_ci.rst

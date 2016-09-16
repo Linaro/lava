@@ -51,16 +51,15 @@ Migration to V2 started with the 2016.2 release.
 LAVA Overview
 #############
 
-.. include:: what-is-lava.rst
-
+.. include:: what-is-lava.rsti
 
 Architecture
 ************
 
 .. include:: architecture-v2.rsti
 
-Features
-********
+Methods
+*******
 
 Deployment methods
 ==================

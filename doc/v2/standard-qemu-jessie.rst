@@ -74,10 +74,10 @@ Context
 =======
 
 Some :term:`device types <device type>` can support multiple types of
-deployment in the template and the :term:`job context <context>` variable is
-used in the test job submission to dictate how the test job is executed. The
-first example test job included the use of ``context`` and the standard test
-job for QEMU extends this:
+deployment in the template and the :term:`job context` variable is used in the
+test job submission to dictate how the test job is executed. The first example
+test job included the use of ``context`` and the standard test job for QEMU
+extends this:
 
 .. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
      :code: yaml
