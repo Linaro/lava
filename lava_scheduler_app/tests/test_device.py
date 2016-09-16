@@ -681,3 +681,23 @@ class TestTemplates(TestCaseWithFactory):
         options.extend(extra)
         self.assertIn('-global', options)
         self.assertIn('-cpu cortex-a57', options)
+
+    def test_overdrive_template(self):
+        data = """{% extends 'overdrive.jinja2' %}
+{% set connection_command = 'telnet serial4 7001' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}"""
+        self.assertTrue(self.validate_data('staging-overdrive-01', data))
+        test_template = prepare_jinja_template('staging-overdrive-01', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual(
+            [check for check in template_dict['actions']['boot']['methods']['grub']['nfs']['commands'] if 'nfsroot' in check][0].count('nfsroot'),
+            1
+        )
+        self.assertIn(
+            ' rw',
+            [check for check in template_dict['actions']['boot']['methods']['grub']['nfs']['commands'] if 'nfsroot' in check][0]
+        )
+        self.assertIsNotNone(template_dict)
