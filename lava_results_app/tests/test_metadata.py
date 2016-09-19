@@ -238,3 +238,42 @@ class TestMetaTypes(TestCaseWithFactory):
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
         map_metadata(yaml.dump(pipeline), job)
+
+    def test_inline(self):
+        """
+        Test inline can be parsed without run steps
+        """
+        data = self.factory.make_job_data()
+        test_block = [block for block in data['actions'] if 'test' in block][0]
+        smoke = [
+            {
+                "path": "inline/smoke-tests-basic.yaml",
+                "from": "inline",
+                "name": "smoke-tests-inline",
+                "repository": {
+                    "install": {
+                        "steps": [
+                            "apt",
+                        ]
+                    },
+                    "metadata": {
+                        "description": "Basic system test command for Linaro Ubuntu images",
+                        "format": "Lava-Test Test Definition 1.0",
+                        "name": "smoke-tests-basic"
+                    }
+                }
+            }
+        ]
+        test_block['test']['definitions'] = smoke
+        job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        parser = JobParser()
+        obj = PipelineDevice(device_config, device.hostname)
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        allow_missing_path(pipeline_job.pipeline.validate_actions, self,
+                           'qemu-system-x86_64')
+        pipeline = pipeline_job.describe()
+        map_metadata(yaml.dump(pipeline), job)

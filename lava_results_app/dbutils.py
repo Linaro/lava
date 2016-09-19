@@ -230,8 +230,9 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
             else:
                 for definition in definitions:
                     if definition['from'] == 'inline':
+                        run = definition['repository'].get('run', None)
                         # an inline repo without test cases will not get reported.
-                        if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                        if run and 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
                             prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
                         else:
                             # store the fact that an inline exists but would not generate any testcases
