@@ -137,30 +137,30 @@ parameters:
 timeouts:
   actions:
     apply-overlay-image:
-      seconds: {{ action_timeout_apply_overlay_image | default(120) }}
+      minutes: {{ action_timeout_apply_overlay_image | default(2) }}
     dd-image:
-      seconds: {{ action_timeout_dd_image | default(600) }}
+      minutes: {{ action_timeout_dd_image | default(10) }}
     download_retry:
-      seconds: {{ action_timeout_download_retry | default(300) }}
+      minutes: {{ action_timeout_download_retry | default(5) }}
     http_download:
-      seconds: {{ action_timeout_http_download | default(300) }}
+      minutes: {{ action_timeout_http_download | default(5) }}
     lava-test-shell:
-      seconds: {{ action_timeout_lava_test_shell | default(30) }}
+      minutes: {{ action_timeout_lava_test_shell | default(3) }}
     nfs-deploy:
-      seconds: {{ action_timeout_nfs_deploy | default(600) }}
+      minutes: {{ action_timeout_nfs_deploy | default(10) }}
     power_off:
       seconds: {{ action_timeout_power_off | default(5) }}
     u-boot-commands:
-      seconds: {{ action_timeout_u_boot_commands | default(60) }}
+      minutes: {{ action_timeout_u_boot_commands | default(3) }}
     umount-retry:
       seconds: {{ action_timeout_umount_retry | default(45) }}
   connections:
     dd-image:
-      seconds: {{ connection_timeout_dd_image | default(600) }}
+      minutes: {{ connection_timeout_dd_image | default(10) }}
     uboot-retry:
-      seconds: {{ connection_timeout_uboot_retry | default(60) }}
+      minutes: {{ connection_timeout_uboot_retry | default(4) }}
     u-boot-commands:
-      seconds: {{ connection_timeout_u_boot_commands | default(60) }}
+      minutes: {{ connection_timeout_u_boot_commands | default(2) }}
     auto-login:
-      seconds: {{ connection_timeout_auto_login | default(120) }}
+      minutes: {{ connection_timeout_auto_login | default(2) }}
 {% endblock -%}
