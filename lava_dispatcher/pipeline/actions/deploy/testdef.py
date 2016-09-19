@@ -934,12 +934,11 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            steps = testdef['run'].get('steps', [])
-            if steps:
-                for cmd in steps:
-                    if '--cmd' in cmd or '--shell' in cmd:
-                        cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
-                    runsh.write('%s\n' % cmd)
+            steps = testdef.get('run', {}).get('steps', [])
+            for cmd in steps:
+                if '--cmd' in cmd or '--shell' in cmd:
+                    cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
+                runsh.write('%s\n' % cmd)
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
 
         self.results = {
