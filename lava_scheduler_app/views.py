@@ -1351,7 +1351,6 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'description_file': description_filename(job.id),
             'log_data': log_data,
             'default_section': default_section,
         })
