@@ -49,7 +49,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'LAVA Server'
+project = u'LAVA'
 copyright = u'2010-2016, Linaro Limited'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -131,6 +131,7 @@ html_theme_options = {
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 # html_logo = "../linaro.png"
+html_logo = "images/lava.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
