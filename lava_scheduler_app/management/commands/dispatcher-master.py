@@ -255,7 +255,9 @@ class Command(BaseCommand):
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
-        self.logger.debug("[CC] Receiving: %s", msg)
+        # This is way to verbose for production and should only be activated
+        # by (and for) developers
+        # self.logger.debug("[CC] Receiving: %s", msg)
 
         # 1: the hostname (see ZMQ documentation)
         hostname = msg[0]
