@@ -969,6 +969,7 @@ def device_dictionary_sequence():
         'adb_serial_number',
         'fastboot_command',
         'fastboot_serial_number',
+        'board_id',
     ]
 
 
