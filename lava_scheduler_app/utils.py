@@ -717,6 +717,7 @@ def allowed_overrides(device_dict, system=True):
     """
     Returns the list of keys which can be overridden in a job context
     :param device_dict: dict created using DeviceDictionary.to_dict()
+    :param system: unit test support to switch from the default jinja2 path
     :return: a sorted list of keys which can be overridden in the job context
     """
     path = jinja_template_path(system)
