@@ -117,6 +117,22 @@ There are some considerations for the names of a device-type in LAVA.
 #. Check other LAVA instances, especially if your instance is likely to
    need to work with other instances with a single frontend (like kernelci.org)
 
+.. index:: template mismatch
+
+.. _template_mismatch:
+
+.. # comment: prevent this in the submission API once V1 jobs are rejected.
+
+Matching the template
+---------------------
+
+The name of a device type **must** match an available template in the form::
+
+ /etc/lava-server/dispatcher-config/device-types/{{name}}.jinja2
+
+The UI will raise an configuration error when viewed by the admin, if no matching
+template is found.
+
 Examples
 ========
 

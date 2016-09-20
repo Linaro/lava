@@ -2358,9 +2358,15 @@ def device_detail(request, pk):
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
 
+    mismatch = False
+
     overrides = None
     if device.is_pipeline:
         overrides = []
+        path = utils.jinja_template_path(system=True)
+        devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % device.device_type.name)
+        mismatch = not os.path.exists(devicetype_file)
+
     template = loader.get_template("lava_scheduler_app/device.html")
     return HttpResponse(template.render(
         {
@@ -2396,6 +2402,7 @@ def device_detail(request, pk):
             'next_device': next_device,
             'previous_device': previous_device,
             'overrides': overrides,
+            'template_mismatch': mismatch,
         },
         request=request))
 

@@ -29,6 +29,16 @@
 </div>
 {% endif %}
 
+{% if can_admin and device.is_pipeline and template_mismatch %}
+  <div class="alert alert-warning">
+    <strong>Configuration Error: template-mismatch.</strong>
+  <p>The '{{ device.device_type }}' device type has no matching jinja2 template.
+      Pipeline (V2) jobs requesting this device type will not be able to start until
+     a template is available on the master.
+  </p>
+  </div>
+{% endif %}
+
 {% block device_heading %}{% endblock %}
 
 <div class="row">

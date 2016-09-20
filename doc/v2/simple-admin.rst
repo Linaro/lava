@@ -342,7 +342,8 @@ templates should be accompanied by new unit tests for that template.
 .. _Jinja2: http://jinja.pocoo.org/docs/dev/
 
 .. seealso:: :ref:`overriding_device_configuration`,
-   :ref:`migrating_known_device_example` and :ref:`developer_guide`.
+   :ref:`migrating_known_device_example`, :ref:`developer_guide`
+   and :ref:`template_mismatch`.
 
 .. index:: admin log files
 
