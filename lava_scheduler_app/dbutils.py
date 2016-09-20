@@ -792,49 +792,32 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         if 'target' not in device_object:
             device_object.target = device.hostname
         device_object['hostname'] = device.hostname
+    return device
 
-    # write the pipeline description to the job output directory.
-    # Can only validate this job for this device, even with multinode
-    # dynamic connections still get the device config of the host
+
+def parse_job_description(job):
+    filename = os.path.join(job.output_dir, 'description.yaml')
+    logger = logging.getLogger('dispatcher-master')
     try:
-        logger.info("[%d] Parsing definition", job.id)
-        # pass (unused) output_dir just for validation as there is no zmq socket either.
-        pipeline_job = parser.parse(
-            job.definition, device_object,
-            job.id, None, None, None, output_dir=job.output_dir)
-    except (
-            AttributeError, JobError, NotImplementedError,
-            KeyError, TypeError, RuntimeError) as exc:
-        exc = format_exc(exc)
-        logger.error('[%d] parser error: %s', job.id, exc)
-        fail_job(job, fail_msg=exc)
-        return None
+        with open(filename, 'r') as f_describe:
+            description = f_describe.read()
+    except IOError:
+        logger.error("'Unable to open '%s'", filename)
+        return
 
-    pipeline = pipeline_job.describe()
-    if not os.path.exists(job.output_dir):
-        os.makedirs(job.output_dir)
-    pipeline_dump = yaml.dump(pipeline)
-    with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-        describe_yaml.write(pipeline_dump)
-    if not map_metadata(pipeline_dump, job):
+    if not map_metadata(description, job):
         logger.warning("[%d] unable to map metadata", job.id)
 
     # add the compatibility result from the master to the definition for comparison on the slave.
-    if 'compatibility' in pipeline:
-        try:
-            compat = int(pipeline['compatibility'])
-        except ValueError:
-            logger.error("[%d] Unable to parse job compatibility: %s",
-                         job.id, pipeline['compatibility'])
-            compat = 0
-        job.pipeline_compatibility = compat
-        job.save(update_fields=['pipeline_compatibility'])
-    else:
-        logger.error("[%d] Unable to identify job compatibility.", job.id)
-        fail_job(job, fail_msg='Unknown compatibility')
-        return None
-
-    return device
+    pipeline = yaml.load(description)
+    try:
+        compat = int(pipeline['compatibility'])
+    except ValueError:
+        logger.error("[%d] Unable to parse job compatibility: %s",
+                     job.id, pipeline['compatibility'])
+        compat = 0
+    job.pipeline_compatibility = compat
+    job.save(update_fields=['pipeline_compatibility'])
 
 
 def device_type_summary(visible=None):

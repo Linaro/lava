@@ -24,6 +24,7 @@ import sys
 import fcntl
 import jinja2
 import logging
+import lzma
 import os
 import signal
 import time
@@ -41,6 +42,7 @@ from lava_scheduler_app.utils import mkdir
 from lava_scheduler_app.dbutils import (
     create_job, start_job,
     fail_job, cancel_job, end_job,
+    parse_job_description,
     select_device,
 )
 from lava_results_app.dbutils import map_scanned_results
@@ -303,6 +305,7 @@ class Command(BaseCommand):
                 job_id = int(msg[2])
                 job_status = int(msg[3])
                 error_msg = msg[4]
+                description = msg[5]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
@@ -315,6 +318,8 @@ class Command(BaseCommand):
             else:
                 status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
+
+            # Find the corresponding job and update the status
             try:
                 with transaction.atomic():
                     job = TestJob.objects.select_for_update().get(id=job_id)
@@ -322,6 +327,18 @@ class Command(BaseCommand):
                         cancel_job(job)
                     else:
                         end_job(job, job_status=status)
+
+                # Save the description
+                filename = os.path.join(job.output_dir, 'description.yaml')
+                try:
+                    with open(filename, 'w') as f_description:
+                        f_description.write(lzma.decompress(description))
+                except (IOError, lzma.error) as exc:
+                    self.logger.error("[%d] Unable to dump 'description.yaml'",
+                                      job_id)
+                    self.logger.exception(exc)
+                parse_job_description(job)
+
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
             # ACK even if the job is unknown to let the dispatcher
