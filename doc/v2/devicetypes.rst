@@ -121,10 +121,10 @@ There are some considerations for the names of a device-type in LAVA.
 
 .. _template_mismatch:
 
-.. # comment: prevent this in the submission API once V1 jobs are rejected.
-
 Matching the template
 ---------------------
+
+.. # comment: prevent this in the submission API once V1 jobs are rejected.
 
 The name of a device type **must** match an available template in the form::
 
