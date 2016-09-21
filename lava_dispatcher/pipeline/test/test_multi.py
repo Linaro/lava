@@ -20,6 +20,7 @@
 
 
 import os
+import yaml
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.job import Job
@@ -27,6 +28,7 @@ from lava_dispatcher.pipeline.action import Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
@@ -145,6 +147,36 @@ class TestMultiDeploy(unittest.TestCase):
         self.assertEqual(pipeline.actions[1].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared
         self.assertEqual(pipeline.actions[2].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
+
+
+class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-nfs.yaml')
+        with open(bbb_yaml) as sample_job_data:
+            self.job_data = yaml.load(sample_job_data)
+
+    def test_multidefinition(self):
+        block = [testblock['test'] for testblock in self.job_data['actions'] if 'test' in testblock][0]
+        self.assertIn('definitions', block)
+        block['definitions'][1] = block['definitions'][0]
+        self.assertEqual(len(block['definitions']), 2)
+        self.assertEqual(block['definitions'][1], block['definitions'][0])
+        parser = JobParser()
+        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, None, None,
+                           output_dir='/tmp/')
+        self.assertIsNotNone(job)
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        tftp = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in tftp.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        runscript = [action for action in testdef.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
+        testdef_index = runscript.get_common_data('test-definition', 'testdef_index')
+        self.assertEqual(len(block['definitions']), len(testdef_index))
+        runscript.validate()
+        self.assertIsNotNone(runscript.errors)
+        self.assertIn('Test definition names need to be unique.', runscript.errors)
 
 
 class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-methods

@@ -892,6 +892,8 @@ class TestRunnerAction(TestOverlayAction):
         testdef_index = self.get_common_data('test-definition', 'testdef_index')
         if not testdef_index:
             self.errors = "Unable to identify test definition index"
+        if len(set(testdef_index.keys())) != len(set(testdef_index.values())):
+            self.errors = "Test definition names need to be unique."
         # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
         # to self.testdef_levels {'1.3,4,1': '0_smoke-tests', ...}
         for count, name in testdef_index.items():
