@@ -32,6 +32,12 @@ LAVA V2 - Pipeline model
 [ `Scheduler <../../../scheduler/>`_ ]
 [ `API <../../../api/help/>`_ ]
 
+.. figure:: images/lava.svg
+    :width: 50%
+    :align: center
+    :alt: LAVA logo
+    :figclass: fig-float
+
 LAVA V2 is the second major version of LAVA. The major user-visible
 features are:
 

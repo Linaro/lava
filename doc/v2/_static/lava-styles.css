@@ -1,5 +1,8 @@
 /* override the default bootstrap theme here - we want the logo to
 display in the nav bar alongside "LAVA" */
- .navbar-brand > img {
-    display: inline; 
+.navbar-brand > img {
+    display: inline;
+}
+.fig-float {
+    float: right;
 }
