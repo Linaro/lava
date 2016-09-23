@@ -1,0 +1,17 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: stm32-carbon
+board_id: '{{ board_id|default('0000000000') }}'
+actions:
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      dfu:
+        parameters:
+          command:
+            dfu-util
+          options:
+          - -a {{ debug|default('0') }}
+{% endblock -%}
