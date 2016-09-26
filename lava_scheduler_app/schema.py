@@ -47,6 +47,15 @@ def _simple_params():
     })
 
 
+def _context_schema():
+    return Schema({
+        Optional('arch'): str,
+        Optional('memory'): int,
+        Optional('netdevice'): str,
+        Optional('extra_options'): list
+    }, extra=True)
+
+
 def _job_boot_schema():
     return Schema({
         Required('method'): str,
@@ -214,7 +223,7 @@ def _job_schema():
             Required('job_name'): All(str, Length(min=1, max=200)),
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
-            'context': _simple_params(),
+            'context': _context_schema(),
             'metadata': dict,
             'secrets': dict,
             'tags': [str],
