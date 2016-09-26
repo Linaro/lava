@@ -389,7 +389,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # but the failing action may be inside an internal pipeline of the retry
                 if not self.parent:  # top level pipeline, no retries left
                     self.cleanup_actions(connection, exc_message)
-                raise exc
+                raise
         return connection
 
     def prepare_actions(self):
