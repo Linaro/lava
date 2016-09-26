@@ -218,7 +218,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             if archive not in ['tar']:
                 self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
-        if self.key == 'kernel':
+        if self.key == 'kernel' and ('kernel' in self.parameters):
             self.set_common_data('type', self.key, self.parameters[self.key].get('type', None))
 
     def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
