@@ -1,0 +1,101 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: {{ device_type|default('uboot') }}
+
+{% set base_uboot_commands = (
+"          - setenv autoload no
+          - setenv initrd_high {{ uboot_initrd_high|default('0xffffffff') }}
+          - setenv fdt_high {{ uboot_ftd_high|default('0xffffffff') }} ") -%}
+
+{% set base_uboot_addr_commands = (
+"          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'") -%}
+
+{% set base_uboot_tftp_commands = (
+"          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") -%}
+
+{% set base_uboot_bootcmd = (
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_uboot_tftp_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_uboot_nfs_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot") -%}
+
+{% set base_uboot_usb_commands = uboot_usb_commands|default("") %}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+{% set interrupt_prompt = 'Qualcomm-DragonBoard 410C' %}
+{% set bootloader_prompt = '=>' %}
+{% set action_timeout_u_boot_commands = 90 %}
+
+{# adds the parameters: top level block #}
+{% block vland %}
+{{ super() }}
+{% endblock %}
+  image:
+   kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
+   ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
+   dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+  uimage:
+   kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
+   ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
+   dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+  zimage:
+   kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
+   ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
+   dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+
+actions:
+  deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+    methods:
+      tftp:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      u-boot:
+        parameters:
+          mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }}
+          bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}
+          interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
+          boot_message: {{ boot_message|default('Booting Linux') }}
+          send_char: False
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        nfs:
+          commands:
+{{ base_uboot_usb_commands }}
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_nfs_commands }}
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
+            {{ base_nfsroot_args }} {{ base_kernel_args }} ip=dhcp'"
+{{ base_uboot_nfs_bootcmd }}
+        ramdisk:
+          commands:
+{{ base_uboot_usb_commands }}
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} ip=dhcp'
+{{ base_uboot_tftp_bootcmd }}
+{% endblock %}
+
+{% block timeouts %}
+{% endblock %}

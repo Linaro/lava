@@ -1,0 +1,21 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = 'ttyMSM0' %}
+{% set baud_rate = 115200 %}
+{% set device_type = "apq8016-sbc" %}
+
+{% set extra_kernel_args = "debug loglevel=7" %}
+{% set interrupt_prompt = 'Qualcomm-DragonBoard 410C' %}
+{% set bootloader_prompt = '=>' %}
+{% set action_timeout_u_boot_commands = 90 %}
+{% set bootm_kernel_addr = '0x80000000' %}
+{% set bootm_ramdisk_addr = '0x82000000' %}
+{% set bootm_dtb_addr = '0x81000000' %}
+{% set booti_kernel_addr = '0x80000000' %}
+{% set booti_ramdisk_addr = '0x82000000' %}
+{% set booti_dtb_addr = '0x81000000' %}
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_ftd_high = '0xffffffffffffffff' %}
+{% set uboot_usb_commands = (
+"          - usb start") -%}
