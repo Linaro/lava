@@ -1,0 +1,13 @@
+CONFIG = {
+    'mode': 'wsgi',
+    'working_dir': '/var/lib/lava-server/home/',
+    'user': 'lavaserver',
+    'group': 'lavaserver',
+    'args': (
+        '--bind=127.0.0.1:8000',
+        '--workers=4',
+        '--log-file=/var/log/lava-server/gunicorn.log',
+        '--log-level=info',
+        'lava_server.wsgi:application',
+    ),
+}

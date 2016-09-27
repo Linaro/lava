@@ -367,6 +367,15 @@ Log files
 
    /var/log/lava-dispatcher/lava-slave.log
 
+* **apache** - includes XML-RPC logs.
+
+   /var/log/apache2/lava-server.log
+
+* **gunicorn** - details of the :abbr:`WSGI (Web Server Gateway Interface)`
+  operation for django
+
+   /var/log/lava-server/gunicorn.log
+
 TestJob data
 ------------
 

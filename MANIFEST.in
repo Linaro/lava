@@ -47,6 +47,10 @@ include etc/lava-publisher.init
 include etc/lava-publisher.service
 include etc/lava-server.init
 include etc/lava-server.conf
+include etc/lava-server.gunicorn
+include etc/lava-server-gunicorn.init
+include etc/lava-server-gunicorn.service
+include etc/lava-server.uwsgi.conf
 include etc/env.yaml
 include etc/logrotate.d/*
 include etc/lava-server.wsgi
