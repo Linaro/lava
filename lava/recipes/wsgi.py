@@ -24,7 +24,7 @@ def create_environ(env_file):
 
 
 def handler(settings, ddst):
-    import django.core.handlers.wsgi
+    import django.core.wsgi
 
     env_file = "/etc/lava-server/env.yaml"
     if os.path.exists(env_file):
