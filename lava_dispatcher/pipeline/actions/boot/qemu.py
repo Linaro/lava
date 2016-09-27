@@ -226,7 +226,8 @@ class CallQemuAction(Action):
             qemu_binary = which(boot['parameters']['command'])
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
-            self.sub_command.extend(boot['parameters'].get('extra', []))
+            self.sub_command.extend(
+                ['%s' % item for item in boot['parameters'].get('extra', [])])
         except AttributeError as exc:
             self.errors = "Unable to parse device options: %s %s" % (
                 exc, self.job.device['actions']['boot']['methods']['qemu'])
