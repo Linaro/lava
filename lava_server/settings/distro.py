@@ -254,6 +254,11 @@ EVENT_SOCKET = distro_settings.get_setting("EVENT_SOCKET", EVENT_SOCKET)
 EVENT_ADDITIONAL_SOCKETS = distro_settings.get_setting("EVENT_ADDITIONAL_SOCKETS", EVENT_ADDITIONAL_SOCKETS)
 EVENT_TOPIC = distro_settings.get_setting("EVENT_TOPIC", EVENT_TOPIC)
 
+# Add template caching
+if distro_settings.get_setting("USE_TEMPLATE_CACHE", False):
+    TEMPLATES[0]['OPTIONS']['loaders'] = [('django.template.loaders.cached.Loader',
+                                           TEMPLATES[0]['OPTIONS']['loaders'])]
+
 
 def set_timeout(connection, **kw):
     connection.cursor().execute("SET statement_timeout to 30000")
