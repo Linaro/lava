@@ -1418,7 +1418,6 @@ def job_definition(request, pk):
             'pipeline': description.get('pipeline', []),
             'job_file_present': bool(log_file),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         request=request))
@@ -1703,7 +1702,7 @@ def job_pipeline_timing(request, pk):
             # In-depth first as that's the order when parsing the log file
             if 'pipeline' in action:
                 lvls.extend(dump_levels({'pipeline': action['pipeline']}))
-            lvls.append((action['name'], action['level']))
+            lvls.append((action['name'], action['level'], action['timeout']['duration']))
         return lvls
 
     try:
@@ -1713,7 +1712,7 @@ def job_pipeline_timing(request, pk):
         raise Http404
 
     # Add the validation that is not part of the description file
-    levels = [('validate', '0')]
+    levels = [('validate', '0', '0')]
     levels.extend(dump_levels(description))
     # Pattern for the logs
     pattern = re.compile('^(?P<action>[\\w_-]+) duration: (?P<duration>\\d+\\.\\d+)$')
@@ -1727,11 +1726,12 @@ def job_pipeline_timing(request, pk):
             continue
         if match is not None:
             d = match.groupdict()
+            timeout = float(levels[index][2])
             try:
-                data[levels[index][1]] = (d['action'], float(d['duration']))
+                data[levels[index][1]] = (d['action'], float(d['duration']), timeout)
             except ValueError:
                 # Set it to 0 if this is not a float
-                data[levels[index][1]] = (d['action'], 0.0)
+                data[levels[index][1]] = (d['action'], 0.0, timeout)
             index += 1
 
     # Build the data objects for the template
@@ -1742,13 +1742,16 @@ def job_pipeline_timing(request, pk):
     total_duration = 0
     max_duration = 0
     summary = []
-    for action in actions:
-        duration = data[action][1]
+    for lvl in actions:
+        action = data[lvl][0]
+        duration = data[lvl][1]
+        timeout = data[lvl][2]
         max_duration = max(max_duration, duration)
-        pipeline.append((action, data[action][0], duration))
-        if '.' not in action:
+        duration_close = duration >= timeout * 0.9 if timeout else False
+        pipeline.append((lvl, action, duration, timeout, duration_close))
+        if '.' not in lvl:
             total_duration += duration
-            summary.append([data[action][0], duration, 0])
+            summary.append([action, duration, 0])
 
     for index, action in enumerate(summary):
         summary[index][2] = action[1] / total_duration * 100

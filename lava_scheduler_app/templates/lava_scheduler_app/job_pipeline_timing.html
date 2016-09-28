@@ -46,6 +46,7 @@
           <th>Level</th>
           <th>Action</th>
           <th>Duration (seconds)</th>
+          <th>Timeout (seconds)</th>
         </tr>
       </thead>
       <tbody>
@@ -60,6 +61,11 @@
           <td>{{ action.0 }}</td>
           <td>{{ action.1 }}</td>
           <td>{{ action.2 }}</td>
+          {% if action.4 %}
+          <td><span class="label label-warning"><strong>{{ action.2 }} / {{ action.3|floatformat:"0" }}</strong></span></td>
+          {% else %}
+          <td>{{ action.3|floatformat:"0" }}</td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
