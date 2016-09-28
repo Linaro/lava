@@ -87,21 +87,23 @@ class ApplyOverlayImage(Action):
     def __init__(self):
         super(ApplyOverlayImage, self).__init__()
         self.name = "apply-overlay-image"
-        self.summary = "apply overlay via guestfs to test image"
+        self.summary = "apply overlay to test image"
+        self.description = "apply overlay via guestfs to the test image"
 
     def validate(self):
         super(ApplyOverlayImage, self).validate()
 
     def run(self, connection, args=None):
-        if not self.data['compress-overlay'].get('output'):
-            raise RuntimeError("Unable to find the overlay")
-        overlay = self.data['compress-overlay'].get('output')
-        self.logger.debug("Overlay: %s", overlay)
-        decompressed_image = self.data['download_action']['image']['file']
-        self.logger.debug("Image: %s", decompressed_image)
-        root_partition = self.parameters['image']['root_partition']
-        self.logger.debug("root_partition: %s", root_partition)
-        copy_in_overlay(decompressed_image, root_partition, overlay)
+        if self.data['compress-overlay'].get('output'):
+            overlay = self.data['compress-overlay'].get('output')
+            self.logger.debug("Overlay: %s", overlay)
+            decompressed_image = self.data['download_action']['image']['file']
+            self.logger.debug("Image: %s", decompressed_image)
+            root_partition = self.parameters['image']['root_partition']
+            self.logger.debug("root_partition: %s", root_partition)
+            copy_in_overlay(decompressed_image, root_partition, overlay)
+        else:
+            self.logger.debug("No overlay to deploy")
         return connection
 
 

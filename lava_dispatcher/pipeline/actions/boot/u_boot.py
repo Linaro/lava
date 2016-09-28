@@ -241,7 +241,7 @@ class UBootSecondaryMedia(Action):
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
 
-        self.set_common_data('file', 'kernel', self.parameters['kernel'])
+        self.set_common_data('file', 'kernel', self.parameters.get('kernel', ''))
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
