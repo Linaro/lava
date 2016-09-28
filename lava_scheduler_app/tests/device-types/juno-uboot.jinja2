@@ -85,7 +85,7 @@ actions:
           - setenv initrd_name ramdisk.img
           - setenv kernel_name norkern
 {{ base_load_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'
 {{ base_nfs_uboot_bootcmd }}
         ramdisk-tftp:
           commands:
