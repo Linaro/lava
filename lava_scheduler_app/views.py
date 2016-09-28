@@ -594,24 +594,24 @@ def mydevice_list(request):
         request=request))
 
 
-@BreadCrumb("My Device Type Health History", parent=index)
-def mydevice_type_health_history_log(request):
-    prefix = "mydthealthhistory_"
-    mydthhistory_data = MyDTHealthHistoryView(request,
-                                              model=DeviceStateTransition,
-                                              table_class=DeviceTypeTransitionTable)
-    mydthhistory_table = DeviceTypeTransitionTable(
-        mydthhistory_data.get_table_data(prefix),
+@BreadCrumb("My Devices Health History", parent=index)
+def mydevices_health_history_log(request):
+    prefix = "mydeviceshealthhistory_"
+    mydeviceshhistory_data = MyDevicesHealthHistoryView(request,
+                                                        model=DeviceStateTransition,
+                                                        table_class=DeviceTypeTransitionTable)
+    mydeviceshhistory_table = DeviceTypeTransitionTable(
+        mydeviceshhistory_data.get_table_data(prefix),
         prefix=prefix,
     )
     config = RequestConfig(request,
-                           paginate={"per_page": mydthhistory_table.length})
-    config.configure(mydthhistory_table)
-    template = loader.get_template("lava_scheduler_app/mydevice_type_health_history_log.html")
+                           paginate={"per_page": mydeviceshhistory_table.length})
+    config.configure(mydeviceshhistory_table)
+    template = loader.get_template("lava_scheduler_app/mydevices_health_history_log.html")
     return HttpResponse(template.render(
         {
-            'mydthealthhistory_table': mydthhistory_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
+            'mydeviceshealthhistory_table': mydeviceshhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevices_health_history_log),
         },
         request=request))
 
@@ -2273,10 +2273,10 @@ class DTHealthHistoryView(JobTableView):
         )
 
 
-class MyDTHealthHistoryView(JobTableView):
+class MyDevicesHealthHistoryView(JobTableView):
 
     def __init__(self, request, **kwargs):
-        super(MyDTHealthHistoryView, self).__init__(request, **kwargs)
+        super(MyDevicesHealthHistoryView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
         states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
