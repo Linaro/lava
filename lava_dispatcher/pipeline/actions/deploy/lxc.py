@@ -152,7 +152,7 @@ class LxcCreateAction(DeployAction):
     def run(self, connection, args=None):
         connection = super(LxcCreateAction, self).run(connection, args)
         if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
-            lxc_cmd = ['lxc-create', '-t', self.lxc_data['lxc_template'],
+            lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
                        '-n', self.lxc_data['lxc_name'], '--', '--release',
                        self.lxc_data['lxc_release'], '--arch',
                        self.lxc_data['lxc_arch']]
@@ -166,16 +166,13 @@ class LxcCreateAction(DeployAction):
                             ','.join(self.parameters['packages'])]
             cmd_out_str = 'Generation complete.'
         else:
-            lxc_cmd = ['lxc-create', '-t', self.lxc_data['lxc_template'],
+            lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
                        '-n', self.lxc_data['lxc_name'], '--', '--dist',
                        self.lxc_data['lxc_distribution'], '--release',
                        self.lxc_data['lxc_release'], '--arch',
                        self.lxc_data['lxc_arch']]
-            cmd_out_str = 'Unpacking the rootfs'
-        command_output = self.run_command(lxc_cmd)
-        if command_output and cmd_out_str not in command_output:
-            raise JobError("Unable to create lxc container: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
+        if not self.run_command(lxc_cmd, allow_silent=True):
+            raise JobError("Unable to create lxc container")
         else:
             self.results = {'status': self.lxc_data['lxc_name']}
         return connection
