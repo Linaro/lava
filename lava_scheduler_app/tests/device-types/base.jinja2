@@ -115,7 +115,7 @@ parameters:
    {{ interface }}:
      sysfs: "{{ sysfs.get(interface) }}"
      mac: "{{ mac_addr.get(interface) }}"
-{% for switch, port in map.get(interface).iteritems() %}
+{% for switch, port in map.get(interface).items() %}
      switch: "{{ switch }}"
      port: {{ port }}
 {% endfor %}
