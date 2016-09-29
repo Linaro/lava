@@ -283,7 +283,7 @@ class DeviceStateTransitionAdmin(admin.ModelAdmin):
 
 class DeviceTypeAdmin(admin.ModelAdmin):
     def has_health_check(self, obj):
-        return obj.health_check_job != ""
+        return bool(obj.health_check_job)
     has_health_check.boolean = True
 
     def architecture_name(self, obj):
@@ -314,9 +314,9 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         return ''
 
     def health_check_frequency(self, device_type):
-        if device_type.health_check_job == "":
+        if not device_type.health_check_job:
             return ""
-        if not list(Device.objects.filter(Q(device_type=device_type), ~Q(status=Device.RETIRED))):
+        if not device_type.device_set.filter(~Q(status=Device.RETIRED)).count():
             return ""
         if device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             return "every %d jobs" % device_type.health_frequency
