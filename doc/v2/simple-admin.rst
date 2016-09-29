@@ -21,7 +21,7 @@ You need to be familiar with these sections:
 .. seealso:: `Django documentation on the Django Admin
    Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
 
-.. _simple_admiin_outline:
+.. _simple_admin_outline:
 
 Outline
 *******

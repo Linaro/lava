@@ -75,8 +75,21 @@ LAVA instance for a few reasons:
 Create a Device Type
 --------------------
 
-Log in to the LAVA instance and click on your username to see the
-Profile menu.
+Prior to adding any devices, admins should add suitable :term:`device types
+<device type>` to the database.
+The device type name should match a jinja2 template file in::
+
+ /etc/lava-server/dispatcher-config/device-types/
+
+If an existing template does not exist, a new template will need to be created.
+
+.. seealso:: :ref:`device_types`
+
+You can then either use the :ref:`web admin interface <django_admin_interface>`
+or the **lava-server** command line to add device types.
+
+In order to use the web admin interface, log in to the LAVA instance and click
+on your username to see the Profile menu.
 
 .. image:: images/profile-menu.png
 
@@ -102,6 +115,18 @@ Just before you add the device type, take a look at the available
 
 The only value needed for the QEMU device type is the **Name**, just
 check that **Display** is the default: enabled. Now Save.
+
+Using the command line interface it's also possible to list all known device types::
+
+  lava-server manage add-device-type --list
+
+On the command line, you can add device types (for instance QEMU and panda) using::
+
+  lava-server manage add-device-type qemu panda
+
+It's also possible to add all known device types at the same time with::
+
+  lava-server manage add-device-type '*'
 
 .. _create_device_database:
 
