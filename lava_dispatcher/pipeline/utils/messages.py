@@ -61,10 +61,9 @@ class LinuxKernelMessages(Action):
         (FREE_INIT, KERNEL_FREE_INIT_MSG, 'success'),
     )
 
-    name = 'kernel-messages'
-
     def __init__(self):
         super(LinuxKernelMessages, self).__init__()
+        self.name = 'kernel-messages'
         self.description = "Test kernel messages during boot."
         self.summary = "Check for kernel errors, faults and panics."
         self.messages = self.get_kernel_prompts()

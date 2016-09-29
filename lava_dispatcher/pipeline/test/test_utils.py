@@ -31,7 +31,7 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.action import InfrastructureError
+from lava_dispatcher.pipeline.action import InfrastructureError, Action
 from lava_dispatcher.pipeline.utils import vcs
 
 
@@ -237,3 +237,30 @@ class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-metho
             "reboot: Restarting system",  # modified in the job yaml
             reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
         )
+
+
+class TestClasses(unittest.TestCase):
+
+    def setUp(self):
+        from lava_dispatcher.pipeline.actions.deploy import strategies
+        from lava_dispatcher.pipeline.actions.boot import strategies
+        from lava_dispatcher.pipeline.actions.test import strategies
+        self.allowed = [
+            'commands',  # pipeline.actions.commands.py
+            'deploy',
+            'test',
+        ]
+
+    def test_summary_exists(self):
+        for subclass in Action.__subclasses__():
+            if not subclass.name:
+                continue
+            if not hasattr(subclass, 'summary') and subclass.name not in self.allowed:
+                self.fail(subclass)
+
+    def test_definition_exists(self):
+        for subclass in Action.__subclasses__():
+            if not subclass.name:
+                continue
+            if not hasattr(subclass, 'definition') and subclass.name not in self.allowed:
+                self.fail(subclass)

@@ -603,6 +603,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if ' ' in self.name:
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
+        if not self.summary:
+            self.errors = "action %s (%s) lacks a summary" % (self.name, self)
+
+        if not self.description:
+            self.errors = "action %s (%s) lacks a description" % (self.name, self)
+
         if not self.section:
             self.errors = "%s action has no section set" % self
 
