@@ -85,7 +85,7 @@ actions:
 {{ base_uboot_nfs_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
-            {{ base_nfsroot_args }} {{ base_kernel_args }} ip=dhcp'"
+            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_nfs_bootcmd }}
         ramdisk:
           commands:
@@ -93,7 +93,7 @@ actions:
 {{ base_uboot_commands }}
 {{ base_uboot_addr_commands }}
 {{ base_uboot_tftp_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} ip=dhcp'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'
 {{ base_uboot_tftp_bootcmd }}
 {% endblock %}
 

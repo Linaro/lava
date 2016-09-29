@@ -35,7 +35,7 @@ actions:
           - insmod part_gpt
           - insmod efi_gop
           - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} ip=dhcp'
+          - 'linux (tftp)/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} {{ base_ip_args }}'
           - initrd (tftp)/{RAMDISK}
           - devicetree (tftp)/{DTB}
           - boot
@@ -48,7 +48,7 @@ actions:
           - insmod part_gpt
           - insmod efi_gop
           - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} ip=dhcp root=/dev/nfs rw'
+          - 'linux (tftp)/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw'
           - initrd (tftp)/{RAMDISK}
           - devicetree (tftp)/{DTB}
           - boot

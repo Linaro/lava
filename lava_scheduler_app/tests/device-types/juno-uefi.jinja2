@@ -4,7 +4,7 @@
 {% set baud_rate = baud_rate | default('115200') %}
 {% set base_kernel_args = base_kernel_args | default('') %}
 
-{% set tftp_bootargs = tftp_bootargs | default('console=' + console_device + ',' + baud_rate + ' earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp') %}
+{% set tftp_bootargs = tftp_bootargs | default('console=' + console_device + ',' + baud_rate + ' earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr {{ base_ip_args }}') %}
 {% set nor_flash_bootargs = nor_flash_bootargs | default('dtb=board.dtb initrd=ramdisk.img console=' + console_device + ',' + baud_rate + ' androidboot.hardware=juno systemd.log_target=null rootwait root=/dev/sda1') %}
 
 {% if not hard_reset_command %}

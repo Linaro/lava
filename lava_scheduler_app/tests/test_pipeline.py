@@ -412,6 +412,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'tftp_mac': 'FF:01:00:69:AA:CC',
             'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
             'console_device': 'ttyAMX0',
+            'base_ip_args': 'ip=dhcp'
         }
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])

@@ -78,7 +78,8 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
     def test_menu_context(self):
         job_ctx = {
             'menu_early_printk': '',
-            'menu_interrupt_prompt': 'Default boot will start in'
+            'menu_interrupt_prompt': 'Default boot will start in',
+            'base_ip_args': 'ip=dhcp'
         }
         hostname = self.factory.make_fake_mustang_device()
         device_dict = DeviceDictionary.get(hostname)
