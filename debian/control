@@ -26,11 +26,10 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-hijack (<= 1.0.10-1), python-django (<< 1.8),
  python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
-Depends: apache2, adduser, diffstat, fuse, iproute2, lsb-base (>= 4),
- libapache2-mod-uwsgi, libapache2-mod-wsgi, python-tz,
- python-daemon, python-dateutil, python-django-auth-ldap,
- python-setuptools, libjs-excanvas, libjs-jquery-cookie,
- libjs-jquery, libjs-jquery-ui, python-django (>= 1.8),
+Depends: apache2, adduser, diffstat, fuse, gunicorn, iproute2,
+ lsb-base (>= 4), python-tz, python-daemon, python-dateutil,
+ python-django (>= 1.8), python-django-auth-ldap, python-setuptools,
+ libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
  lava-dispatcher (>= 2016.9),
@@ -86,9 +85,10 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python-mocker, python-nose, python-netifaces, python-setuptools,
  python-sphinx-bootstrap-theme,
  python-zmq, python-yaml, python-voluptuous,
- docbook-xsl, xsltproc, python-mock,  django-testscenarios,
+ docbook-xsl, xsltproc, python-mock,
  ${python:Depends}, ${misc:Depends}
-Recommends: sbuild, python-django-extensions, python-pydot
+Recommends: sbuild, python-django-extensions, python-pydot,
+ django-testscenarios
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
