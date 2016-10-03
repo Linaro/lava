@@ -44,6 +44,9 @@ override_dh_auto_build:
 override_dh_auto_install:
 	dh_auto_install
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
+	# gunicorn support
+	# dh_systemd_enable --name lava-server debian/lava-server-gunicorn.service
+	dh_installinit --name lava-server-gunicorn
 	# dispatcher-master zeromq support, lava-server.init handled by auto_install.
 	dh_installinit --name lava-master
 	dh_installman -plava-server man/_build/man/lava-server.1
@@ -57,6 +60,8 @@ override_dh_auto_install:
 	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
+	# gunicorn
+	# dh_systemd_start --name lava-server debian/lava-server-gunicorn.service
 
 override_dh_compress:
 	dh_compress -X.yaml

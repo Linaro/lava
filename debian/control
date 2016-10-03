@@ -27,8 +27,8 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
- libapache2-mod-uwsgi, libapache2-mod-wsgi, python-tz,
- python-daemon, python-dateutil, python-django-auth-ldap,
+ gunicorn | libapache2-mod-uwsgi, gunicorn | libapache2-mod-wsgi,
+ python-tz, python-daemon, python-dateutil, python-django-auth-ldap,
  python-setuptools, libjs-excanvas, libjs-jquery-cookie,
  libjs-jquery, libjs-jquery-ui, python-django (>= 1.8),
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
@@ -86,9 +86,10 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python-mocker, python-nose, python-netifaces, python-setuptools,
  python-sphinx-bootstrap-theme,
  python-zmq, python-yaml, python-voluptuous,
- docbook-xsl, xsltproc, python-mock,  django-testscenarios,
+ docbook-xsl, xsltproc, python-mock,
  ${python:Depends}, ${misc:Depends}
-Recommends: sbuild, python-django-extensions, python-pydot
+Recommends: sbuild, python-django-extensions, python-pydot,
+ django-testscenarios
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.

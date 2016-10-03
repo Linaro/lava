@@ -287,6 +287,8 @@ case "$1" in
             chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME/
         fi
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
+            a2enmod proxy
+            a2enmod proxy_http
             apache2ctl restart
         fi
     ;;
