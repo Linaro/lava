@@ -101,14 +101,14 @@ Initial considerations
 .. _installing_pipeline_worker:
 
 Detailed changes
-================
+****************
 
 The pipeline design designates the machine running Django and PostgreSQL as the
 ``lava-master`` and all other machines connected to that master which will
 actually be running the jobs are termed ``lava-slave`` machines.
 
 Dependencies and recommends
----------------------------
+===========================
 
 Debian has the concept of Dependencies which must be installed and Recommends
 which are optional but expected to be useful by most users of the package in
@@ -127,7 +127,7 @@ to be done ahead of the upgrade to 2016.6::
 .. _configuring_lava_slave:
 
 Installing lava-dispatcher
---------------------------
+==========================
 
 If this slave has no devices which will be used by the current dispatcher, only
 by the pipeline, i.e. :term:`exclusive` devices, only ``lava-dispatcher`` needs
@@ -196,7 +196,7 @@ connections to be visible to the master.
 .. _adding_pipeline_workers:
 
 Adding pipeline workers to the master
-=====================================
+*************************************
 
 A worker which only has :term:`exclusive` pipeline devices attached can be
 installed as a :ref:`pipeline worker <installing_pipeline_worker>`. These
@@ -230,7 +230,7 @@ devices by worker and taking all selected devices offline in a single action.)
 .. _zmq_curve:
 
 Using ZMQ authentication and encryption
-=======================================
+***************************************
 
 ``lava-master`` and ``lava-slave`` use ZMQ to pass control messages and log
 messages. When using a slave on the same machine as the master, this traffic
@@ -264,7 +264,7 @@ the certificate from ``/etc/lava-dispatcher/certificates.d/`` and restart the
 master daemon to immediately block that slave.
 
 Create certificates
--------------------
+===================
 
 Encryption is supported by default in ``lava-master`` and ``lava-slave`` but
 needs to be enabled in the init scripts for each daemon. Start by generating a
@@ -281,7 +281,7 @@ slave machine::
  $ sudo /usr/share/lava-dispatcher/create_certificate.py foo_slave_1
 
 Distribute public certificates
-------------------------------
+==============================
 
 Copy the public component of the master certificate to each slave. By default,
 the master public key will be
@@ -299,7 +299,7 @@ available to the master is a security risk.
 .. _preparing_for_zmq_auth:
 
 Preparation
------------
+===========
 
 Once enabled, the master will refuse connections from any slave which are
 either not encrypted or lack a certificate in
@@ -311,7 +311,7 @@ each of the slaves::
 .. _zmq_master_encryption:
 
 Enable master encryption
-------------------------
+========================
 
 The master will only authenticate the slave certificates if the master is
 configured with the ``--encrypt`` option. Edit ``/etc/lava-server/lava-master``
@@ -338,7 +338,7 @@ explicitly::
 .. _zmq_slave_encryption:
 
 Enable slave encryption
------------------------
+=======================
 
 .. seealso:: :ref:`preparing_for_zmq_auth`
 
@@ -361,7 +361,7 @@ location of the slave certificates, specify those locations and names in
    **public** master key copied onto that slave by the admin.
 
 Restarting master and slaves
-----------------------------
+============================
 
 For minimal disruption, the master and each slave can be prepared for
 encryption and authentication without restarting any of the daemons. Only upon
@@ -406,7 +406,7 @@ is why the machine is called *playground*.)
 .. _adding_pipeline_devices_to_worker:
 
 Adding pipeline devices to a worker
-===================================
+***********************************
 
 Admins use the Django admin interface to add devices to workers using the
 worker drop-down in the device detail page.
@@ -421,7 +421,7 @@ deployment workers.
 .. _changing_existing_workers:
 
 Changes for existing remote workers
-===================================
+***********************************
 
 On an existing remote worker, a ``lava-master`` daemon will already be running
 on localhost (doing nothing). Once the migration to the :term:`pipeline` is
@@ -431,7 +431,7 @@ should have ``lava-master`` disabled on localhost once the slave has been
 directed at the real master as above.
 
 Disabling lava-master on workers
---------------------------------
+================================
 
 .. note:: A pipeline worker will only have ``lava-dispatcher`` installed, so
    there will be no ``lava-master`` daemon which is installed by
@@ -458,3 +458,166 @@ the JSON jobs). On such workers, ``lava-master`` should be **disabled** once
 
 Removing the executable bits stops the lava-master being re-enabled when the
 packages are updated.
+
+Disabling V1 on pipeline dispatchers
+************************************
+
+Existing remote workers with both V1 and V2 devices will need to migrate to
+supporting V2 only. Once all devices on the worker can support V2, the admin
+can disable V1 test jobs on that worker.
+
+.. caution:: Due to the way that V1 remote workers are configured, it is
+   possible for removal of V1 support to **erase** data on the master if these
+   steps are not followed in order. It is particularly important that the V1
+   SSHFS mountpoint is handled correctly and that any operations on the
+   database remain **local** to the remote worker by using ``psql`` instead of
+   any ``lava-server`` commands.
+
+#. All device types on the dispatcher must have V2 health checks configured.
+
+#. Make all devices on the dispatcher :term:`exclusive` to V2.
+
+#. Remove V1 configuration files from the dispatcher. Depending on local admin,
+   this may involve tools like ``salt`` or ``ansible`` removing files from
+   ``/etc/lava-dispatcher/devices/`` and ``/etc/lava-dispatcher/device-types/``
+
+#. Ensure lava-slave is pinging the master correctly:
+
+   .. code-block:: shell
+
+    tail -f /var/log/lava-dispatcher/lava-slave.log
+
+#. Check for existing database records using ``psql``
+
+   .. note:: Do **not** use ``lava-server manage shell`` for this step because
+      the developer shell has access to the master database, use ``psql``.
+
+   Check the LAVA_DB_NAME value from ``/etc/lava-server/instance.conf``.  If
+   there is no database with that name visible to ``psql``, there is nothing
+   else to do for this stage.
+
+   .. code-block:: shell
+
+    $ sudo su postgres
+    $ psql lavaserver
+    psql: FATAL:  database "lavaserver" does not exist
+
+   If a database does exist with LAVA_DB_NAME, it **should** be empty. Check
+   using a sample SQL command:
+
+   .. code-block:: sql
+
+    =# SELECT count(id) from lava_scheduler_app_testjob;
+
+   If records exist, it is up to you to investigate these records and decide if
+   something has gone wrong with your LAVA configuration or if these are old
+   records from a time when this machine was not a worker. Database records on a
+   worker are **not** visible to the master or web UI.
+
+#. Stop the V1 scheduler:
+
+   .. code-block:: shell
+
+    sudo service lava-server stop
+
+#. ``umount`` the V1 SSHFS which provices read-write access to the test job
+   log files **on the master**.
+
+   * Check the output of ``mount`` and ``/etc/lava-server/instance.conf`` for
+     the value of LAVA_PREFIX. The SSHFS mount is
+     ``${LAVA_PREFIX}/default/media``. The directory should be empty once the
+     SSHFS mount is removed:
+
+     .. code-block:: shell
+
+      $ mountpoint /var/lib/lava-server/default/media
+      /var/lib/lava-server/default/media is a mountpoint
+      $ sudo umount /var/lib/lava-server/default/media
+      $ sudo ls -a /var/lib/lava-server/default/media
+      .  ..
+
+#. Check if ``lavapdu`` is required for the remaining devices. If not, you may
+   choose to stop ``lavapdu-runner`` and ``lavapdu-listen``, then remove
+   ``lavapdu``:
+
+      .. code-block:: shell
+
+    sudo service lavapdu-listen stop
+    sudo service lavapdu-runner stop
+    sudo apt-get --purge remove lavapdu-client lavapdu-daemon
+
+#. Unless any other tasks on this worker, unrelated to LAVA, use the postgres
+   database, you can now choose to drop the postgres cluster on this worker,
+   deleting all postgresql databases on the worker. (Removing or purging the
+   ``postgres`` package does not drop the database, it continues to take up
+   space on the filesystem).
+
+   .. code-block:: shell
+
+    sudo su postgres
+    pg_lsclusters
+
+   The output of ``pg_lsclusters`` is dependent on the version of ``postgres``.
+   Check for the ``Ver`` and ``Cluster`` columns, these will be needed to
+   identify the cluster to drop, e.g. ``9.4 main``.
+
+   To drop the cluster, specify the ``Ver`` and ``Cluster`` to the
+   ``pg_dropcluster`` postgres command, for example:
+
+   .. code-block:: shell
+
+    pg_dropcluster 9.4 main --stop
+    exit
+
+#. If lava-coordinator is installed, check the local config is not localhost in
+   ``/etc/lava-coordinator/lava-coordinator.conf`` and then stop
+   lava-coordinator::
+
+    sudo service lava-coordinator stop
+
+#. Remove ``lava-server``:
+
+   .. code-block:: shell
+
+    sudo apt-get --purge remove lava-server
+
+#. Remove the remaining dependencies required for ``lava-server``:
+
+   .. code-block:: shell
+
+    sudo apt-get --purge autoremove
+
+   This list may include ``lava-coordinator``, ``lava-server-doc``,
+   ``libapache2-mod-uwsgi``, ``libapache2-mod-wsgi``, ``postgresql``,
+   ``python-django-auth-ldap``, ``python-django-kvstore``,
+   ``python-django-restricted-resource``, ``python-django-tables2``,
+   ``python-ldap``, ``python-markdown``, ``uwsgi-core`` but may also remove
+   others. Check the list carefully.
+
+#. Check lava-slave is still pinging the master correctly.
+
+#. Check for any remaining files in ``/etc/lava-server/`` and remove.
+
+#. Check for any remaining lava-server processes - only ``lava-slave`` should
+   be running.
+
+#. Check if apache can be cleanly restarted. You may need to run ``sudo
+   a2dismod uwsgi`` and ``sudo a2dissite lava-server``:
+
+   .. code-block:: shell
+
+    sudo service apache2 restart
+
+#. Copy the default ``apache2`` lava-dispatcher configuration into
+   ``/etc/apache2/sites-available/`` and enable:
+
+   .. code-block:: shell
+
+    cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
+    $ sudo a2ensite lava-dispatcher
+    $ sudo service apache2 restart
+    $ sudo apache2ctl -M
+    $ wget http://localhost/tmp/
+    $ rm index.html
+
+#. Run healthchecks on all your devices.
