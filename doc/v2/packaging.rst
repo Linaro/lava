@@ -83,10 +83,3 @@ normal user or by root. The system user is used just for the filesystem
 permissions.
 
 There are also daemons for the ``dispatcher-master`` and the ``lava-slave``.
-
-WSGI debugging help
-===================
-
-https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
-
-If you get a 502 bad gateway, the uwsgi is probably not setup correctly.

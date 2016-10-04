@@ -148,12 +148,20 @@ If the default Apache configuration from LAVA is suitable, you can
 enable it immediately::
 
  $ sudo a2dissite 000-default
+ $ sudo a2enmod proxy
+ $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
 Edits to the ``/etc/apache2/sites-available/lava-server.conf`` file
 will not be overwritten by package upgrades unless the admin explicitly
 asks ``dpkg`` to do so.
+
+If you later choose to remove ``lava-server``, the apache modules enabled above
+can be disabled using::
+
+ $ sudo a2dismod proxy
+ $ sudo a2dismod proxy_http
 
 .. index:: tftpd-hpa
 
@@ -255,6 +263,8 @@ Then install ``lava-server`` from ``jessie-backports`` using the ``-t`` option::
 
  $ sudo apt -t jessie-backports install lava-server
  $ sudo a2dissite 000-default
+ $ sudo a2enmod proxy
+ $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
@@ -277,6 +287,8 @@ To install just the lava-server from the current packages, use::
 
  $ sudo apt install lava-server
  $ sudo a2dissite 000-default
+ $ sudo a2enmod proxy
+ $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
@@ -322,6 +334,8 @@ one set.
  $ sudo apt install postgresql
  $ sudo apt -t jessie-backports install lava
  $ sudo a2dissite 000-default
+ $ sudo a2enmod proxy
+ $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
@@ -357,25 +371,19 @@ the HTML content on the fly. This is not a recommended setup.
 Superuser
 =========
 
-OpenID or LDAP
---------------
+LDAP
+----
 
-In LAVA instances that use external authentication mechanisms such as
-OpenID or LDAP, log in once with the user account that will be granted
-superuser privileges in the LAVA web UI. After logging in with OpenID
-or LDAP successfully, make use of the following command to make this
-user a superuser::
+In LAVA instances that use LDAP for external authentication, log in once with
+the user account that will be granted superuser privileges in the LAVA web UI.
+Then use the following command to make this user a superuser::
 
   $ sudo lava-server manage authorize_superuser --username {username}
 
 .. note:: `{username}` is the username of OpenID or LDAP user.
 
-LDAP
-----
-
-Alternatively, in LAVA instances that use LDAP as authentication
-mechanism, the `addldapuser` command can be used to populate a user
-from LDAP and also grant superuser privilege as follows::
+Alternatively, the `addldapuser` command can be used to populate a user from
+LDAP and also grant superuser privilege as follows::
 
   $ sudo lava-server manage addldapuser --username {username} --superuser
 

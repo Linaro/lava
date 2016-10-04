@@ -107,11 +107,6 @@ exhaustive.
   set of shelves or a wall-mounted rack is going to make things a lot
   easier to manage.
 
-Architecture
-============
-
-.. include:: architecture-v2.rsti
-
 .. _more_installation_types:
 
 Recommended Installation Types
@@ -157,14 +152,6 @@ use authentication.
 
 Other installation notes
 ************************
-
-A note on wsgi buffers
-======================
-
-When submitting a large amount of data to the django application,
-it is possible to get an HTTP 500 internal server error. This problem
-can be fixed by appending ``buffer-size = 65535`` to
-``/etc/lava-server/uwsgi.ini``
 
 .. _automated_installation:
 
