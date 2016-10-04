@@ -192,6 +192,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             elif action.name in overrides:
                 self._override_action_timeout(action, overrides)
                 parameters['timeout'] = overrides[action.name]
+            elif 'timeout' in parameters:
+                action.timeout.duration = Timeout.parse(parameters['timeout'])
             if 'connections' in overrides and action.name in overrides['connections']:
                 self._override_connection_timeout(action, overrides['connections'])
         action.parameters = parameters
