@@ -11,6 +11,25 @@ other large amounts of data need to set up their own network
 configuration, access and download methods and do the transfer in the
 test definition.
 
+Guidance in using the API
+-------------------------
+
+It is recommended to avoid doing a lot of calculation within the calls
+to the API. There are times when a script is needed to retrieve data from
+the test shell but resist the temptation to run that script in the call
+to the API. **Always** check the output of the script (e.g. with
+``lava-test-case``) and/or run the script separately in the test definition
+run steps so that the output appears in the test job logs. Preparing and
+outputting the data before sending it with the API will aid in debugging
+the test definition.
+
+.. note:: Debugging of complex test definitions does **not** only happen
+   during the initial development. Retain enough structure in your test
+   definitions to be able to debug problems later **without** needing to
+   resubmit the MultiNode test job.
+
+.. seealso:: :ref:`Limitations of hacking sessions <hacking_session_limitations>`
+
 .. index:: lava-self
 
 .. _lava_self:
@@ -269,6 +288,14 @@ by ``lava-wait-all foo``.
 lava-network
 ------------
 
+.. caution:: ``lava-network`` is **deprecated** and can be problematic as it
+   has assumptions about the output of commands like ``ifconfig`` which
+   can change between operating systems. Test writers should break up
+   the tasks of identifying data about the network into specific handlers
+   which can cope with the tools provided within specific operating systems.
+   ``lava-network`` can be replaced by using such scripts alongside the
+   rest of the API, e.g. ``lava-send``, ``lava-wait`` and ``lava-wait-all``.
+
 Helper script to broadcast IP data from the test image, wait for data
 to be received by the rest of the group (or one role within the group)
 and then provide an interface to retrieve IP data about the group on
@@ -382,7 +409,9 @@ specified.
 
     #!/bin/sh
 
-    lava-send server-ready free-space=`df -h | grep "/$" | awk '{print $4}'`
+    SPACE=`df -h | grep "/$" | awk '{print $4}'`
+    echo $SPACE
+    lava-send server-ready free-space=$SPACE
 
 Notes:
 
@@ -423,7 +452,9 @@ specified.
 
     iperf -s &
     echo $! > /tmp/iperf-server.pid
-    lava-send server-ready server-ip=`ip route get 8.8.8.8 | head -n 1 | awk '{print $NF}'`
+    IP=`ip route get 8.8.8.8 | head -n 1 | awk '{print $NF}'`
+    echo $IP
+    lava-send server-ready server-ip=$IP
     lava-wait client-done
     kill -9 `cat /tmp/iperf-server.pid`
 

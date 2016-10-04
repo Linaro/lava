@@ -18,6 +18,18 @@ Assumptions
   other access if firewalls exist between the user and the device).
 * The test job deployment raises a usable networking interface.
 
+.. _hacking_session_limitations:
+
+Limitations
+===========
+
+The session connection is SSH, not serial. This can change the way that certain
+operations run within the session compared to an automated test job. In
+particular, the :ref:`multinode_api` does not operate either within a hacking
+session or between two hacking sessions. A test definition which runs either
+before or after the hacking session **will** be able to use the full MultiNode
+API.
+
 Device requirements
 ===================
 
