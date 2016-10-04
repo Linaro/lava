@@ -687,11 +687,27 @@ class TestTemplates(TestCaseWithFactory):
 {% set connection_command = 'telnet serial4 7001' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
-{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}"""
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
+{% set map = {'iface0': {'lngswitch03': 13}, 'iface1': {'lngswitch03': 1}, 'iface2': {'lngswitch02': 9}, 'iface3': {'lngswitch02': 10}} %}
+{% set tags = {'iface0': [], 'iface1': ['RJ45', '1G', '10G'], 'iface2': ['SFP+', '1G', '10G'], 'iface3': ['SFP+', '1G', '10G']} %}
+{% set mac_addr = {'iface0': '00:00:1a:1b:8b:f6', 'iface1': '00:00:1a:1b:8b:f7', 'iface2': '00:11:0a:68:94:30', 'iface3': '00:11:0a:68:94:31'} %}
+{% set interfaces = ['iface0', 'iface1', 'iface2', 'iface3'] %}
+{% set sysfs = {'iface0': '/sys/devices/platform/AMDI8001:00/net/',
+'iface1': '/sys/devices/platform/AMDI8001:01/net/',
+'iface2': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.0/net/',
+'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}"""
         self.assertTrue(self.validate_data('staging-overdrive-01', data))
         test_template = prepare_jinja_template('staging-overdrive-01', data, system_path=False)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('parameters', template_dict)
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('actions', template_dict)
+        self.assertIn('iface2', template_dict['parameters']['interfaces'])
+        self.assertIn('iface1', template_dict['parameters']['interfaces'])
+        self.assertIn('iface0', template_dict['parameters']['interfaces'])
+        self.assertIn('sysfs', template_dict['parameters']['interfaces']['iface2'])
         self.assertEqual(
             [check for check in template_dict['actions']['boot']['methods']['grub']['nfs']['commands'] if 'nfsroot' in check][0].count('nfsroot'),
             1
@@ -700,4 +716,3 @@ class TestTemplates(TestCaseWithFactory):
             ' rw',
             [check for check in template_dict['actions']['boot']['methods']['grub']['nfs']['commands'] if 'nfsroot' in check][0]
         )
-        self.assertIsNotNone(template_dict)
