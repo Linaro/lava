@@ -344,7 +344,7 @@ class ExtractRamdisk(Action):
         ramdisk = self.data['download_action']['ramdisk']['file']
         ramdisk_dir = mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
-        os.mkdir(extracted_ramdisk)
+        os.mkdir(extracted_ramdisk, 0o755)
         compression = self.parameters['ramdisk'].get('compression', None)
         suffix = ""
         if compression:
