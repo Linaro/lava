@@ -27,6 +27,8 @@ import yaml
 import pexpect
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, PatternFixup
 from lava_dispatcher.pipeline.test.test_basic import Factory
@@ -103,6 +105,29 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
 #        self.assertIsNotNone(testdef.job.device['hostname'])
+
+    def test_name(self):
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdef.validate()
+        self.assertEqual([], testdef.errors)
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
+        parser = JobParser()
+        with open(kvm_yaml, 'r') as sample_job_data:
+            content = yaml.load(sample_job_data)
+        data = [block['test'] for block in content['actions'] if 'test' in block][0]
+        definitions = [block for block in data['definitions'] if 'path' in block][0]
+        definitions['name'] = 'smoke tests'
+        job = parser.parse(yaml.dump(content), device, 4212, None, None, None,
+                           output_dir='/tmp/')
+        deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdef.validate()
+        self.assertNotEqual([], testdef.errors)
+        self.assertIn('Invalid characters found in test definition name: smoke tests', job.pipeline.errors)
 
     def test_vcs_parameters(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]

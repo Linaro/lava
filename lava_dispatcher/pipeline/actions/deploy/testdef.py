@@ -38,7 +38,11 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_V1_FIXUP, DEFAULT_V1_PATTERN
+from lava_dispatcher.pipeline.utils.constants import (
+    DEFAULT_V1_FIXUP,
+    DEFAULT_V1_PATTERN,
+    DEFAULT_TESTDEF_NAME_CLASS
+)
 
 
 def identify_test_definitions(parameters):
@@ -647,6 +651,13 @@ class TestDefinitionAction(TestAction):
         for testdef in self.test_list[0]:
             if 'from' not in testdef:
                 self.errors = "missing 'from' field in test definition %s" % testdef
+            if 'name' not in testdef:
+                self.errors = "missing 'name' field in test definition %s" % testdef
+            else:
+                exp = re.compile(DEFAULT_TESTDEF_NAME_CLASS)
+                res = re.match(exp, testdef['name'])
+                if not res:
+                    self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
         self.internal_pipeline.validate_actions()
 
     def run(self, connection, args=None):

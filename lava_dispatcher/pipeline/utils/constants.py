@@ -146,3 +146,7 @@ DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
 
 # override os.linesep which is platform-dependent based on the dispatcher, not device.
 LINE_SEPARATOR = '\r\n'
+
+# valid characters in components of a test definition name
+# excludes whitespace and punctuation (except hyphen and underscore)
+DEFAULT_TESTDEF_NAME_CLASS = r'^[\w\d\_\-]+$'
