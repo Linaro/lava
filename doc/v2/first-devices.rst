@@ -184,13 +184,20 @@ Once updated, the device dictionary is added to the Device view in the
 administrative interface under the Advanced Properties section at the
 base of the page.
 
-Adding other known devices
-**************************
+.. index:: adding devices of known types
+
+.. _adding_known_devices:
+
+Adding other devices of known device-types
+******************************************
 
 The core principles remain the same as for QEMU, the main differences
 are in the way that the device dictionary is needed to provide a wider
 range of settings covering power control, serial connections, network
 details and other values.
+
+.. seealso:: :ref:`health_checks` - each time a new device type is added to an
+   instance, a health check test job needs to be defined.
 
 Check existing instances
 ========================
@@ -236,6 +243,10 @@ time before the V1 code support is removed.
 
 .. seealso:: :ref:`migrating_known_device_example` and
    :ref:`migrating_to_pipeline`.
+
+.. index:: device integration, adding new device-types
+
+.. _adding_new_device_types:
 
 Adding new device types
 ***********************

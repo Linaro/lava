@@ -166,7 +166,7 @@ Glossary of terms
     customise this data to make it directly relevant to the developers. This is
     supported using the :ref:`xml_rpc` and REST API support.
 
-    .. seealso:: :ref:`what_is_lava_not`
+    .. seealso:: :ref:`what_is_lava_not` and :ref:`custom_result_handling`.
 
   hacking session
     A test job which uses a particular type of test definition to allow users
