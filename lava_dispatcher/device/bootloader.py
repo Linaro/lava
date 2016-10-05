@@ -109,7 +109,9 @@ class BootloaderTarget(MasterImageTarget):
         # At minimal we have a kernel
         bootx.append('${kernel_addr_r}')
 
-        if ramdisk is not None:
+        if self.config.ramdisk_raw:
+            bootx.append('-')
+        elif ramdisk is not None:
             bootx.append('${initrd_addr_r}')
         elif ramdisk is None and dtb is not None:
             bootx.append('-')
@@ -208,7 +210,7 @@ class BootloaderTarget(MasterImageTarget):
                                                  decompress=False)
                         extract_overlay(overlay, ramdisk_dir)
                     ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
-                if self._is_uboot():
+                if self._is_uboot() and not self.config.ramdisk_raw:
                     # Ensure ramdisk has u-boot header
                     if not self._is_uboot_ramdisk(ramdisk):
                         ramdisk_uboot = ramdisk + ".uboot"
