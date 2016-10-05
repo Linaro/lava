@@ -339,6 +339,10 @@ one set.
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
+.. seealso:: :ref:`Creating a superuser <create_superuser>`, :ref:`logging_in`,
+   :ref:`authentication_tokens` and the :ref:`first job definition
+   <first_job_definition>`.
+
 Setting up a reverse proxy
 ==========================
 

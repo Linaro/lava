@@ -674,6 +674,8 @@ provides the device-specific values.
  {% set power_off_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command off --port 05" %}
  {% set power_on_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command on --port 05" %}
 
+.. _testing_templates_dictionaries:
+
 Testing the template and dictionary
 ===================================
 

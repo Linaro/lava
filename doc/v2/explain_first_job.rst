@@ -3,8 +3,12 @@
 The first job in detail
 #######################
 
+`Download / view <examples/test-jobs/qemu-pipeline-first-job.yaml>`_ the
+complete first job YAML.
+
 As the first job, this is a simple emulated test which does not need any extra
-hardware, it does not use protocols and runs as a single job.
+hardware, it does not use protocols and runs as a single job. The elements of
+the first job are described in detail below.
 
 .. note:: This kind of test is generally termed ``singlenode``.
 
@@ -49,8 +53,12 @@ Top level elements of a test job
   In this case, ``arch: amd64`` sets the template to use the
   ``qemu-system-x86_64`` executable when starting the emulation.
 
+General details of the test job are specified in the top level elements, such
+as in this snippet from the first job:
+
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
+   :start-after: x86_64 QEMU
    :end-before: # context
 
 Actions within the test job
@@ -86,8 +94,7 @@ image which will be substituted into the option.
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
    :start-after: ACTION_BLOCK
-   :end-before: BOOT_BLOCK
-
+   :end-before: # BOOT_BLOCK
 
 The other role of a deploy action is to prepare the overlay which will contain
 the test shell scripts and repositories. These will be added to the booted

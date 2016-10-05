@@ -72,7 +72,11 @@ LAVA administration guide
    :maxdepth: 3
 
    simple-admin.rst
+   first-devices.rst
    pipeline-admin.rst
+   pipeline-admin-example.rst
+   pipeline-debug.rst
+   lava-tool-issues.rst
 
 .. _contents_developer_guide:
 

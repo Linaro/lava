@@ -560,9 +560,3 @@ Early admin stuff:
 * device configuration and templates
 * getting a number of cheap ARMv7 development boards
 
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   lava-tool-issues.rst

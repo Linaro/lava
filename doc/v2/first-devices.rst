@@ -18,6 +18,11 @@ You need to be familiar with these sections:
 .. seealso:: `Django documentation on the Django Admin
    Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
 
+.. _django_admin_interface:
+
+Django administration interface
+*******************************
+
 The django admin interface is a core component of the django framework.
 Elements can be added for particular implementations but, fundamentally,
 the operation of the interface is the same as other django sites. The
@@ -25,10 +30,20 @@ appearance of the menu is determined by the version of django installed
 on your system. The style changed substantially in django 1.9, so images
 of the interface itself are not included here.
 
-.. _django_admin_interface:
+Changes within the administration interface and changes made as a superuser
+through the UI are tracked through the **History** elements of objects in the
+database. When viewing a specific element (for example a single Test Job or a
+single Device), click on the **History** link to view all changes relating to
+that element. There is also a link back to the UI view of the same element.
+
+.. note:: the organisation, layout and content of the django administration
+   interface is subject to change with upgrades to django itself and these
+   changes are outside the control of LAVA.
+
+.. _django_admin_interface_sites:
 
 Administative interface site links
-**********************************
+==================================
 
 The django administrative interface offers links back to your LAVA
 instance *if* the ``Sites`` element is modified. (The default django
@@ -187,17 +202,24 @@ to provide the device-specific details on top of the template:
 .. code-block:: jinja
 
   {% extends 'qemu.jinja2' %}
-  {% set arch = 'amd64' %}
   {% set mac_addr = '52:54:00:12:34:59' %}
   {% set memory = '1024' %}
 
 * The device dictionary **must** ``extend`` an existing template.
-* For this first device, the device dictionary specifies the ``arch``
-  variable which must be set to start the correct QEMU system binary.
-  Later sections will cover how to use this template to emulate more
-  than one architecture.
-* The MAC address needs to differ for each device of this type.
-* The available memory for the virtual machine is set in megabytes.
+
+* The architecture (``arch`` value) is not set in this device dictionary. This
+  allows this device to run test jobs using files for any architecture
+  supported by QEMU.
+
+  .. seealso:: :ref:`overriding_device_configuration`
+
+* The MAC address needs to differ for each device of this type across all
+  instances on the same subnet.
+
+* The available memory for the virtual machine is set in megabytes. This can be
+  changed later to balance the requirements of test jobs with performance on
+  the worker.
+
 * Line ordering within the device dictionary is irrelevant, although
   it is common to put the ``extends`` line first when storing the
   dictionary as a file.
@@ -210,9 +232,12 @@ This dictionary does not include a setting to use a ``tap`` device which
 means that this device would not support a hacking session inside the
 virtual machine. Setting up a bridge is out of scope for this documentation.
 
-.. seealso:: :ref:`create_device_dictionary`,
-   :ref:`updating_device_dictionary`, :ref:`checking_templates` and
-   :ref:`device_type_templates`.
+.. seealso:: :ref:`create_device_dictionary` to export and modify a device
+   dictionary, :ref:`updating_device_dictionary` to import a device dictionary
+   into the database for use with a new or existing device,
+   :ref:`checking_templates` for help with types of devices other than QEMU and
+   :ref:`device_type_templates` for help with how the device dictionary works
+   with the device-type templates.
 
 Once updated, the device dictionary is added to the Device view in the
 administrative interface under the Advanced Properties section at the
