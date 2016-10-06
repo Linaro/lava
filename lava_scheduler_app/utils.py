@@ -844,7 +844,6 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
     # jobs dictionary lists the jobs per role,
     jobs = {}
-    count = 0
     # check the count of the host_roles
     check_count = None
     for role in roles:
@@ -854,6 +853,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
         if role == check_count:
             if roles[role]['count'] != 1:
                 raise SubmissionException('The count for a role designated as a host_role must be 1.')
+    sub_id_count = 0
     for role in roles:
         jobs[role] = []
         for sub in range(0, roles[role]['count']):
@@ -862,14 +862,14 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             job.update(roles[role])
             # only here do multiple jobs for the same role differ
             params = job['protocols']['lava-multinode']
-            params.update({'sub_id': sub + count})
+            params.update({'sub_id': sub_id_count})
             job['protocols']['lava-multinode'].update(params)
             del params
             for item in maps:
                 if item in job:
                     del job[item]
             jobs[role].append(copy.deepcopy(job))
-        count += 1
+            sub_id_count += 1
 
     # populate the lava-vland protocol metadata
     if 'lava-vland' in submission['protocols']:

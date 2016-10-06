@@ -1069,12 +1069,21 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         device_dict = DeviceDictionary(hostname='bbb-01')
         device_dict.parameters = {
             'bootloader_prompt': '=>',
             'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-02')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6005',
             'extends': 'beaglebone-black.jinja2',
         }
         device_dict.save()
@@ -1085,6 +1094,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_object_list:
             definition = yaml.load(job.definition)
             self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            sub_ids = [job.sub_id for job in job_object_list]
+            self.assertEqual(len(set(sub_ids)), len(sub_ids))
             if job.requested_device_type.name == 'qemu':
                 job.actual_device = Device.objects.get(hostname='fakeqemu1')
             elif job.requested_device_type.name == 'beaglebone-black':
