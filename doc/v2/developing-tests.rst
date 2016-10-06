@@ -269,5 +269,4 @@ not be rebooted between the definitions.
    pipeline-usecases.rst
    test-examples.rst
    bootimages.rst
-   debugging.rst
    tests-reference.rst

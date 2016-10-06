@@ -16,7 +16,7 @@ Glossary of terms
 [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
 [ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
-[ :term:`distributed deployment`] [ :term:`DUT` ]
+[ :term:`distributed deployment`] [ :term:`DTB` ] [ :term:`DUT` ]
 [ :term:`exclusive` ]
 [ :term:`frontend` ]
 [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
@@ -121,6 +121,11 @@ Glossary of terms
     more :term:`remote workers <remote worker>` which communicate with the
     master using :term:`ZMQ`. This method spreads the load of running tests on
     devices multiple dispatchers.
+
+  DTB
+    Device Tree Blob - file describing hardware configuration,
+    commonly used on ARM devices with the Linux kernel. See
+    https://en.wikipedia.org/wiki/Device_tree for more information.
 
   DUT
     Device Under Test - a quick way to refer to the :term:`device` in LAVA.
