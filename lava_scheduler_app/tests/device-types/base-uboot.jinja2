@@ -4,8 +4,8 @@ device_type: {{ device_type|default('uboot') }}
 
 {% set base_uboot_commands = (
 "          - setenv autoload no
-          - setenv initrd_high {{ uboot_initrd_high|default('0xffffffff') }}
-          - setenv fdt_high {{ uboot_ftd_high|default('0xffffffff') }} ") -%}
+          - setenv initrd_high " + uboot_initrd_high|default('0xffffffff') + "
+          - setenv fdt_high " + uboot_ftd_high|default('0xffffffff') ) -%}
 
 {% set base_uboot_addr_commands = (
 "          - setenv kernel_addr_r '{KERNEL_ADDR}'
