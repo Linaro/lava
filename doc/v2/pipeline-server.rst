@@ -459,6 +459,10 @@ the JSON jobs). On such workers, ``lava-master`` should be **disabled** once
 Removing the executable bits stops the lava-master being re-enabled when the
 packages are updated.
 
+.. index:: disable v1 worker, fuse, psql, sshfs
+
+.. _disable_v1_worker:
+
 Disabling V1 on pipeline dispatchers
 ************************************
 
@@ -540,7 +544,7 @@ can disable V1 test jobs on that worker.
    choose to stop ``lavapdu-runner`` and ``lavapdu-listen``, then remove
    ``lavapdu``:
 
-      .. code-block:: shell
+   .. code-block:: shell
 
     sudo service lavapdu-listen stop
     sudo service lavapdu-runner stop
@@ -620,4 +624,114 @@ can disable V1 test jobs on that worker.
     $ wget http://localhost/tmp/
     $ rm index.html
 
+#. Undo fuse configuration
+
+   V1 setup required editing ``/etc/fuse.conf`` on the worker and enabling the
+   ``user_allow_other`` option. This can now be disabled.
+
 #. Run healthchecks on all your devices.
+
+.. index:: disable v1 master, revoke v1 postgres access
+
+.. _disable_v1_master:
+
+Disabling V1 support on the master
+**********************************
+
+Once all workers on an instance have had V1 support disabled, there remain
+tasks to be done on the server. V1 relies on read:write database access from
+each worker supporting V1 as well as the SSHFS mountpoint. For the security of
+the data on the master, this access needs to be revoked now that V1 is no
+longer in use on this master.
+
+The changes below undo the *Distributed deployment* setup of V1 for remote
+workers. The master continues to have a worker available and this worker is
+unaffected by the removal of remote worker support.
+
+.. note:: There was a lot of scope in V1 for admins to make subtle changes to
+   the local configuration, especially if the instance was first installed
+   before the Debian packaging became the default installation method. (Even if
+   the machine has later been reinstalled, elements such as system usernames,
+   database names and postgres usernames will have been retained to be able to
+   access older data.) Check the details in ``/etc/lava-server/instance.conf``
+   on the master for information on ``LAVA_SYS_USER``, ``LAVA_DB_USER`` and
+   ``LAVA_PREFIX``. In some places, V1 setup only advised that certain changes
+   were made - admins may have adapted these instructions and removal of those
+   changes will need to take this into account. It is, however, important that
+   the V1 support changes are removed to ensure the security of the data on the
+   master.
+
+SSH authorized keys
+===================
+
+The SSH public keys need to be removed from the ``LAVA_SYS_USER`` account on
+the master. Check the contents of ``/etc/lava-server/instance.conf`` - the
+default for recent installs is ``lavaserver``. Check the details in, for
+example, ``/var/lib/lava-server/home/.ssh/authorized_keys``:
+
+.. code-block:: shell
+
+ $ sudo su lavaserver
+ $ vim /var/lib/lava-server/home/.ssh/authorized_keys
+
+.. note:: V1 used the same comment for all keys. ``ssh key used by LAVA for
+   sshfs``. Once all V1 workers are disabled, all such keys can be removed
+   from ``/var/lib/lava-server/home/.ssh/authorized_keys``.
+
+Prevent postgres listening to workers
+=====================================
+
+V1 setup advised that ``postgresql.conf`` was modified to allow
+``listen_addresses = '*'``. Depending on your version of postgres, this file
+can be found under the ``/etc/postgresql/`` directory, in the ``main``
+directory for that version of ``postgres``. e.g.
+``/etc/postgresql/9.4/main/postgresql.conf``
+
+There is no need for a V2 master to have any LAVA processes connecting to the
+database other than those on the master. ``listen_addresses`` can be updated,
+according to the postgres documentation. The default is for
+``listen_addresses`` to be commented out in ``postgresql.conf``.
+
+Revoke postgres access
+======================
+
+V1 setup advised that ``pg_hba.conf`` was modified to allow remote workers to
+be able to read and write to the postgres database. Depending on your version
+of postgres, this file can be found under the ``/etc/postgresql/`` directory,
+in the ``main`` directory for that version of ``postgres``. e.g.
+``/etc/postgresql/9.4/main/pg_hba.conf`` A line similar to the following
+may exist:
+
+.. code-block:: none
+
+ host    lavaserver      lavaserver      0.0.0.0/0               md5
+
+Some instances may have a line similar to:
+
+.. code-block:: none
+
+ host    all             all             10.0.0.0/8              md5
+
+For V2, only the default postgres configuration is required. For example:
+
+.. code-block:: none
+
+ local   all             all                                     peer
+ local   all             all                                     peer
+ host    all             all             127.0.0.1/32            md5
+ host    all             all             ::1/128                 md5
+
+Check the entries in your own instance (in this example, 9.4) using:
+
+.. code-block:: none
+
+ sudo grep -v '#' /etc/postgresql/9.4/main/pg_hba.conf
+
+Restart postgres
+================
+
+For these changes to take effect, postgres must be restarted:
+
+.. code-block:: shell
+
+ sudo service postgresql restart
