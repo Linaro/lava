@@ -2028,15 +2028,56 @@ class TestJob(RestrictedResource):
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
             job_list = []
-            try:
-                parent_id = (TestJob.objects.latest('id')).id + 1
-            except:  # pylint: disable=bare-except
-                parent_id = 1
+            # parent_id must be the id of the .0 sub_id
+            # each sub_id must relate back to that parent
+            # this is fixed in V2 in a much cleaner way.
+            role = node_json.keys()[0]
+
+            device_type = DeviceType.objects.get(
+                name=node_json[role][0]["device_type"])
+            # cannot set sub_id until parent_id is known.
+            job = TestJob(
+                submitter=submitter,
+                requested_device=target,
+                description=job_name,
+                requested_device_type=device_type,
+                definition=simplejson.dumps(node_json[role][0],
+                                            sort_keys=True,
+                                            indent=4 * ' '),
+                original_definition=simplejson.dumps(json_data,
+                                                     sort_keys=True,
+                                                     indent=4 * ' '),
+                multinode_definition=json_data,
+                health_check=health_check, user=user, group=group,
+                is_public=is_public,
+                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
+                target_group=target_group)
+            job.save()
+            # Add tags as defined per role for each job.
+            taglist = _get_tag_list(node_json[role][0].get("tags", []))
+            if taglist:
+                for tag in Tag.objects.filter(name__in=taglist):
+                    job.tags.add(tag)
+            # This save is important though we have one few lines
+            # above, because, in order to add to the tags table we need
+            # a foreign key reference from the jobs table which happens
+            # with the previous job.save(). The following job.save()
+            # ensures the tags are saved properly with references.
+            job.save()
+            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
+            job.sub_id = "%d.0" % parent_id
+            job.save(update_fields=['sub_id'])
+            job_list.append(job)
             child_id = 0
 
+            # node_json is a dictionary, not a list.
             for role in node_json:
                 role_count = len(node_json[role])
                 for c in range(0, role_count):
+                    if child_id == 0:
+                        # already done .0 to get the parent_id
+                        child_id = 1
+                        continue
                     device_type = DeviceType.objects.get(
                         name=node_json[role][c]["device_type"])
                     sub_id = '.'.join([str(parent_id), str(child_id)])
@@ -2083,15 +2124,50 @@ class TestJob(RestrictedResource):
             vm_group = str(uuid.uuid4())
             node_json = utils.split_vm_job(job_data, vm_group)
             job_list = []
-            try:
-                parent_id = (TestJob.objects.latest('id')).id + 1
-            except:  # pylint: disable=bare-except
-                parent_id = 1
+            # parent_id must be the id of the .0 sub_id
+            # each sub_id must relate back to that parent
+            # this is fixed in V2 in a much cleaner way.
+
+            role = node_json.keys()[0]
+            device_type = DeviceType.objects.get(
+                name=node_json[role][0]["device_type"])
+            # cannot set sub_id until parent_id is known.
+            job = TestJob(
+                submitter=submitter,
+                requested_device=target,
+                description=job_name,
+                requested_device_type=device_type,
+                definition=simplejson.dumps(node_json[role][0],
+                                            sort_keys=True,
+                                            indent=4 * ' '),
+                original_definition=simplejson.dumps(json_data,
+                                                     sort_keys=True,
+                                                     indent=4 * ' '),
+                vmgroup_definition=json_data,
+                health_check=health_check, user=user, group=group,
+                is_public=is_public,
+                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
+                vm_group=vm_group)
+            job.save()
+            # Add tags as defined per role for each job.
+            taglist = _get_tag_list(node_json[role][0].get("tags", []))
+            if taglist:
+                for tag in Tag.objects.filter(name__in=taglist):
+                    job.tags.add(tag)
+            job.save()
+            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
+            job.sub_id = "%d.0" % parent_id
+            job.save(update_fields=['sub_id'])
+            job_list.append(job)
             child_id = 0
 
             for role in node_json:
                 role_count = len(node_json[role])
                 for c in range(0, role_count):
+                    if child_id == 0:
+                        # already done .0 to get the parent_id
+                        child_id = 1
+                        continue
                     name = node_json[role][c]["device_type"]
                     try:
                         device_type = DeviceType.objects.get(name=name)
