@@ -226,7 +226,7 @@
 {% if query.is_published %}
 <script>
   $("#query_group").editable(
-  "{% url 'lava.results.query_add_group' username=query.owner.username name=query.name %}",
+  "{% url 'query_add_group' username=query.owner.username name=query.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -249,14 +249,14 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava.results.query_group_list' %}',
+        source: '{% url 'query_group_list' %}',
         minLength: 2,
       });
   });
 
 
   $("#group").editable(
-  "{% url 'lava.results.query_select_group' username=query.owner.username name=query.name %}",
+  "{% url 'query_select_group' username=query.owner.username name=query.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -270,7 +270,7 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava.results.get_query_group_names' %}',
+        source: '{% url 'get_query_group_names' %}',
         minLength: 1,
       });
   });

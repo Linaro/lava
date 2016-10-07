@@ -112,7 +112,7 @@ urlpatterns = [
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+omit-result$', query_omit_result, name='lava.results.query_omit_result'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+include-result$', query_include_result, name='lava.results.query_include_result'),
     url(r'^query/get-query-groups$', query_group_list, name='query_group_list'),
-    url(r'^query/\+get-group-names$', get_query_group_names),
+    url(r'^query/\+get-group-names$', get_query_group_names, name='get_query_group_names'),
     url(r'^query/\+get-query-names$', get_query_names,
         name='lava.results.get_query_names'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)$', testjob, name='lava.results.testjob'),
