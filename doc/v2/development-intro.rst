@@ -302,6 +302,45 @@ changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
 
+.. _developer_planning:
+
+Planning
+========
+
+The LAVA software team use Jira_ for long term planning for new features and
+concepts. The JIRA instance used by LAVA is
+https://projects.linaro.org/browse/LAVA and anonymous access is available for
+anyone interested in LAVA to find out more about the future direction of LAVA.
+Not all features are available at this stage but all LAVA issues are visible
+individually. Not all issues will necesarily be delivered exactly as described,
+many descriptions are written well in advance of delivery of the feature.
+
+Many git commit messages within the LAVA codebase contain references to JIRA
+issues as ``LAVA-123`` etc. All references like this can be appended to a basic
+URL to find the details of that issue: ``https://projects.linaro.org/browse/``.
+e.g. the addition of this section on JIRA relates to ``LAVA-735`` which can be
+viewed as https://projects.linaro.org/browse/LAVA-735
+
+Within JIRA, there is a hierarchy of issues. *EPIC* is the highest level to
+group similar issues. *Stories* are each within a single EPIC and *sub-tasks*
+can exist within a single Story.
+
+This information is made available for interest and to make our development
+process open to the community. If you have comments or questions about anything
+visible within the LAVA project, please subscribe to one of the :ref:`mailing
+lists <mailing_lists>` and ask your questions there. For bugs in the current
+release, please continue to file bug reports using Bugzilla_.
+
+Many stories contain comments linking directly to one or more gerrit reviews
+related to that story. When the review is merged, the story will be marked as
+resolved with a *Fix Version* matching the git tag of the release containing
+the fix from the review.
+
+.. _Jira: http://www.atlassian.com/jira-software
+.. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+
+.. _community_contributions:
+
 Community contributions
 =======================
 
