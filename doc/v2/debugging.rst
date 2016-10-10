@@ -1,6 +1,6 @@
-.. _debugging_test_failures:
-
 .. index:: debug, debugging test failures
+
+.. _debugging_test_failures:
 
 Debugging LAVA test failures
 ############################
