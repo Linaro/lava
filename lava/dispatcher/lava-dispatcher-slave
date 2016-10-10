@@ -49,6 +49,11 @@ import zmq
 import zmq.auth
 from zmq.utils.strtypes import b, u
 
+if sys.version >= '3':
+    LZMAError = lzma.LZMAError
+else:
+    LZMAError = lzma.error
+
 # pylint: disable=no-member
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
@@ -152,8 +157,8 @@ class Job(object):
             filename = os.path.join(self.base_dir, "logs",
                                     "description.yaml")
             data = open(filename, 'r').read()
-            return lzma.compress(data)
-        except (IOError, lzma.error) as exc:
+            return lzma.compress(b(data))
+        except (IOError, LZMAError) as exc:
             LOG.error("Unable to read 'description.yaml'")
             LOG.exception(exc)
             return ''
@@ -299,7 +304,7 @@ def create_zmq_context(master_uri, hostname, send_queue, encrypt,
 
     def signal_to_pipe(signum, frame):
         # Send the signal number on the pipe
-        os.write(pipe_w, chr(signum))
+        os.write(pipe_w, b(chr(signum)))
 
     signal.signal(signal.SIGHUP, signal_to_pipe)
     signal.signal(signal.SIGINT, signal_to_pipe)
