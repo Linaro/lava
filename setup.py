@@ -12,7 +12,7 @@ elif sys.version_info[0] == 3:
 setup(
     name="lava-dispatcher",
     version=version_tag(),
-    url='http://git.linaro.org/git/lava/lava-dispatcher.git',
+    url='https://git.linaro.org/lava/lava-dispatcher.git',
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
