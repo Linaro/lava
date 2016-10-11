@@ -1084,6 +1084,8 @@ the overlay, where the connection method requires this.
 Both Primary and Secondary connections are affected by :ref:`security` issues
 due to the requirements of automation.
 
+.. index:: secondary connections - concepts
+
 .. _secondary_connection:
 
 Secondary connection

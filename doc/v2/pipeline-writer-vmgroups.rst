@@ -1,4 +1,6 @@
-.. _replacing _vmgroups:
+.. index:: replacing vmgroups, secondary connections - vmgroups
+
+.. _replacing_vmgroups:
 
 Replacing VMGroups using Secondary Connections
 ##############################################

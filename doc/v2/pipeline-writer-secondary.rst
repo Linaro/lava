@@ -1,3 +1,5 @@
+.. index:: secondary connections - writing
+
 .. _writing_secondary_connection_jobs:
 
 Writing jobs using Secondary Connections
