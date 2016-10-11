@@ -25,6 +25,7 @@ import sys
 import yaml
 import zmq
 import zmq.auth
+from zmq.utils.strtypes import b
 
 
 class ZMQPushHandler(logging.Handler):
@@ -58,8 +59,8 @@ class ZMQPushHandler(logging.Handler):
         self.action_name = name
 
     def emit(self, record):
-        msg = [self.job_id, self.action_level, self.action_name,
-               self.formatter.format(record)]
+        msg = [b(self.job_id), b(self.action_level), b(self.action_name),
+               b(self.formatter.format(record))]
         self.socket.send_multipart(msg)
 
     def close(self):
@@ -95,7 +96,7 @@ class YAMLLogger(logging.Logger):
         # Set width to a really large value in order to always get one line.
         self._log(level, yaml.dump(data, default_flow_style=True,
                                    default_style='"',
-                                   width=sys.maxint)[:-1], ())
+                                   width=sys.maxsize)[:-1], ())
 
     def exception(self, exc, *args, **kwargs):
         self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
