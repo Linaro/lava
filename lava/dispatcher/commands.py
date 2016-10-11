@@ -206,7 +206,7 @@ class dispatch(DispatcherCommand):
                 from setproctitle import setproctitle
             except ImportError:
                 logging.warning(
-                    ("Unable to set import 'setproctitle', "
+                    ("Unable to import 'setproctitle', "
                      "process name cannot be changed"))
             else:
                 setproctitle("lava-dispatch [job: %s]" % self.args.job_id)
