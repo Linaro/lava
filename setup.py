@@ -12,13 +12,20 @@ elif sys.version_info[0] == 3:
 setup(
     name="lava-dispatcher",
     version=version_tag(),
+    description="Linaro Automated Validation Architecture dispatcher",
     url='https://git.linaro.org/lava/lava-dispatcher.git',
-    license='GPL v2 or later',
-    description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
     author_email='linaro-validation@lists.linaro.org',
-    namespace_packages=['lava'],
-    test_suite='lava_dispatcher.tests.test_suite',
+    license='GPL v2 or later',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Software Development :: Embedded Systems',
+        'Topic :: Software Development :: Testing',
+    ],
     entry_points="""
     [lava.commands]
     dispatch = lava.dispatcher.commands:dispatch
@@ -32,6 +39,7 @@ setup(
     shell-hooks = lava_dispatcher.signals.shellhooks:ShellHooks
     """,
     packages=find_packages(),
+    namespace_packages=['lava'],
     package_data={
         'lava_dispatcher': [
             'default-config/lava-dispatcher/lava-dispatcher.conf',
@@ -88,6 +96,7 @@ setup(
         'pyzmq',
         'configobj'
     ],
+    test_suite='lava_dispatcher.tests.test_suite',
     tests_require=[
         'pep8 >= 1.4.6',
         'testscenarios >= 0.4'
