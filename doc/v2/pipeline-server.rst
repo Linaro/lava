@@ -579,6 +579,14 @@ can disable V1 test jobs on that worker.
 
     sudo service lava-coordinator stop
 
+   .. caution:: ``lava-coordinator`` will typically be uninstalled in a later
+      step. Ensure that the working coordinator configuration is retained by
+      copying ``/etc/lava-coordinator/lava-coordinator.conf`` to a safe
+      location. It will need to be restored later. The coordinator process
+      itself is not needed on the worker for either V1 or V2 was installed
+      as a requirement of ``lava-server``, only the configuration is actually
+      required.
+
 #. Remove ``lava-server``:
 
    .. code-block:: shell
@@ -601,6 +609,10 @@ can disable V1 test jobs on that worker.
 #. Check lava-slave is still pinging the master correctly.
 
 #. Check for any remaining files in ``/etc/lava-server/`` and remove.
+
+#. Create the ``/etc/lava-coordinator`` directory and restore
+   ``/etc/lava-coordinator/lava-coordinator.conf`` to restore MultiNode
+   operation on this worker.
 
 #. Check for any remaining lava-server processes - only ``lava-slave`` should
    be running.
