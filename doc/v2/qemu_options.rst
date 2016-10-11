@@ -5,10 +5,38 @@
 Extending the options passed to QEMU
 ####################################
 
+There are two ways to use QEMU in LAVA.
+
+Virtualisation testing
+**********************
+
+If you want to test virtualisation on a :term:`DUT`, then you have complete
+freedom to launch QEMU in any way you desire, including from a locally compiled
+source tree with custom patches. It is often useful to separate the output of
+the virtual machine from the host device or to run a test shell inside the
+virtual machine as well as on the host device, so a :ref:`secondary_connection`
+can be used. This is a relatively complex test job with particular issues about
+how to identify the IP address of the virtual machine so that the secondary
+connection can login over SSH.
+
+.. seealso:: :ref:`using_secondary_connections` and
+   :ref:`writing_secondary_connection_jobs`
+
+The rest of this page deals with how to specify the options to QEMU when using
+QEMU on the dispatcher for testing emulation within QEMU.
+
+Emulation testing
+*****************
+
+LAVA also supports running QEMU on the dispatcher, allowing testing of an x86
+virtual machine and emulation of other architectures using the same device. The
+QEMU command line is built up by combining settings from the :term:`jinja2`
+template, the :term:`device dictionary` and the :term:`job context`.
+
 The Jinja2 template for QEMU tries to cover a range of use cases but QEMU has a
 very long and complex set of possible options and commands.
 
-The LAVA support has three elements:
+The LAVA support for QEMU has three elements:
 
 #. **substituted** - options into which values must be inserted by LAVA.
 
@@ -57,6 +85,9 @@ lot of scope for customisation. Some of these elements have defaults in the
 device type template which can be overridden by the test writer. Other options
 can be specific to individual test jobs.
 
+When writing a new test job, it is best to start with an example command line
+based on how you would use QEMU to run the same test on your local machines.
+
 Example command lines
 *********************
 
@@ -103,21 +134,24 @@ This example would break into:
 
   * ``/usr/bin/qemu-system-aarch64``
   * ``-nographic``
-  * ``-machine virt -cpu cortex-a57``
   * ``-m 2048``
 
 * **Substituted** using ``image_args`` in the test job definition.
+
+  Use *substituted* for the complete argument. Include any other options
+  which relate to the filepath into the ``image_args``.
 
   * ``-kernel /tmp/tmpQi2ZR3/Image --append "console=ttyAMA0 root=/dev/vda rw"``
   * ``-drive format=raw,file=/tmp/tmpQi2ZR3/ubuntu-core-14.04.1-core-arm64-ext4.img``
   * ``-drive format=qcow2,file=/tmp/tmpMgsuvB/lava-guest.qcow2,media=disk``
 
-* **Specific** - using ``extra_options`` in the job context:
+* **Specific** - using the :term:`job context` to override defaults:
 
-  * ``-smp 1``
-  * ``-global virtio-blk-device.scsi=off``
-  * ``-device virtio-scsi-device,id=scsi``
+  * ``-machine virt``
+  * ``-cpu cortex-a57``
 
+  To use ``/usr/bin/qemu-system-aarch64``, the job context also needs to
+  include ``arch: arm64`` or ``arch: aarch64``:
 
 * **Specific** - using ``extra_options`` in the job context:
 
@@ -141,7 +175,7 @@ How to override variables
   .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
      :code: yaml
      :start-after: ACTION_BLOCK
-     :end-before: BOOT_BLOCK
+     :end-before: # BOOT_BLOCK
 
 * Mandatory options and commands cannot be overridden. These will either be
   hard-coded values in the device type template or variables set by the admin
@@ -158,6 +192,22 @@ How to override variables
      :code: yaml
      :start-after: visibility: public
      :end-before: metadata:
+
+  When using the multiple architecture support, it is common to change the
+  ``machine`` and ``cpu`` arguments passed to QEMU.
+
+  .. include:: examples/test-jobs/qemu-aarch64.yaml
+     :code: yaml
+     :start-after: visibility: public
+     :end-before: extra_options:
+
+  (This example simply restates the defaults but any value which QEMU would
+  accept as an argument to ``-machine`` and ``-cpu`` respectively could
+  be used.)
+
+  If using QEMU to emulate a microcontroller, you might need to use the ``vga``
+  and ``serial`` options which each take a complete argument, passed unchanged
+  to QEMU.
 
   Specific options can also extend beyond the range that the device type
   template needs to cover and in order to build a working QEMU command line,

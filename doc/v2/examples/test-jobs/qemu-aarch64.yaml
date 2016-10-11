@@ -1,0 +1,50 @@
+device_type: qemu
+job_name: qemu aarch64 example
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+context:
+  arch: aarch64
+  netdevice: tap
+  machine: virt
+  cpu: cortex-a57
+  extra_options:
+  - -smp
+  - 1
+  - -global
+  - virtio-blk-device.scsi=off
+  - -device virtio-scsi-device,id=scsi
+  - --append "console=ttyAMA0 root=/dev/vda rw"
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: qemu-aarch64.yaml
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      kernel:
+        image_arg: -kernel {kernel}
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+      initrd:
+        image_arg: -initrd {initrd}
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+    os: debian
+    root_partition: 1
+
+- boot:
+    method: qemu
+    media: tmpfs
+    prompts:
+    # escape the brackets to ensure that the prompt does not match
+    # kernel debug lines which may mention initramfs
+    - '\(initramfs\)'
+
