@@ -801,15 +801,15 @@ def parse_job_description(job):
     try:
         with open(filename, 'r') as f_describe:
             description = f_describe.read()
-    except IOError:
-        logger.error("'Unable to open '%s'", filename)
+        pipeline = yaml.load(description)
+    except (IOError, yaml.YAMLError):
+        logger.error("'Unable to open and parse '%s'", filename)
         return
 
     if not map_metadata(description, job):
         logger.warning("[%d] unable to map metadata", job.id)
 
     # add the compatibility result from the master to the definition for comparison on the slave.
-    pipeline = yaml.load(description)
     try:
         compat = int(pipeline['compatibility'])
     except ValueError:
