@@ -310,13 +310,14 @@ class Command(BaseCommand):
                 status = TestJob.INCOMPLETE
                 self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
                 self.logger.error("[%d] Error: %s", job_id, error_msg)
+                # Set the failure comment
+                TestJob.objects.filter(id=job_id).update(failure_comment=error_msg)
             else:
                 status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
             try:
                 with transaction.atomic():
-                    job = TestJob.objects.select_for_update() \
-                                         .get(id=job_id)
+                    job = TestJob.objects.select_for_update().get(id=job_id)
                     if job.status == TestJob.CANCELING:
                         cancel_job(job)
                     else:
