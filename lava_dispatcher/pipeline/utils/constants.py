@@ -39,6 +39,9 @@ MAX_RETRY = 5
 # u-boot auto boot prompt
 UBOOT_AUTOBOOT_PROMPT = "Hit any key to stop autoboot"
 
+# u-boot interrupt character
+UBOOT_INTERRUPT_CHARACTER = ' '
+
 # u-boot default timeout for commands
 UBOOT_DEFAULT_CMD_TIMEOUT = 90
 

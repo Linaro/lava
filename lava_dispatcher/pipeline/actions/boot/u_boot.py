@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
+    UBOOT_INTERRUPT_CHARACTER,
     UBOOT_DEFAULT_CMD_TIMEOUT,
     BOOT_MESSAGE,
 )
@@ -205,10 +206,11 @@ class UBootInterrupt(Action):
         device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
+        interrupt_char = device_methods['u-boot']['parameters'].get('interrupt_char', UBOOT_INTERRUPT_CHARACTER)
         self.logger.debug("Changing prompt to '%s'", interrupt_prompt)
         connection.prompt_str = interrupt_prompt
         self.wait(connection)
-        connection.sendline(' \n')
+        connection.sendline('%s\n' % interrupt_char)
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.wait(connection)
         return connection
