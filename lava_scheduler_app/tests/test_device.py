@@ -716,3 +716,18 @@ class TestTemplates(TestCaseWithFactory):
             ' rw',
             [check for check in template_dict['actions']['boot']['methods']['grub']['nfs']['commands'] if 'nfsroot' in check][0]
         )
+
+    def test_highbank_template(self):
+        data = """{% extends 'highbank.jinja2' %}
+{% set connection_command = 'ipmitool -I lanplus -U admin -P admin -H calxeda02-07-02 sol activate' %}
+{% set power_off_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power off' %}
+{% set power_on_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}
+{% set hard_reset_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power off; sleep 20; ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}"""
+        self.assertTrue(self.validate_data('highbank-07', data))
+        test_template = prepare_jinja_template('highbank-07', data, system_path=False)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual(template_dict['character_delays']['boot'], 100)
+        self.assertEqual(template_dict['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt'], 'Highbank')
+        self.assertEqual(template_dict['actions']['boot']['methods']['u-boot']['parameters']['interrupt_char'], 's')
