@@ -31,13 +31,21 @@ device_type: {{ device_type|default('uboot') }}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default("") %}
 
+{% if boot_delay or test_delay%}
+character_delays:
+{% if boot_delay %}
+  boot: {{ boot_delay|default(100) }}
+{% endif %}
+{% if test_delay %}
+  test: {{ test_delay|default(100) }}
+{% endif %}
+{% endif %}
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-{% set interrupt_prompt = 'Qualcomm-DragonBoard 410C' %}
-{% set bootloader_prompt = '=>' %}
-{% set action_timeout_u_boot_commands = 90 %}
+{% set action_timeout_u_boot_commands = action_timeout_u_boot_commands | default(3) %}
+{% set connection_timeout_u_boot_commands = connection_timeout_u_boot_commands | default(2) %}
 
 {# adds the parameters: top level block #}
 {% block vland %}
@@ -73,9 +81,10 @@ actions:
           mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }}
           bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: {{ interrupt_char|default(' ') }}
           boot_message: {{ boot_message|default('Booting Linux') }}
           send_char: False
-          # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
         nfs:
           commands:
@@ -98,4 +107,5 @@ actions:
 {% endblock %}
 
 {% block timeouts %}
+{{ super() }}
 {% endblock %}
