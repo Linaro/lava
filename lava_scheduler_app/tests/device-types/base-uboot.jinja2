@@ -70,11 +70,16 @@ actions:
     parameters:
       add_header: u-boot
       mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+    connections:
+      lxc:
+      serial:
     methods:
+      lxc:
       tftp:
 
   boot:
     connections:
+      lxc:
       serial:
     methods:
       u-boot:

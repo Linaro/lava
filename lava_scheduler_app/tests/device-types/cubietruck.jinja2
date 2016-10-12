@@ -51,8 +51,12 @@ actions:
       mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
 {% if not deploy_methods %}
     # list of deployment methods which this device supports
+    connections:
+      lxc:
+      serial:
     methods:
       usb:
+      lxc:
       sata:
       tftp:
       ssh:
@@ -67,6 +71,7 @@ actions:
 {% endif %}
   boot:
     connections:
+      lxc:
       serial:
       ssh:
     # list of boot methods which this device supports.
