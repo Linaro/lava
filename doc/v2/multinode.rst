@@ -39,7 +39,7 @@ LAVA Multi-Node timeout behaviour
 
 The submitted YAML includes a timeout value - in single node LAVA, this is applied to each individual action
 executed on the device under test (not for the entire job as a whole). i.e. the default timeout can be smaller
-than any one individual timeout used in the JSON or internally within LAVA.
+than any one individual timeout used in the YAML or internally within LAVA.
 
 In Multi-Node LAVA, this timeout is also applied to individual polling operations, so an individual lava-sync
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
