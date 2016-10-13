@@ -817,7 +817,8 @@ class TestInstallAction(TestOverlayAction):
         self.name = "test-install-overlay"
         self.description = "overlay dependency installation support files onto image"
         self.summary = "applying LAVA test install scripts"
-        self.skip_list = ['keys', 'sources', 'deps', 'steps', 'all']  # keep 'all' as the last item
+        self.skip_list = ['keys', 'sources', 'deps', 'steps', 'git-repos',
+                          'all']  # keep 'all' as the last item
         self.skip_options = []
 
     def validate(self):
@@ -883,6 +884,35 @@ class TestInstallAction(TestOverlayAction):
                 if steps:
                     for cmd in steps:
                         install_file.write('%s\n' % cmd)
+
+            if 'git-repos' not in self.skip_options:
+                repos = testdef['install'].get('git-repos', [])
+                for repo in repos:
+                    dest_path = runner_path
+                    commit_id = None
+                    if isinstance(repo, str):
+                        commit_id = GitHelper(repo).clone(dest_path)
+                    if isinstance(repo, dict):
+                        # TODO: We use 'skip_by_default' to check if this
+                        # specific repository should be skipped. The value
+                        # for 'skip_by_default' comes from job parameters.
+                        url = repo.get('url', None)
+                        branch = repo.get('branch', None)
+                        destination = repo.get('destination', None)
+                        if destination:
+                            dest_path = os.path.join(runner_path, destination)
+                            if os.path.abspath(runner_path) != os.path.dirname(
+                                    dest_path):
+                                raise RuntimeError(
+                                    "Destination path is unacceptable %s" %
+                                    destination)
+                                continue
+                        commit_id = GitHelper(url).clone(dest_path,
+                                                         branch=branch)
+                    if commit_id is None:
+                        raise RuntimeError(
+                            "Unable to clone %s" % str((repo)))
+
         self.results = {'success': self.test_uuid}
         return connection
 

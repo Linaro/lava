@@ -328,7 +328,7 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.job.validate()
         self.assertEqual(
             single_testdef.skip_list,
-            ['keys', 'sources', 'deps', 'steps', 'all']
+            ['keys', 'sources', 'deps', 'steps', 'git-repos', 'all']
         )
         self.assertEqual(single_testdef.skip_options, ['deps'])
 
