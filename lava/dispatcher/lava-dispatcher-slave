@@ -242,9 +242,14 @@ def send_multipart_u(sock, data):
 
 
 def send_end(sock, job_id, job):
-    job_status = job.proc.returncode if job.proc is not None else 0
-    send_multipart_u(sock, ["END", str(job_id),
-                            str(job_status), job.errors(),
+    err = job.errors()
+    if job.proc is not None:
+        job_status = job.proc.returncode
+    elif err == '':
+        job_status = 0
+    else:
+        job_status = 2
+    send_multipart_u(sock, ["END", str(job_id), str(job_status), err,
                             job.description()])
 
 
