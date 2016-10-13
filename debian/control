@@ -26,7 +26,7 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-hijack (<= 1.0.10-1), python-django (<< 1.8),
  python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
-Depends: apache2, adduser, diffstat, fuse, iproute2,
+Depends: apache2, adduser, diffstat, fuse, iproute2, lsb-base (>= 4),
  libapache2-mod-uwsgi, libapache2-mod-wsgi, python-tz,
  python-daemon, python-dateutil, python-django-auth-ldap,
  python-setuptools, libjs-excanvas, libjs-jquery-cookie,
