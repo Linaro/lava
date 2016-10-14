@@ -79,6 +79,7 @@ class ApplyOverlayGuest(Action):
             guest_file, self.data['compress-overlay'].get('output'),
             self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
         self.results = {'success': blkid}
+        self.set_common_data('guest', 'UUID', blkid)
         return connection
 
 

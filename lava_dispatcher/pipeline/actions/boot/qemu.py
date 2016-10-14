@@ -272,8 +272,13 @@ class CallQemuAction(Action):
             # before the test shell tries to execute.
             shell_precommand_list = []
             mountpoint = self.data['lava_test_results_dir']
+            uuid = '/dev/disk/by-uuid/%s' % self.get_common_data('guest', 'UUID')
             shell_precommand_list.append('mkdir %s' % mountpoint)
-            shell_precommand_list.append('mount -L LAVA %s' % mountpoint)
+            # prepare_guestfs always uses ext2
+            shell_precommand_list.append('mount %s -t ext2 %s' % (uuid, mountpoint))
+            # debug line to show the effect of the mount operation
+            # also allows time for kernel messages from the mount operation to be processed.
+            shell_precommand_list.append('ls -la %s/bin/lava-test-runner' % mountpoint)
             self.set_common_data('lava-test-shell', 'pre-command-list', shell_precommand_list)
 
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))
