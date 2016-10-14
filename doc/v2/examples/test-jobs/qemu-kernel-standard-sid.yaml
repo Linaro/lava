@@ -1,0 +1,82 @@
+device_type: qemu
+job_name: qemu arm64 ramdisk
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+
+priority: medium
+visibility: public
+context:
+  arch: arm64
+  machine: virt
+  cpu: cortex-a57
+  extra_options:
+  - -smp
+  - 1
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: doc/v2/examples/test-jobs/qemu-kernel-standard-sid.yaml
+  build-readme: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/debian-arm64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-sid-arm64/2/console
+  build-script: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/build-foreign-nfs.sh
+# When modifying the standard qemu test jobs, always keep the builds of the
+# kernel, initrd and rootfs in sync or provide a replacement kernel with all
+# necessary modules built in.
+
+# ACTION_BLOCK
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      kernel:
+        image_arg: -kernel {kernel} --append 'root=/dev/ram0 rw rootwait rootdelay=5 console=ttyAMA0,38400n8 init=/sbin/init'
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+        sha256sum: 714e9669883f4705f3358d11a61cd601e4c938006cbfef0f785a65f3f8f74896
+      initrd:
+        image_arg: -initrd {initrd}
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+        sha256sum: 4fb2e63d796729e03b6c5ed3f8e5c0ee2ffe94ea5ded800c508d53c303591972
+    os: oe
+
+# BOOT_BLOCK
+- boot:
+    method: qemu
+    media: tmpfs
+    timeout:
+      minutes: 2
+    prompts:
+    - '\(initramfs\)'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: smoke-tests-basic
+          description: "Basic system test command for Linaro Ubuntu images"
+        run:
+          steps:
+          - ifconfig -a
+          - mount
+          - ls -l /dev/
+      name: env-dut-inline
+      path: inline/env-dut.yaml
+    - from: git
+      repository: git://git.linaro.org/qa/test-definitions.git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+    - from: git
+      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/single-node/singlenode01.yaml
+      name: singlenode-basic

@@ -160,4 +160,4 @@ standard QEMU test job:
    :hidden:
    :maxdepth: 1
 
-   standard-armmp-ramdisk-bbb.rst
+   standard-qemu-kernel.rst
