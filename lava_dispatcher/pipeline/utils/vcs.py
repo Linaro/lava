@@ -34,7 +34,7 @@ class VCSHelper(object):
     def __init__(self, url):
         self.url = url
 
-    def clone(self, dest_path, revision=None):
+    def clone(self, dest_path, revision=None, branch=None):
         raise NotImplementedError
 
 
@@ -44,7 +44,7 @@ class BzrHelper(VCSHelper):
         super(BzrHelper, self).__init__(url)
         self.binary = '/usr/bin/bzr'
 
-    def clone(self, dest_path, revision=None):
+    def clone(self, dest_path, revision=None, branch=None):
         cwd = os.getcwd()
         logger = logging.getLogger('dispatcher')
         env = dict(os.environ)

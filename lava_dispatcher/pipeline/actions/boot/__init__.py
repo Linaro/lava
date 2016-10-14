@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
