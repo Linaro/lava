@@ -1,7 +1,7 @@
 .. _device_types:
 
-Identifying device types
-************************
+Device types
+############
 
 When adding devices, there is a decision to be made about what qualifies as a
 device type and what does not. A different type of device can mean different

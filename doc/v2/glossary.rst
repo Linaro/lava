@@ -1,5 +1,8 @@
 .. _glossary:
 
+Glossary of terms
+=================
+
 ..
    Please add new terms in alphabetical order and feel free to relocate
    existing terms to match. All terms are automatically added to the Sphinx
@@ -8,34 +11,48 @@
    expected to need to read the entire glossary to find the information. FIXME
    - need to add many more terms here
 
-Glossary of terms
-=================
+**A** [ :term:`action level` ]
 
-[ :term:`action level` ]
-[ :term:`chart` ]
-[ :term:`device` ] [ :term:`device dictionary` ]
+**C** [ :term:`chart` ]
+
+**D** [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
 [ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
 [ :term:`distributed deployment`] [ :term:`DTB` ] [ :term:`DUT` ]
-[ :term:`exclusive` ]
-[ :term:`frontend` ]
-[ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
-[ :term:`inline` ] [ :term:`interface tag` ]
-[ :term:`master` ] [ :term:`messageID` ] [ :term:`MultiNode` ]
-[ :term:`jinja2`] [ :term:`job definition` ]
-[ :term:`offline` ]
-[ :term:`pipeline` ] [ :term:`prompts` ]
+
+**E** [ :term:`exclusive` ]
+
+**F** [ :term:`frontend` ]
+
+**H** [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
+
+**I** [ :term:`inline` ] [ :term:`interface tag` ]
+
+**J** [ :term:`jinja2`] [ :term:`job definition` ]
+
+**M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`MultiNode` ]
+
+**O** [ :term:`offline` ]
+
+**P** [ :term:`pipeline` ] [ :term:`prompts` ]
 [ :term:`PDU` ][ :term:`physical access` ] [ :term:`priority` ]
-[ :term:`query` ]
-[ :term:`refactoring` ] [ :term:`results` ]
+
+**Q** [ :term:`query` ]
+
+**R** [ :term:`refactoring` ] [ :term:`results` ]
 [ :term:`remote worker`] [ :term:`restricted device` ]
 [ :term:`retired` ]
 [ :term:`role` ] [ :term:`rootfs` ] [ :term:`rootfstype` ]
-[ :term:`scheduler` ]
-[ :term:`test run` ] [ :term:`test shell` ] [ :term:`tftp` ]
-[ :term:`VLANd` ]
-[ :term:`worker` ]
-[ :term:`ZMQ` ]
+
+**S** [ :term:`scheduler` ]
+
+**T** [ :term:`test run` ] [ :term:`test shell` ] [ :term:`tftp` ]
+
+**V** [ :term:`VLANd` ]
+
+**W** [ :term:`worker` ]
+
+**Z** [ :term:`ZMQ` ]
 
 
 .. glossary::

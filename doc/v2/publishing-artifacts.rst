@@ -1,3 +1,5 @@
+.. index:: publish artifacts
+
 .. _publishing_artifacts:
 
 Publishing artifacts

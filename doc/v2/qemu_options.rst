@@ -2,8 +2,8 @@
 
 .. _extending_qemu_options:
 
-Extending the options passed to QEMU
-####################################
+QEMU options
+############
 
 There are two ways to use QEMU in LAVA.
 

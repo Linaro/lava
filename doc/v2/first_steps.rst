@@ -1,23 +1,15 @@
-First Steps Using LAVA V2
-#########################
+.. _first_steps_using_lava:
+
+First steps as a user
+#####################
 
 .. include:: logging-in.rsti
-
 .. include:: authentication-tokens.rsti
 
-.. include:: first-job.rsti
+.. #
+   first-job
+   explain_first_job
+   lava-tool
 
-.. include:: lava-tool.rsti
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   standard-qemu-jessie.rst
-   qemu_options.rst
-   first-installation.rst
-   installing_on_debian.rst
-   first-devices.rst
-   devicetypes.rst
-   growing_your_lab.rst
-   authentication.rst
+   .. include:: first-job.rsti
+   .. include:: lava-tool.rsti

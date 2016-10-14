@@ -1,3 +1,5 @@
+.. index:: lava-tool issues
+
 .. _fixing_issues_with_lava_tool:
 
 Fixing issues with lava-tool

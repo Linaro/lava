@@ -1,9 +1,9 @@
-.. index:: submit
+.. index:: submit, first job
 
 .. _submit_first_job:
 
 Submitting your first job
-=========================
+#########################
 
 A job defines what software should be deployed on the ``device under test``
 (DUT) and what actions should be performed there. Jobs are defined in *YAML*
@@ -201,6 +201,8 @@ Viewing the submitted job will show the same screen as other submission methods.
 
 .. _xmlrpc_job_submit:
 
+.. index:: xml-rpc job submission
+
 XML-RPC Job Submission
 ======================
 
@@ -219,10 +221,3 @@ use ``https`` wherever possible to protect the token.
    sections on  :ref:`lava_tool` and the **Available methods** link from
    the API menu of the LAVA instance.
    For example: ``http://localhost/api/help``.
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   explain_first_job.rst

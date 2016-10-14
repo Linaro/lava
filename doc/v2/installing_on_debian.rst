@@ -2,8 +2,8 @@
 
 .. _debian_installation:
 
-Debian-based distributions
-**************************
+Installing on a Debian-based distribution
+*****************************************
 
 These instructions cover installation on Debian. The supported
 versions are:
@@ -63,6 +63,8 @@ suites by following links from the Debian package trackers for
 `lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_
 and `lava-server <https://tracker.debian.org/pkg/lava-server>`_.
 
+.. index:: lava repository
+
 .. _lava_repositories:
 
 LAVA repositories
@@ -105,6 +107,8 @@ staging repository::
 This repository uses the same key as the production repository and
 uses ``sid`` in the same way.
 
+.. index:: lava archive signing key
+
 .. _lava_archive_signing_key:
 
 LAVA Archive signing key
@@ -129,6 +133,8 @@ Then update to locate the required dependencies::
  $ sudo apt update
 
 .. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+
+.. index:: production release
 
 .. _production_releases:
 

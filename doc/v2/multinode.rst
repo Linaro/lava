@@ -2,8 +2,8 @@
 
 .. _multinode:
 
-Multi-Node LAVA
-###############
+MultiNode LAVA
+##############
 
 .. seealso:: :ref:`multinode_protocol` and
   :ref:`Using the multinode protocol <writing_multinode>`
@@ -16,7 +16,7 @@ same group during tests.
 
 Within a MultiNode group, devices of the same device type are assigned a role and a
 ``count`` of devices to include into that role. Role labels must be unique across the
-entire multinode job. Each role has a ``device_type`` and any number of roles can
+entire MultiNode job. Each role has a ``device_type`` and any number of roles can
 have the same ``device_type``. Each role can be assigned device ``tags``.
 
 Once roles are defined, actions (including test images and test definitions) can be marked
@@ -34,20 +34,20 @@ the test definition in the default PATH.
 
 .. index:: multinode timeouts
 
-LAVA Multi-Node timeout behaviour
-*********************************
+LAVA MultiNode timeout behaviour
+********************************
 
 The submitted YAML includes a timeout value - in single node LAVA, this is applied to each individual action
 executed on the device under test (not for the entire job as a whole). i.e. the default timeout can be smaller
 than any one individual timeout used in the YAML or internally within LAVA.
 
-In Multi-Node LAVA, this timeout is also applied to individual polling operations, so an individual lava-sync
+In MultiNode LAVA, this timeout is also applied to individual polling operations, so an individual lava-sync
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
 response.
 
 .. _multinode_timeouts:
 
-Recommendations on timeouts for multinode
+Recommendations on timeouts for MultiNode
 =========================================
 
 .. seealso:: :ref:`timeouts`

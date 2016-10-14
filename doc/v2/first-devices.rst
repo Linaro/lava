@@ -1,7 +1,9 @@
+.. index:: first devices
+
 .. _first_devices:
 
-First Devices
-#############
+Adding your first devices
+#########################
 
 Requirements
 ************

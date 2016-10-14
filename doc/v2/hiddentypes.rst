@@ -1,7 +1,7 @@
 .. _v2_hidden_device_type:
 
-Hidden device type
-##################
+Hidden device types
+###################
 
 The :ref:`device_owners` can be extended to make certain device types
 invisible to certain users for licensing reasons. Only lab administrators

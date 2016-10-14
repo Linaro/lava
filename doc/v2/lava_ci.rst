@@ -37,6 +37,8 @@ to fix problems identified by the testing.
    background on CI workflow and best practices and :ref:`ci_loop` for an
    example of how LAVA can work within a CI loop.
 
+.. index:: best practice ci
+
 Summary of CI best practices
 ============================
 

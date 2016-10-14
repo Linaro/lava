@@ -1,3 +1,5 @@
+.. index:: advanced installation topics, laptop, virtual machine
+
 .. _advanced_installation:
 
 Advanced Installation Topics
@@ -41,14 +43,14 @@ an issue.
 Workload
 ========
 
-Consider the expected load of the master and each of the slaves:
+Consider the expected load of the master and each of the workers:
 
 * The workload on the **master** primarily depends on:
 
   #. the visibility of the instance,
   #. the number of users,
   #. the average number of jobs in the queue and
-  #. the total number of devices attached across all the slaves
+  #. the total number of devices attached across all the workers
      connected to this master.
 
 * The workload on the **worker** involves a range of tasks, scaling
@@ -117,7 +119,7 @@ Single instance
 
 The basic guide shows how to install ``lava-server`` and ``lava-dispatcher``
 on a single machine. This kind of instance can later be migrated to
-the same master with one or more remote slaves when more devices become
+the same master with one or more remote workers when more devices become
 available. Single instance installs are useful for local development,
 testing inside virtual machines and small scale testing.
 
@@ -126,27 +128,27 @@ Limitations
 
 The main limitation of a single instance is the number of devices which
 can be supported and the need to connect some devices directly to that
-machine. The solution then is to allocate a new machine as a slave and
-move some devices onto the slave.
+machine. The solution then is to allocate a new machine as a worker and
+move some devices onto the worker.
 
-Master with one or more remote slaves
-=====================================
+Master with one or more remote workers
+======================================
 
 Any single instance of LAVA V2 can be extended to work with one or more
-slaves which only need ``lava-dispatcher`` installed.
+workers which only need ``lava-dispatcher`` installed.
 
-.. seealso:: :ref:`Installing a slave <installing_pipeline_worker>`
+.. seealso:: :ref:`Installing a worker <installing_pipeline_worker>`
 
 Authentication and encryption
 -----------------------------
 
-When the slave is on the same subnet and behind the same firewall as the
-master, admins can choose to use slaves without authentication. In all
+When the worker is on the same subnet and behind the same firewall as the
+master, admins can choose to use workers without authentication. In all
 other cases, the ZMQ socket used for passing control messages to the
-slave and the socket used to pass logs back to the master need to use
+worker and the socket used to pass logs back to the master need to use
 authentication which will then turn on :ref:`encryption <zmq_curve>`.
 
-Once authentication is configured on the master, one or more slaves can
+Once authentication is configured on the master, one or more workers can
 be :ref:`prepared <installing_pipeline_worker>` and also configured to
 use authentication.
 
@@ -234,22 +236,3 @@ which change network configuration between jobs. The interfaces in the
 list should include the interface which a remote worker can use to
 serve files to all devices connected to this worker.
 
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   pipeline-server.rst
-   pipeline-admin.rst
-   proxy.rst
-   pipeline-admin-example.rst
-   device-capabilities.rst
-   authentication.rst
-   hijack-user.rst
-   hiddentypes.rst
-   migrate-lava.rst
-   pdudaemon.rst
-   nexus-deploy.rst
-   ipmi-pxe-deploy.rst
-   ipxe.rst
-   lxc-deploy.rst
-   vland-admin.rst

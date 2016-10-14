@@ -1,7 +1,9 @@
+.. index:: administrator debugging, debugging V2 instance
+
+.. _debugging_v2:
+
 Administrator debugging
 #######################
-
-.. debugging_v2:
 
 Debugging a LAVA V2 instance
 ****************************

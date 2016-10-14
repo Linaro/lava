@@ -1,3 +1,5 @@
+.. index:: lava test shell
+
 .. _lava_test_shell:
 
 LAVA Test Shell

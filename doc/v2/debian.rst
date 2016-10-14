@@ -1,4 +1,4 @@
-.. index:: developers
+.. index:: developers, debian development, lava on debian
 
 .. _lava_on_debian:
 

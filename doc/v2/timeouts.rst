@@ -5,10 +5,12 @@
 Timeouts
 ########
 
-V2 provides a lot more detailed control over timeouts within testjobs. The job has an over-arching
-timeout, each action has a default runtime timeout, each connection has a default timeout to get a
-reply and individual actions within the pipeline can have the action or connection timeout modified
-in the test definition or in the device configuration.
+V2 provides detailed control over timeouts within testjobs. The job
+has an over-arching timeout, each action has a default runtime
+timeout, each connection has a default timeout to get a reply and
+individual actions within the pipeline can have the action or
+connection timeout modified in the test definition or in the device
+configuration.
 
 .. _need_for_timeouts:
 

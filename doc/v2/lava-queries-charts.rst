@@ -1,3 +1,5 @@
+.. index:: using test results, queries
+
 .. _result_queries:
 
 Using Test Results
@@ -410,10 +412,3 @@ compared to queries, the chart type. New URL paramater is named "type" and can
 take values of pass/fail, measurement and attributes.
 
 `Example Chart by URL <https://playground.validation.linaro.org/results/chart/+custom?type=pass/fail&entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   data-export.rst
-   custom-result-handling.rst

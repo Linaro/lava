@@ -1,3 +1,5 @@
+.. index:: packaging for distributions, packaging
+
 .. _packaging_distribution:
 
 Packaging lava-server for distributions

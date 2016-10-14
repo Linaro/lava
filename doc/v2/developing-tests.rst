@@ -1,3 +1,5 @@
+.. index:: writing tests
+
 .. _test_developer:
 
 Writing Tests
@@ -246,27 +248,3 @@ not be rebooted between the definitions.
 .. seealso:: :ref:`Dispatcher Actions <test_action_definitions>`
 
 .. seealso:: ``lava_test_shell`` `developer documentation <lava_test_shell.html>`_
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   writing-tests.rst
-   pipeline-writer.rst
-   test-repositories.rst
-   timeouts.rst
-   dispatcher-format.rst
-   dispatcher-actions2.rst
-   lava_test_shell.rst
-   publishing-artifacts.rst
-   healthchecks.rst
-   hacking-session.rst
-   multinode.rst
-   writing-multinode.rst
-   multinodeapi.rst
-   debugging.rst
-   vland.rst
-   pipeline-usecases.rst
-   test-examples.rst
-   bootimages.rst
-   tests-reference.rst

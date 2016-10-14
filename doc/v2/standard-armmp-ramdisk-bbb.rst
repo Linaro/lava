@@ -1,3 +1,5 @@
+.. index:: standard known devices
+
 .. _standard_known_devices:
 
 Standard test jobs using known devices

@@ -445,17 +445,3 @@ that someone can migrate the pull request to a review.
 .. note:: You will need to respond to comments on the review and the
    process of updating the review is **not** linked to the github pull request
    process.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   process.rst
-   development.rst
-   pipeline-design.rst
-   dispatcher-design.rst
-   pipeline-schema.rst
-   dispatcher-testing.rst
-   debian.rst
-   packaging.rst
-   developer-example.rst

@@ -1,3 +1,5 @@
+.. index:: pipeline design
+
 .. _pipeline_design:
 
 Pipeline Design

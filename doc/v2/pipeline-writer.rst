@@ -1,3 +1,7 @@
+.. index:: test writer use cases
+
+.. _test_writer_use_cases:
+
 Test Writer use cases
 #####################
 

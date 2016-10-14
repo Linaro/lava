@@ -1,3 +1,5 @@
+.. index:: writing test definition
+
 .. _writing_tests:
 
 Writing a LAVA test definition

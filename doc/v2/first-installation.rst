@@ -1,6 +1,8 @@
+.. index:: first installation
+
 .. _installation:
 
-First Steps Installing LAVA V2
+First steps installing LAVA V2
 ##############################
 
 Initial LAVA Installation
@@ -91,6 +93,8 @@ multi-core machine, this can cause high load. It is worth considering
 matching the number of devices to the number of cores for parallel
 decompression, and matching the amount of available RAM to the number
 and size of test images which are likely to be in use.
+
+.. index:: install release, release
 
 Which release to install
 ************************
@@ -358,6 +362,8 @@ W.I.P
 This will create a symlink in /dev called rack-usb01 etc. which can then be
 addressed in the :ref:`ser2net` config file.
 
+.. index:: contact, bug reports
+
 Contact and bug reports
 ***********************
 
@@ -369,10 +375,3 @@ System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=lava-server
 
 Feel free to contact us at validation (at) linaro (dot) org and on
 the ``#linaro-lava`` channel on OFTC.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   advanced-installation.rst
-   pipeline-debug.rst

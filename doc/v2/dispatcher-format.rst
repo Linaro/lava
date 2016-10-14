@@ -1,9 +1,9 @@
+.. index:: writing job submission yaml
+
 .. _dispatcher_yaml:
 
 Writing YAML files for the pipeline dispatcher
 ##############################################
-
-FIXME! Massive overlap here...
 
 To use the new features in the pipeline (v2) dispatcher, a new
 submission format was required and as YAML supports comments, it was

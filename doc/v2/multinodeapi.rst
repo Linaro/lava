@@ -1,3 +1,5 @@
+.. index:: MultiNode API
+
 .. _multinode_api:
 
 MultiNode API

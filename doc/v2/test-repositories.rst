@@ -1,3 +1,5 @@
+.. index:: test definition repository
+
 .. _test_repos:
 
 Test definitions in version control

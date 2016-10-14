@@ -4,19 +4,13 @@
 
    Any chapter sections (#####) in this file appear in the Site menu.
    Same for any files included into this file.
-   Same for any files listed in a toctree in this file, including hidden.
    Same for any files directly included into any file covered by the above.
-   No files listed in toctrees in any of the listed files, other than this
-     one will be listed in the Site menu. These will be used to create
-     the previous and next navigation entries instead.
    Chapter sections in files not listed in the Site menu will show as
      the top entry of the Page menu on that page.
-   The Site menu appears on all pages - use to provide gross navigation.
-   Pages still need to appear in toctrees for prev+next navigation.
+   The Site menu appears on all pages - use to provide gross navigation. Pages
+   still need to appear in the contents.rst toctree for prev+next navigation.
    conf.py adds permanent links to genindex - the navbar
       gets folded into a menu by bootstrap on narrow screens.
-   Add a hidden toctree to pages which naturally follow the start page
-      linked from the Site menu.
 
 .. index:: Documentation Index
 
@@ -130,13 +124,23 @@ Advanced use cases expand on this support to include:
   to support developer-specific tasks like
   `KernelCI <https://kernelci.org/>`_.
 
+.. # this toctable determines the Site menu (if configured to appear)
+   and the next/prevous links on the top bar
+
+.. toctree::
+   :hidden:
+   :maxdepth: 3
+
+   self
+   contents
+
 Glossary
 ********
 
 .. toctree::
    :maxdepth: 1
 
-   glossary.rst
+   glossary
 
 Support
 *******
@@ -144,19 +148,5 @@ Support
 .. toctree::
    :maxdepth: 1
 
-   support.rst
+   support
 
-.. toctree::
-   :hidden:
-   :maxdepth: 2
-
-   first_steps.rst
-   first-installation.rst
-   developing-tests.rst
-   results-intro.rst
-   simple-admin.rst
-   pipeline-admin.rst
-   development-intro.rst
-   migration.rst
-   other.rst
-   contents.rst

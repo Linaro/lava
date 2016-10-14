@@ -57,6 +57,8 @@ QA team. These jobs will provide a known baseline for test definition writers,
 in a similar manner to the way the existing QA test definitions provide a base
 for more elaborate testing.
 
+.. index:: standard jessie qemu
+
 .. _standard_amd64_jessie_qemu:
 
 Standard QEMU test job for Jessie
@@ -155,9 +157,3 @@ standard QEMU test job:
 * Write a new test definition using version control and make it available
   publicly, then add that definition to your test job based on this first
   standard test job.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   standard-qemu-kernel.rst

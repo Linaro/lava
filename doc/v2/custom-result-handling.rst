@@ -1,7 +1,11 @@
+.. index:: custom result handling
+
 .. _custom_result_handling:
 
 Custom result handling
 ######################
+
+.. index:: ci loop
 
 .. _ci_loop:
 
@@ -152,6 +156,8 @@ Questions to ask
 
 * **Resourcing** - a frontend has the potential to become complex and need
   long term maintenance and development.
+
+.. index:: kernel ci
 
 .. _kernelci_org:
 

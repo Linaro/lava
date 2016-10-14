@@ -2,8 +2,8 @@
 
 .. still needs to be reconciled, maybe merge in the standard files section.
 
-Building and manipulating images
-********************************
+Building and manipulating images for your devices
+#################################################
 
 This section looks into how to manipulate, inspect and create boot
 images. The details of preparing a suitable kernel or configuring a

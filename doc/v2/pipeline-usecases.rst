@@ -1,7 +1,7 @@
 .. _pipeline_use_cases:
 
-Refactoring Use Cases
-#####################
+Advanced Use Cases
+##################
 
 This section seeks to provide help for several aspects of working
 with the :ref:`dispatcher_design` from the perspective of lab

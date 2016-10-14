@@ -1,3 +1,7 @@
+.. index:: developing LAVA
+
+.. _lava_development:
+
 LAVA development
 ################
 

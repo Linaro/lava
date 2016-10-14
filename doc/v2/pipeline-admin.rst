@@ -1,7 +1,9 @@
-Administrator Guide
-###################
+.. index:: administrator guide
 
 .. _admin_introduction:
+
+Understanding the Pipeline - an administrator guide
+###################################################
 
 Introduction
 ************

@@ -1,4 +1,4 @@
-.. index:: migrations
+.. index:: migrations, migrating to V2
 
 .. _migrating_to_pipeline:
 

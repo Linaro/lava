@@ -1,7 +1,9 @@
+.. index:: dispatcher action reference
+
 .. _dispatcher_actions:
 
-Dispatcher Actions
-##################
+Test writer reference guide
+###########################
 
 The V2 dispatcher uses a Pipeline structure - see
 :ref:`pipeline_construction`. Actions can have internal pipelines

@@ -1,13 +1,16 @@
+.. index:: user authentication
+
 .. _user_authentication:
 
-User authentication
-===================
+Configuring user authentication
+===============================
 
-LAVA frontend is developed using Django_ web application framework
-and user authentication and authorization is based on standard `Django
-auth subsystems`_. This means that it is fairly easy to integrate authentication
-against any source for which Django backend exists. Discussed below are
-tested and supported authentication methods for LAVA.
+The LAVA frontend is developed using the Django_ web application
+framework and user authentication and authorization is based on the
+standard `Django auth subsystems`_. This means that it is fairly easy
+to integrate authentication against any source for which a Django
+backend exists. Discussed below are the tested and supported
+authentication methods for LAVA.
 
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/

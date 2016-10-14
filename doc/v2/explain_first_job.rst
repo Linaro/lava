@@ -1,7 +1,9 @@
+.. index:: explain first job, first job detail
+
 .. _explain_first_job:
 
-The first job in detail
-#######################
+Explaining the first job in detail
+##################################
 
 `Download / view <examples/test-jobs/qemu-pipeline-first-job.yaml>`_ the
 complete first job YAML.
@@ -15,10 +17,11 @@ the first job are described in detail below.
 Top level elements of a test job
 ********************************
 
-* **comments** - V2 uses YAML for job submission precisely because YAML
-  supports comments. **Please use comments liberally**. Comments are preserved
-  in the job definition which can be viewed and downloaded from the instance.
-  Comments are not passed to the dispatcher.
+* **comments** - One of the reasons why V2 uses YAML for job
+  submission is because YAML supports comments. **Please use comments
+  liberally**. Comments are preserved in the job definition which can
+  be viewed and downloaded from the instance. Comments are not passed
+  to the dispatcher.
 
 * **device_type** - a label which must match the type of :term:`device`
   declared on the instance to which you want to submit this job. Each
@@ -112,8 +115,8 @@ not set or is set to an unrecognised string.
 Supported operating systems include ``debian``, ``ubuntu``, ``oe`` (for
 OpenEmbedded) and ``fedora``.
 
-Example of deploy label subsitution
------------------------------------
+Example of deploy label substitution
+------------------------------------
 
 ``https://images.validation.linaro.org/kvm-debian-wheezy.img.gz`` is downloaded
 and then decompressed using the ``gz`` algorithm to create a file called

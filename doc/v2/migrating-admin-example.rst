@@ -1,3 +1,5 @@
+.. index:: migrating known device
+
 .. _migrating_known_device_example:
 
 Worked example of migrating a known device

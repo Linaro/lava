@@ -1,3 +1,7 @@
+.. index:: using tables in LAVA
+
+.. _using_tables:
+
 Using tables in LAVA
 ********************
 
