@@ -40,9 +40,6 @@ from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.filesystem import (
-    tftpd_dir,
-)
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
     SECONDARY_DEPLOYMENT_MSG,
@@ -185,7 +182,7 @@ class DDAction(Action):
         # always have a constant string to match against
         prompt_string = connection.prompt_str
         connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         connection.sendline("%s | %s ; echo %s" % (download_cmd, dd_cmd, SECONDARY_DEPLOYMENT_MSG))
         self.wait(connection)
         if not self.valid:
@@ -193,7 +190,7 @@ class DDAction(Action):
 
         # set prompt back
         connection.prompt_str = prompt_string
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         return connection
 
 

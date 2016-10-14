@@ -254,7 +254,7 @@ class BootloaderCommandOverlay(Action):
         substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
 
         self.data[self.type]['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data[self.type]['commands']))
+        self.logger.debug("Parsed boot commands: %s", '; '.join(self.data[self.type]['commands']))
         return connection
 
 
@@ -283,7 +283,7 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, args)
         connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         i = 1
         for line in self.data[self.type]['commands']:

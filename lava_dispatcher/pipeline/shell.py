@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
-import os
 import pexpect
 import sys
 import time

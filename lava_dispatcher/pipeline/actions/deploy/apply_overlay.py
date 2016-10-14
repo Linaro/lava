@@ -30,8 +30,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     LXC_PATH,
-    RAMDISK_FNAME,
-    DISPATCHER_DOWNLOAD_DIR,
+    RAMDISK_FNAME
 )
 from lava_dispatcher.pipeline.utils.installers import (
     add_late_command,
@@ -268,7 +267,8 @@ class ExtractNfsRootfs(ExtractRootfs):
 
         if 'prefix' in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]['prefix']
-            self.logger.warning("Adding '%s' prefix, any other content will not be visible." % prefix)
+            self.logger.warning("Adding '%s' prefix, any other content will not be visible.",
+                                prefix)
 
             # Grab the path already defined in super().run() and add the prefix
             root_dir = self.get_common_data('file', self.file_key)

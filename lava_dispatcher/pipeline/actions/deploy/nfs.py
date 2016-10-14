@@ -26,14 +26,12 @@ from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
-    PrepareOverlayTftp,
     ExtractNfsRootfs,
     OverlayAction,
     ExtractModules,
     ApplyOverlayTftp,
 )
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 def nfs_accept(device, parameters):

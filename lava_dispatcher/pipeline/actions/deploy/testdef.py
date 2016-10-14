@@ -260,7 +260,9 @@ class RepoAction(Action):
         self.data['test'][self.uuid].setdefault('testdef_pattern', {})
         self.data['test'][self.uuid]['testdef_pattern'].update({'pattern': pattern})
         self.data['test'][self.uuid]['testdef_pattern'].update({'fixupdict': fixup})
-        self.logger.debug("uuid=%s testdef=%s" % (self.uuid, self.data['test'][self.uuid]['testdef_pattern']))
+        self.logger.debug("uuid=%s testdef=%s",
+                          self.uuid,
+                          self.data['test'][self.uuid]['testdef_pattern'])
 
 
 class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
@@ -541,7 +543,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         except OSError as exc:
             raise JobError('Unable to get test definition from url\n' + str(exc))
         finally:
-            self.logger.info("Downloaded test definition file to %s." % runner_path)
+            self.logger.info("Downloaded test definition file to %s.", runner_path)
 
         i = []
         for elem in " $&()\"'<>/\\|;`":

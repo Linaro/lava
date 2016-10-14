@@ -28,7 +28,6 @@ from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.boot.environment import (
     ExportDeviceEnvironment,
 )
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.connections.lxc import (
     ConnectLxc,
 )

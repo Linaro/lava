@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import shutil
 
 from lava_dispatcher.pipeline.action import Action, Pipeline, JobError
 from lava_dispatcher.pipeline.logical import Deployment
@@ -33,8 +32,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import (
     prepare_install_base,
-    copy_out_files,
-    tftpd_dir,
+    copy_out_files
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip

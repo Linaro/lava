@@ -270,7 +270,8 @@ class BootloaderCommandOverlay(Action):
             self.data[self.type]['commands'] = bootscript_commands
         else:
             self.data[self.type]['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data[self.type]['commands']))
+        self.logger.debug("Parsed boot commands: %s",
+                          '; '.join(self.data[self.type]['commands']))
         return connection
 
 

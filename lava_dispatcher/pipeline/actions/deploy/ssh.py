@@ -27,7 +27,6 @@ from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ExtractRootfs,
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 # Deploy SSH can mean a few options:
@@ -62,7 +61,7 @@ class Ssh(Deployment):
             return False
         if 'ssh' not in device['actions']['deploy']['methods']:
             return False
-        if 'to' in parameters and 'ssh' != parameters['to']:
+        if 'to' in parameters and parameters['to'] != 'ssh':
             return False
         return True
 

@@ -131,7 +131,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 os.makedirs(base_dir, mode=0o755)
 
                 def clean():
-                    self.logger.info("Cleanup: removing %s" % base_dir)
+                    self.logger.info("Cleanup: removing %s", base_dir)
                     shutil.rmtree(base_dir)
                 self.logger.info("Root tmp directory created at %s", base_dir)
                 atexit.register(clean)

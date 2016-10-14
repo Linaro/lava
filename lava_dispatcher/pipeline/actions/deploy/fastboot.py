@@ -33,8 +33,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.utils.constants import (
-    DISPATCHER_DOWNLOAD_DIR,
-    FASTBOOT_REBOOT_TIMEOUT,
+    FASTBOOT_REBOOT_TIMEOUT
 )
 
 
