@@ -206,8 +206,7 @@ class Job(object):
         except Exception as exc:  # pylint: disable=broad-except
             # daemon must always continue running even if the job crashes
             if hasattr(exc, "child_traceback"):
-                LOG.exception(
-                    {exc.strerror: exc.child_traceback.split("\n")})
+                LOG.exception(exc.child_traceback)
             else:
                 LOG.exception(exc)
             with open(err_file, "a") as errlog:
