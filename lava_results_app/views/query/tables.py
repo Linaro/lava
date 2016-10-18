@@ -41,9 +41,7 @@ class UserQueryTable(LavaTable):
         super(UserQueryTable, self).__init__(*args, **kwargs)
         self.length = 10
 
-    name = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
-    ''')
+    name = tables.Column()
 
     is_published = tables.Column()
 
@@ -59,15 +57,9 @@ class UserQueryTable(LavaTable):
 
     query_group = tables.Column()
 
-    view = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}/+detail">view</a>
-    ''')
-    view.orderable = False
-
-    remove = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?">remove</a>
-    ''')
-    remove.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_actions_field.html")
+    actions.orderable = False
 
     last_updated = tables.TemplateColumn('''
     {% if record.is_live %}{% now "DATETIME_FORMAT" %}_live{% elif not record.last_updated %}Never{% else %}{{ record.last_updated }}{% endif %}
@@ -76,8 +68,8 @@ class UserQueryTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = Query
         fields = (
-            'name', 'is_published', 'description',
-            'query_group', 'owner', 'last_updated', 'view', 'remove'
+            'name', 'actions', 'is_published', 'description',
+            'query_group', 'owner', 'last_updated'
         )
         sequence = fields
         searches = {
@@ -92,9 +84,11 @@ class OtherQueryTable(UserQueryTable):
         super(OtherQueryTable, self).__init__(*args, **kwargs)
         self.length = 10
 
-    name = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
-    ''')
+    name = tables.Column()
+
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_actions_field.html")
+    actions.orderable = False
 
     description = tables.Column()
 
@@ -104,11 +98,11 @@ class OtherQueryTable(UserQueryTable):
 
     class Meta(UserQueryTable.Meta):
         fields = (
-            'name', 'description', 'owner',
+            'name', 'actions', 'description', 'owner',
         )
         sequence = fields
         exclude = (
-            'is_published', 'view', 'remove', 'query_group'
+            'is_published', 'query_group'
         )
 
 
@@ -119,9 +113,11 @@ class GroupQueryTable(UserQueryTable):
         self.length = 10
         self.base_columns['query_group'].visible = False
 
-    name = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
-    ''')
+    name = tables.Column()
+
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_actions_field.html")
+    actions.orderable = False
 
     description = tables.Column()
 
@@ -131,14 +127,17 @@ class GroupQueryTable(UserQueryTable):
 
     class Meta(UserQueryTable.Meta):
         fields = (
-            'name', 'description', 'owner',
+            'name', 'actions', 'description', 'owner',
         )
         sequence = fields
 
 
 class QueryTestJobTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')

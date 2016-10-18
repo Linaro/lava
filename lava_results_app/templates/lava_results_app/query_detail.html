@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load keep_spacing %}
 {% load django_tables2 %}
+{% load results_accessibility_tags %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
@@ -9,7 +10,15 @@
 
 {% block content %}
 
-<h1>Query {{ query.name }} <small><a href="{% url 'lava.results.query_display' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Results</a></small></h1>
+{% is_accessible_by query request.user as is_accessible %}
+
+{% spaceless %}
+<h1>Query {{ query.name }}
+  <small><a id="query_results" class="btn btn-xs btn-success {% if not query.is_live and not query.has_view %}disabled{% endif %}" title="{% if query.has_view or query.is_live %}View query results{% else %}Results not available, please run the query{% endif %}"
+            {% if not query.is_live and not query.has_view %}onclick="javascript:void(0)" style="pointer-events: auto;"
+            {% else %}href="{{ query.get_absolute_url }}"
+            {% endif %}><span class="glyphicon glyphicon-signal"></span> Results</a></small></h1>
+{% endspaceless %}
 
 <div class="row">
   <div class="col-md-6">
@@ -29,22 +38,23 @@
     <dd>
       {{ query.content_type.name }}
     </dd>
-    <dt>Last updated</dt>
-    <dd id="last_updated">
-      {% if query.is_live %}
-      Live query
-      {% elif not view_exists %}
-      <span class="text-danger">DB view does not exist!! Please refresh the query.</span>
-      {% else %}
-      {{ query.last_updated | default:"Never" }}
-      {% endif %}
-    </dd>
     <dt>Results limit</dt>
     <dd>
       {{ query.limit }}
     </dd>
 
-    {% if query.is_published %}
+    <dt>Last updated</dt>
+    <dd id="last_updated">
+      {% if query.is_live %}
+      Live query
+      {% elif not query.has_view %}
+      <span class="text-danger">Not available. Please run query first.</span>
+      {% else %}
+      <span title="{{ query.last_updated }}">{{ query.last_updated|timesince }} ago.</span>
+      {% endif %}
+    </dd>
+
+    {% if query.is_published and is_accessible %}
     <dt>Query Group label</dt>
     <dd>
       <a href="#">
@@ -64,12 +74,6 @@
       <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
 
     </dd>
-    <dt>Maintainer</dt>
-    <dd>
-      {{ query.owner }}&nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the query.">?</button>
-    </dd>
-
     <dt>Group edit permission</dt>
     <dd>
       <a href="#">
@@ -80,6 +84,12 @@
       <div style="clear: both;"></div>
     </dd>
     {% endif %}
+    <dt>Maintainer</dt>
+    <dd>
+      {{ query.owner }}&nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the query.">?</button>
+    </dd>
+
     <dt>Description</dt>
     <dd>
     {{ query.description|keep_spacing|linebreaks }}
@@ -90,22 +100,29 @@
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
     <div class="btn-group btn-group-justified">
-      {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+        <a class="btn btn-primary {% if not is_accessible %}disabled{% endif %}"
+           {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficent permissions"
+           {% else %}href="{{ query.get_absolute_url }}/+edit"
+           {% endif %}>
+          <span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+delete" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+        <a class="btn btn-danger {% if not is_accessible %}disabled{% endif %}"
+           {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficent permissions"
+           {% else %}href="{{ query.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+           {% endif %}>
+          <span class="glyphicon glyphicon-trash"></span> Delete</a>
       </div>
-      {% endif %}
-      {% if request.user.is_authenticated %}
       <div class="btn-group">
         <a href="{{ query.get_absolute_url }}/+copy?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
       </div>
-      {% endif %}
-      {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+toggle-published" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
+        <a class="btn btn-default {% if not is_accessible %}disabled{% endif %}"
+           {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficent permissions"
+           {% else %}href="{{ query.get_absolute_url }}/+toggle-published"
+           {% endif %}>
+          <span class="glyphicon glyphicon-share"></span>
 	  {% if query.is_published %}
 	  Unpublish
 	  {% else %}
@@ -113,21 +130,27 @@
 	  {% endif %}
 	</a>
       </div>
-      {% if not query.is_live %}
       <div class="btn-group">
-        <a id="query_refresh" href="javascript: void(0);" class="btn btn-warning"><span class="glyphicon glyphicon-refresh"></span> Refresh</a>
+        <a id="query_refresh" href="javascript: void(0);" class="btn btn-warning {% if not is_accessible or query.is_live or not query_conditions %}disabled{% endif %}"
+           {% if not is_accessible or query.is_live or not query_conditions %}style="pointer-events: auto;"
+           {% endif %}
+           {% if not is_accessible %}
+           title="Insufficient permissions"
+           {% elif query.is_live %}
+           title="Cannot run live queries"
+           {% elif not query_conditions %}
+           title="No conditions present. Please add some and try again."
+           {% endif %}>
+          <span class="glyphicon glyphicon-refresh"></span> Run query</a>
       </div>
-      {% endif %}
-      {% endif %}
     </div>
 
     <div id="refresh_loading_dialog">
-      <div>Refreshing query. Please wait.</div>
+      <div>Running query. Please wait.</div>
     </div>
 
   </div>
 </div>
-
 
 <h4 class="modal-header">Conditions</h4>
 
@@ -141,8 +164,10 @@
             <th>Field</th>
             <th>Operator</th>
             <th>Value</th>
+            {% if is_accessible %}
             <th>Edit</th>
             <th>Remove</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -160,6 +185,7 @@
       <td>
 	{{ condition.value|safe }}
       </td>
+      {% if is_accessible %}
       <td>
 	<a class="glyphicon glyphicon-edit" aria-hidden="true" href="javascript: void(0);" onclick="open_condition_modal('{{ query.name }}','{{ condition.id }}','{{ condition.table.id }}','{{ condition.field }}','{{ condition.operator }}','{{ condition.value }}');">
 	</a>
@@ -168,11 +194,12 @@
 	<a class="glyphicon glyphicon-remove" aria-hidden="true" href="{% url 'lava.results.query_remove_condition' query.owner.username query.name condition.id %}">
 	</a>
       </td>
+      {% endif %}
     </tr>
     {% endfor %}
     </tbody>
   </table>
-  <a onclick="open_condition_modal('{{ query.name }}');" class="btn btn-sm btn-primary" href="javascript: void(0);" >
+  <a onclick="open_condition_modal('{{ query.name }}');" class="btn btn-sm btn-primary {% if not is_accessible%}disabled{% endif %}" href="javascript: void(0);" >
     Add new condition
   </a>
 </div>
@@ -212,7 +239,9 @@
   query_name = '{{ query.name }}';
   query_user = '{{ query.owner.username }}';
   is_updating = '{{ query.is_updating }}';
+  is_live = '{{ query.is_live }}';
   condition_choices = JSON.parse($("#id_condition_choices").val());
+  query_conditions = '{{ query_conditions }}';
   initial_operators = Object();
   $("#id_operator option").each(function() {
     initial_operators[$(this).val()] = $(this).html();
@@ -223,7 +252,7 @@
   });
 </script>
 
-{% if query.is_published %}
+{% if query.is_published and is_accessible %}
 <script>
   $("#query_group").editable(
   "{% url 'query_add_group' username=query.owner.username name=query.name %}",

@@ -833,6 +833,9 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
+    def has_view(self):
+        return QueryMaterializedView.view_exists(self.id)
+
     def get_results(self, user, limit=None, order_by=['-id']):
         """ Used to get query results for persistant queries.
 
@@ -975,7 +978,7 @@ class Query(models.Model):
                 query.save()
 
         try:
-            if not QueryMaterializedView.view_exists(self.id):
+            if not self.has_view():
                 QueryMaterializedView.create(self)
             elif self.is_changed:
                 QueryMaterializedView.drop(self.id)

@@ -9,9 +9,46 @@
 
 {% block content %}
 
-<h2 class="modal-header">Custom Query Matches
-  <small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
-  <small><a href="{% url 'lava.results.query_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small></h2>
+<h2 class="modal-header">Custom Query Matches</h2>
+
+<div class="btn-group-headline"><small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
+  <small><a href="{% url 'lava.results.query_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small>
+<small><a href="#" id="bookmark_query" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-star-empty"></span>  Bookmark</a></small></div>
+
+<div class="alert alert-info">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  Click <strong><a id="conditions_link" href="#" data-toggle="collapse" data-target="#conditions_container">here</a></strong> for the list conditions.
+  <div class="collapse" id="conditions_container">
+    <table class="table table-hover table-sm">
+    <thead class="thead-inverse">
+        <tr>
+            <th>Entity</th>
+            <th>Field</th>
+            <th>Operator</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for condition in conditions %}
+    <tr>
+      <td>
+	{{ condition.table.model }}
+      </td>
+      <td>
+	{{ condition.field }}
+      </td>
+      <td>
+	{{ condition.operator }}
+      </td>
+      <td>
+	{{ condition.value|safe }}
+      </td>
+    </tr>
+    {% endfor %}
+    </table>
+  </div>
+</div>
+
 
 {% render_table query_table %}
 
@@ -19,4 +56,20 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+<script type="text/javascript">
+  $(function() {
+  $('#bookmark_query').click(function() {
+    if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
+      window.sidebar.addPanel(document.title, window.location.href, '');
+    } else if (window.external && ('AddFavorite' in window.external)) { // IE Favorite
+      window.external.AddFavorite(location.href, document.title);
+    } else if (window.opera && window.print) { // Opera Hotlist
+      this.title = document.title;
+      return true;
+    } else { // webkit - safari/chrome
+      alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != -1 ? 'Command/Cmd' : 'CTRL') + ' + D to bookmark this page.');
+    }
+  });
+});
+</script>
 {% endblock %}
