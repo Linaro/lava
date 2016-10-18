@@ -433,7 +433,7 @@ def _validate_idle_device(job, device):
     if jobs:
         logger.warning(
             "%s (which has current_job %s) is already referenced by %d jobs %s",
-            device.hostname, device.current_job, len(jobs), [job.id for job in jobs])
+            device.hostname, device.current_job, len(jobs), [j.id for j in jobs])
         if len(jobs) == 1:
             logger.warning(
                 "Fixing up a broken device reservation for %s on %s",
