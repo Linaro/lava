@@ -104,6 +104,12 @@ commands:
 {% if power_on_command %}
     power_on: {{ power_on_command }}
 {% endif %}
+{% if pre_power_command %}
+    pre_power_command: {{ pre_power_command }}
+{% endif -%}
+{% if pre_os_command %}
+    pre_os_command: {{ pre_os_command }}
+{% endif -%}
 {% endif %}
 {% endblock -%}
 
