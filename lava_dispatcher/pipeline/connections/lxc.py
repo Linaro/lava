@@ -77,13 +77,16 @@ class ConnectLxc(Action):
                         devices = [path]
 
                     for device in devices:
-                        self.logger.debug('adding %s at %s', device, path)
                         device = os.path.join(path, device)
-                        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                        log = self.run_command(lxc_cmd)
-                        self.logger.debug(log)
-                        self.logger.debug("%s: devices added from %s",
-                                          lxc_name, path)
+                        if os.path.exists(device):
+                            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+                            log = self.run_command(lxc_cmd)
+                            self.logger.debug(log)
+                            self.logger.debug("%s: devices added from %s",
+                                              lxc_name, path)
+                        else:
+                            self.logger.info("%s: skipped adding %s device",
+                                             lxc_name, device)
             else:
                 self.logger.warning("device_path is None")
         else:
