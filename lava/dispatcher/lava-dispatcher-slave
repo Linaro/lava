@@ -72,7 +72,7 @@ SEND_QUEUE = 10
 # FIXME: This is a temporary fix until the overlay is sent to the master
 # The job.yaml and device.yaml are retained so that lava-dispatch can be re-run manually
 # (at least until the slave is rebooted).
-TMP_DIR = os.path.join(tempfile.gettempdir(), "lava-dispatcher/slave/")
+TMP_DIR = "/var/lib/lava/dispatcher/slave/tmp"
 
 # Create the logger that will be configured after arguments parsing
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
@@ -82,7 +82,7 @@ LOG = logging.getLogger("dispatcher-slave")
 def mkdir(path):
     """Create a directory only if needed."""
     try:
-        os.makedirs(path)
+        os.makedirs(path, mode=0o755)
     except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
@@ -154,8 +154,7 @@ class Job(object):
 
     def description(self):
         try:
-            filename = os.path.join(self.base_dir, "logs",
-                                    "description.yaml")
+            filename = os.path.join(self.base_dir, "description.yaml")
             data = open(filename, 'r').read()
             return lzma.compress(b(data))
         except (IOError, LZMAError) as exc:
@@ -182,7 +181,7 @@ class Job(object):
                 "--target",
                 os.path.join(self.base_dir, "device.yaml"),
                 os.path.join(self.base_dir, "job.yaml"),
-                "--output-dir=%s" % os.path.join(self.base_dir, "logs/"),
+                "--output-dir=%s" % self.base_dir,
                 "--job-id=%s" % self.job_id,
                 "--socket-addr=%s" % self.log_socket
             ]
