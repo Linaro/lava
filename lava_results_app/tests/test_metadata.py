@@ -37,6 +37,7 @@ class TestMetaTypes(TestCaseWithFactory):
     """
     def test_job(self):
         MetaType.objects.all().delete()
+        TestJob.objects.all().delete()
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
         job_def = yaml.load(job.definition)
