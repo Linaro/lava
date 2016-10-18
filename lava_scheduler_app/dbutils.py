@@ -11,7 +11,6 @@ import jinja2
 import datetime
 import logging
 import simplejson
-from traceback import format_exc
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
@@ -30,8 +29,6 @@ from lava_scheduler_app.models import (
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import JobError
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -749,7 +746,6 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
     # Load job definition to get the variables for template rendering
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
-    parser = JobParser()
     device = None
     device_object = None
     if not job.dynamic_connection:
