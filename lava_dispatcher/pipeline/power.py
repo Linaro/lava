@@ -22,7 +22,6 @@
 # imported by the parser to populate the list of subclasses.
 
 
-import yaml
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -283,7 +282,5 @@ class FinalizeAction(Action):
         else:
             self.results = {'success': "Complete"}
             self.logger.info("Status: Complete")
-        with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
-            results.write(yaml.dump(self.job.pipeline.describe()))
         # from meliae import scanner
         # scanner.dump_all_objects('filename.json')
