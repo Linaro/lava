@@ -1,6 +1,4 @@
 {% extends 'base.jinja2' %}
-{% block body %}
-device_type: {{ device_type|default('uboot') }}
 
 {% set base_uboot_commands = (
 "          - setenv autoload no
@@ -30,6 +28,9 @@ device_type: {{ device_type|default('uboot') }}
           - boot") -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default("") %}
+
+{% block body %}
+device_type: {{ device_type|default('uboot') }}
 
 {% if boot_delay or test_delay%}
 character_delays:
