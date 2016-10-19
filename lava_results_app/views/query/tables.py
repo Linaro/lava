@@ -27,7 +27,6 @@ from lava_results_app.models import (
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import (
     JobTable,
-    DateColumn,
     RestrictedIDLinkColumn
 )
 from lava_results_app.tables import (
@@ -146,8 +145,8 @@ class QueryTestJobTable(JobTable):
     device.orderable = False
     duration = tables.Column()
     duration.orderable = False
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn()
+    end_time = tables.DateColumn()
 
     omit = tables.TemplateColumn('''
     <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>

@@ -2261,13 +2261,17 @@ class TestJob(RestrictedResource):
         :param user:  the user making the request
         :return: True or False
         """
+        if self._can_admin(user):
+            return True
+        device_type = self.job_device_type()
+        if device_type and device_type.owners_only:
+            if device_type.num_devices_visible_to(user) == 0:
+                return False
         if self.is_public:
             return True
         if not self.is_pipeline:
             # old jobs will be private, only pipeline extends beyond this level
             return self.is_accessible_by(user)
-        if self._can_admin(user):
-            return True
         logger = logging.getLogger('lava_scheduler_app')
         if self.visibility == self.VISIBLE_PUBLIC:
             # logical error

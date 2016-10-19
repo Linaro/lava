@@ -621,17 +621,10 @@ def get_restricted_job(user, pk, request=None):
     accessibility to the object.
     """
     job = TestJob.get_by_job_number(pk)
-    device_type = job.job_device_type()
-    if not device_type:
-        # dynamic connection - might need to still be restricted?
+    if job.can_view(user):
         return job
-    if device_type.num_devices_visible_to(user) == 0:
-        raise Http404()
-    if utils.check_user_auth(user, job, request=request):
-        return job
-    if not job.is_accessible_by(user) and not user.is_superuser:
+    else:
         raise PermissionDenied()
-    return job
 
 
 def filter_device_types(user):

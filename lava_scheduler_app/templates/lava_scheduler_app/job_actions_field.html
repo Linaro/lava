@@ -1,0 +1,33 @@
+{% load utils %}
+
+{% can_view record request.user as can_view %}
+
+<div class="btn-toolbar">
+  <a class="btn btn-xs btn-success {% if not can_view %}disabled{% endif %}"
+     title="{% if can_view %}View job results{% else %}Insufficient permissions{% endif %}"
+     {% if not can_view %}
+     onclick="javascript:void(0)" style="pointer-events: auto;"
+     {% else %}
+     href="{{ record.results_link }}"
+     {% endif %}>
+    <span class="glyphicon glyphicon-eye-open"></span>
+  </a>
+    <a class="btn btn-xs btn-info {% if not can_view %}disabled{% endif %}"
+     title="{% if can_view %}View job details{% else %}Insufficient permissions{% endif %}"
+     {% if not can_view %}
+     onclick="javascript:void(0)" style="pointer-events: auto;"
+     {% else %}
+     href="{{ record.get_absolute_url }}"
+     {% endif %}>
+    <span class="glyphicon glyphicon-pencil"></span>
+  </a>
+    <a class="btn btn-xs btn-primary {% if not can_view %}disabled{% endif %}" title="{% if can_view %}End of log{% else %}Insufficient permissions{% endif %}"
+     {% if not can_view %}
+     onclick="javascript:void(0)" style="pointer-events: auto;"
+     {% else %}
+     href="{{ record.get_absolute_url }}{% if record.is_pipeline %}#bottom{% else %}/log_file#bottom{% endif %}"
+     {% endif %}>
+    <span class="glyphicon glyphicon-fast-forward"></span>
+  </a>
+</div>
+
