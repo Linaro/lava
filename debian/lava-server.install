@@ -13,5 +13,4 @@ etc/env.yaml ./etc/lava-server/
 etc/lava-publisher.service ./usr/share/lava-server/
 etc/lava-publisher.init ./usr/share/lava-server/
 etc/lava-master ./etc/lava-server/
-etc/lava-server-gunicorn.init ./etc/init.d/
 etc/lava-server-gunicorn.service ./etc/lava-server/
