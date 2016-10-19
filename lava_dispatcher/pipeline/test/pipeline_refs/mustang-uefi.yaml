@@ -53,7 +53,7 @@
     - {class: power.RebootDevice, name: soft-reboot}
     - {class: power.PDUReboot, name: pdu_reboot}
     - {class: power.PowerOn, name: power_on}
-  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: menu-interrupt}
+  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
   - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
   - {class: menus.menus.MenuReset, name: menu-reset}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
