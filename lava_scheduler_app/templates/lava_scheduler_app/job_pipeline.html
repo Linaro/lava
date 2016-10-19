@@ -89,10 +89,10 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-md-6">
-    <h4 class="modal-header">Logs</h4>
+  <div class="col-md-12">
+    <h4 class="modal-header">Actions</h4>
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
         class="glyphicon glyphicon-fast-forward"></span></a></li>
@@ -105,22 +105,16 @@
           <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
         {% endif %}
         </ul>
-      <hr/>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-save-file"></span></a></li>
         {% if job.results_link and not job.archived_bundle %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-eye-open"></span></a></li>
         {% endif %}
         </ul>
       </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <h4 class="modal-header">Actions</h4>
-    <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         {% if show_cancel %}
           <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
@@ -137,7 +131,7 @@
         {% endif %}
         </ul>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
         {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
@@ -159,6 +153,7 @@
     </div>
   </div>
 </div>
+<hr/>
 {% if job.is_multinode or job.is_vmgroup %}
 <div class="row">
   <div class="col-md-6">
