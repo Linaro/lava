@@ -93,14 +93,25 @@ class LxcProtocol(Protocol):
                                   reboot_cmd, shell.exitstatus,
                                   shell.readlines())
 
-        # ShellCommand executes the destroy command
-        cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
+        # ShellCommand executes the destroy command after checking for the
+        # existance of the container
+        cmd = "lxc-info -p -n {0}".format(self.lxc_name)
         self.logger.debug("%s protocol: executing '%s'", self.name, cmd)
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
         # execute the command.
-        shell.expect(pexpect.EOF)
-        if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (cmd, shell.exitstatus,
-                                                         shell.readlines()))
+        lxc_exists = shell.expect(pexpect.EOF)
+        if not lxc_exists:
+            self.logger.info("%s protocol: %s exists, proceed to destroy",
+                             self.name, self.lxc_name)
+            cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
+            self.logger.debug("%s protocol: executing '%s'", self.name, cmd)
+            shell = ShellCommand("%s\n" % cmd, self.system_timeout,
+                                 logger=self.logger)
+            # execute the command.
+            shell.expect(pexpect.EOF)
+            if shell.exitstatus:
+                raise JobError("%s command exited %d: %s" % (cmd,
+                                                             shell.exitstatus,
+                                                             shell.readlines()))
         self.logger.debug("%s protocol finalised.", self.name)

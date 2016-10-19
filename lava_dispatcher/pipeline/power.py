@@ -192,34 +192,6 @@ class LxcStop(Action):
         return connection
 
 
-# FIXME: Unused action, but can give fine grained control.
-class LxcDestroy(Action):
-    """
-    Destroys the lxc container at the end of a job
-    """
-    def __init__(self):
-        super(LxcDestroy, self).__init__()
-        self.name = "lxc_destroy"
-        self.summary = "send destroy command"
-        self.description = "destroy the lxc container"
-
-    def validate(self):
-        super(LxcDestroy, self).validate()
-        self.errors = infrastructure_error('lxc-destroy')
-
-    def run(self, connection, args=None):
-        connection = super(LxcDestroy, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        if not lxc_name:
-            return connection
-        lxc_cmd = ['lxc-destroy', '-n', lxc_name]
-        command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
-            raise JobError("Unable to destroy lxc container: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
 class PowerOff(Action):
     """
     Turns power off at the end of a job

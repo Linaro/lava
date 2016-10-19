@@ -90,7 +90,7 @@ class ConnectLxc(Action):
             else:
                 self.logger.warning("device_path is None")
         else:
-            self.logger.error("No device path defined for this device.")
+            self.logger.debug("No device path defined for this device.")
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
