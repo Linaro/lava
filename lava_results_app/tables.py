@@ -164,6 +164,7 @@ class ResultsTable(LavaTable):
     total = tables.Column(accessor='job', verbose_name='Totals')
     logged = tables.Column(accessor='job', verbose_name='Logged')
     buglinks = tables.Column(accessor='job', verbose_name='Bug Links')
+    buglinks.orderable = False
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {
@@ -202,6 +203,7 @@ class SuiteTable(LavaTable):
     units = tables.Column()
     logged = tables.DateColumn()
     buglinks = tables.Column(accessor='suite', verbose_name='Bug Links')
+    buglinks.orderable = False
 
     def render_name(self, record):  # pylint: disable=no-self-use
         return mark_safe(
