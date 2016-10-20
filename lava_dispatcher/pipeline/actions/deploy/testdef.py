@@ -586,7 +586,7 @@ class TestDefinitionAction(TestAction):
         files are created by TestOverlayAction. More complex scripts like the
         install:deps script and the main run script have custom Actions.
         """
-        index = OrderedDict()
+        index = []
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.test_list = identify_test_definitions(self.job.parameters)
         if not self.test_list:
@@ -601,8 +601,8 @@ class TestDefinitionAction(TestAction):
                 # set the full set of job YAML parameters for this handler as handler parameters.
                 handler.job = self.job
                 handler.parameters = testdef
-                # store the correct test_name before incrementing the local index dict
-                handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
+                # store the correct test_name before appending to the local index
+                handler.parameters['test_name'] = "%s_%s" % (len(index), handler.parameters['name'])
                 self.internal_pipeline.add_action(handler)
                 handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
 
@@ -627,7 +627,7 @@ class TestDefinitionAction(TestAction):
                 runsh.parameters['test_name'] = handler.parameters['test_name']
                 runsh.test_uuid = handler.uuid
 
-                index[len(list(index.keys()))] = handler.parameters['name']
+                index.append(handler.parameters['name'])
 
                 # add overlay handlers to the pipeline
                 self.internal_pipeline.add_action(overlay)
@@ -935,11 +935,11 @@ class TestRunnerAction(TestOverlayAction):
         testdef_index = self.get_common_data('test-definition', 'testdef_index')
         if not testdef_index:
             self.errors = "Unable to identify test definition index"
-        if len(set(testdef_index.keys())) != len(set(testdef_index.values())):
+        if len(testdef_index) != len(set(testdef_index)):
             self.errors = "Test definition names need to be unique."
         # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
-        # to self.testdef_levels {'1.3,4,1': '0_smoke-tests', ...}
-        for count, name in testdef_index.items():
+        # to self.testdef_levels {'1.3.4.1': '0_smoke-tests', ...}
+        for (count, name) in enumerate(testdef_index):
             if self.parameters['name'] == name:
                 self.testdef_levels[self.level] = "%s_%s" % (count, name)
         if not self.testdef_levels:

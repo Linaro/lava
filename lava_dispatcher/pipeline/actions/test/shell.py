@@ -311,7 +311,7 @@ class TestShellAction(TestAction):
                 # set the pattern for this run from pattern_dict
                 testdef_index = self.get_common_data('test-definition', 'testdef_index')
                 uuid_list = self.get_common_data('repo-action', 'uuid-list')
-                for key, value in testdef_index.items():
+                for (key, value) in enumerate(testdef_index):
                     if self.definition == "%s_%s" % (key, value):
                         pattern = self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern']
                         fixup = self.job.context['test'][uuid_list[key]]['testdef_pattern']['fixupdict']

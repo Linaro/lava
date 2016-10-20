@@ -381,7 +381,7 @@ class TestDefinitions(unittest.TestCase):
         self.assertIn("test_list", self.job.context['common']['test-definition'])
         self.assertEqual(
             self.job.context['common']['test-definition']['testdef_index'],
-            {0: 'smoke-tests', 1: 'singlenode-advanced'}
+            ['smoke-tests', 'singlenode-advanced']
         )
         test_list = self.job.context['common']['test-definition']['test_list']
         self.assertEqual(len(test_list), 2)
@@ -433,7 +433,7 @@ class TestDefinitions(unittest.TestCase):
         testdef_index = self.job.context['common']['test-definition']['testdef_index']
         start_run = '0_smoke-tests'
         uuid_list = definition.get_common_data('repo-action', 'uuid-list')
-        for key, value in testdef_index.items():
+        for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
                 self.assertEqual('4212_1.3.2.4.1', uuid_list[key])
                 self.assertEqual(
