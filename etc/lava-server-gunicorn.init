@@ -11,6 +11,7 @@
 
 # Author: Neil Williams <codehelp@debian.org>
 
+LOGFILE="/var/log/lava-server/gunicorn.log"
 LOGLEVEL="debug"
 WORKERS=4
 RECIPE="lava_server.wsgi"
@@ -21,7 +22,7 @@ DESC="lava-server gunicorn wsgi support"             # short description
 NAME=lava-server-gunicorn                            # short server's name
 DAEMON="/usr/bin/gunicorn"                           # server's location
 OPTIONS="-D -u lavaserver -g lavaserver -w $WORKERS $RECIPE"
-DAEMON_ARGS="--log-level $LOGLEVEL $OPTIONS"  # Arguments to run the daemon with
+DAEMON_ARGS="--log-level $LOGLEVEL --log-file $LOGFILE $OPTIONS"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-server-gunicorn.pid
 SCRIPTNAME=/etc/init.d/lava-server-gunicorn
 
