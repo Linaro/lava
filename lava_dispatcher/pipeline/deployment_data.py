@@ -77,6 +77,7 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': "root@linaro# ",
     'TESTER_PS1_INCLUDES_RC': False,
     'boot_cmds': 'boot_cmds_android',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'android',
@@ -93,6 +94,7 @@ ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'ubuntu',
@@ -109,6 +111,7 @@ debian = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'debian',
@@ -125,6 +128,7 @@ oe = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds_oe',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'oe',
@@ -140,6 +144,7 @@ lede = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds_lede',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'lede',
@@ -155,6 +160,7 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'fedora',
@@ -171,6 +177,7 @@ centos = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
 
     # for lava-test-shell
     'distro': 'centos',
@@ -187,6 +194,7 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
     'installer_extra_cmd': 'cp -r /lava-* /target/ || true ;',
 
     # DEBIAN_INSTALLER preseeeding
@@ -215,6 +223,7 @@ centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
     'installer_extra_cmd': 'curl {OVERLAY_URL} > /lava-overlay.tar.gz\ntar -zxvf /lava-overlay.tar.gz -C /',
     'preseed_to_ramdisk': "preseed.cfg",
 

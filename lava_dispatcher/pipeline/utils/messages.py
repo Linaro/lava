@@ -1,5 +1,5 @@
-# Copyright (C) 2016 Linaro Limited
 #
+# Copyright (C) 2016 Linaro Limited
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
@@ -19,13 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, JobError, TestError
 from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,
     KERNEL_EXCEPTION_MSG,
     KERNEL_FAULT_MSG,
     KERNEL_PANIC_MSG,
+    KERNEL_TRACE_MSG,
     KERNEL_INIT_ALERT,
 )
 
@@ -47,16 +48,19 @@ class LinuxKernelMessages(Action):
     FAULT = 1
     PANIC = 2
     ALERT = 3
+    TRACE = 4
     # these can be omitted by InitMessages
-    FREE_UNUSED = 4
-    FREE_INIT = 5
+    FREE_UNUSED = 5
+    FREE_INIT = 6
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, 'exception'),
         (FAULT, KERNEL_FAULT_MSG, 'fault'),
         (PANIC, KERNEL_PANIC_MSG, 'panic'),
-        # ALERT is allowable behaviour - just needs a sendline to get to the prompt
-        (ALERT, KERNEL_INIT_ALERT, 'success'),
+        (TRACE, KERNEL_TRACE_MSG, 'trace'),
+        # ALERT is allowable behaviour for some deployments
+        # ramdisk just needs a sendline to get to the prompt
+        (ALERT, KERNEL_INIT_ALERT, 'alert'),
         (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, 'success'),
         (FREE_INIT, KERNEL_FREE_INIT_MSG, 'success'),
     )
@@ -80,7 +84,7 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[:cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection):
+    def parse_failures(cls, connection, action=None):  # pylint: disable=too-many-branches
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -101,33 +105,54 @@ class LinuxKernelMessages(Action):
         Always returns a list, the list may be empty.
         """
         results = []
+        init = False
+        if not connection:
+            return results
+        if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
+            if cls.MESSAGE_CHOICES[cls.FREE_INIT][1] in connection.prompt_str:
+                init = True
+
         while True:
             try:
                 index = connection.wait()
-            except pexpect.EOF:
+            except (pexpect.EOF, pexpect.TIMEOUT, JobError, TestError):
+                if action:
+                    msg = "Failed to match - connection timed out handling messages."
+                    action.logger.error(msg)
+                    action.errors = msg
                 break
-            except pexpect.TIMEOUT:
-                raise JobError("time out in %s" % cls.name)
+
+            if action and index:
+                action.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
             message = connection.raw_connection.after
-            if index == cls.ALERT:
+            if index == cls.ALERT or index == cls.TRACE:
+                if action:
+                    action.logger.warning("%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
+                # ALERT or TRACE may need a newline to force a prompt
                 connection.sendline(connection.check_char)
                 # this is allowable behaviour, not a failure.
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': cls.name
+                    'message': message
                 })
-                break
-            elif index <= cls.PANIC:
+                continue
+            elif index == cls.PANIC or index == cls.EXCEPTION:
+                if action:
+                    action.logger.error("%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
                     'message': message
                 })
-            elif index == cls.FREE_UNUSED or index == cls.FREE_INIT:
-                results.append({
-                    cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': cls.name
-                })
-                break
+                continue
+            elif index and index >= cls.FREE_UNUSED:
+                if init and index <= cls.FREE_INIT:
+                    results.append({
+                        cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
+                        'message': 'kernel-messages'
+                    })
+                    continue
+                else:
+                    break
             else:
                 break
         # allow calling actions to pick up failures

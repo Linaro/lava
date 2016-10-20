@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
     QCowConversionAction,
 )
+from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
@@ -63,6 +64,13 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         self.internal_pipeline.add_action(ApplyOverlayGuest())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
+
+    def validate(self):
+        super(DeployImagesAction, self).validate()
+        self.set_common_data(
+            'lineseparator',
+            'os_linesep',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
 
 
 class DeployMonitoredAction(DeployAction):

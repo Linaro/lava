@@ -36,7 +36,10 @@ from lava_dispatcher.pipeline.utils.filesystem import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.constants import INSTALLER_IMAGE_MAX_SIZE
+from lava_dispatcher.pipeline.utils.constants import (
+    INSTALLER_IMAGE_MAX_SIZE,
+    LINE_SEPARATOR
+)
 
 
 class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attributes
@@ -60,6 +63,10 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
         super(DeployIsoAction, self).validate()
         suffix = os.path.join(*self.preseed_path.split('/')[-2:])
         self.data[self.name].setdefault('suffix', suffix)
+        self.set_common_data(
+            'lineseparator',
+            'os_linesep',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
 
     def populate(self, parameters):
         self.preseed_path = self.mkdtemp()

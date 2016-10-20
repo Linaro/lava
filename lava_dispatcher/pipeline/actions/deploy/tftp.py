@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import tftpd_dir
 
@@ -113,6 +114,12 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if not tftp_dir.startswith(tftpd_directory) and \
            not tftp_dir.startswith(tmp_dir):
             self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
+
+        # allow change of lineseparator on sendline during later stages of boot
+        self.set_common_data(
+            'lineseparator',
+            'os_linesep',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp()

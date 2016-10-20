@@ -125,6 +125,8 @@ KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'
 KERNEL_FREE_INIT_MSG = 'Freeing init memory'
 # exception
 KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+# stack trace
+KERNEL_TRACE_MSG = 'Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 # unhandled fault
 KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
 # panic

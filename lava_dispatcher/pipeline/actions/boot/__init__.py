@@ -18,12 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     AUTOLOGIN_DEFAULT_TIMEOUT,
     DEFAULT_SHELL_PROMPT,
     DISTINCTIVE_PROMPT_CHARACTERS,
+    LINE_SEPARATOR,
 )
 from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
@@ -48,7 +50,6 @@ class BootAction(RetryAction):
     name = 'boot'
 
 
-# FIXME: needs a unit test to check YAML parameter syntax
 class AutoLoginAction(Action):
     """
     Automatically login on the device.
@@ -59,15 +60,14 @@ class AutoLoginAction(Action):
     def __init__(self):
         super(AutoLoginAction, self).__init__()
         self.name = 'auto-login-action'
-        self.description = "automatically login after boot using job parameters"
-        self.summary = "Auto-login after boot"
+        self.description = "automatically login after boot using job parameters and checking for messages."
+        self.summary = "Auto-login after boot with support for kernel messages."
         self.check_prompt_characters_warning = (
             "The string '%s' does not look like a typical prompt and"
             " could match status messages instead. Please check the"
             " job log files and use a prompt string which matches the"
             " actual prompt string more closely."
         )
-        # FIXME: self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
     def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
@@ -104,58 +104,83 @@ class AutoLoginAction(Action):
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
 
+    def check_kernel_messages(self, connection):
+        """
+        Use the additional pexpect expressions to detect warnings
+        and errors during the kernel boot. Ensure all test jobs using
+        auto-login-action have a result set so that the duration is
+        always available when the action completes successfully.
+        """
+        self.logger.info("Parsing kernel messages")
+        self.logger.debug(connection.prompt_str)
+        parsed = LinuxKernelMessages.parse_failures(connection, self)
+        if len(parsed) and 'success' in parsed[0]:
+            self.results = {'success': parsed[0]}
+        elif not parsed:
+            self.results = {'success': "No kernel warnings or errors detected."}
+        else:
+            self.results = {'fail': parsed}
+            self.logger.warning("Kernel warnings or errors detected.")
+
     def run(self, connection, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
-        def check_prompt_characters(prompt):
-            if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
-                self.logger.warning(self.check_prompt_characters_warning, prompt)
-
-        connection.prompt_str = LinuxKernelMessages.get_init_prompts()
-        # Skip auto login if the configuration is not found
-        params = self.parameters.get('auto_login', None)
-        if params is None:
-            self.logger.debug("Skipping of auto login")
-        else:
-            self.logger.debug("Waiting for the login prompt")
-            connection.prompt_str.append(params['login_prompt'])
-            self.logger.debug(connection.prompt_str)
-            results = LinuxKernelMessages.parse_failures(connection)
-            if len(results) > 1:
-                self.results = {'fail': results}
-                return connection
-            else:
-                connection.sendline(params['username'], delay=self.character_delay)
-
-            if 'password_prompt' in params:
-                self.logger.debug("Waiting for password prompt")
-                connection.prompt_str = params['password_prompt']
-                self.wait(connection)
-                connection.sendline(params['password'], delay=self.character_delay)
-        # prompt_str can be a list or str
-        if isinstance(connection.prompt_str, str):
-            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
-        else:
-            connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
+        def check_prompt_characters(chk_prompt):
+            if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
+                self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
         prompts = self.parameters.get('prompts', None)
-        if isinstance(prompts, list):
-            for prompt in prompts:
-                check_prompt_characters(prompt)
-            connection.prompt_str.extend(prompts)
+        for prompt in prompts:
+            check_prompt_characters(prompt)
+
+        connection.prompt_str = LinuxKernelMessages.get_init_prompts()
+        connection.prompt_str.extend(prompts)
+        # Skip auto login if the configuration is not found
+        params = self.parameters.get('auto_login', None)
+        if not params:
+            self.logger.debug("Skipping of auto login")
+            # wait for a prompt or kernel messages
+            self.check_kernel_messages(connection)
+            # clear kernel message prompt patterns
+            connection.prompt_str = self.parameters.get('prompts', [])
+            # already matched one of the prompts
         else:
-            check_prompt_characters(prompts)
-            connection.prompt_str.append(prompts)
+            self.logger.info("Waiting for the login prompt")
 
+            # over-riding lineseparator
+            linesep = self.get_common_data('lineseparator', 'os_linesep')
+            if not linesep:
+                linesep = os.linesep
+            connection.raw_connection.linesep = linesep
+            self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
+            connection.prompt_str.append(params['login_prompt'])
+
+            # wait for a prompt or kernel messages
+            self.check_kernel_messages(connection)
+            self.logger.debug("Sending username %s", params['username'])
+            connection.sendline(params['username'], delay=self.character_delay)
+            # clear the kernel_messages patterns
+            connection.prompt_str = self.parameters.get('prompts', [])
+
+            if 'password_prompt' in params:
+                self.logger.info("Waiting for password prompt")
+                connection.prompt_str.append(params['password_prompt'])
+                # wait for the password prompt
+                index = self.wait(connection)
+                if index:
+                    self.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
+                self.logger.debug("Sending password %s", params['password'])
+                connection.sendline(params['password'], delay=self.character_delay)
+                # clear the Password pattern
+                connection.prompt_str = self.parameters.get('prompts', [])
+
+            # wait for the login process to provide the prompt
+            index = self.wait(connection)
+            if index:
+                self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
+
+        connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
-
-        if params is None:
-            self.logger.debug("Parsing kernel messages")
-            parsed = LinuxKernelMessages.parse_failures(connection)
-            if len(parsed) and 'success' in parsed[0]:
-                self.results = {'success': parsed[0]}
-            else:
-                self.results = {'fail': parsed}
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
         return connection
