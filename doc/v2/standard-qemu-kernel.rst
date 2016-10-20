@@ -19,7 +19,7 @@ depending on the type of test job.
 .. _standard_kernel_initramfs:
 
 QEMU with kernel and initramfs
-****************************
+******************************
 
 This example will show how to boot an arm64 Debian kernel and initramfs in
 LAVA.
@@ -106,7 +106,7 @@ specified.
 .. _standard_kernel_initramfs_rootfs:
 
 QEMU with kernel, initramfs and rootfs
-************************************
+**************************************
 
 This example will show how to boot an arm64 Debian kernel and initramfs with a
 root filesystem (as a drive) in LAVA.
