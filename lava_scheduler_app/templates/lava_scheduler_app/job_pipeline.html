@@ -95,7 +95,8 @@
       <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
-        class="glyphicon glyphicon-fast-forward"></span></a></li>
+                                                                                class="glyphicon glyphicon-fast-forward"></span></a></li>
+        <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-save-file"></span></a></li>
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
@@ -103,42 +104,40 @@
            <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% elif expand %}
           <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
-        {% endif %}
+          {% endif %}
         </ul>
       </div>
       <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-save-file"></span></a></li>
         {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-eye-open"></span></a></li>
-        {% endif %}
-        </ul>
-      </div>
-      <div class="col-md-3">
-        <ul class="nav nav-pills nav-stacked">
-        {% if show_cancel %}
-          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
-        {% endif %}
-        {% if show_resubmit and not job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
-        {% endif %}
-        {% if user.is_authenticated %}
+          {% endif %}
+          {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
         </a></li>
         <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a></li>
-
         {% endif %}
         </ul>
       </div>
       <div class="col-md-3">
-        {% if show_failure %}
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_resubmit and not job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-info">Resubmit</a></li>
+          {% endif %}
+          {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
         {% if user.is_authenticated and user.is_superuser %}
         <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
             Admin this TestJob
         </a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-3">
+        {% if show_cancel %}
+          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
         {% endif %}
         </ul>
         {% endif %}

@@ -4,7 +4,7 @@ beautify_options = {
 
 $("#validate").click(function(){
     $("#busyIndicator").show(); 
-    validate_input($("#json-input").val());
+    validate_input();
     $("#busyIndicator").hide(); 
 });
 
@@ -16,100 +16,91 @@ $(document).ajaxStart(function () {
 
 $(window).ready(
     function () {
-        $("#json-input").linedtextarea();
+        $("#definition-input").linedtextarea();
 
-        $("#json-input").bind('paste', function() {
+        $("#definition-input").bind('paste', function() {
             // Need a timeout since paste event does not give the content
             // of the clipboard.
             setTimeout(function(){
-                validate_input($("#json-input").val());
+                if (is_url($("#definition-input").val()) && $("#definition-input").val().split("\n").length == 1) {
+                    load_url($("#definition-input").val());
+                } else {
+                    validate_input();
+                }
             },100);
         });
 
-        $("#json-input").keypress(function() {
+        $("#definition-input").keypress(function() {
             $("#submit").attr("disabled", "disabled");
-            $("#json-valid-container").hide();
+            $("#valid_container").hide();
             $("#validation_note").show();
          });
 
         $("#submit").attr("disabled", "disabled");
         $("#validation_note").hide();
 
-        validate_input($("#json-input").val());
+        // For resubmit purposes only.
+        validate_input();
     });
 
-validate_input = function(json_input) {
+validate_input = function() {
+    if ($("#definition-input").val() != "") {
+        validate_job_definition($("#definition-input").val());
+    }
+}
 
-    if ($("#json-input").val() != "") {
-        if (is_url($("#json-input").val().split("\n"))) {
-            load_url();
-        } else {
-            $("#json-input").val(js_beautify(json_input, beautify_options));
-            validate_job_data(json_input);
+load_url = function(url) {
+    // Loads definition content if URL is provided in the text area.
+    $.ajax({
+        type: "POST",
+        url: remote_definition_url,
+        data: {
+            "url": url.trim(),
+            "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
+        },
+        success: function(data) {
+            try {
+                $.parseJSON(data);
+                $("#definition-input").val(js_beautify(data, beautify_options));
+                validate_input();
+            } catch (e) {
+                validate_definition_callback(e);
+                return;
+            }
         }
-    }
+    });
 }
 
-load_url = function() {
-    // Loads JSON content if URL is provided in the json text area.
-    if ($("#json-input").val().split("\n").length == 1) {
-        $.ajax({
-            type: "POST",
-            url: remote_json_url,
-            data: {
-                "url": $("#json-input").val().trim(),
-                "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
-            },
-            success: function(data) {
-                try {
-                    $.parseJSON(data);
-                    $("#json-input").val(js_beautify(data, beautify_options));
-                    validate_job_data(data);
-                } catch (e) {
-                    $("#json-valid-container").html("Invalid JSON: " + data);
-                    valid_json_css(false);
-                    $("#submit").attr("disabled", "disabled");
-                    $("#validation_note").show();
-                }
-            }});
-    }
-}
-
-validate_job_data = function(data) {
+validate_job_definition = function(data) {
     $.post(window.location.pathname,
-           {"json-input": data,
+           {"definition-input": data,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
            function(data) {
-               if (data == "success") {
-                   $("#json-valid-container").html("Valid JSON.");
-                   valid_json_css(true);
-                   $("#submit").removeAttr("disabled");
-                   $("#validation_note").hide();
-                   unselect_error_line();
-               } else {
-                   $("#json-valid-container").html(
-                       data.replace("[u'", "").replace("']", "").
-                           replace('[u"', "").replace('"]', ""));
-                   valid_json_css(false);
-                   $("#submit").attr("disabled", "disabled");
-                   $("#validation_note").show();
-                   select_error_line(data);
-               }
+               validate_definition_callback(data);
            }, "json");
 }
 
-valid_json_css = function(success) {
-    // Updates the css of the json validation container with appropriate msg.
-    if (success) {
-        $("#json-valid-container").css("backgound-color", "#50ef53");
-        $("#json-valid-container").css("color", "#139a16");
-        $("#json-valid-container").css("border-color", "#139a16");
-        $("#json-valid-container").show();
+validate_definition_callback = function(result) {
+    // Updates the css of the definition validation container with
+    // appropriate msg.
+    if (result == "success") {
+        $("#valid_container").html("Valid definition.");
+        $("#valid_container").css("backgound-color", "#50ef53");
+        $("#valid_container").css("color", "#139a16");
+        $("#valid_container").css("border-color", "#139a16");
+        $("#valid_container").show();
+        $("#submit").removeAttr("disabled");
+        $("#validation_note").hide();
+        unselect_error_line();
     } else {
-        $("#json-valid-container").css("backgound-color", "#ff8383");
-        $("#json-valid-container").css("color", "#da110a");
-        $("#json-valid-container").css("border-color", "#da110a");
-        $("#json-valid-container").show();
+        $("#valid_container").html("Invalid definition: " + result);
+        $("#valid_container").css("backgound-color", "#ff8383");
+        $("#valid_container").css("color", "#da110a");
+        $("#valid_container").css("border-color", "#da110a");
+        $("#valid_container").show();
+        $("#submit").attr("disabled", "disabled");
+        $("#validation_note").hide();
+        select_error_line(result);
     }
 }
 
@@ -120,16 +111,19 @@ unselect_error_line = function() {
 
 select_error_line = function(error) {
     // Selects the appropriate line in text area based on the parsed error msg.
-    line_string = error.split(": ")[1];
-    line_number = parseInt(line_string.split(" ")[1]);
-
+    line_string = error.toString().split(": ")[1];
     $(".lineno").removeClass("lineselect");
-    $("#lineno"+line_number).addClass("lineselect");
 
-    // Scroll the textarea to the highlighted line.
-    $("#json-input").scrollTop(
-        line_number * (parseInt($("#lineno1").css(
-            "height")) - 1) - ($("#json-input").height() / 2));
+    if (line_string) {
+        line_number = parseInt(line_string.split(" ")[1]);
+
+        $("#lineno"+line_number).addClass("lineselect");
+
+        // Scroll the textarea to the highlighted line.
+        $("#definition-input").scrollTop(
+            line_number * (parseInt($("#lineno1").css(
+                "height")) - 1) - ($("#definition-input").height() / 2));
+    }
 }
 
 is_url = function (str) {

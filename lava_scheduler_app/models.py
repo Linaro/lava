@@ -2321,9 +2321,6 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        if self.is_pipeline:
-            # FIXME: allow resubmission once UI submission of YAML is also supported.
-            return False
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 

@@ -58,14 +58,15 @@ from lava_scheduler_app.models import (
     TestJob,
     TestJobUser,
     JSONDataError,
-    validate_job_json,
+    validate_job,
     DevicesUnavailableException,
     Worker,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     initiate_health_check_job,
-    device_type_summary
+    device_type_summary,
+    testjob_submission
 )
 from dashboard_app.models import BundleStream
 
@@ -1048,12 +1049,11 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
-
         use_wizard = request.POST.get("wizard", None)
 
         if request.is_ajax():
             try:
-                validate_job_json(request.POST.get("json-input"))
+                validate_job(request.POST.get("definition-input"))
                 return HttpResponse(simplejson.dumps("success"))
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
@@ -1068,15 +1068,16 @@ def job_submit(request):
                 response_data["error"] = str(e)
 
             job_definition = _prepare_template(request)
-            response_data["json_input"] = str(job_definition).replace("'", '"')
+            response_data["definition_input"] = str(job_definition).replace(
+                "'", '"')
             template = loader.get_template("lava_scheduler_app/job_submit.html")
             return HttpResponse(template.render(
                 response_data, request=request))
 
         else:
             try:
-                json_data = request.POST.get("json-input")
-                job = TestJob.from_json_and_user(json_data, request.user)
+                definition_data = request.POST.get("definition-input")
+                job = testjob_submission(definition_data, request.user)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -1089,17 +1090,19 @@ def job_submit(request):
                         user=request.user, test_job=job)
                     testjob_user.is_favorite = True
                     testjob_user.save()
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(
                     response_data, request=request))
 
-            except (JSONDataError, ValueError, DevicesUnavailableException) \
-                    as e:
+            except Exception as e:
                 response_data["error"] = str(e)
                 response_data["context_help"] = "lava scheduler submit job",
-                response_data["json_input"] = request.POST.get("json-input")
+                response_data["definition_input"] = request.POST.get(
+                    "definition-input")
                 response_data["is_favorite"] = request.POST.get("is_favorite")
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(
                     response_data, request=request))
 
@@ -1992,8 +1995,8 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             try:
-                job = TestJob.from_json_and_user(
-                    request.POST.get("json-input"), request.user)
+                job = testjob_submission(request.POST.get("definition-input"),
+                                         request.user)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -2002,16 +2005,18 @@ def job_resubmit(request, pk):
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
-            except (JSONDataError, ValueError, DevicesUnavailableException) \
-                    as e:
+            except SubmissionError as e:
                 response_data["error"] = str(e)
-                response_data["json_input"] = request.POST.get("json-input")
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+                response_data["definition_input"] = request.POST.get(
+                    "definition-input")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
+                return HttpResponse(
+                    template.render(response_data, request=request))
         else:
             if request.is_ajax():
                 try:
-                    validate_job_json(request.POST.get("json-input"))
+                    validate_job(request.POST.get("definition-input"))
                     return HttpResponse(simplejson.dumps("success"))
                 except Exception as e:
                     return HttpResponse(simplejson.dumps(str(e)),
@@ -2047,13 +2052,15 @@ def job_resubmit(request, pk):
                     "nor in the same group as the submitter. Please provide a bundle stream."
 
             try:
-                response_data["json_input"] = definition
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+                response_data["definition_input"] = definition
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
+                return HttpResponse(
+                    template.render(response_data, request=request))
             except (JSONDataError, ValueError, DevicesUnavailableException) \
                     as e:
                 response_data["error"] = str(e)
-                response_data["json_input"] = definition
+                response_data["definition_input"] = definition
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
@@ -2130,15 +2137,15 @@ def job_json(request, pk):
 
 
 @post_only
-def get_remote_json(request):
-    """Fetches remote json file."""
+def get_remote_definition(request):
+    """Fetches remote job definition file."""
     url = request.POST.get("url")
 
     try:
         data = urllib2.urlopen(url).read()
-        # Validate that the data at the location is really JSON.
+        # Validate that the data at the location is really JSON or YAML.
         # This is security based check so noone can misuse this url.
-        simplejson.loads(data)
+        yaml.load(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
                             content_type="application/json")
