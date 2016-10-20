@@ -378,21 +378,10 @@ class TestDefinitions(unittest.TestCase):
         self.assertIn('common', self.job.context)
         self.assertIn("test-definition", self.job.context['common'])
         self.assertIn("testdef_index", self.job.context['common']['test-definition'])
-        self.assertIn("test_list", self.job.context['common']['test-definition'])
         self.assertEqual(
             self.job.context['common']['test-definition']['testdef_index'],
             ['smoke-tests', 'singlenode-advanced']
         )
-        test_list = self.job.context['common']['test-definition']['test_list']
-        self.assertEqual(len(test_list), 2)
-        self.assertIn('path', test_list[0])
-        self.assertIn('path', test_list[1])
-        self.assertIn('name', test_list[0])
-        self.assertIn('name', test_list[1])
-        self.assertEqual(test_list[0]['path'], 'ubuntu/smoke-tests-basic.yaml')
-        self.assertEqual(test_list[0]['name'], 'smoke-tests')
-        self.assertEqual(test_list[1]['path'], 'lava-test-shell/single-node/singlenode03.yaml')
-        self.assertEqual(test_list[1]['name'], 'singlenode-advanced')
         self.assertEqual(
             self.job.context['common']['test-runscript-overlay']['testdef_levels'],
             {

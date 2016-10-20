@@ -167,9 +167,6 @@ class RepoAction(Action):
                 raise RuntimeError("RepoAction validate called super without setting the vcs")
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
-        # a genuinely unique ID based on the *database* JobID and pipeline level for reproducibility
-        # and tracking - {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
-        self.uuid = "%s_%s" % (self.job.job_id, self.level)
         super(RepoAction, self).validate()
         # list of levels involved in the repo actions for this overlay
         uuid_list = self.get_common_data('repo-action', 'uuid-list')
@@ -591,7 +588,6 @@ class TestDefinitionAction(TestAction):
         self.test_list = identify_test_definitions(self.job.parameters)
         if not self.test_list:
             return
-        self.set_common_data(self.name, 'test_list', self.test_list[0])
         for testdefs in self.test_list:
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
@@ -604,6 +600,9 @@ class TestDefinitionAction(TestAction):
                 # store the correct test_name before appending to the local index
                 handler.parameters['test_name'] = "%s_%s" % (len(index), handler.parameters['name'])
                 self.internal_pipeline.add_action(handler)
+                # a genuinely unique ID based on the *database* JobID and
+                # pipeline level for reproducibility and tracking -
+                # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
                 handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
 
                 # copy details into the overlay, one per handler but the same class each time.
@@ -650,16 +649,21 @@ class TestDefinitionAction(TestAction):
             return
         if not self.test_list:
             return
-        for testdef in self.test_list[0]:
-            if 'from' not in testdef:
-                self.errors = "missing 'from' field in test definition %s" % testdef
-            if 'name' not in testdef:
-                self.errors = "missing 'name' field in test definition %s" % testdef
-            else:
-                exp = re.compile(DEFAULT_TESTDEF_NAME_CLASS)
-                res = re.match(exp, testdef['name'])
-                if not res:
-                    self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
+
+        exp = re.compile(DEFAULT_TESTDEF_NAME_CLASS)
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                if 'parameters' in testdef:  # optional
+                    if not isinstance(testdef['parameters'], dict):
+                        self.errors = "Invalid test definition parameters"
+                if 'from' not in testdef:
+                    self.errors = "missing 'from' field in test definition %s" % testdef
+                if 'name' not in testdef:
+                    self.errors = "missing 'name' field in test definition %s" % testdef
+                else:
+                    res = exp.match(testdef['name'])
+                    if not res:
+                        self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
         self.internal_pipeline.validate_actions()
 
     def run(self, connection, args=None):
@@ -721,11 +725,6 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
-        test_list = self.get_common_data('test-definition', 'test_list')
-        for testdef in test_list:
-            if 'parameters' in testdef:  # optional
-                if not isinstance(testdef['parameters'], dict):
-                    self.errors = "Invalid test definition parameters"
 
     def handle_parameters(self, testdef):
 
