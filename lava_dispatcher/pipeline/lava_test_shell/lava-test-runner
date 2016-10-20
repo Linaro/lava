@@ -11,7 +11,7 @@ echo $LAVA_PATH
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="$LAVA_PATH/lava-test-runner.conf"
 RESULTSDIR="$LAVA_PATH/results"
-BINDIR="$LAVA_PATH/bin"
+BINDIR="$LAVA_PATH/../bin"
 
 hwcontext()
 {

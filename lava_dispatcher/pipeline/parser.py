@@ -45,7 +45,7 @@ import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
 
 
-def parse_action(job_data, name, device, pipeline, test_action):
+def parse_action(job_data, name, device, pipeline, test_action, count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -56,6 +56,8 @@ def parse_action(job_data, name, device, pipeline, test_action):
     if name == 'boot':
         Boot.select(device, parameters)(pipeline, parameters)
     elif name == 'test':
+        # stage starts at 0
+        parameters['stage'] = count - 1
         LavaTest.select(device, parameters)(pipeline, parameters)
     elif name == 'deploy':
         if 'type' not in parameters:
@@ -157,10 +159,10 @@ class JobParser(object):
             for name in action_data:
                 if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update(self._map_context_defaults())
-                # TODO: pass the counts to each action to knwo it's number
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
-                    parse_action(action_data, name, device, pipeline, test_action)
+                    parse_action(action_data, name, device, pipeline,
+                                 test_action, counts[name])
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
@@ -170,7 +172,8 @@ class JobParser(object):
                                 if repeat_action == 'yaml_line':
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
-                                parse_action(repeating, repeat_action, device, pipeline, test_action)
+                                parse_action(repeating, repeat_action, device,
+                                             pipeline, test_action, counts[name])
 
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects

@@ -216,16 +216,17 @@ class TestShellAction(TestAction):
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
         pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
-        if pre_command_list:
+        if pre_command_list and self.parameters['stage'] == 0:
             for command in pre_command_list:
                 connection.sendline(command)
 
         with connection.test_connection() as test_connection:
             # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
             test_connection.sendline(
-                "%s/bin/lava-test-runner %s" % (
+                "%s/bin/lava-test-runner %s/%s" % (
                     self.data["lava_test_results_dir"],
-                    self.data["lava_test_results_dir"]),
+                    self.data["lava_test_results_dir"],
+                    self.parameters['stage']),
                 delay=self.character_delay)
 
             self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")

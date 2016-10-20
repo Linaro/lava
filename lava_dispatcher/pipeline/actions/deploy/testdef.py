@@ -168,6 +168,7 @@ class RepoAction(Action):
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
         super(RepoAction, self).validate()
+        # FIXME: unused
         # list of levels involved in the repo actions for this overlay
         uuid_list = self.get_common_data('repo-action', 'uuid-list')
         if uuid_list:
@@ -209,6 +210,7 @@ class RepoAction(Action):
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
             args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
+            str(self.stage),
             'tests',
             args['test_name']
         )
@@ -217,6 +219,7 @@ class RepoAction(Action):
 
         self.data['test'][self.uuid]['overlay_path'][args['test_name']] = os.path.join(
             self.data['test-definition']['overlay_dir'],
+            str(self.stage),
             'tests',
             args['test_name']
         )
@@ -575,6 +578,7 @@ class TestDefinitionAction(TestAction):
         self.description = "load test definitions into image"
         self.summary = "loading test definitions"
         self.test_list = None
+        self.stages = 0
 
     def populate(self, parameters):
         """
@@ -604,6 +608,7 @@ class TestDefinitionAction(TestAction):
                 # pipeline level for reproducibility and tracking -
                 # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
                 handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
+                handler.stage = self.stages
 
                 # copy details into the overlay, one per handler but the same class each time.
                 overlay = TestOverlayAction()
@@ -633,6 +638,7 @@ class TestDefinitionAction(TestAction):
                 self.internal_pipeline.add_action(installer)
                 self.internal_pipeline.add_action(runsh)
                 self.set_common_data(self.name, 'testdef_index', index)
+            self.stages += 1
 
     def validate(self):
         """
@@ -695,10 +701,12 @@ class TestDefinitionAction(TestAction):
         connection = super(TestDefinitionAction, self).run(connection, args)
 
         self.logger.debug("lava-test-runner.conf")
-        with open('%s/lava-test-runner.conf' % self.data['test-definition']['overlay_dir'], 'a') as runner_conf:
-            for handler in self.internal_pipeline.actions:
-                if isinstance(handler, RepoAction):
-                    runner_conf.write(handler.runner)
+        for stage in range(0, self.stages):
+            path = '%s/%s' % (self.data[self.name]['overlay_dir'], stage)
+            with open('%s/%s/lava-test-runner.conf' % (self.data[self.name]['overlay_dir'], stage), 'a') as runner_conf:
+                for handler in self.internal_pipeline.actions:
+                    if isinstance(handler, RepoAction) and handler.stage == stage:
+                        runner_conf.write(handler.runner)
 
         return connection
 

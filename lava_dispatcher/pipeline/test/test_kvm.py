@@ -346,7 +346,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         inline_repo.data['test-definition'] = {'overlay_dir': location}
 
         inline_repo.run(None)
-        yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
+        yaml_file = os.path.join(location, '0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, 'r') as f_in:
             testdef = yaml.load(f_in)
