@@ -1,33 +1,23 @@
-{% extends 'base.jinja2' %}
-{% block body %}
-device_type: juno
+{% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device | default('ttyAMA0') %}
 {% set baud_rate = baud_rate | default('115200') %}
-{% set base_kernel_args = extra_kernel_args | default(
-           'rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9') %}
+{% set juno_kernel_args = 'ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9' %}
 
-{% set base_uboot_commands = uboot_commands | default(
-"          - setenv autoload no
-          - setenv initrd_high '0xffffffffffffffff'
-          - setenv fdt_high '0xffffffffffffffff'
-          - setenv bootdelay 1
-          - setenv ethact smc911x-0") -%}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_ftd_high = '0xffffffffffffffff' %}
+
+{% set base_uboot_commands_juno_extras =
+"          - setenv bootdelay 1
+          - setenv ethact smc911x-0" -%}
 
 {% set base_load_commands = load_commands | default(
 "          - setenv loadkernel 'afs load ${kernel_name} {KERNEL_ADDR}'
           - setenv loadfdt 'afs load ${fdtfile} {DTB_ADDR} ; fdt addr {DTB_ADDR}; fdt resize'
           - setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'") -%}
 
-{% set base_uboot_bootcmd = uboot_bootcmd | default(
-"          - setenv bootcmd 'run loadkernel; run loadfdt; {BOOTX}'
-          - boot") -%}
-
-{% set base_tftp_uboot_bootcmd = tftp_uboot_bootcmd | default(
-"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; {BOOTX}'
-          - boot") -%}
-
-{% set base_nfs_uboot_bootcmd = nfs_uboot_bootcmd | default(base_tftp_uboot_bootcmd) %}
+{% block body %}
+device_type: juno
 
 {% block parameters -%}
 parameters:
@@ -45,6 +35,9 @@ parameters:
 
 actions:
   deploy:
+    parameters:
+      mkimage_arch: arm64
+      add_header: u-boot
     # list of deployment methods which this device supports
     methods:
       lxc:
@@ -66,42 +59,60 @@ actions:
       lxc:
       u-boot:
         parameters:
-          bootloader_prompt: {{ bootloader_prompt|default('VExpress64') }}
+          bootloader_prompt: VExpress64
           boot_message: {{ boot_message|default('Linux version') }}
           send_char: False
-        ramdisk:
+          mkimage_arch: arm64
+        ramdisk-local:
           commands:
 {{ base_uboot_commands }}
+{{ base_uboot_commands_juno_extras }}
           - setenv fdtfile board.dtb
           - setenv initrd_name ramdisk.img
           - setenv kernel_name norkern
 {{ base_load_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ base_kernel_args }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ juno_kernel_args }}'
 {{ base_uboot_bootcmd }}
-        nfs:
+        nfs-local:
           commands:
 {{ base_uboot_commands }}
+{{ base_uboot_commands_juno_extras }}
           - setenv fdtfile board.dtb
           - setenv initrd_name ramdisk.img
           - setenv kernel_name norkern
 {{ base_load_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'
-{{ base_nfs_uboot_bootcmd }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ juno_kernel_args }}'
+{{ base_uboot_nfs_bootcmd }}
         ramdisk-tftp:
           commands:
 {{ base_uboot_commands }}
-{{ base_tftp_commands}}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ base_kernel_args }}'
-{{ base_tftp_uboot_bootcmd }}
-        tftp:
+{{ base_uboot_commands_juno_extras }}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ juno_kernel_args }}'
+{{ base_uboot_tftp_bootcmd }}
+        tftp-local-ramdisk-nfsroot:
           commands:
 {{ base_uboot_commands }}
           - setenv initrd_name ramdisk.img
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'afs load ramdisk.img {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ base_kernel_args }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args }} {{ juno_kernel_args }}'
 {{ base_tftp_uboot_bootcmd }}
+        usb:
+          commands:
+          - usb start
+          - usb info
+{{ base_uboot_commands }}
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ juno_kernel_args }}'
+{{ base_uboot_bootcmd }}
         use-defaults:
           commands:
           - boot
