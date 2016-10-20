@@ -54,15 +54,14 @@ def parse_action(job_data, name, device, pipeline, test_action):
         parameters.update(pipeline.job.parameters['protocols'])
 
     if name == 'boot':
-        Boot.select(device, job_data[name])(pipeline, parameters)
+        Boot.select(device, parameters)(pipeline, parameters)
     elif name == 'test':
-        LavaTest.select(device, job_data[name])(pipeline, parameters)
-    elif name == 'deploy' and test_action and 'type' not in job_data[name]:
-        parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
-        Deployment.select(device, job_data[name])(pipeline, parameters)
-    elif name == 'deploy' and 'type' in job_data[name]:
+        LavaTest.select(device, parameters)(pipeline, parameters)
+    elif name == 'deploy':
+        if 'type' not in parameters:
+            parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         parameters.update({'test_action': test_action})
-        Deployment.select(device, job_data[name])(pipeline, parameters)
+        Deployment.select(device, parameters)(pipeline, parameters)
 
 
 class JobParser(object):
@@ -149,10 +148,7 @@ class JobParser(object):
         self._timeouts(data, job)
 
         # some special handling is needed to tell the overlay classes about the presence or absence of a test action
-        test_action = True
-        test_list = [action for action in data['actions'] if 'test' in action]
-        if test_list and 'test' not in test_list[0]:
-            test_action = False
+        test_action = bool([action for action in data['actions'] if 'test' in action])
 
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
@@ -161,6 +157,7 @@ class JobParser(object):
             for name in action_data:
                 if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update(self._map_context_defaults())
+                # TODO: pass the counts to each action to knwo it's number
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     parse_action(action_data, name, device, pipeline, test_action)
