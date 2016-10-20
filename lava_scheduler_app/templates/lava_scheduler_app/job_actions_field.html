@@ -2,7 +2,7 @@
 
 {% can_view record request.user as can_view %}
 
-<div class="btn-toolbar">
+<div class="text-nowrap">
   <a class="btn btn-xs btn-success {% if not can_view %}disabled{% endif %}"
      title="{% if can_view %}View job results{% else %}Insufficient permissions{% endif %}"
      {% if not can_view %}
