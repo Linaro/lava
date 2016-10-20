@@ -126,17 +126,26 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
             logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
             return False
 
+        measurement = None
+        units = ''
+        if 'duration' in results:
+            measurement = results['duration']
+            units = 'seconds'
         try:
             # For lava test suite, the test (actions) can be seen two times.
             case = TestCase.objects.get(name=name, suite=suite)
             case.test_set = testset
             case.metadata = yaml.dump(results)
             case.result = result_val
+            case.measurement = measurement
+            case.units = units
         except TestCase.DoesNotExist:
             case = TestCase.objects.create(name=name,
                                            suite=suite,
                                            test_set=testset,
                                            metadata=yaml.dump(results),
+                                           measurement=measurement,
+                                           units=units,
                                            result=result_val)
         with transaction.atomic():
             case.save()
