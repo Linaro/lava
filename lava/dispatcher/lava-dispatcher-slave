@@ -242,7 +242,7 @@ def send_multipart_u(sock, data):
 
 def send_end(sock, job_id, job):
     err = job.errors()
-    if job.proc is not None:
+    if job.proc is not None and job.proc.returncode is not None:
         job_status = job.proc.returncode
     elif err == '':
         job_status = 0
