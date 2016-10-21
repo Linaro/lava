@@ -366,9 +366,9 @@ class ExtractRamdisk(Action):
         ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
-        cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')
+        cmd = ('cpio -iud -F %s' % ramdisk_data).split(' ')
         if not self.run_command(cmd):
-            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_data)
+            raise JobError('Unable to extract cpio arcive: %s - missing header definition (i.e. u-boot)?' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
         self.data[self.name]['extracted_ramdisk'] = extracted_ramdisk  # directory
