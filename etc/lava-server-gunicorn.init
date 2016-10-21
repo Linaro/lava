@@ -15,15 +15,16 @@ LOGFILE="/var/log/lava-server/gunicorn.log"
 LOGLEVEL="debug"
 WORKERS=4
 RECIPE="lava_server.wsgi"
+PIDFILE=/var/run/lava-server-gunicorn.pid
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+COMM="gunicorn: maste"
 DESC="lava-server gunicorn wsgi support"             # short description
 NAME=lava-server-gunicorn                            # short server's name
 DAEMON="/usr/bin/gunicorn"                           # server's location
-OPTIONS="-D -u lavaserver -g lavaserver -w $WORKERS $RECIPE"
+OPTIONS="-D -p $PIDFILE -u lavaserver -g lavaserver -w $WORKERS $RECIPE"
 DAEMON_ARGS="--log-level $LOGLEVEL --log-file $LOGFILE $OPTIONS"  # Arguments to run the daemon with
-PIDFILE=/var/run/lava-server-gunicorn.pid
 SCRIPTNAME=/etc/init.d/lava-server-gunicorn
 
 # Read configuration variable file if it is present
@@ -68,7 +69,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name "$COMM"
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -89,15 +90,15 @@ do_stop()
 #
 # Function that sends a SIGHUP to the daemon/service
 #
-do_reload() {
+#do_reload() {
 	#
 	# If the daemon can reload its configuration without
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
-	return 0
-}
+	#start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
+	#return 0
+#}
 
 case "$1" in
   start)
@@ -119,11 +120,11 @@ case "$1" in
   status)
 	   status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
 	   ;;
-  reload|force-reload)
-	  log_daemon_msg "Reloading $DESC" "$NAME"
-	  do_reload
-	  log_end_msg $?
-	;;
+  #reload|force-reload)
+	#  log_daemon_msg "Reloading $DESC" "$NAME"
+	#  do_reload
+	#  log_end_msg $?
+	#;;
   restart|force-reload)
 	#
 	# If the "reload" option is implemented then remove the
