@@ -86,6 +86,8 @@ class OverlayAction(DeployAction):
         self.v2_scripts_to_copy = []
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
+        self.target_mac = ''
+        self.target_ip = ''
 
     def validate(self):
         super(OverlayAction, self).validate()
@@ -113,6 +115,11 @@ class OverlayAction(DeployAction):
             self.errors = "Unable to update lava_test_shell support scripts."
         if self.job.parameters.get('output_dir', None) is None:
             self.errors = "Unable to use output directory."
+        if 'parameters' in self.job.device:
+            if 'interfaces' in self.job.device['parameters']:
+                if 'target' in self.job.device['parameters']['interfaces']:
+                    self.target_mac = self.job.device['parameters']['interfaces']['target'].get('mac', '')
+                    self.target_ip = self.job.device['parameters']['interfaces']['target'].get('ip', '')
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -166,10 +173,15 @@ class OverlayAction(DeployAction):
                     os.fchmod(fout.fileno(), self.xmod)
         for fname in self.v2_scripts_to_copy:
             with open(fname, 'r') as fin:
-                output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
+                foutname = os.path.basename(fname)
+                output_file = '%s/bin/%s' % (lava_path, foutname)
                 self.logger.debug("Updating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
+                    if foutname == 'lava-target-mac':
+                        fout.write("TARGET_DEVICE_MAC='%s'\n" % self.target_mac)
+                    if foutname == 'lava-target-ip':
+                        fout.write("TARGET_DEVICE_IP='%s'\n" % self.target_ip)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
 

@@ -11,33 +11,7 @@
     pipeline:
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
-    - class: actions.deploy.testdef.TestDefinitionAction
-      name: test-definition
-      pipeline:
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
@@ -249,22 +223,6 @@
     - class: actions.deploy.testdef.TestDefinitionAction
       name: test-definition
       pipeline:
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
       - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}

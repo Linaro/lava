@@ -45,12 +45,16 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
-def identify_test_definitions(parameters):
+def identify_test_definitions(parameters, namespace=None):
     """
     Iterates through the job parameters to identify all the test definitions,
     including those involved in repeat actions.
     """
     # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
+    if namespace:
+        test_actions = [action for action in parameters['actions'] if 'test' in action]
+        namespace_tests = [action['test']['definitions'] for action in test_actions if 'namespace' in action['test'] and action['test']['namespace'] == namespace]
+        return namespace_tests
     test_list = [action['test']['definitions'] for action in parameters['actions'] if 'test' in action]
     repeat_list = [action['repeat'] for action in parameters['actions'] if 'repeat' in action]
     if repeat_list:
@@ -589,9 +593,10 @@ class TestDefinitionAction(TestAction):
         """
         index = []
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.test_list = identify_test_definitions(self.job.parameters)
-        if not self.test_list:
-            return
+        namespace = parameters.get('namespace', None)
+        self.test_list = identify_test_definitions(self.job.parameters, namespace)
+        if self.test_list:
+            self.set_common_data(self.name, 'test_list', self.test_list[0])
         for testdefs in self.test_list:
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
