@@ -156,7 +156,10 @@ class ResultsTable(LavaTable):
                 )
             )
 
-    job_id = JobRestrictionColumn(verbose_name='Test Job')
+    job_id = tables.Column(verbose_name='Job ID')
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/suite_actions_field.html")
+    actions.orderable = False
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')
@@ -170,11 +173,14 @@ class ResultsTable(LavaTable):
         searches = {
             'name': 'contains'
         }
+        sequence = {
+            'job_id', 'actions'
+        }
 
 
 class ResultsIndexTable(ResultsTable):
 
-    job_id = IndexResultsColumn(verbose_name='Job Results')
+    job_id = tables.Column(verbose_name='Job ID')
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')

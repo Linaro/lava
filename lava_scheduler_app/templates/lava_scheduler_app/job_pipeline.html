@@ -110,11 +110,12 @@
       <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link and not job.archived_bundle %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-eye-open"></span></a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
           {% endif %}
           {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
+            <span class="glyphicon glyphicon-star"></span>
         </a></li>
         <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a></li>
         {% endif %}

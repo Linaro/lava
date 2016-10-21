@@ -114,9 +114,9 @@
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
             {% if job.is_pipeline %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-eye-open"></span></a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
             {% else %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle <span class="glyphicon glyphicon-eye-open"></span></a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle <span class="glyphicon glyphicon-signal"></span></a></li>
             {% endif %}
         {% endif %}
         </ul>

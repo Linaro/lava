@@ -10,7 +10,7 @@
      {% else %}
      href="{{ record.results_link }}"
      {% endif %}>
-    <span class="glyphicon glyphicon-eye-open"></span>
+    <span class="glyphicon glyphicon-signal"></span>
   </a>
     <a class="btn btn-xs btn-info {% if not can_view %}disabled{% endif %}"
      title="{% if can_view %}View job details{% else %}Insufficient permissions{% endif %}"
@@ -19,7 +19,7 @@
      {% else %}
      href="{{ record.get_absolute_url }}"
      {% endif %}>
-    <span class="glyphicon glyphicon-pencil"></span>
+    <span class="glyphicon glyphicon-eye-open"></span>
   </a>
     <a class="btn btn-xs btn-primary {% if not can_view %}disabled{% endif %}" title="{% if can_view %}End of log{% else %}Insufficient permissions{% endif %}"
      {% if not can_view %}
