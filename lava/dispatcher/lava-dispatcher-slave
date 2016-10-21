@@ -41,7 +41,6 @@ import signal
 import socket
 import subprocess
 import sys
-import tempfile
 import time
 import traceback
 import yaml
@@ -67,6 +66,7 @@ else:
 # zmq socket send high water mark
 TIMEOUT = 5
 JOBS_CHECK_INTERVAL = 5
+FINISH_MAX_DURATION = 60
 SEND_QUEUE = 10
 
 # FIXME: This is a temporary fix until the overlay is sent to the master
@@ -107,6 +107,11 @@ class Master(object):
 
 class Job(object):
     """Wrapper around a job process."""
+
+    RUNNING = 1
+    FINISHING = 2
+    ENDING = 3
+
     def __init__(self, job_id, definition, device_definition, env,
                  log_socket, master_cert, slave_cert, env_dut=None):
         self.job_id = job_id
@@ -116,7 +121,8 @@ class Job(object):
         self.env = env
         self.env_dut = env_dut
         self.proc = None
-        self.is_running = False
+        self.status = Job.RUNNING
+        self.finish_time = 0
         self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
         mkdir(self.base_dir)
 
@@ -197,7 +203,6 @@ class Job(object):
                 args,
                 stdout=open(out_file, "w"),
                 stderr=open(err_file, "w"), env=env)
-            self.is_running = True
         except Exception as exc:  # pylint: disable=broad-except
             # daemon must always continue running even if the job crashes
             if hasattr(exc, "child_traceback"):
@@ -211,12 +216,14 @@ class Job(object):
 
     def cancel(self):
         """Cancel the job and kill the process."""
+        # self.proc can be None as cancel() is also called when the process
+        # fails to start.
         if self.proc is not None:
-            self.proc.terminate()
-            # TODO: be sure not to block here
-            self.proc.wait()
-            self.proc = None
-        self.is_running = False
+            self.proc.send_signal(signal.SIGINT)
+        # Set the status and store the time
+        if self.status != Job.FINISHING:
+            self.finish_time = time.time()
+            self.status = Job.FINISHING
 
 
 def get_fqdn():
@@ -240,7 +247,7 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b(d) for d in data])
 
 
-def send_end(sock, job_id, job):
+def send_end(sock, job_id, job, print_exception=False):
     err = job.errors()
     if job.proc is not None and job.proc.returncode is not None:
         job_status = job.proc.returncode
@@ -248,6 +255,12 @@ def send_end(sock, job_id, job):
         job_status = 0
     else:
         job_status = 2
+
+    if print_exception and job_status:
+        LOG.info("[%d] Job returned non-zero", job_id)
+        if err:
+            LOG.exception(err)
+
     send_multipart_u(sock, ["END", str(job_id), str(job_status), err,
                             job.description()])
 
@@ -486,13 +499,13 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
             # back the right signal (ignoring the duplication or signaling
             # the end of the job).
             if job_id in jobs:
-                if jobs[job_id].is_running:
+                if jobs[job_id].status == Job.ENDING:
+                    LOG.warning("[%d] Job has already ended", job_id)
+                    send_end(sock, job_id, jobs[job_id])
+                else:
                     LOG.info(
                         "[%d] Job has already been started", job_id)
                     send_multipart_u(sock, ["START_OK", str(job_id)])
-                else:
-                    LOG.warning("[%d] Job has already ended", job_id)
-                    send_end(sock, job_id, jobs[job_id])
             else:
                 jobs[job_id] = Job(job_id, job_definition, device_definition,
                                    env, socket_addr, master_cert, slave_cert,
@@ -515,7 +528,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
             # back the right signal (ignoring the duplication or signaling
             # the end of the job).
             if job_id in jobs:
-                if jobs[job_id].is_running:
+                if jobs[job_id].status == Job.RUNNING:
                     jobs[job_id].cancel()
                 else:
                     LOG.info(
@@ -523,7 +536,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
             else:
                 LOG.debug("[%d] Unknown job, sending END", job_id)
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
-                jobs[job_id].is_running = False
+                jobs[job_id].status = Job.ENDING
             # Send the END message anyway
             send_end(sock, job_id, jobs[job_id])
 
@@ -553,18 +566,18 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
                 LOG.error("Invalid message '%s'", msg)
                 return
             if job_id in jobs:
-                if jobs[job_id].is_running:
-                    # The job is still running
-                    send_multipart_u(sock, ["START_OK", str(job_id)])
-                else:
+                if jobs[job_id].status == Job.ENDING:
                     # The job has already ended
                     send_end(sock, job_id, jobs[job_id])
+                else:
+                    # The job is still running
+                    send_multipart_u(sock, ["START_OK", str(job_id)])
             else:
                 # Unknown job: return END anyway
                 LOG.debug(
                     "[%d] Unknown job, sending END after STATUS", job_id)
                 jobs[job_id] = Job(job_id, "", "", None, None, None, None)
-                jobs[job_id].is_running = False
+                jobs[job_id].status = Job.ENDING
                 send_end(sock, job_id, jobs[job_id])
 
             # Mark the master as alive
@@ -590,27 +603,33 @@ def check_job_status(jobs, sock, last_jobs_check):
 
     # Loop on all running jobs
     for job_id in jobs.keys():
-        if jobs[job_id].is_running:
+        status = jobs[job_id].status
+        if status == Job.RUNNING:
             ret = jobs[job_id].proc.poll()
             # Job has finished
             if ret is not None:
                 LOG.info("[%d] Job END", job_id)
-                job_status = jobs[job_id].proc.returncode
-                errs = jobs[job_id].errors()
-                if job_status:
-                    LOG.info("[%d] Job returned non-zero", job_id)
-                    if errs:
-                        LOG.exception(errs)
+                jobs[job_id].status = Job.ENDING
+                send_end(sock, job_id, jobs[job_id])
 
-                jobs[job_id].is_running = False
-                send_multipart_u(sock, ["END", str(job_id),
-                                        str(job_status), errs,
-                                        jobs[job_id].description()])
+        elif status == Job.FINISHING:
+            # Terminate processes that where not collected last time and that are
+            # too long to end.
+            if now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
+                LOG.info("[%d] Job not finishing => terminating")
+                # Just terminate the proc and let the next iteration will send the
+                # signal for us.
+                jobs[job_id].proc.terminate()
+                jobs[job_id].proc.wait()
+                LOG.info("[%d] Job END", job_id)
+                jobs[job_id].status = Job.ENDING
+                send_end(sock, job_id, jobs[job_id])
 
         else:
             # Re-send the END message (the server hasn't answered yet)
             LOG.info("[%d] Job END (resend)", job_id)
             send_end(sock, job_id, jobs[job_id])
+
     return now
 
 
