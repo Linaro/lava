@@ -32,7 +32,6 @@ Further information
 ###################
 
 * http://wiki.debian.org/LAVA
-* https://wiki.linaro.org/LAVA/LAVA_packaging
 * https://github.com/Linaro
 
 .. _packaging_components:
