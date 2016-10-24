@@ -70,6 +70,8 @@ LAVA instance for a few reasons:
 .. seealso:: :ref:`creating_gold_standard_files` and
    :ref:`adding_qemu_v2_device`.
 
+.. index:: add-device-type, adding a device type
+
 .. _create_device_type_database:
 
 Create a Device Type
@@ -86,7 +88,9 @@ If an existing template does not exist, a new template will need to be created.
 .. seealso:: :ref:`device_types`
 
 You can then either use the :ref:`web admin interface <django_admin_interface>`
-or the **lava-server** command line to add device types.
+or the ``lava-server`` command line to add device types.
+
+**Using the admin interface**
 
 In order to use the web admin interface, log in to the LAVA instance and click
 on your username to see the Profile menu.
@@ -116,22 +120,37 @@ Just before you add the device type, take a look at the available
 The only value needed for the QEMU device type is the **Name**, just
 check that **Display** is the default: enabled. Now Save.
 
-Using the command line interface it's also possible to list all known device types::
+**Using the command line**
 
-  lava-server manage add-device-type --list
-
-On the command line, you can add device types (for instance QEMU and panda) using::
+On the command line, you can add device types (for instance QEMU and panda)
+using::
 
   lava-server manage add-device-type qemu panda
 
-It's also possible to add all known device types at the same time with::
+It's also possible to add all known device types at the same time with:
+
+.. code-block:: none
 
   lava-server manage add-device-type '*'
 
-.. _create_device_database:
+Descriptive fields like ``Architecture name``, ``Processor name``, ``CPU model
+name``, ``List of cores`` and ``Bit count`` cannot be set on the command line.
+
+Using the command line interface it's also possible to list all known device
+types:
+
+.. code-block:: none
+
+  lava-server manage add-device-type --list
+
+.. index:: add-device, adding a device, create a device in the database
+
+.. _adding_qemu_v2_device:
 
 Create a device in the database
 -------------------------------
+
+**Using the admin interface**
 
 * Navigate back to ``LAVA_SCHEDULER_APP`` and select ``Devices`` and
   ``Add Device``.
@@ -142,10 +161,25 @@ Create a device in the database
 * Your first device should be public.
 * Ensure that the device is enabled as a ``Pipeline device``.
 
-.. _adding_qemu_v2_device:
+**Using the command line**
 
-Adding your first QEMU device
------------------------------
+Using the command line interface it's also possible to list all known device
+types:
+
+.. code-block:: none
+
+  lava-server manage add-device --list
+
+On the command line, you can add device types (for instance a QEMU type device
+with a hostname ``qemu01``) using::
+
+  lava-server manage add-device --device-type qemu qemu01
+
+See ``lava-server manage help add-device`` for more options, including initial
+states of the device in the database.
+
+Adding a dictionary to the first QEMU device
+--------------------------------------------
 
 For the first device, a simple :term:`device dictionary` can be used
 to provide the device-specific details on top of the template:
@@ -210,7 +244,7 @@ https://validation.linaro.org/ .
 The contents of the device dictionary for particular devices are visible
 to anyone with access to that device type, using the device detail page.
 Details of the jinja2 files used to update the device dictionary on
-Linaro instances is also held in git:
+Linaro instances is also held in git::
 
  https://git.linaro.org/lava/lava-lab.git
 
