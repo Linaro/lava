@@ -111,8 +111,8 @@
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
-          {% endif %}
-          {% if user.is_authenticated %}
+        {% endif %}
+        {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
             <span class="glyphicon glyphicon-star"></span>
@@ -125,21 +125,22 @@
         <ul class="nav nav-pills nav-stacked">
         {% if show_resubmit and not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-info">Resubmit</a></li>
-          {% endif %}
-          {% if show_failure %}
-        <ul class="nav nav-pills nav-stacked">
+        {% endif %}
+        {% if show_failure %}
+          <li><ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+        {% endif %}
         {% if user.is_authenticated and user.is_superuser %}
         <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
             Admin this TestJob
-        </a></li>
+        </a></li></ul></li>
         {% endif %}
         </ul>
       </div>
       <div class="col-md-3">
         {% if show_cancel %}
+        <ul class="nav nav-pills nav-stacked">
           <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
-        {% endif %}
         </ul>
         {% endif %}
         {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
