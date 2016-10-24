@@ -177,14 +177,14 @@ jobs to any instance using your browser. You need to be logged in and have
 permission to submit jobs to that instance. The web submission form for a
 localhost installation would be ``http://localhost/scheduler/jobsubmit``.
 
-To submit jobs to the Linaro lab at Cambridge, visit
+To submit jobs to the Linaro lab in Cambridge, visit
 ``https://validation.linaro.org/scheduler/jobsubmit``. Paste your YAML file
-into the window and click "Submit" button. An example job submission screen is
-shown below,
+into the window and click the "Submit" button. An example job submission screen
+is shown below,
 
 .. image:: images/job-submission-screen.png
 
-.. note:: If a link to test job YAML file is pasted on the above screen, the
+.. note:: If a link to a test job YAML file is pasted on the above screen, the
    YAML file will be fetched and displayed in the text box for submission. Make
    sure that the link is to the raw content of the YAML file, not HTML.
 
