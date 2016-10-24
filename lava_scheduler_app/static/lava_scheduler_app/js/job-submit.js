@@ -1,7 +1,3 @@
-beautify_options = {
-    "brace_style": "expand"
-}
-
 $("#validate").click(function(){
     $("#busyIndicator").show(); 
     validate_input();
@@ -60,8 +56,7 @@ load_url = function(url) {
         },
         success: function(data) {
             try {
-                $.parseJSON(data);
-                $("#definition-input").val(js_beautify(data, beautify_options));
+                $("#definition-input").val(data);
                 validate_input();
             } catch (e) {
                 validate_definition_callback(e);
@@ -111,7 +106,7 @@ unselect_error_line = function() {
 
 select_error_line = function(error) {
     // Selects the appropriate line in text area based on the parsed error msg.
-    line_string = error.toString().split(": ")[1];
+    line_string = error.match(/line \d+/).toString();
     $(".lineno").removeClass("lineselect");
 
     if (line_string) {
