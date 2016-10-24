@@ -2782,7 +2782,7 @@ class TestJob(RestrictedResource):
                     break
 
             kwargs["query"]["compare_index"] = compare_index
-            if compare_index is not None:
+            if compare_index is not None and self.notification.blacklist:
                 # Get testsuites diffs between current job and latest complete
                 # job from query.
                 new_suites = self.testsuite_set.all().exclude(
