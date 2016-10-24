@@ -365,14 +365,14 @@ Log files
   Includes details of the test results recorded and job exit codes. Logs are
   created on the slave::
 
-   /var/log/lava-dispatcher/lava-slave.log
+    /var/log/lava-dispatcher/lava-slave.log
 
-* **apache** - includes XML-RPC logs.
+* **apache** - includes XML-RPC logs::
 
    /var/log/apache2/lava-server.log
 
 * **gunicorn** - details of the :abbr:`WSGI (Web Server Gateway Interface)`
-  operation for django
+  operation for django::
 
    /var/log/lava-server/gunicorn.log
 
