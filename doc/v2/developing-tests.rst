@@ -123,7 +123,7 @@ Deploying a pre-built QEMU image
         images:
             rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
               compression: gz
         os: debian
 

@@ -56,7 +56,7 @@ actions:
     images:
         rootfs:
           image_arg: -drive format=raw,file={rootfs}
-          url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+          url: http://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
           compression: gz
     os: debian
     root_partition: 1

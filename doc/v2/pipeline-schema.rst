@@ -70,7 +70,7 @@ An example pipeline job for a QEMU device looks like:
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         compression: gz
         os: debian
         # if root_partition partition is not present:

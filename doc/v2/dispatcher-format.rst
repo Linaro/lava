@@ -80,7 +80,7 @@ preceding hyphen.
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         os: debian
 
 This stanza describes a deployment strategy where the timeout for the
@@ -123,7 +123,7 @@ Sample JOB definition for a KVM
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -518,7 +518,7 @@ Supported methods
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)

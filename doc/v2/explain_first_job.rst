@@ -118,12 +118,12 @@ OpenEmbedded) and ``fedora``.
 Example of deploy label substitution
 ------------------------------------
 
-``https://images.validation.linaro.org/kvm-debian-wheezy.img.gz`` is downloaded
-and then decompressed using the ``gz`` algorithm to create a file called
-``kvm-debian-wheezy.img`` in a ``tmpfs`` location. This location is then
+``https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz`` is
+downloaded and then decompressed using the ``gz`` algorithm to create a file
+called ``stretch-2.img`` in a ``tmpfs`` location. This location is then
 substituted into the ``image_arg``::
 
- -drive format=raw,file=/tmp/tmp.23FDsf/kvm-debian-wheezy.img
+ -drive format=raw,file=/tmp/tmp.23FDsf/stretch-2.img
 
 Boot action for QEMU
 ====================

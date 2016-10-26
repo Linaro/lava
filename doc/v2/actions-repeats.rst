@@ -102,7 +102,7 @@ and :ref:`test_action` actions in a repeat block.
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         os: debian
         root_partition: 1
 
