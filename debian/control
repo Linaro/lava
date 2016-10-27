@@ -26,15 +26,15 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-hijack (<= 1.0.10-1), python-django (<< 1.8),
  python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
-Depends: apache2, adduser, fuse, gunicorn, iproute2,
- lsb-base (>= 4), python-tz, python-daemon, python-dateutil,
+Depends: apache2, adduser, gunicorn, iproute2, lsb-base (>= 4),
+ python-tz, python-daemon, python-dateutil,
  python-django (>= 1.8), python-django-auth-ldap, python-setuptools,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
  lava-dispatcher (>= 2016.9),
  ${python:Depends}, ${misc:Depends}
-Recommends: ntp, lava-coordinator, lava-server-doc
+Recommends: fuse, ntp, lava-coordinator, lava-server-doc
 Suggests: python-django-hijack, python-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
@@ -57,9 +57,9 @@ Package: lava
 Architecture: all
 Section: metapackages
 Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
- lava-dev, lava-tool, lavapdu-client, linaro-image-tools, ntp | ntpdate,
- tftpd-hpa, openssh-client, schroot, lxc, rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon
+ lava-dev, lava-tool, lavapdu-client, ntp | ntpdate, tftpd-hpa,
+ openssh-client, schroot, lxc, rsync, bridge-utils, ${misc:Depends}
+Recommends: lavapdu-daemon, linaro-image-tools
 Suggests: vmdebootstrap
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
@@ -83,8 +83,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python | python-all | python-dev | python-all-dev, pep8 | python-pep8,
  python-guestfs, python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-nose, python-netifaces, python-setuptools,
- python-sphinx-bootstrap-theme,
- python-zmq, python-yaml, python-voluptuous,
+ python-sphinx-bootstrap-theme, python-zmq, python-yaml, python-voluptuous,
  docbook-xsl, xsltproc, python-mock,
  ${python:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot,
