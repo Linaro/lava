@@ -25,6 +25,7 @@
 
 from lava_dispatcher.actions.boot import SecondaryShell
 from lava_dispatcher.actions.boot.cmsis_dap import CMSIS
+from lava_dispatcher.actions.boot.depthcharge import Depthcharge
 from lava_dispatcher.actions.boot.dfu import DFU
 from lava_dispatcher.actions.boot.docker import BootDocker
 from lava_dispatcher.actions.boot.fastboot import BootFastboot

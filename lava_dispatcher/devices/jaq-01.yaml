@@ -1,0 +1,37 @@
+# Veyron jaq AKA Haier Chromebook 11, running depthcharge firmware in netboot mode
+
+device_type: rk3288-veyron-jaq
+
+commands:
+  connect: telnet localhost 6002
+
+actions:
+  deploy:
+    methods:
+      tftp:
+
+  boot:
+    connections:
+      serial:
+
+    methods:
+      depthcharge:
+        parameters:
+          start_message: Starting netboot
+          bootloader_prompt: "dpch:"
+          boot_message: Booting Linux
+        nfs:
+          cmdline: 'console=ttyS2,115200n8 rootwait rootdelay=10 root=/dev/nfs rw
+            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
+          commands:
+            - tftpboot {SERVER_IP} {KERNEL} {CMDLINE}
+
+timeouts:
+  actions:
+    depthcharge-retry:
+      minutes: 2
+    depthcharge-wait-cli:
+      minutes: 2
+  connections:
+    depthcharge-wait-cli:
+      minutes: 2

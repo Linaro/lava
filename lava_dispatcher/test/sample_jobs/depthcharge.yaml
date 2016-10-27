@@ -1,0 +1,28 @@
+device_type: beaglebone-black
+job_name: depthcharge-unittest-only
+priority: medium
+visibility: public
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  extract-nfsrootfs:
+    seconds: 90
+
+actions:
+  - deploy:
+      timeout:
+        minutes: 2
+      to: tftp
+      kernel:
+        url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+      nfsrootfs:
+        url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+        compression: gz
+      os: debian
+
+  - boot:
+      method: depthcharge
+      commands: nfs
