@@ -499,10 +499,63 @@ best way to handle such results.
 Files
 =====
 
-``lava-test-case-attach`` is :ref:`not supported in V2 <test_attach>`.
+.. seealso:: In LAVA V1, data files could be published using 
+   ``lava-test-case-attach``. In V2, there is a new way to publish directly 
+   from the :term:`DUT` - the :ref:`publishing API 
+   <publishing_artifacts>`.
 
-.. FIXME: add details of the publishing API
+Measurements
+============
 
+``lava-test-case`` supports recording integer or floating point measurements
+for a particular test case. When a measurement is supplied, a text string can
+also be supplied to be used as the units of that measurement, e.g. seconds or
+bytes. Results which cannot be compared as integers or floating point numbers
+cannot be used as measurements.
+
+.. seealso:: :ref:`recording_test_measurements`
+
+The lava test results
+=====================
+
+Each test job creates a set of results in a reserved test suite called 
+``lava``. LAVA will reject any submission which tries to set ``lava`` as the 
+test definition name. These results are generated directly by the LAVA actions 
+and include useful metadata including the actual time taken for specific 
+actions and data generated during the test operation such as the VCS commit 
+hash of each test definition included into the overlay.
+
+The results are available in the same ways as any other test suite. In addition
+to strings and measurements, the ``lava`` suite also include an element called
+**extra**.
+
+Examples
+--------
+
+* The ``lava`` test suite may contain a result for the ``git-repo-action`` test
+  case, generated during the running of the test. The **extra** data in this
+  test case could look like:
+
+  .. code-block:: yaml
+
+   extra:
+     path: ubuntu/smoke-tests-basic.yaml
+     repository: git://git.linaro.org/qa/test-definitions.git
+     success: c50a99ebb5835501181f4e34417e38fc819a6280
+
+* The **duration** result for the ``auto-login-action`` records the time taken
+  to boot the kernel and get to a login prompt. The **extra** data for the same
+  result includes details of kernel messages identified during the boot
+  including stack traces, kernel panics and other alerts, if any.
+
+Results from any test suite can be tracked using :term:`queries <query>`,
+:term:`charts <chart>` and / or the :ref:`REST API <downloading_results>`.
+
+.. note:: The results in the ``lava`` test suite are managed by the software
+   team. The results in the other test suites are entirely down to the test
+   writer to manage. The less often the **names** of the test definitions
+   and the test cases change, the easier it will be to track those test cases
+   over time.
 
 .. _best_practices:
 
@@ -549,6 +602,11 @@ outside of the :ref:`multinode_api`.
    to, for example, gather any inputs that you get via LAVA, call the main
    test program, and translate your regular output into ways to
    tell lava how the test went (if needed).
+
+#. Standard test jobs are intended to showcase the design of the test job,
+   **not** the test definitions. These test definitions tend to be very
+   simplistic and are **not** intended to be examples of how to write test
+   definitions, just how to prepare test jobs.
 
 .. seealso:: :ref:`custom_scripts`
 

@@ -1,3 +1,5 @@
+.. index:: results introduction
+
 .. _results_intro:
 
 Introduction to Results in LAVA
@@ -16,10 +18,13 @@ flag:
 * skip
 * unknown
 
-In addition, each test case can include a measurement, with units.
+In addition, each test case can include a measurement (integer or floating
+point), with units.
 
 Test cases are aggregated into a Test Suite. Multiple test suites can be
 generated for each submitted test job.
+
+.. seealso:: :ref:`recording_test_result_data`
 
 .. _results_rest_api:
 
