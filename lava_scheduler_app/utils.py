@@ -297,16 +297,6 @@ def get_uptime():
         return uptime
 
 
-def get_lshw_out():
-    """Return the output of lshw command in html format.
-    """
-    lshw_cmd = "lshw -html"
-    proc = subprocess.Popen(lshw_cmd, shell=True, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    lshw_out, lshw_err = proc.communicate()
-    return simplejson.dumps(lshw_out)
-
-
 # pylint gets confused with netifaces
 def get_ip_address():  # pylint: disable=no-member
     """Returns the IP address of the default interface, if found.
@@ -324,117 +314,6 @@ def get_ip_address():  # pylint: disable=no-member
                     ip = default_interface_values.get(
                         netifaces.AF_INET)[0].get('addr')
     return ip
-
-
-def format_sw_info_to_html(data_dict):
-    """Formats the given software info DATA_DICT to viewable html.
-    """
-    ordered_data_dict = OrderedDict(sorted(data_dict.items()))
-    html_content = '<table>\n'
-    html_content += '<tr>\n<th>Software</th>\n<th>Information</th>\n</tr>\n'
-    for k, v in ordered_data_dict.iteritems():
-        html_content += '<tr>\n<td>%s</td>\n<td>%s</td>\n</tr>\n' % (k, v)
-
-    return html_content
-
-
-def installed_packages(prefix=None, package_name=None):  # pylint: disable=too-many-locals
-    """Queries dpkg and filters packages that are related to PACKAGE_NAME.
-
-    PREFIX is the installation prefix for the given instance ie.,
-    '/srv/lava/instances/<instance_name>/' which is used for finding out the
-    installed package via the python environment.
-
-    Returns a dictionary of packages where the key is the package and the value
-    is the package version.
-    """
-    packages = {}
-    if package_name:
-        package_cmd = "dpkg -l | grep %s" % package_name
-        proc = subprocess.Popen(package_cmd, shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        package_out, _ = proc.communicate()
-        pack_re = re.compile(r"ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
-                             re.MULTILINE)
-        for package in pack_re.findall(package_out):
-            packages[package[0]] = package[1]
-
-    # Find packages via the python environment for this instance.
-    if prefix:
-        python_path = os.path.join(prefix, 'bin/python')
-        cmd = "grep exports %s" % python_path
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        out, _ = proc.communicate()
-
-        # The output of the command looks like the following, which is a
-        # string, we process this string to populate the package dictionary.
-        #
-        # '/srv/lava/.cache/git-cache/exports/lava-android-test/2013.12',
-        # '/srv/lava/.cache/git-cache/exports/linaro-dashboard-bundle/2013.12',
-        if out:
-            out = out.replace("'", '')
-            for path in out.split(','):
-                path = path.strip()
-                if path:
-                    path = path.replace("'", '')
-                    key = os.path.basename(os.path.dirname(path))
-                    value = os.path.basename(path)
-                    packages[key] = value
-
-    return packages
-
-
-def local_diffstat(prefix):
-    """If there are local build outs available. Get the diffstat of the same.
-    PREFIX is the directory to search for local build outs.
-
-    Returns a dictionary of diffstat where the key is the package and the value
-    is the diffstat output.
-    """
-    diffstat = {}
-
-    local_buildout_path = os.path.join(prefix, 'code/current/local')
-    if not os.path.exists(local_buildout_path):
-        return diffstat
-    for d in os.listdir(local_buildout_path):
-        diffstat_cmd = "cd %s; git diff | diffstat;" % \
-            os.path.join(local_buildout_path, d)
-        proc = subprocess.Popen(diffstat_cmd, shell=True,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        diffstat_out, diffstat_err = proc.communicate()
-        if diffstat_out:
-            diffstat_out = '<br />'.join(diffstat_out.split('\n'))
-            diffstat[d + '-local-buildout'] = diffstat_out
-        else:
-            diffstat[d + '-local-buildout'] = diffstat_err
-
-    return diffstat
-
-
-def get_software_info():
-    """Returns git status and version information for LAVA related software.
-    """
-    sw_info = {}
-
-    # Populate the git status of server code from exports directory.
-    settings = Settings("lava-server")
-    instance_config_path = settings._get_pathname("instance")  # pylint: disable=protected-access
-    instance_config = ConfigFile.load(instance_config_path)
-    prefix = os.path.join(instance_config.LAVA_PREFIX,
-                          instance_config.LAVA_INSTANCE)
-
-    # Populate installed packages.
-    sw_info.update(installed_packages(package_name='lava'))
-    sw_info.update(installed_packages(package_name='linaro'))
-    sw_info.update(installed_packages(prefix=prefix))
-
-    # Summary of local build outs, if any.
-    if instance_config.LAVA_DEV_MODE == 'yes':
-        sw_info.update(local_diffstat(prefix))
-
-    return simplejson.dumps(format_sw_info_to_html(sw_info))
 
 
 def get_heartbeat_timeout():
@@ -886,7 +765,6 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
 
 def get_shared_device_config(filename):
-    config_dict = {}
     if os.path.isfile(filename):
         try:
             with open(filename, 'r') as f:
