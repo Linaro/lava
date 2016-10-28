@@ -224,3 +224,93 @@ within the inactivity timeout, call the ``continue_hacking`` script
 from the command line within the hacking session. The hacking session
 is still monitored for :ref:`inactivity_termination`, so do remember
 to log back in.
+
+.. _multiple_hacking_sessions:
+
+Multiple hacking sessions
+=========================
+
+It is possible to use :ref:`secondary connections <secondary_connection>` to
+allow more than one person to have a hacking session on a device. Depending on
+how the test job is designed, it is possible to have two hacking sessions into
+the same machine or to contain each hacking session within a separate virtual
+machine. The secondary connection acts exactly as a second root login to the
+device, so it is up to the test writer to handle possible collisions between
+the sessions. It is possible to have multiple hacking sessions per person or
+one hacking session each for multiple users. Secondary connections separate
+each session as a single node in the MultiNode group.
+
+.. note:: The :ref:`multinode_api` does **not** support the synchronisation or
+   message sending primitives inside hacking sessions. Interactive users are
+   required to exchange information between users in other means, either by
+   using common files on a shared filesystem or other external methods like
+   email or IRC.
+
+Sharing a single device
+-----------------------
+
+The basis of a test job to share a device between multiple hacking sessions is
+the same as any other secondary connection test job on that device, all that
+changes is the test definition.
+
+If using multiple users on a single device, it will be necessary to create a
+:term:`role` for each user in the MultiNode group. This allows a separate test
+definition for each role, including details of the public SSH key and IRC nick
+of the user who will be able to use that session. Each hacking session test
+definition will notify the specified user individually, when that session is
+ready.
+
+The ``count`` specified in the MultiNode group determines how many secondary
+connections are made using any one ``role``. For one session per user, the
+count for each role would be one with the number of roles determining the
+number of users.
+
+.. note:: Remember: this test job will result in multiple individuals all
+   having a **root** user login on the device at the same time. Users must
+   co-operate and consider that some tasks (like installing new packages) will
+   prevent other users from doing their tasks at the same time. It is exactly
+   the same as giving multiple people SSH access to a server and giving all
+   those users ``sudo`` privileges - the users need to work together.
+
+Separating users using virtual machines
+---------------------------------------
+
+If users are to be separated within virtual machines, one test definition will
+be responsible for starting each of those machines and this definition will
+have full control of the QEMU command line for each machine. (It is therefore
+possible to launch virtual machines of different architectures or
+configurations for specific purposes.)
+
+Notifying users in this situation is more difficult but the existing support
+within the standard hacking session can be re-used as it is simply a script
+being called with parameters from the test job. In particular, the notification
+will have to allow for declaring the IP address of the virtual machine for
+each user.
+
+.. caution:: Separating hacking sessions into virtual machines is a more
+   complex task and requires a lot of setup on the device. Consider if it is
+   really necessary for each user to be on this one device at the same time or
+   whether the separation between users would be better done with separate
+   hacking session test jobs. Remember, users may not be able to share data or
+   files across different virtual machines on one device. This method is
+   **not** a workaround for a lack of hardware of a particular type of device.
+
+In particular, pay attention to:
+
+* Identify unique MAC addresses for each virtual machine and check with the
+  lab admins to ensure that these do not clash with any other device on the
+  lab network.
+
+* Setup the bridging on the device before starting any virtual machines so that
+  the machine will get an IP address which is visible to the user.
+
+Start by creating a test job which can launch multiple virtual machines and
+identify the IP address of each machine. The exact mechanisms used to obtain
+this information will vary by use case. The IP address is then passed back to
+the dispatcher to initiate the secondary connection into the running virtual
+machine. The hacking session can then start as normal inside that virtual
+machine.
+
+.. seealso:: :ref:`delayed_start_multinode` for more information on creating
+   a test job which can delay starting the secondary connections until the
+   first test job has successfully launched the virtual machines.
