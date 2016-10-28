@@ -105,7 +105,7 @@ class DeployMonitoredQEMU(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False
@@ -142,7 +142,7 @@ class DeployMonitoredPyOCD(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if device['device_type'] not in ['nrf52-nitrogen', 'nxp-k64f', '943907AEVAL1F']:
+        if 'pyocd' not in device['actions']['boot']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False
@@ -190,7 +190,7 @@ class DeployImages(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False

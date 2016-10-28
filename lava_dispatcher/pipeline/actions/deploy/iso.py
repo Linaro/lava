@@ -90,7 +90,7 @@ class DeployIso(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
             return False
         if 'to' in parameters and parameters['to'] == 'iso-installer':
             if 'iso' in parameters and 'installation_size' in parameters['iso']:

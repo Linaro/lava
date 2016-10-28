@@ -61,11 +61,11 @@ class BootQEMU(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
+        if 'qemu' not in device['actions']['boot']['methods']:
+            return False
         if 'method' not in parameters:
             return False
         if parameters['method'] != 'qemu':
-            return False
-        if device['device_type'] != 'qemu':
             return False
         if parameters['method'] == 'monitor':
             return False
@@ -87,7 +87,7 @@ class BootMonitorQemu(Boot):
     def accepts(cls, device, parameters):
         if 'method' not in parameters:
             return False
-        if device['device_type'] != 'qemu':
+        if 'qemu' not in device['actions']['boot']['methods']:
             return False
         if parameters['method'] != 'monitor':
             return False
