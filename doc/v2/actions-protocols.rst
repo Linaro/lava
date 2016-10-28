@@ -300,6 +300,47 @@ This is a small deviation from how existing MultiNode jobs may be defined but
 the potential benefits are substantial when combined with the other elements of
 the MultiNode Protocol.
 
+Marking some roles as essential
+===============================
+
+In many Multinode jobs, one or more roles is/are essential to completion of the
+test. For example, a secondary connection job using SSH **must** rely on the
+role providing the SSH server and cannot be expected to do anything useful if
+that role does not become available.
+
+In the MultiNode protocols section of the test job definition, roles may be
+marked as **essential: True**. If **any** of the jobs for an essential role
+fail with an :ref:`infrastructure_error_exception` or
+:ref:`job_error_exception`, then the entire multinode group will end. (Pipeline
+jobs always call the FinalizeAction when told to end by the master, so the
+device will power-off or the connection can logout.)
+
+.. code-block:: yaml
+
+  protocols:
+    lava-multinode:
+    # expect_role is used by the dispatcher and is part of delay_start
+    # host_role is used by the scheduler, unrelated to delay_start.
+      roles:
+        host:
+          device_type: beaglebone-black
+          essential: True
+          count: 1
+          timeout:
+            minutes: 10
+        guest:
+          # protocol API call to make during protocol setup
+          request: lava-start
+          # set the role for which this role will wait
+          expect_role: host
+          timeout:
+            minutes: 15
+          # no device_type, just a connection
+          connection: ssh
+          count: 3
+          # each ssh connection will attempt to connect to the device of role 'host'
+          host_role: host
+
 VLANd protocol
 **************
 
