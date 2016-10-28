@@ -1,3 +1,5 @@
+.. index:: developer testing, running unit tests
+
 .. _testing_pipeline_code:
 
 Testing the new design
@@ -710,23 +712,29 @@ are the raw content of the output YAML.
      remove-tgz: pass, tar-tgz: pass}
  - {debug: 'lava-test-shell duration: 26.88', ts: '2015-09-07T09:43:14.065956'}
 
+.. index:: developer debugging slaves
+
 .. _debugging_slaves:
 
 Debugging on the slave dispatcher
 *********************************
 
 Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted
-YAML files. These files are then passed to :file:`lava-dispatch` when
-the job starts. To reproduce issues on the slave, the original files
-are retained in a temporary directory after the job has completed. As
-long as the slave has not been rebooted since the job started, the files
-will be retained in :file:`/tmp/lava-dispatcher/slave/<JOB_ID>/`. These
-can then be used to re-run the job on the command line. Also in this
-directory, there is an ``err`` file which tracks any exceptions caught
-by the slave during the job run - these are sent back to the master and
-appear as a failure comment. Exceptions of this kind can then generate
-bug reports so that the dispatcher code handles the issue instead of it
-falling back to the slave daemon to handle.
+YAML files but are then deleted when the test job ends.
+
+Equivalent files can be prepared using the ``lava-server manage
+device-dictionary`` ``review`` option to output the device configuration YAML.
+To re-run the job on the slave, pass this configuration as the ``--target``
+option to ``lava-dispatch`` and specify a temporary ``--output-dir`` and the
+test job definition.
+
+.. note:: MultiNode test jobs produce a specific test job for each node in the
+   group. The original MultiNode definition **cannot** be executed by
+   ``lava-dispatch`` on the command line and the job definition for a single
+   node within a MultiNode group will also need editing before it can be run
+   without reference to the other nodes.
+
+.. index:: developer: adding new classes
 
 .. _adding_new_classes:
 

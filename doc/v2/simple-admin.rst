@@ -293,7 +293,7 @@ Best practice
 .. _`puppet`: https://github.com/puppetlabs/puppet
 .. _`ansible`: https://www.ansible.com/
 
-.. index:: admin triage, triage, debug, admin debug, administration
+.. index:: admin triage, triage, admin debug, administration
 
 .. _admin_triage:
 
@@ -379,38 +379,19 @@ Log files
 TestJob data
 ------------
 
-* **slave logs** are normally transmitted to the master but will also appear in
-  ``/tmp/lava-dispatcher/slave/`` in directories named from the job ID. Logs
-  include:
+* **slave logs** are transmitted to the master - temporary files used by the
+  testjob are deleted when the test job ends.
 
-  * ``err`` - captures any errors during processing,
-
-  * ``job.yaml`` - the test job configuration as sent from the master
-
-  * ``device.yaml`` - the device configuration as sent from the master
-
-  * ``logs/results.yaml`` - the results of the test job, as transmitted to the
-    master. Useful for debugging issues with result handling or metadata
-    generation.
-
-  * The Lava Test Shell Overlay, if the test job used Lava Test Shell. This
-    file is a tarball of the lava scripts and the test definitions which the
-    dispatcher makes available to the test job at runtime. The overlay is named
-    according to the level in the pipeline at which it was created (to allow
-    for test jobs which would use multiple test actions). For example:
-    ``overlay-1.3.4.tar.gz``.
-
-* **job validation** - the master retains a copy of the output from the
-  validation of the testjob. Currently, this validation occurs on the master
-  but may move to the slave in future. The logs is stored on the master as the
+* **job validation** - the master retains the output from the validation of the
+  testjob performed by the slave. The logs is stored on the master as the
   ``lavaserver`` user - so for job ID 4321::
 
    $ sudo su lavaserver
    $ ls /var/lib/lava-server/default/media/job-output/job-4321/description.yaml
 
-  * **other testjob data** - also stored in the same location on the  master
-    are the complete log file (``output.yaml``) and the logs for each specific
-    action within the job in a directory tree below the ``pipeline`` directory.
+* **other testjob data** - also stored in the same location on the  master
+  are the complete log file (``output.yaml``) and the logs for each specific
+  action within the job in a directory tree below the ``pipeline`` directory.
 
 .. index:: override device
 
