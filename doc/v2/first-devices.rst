@@ -85,7 +85,7 @@ LAVA instance for a few reasons:
    easy to modify.
 
 .. seealso:: :ref:`creating_gold_standard_files` and
-   :ref:`adding_qemu_v2_device`.
+   :ref:`create_device_database`.
 
 .. index:: add-device-type, adding a device type
 
@@ -162,7 +162,7 @@ types:
 
 .. index:: add-device, adding a device, create a device in the database
 
-.. _adding_qemu_v2_device:
+.. _create_device_database:
 
 Create a device in the database
 -------------------------------
