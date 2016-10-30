@@ -37,10 +37,10 @@ override_dh_auto_build:
 	cp etc/lava-server-gunicorn.init debian/
 	[ ! -f etc/lava-master.init ] || cp etc/lava-master.init debian/
 	python setup.py build
-	make -C doc/ html SPHINXOPTS="-j4 -D today=\"$(BUILD_DATE)\""
-	make -C doc/v1/ html SPHINXOPTS="-j4 -D today=\"$(BUILD_DATE)\""
-	make -C doc/v2/ html SPHINXOPTS="-j4 -D today=\"$(BUILD_DATE)\""
-	make -C man/ man SPHINXOPTS="-j4 -D today=\"$(BUILD_DATE)\""
+	make -C doc/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C doc/v1/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C doc/v2/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C man/ man SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
 	dh_auto_install
