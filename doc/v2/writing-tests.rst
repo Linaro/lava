@@ -233,6 +233,8 @@ the test definition needs to call any scripts or programs, those need
 to be downloaded or installed before being called in the inline test
 definition.
 
+`Download or view inline example <examples/test-jobs/inline-test-definition-example.yaml>`_
+
 .. _custom_scripts:
 
 Writing custom scripts to support tests

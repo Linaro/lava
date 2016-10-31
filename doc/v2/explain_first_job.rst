@@ -167,6 +167,6 @@ how to specify a timeout for a particular section of the job.
 
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
-   :start-after: prompts: ["root@debian:"]
+   :start-after: username: root
 
 .. seealso:: Back to your first job :ref:`job_submission`.

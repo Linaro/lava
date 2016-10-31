@@ -40,6 +40,9 @@ actions:
     method: qemu
     media: tmpfs
     prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
 
 # START-INLINE-TEST-BLOCK
 - test:
