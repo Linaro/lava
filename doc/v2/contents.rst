@@ -52,6 +52,7 @@ First steps using LAVA V2
    first-job
    explain_first_job
    lava-tool
+   standard-test-jobs
    standard-qemu-jessie
    standard-qemu-kernel
    standard-armmp-ramdisk-bbb

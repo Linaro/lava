@@ -2,7 +2,7 @@
 
 .. _standard_known_devices:
 
-Standard test jobs using known devices
+Standard test job for beaglebone-black
 ######################################
 
 If you do not have access to a ``beaglebone-black`` device in a LAVA instance

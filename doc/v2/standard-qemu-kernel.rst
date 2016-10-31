@@ -2,17 +2,18 @@
 
 .. _standard_qemu_kernel:
 
-Booting a kernel with QEMU
-##########################
+Standard test job for QEMU - Sid arm64
+######################################
 
-The :ref:`standard_amd64_jessie_qemu` uses a fully built image containing a
-root filesystem (rootfs), kernel, initramfs, modules and configuration. QEMU
-also supports booting a kernel and an initramfs with or without a root
-filesystem. Testing such jobs in LAVA involves adding the overlay (containing
-the LAVA test shell helpers and the test shell definition created by the test
-writer) as an additional drive. This avoids needing to modify the initramfs or
-root filesystem provided by the test writer but does have some requirements,
-depending on the type of test job.
+The :ref:`first standard QEMU job <standard_amd64_jessie_qemu>` uses
+a fully built image containing a root filesystem (rootfs), kernel,
+initramfs, modules and configuration. QEMU also supports booting a
+kernel and an initramfs with or without a root filesystem. Testing
+such jobs in LAVA involves adding the overlay (containing the LAVA
+test shell helpers and the test shell definition created by the test
+writer) as an additional drive. This avoids needing to modify the
+initramfs or root filesystem provided by the test writer but does have
+some requirements, depending on the type of test job.
 
 .. index:: qemu standard kernel initramfs
 
