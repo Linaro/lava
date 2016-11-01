@@ -28,6 +28,8 @@ overview to help you know where to look for particular help.
 * :ref:`contents_context_help` - some pages in the UI have a ``Help``
   link in the context-menu section at the top of the page. These pages
   are listed in this section for reference and easier navigation.
+* :ref:`glossary` - descriptions of terms which have particular meanings inside
+  LAVA.
 
 .. toctree::
    :maxdepth: 1

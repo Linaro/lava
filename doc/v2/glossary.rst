@@ -17,30 +17,37 @@ Glossary of terms
 
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
-[ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
-[ :term:`distributed deployment`] [ :term:`DTB` ] [ :term:`DUT` ]
+[ :term:`device tag` ] [ :term:`device type` ] [ :term:`developer image` ]
+[ :term:`dispatcher` ] [ :term:`distributed deployment`] [ :term:`DTB` ]
+[ :term:`DUT` ]
 
 **E** [ :term:`exclusive` ]
 
 **F** [ :term:`frontend` ]
 
-**H** [ :term:`health check` ] [:term:`hidden device type` ] [ :term:`hostname` ]
+**H** [ :term:`hacking session` ] [ :term:`health check` ]
+[:term:`hidden device type` ] [ :term:`hostname` ]
 
 **I** [ :term:`inline` ] [ :term:`interface tag` ]
 
-**J** [ :term:`jinja2`] [ :term:`job definition` ]
+**J** [ :term:`jinja2`] [ :term:`job context` ] [ :term:`job definition` ]
+
+**L** [ :term:`lxc` ]
 
 **M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`MultiNode` ]
 
 **O** [ :term:`offline` ]
 
-**P** [ :term:`pipeline` ] [ :term:`prompts` ]
-[ :term:`PDU` ][ :term:`physical access` ] [ :term:`priority` ]
+**P** [ :term:`parameters` ] [ :term:`PDU` ] [ :term:`physical access` ]
+[ :term:`pipeline` ] [ :term:`priority` ] [ :term:`production image` ]
+[ :term:`prompts` ] [ :term:`protocol` ]
 
 **Q** [ :term:`query` ]
 
-**R** [ :term:`refactoring` ] [ :term:`results` ]
-[ :term:`remote worker`] [ :term:`restricted device` ]
+**R** [ :term:`refactoring` ]
+[ :term:`remote worker`]
+[ :term:`restricted device` ]
+[ :term:`results` ]
 [ :term:`retired` ]
 [ :term:`role` ] [ :term:`rootfs` ] [ :term:`rootfstype` ]
 
@@ -249,6 +256,15 @@ Glossary of terms
 
     .. seealso:: http://jinja.pocoo.org/docs/dev/
 
+  job context
+    Test job definitions can include the ``context:`` dictionary at the top
+    level. This is used to set values for selected variables in the device
+    configuration, subject to the administrator settings for the device
+    templates and device dictionary. A common :ref:`example
+    <explain_first_job>` is to instruct the template to use the
+    ``qemu-system-x86_64`` executable when starting a QEMU test job using the
+    value ``arch: amd64``.
+
   job definition
     The original YAML submitted to create a job in LAVA is retained in the
     database and can be viewed directly from the job log. Although the YAML is
@@ -259,14 +275,12 @@ Glossary of terms
     definition will be the parsed YAML for this particular device within the
     MultiNode job.
 
-  job context
-    Test job definitions can include the ``context:`` dictionary at the top
-    level. This is used to set values for selected values in the device
-    configuration, subject to the administrator settings for the device
-    templates and device dictionary. The most common :ref:`example
-    <explain_first_job>` is to instruct the template to use the
-    ``qemu-system-x86_64`` executable when starting a QEMU test job using the
-    value ``arch: amd64``.
+  LXC
+    `Linux containers <https://en.wikipedia.org/wiki/LXC>`_ are used in LAVA to
+    allow custom configurations on the dispatcher for each use. The extra
+    utilities or services are transparently available to the pipeline code and
+    selected device nodes can also be made available, depending on admin
+    configuration of the devices.
 
   master
     The master is a server machine with ``lava-server`` installed and it
@@ -339,10 +353,26 @@ Glossary of terms
    and which LAVA will use to determine whether the boot was successful. One of
    the specified prompts **must** match before the test can be started.
 
+  protocol
+    A protocol in LAVA is a method of interacting with external services using
+    an :abbr:`API (Application Programming Interface)` instead of with direct
+    shell commands or via a test shell. Examples of services in LAVA which use
+    protocols include :term:`LXC`, :term:`MultiNode` and :term:`VLANd`. The
+    protocol defines which API calls are available through the LAVA interface
+    and the Pipeline determines when the API call is made.
+
+    .. seealso:: :ref:`protocols`
+
   query
     See :ref:`result_queries`. Queries are used to identify test jobs and
     associated results which match specified criteria based on the results or
     metadata.
+
+  refactoring
+    Within LAVA, the process of developing the :term:`pipeline` code in
+    parallel with the existing code, resulting in new elements alongside old
+    code - possibly disabled on some instances. See :ref:`dispatcher_design`
+    and :ref:`pipeline_use_cases`.
 
   remote worker
     A dispatcher with devices attached which does not have a web frontend but
@@ -350,12 +380,6 @@ Glossary of terms
     operation of test jobs on the attached devices.
 
     .. seealso:: :ref:`growing_your_lab`
-
-  refactoring
-    Within LAVA, the process of developing the :term:`pipeline` code in
-    parallel with the existing code, resulting in new elements alongside old
-    code - possibly disabled on some instances. See :ref:`dispatcher_design`
-    and :ref:`pipeline_use_cases`.
 
   restricted device
     A restricted device can only accept job submissions from the device owner.
@@ -414,6 +438,14 @@ Glossary of terms
 
     .. seealso:: :ref:`tftp_support`.
 
+  VLANd
+    VLANd is a daemon to support virtual local area networks in LAVA. This
+    support is specialised and requires careful configuration of the entire
+    LAVA instance, including the physical layout of the switches and the
+    devices of that instance.
+
+    .. seealso:: :ref:`vland_in_lava` or :ref:`admin_vland_lava`.
+
   worker
     The worker is responsible for running the ``lava-slave`` daemon to start
     and monitor test jobs running on the dispatcher. Each :term:`master` has a
@@ -422,14 +454,6 @@ Glossary of terms
     how many devices to assign to which worker. In large instances, it is
     common for all devices to be assigned to remote workers to manage the load
     on the master.
-
-  VLANd
-    VLANd is a daemon to support virtual local area networks in LAVA. This
-    support is specialised and requires careful configuration of the entire
-    LAVA instance, including the physical layout of the switches and the
-    devices of that instance.
-
-    .. seealso:: :ref:`vland_in_lava` or :ref:`admin_vland_lava`.
 
   ZMQ
     Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is the basis of
