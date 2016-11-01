@@ -87,7 +87,6 @@ class LxcStartAction(Action):
         self.name = "boot-lxc"
         self.summary = "attempt to boot"
         self.description = "boot into lxc container"
-        self.command = ''
 
     def validate(self):
         super(LxcStartAction, self).validate()
