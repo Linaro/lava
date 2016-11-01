@@ -72,11 +72,6 @@ class ShellLogger(object):
         sys.stdout.flush()
         sys.stderr.flush()
 
-    def __del__(self):
-        # Only needed for processes that does not end output with a new line.
-        if self.line:
-            self.write('\n')
-
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     """

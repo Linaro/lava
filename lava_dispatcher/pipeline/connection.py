@@ -152,7 +152,6 @@ class Connection(object):
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                # FIXME: determine how to access the zmq logger
                 # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
