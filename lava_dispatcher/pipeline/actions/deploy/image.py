@@ -117,6 +117,8 @@ class DeployMonitoredQEMU(Deployment):
             return False
         if 'type' not in parameters.keys():
             return False
+        if parameters['type'] != 'monitor':
+            return False
         return True
 
 
@@ -142,7 +144,7 @@ class DeployMonitoredPyOCD(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if 'pyocd' not in device['actions']['boot']['methods']:
+        if 'pyocd' not in device['actions']['deploy']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False
