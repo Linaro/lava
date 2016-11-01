@@ -74,7 +74,8 @@ def handle_embedded(os_name, data, dirname, simulate=False):
                     our_path = os.path.join(
                         dirname, python_dir, package['lava_directory'], ours)
                     if not os.path.exists(ext_path):
-                        raise RuntimeError("missing %s" % ext_path)
+                        print("skipping symlink for %s" % ext_path)
+                        continue
                     if not simulate:
                         if not os.path.exists(our_path):
                             raise RuntimeError("missing %s" % our_path)
