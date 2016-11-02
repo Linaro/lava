@@ -224,8 +224,7 @@ devices by worker and taking all selected devices offline in a single action.)
 
 ..seealso:: :ref:`create_device_database`
 
-.. index::
-   single: encrypt; ZMQ authentication; master slave configuration
+.. index:: ZMQ authentication, master slave configuration
 
 .. _zmq_curve:
 
@@ -262,6 +261,8 @@ Protection of the secret keys for the master and each of the slaves is the
 responsibility of the admin. If a slave is compromised, the admin can delete
 the certificate from ``/etc/lava-dispatcher/certificates.d/`` and restart the
 master daemon to immediately block that slave.
+
+.. index:: encrypt, ZMQ certificates
 
 Create certificates
 ===================

@@ -1,4 +1,4 @@
-.. index:: MultiNode
+.. index:: MultiNode - outline
 
 .. _multinode:
 

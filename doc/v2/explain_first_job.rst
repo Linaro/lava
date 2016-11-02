@@ -31,7 +31,9 @@ Top level elements of a test job
 * **job_name** - your own free text name for this job. This name is used in the
   server side tables but has no further relevance for the dispatcher. There is
   no need to make this into a single long word, any valid YAML string is
-  allowed, so commas, capitalisation and whitespace are fine.
+  allowed, so commas, capitalisation and whitespace are fine. Long job names,
+  in particular, need to include whitespace. Avoid the temptation to use a
+  build URL as the job name, use :ref:`job_metadata` instead.
 
 * **timeouts** - a range of things can go wrong inside a LAVA test job, so the
   test writer needs to indicate how long parts of the job should take. This
@@ -55,6 +57,15 @@ Top level elements of a test job
   available to override some of the server-side device configuration templates.
   In this case, ``arch: amd64`` sets the template to use the
   ``qemu-system-x86_64`` executable when starting the emulation.
+
+* **metadata** - Once the test job becomes part of an automated submission or
+  a :abbr:`CI (Continous Integration)` :term:`loop <ci loop>`, metadata needs
+  to be used to identify each submission, provide information on exactly what
+  changed from the last test job and information on how other users can modify
+  the test job artifacts to extend or debug the results.
+
+  .. seealso:: :ref:`job_metadata`, :ref:`continuous_integration` and
+    :ref:`ci_loop`
 
 General details of the test job are specified in the top level elements, such
 as in this snippet from the first job:

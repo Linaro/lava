@@ -37,11 +37,21 @@ of the closest standard test job for quick reference.
    shipped with LAVA and are routinely tested on
    ``staging.validation.linaro.org``.
 
+.. index:: job metadata, metadata
+
+.. _job_metadata:
+
 Metadata
 ********
 
-Standard test jobs include metadata which links the test job back to the build
-information, logs and scripts.
+Standard test jobs include :term:`metadata` which links the test job back to
+the build information, logs and scripts.
+
+Metadata consists of a series of key value pairs where the key must be a single
+word (no whitespace, underscores and hyphens are allowed). Keys must be unique
+within the metadata.Keys used in metadata should be consistent across
+particular groups of test jobs with data specific to that test job in the
+value.
 
 Ensure that you change the **metadata** to point at your local repository so
 that you can easily distinguish between the results with and without your
@@ -51,6 +61,17 @@ modifications:
      :code: yaml
      :start-after: visibility: public
      :end-before: # CONTEXT_BLOCK
+
+Automated test jobs should always use the metadata to specify:
+
+* the source repository of the job definition
+* the path to the job definition within the source repository
+* the details of the build
+* links to the build logs
+* links to the build scripts.
+
+These details allow other users to adapt and modify the build artifacts for
+further tests.
 
 The set of gold standard jobs has been defined in association with the Linaro
 QA team. These jobs will provide a known baseline for test definition writers,

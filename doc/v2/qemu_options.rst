@@ -159,6 +159,8 @@ This example would break into:
   * ``-global virtio-blk-device.scsi=off``
   * ``-device virtio-scsi-device,id=scsi``
 
+.. _override_variables_context:
+
 How to override variables
 *************************
 

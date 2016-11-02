@@ -1,3 +1,5 @@
+.. index:: glossary
+
 .. _glossary:
 
 Glossary of terms
@@ -13,7 +15,7 @@ Glossary of terms
 
 **A** [ :term:`action level` ]
 
-**C** [ :term:`chart` ]
+**C** [ :term:`chart` ] [ :term:`ci loop` ]
 
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
@@ -34,7 +36,8 @@ Glossary of terms
 
 **L** [ :term:`lxc` ]
 
-**M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`MultiNode` ]
+**M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`metadata` ]
+[ :term:`MultiNode` ]
 
 **O** [ :term:`offline` ]
 
@@ -68,18 +71,24 @@ Glossary of terms
     The :term:`pipeline` is organised into sections and levels. The first
     section of the pipeline is given level 1. Sub tasks of that section start
     with level 1.1 and so on. Log files and job definitions will refer to
-    actions using the level, e.g. to download the boot log of a job, the link
-    will include the job ID, the action name and action level. e.g.
-    ``job/8360/download/2.4.5-auto-login-action.log`` - job ID 8360, action
-    level 2.4.5, action name auto-login-action. (The keyword ``download`` is
-    used to separate the jobID from the action level.) Details of the action
-    can then be accessed as: ``job/8360/definition#2.4.5``
+    actions using the level. Details of the action can then be accessed using
+    the level as the location: ``job/8360/definition#2.4.5``
 
     .. seealso:: :ref:`pipeline_construction`
 
   chart
     A chart allows users to track :term:`results` over time using
     :term:`queries <query>`.
+
+  ci loop
+    Continous Integration (CI) typically involves repeated automated
+    submissions using automated builds of the artifacts prompted by
+    modifications made by developers. Providing feedback to the developers on
+    whether the automated build passed or failed creates a loop. LAVA is
+    designed as one component of a ci loop.
+
+    .. seealso:: :ref:`ci_loop`, :ref:`continuous_integration` and
+      :term:`metadata`
 
   device
     A device in LAVA is an instance of a :term:`device type`.
@@ -263,7 +272,11 @@ Glossary of terms
     templates and device dictionary. A common :ref:`example
     <explain_first_job>` is to instruct the template to use the
     ``qemu-system-x86_64`` executable when starting a QEMU test job using the
-    value ``arch: amd64``.
+    value ``arch: amd64``. All device types support variables in the job
+    context.
+
+    .. seealso:: :ref:`override_variables_context` and
+      :ref:`multinode_roles`
 
   job definition
     The original YAML submitted to create a job in LAVA is retained in the
@@ -291,6 +304,14 @@ Glossary of terms
     is a string, unique within the group. It is recommended to make these
     strings descriptive using underscores instead of spaces. The messageID will
     be included the the log files of the test.
+
+  metadata
+    Test jobs should include metadata relating to the files used within the
+    job. Metadata consists of a key and a value, there is no limit to the
+    number of key value pairs as long as each key is unique within the metadata
+    for that test job.
+
+    .. seealso:: :ref:`job_metadata`
 
   MultiNode
      A single test job which runs across multiple devices.

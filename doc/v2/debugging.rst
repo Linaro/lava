@@ -226,13 +226,12 @@ result parser against the block using your favourite language.
 Comment out the parser from the YAML if there are particular problems,
 just to see what the default LAVA parsers can provide.
 
-.. note:: Parsers can be difficult to debug after being parsed from
-	  YAML into shell. LAVA developers used to recommend the use
-	  of custom parsers, but experience has shown this to be a
-	  mistake. Instead, it is suggested that new test definitions
-	  should use :ref:`custom scripts<custom_scripts>`. This
-	  allows the parsing to be debugged outside LAVA, as well as
-	  making the test itself more portable.
+.. note:: Parsers can be difficult to debug after being parsed from YAML into
+   shell. LAVA developers used to recommend the use of custom parsers, but
+   experience has shown this to be a mistake. Instead, it is suggested that new
+   test definitions should use :ref:`custom scripts<custom_scripts>`. This
+   allows the parsing to be debugged outside LAVA, as well as making the test
+   itself more portable.
 
 .. _paths:
 
@@ -257,7 +256,7 @@ Be obsessive about paths and scripts
 
 .. _debugging_multinode:
 
-.. index:: MultiNode, debugging MultiNode tests
+.. index:: MultiNode - debugging
 
 Debugging MultiNode tests
 *************************

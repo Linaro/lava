@@ -1,4 +1,4 @@
-.. index:: writing multinode
+.. index:: MultiNode - writing multinode tests
 
 .. _writing_multinode:
 
@@ -27,6 +27,8 @@ will show.
    useful to submit the definition of one node of a MultiNode job as a
    separate job, due to links between the jobs.
 
+.. index:: MultiNode - writing test jobs
+
 .. _writing_multinode_job_file:
 
 Writing a MultiNode job file
@@ -36,7 +38,7 @@ Our first example is the simplest possible MultiNode test job - the
 same job runs on two devices of the same type, without using any of
 the synchronisation calls.
 
-.. comment: add download links once packaging is updated for this branch.
+.. index:: MultiNode job context, MultiNode roles
 
 .. _multinode_roles:
 
@@ -65,6 +67,13 @@ example snippet creates a group of two ``qemu`` devices, one in the
    whatever descriptive names you like for the different roles in your
    test, so long as they are unique.
 
+Using the job context in MultiNode
+----------------------------------
+
+The :term:`job context` can be included in the MultiNode :term:`role` and the
+same variables will be used for all devices within the specified role. See the
+example above for an example syntax.
+
 The role names defined here will be used later in the test job to
 determine which tests are run on which devices, and also inside the
 test shell definition to determine how the devices communicate with
@@ -72,6 +81,10 @@ each other. After just these changes, your test job will be enough to
 run a simple MultiNode test in LAVA. It will pick several devices for
 the test, then run exactly the same set of actions on each device
 independently.
+
+.. index:: MultiNode - using roles
+
+.. _using_multinode_roles:
 
 Using MultiNode roles
 =====================
