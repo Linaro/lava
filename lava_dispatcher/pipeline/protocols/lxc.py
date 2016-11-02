@@ -100,8 +100,8 @@ class LxcProtocol(Protocol):
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
         # execute the command.
-        lxc_exists = shell.expect(pexpect.EOF)
-        if not lxc_exists:
+        shell.expect(pexpect.EOF)
+        if not shell.exitstatus:
             self.logger.info("%s protocol: %s exists, proceed to destroy",
                              self.name, self.lxc_name)
             cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
