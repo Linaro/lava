@@ -33,6 +33,9 @@ Test Writer aspects
   Notifications can include a comparison of results against similar
   jobs which have already completed on the same instance.
 
+  .. seealso:: :ref:`notifications`, :ref:`publishing_events` and
+    :ref:`publishing_artifacts`
+
 Administrator aspects
 =====================
 

@@ -235,3 +235,45 @@ fixed IP address, e.g. for LAVA installations on laptops and other devices
 which change network configuration between jobs. The interfaces in the
 list should include the interface which a remote worker can use to
 serve files to all devices connected to this worker.
+
+.. index:: event notifications - configuration
+
+.. _configuring_event_notifications:
+
+Configuring event notifications
+===============================
+
+Event notifications **must** be configured before being enabled.
+
+* All changes need to be configured in ``/etc/lava-server/settings.conf`` (JSON
+  syntax).
+
+* Ensure that the ``EVENT_TOPIC`` is **changed** to a string which the
+  receivers of the events can use for filtering.
+
+  * Instances in the Cambridge lab use a convention which is similar to DBus -
+    the top level URL of the instance is reversed.
+
+* Ensure that the ``EVENT_SOCKET`` is visible to the receivers - change the
+  default port of ``5500`` if required.
+
+* Enable event notifications by setting ``EVENT_NOTIFICATION`` to ``true``
+
+* Restart ``lava-server-gunicorn`` to pick up the settings.
+
+The default values for the event notification settings are:
+
+.. code-block:: python
+
+ "EVENT_TOPIC": "org.linaro.validation",
+ "INTERNAL_EVENT_SOCKET": "ipc:///tmp/lava.events",
+ "EVENT_SOCKET": "tcp://*:5500",
+ "EVENT_NOTIFICATION": false,
+
+The ``INTERNAL_EVENT_SOCKET`` does not usually need to be changed.
+
+Services which will receive these events **must** be able to connect to the
+``EVENT_SOCKET``. Depending on your local configuration, this may involve
+opening the specified port on a firewall.
+
+.. seealso:: :ref:`publishing_events`
