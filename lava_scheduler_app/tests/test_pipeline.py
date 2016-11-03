@@ -336,19 +336,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(assigned, device2)
         self.assertEqual(set(device2.tags.all()), set(server_job.tags.all()))
 
-    def test_invalid_device(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        job_def = yaml.load(job.definition)
-        job_ctx = job_def.get('context', {})
-        device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
-        del device_config['device_type']
-        parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, None, None, output_dir='/tmp')
-
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
         self.assertTrue(device.is_pipeline)
