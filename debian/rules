@@ -35,6 +35,7 @@ override_dh_auto_build:
 	dh_auto_build
 	cp etc/lava-server.init debian/
 	cp etc/lava-server-gunicorn.init debian/
+	cp etc/lava-publisher.init debian/
 	[ ! -f etc/lava-master.init ] || cp etc/lava-master.init debian/
 	python setup.py build
 	make -C doc/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
@@ -48,6 +49,7 @@ override_dh_auto_install:
 	# dispatcher-master zeromq support, lava-server.init handled by auto_install.
 	dh_installinit --name lava-master
 	dh_installinit --name lava-server-gunicorn
+	dh_installinit --name lava-publisher
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	dh_installman -plava-server man/_build/man/lava-master.1
