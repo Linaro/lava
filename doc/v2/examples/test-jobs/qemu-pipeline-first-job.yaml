@@ -38,6 +38,8 @@ actions:
 
 # BOOT_BLOCK
 - boot:
+    timeout:
+      minutes: 2
     method: qemu
     media: tmpfs
     prompts: ["root@debian:"]
