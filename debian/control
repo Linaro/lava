@@ -85,7 +85,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python-mocker, python-nose, python-netifaces, python-setuptools,
  python-sphinx-bootstrap-theme, python-zmq, python-yaml, python-voluptuous,
  docbook-xsl, xsltproc, python-mock,
- ${misc:Depends}
+ ${python:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot,
  django-testscenarios
 Description: Linaro Automated Validation Architecture developer support
@@ -99,8 +99,7 @@ Description: Linaro Automated Validation Architecture developer support
 Package: lava-server-doc
 Architecture: all
 Section: doc
-Built-Using: ${sphinxdoc:Built-Using}
-Depends: python-sphinx-bootstrap-theme, ${sphinxdoc:Depends}, ${misc:Depends}
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
 Conflicts: linaro-dashboard-bundle-doc
 Provides: linaro-dashboard-bundle-doc
 Replaces: linaro-dashboard-bundle-doc
