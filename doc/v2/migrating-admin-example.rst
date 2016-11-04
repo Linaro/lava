@@ -532,7 +532,7 @@ have  a name, separate from the content of the YAML file.
 Complete YAML submission
 ========================
 
-.. include:: examples/test-jobs/mustang-admin-example-job-yaml
+.. include:: examples/test-jobs/mustang-admin-example-job.yaml
    :code: yaml
 
 Writing a device type template
