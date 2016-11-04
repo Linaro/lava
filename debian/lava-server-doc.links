@@ -1,1 +1,5 @@
-usr/share/doc/lava-server-doc/html/ usr/share/pyshared/lava_server/docs
+usr/lib/python2.7/dist-packages/sphinx_bootstrap_theme/bootstrap/static/bootstrap-2.3.2 usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-2.3.2
+usr/lib/python2.7/dist-packages/sphinx_bootstrap_theme/bootstrap/static/bootswatch-2.3.2 usr/share/doc/lava-server-doc/html/v2/_static/bootswatch-2.3.2
+usr/lib/python2.7/dist-packages/sphinx_bootstrap_theme/bootstrap/static/bootstrap-3.3.4 usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-3.3.4
+usr/lib/python2.7/dist-packages/sphinx_bootstrap_theme/bootstrap/static/bootswatch-3.3.4 usr/share/doc/lava-server-doc/html/v2/_static/bootswatch-3.3.4
+usr/lib/python2.7/dist-packages/sphinx_bootstrap_theme/bootstrap/static/js usr/share/doc/lava-server-doc/html/v2/_static/js
