@@ -26,9 +26,28 @@ parameters:
     ramdisk: '{{ booti_ramdisk_addr|default('0x84000000') }}'
     dtb: '{{ booti_dtb_addr|default('0x83000000') }}'
   interfaces:
+{% if device_ip or device_mac %}
     target:
       ip: {{ device_ip|default('') }}
       mac: {{ device_mac|default('') }}
+{% endif %}
+{% if interfaces %}
+{% for interface in interfaces %}
+    {{ interface }}:
+      sysfs: "{{ sysfs.get(interface) }}"
+      mac: "{{ mac_addr.get(interface) }}"
+{% for switch, port in map.get(interface).items() %}
+      switch: "{{ switch }}"
+      port: {{ port }}
+{% endfor %}
+      tags:
+{% if tags.get(interface) %}
+{% for tag in tags.get(interface) %}
+      - {{ tag }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
   media:  # four USB slots.
     usb:
       UUID-required: True

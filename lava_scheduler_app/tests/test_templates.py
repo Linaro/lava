@@ -391,3 +391,29 @@ class TestTemplates(unittest.TestCase):
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
                 self.assertIn(',tcp,hard,intr,nolock ', line)
+
+    def test_juno_uboot_vland_template(self):
+        data = """{% extends 'juno-uboot.jinja2' %}
+{% set map = {'iface0': {'lngswitch03': 19}, 'iface1': {'lngswitch03': 8}} %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command reboot --port 19' %}
+{% set tags = {'iface0': [], 'iface1': ['RJ45', '10M', '100M']} %}
+{% set interfaces = ['iface0', 'iface1'] %}
+{% set device_mac = '90:59:af:5e:69:fd' %}
+{% set sysfs = {'iface0': '/sys/devices/platform/ocp/4a100000.ethernet/net/',
+'iface1': '/sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1.auto/usb1/1-1/1-1:1.0/net/'} %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command off --port 19' %}
+{% set mac_addr = {'iface0': '90:59:af:5e:69:fd', 'iface1': '00:e0:4c:53:44:58'} %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command on --port 19' %}
+{% set connection_command = 'telnet localhost 7333' %}
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('iface0', template_dict['parameters']['interfaces'])
+        self.assertIn('port', template_dict['parameters']['interfaces']['iface0'])
+        self.assertIn('target', template_dict['parameters']['interfaces'])
+        self.assertIn('ip', template_dict['parameters']['interfaces']['target'])
+        self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
+        self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
