@@ -27,7 +27,7 @@ case "$1" in
     "
     for dir in ${dirs}; do
       if [ -d ${dir} ] && [ ! -h ${dir} ]; then
-        echo rm -rf ${dir}
+        rm -rf ${dir}
       fi
     done
     ;;
