@@ -20,6 +20,7 @@
 
 import os
 import glob
+import yaml
 import unittest
 
 from lava_dispatcher.pipeline.device import NewDevice
@@ -42,6 +43,16 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     def create_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/lxc-01.yaml'))
+        lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(lxc_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4577, None, None, None,
+                               output_dir=output_dir)
+        return job
+
+    def create_bbb_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__),
+                                        '../devices/bbb-01.yaml'))
         lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
@@ -107,3 +118,49 @@ class TestLxcDeploy(unittest.TestCase):  # pylint: disable=too-many-public-metho
             if action.name == 'test':
                 # get the action & populate it
                 self.assertEqual(len(action.parameters['definitions']), 2)
+
+
+class TestLxcWithDevices(unittest.TestCase):
+
+    def setUp(self):
+        super(TestLxcWithDevices, self).setUp()
+        factory = Factory()
+        self.job = factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
+
+    def test_lxc_with_device(self):
+        self.assertIsNotNone(self.job)
+        # validate with two test actions, lxc and device
+        self.job.validate()
+        lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc.yaml')
+        with open(lxc_yaml) as sample_job_data:
+            data = yaml.load(sample_job_data)
+        lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        self.assertIsNotNone(test_def.level, test_def.test_list)
+        runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
+        self.assertIsNotNone(runner.testdef_levels)
+        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        self.assertIsNotNone(test_def.level, test_def.test_list)
+        runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
+        self.assertIsNotNone(runner.testdef_levels)
+        # remove the second test action
+        data['actions'].pop()
+        test_actions = [action for action in data['actions'] if 'test' in action]
+        self.assertEqual(len(test_actions), 1)
+        self.assertEqual(test_actions[0]['test']['namespace'], 'probe')
+        parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__),
+                                        '../devices/bbb-01.yaml'))
+        job = parser.parse(yaml.dump(data), device, 4577, None, None, None,
+                           output_dir=mkdtemp())
+        job.validate()
+        lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        self.assertIsNotNone(test_def.level, test_def.test_list)
+        runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
+        self.assertIsNotNone(runner.testdef_levels)

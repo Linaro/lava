@@ -39,9 +39,13 @@ commands:
 
 actions:
   deploy:
+    connections:
+      lxc:
+      serial:
     methods:
       tftp:
       usb:
+      lxc:
       ssh:
         options:
           - '-o'
@@ -64,9 +68,11 @@ actions:
     connections:
       serial:
       ssh:
+      lxc:
     methods:
       kexec:
       ssh:
+      lxc:
       u-boot:
         parameters:
           bootloader_prompt: U-Boot

@@ -596,7 +596,10 @@ class TestDefinitionAction(TestAction):
         namespace = parameters.get('namespace', None)
         self.test_list = identify_test_definitions(self.job.parameters, namespace)
         if self.test_list:
-            self.set_common_data(self.name, 'test_list', self.test_list[0])
+            if namespace:
+                self.set_common_data(namespace, 'test_list', self.test_list[0])
+            else:
+                self.set_common_data(self.name, 'test_list', self.test_list[0])
         for testdefs in self.test_list:
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
@@ -642,7 +645,10 @@ class TestDefinitionAction(TestAction):
                 self.internal_pipeline.add_action(overlay)
                 self.internal_pipeline.add_action(installer)
                 self.internal_pipeline.add_action(runsh)
-                self.set_common_data(self.name, 'testdef_index', index)
+                if namespace:
+                    self.set_common_data(namespace, 'testdef_index', index)
+                else:
+                    self.set_common_data(self.name, 'testdef_index', index)
             self.stages += 1
 
     def validate(self):
@@ -944,7 +950,11 @@ class TestRunnerAction(TestOverlayAction):
         self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
     def validate(self):
-        testdef_index = self.get_common_data('test-definition', 'testdef_index')
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            testdef_index = self.get_common_data(namespace, 'testdef_index')
+        else:
+            testdef_index = self.get_common_data('test-definition', 'testdef_index')
         if not testdef_index:
             self.errors = "Unable to identify test definition index"
         if len(testdef_index) != len(set(testdef_index)):
