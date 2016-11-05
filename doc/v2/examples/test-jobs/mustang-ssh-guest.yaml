@@ -1,4 +1,4 @@
-job_name: mustang-guest-ssh
+job_name: secondary connection using a mustang and ssh
 
 timeouts:
   action:
@@ -30,8 +30,8 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
-  path: mustang-ssh-guest.yaml
+  docs-source: actions-deploy-to-ssh
+  docs-filename: mustang-ssh-guest.yaml
 
 actions:
 - deploy:
@@ -93,6 +93,7 @@ actions:
     method: ssh
     prompts:
     - 'root@linaro-nano:'
+    - 'lava-test:'
     parameters:
       hostID: ipv4  # messageID
       host_key: ipaddr  # message key
@@ -155,6 +156,9 @@ actions:
           steps:
           - tar -tzf /$(pwd|awk -F'-' '{print $2}'|awk -F'/' '{print $1}')-overlay*.tar.gz
           - lava-sync clients
-    name: kvm-basic-singlenode
+    - from: git
+      name: smoke-tests
+      path: ubuntu/smoke-tests-basic.yaml
+      repository: 'git://git.linaro.org/qa/test-definitions.git'
     timeout:
       minutes: 5

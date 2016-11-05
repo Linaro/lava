@@ -69,6 +69,9 @@ actions:
     - bar
     method: qemu
     media: tmpfs
+    auto_login:
+      login_prompt: "debian login:"
+      username: root
     prompts:
     - "root@debian:"
 # END-BOOT-BLOCK

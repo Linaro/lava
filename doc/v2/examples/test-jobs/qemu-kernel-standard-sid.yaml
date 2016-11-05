@@ -54,29 +54,3 @@ actions:
       minutes: 2
     prompts:
     - '\(initramfs\)'
-
-- test:
-    timeout:
-      minutes: 5
-    definitions:
-    - from: inline
-      repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: smoke-tests-basic
-          description: "Basic system test command for Linaro Ubuntu images"
-        run:
-          steps:
-          - ifconfig -a
-          - mount
-          - ls -l /dev/
-      name: env-dut-inline
-      path: inline/env-dut.yaml
-    - from: git
-      repository: git://git.linaro.org/qa/test-definitions.git
-      path: ubuntu/smoke-tests-basic.yaml
-      name: smoke-tests
-    - from: git
-      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-      path: lava-test-shell/single-node/singlenode01.yaml
-      name: singlenode-basic

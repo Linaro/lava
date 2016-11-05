@@ -97,7 +97,6 @@ Booting the kernel
 .. include:: examples/test-jobs/qemu-kernel-standard-sid.yaml
      :code: yaml
      :start-after: # BOOT_BLOCK
-     :end-before: - test:
 
 As this system will boot into the initramfs, the ``'\(initramfs\)'`` prompt is
 specified.
@@ -181,7 +180,6 @@ Booting the kernel
 .. include:: examples/test-jobs/qemu-kernel-rootfs-standard-sid.yaml
      :code: yaml
      :start-after: # BOOT_BLOCK
-     :end-before: - test:
 
 As this system will boot into the provided root filesystem, the ``'root@sid:'``
 prompt is specified and the ``auto_login`` details of the root filesystem are

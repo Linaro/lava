@@ -58,7 +58,8 @@ actions:
       minutes: 2
     auto_login:
       login_prompt: "login:"
-      username: root    prompts:
+      username: root
+    prompts:
     - 'root@sid:'
 
 - test:

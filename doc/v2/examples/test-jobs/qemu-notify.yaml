@@ -1,6 +1,6 @@
 # Your first LAVA JOB definition for an x86_64 QEMU
 device_type: qemu
-job_name: QEMU pipeline, first job
+job_name: QEMU job with notification
 
 timeouts:
   job:

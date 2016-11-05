@@ -1,5 +1,5 @@
 device_type: mustang
-job_name: mustang-singlenode-jessie
+job_name: mustang singlenode with Debian jessie
 priority: medium
 visibility: public
 
@@ -11,6 +11,10 @@ metadata:
 timeouts:
   job:
     minutes: 15
+  action:
+    minutes: 2
+  connection:
+    minutes: 2
 actions:
 - deploy:
       to: tftp
@@ -24,8 +28,7 @@ actions:
       os: debian
 - boot:
     prompts:
-      - 'linaro-test'
-      - 'root@debian:~#'
+      - 'root@linaro-nano:'
     method: u-boot
     commands: nfs
     type: bootm
