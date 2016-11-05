@@ -1,0 +1,45 @@
+# notify recipients block
+notify:
+  - to:
+     method: irc
+     user: neil.williams
+  - to:
+     method: irc
+     handle: codehelp
+     server: irc.freenode.net
+  - to:
+     method: email
+     user: neil.williams
+  - to:
+     method: email
+     email: neil.williams@linaro.org
+
+# notify compare block
+notify:
+  - to:
+     method: email
+     user: neil.williams
+  criteria:
+    status: complete
+  verbosity: verbose
+  compare:
+    query:
+      name: query_name
+      username: query_owner
+    blacklist: [lava, singlenode-advanced]
+
+# notify compare custom block
+notify:
+  - to:
+     method: email
+     user: neil.williams
+  criteria:
+    status: complete
+  verbosity: verbose
+  compare:
+    query:
+      entity: testjob
+      conditions:
+        submitter: stevan.radakovic
+        requested_device_type: qemu
+    blacklist: [singlenode-advanced]

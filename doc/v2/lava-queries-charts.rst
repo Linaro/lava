@@ -8,6 +8,8 @@ Using Test Results
 LAVA result visualization
 *************************
 
+.. _queries:
+
 LAVA Queries
 ============
 

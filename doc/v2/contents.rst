@@ -131,6 +131,7 @@ Results in LAVA
    results-intro
    lava-queries-charts
    data-export
+   user-notifications
    custom-result-handling
    tables
 

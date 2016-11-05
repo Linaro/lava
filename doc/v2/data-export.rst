@@ -58,9 +58,9 @@ XML-RPC can also be used to query data anonymously::
 Individual XML-RPC commands are documented on the `API Help <../../api/help>`_
 page.
 
-.. index:: notifications
+.. index:: notifications_summary
 
-.. _notifications:
+.. _notification_summary:
 
 User specified notifications
 ****************************
@@ -68,13 +68,16 @@ User specified notifications
 Users can have notifications about submitted test jobs by adding a notify
 block to the test job submission.
 
-To use IRC notifications, the user of the notification **must** have already
-configured the ``IRC settings`` in their own profile on the instance, by
-logging in and following the **Profile** link from the menu:
+The basic setup of the notifications in job definitions will have **criteria**,
+**verbosity**, **recipients** and **compare** blocks.
+**Criteria** tells the system when the notifications should be sent and
+**verbosity** will tell the system how detailed the email notification should
+be.
 
-.. image:: images/profile-menu.png
+Recipient methods accept **email** and **irc** options.
 
-.. FIXME: more content needed.
+Here's the example notification setup. For more information please go to
+:ref:`notifications`.
 
 Example test job notification
 =============================
@@ -83,6 +86,7 @@ Example test job notification
    :code: yaml
    :start-after: # notify block
    :end-before: # ACTION_BLOCK
+
 
 .. index:: publishing events, event notifications
 

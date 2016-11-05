@@ -44,6 +44,7 @@ Other test job elements
    actions-repeats.rst
    actions-protocols.rst
    actions-timeout.rst
+   user-notifications.rst
 
 .. FIXME need to add notifications and metadata
 
