@@ -461,7 +461,7 @@ class CompressRamdisk(Action):
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
-            log = subprocess.check_output(cmd, shell=True)
+            log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
         except OSError as exc:
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
         # lazy-logging would mean that the quoting of cmd causes invalid YAML
