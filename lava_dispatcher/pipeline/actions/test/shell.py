@@ -310,7 +310,11 @@ class TestShellAction(TestAction):
                 self.start = time.time()
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
                 # set the pattern for this run from pattern_dict
-                testdef_index = self.get_common_data('test-definition', 'testdef_index')
+                namespace = self.parameters.get('namespace', None)
+                if namespace:
+                    testdef_index = self.get_common_data(namespace, 'testdef_index')
+                else:
+                    testdef_index = self.get_common_data('test-definition', 'testdef_index')
                 uuid_list = self.get_common_data('repo-action', 'uuid-list')
                 for (key, value) in enumerate(testdef_index):
                     if self.definition == "%s_%s" % (key, value):
