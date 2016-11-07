@@ -121,15 +121,15 @@ Finding your way around the files
 =================================
 
 * Start with a device-type YAML file from the dispatcher which is similar to
-  the one you want to support. Modify the YAML and verify using the `Online 
-  YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to 
-  make sure you **always** have valid YAML. This is the basis of your device 
+  the one you want to support. Modify the YAML and verify using the `Online
+  YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to
+  make sure you **always** have valid YAML. This is the basis of your device
   type template. Use **comments** liberally, this is YAML remember.
 
 * Compare that with the device-specific YAML which is what the dispatcher will
-  actually see. Again, modify the YAML and verify using the `Online YAML parser 
-  <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ and make sure you 
-  **always** have valid YAML. This is what your device type template will need 
+  actually see. Again, modify the YAML and verify using the `Online YAML parser
+  <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ and make sure you
+  **always** have valid YAML. This is what your device type template will need
   to produce.
 
 * Identify variables which are device-specific and add **comments** about what
@@ -160,10 +160,11 @@ Check the ``standard`` directory for tests which use
 The lava-dispatcher pipeline source code
 ----------------------------------------
 
-As well as the source code, the ``devices`` and ``device_types`` directories in this
-git repository contain YAML examples of device and device type configuration. These are
-the raw forms which are used on the ``lava-dispatch`` command line and are useful for
-debugging and starting to create support for your own devices.
+As well as the source code, the ``devices`` and ``device_types`` directories in
+this git repository contain YAML examples of device and device type
+configuration. These are the raw forms which are used on the ``lava-dispatch``
+command line and are useful for debugging and starting to create support for
+your own devices.
 
 https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
 
@@ -191,16 +192,16 @@ includes but is not restricted to:
 Hardware Requirements
 =====================
 
-* **Serial** - the principle method for connecting to any device during
-  an automated test is serial. If a specific baud rate or particular UART
+* **Serial** - the principle method for connecting to any device during an
+  automated test is serial. If a specific baud rate or particular UART
   connections are required, these must be declared clearly.
 
-* **Network** - tests will need a method for delivering files to the
-  device using the bootloader. Unless the bootloader has full support for
-  wireless connections, physical ethernet is required.
+* **Network** - tests will need a method for delivering files to the device
+  using the bootloader. Unless the bootloader has full support for wireless
+  connections, physical ethernet is required.
 
-* **Power** - automation requires that the board can be reliably reset
-  by removing and then reapplying power. The board must support this in an
+* **Power** - automation requires that the board can be reliably reset by
+  removing and then reapplying power. The board must support this in an
   automatic manner, without needing human intervention to press a reset button
   or similar. If such a button is present, each device will need to be modified
   to remove that barrier.
@@ -208,33 +209,33 @@ Hardware Requirements
 Software Requirements
 =====================
 
-* **Interruptable** - for example, ``uBoot`` must be configured to emit
-  a recognisable message and wait for a sufficient number of seconds for a
+* **Interruptable** - for example, ``uBoot`` must be configured to emit a
+  recognisable message and wait for a sufficient number of seconds for a
   keyboard interrupt to get to a prompt.
 
 * **Network aware** - most common deployments will need to pull files
   over a network using TFTP.
 
-* **Stable** - the bootloader is the rescue system for the device and
-  needs to be reliable - if the test causes a kernel panic or hardware lockup,
-  resetting the board (by withdrawing and re-applying power) **must always**
-  put the board back to the same bootloader operation as a standard power-on
-  from cold. Note that USB serial connections can be a particular problem by
-  allowing the device to continue to receive some power when the power supply
-  itself is disconnected.
+* **Stable** - the bootloader is the rescue system for the device and needs to
+  be reliable - if the test causes a kernel panic or hardware lockup, resetting
+  the board (by withdrawing and re-applying power) **must always** put the
+  board back to the same bootloader operation as a standard power-on from cold.
+  Note that USB serial connections can be a particular problem by allowing the
+  device to continue to receive some power when the power supply itself is
+  disconnected.
 
-* **Configurable** - the bootloader needs to be configured over the
-  serial connection during a test. Such configuration support needs to be
-  robust and not lock up the device in case of invalid user input.
+* **Configurable** - the bootloader needs to be configured over the serial
+  connection during a test. Such configuration support needs to be robust and
+  not lock up the device in case of invalid user input.
 
-* **Accessible** - the bootloader will need to be updated by lab admins
-  from time to time and this should be as trivial as possible, e.g. by simply
+* **Accessible** - the bootloader will need to be updated by lab admins from
+  time to time and this should be as trivial as possible, e.g. by simply
   copying a binary to a known location using an established protocol, not some
   board-specific routine requiring special software.
 
-* **Flexible** - the bootloader should support as wide a range of
-  deployments as possible, without needing changes to the bootloader itself.
-  e.g. only having support for uncompressed kernel images would be a problem.
+* **Flexible** - the bootloader should support as wide a range of deployments
+  as possible, without needing changes to the bootloader itself. e.g. only
+  having support for uncompressed kernel images would be a problem.
 
 With such a bootloader installed on the device, the test writer has a wide
 range of possible deployments and boot methods.

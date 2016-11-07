@@ -9,10 +9,10 @@ Deploying test images using LXC
 
 Containers are lightweight virtualization technology. LXC is a userspace
 interface for the Linux kernel containment features. Through a powerful API and
-simple tools, it lets Linux users easily create and manage system or application
-containers. The container provides a lightweight method to allow custom software
-to be used on the dispatcher. The container is used to provide transparent
-access.
+simple tools, it lets Linux users easily create and manage system or
+application containers. The container provides a lightweight method to allow
+custom software to be used on the dispatcher. The container is used to provide
+transparent access.
 
 LAVA supports LXC containers both as a standalone device type and as dynamic
 transparent environments in order to interact with external devices. In either
@@ -71,47 +71,50 @@ Using the LXC protocol to support Android
 LAVA Android Naming Conventions
 ===============================
 
-* **production image** - a build of Android which, when deployed to a device, means that
-  the device is **not** visible to ``adb``. This is typically how a device is configured
-  when first sold to the consumer.
+* **production image** - a build of Android which, when deployed to a device,
+  means that the device is **not** visible to ``adb``. This is typically how a
+  device is configured when first sold to the consumer.
 
-* **developer image** - a build of Android which, when deployed to a device, means that
-  the device **is visible** to ``adb``. Devices configured this way will be able to have
-  the image replaced using any machine, just by connecting a suitable cable, so these images
-  are not typically deployed onto hardware which will be sold to the customer without
-  having this image replaced with a production image.
+* **developer image** - a build of Android which, when deployed to a device,
+  means that the device **is visible** to ``adb``. Devices configured this way
+  will be able to have the image replaced using any machine, just by connecting
+  a suitable cable, so these images are not typically deployed onto hardware
+  which will be sold to the customer without having this image replaced with a
+  production image.
 
 Introduction
 ============
 
-Installing tools like ``adb`` and ``fastboot`` on the dispatcher can be problematic.
-Some of these issues arise from the need to put many different types of devices onto
-a single dispatcher, other issues arise from needing to use different versions of the
-build on the devices. Testing an old system may require downgrading support like
-``openjdk``, new devices or new builds may require upgrading the same support. Containers
-isolate this variation so that each testjob can have a suitable container instead of
-needing to deal with changes on the dispatcher:
+Installing tools like ``adb`` and ``fastboot`` on the dispatcher can be
+problematic. Some of these issues arise from the need to put many different
+types of devices onto a single dispatcher, other issues arise from needing to
+use different versions of the build on the devices. Testing an old system may
+require downgrading support like ``openjdk``, new devices or new builds may
+require upgrading the same support. Containers isolate this variation so that
+each testjob can have a suitable container instead of needing to deal with
+changes on the dispatcher:
 
-#. **Shared lock issues** - Tools can require use of ``flock`` and similar methods to
-   distinguish a connection to one device from another.
+#. **Shared lock issues** - Tools can require use of ``flock`` and similar
+   methods to distinguish a connection to one device from another.
 
-#. **Version disparities** - different device versions, different OS versions, may require
-   different support in debug tools like ``adb`` and ``fastboot``.
+#. **Version disparities** - different device versions, different OS versions,
+   may require different support in debug tools like ``adb`` and ``fastboot``.
 
 #. **hardware issues** - USB hub variability.
 
-.. seealso:: :ref:`lxc_deploy` for more information on the administration of LXC for LAVA.
+.. seealso:: :ref:`lxc_deploy` for more information on the administration of
+   LXC for LAVA.
 
 .. figure:: images/lxc.svg
     :width: 80%
     :align: center
     :alt: LXC in LAVA
 
-Using the ``lava-lxc`` protocol, a Lava Test Shell is provided inside the LXC to support
-installing and configuring whatever tools, packages and files which the testjob will need
-to use. Installing ``adb`` in this test shell removes the need to have a POSIX type shell
-on the device. Files can be pushed and pulled from the device and executed using the
-Android support in the image.
+Using the ``lava-lxc`` protocol, a Lava Test Shell is provided inside the LXC
+to support installing and configuring whatever tools, packages and files which
+the testjob will need to use. Installing ``adb`` in this test shell removes the
+need to have a POSIX type shell on the device. Files can be pushed and pulled
+from the device and executed using the Android support in the image.
 
 .. _lava_android_requirements:
 
@@ -119,19 +122,20 @@ Requirements and Limitations
 ============================
 
 #. The image deployed to the device **must** enable the Android Debug Bridge,
-   i.e. a :term:`developer image`. This means enabling developer access over USB or TCP.
-   This rules out the use of production images.
+   i.e. a :term:`developer image`. This means enabling developer access over
+   USB or TCP. This rules out the use of production images.
 
-#. A list of packages to install into the bare container to provide the necessary tools
-   to communicate with the device.
+#. A list of packages to install into the bare container to provide the
+   necessary tools to communicate with the device.
 
-#. The LXC depends on underlying kernel architecture. For armel, armhf, etc. dispatcher
-   should run on these architectures.
+#. The LXC depends on underlying kernel architecture. For armel, armhf, etc.
+   dispatcher should run on these architectures.
 
-#. Each distro has its own template and the templates do not have common options. It can
-   be difficult to have generic support for all distros.
+#. Each distro has its own template and the templates do not have common
+   options. It can be difficult to have generic support for all distros.
 
-#. ``namespaces`` to relate different job actions to run in the LXC and for the device.
+#. :term:`namespaces <namespace>` to relate different job actions to run in the
+   LXC and for the device.
 
 .. _namespaces_with_lxc:
 
@@ -140,12 +144,12 @@ Namespaces
 
 Namespaces were introduced to handle use-cases specific to LXC, but it can be
 expanded to other use-cases as and when required. The primary purpose of
-namespaces is to tie related actions together. In a typical job definition where
-more than one deploy, boot and test actions are specified there should be a
-mechanism to relate which deploy is connected with a boot and test action. This
-is important since an overlay created during a deploy action will be consumed by
-a test action somewhere down the job definition. A namespace comes into place to
-connect these actions together.
+namespaces is to tie related actions together. In a typical job definition
+where more than one deploy, boot and test actions are specified there should be
+a mechanism to relate which deploy is connected with a boot and test action.
+This is important since an overlay created during a deploy action will be
+consumed by a test action somewhere down the job definition. A namespace comes
+into place to connect these actions together.
 
 
 Protocol elements

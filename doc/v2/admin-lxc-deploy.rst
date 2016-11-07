@@ -5,28 +5,29 @@
 Deploying LXC devices
 =====================
 
-LXC is a userspace interface for the Linux kernel containment
-features. Through a powerful API and simple tools, it lets Linux users
-easily create and manage system or application containers. LXC devices
-can run lava tests within a container without disturbing the
-dispatcher host. The prime advantage of having LXC device in LAVA is
-the ability to provide a transparent, sandboxed environment with support for
-different OS types, enabling testing in different platforms.
+LXC is a userspace interface for the Linux kernel containment features. Through
+a powerful API and simple tools, it lets Linux users easily create and manage
+system or application containers. LXC devices can run lava tests within a
+container without disturbing the dispatcher host. The prime advantage of having
+LXC device in LAVA is the ability to provide a transparent, sandboxed
+environment with support for different OS types, enabling testing in different
+platforms.
 
 Prerequisite
 ------------
-Ensure that LXC is installed in your LAVA dispatcher host, if not use
-the following command to install LXC in Debian::
+
+Ensure that LXC is installed in your LAVA dispatcher host, if not use the
+following command to install LXC in Debian::
 
   $ sudo apt install lxc
 
 Refer the following links in order to setup networking for LXC in Debian:
 
- * Network setup - https://wiki.debian.org/LXC#network_setup
- * Simple Bridge - https://wiki.debian.org/LXC/SimpleBridge
- * Masqueraded Bridge - https://wiki.debian.org/LXC/MasqueradedBridge
- * VLAN Networking - https://wiki.debian.org/LXC/VlanNetworking
- * libvirt - https://wiki.debian.org/LXC/LibVirtDefaultNetwork
+* Network setup - https://wiki.debian.org/LXC#network_setup
+* Simple Bridge - https://wiki.debian.org/LXC/SimpleBridge
+* Masqueraded Bridge - https://wiki.debian.org/LXC/MasqueradedBridge
+* VLAN Networking - https://wiki.debian.org/LXC/VlanNetworking
+* libvirt - https://wiki.debian.org/LXC/LibVirtDefaultNetwork
 
 Android testing with LXC support
 --------------------------------
@@ -45,27 +46,25 @@ list of paths (the path can be a symlink) which will get exposed to LXC.
 Configuration: Unprivileged containers as root
 ----------------------------------------------
 
-This is the recommended configuration for running your LXC devices
-within a LAVA dispatcher. In this configuration the containers will
-run as unprivileged user started by root user.
+This is the recommended configuration for running your LXC devices within a
+LAVA dispatcher. In this configuration the containers will run as unprivileged
+user started by root user.
 
 Allocate additional uids and gids to root::
 
   $ sudo usermod --add-subuids 100000-165536 root
   $ sudo usermod --add-subgids 100000-165536 root
 
-Then edit /etc/lxc/default.conf and append lxc.uidmap entry like
-below::
+Then edit ``/etc/lxc/default.conf`` and append lxc.uidmap entry like below::
 
   lxc.id_map = u 0 100000 65536
   lxc.id_map = g 0 100000 65536
 
-With the above in place any container created as root will be an
-unprivileged container.
+With the above in place any container created as root will be an unprivileged
+container.
 
-.. note:: To apply configurations system wide for all LXC devices
-          attached to the dispatcher use `/etc/lxc/default.conf`
-          file.
+.. note:: To apply configurations system wide for all LXC devices attached to
+  the dispatcher use ``/etc/lxc/default.conf`` file.
 
 Other resources
 ---------------

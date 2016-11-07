@@ -52,7 +52,8 @@ Commands
 
 * **fastboot_command** - command to access the device using fastboot.
 
-* **fastboot_serial_number** - value to pass to fastboot to connect to this device.
+* **fastboot_serial_number** - value to pass to fastboot to connect to this
+  device.
 
 VLANd support
 *************

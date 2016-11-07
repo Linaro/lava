@@ -354,10 +354,10 @@ to interface with :term:`VLANd` to support virtual local area networks in LAVA.
 LXC protocol
 ************
 
-The LXC protocol in LAVA implements a minimal set of APIs in order to define the
-LXC container characteristics that will be shared by actions during the life
-cycle of a job. The protocol also takes care of graceful tear down of the LXC
-container at the end of the job.
+The LXC protocol in LAVA implements a minimal set of APIs in order to define
+the LXC container characteristics that will be shared by actions during the
+life cycle of a job. The protocol also takes care of graceful tear down of the
+LXC container at the end of the job.
 
 Protocol elements
 =================
@@ -381,11 +381,11 @@ elements that are accepted by the LXC protocol:
   LXC protocol appends the job id along with the name of the container provided
   by the user, by default. For example, if the name is given as
   'pipeline-lxc-test' and the submitted job id is 51, then the resulting
-  transparent LXC container that will get created during the job execution would
-  be 'pipeline-lxc-test-51'. This appending of job id is in place in order to
-  ensure job repeatability, ie., when the same job is getting submitted more
-  than once simultaneously, this check will ensure unique name for the
-  container.
+  transparent LXC container that will get created during the job execution
+  would be 'pipeline-lxc-test-51'. This appending of job id is in place in
+  order to ensure job repeatability, ie., when the same job is getting
+  submitted more than once simultaneously, this check will ensure unique name
+  for the container.
 
 * **template** *(optional)* - Templates are per distribution based pre-defined
   scripts that are used to create LXC containers. Though there are many
@@ -396,10 +396,10 @@ elements that are accepted by the LXC protocol:
   * download
   * debian
 
-* **distribution** *(mandatory)* - The distribution of LXC container that should
-  be created, which applies to 'download' template. Though there is no effect
-  when this is specified for the 'debian' template, it is a mandatory data
-  element.
+* **distribution** *(mandatory)* - The distribution of LXC container that
+  should be created, which applies to 'download' template. Though there is no
+  effect when this is specified for the 'debian' template, it is a mandatory
+  data element.
 
 * **release** *(mandatory)* - Specific release of the distribution specified
   above. When releases are other than codenames such as a version number, the

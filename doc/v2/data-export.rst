@@ -5,8 +5,8 @@
 Exporting data out of LAVA
 ##########################
 
-LAVA supports two methods of extracting data and results are available
-whilst the job is running, XML-RPC and the REST API.
+LAVA supports two methods of extracting data and results are available whilst
+the job is running, XML-RPC and the REST API.
 
 In addition, LAVA has two methods of pushing notifications about activity
 within LAVA, notifications and publishing events.
@@ -27,20 +27,17 @@ REST API
 XML-RPC
 *******
 
-LAVA uses XML-RPC to communicate between dispatchers and the server
-and `methods <../../api/help>`_ are available to query various information
-in LAVA.
+LAVA uses XML-RPC to communicate between dispatchers and the server and
+`methods <../../api/help>`_ are available to query various information in LAVA.
 
-.. warning:: When using XML-RPC to communicate with a remote server,
-             check whether ``https://`` can be used to protect the token.
-             ``http://`` connections to a remote XML-RPC server will
-             transmit the token in plaintext. Not all servers have
-             ``https://`` configured. If a token becomes compromised,
-             log in to that LAVA instance and delete the token before
-             creating a new one.
+.. warning:: When using XML-RPC to communicate with a remote server, check
+   whether ``https://`` can be used to protect the token. ``http://``
+   connections to a remote XML-RPC server will transmit the token in plaintext.
+   Not all servers have ``https://`` configured. If a token becomes
+   compromised, log in to that LAVA instance and delete the token before
+   creating a new one.
 
-The general structure of an XML-RPC call can be shown in this python
-snippet::
+The general structure of an XML-RPC call can be shown in this python snippet::
 
   import xmlrpclib
   import json
@@ -65,12 +62,14 @@ page.
 User specified notifications
 ****************************
 
-Users can have notifications about submitted test jobs by adding a notify
-block to the test job submission.
+Users can have notifications about submitted test jobs by adding a notify block
+to the test job submission.
 
 The basic setup of the notifications in job definitions will have **criteria**,
 **verbosity**, **recipients** and **compare** blocks.
+
 **Criteria** tells the system when the notifications should be sent and
+
 **verbosity** will tell the system how detailed the email notification should
 be.
 

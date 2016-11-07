@@ -13,8 +13,8 @@ Packages for LAVA are available for:
 * Debian Stretch (testing)
 * Debian Sid (unstable)
 
-When using the packages to develop LAVA, there is a change to
-the workflow compared to the old lava-deployment-tool buildouts.
+When using the packages to develop LAVA, there is a change to the workflow
+compared to the old lava-deployment-tool buildouts.
 
 .. note:: Changes to build dependencies between Debian unstable and Debian
    stable can cause changes to the builds for each suite. Always ensure that

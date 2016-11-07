@@ -5,10 +5,10 @@
 Pipeline schema
 ###############
 
-In general, the schema used for the pipeline are constrained, not
-strict or free form. This means that the schema requires that specific
-elements **must** exist in specific formats but that other structures
-can be added without invalidating the file according to the schema.
+In general, the schema used for the pipeline are constrained, not strict or
+free form. This means that the schema requires that specific elements **must**
+exist in specific formats but that other structures can be added without
+invalidating the file according to the schema.
 
 There are several types of schema in the pipeline:
 
@@ -18,11 +18,11 @@ There are several types of schema in the pipeline:
 * Dispatcher schema - a modified version of the job submission schema
   to handle the changes imposed when splitting multinode jobs.
 
-As high level constrained schema, the detail of valid files can change
-without needing a change in the schema. Schema will update only if
-large additions are made, for example is a new protocol is added but
-the schema itself is not versioned. The strategy classes impose any
-change of requirements in a much more precise manner than any schema.
+As high level constrained schema, the detail of valid files can change without
+needing a change in the schema. Schema will update only if large additions are
+made, for example is a new protocol is added but the schema itself is not
+versioned. The strategy classes impose any change of requirements in a much
+more precise manner than any schema.
 
 .. _job_submission_schema:
 
@@ -30,24 +30,23 @@ Job Submission Schema
 *********************
 
 The Job Submission Schema exists to act as an initial filter on strings
-submitted over XML-RPC. Only a simple, fast, check is made on YAML
-syntax and basic object structure. Once this test passes, the YAML is
-entered into the database and a JobID is returned to the submitter.
+submitted over XML-RPC. Only a simple, fast, check is made on YAML syntax and
+basic object structure. Once this test passes, the YAML is entered into the
+database and a JobID is returned to the submitter.
 
-After submission, jobs are subject to full validation by the dispatcher
-where the details of the submission will be checked against the
-requirements of the pipeline determined by the strategies requested
-within the job. This validation check happens after the scheduler has
-assigned a device to the job but before the job starts Running. If this
-check fails, the job will be marked as Incomplete with a failure comment.
-During the check, URLs included in the job submission will be checked
-as well as whether the job submission can be successfully built into a
-valid pipeline. This validation step can only be repeated with full
-access to the device configuration of the instance.
+After submission, jobs are subject to full validation by the dispatcher where
+the details of the submission will be checked against the requirements of the
+pipeline determined by the strategies requested within the job. This validation
+check happens after the scheduler has assigned a device to the job but before
+the job starts Running. If this check fails, the job will be marked as
+Incomplete with a failure comment. During the check, URLs included in the job
+submission will be checked as well as whether the job submission can be
+successfully built into a valid pipeline. This validation step can only be
+repeated with full access to the device configuration of the instance.
 
-During the submission process, there are also checks on the device
-type, device restrictions and other scheduler criteria. These are
-checked after the schema check.
+During the submission process, there are also checks on the device type, device
+restrictions and other scheduler criteria. These are checked after the schema
+check.
 
 An example pipeline job for a QEMU device looks like:
 
@@ -162,10 +161,10 @@ Comments
 
 Comments in YAML start with ``#`` and continue to the end of that line.
 
-Comments are retained in the submission and are stored in the
-database as part of the job definition. If the job is multinode, no comments
-are generated for individual nodes but comments in the multinode job
-submission YAML are retained in the Multinode Definition.
+Comments are retained in the submission and are stored in the database as part
+of the job definition. If the job is multinode, no comments are generated for
+individual nodes but comments in the multinode job submission YAML are retained
+in the Multinode Definition.
 
 .. _job_name_element:
 
@@ -176,14 +175,13 @@ Job Name
 * **Required**, max length 200 characters, minimum length 1 character.
 
 Convention in the current dispatcher is that the job name does not use
-whitespace. This convention does not need to be observed with the
-refactoring as the job name is only stored in the database, the dispatcher
-does not care. As a database field, there is a maximum character length
-of 200 characters. A Job Name is Required as it becomes an important
-part of how the web frontend displays information about the job. The name
-itself should be a description of the objective of the test job rather
-than duplicating information already available, like the type of device
-or the submitter.
+whitespace. This convention does not need to be observed with the refactoring
+as the job name is only stored in the database, the dispatcher does not care.
+As a database field, there is a maximum character length of 200 characters. A
+Job Name is Required as it becomes an important part of how the web frontend
+displays information about the job. The name itself should be a description of
+the objective of the test job rather than duplicating information already
+available, like the type of device or the submitter.
 
 .. _device_type_element:
 
@@ -193,13 +191,12 @@ Device Type
 * ``device_type``: string
 * minimum length 1 character.
 
-Although not required by the schema, single node jobs will fail to
-validate if no device type is given. Multi node jobs need the device
-type of particular roles to be specified.
+Although not required by the schema, single node jobs will fail to validate if
+no device type is given. Multi node jobs need the device type of particular
+roles to be specified.
 
-The :term:`device type` **must** exist on that instance for the
-submission to be accepted by the scheduler even if the schema is
-otherwise valid.
+The :term:`device type` **must** exist on that instance for the submission to
+be accepted by the scheduler even if the schema is otherwise valid.
 
 .. _timeout_element:
 
@@ -211,26 +208,26 @@ Timeouts
 * ``timeouts``: dictionary
 * **Required**
 
-The refactoring introduces a new method of determining timeouts. The
-schema requires that a job timeout is specified and that the default
-timeout for each action is also specified. See :ref:`dispatcher_timeouts`.
+The refactoring introduces a new method of determining timeouts. The schema
+requires that a job timeout is specified and that the default timeout for each
+action is also specified. See :ref:`dispatcher_timeouts`.
 
-A job timeout and an action timeout must be specified for the schema
-to validate.
+A job timeout and an action timeout must be specified for the schema to
+validate.
 
-Timeouts should be specified as integers of the number of days, hours,
-minutes or seconds required. There is generally no need to specify
-more than one designator, just round up to the nearest. e.g. instead of
-90 seconds, use 2 minutes. Timeouts lasting longer than 1 day should be
-used with extreme caution. Being a good citizen in a LAVA instance
-means not blocking other users from using the device, should your job
-fail early in a way that can only be cleared via a timeout.
+Timeouts should be specified as integers of the number of days, hours, minutes
+or seconds required. There is generally no need to specify more than one
+designator, just round up to the nearest. e.g. instead of 90 seconds, use 2
+minutes. Timeouts lasting longer than 1 day should be used with extreme
+caution. Being a good citizen in a LAVA instance means not blocking other users
+from using the device, should your job fail early in a way that can only be
+cleared via a timeout.
 
-Use :ref:`individual_action_timeout` to handle situations where the
-job can hang until it times out. The named action which is running
-at the time that the job can hang should have a timeout which stops
-the action within a time period *around twice the average duration* of
-the same action when the job is successful.
+Use :ref:`individual_action_timeout` to handle situations where the job can
+hang until it times out. The named action which is running at the time that the
+job can hang should have a timeout which stops the action within a time period
+*around twice the average duration* of the same action when the job is
+successful.
 
 .. code-block:: yaml
 
@@ -249,18 +246,18 @@ Context
 -------
 
 Context allows individual jobs to override selected device configuration
-values. The fields which can and cannot be overridden are not (yet)
-obvious but include the architecture of the QEMU command and the console
-device and/or baud rate of other devices. It is also possible to override
-the NFS args and UEFI Menu selections. See :ref:`override_support`
+values. The fields which can and cannot be overridden are not (yet) obvious but
+include the architecture of the QEMU command and the console device and/or baud
+rate of other devices. It is also possible to override the NFS args and UEFI
+Menu selections. See :ref:`override_support`
 
 .. code-block:: yaml
 
   context:
     menu_interrupt_prompt: 'Default boot will start in'
 
-(The default values and which values can be overridden will be exposed
-in the next stages of development.)
+(The default values and which values can be overridden will be exposed in the
+next stages of development.)
 
 Some menu selections may embed device-specific information, e.g.:
 
@@ -268,13 +265,12 @@ Some menu selections may embed device-specific information, e.g.:
 
  -  'TFTP on MAC Address: 00:01:73:69:5A:EF'
 
-The MAC address is a fixed part of the device configuration for a
-particular physical interface on that device and therefore needs to be
-retained even if an update causes other elements of the menu to change.
+The MAC address is a fixed part of the device configuration for a particular
+physical interface on that device and therefore needs to be retained even if an
+update causes other elements of the menu to change.
 
-This is handled by asking the template to retain the MAC address
-specified for that device using a placeholder in the context specified
-in the job submission:
+This is handled by asking the template to retain the MAC address specified for
+that device using a placeholder in the context specified in the job submission:
 
 .. code-block:: yaml
 
@@ -307,10 +303,10 @@ Actions
   specified.
 
 Each action element allows **Extra** which means that the full list of
-dictionary items which can be included beneath the action is defined by
-the pipeline, not by the schema. The schema only asserts that selected
-fields must exist (like where to deploy data to and how to boot or the
-definitions to be used for the test).
+dictionary items which can be included beneath the action is defined by the
+pipeline, not by the schema. The schema only asserts that selected fields must
+exist (like where to deploy data to and how to boot or the definitions to be
+used for the test).
 
 .. _deploy_action_element:
 
@@ -319,17 +315,16 @@ Deploy Action
 
 * **to** element is Required.
 
-The deploy action dictates the deployment strategy for the pipeline.
-The elements of the deploy action (and details from the assigned device)
-are used by the pipeline to determine how the deployment will happen and
-whether the submission is able to build a valid pipeline. If a **test**
-action is also defined, the **deploy** action also uses the deploy
-elements to determine which type of operating system support will be
-included into the deployment data.
+The deploy action dictates the deployment strategy for the pipeline. The
+elements of the deploy action (and details from the assigned device) are used
+by the pipeline to determine how the deployment will happen and whether the
+submission is able to build a valid pipeline. If a **test** action is also
+defined, the **deploy** action also uses the deploy elements to determine which
+type of operating system support will be included into the deployment data.
 
-Deploy Actions will typically occur on the dispatcher and are
-collectively assigned tasks which prepare the device to be booted
-in preparation for the test.
+Deploy Actions will typically occur on the dispatcher and are collectively
+assigned tasks which prepare the device to be booted in preparation for the
+test.
 
 .. _boot_action_element:
 
@@ -343,19 +338,18 @@ matched against the prompt of the booted system.
 
 * **method** element is Required.
 
-The boot action dictates the boot strategy for the pipeline. The elements
-of the boot action (and details of the assigned device) are used by the
-pipeline to determine the boot commands and boot sequence as well as whether
-the submission is able to build a valid pipeline.
+The boot action dictates the boot strategy for the pipeline. The elements of
+the boot action (and details of the assigned device) are used by the pipeline
+to determine the boot commands and boot sequence as well as whether the
+submission is able to build a valid pipeline.
 
-The first action in a boot strategy will typically be an attempt to
-establish a connection to the device and cause either a reboot or a
-power-on event.
+The first action in a boot strategy will typically be an attempt to establish a
+connection to the device and cause either a reboot or a power-on event.
 
 Some boot actions do not actually involve a reboot but can simply be a
-connection to a device which is already running. Boot Actions are
-collectively assigned tasks which communicate with the device in such a
-way as to allow the test to start.
+connection to a device which is already running. Boot Actions are collectively
+assigned tasks which communicate with the device in such a way as to allow the
+test to start.
 
 .. _test_action_element:
 
@@ -365,7 +359,6 @@ Test Action
 * **repository** element is Required.
 
 The test action dictates the test definitions which will be used by the
-pipeline. The elements of the test action are used by the pipeline to
-prepare the overlay of test definitions and test script helpers which
-will be deployed to the assigned device and then executed after the
-device has booted.
+pipeline. The elements of the test action are used by the pipeline to prepare
+the overlay of test definitions and test script helpers which will be deployed
+to the assigned device and then executed after the device has booted.

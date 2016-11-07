@@ -11,7 +11,8 @@ Test writers might want to publish files from the device under test
 LAVA does not provide a specific command to publish files. However, LAVA does
 provide a way to share secrets between the test writer and the device.
 
-The secrets should be listed in the *job definition* as a dictionary called ``secrets``:
+The secrets should be listed in the *job definition* as a dictionary called
+``secrets``:
 
 .. code-block:: yaml
 

@@ -146,9 +146,9 @@ complete within expectations of normal latency.
 Before the connection times out, a message will be sent to help prevent serial
 corruption from interfering with the expected prompt.
 
- * Warning message is of the form:
+* Warning message is of the form::
 
- Warning command timed out: Sending ... in case of corruption
+   Warning command timed out: Sending ... in case of corruption
 
 The character used depends on the type of connection - a connection which
 expects a POSIX shell will use ``#`` as this is a neutral / comment operation.

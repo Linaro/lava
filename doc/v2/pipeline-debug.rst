@@ -13,13 +13,13 @@ Debugging a LAVA V2 instance
 Components
 ==========
 
-Each of these components has a service which may need to be restarted
-when making changes. Each of these services are restarted when the
-relevant packages are installed.
+Each of these components has a service which may need to be restarted when
+making changes. Each of these services are restarted when the relevant packages
+are installed.
 
 * **lava-server** - the frontend UI and admin interface. If using apache
-  use ``apache2ctl restart`` when changing any of the django files,
-  device type templates or lava-server settings::
+  use ``apache2ctl restart`` when changing any of the django files, device type
+  templates or lava-server settings::
 
    $ sudo apache2ctl restart
 
@@ -29,22 +29,22 @@ relevant packages are installed.
 
    $ sudo service lava-server restart
 
-* **master** - the dispatcher master, controlling the slaves using ZMQ.
-  The master does the pipeline validation. Restart when changing the dispatcher code (as
-  the master runs the validation check using the dispatcher code)::
+* **master** - the dispatcher master, controlling the slaves using ZMQ. The
+  master does the pipeline validation. Restart when changing the dispatcher
+  code (as the master runs the validation check using the dispatcher code)::
 
    $ sudo service lava-master restart
 
-* **slave** - each dispatcher slave connects to the master using ZMQ
-  and follows the instructions of the master, using configuration
-  specified by the master. Restart is rarely needed, usually only
-  when changing the dispatcher code related to ZMQ or the loghandler::
+* **slave** - each dispatcher slave connects to the master using ZMQ and
+  follows the instructions of the master, using configuration specified by the
+  master. Restart is rarely needed, usually only when changing the dispatcher
+  code related to ZMQ or the loghandler::
 
    $ sudo service lava-slave restart
 
-The scheduler daemon, master and slave all have dedicated singleton
-processes which should be put into loglevel ``DEBUG`` when investigating
-problems. Restart the service after editing the service file.
+The scheduler daemon, master and slave all have dedicated singleton processes
+which should be put into loglevel ``DEBUG`` when investigating problems.
+Restart the service after editing the service file.
 
 * **scheduler daemon** ``/etc/init.d/lava-server`` - enable debug::
 
@@ -60,9 +60,9 @@ problems. Restart the service after editing the service file.
 Log files
 =========
 
-All log files use ``logrotate``, so the information you need may be
-in a ``log.1`` or ``log.2.gz`` file - typically up to ``log.9.gz``.
-Use ``zless`` or ``zgrep`` for older log files.
+All log files use ``logrotate``, so the information you need may be in a
+``log.1`` or ``log.2.gz`` file - typically up to ``log.9.gz``. Use ``zless`` or
+``zgrep`` for older log files.
 
 * **apache** - ``/var/log/apache2/lava-server.log``
 
@@ -78,12 +78,12 @@ Use ``zless`` or ``zgrep`` for older log files.
 * **test jobs** - ``/var/lib/lava-server/default/media/job-output/``
   individual files are in a directory named ``job-$ID``, e.g. ``job-1234``.
   Individual log files from each action in the pipeline are kept in the
-  ``pipeline`` directory with directories for each top level of the
-  pipeline. Other files include the validation output ``description.yaml``
-  and the full log file ``output.txt``. Unlike other logs, ``output.txt``
-  can include escape characters and other elements which can confuse
-  some text editors which try to identify the encoding of the file when
-  no encoding was used when the file was written.
+  ``pipeline`` directory with directories for each top level of the pipeline.
+  Other files include the validation output ``description.yaml`` and the full
+  log file ``output.txt``. Unlike other logs, ``output.txt`` can include escape
+  characters and other elements which can confuse some text editors which try
+  to identify the encoding of the file when no encoding was used when the file
+  was written.
 
 .. _debugging_cli:
 
@@ -95,13 +95,13 @@ Command line debugging
   .. seealso:: :ref:`developer_access_to_django_shell`
 
 * **lava-dispatcher** - The actions of ``lava-slave`` can be replicated
-  on the command line. The relevant device configuration can be obtained
-  using ``lava-tool``, e.g.::
+  on the command line. The relevant device configuration can be obtained using
+  ``lava-tool``, e.g.::
 
    $ lava-tool get-pipeline-device-config --stdout SERVER DEVICE_HOSTNAME
 
-  This config can then be passed to ``lava-dispatch``, in this example
-  in a file named ``device.yaml``::
+  This config can then be passed to ``lava-dispatch``, in this example in a
+  file named ``device.yaml``::
 
    $ sudo lava-dispatch --target device.yaml --output-dir /tmp/debug/ job.yaml
 

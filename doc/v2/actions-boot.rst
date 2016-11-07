@@ -112,8 +112,8 @@ included in the prompt, this can be included in the ``prompt``:
          prompts:
            - 'root@debian:~#'
 
-When using the :term:`lxc_protocol`, the hostname element of the prompt will
-vary::
+When using the :term:`lxc` :term:`protocol`, the hostname element of the 
+prompt will vary::
 
 .. code-block:: yaml
 

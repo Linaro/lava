@@ -1527,7 +1527,7 @@ Sequence
 #. LAVA then manages the download of the files necessary to create
    the secondary connection.
 
-     * e.g. for QEMU, this would be a bootable image file
+   * e.g. for QEMU, this would be a bootable image file
 
 #. LAVA also creates a suitable overlay containing the test definitions to be
    run inside the virtual machine.

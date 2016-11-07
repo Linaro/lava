@@ -18,41 +18,43 @@ This guide makes the following assumptions:
 Things will go more easily if you also have:
 
 #. admin access to the django configuration of the LAVA instance
+
 #. root command line access to the dispatcher currently using the device.
-#. a browser tab open at the `Online YAML parser <http://yaml-online-parser.appspot.com/?yaml=>`_
 
-.. note:: some parts of the refactoring are still in development, so
-   not all of the support may be available. However, as YAML supports
-   comments, this data is not lost.
+#. a browser tab open at the `Online YAML parser
+   <http://yaml-online-parser.appspot.com/?yaml=>`_
 
-The objective is to migrate the configuration of the existing device
-such that exactly the same commands are sent to the device as in the
-current dispatcher jobs, with the benefit of pipeline validation, results
-and metadata.
+.. note:: some parts of the refactoring are still in development, so not all of
+   the support may be available. However, as YAML supports comments, this data
+   is not lost.
+
+The objective is to migrate the configuration of the existing device such that
+exactly the same commands are sent to the device as in the current dispatcher
+jobs, with the benefit of pipeline validation, results and metadata.
 
 .. _writing_device_config_yaml:
 
 Writing a device configuration in YAML
 **************************************
 
-The current dispatcher configuration is in two parts and these will
-typically be respected in the migration.
+The current dispatcher configuration is in two parts and these will typically
+be respected in the migration.
 
 The :term:`device type` configuration will become a device type template.
 
 The device configuration will become a device dictionary.
 
-However, initially, we need a single YAML file which contains the data
-that the pipeline will send to the dispatcher - a combination of the
-device type and device information. You can see examples of such content
-when validating pipeline jobs. (This is example and has been edited
-slightly to take out some of the noise.)::
+However, initially, we need a single YAML file which contains the data that the
+pipeline will send to the dispatcher - a combination of the device type and
+device information. You can see examples of such content when validating
+pipeline jobs. (This is example and has been edited slightly to take out some
+of the noise.)::
 
  $ sudo lava-dispatch --target devices/bbb-01.yaml bbb-uboot-ramdisk.yaml --validate --output-dir=/tmp/test/
 
 Don't worry about running this example yourself at this stage. The files
-themselves may be useful for reference. The device YAML file comes from
-the lava-dispatcher unit tests:
+themselves may be useful for reference. The device YAML file comes from the
+lava-dispatcher unit tests:
 
 https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipeline/devices/bbb-01.yaml
 
@@ -102,13 +104,13 @@ https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/bbb-uboot-ramdisk.ya
       umount-retry: {seconds: 45}
   state: {target: bbb-01}
 
-This snippet includes the connection command (``telnet localhost 6000``)
-from the device configuration and the ramdisk uboot parameters from the
-device type configuration - note that as this is the validation output,
-no job files have been downloaded, so the substitution placeholders remain,
-``{DTB}``, ``{SERVER_IP}``, ``{KERNEL}`` etc. - this is correct and will
-help with the next steps. What isn't so helpful at the moment is the
-layout of this YAML dump.
+This snippet includes the connection command (``telnet localhost 6000``) from
+the device configuration and the ramdisk uboot parameters from the device type
+configuration - note that as this is the validation output, no job files have
+been downloaded, so the substitution placeholders remain, ``{DTB}``,
+``{SERVER_IP}``, ``{KERNEL}`` etc. - this is correct and will help with the
+next steps. What isn't so helpful at the moment is the layout of this YAML
+dump.
 
 .. _migrating_mustang:
 
@@ -206,9 +208,9 @@ Extend the existing YAML file, to add:
 Parameters
 ----------
 
-Note how the existing config just lists the addresses without identifying
-which is the kernel load addr. Although these blocks are the same in this
-example, the addresses can differ between z_load and u_load.::
+Note how the existing config just lists the addresses without identifying which
+is the kernel load addr. Although these blocks are the same in this example,
+the addresses can differ between z_load and u_load.::
 
  u_load_addrs =
     0x4002000000
@@ -234,8 +236,8 @@ Use a working job log file to identify which is where::
   u"setenv bootcmd 'dhcp; setenv serverip 10.3.2.1; run loadkernel;
   run loadinitrd; run loadfdt; run nfsargs; bootm ${kernel_addr_r} - ${fdt_addr_r}'", 'boot']
 
-Note here that the action job uses ``bootm``, so it is ``bootm`` parameters
-we need to specify.
+Note here that the action job uses ``bootm``, so it is ``bootm`` parameters we
+need to specify.
 
 .. code-block:: yaml
 
@@ -245,11 +247,11 @@ we need to specify.
      ramdisk: '0x4004000000'
      dtb: '0x4003000000'
 
-Only add ``bootz`` support if you know that the U-Boot ``bootz`` command
-is present in the U-Boot version on the board and that it works with zImage
-kernels. The eventual templates will exist on the server and can be used
-to declare the detailed device support so that test writers know in advance
-what kind of images the device can use.
+Only add ``bootz`` support if you know that the U-Boot ``bootz`` command is
+present in the U-Boot version on the board and that it works with zImage
+kernels. The eventual templates will exist on the server and can be used to
+declare the detailed device support so that test writers know in advance what
+kind of images the device can use.
 
 .. index:: trailing comma
 
@@ -258,8 +260,8 @@ what kind of images the device can use.
 Actions
 -------
 
-For this example, the deployment method is relatively simple - you can
-see from the working job that it is using ``tftp`` to deploy.
+For this example, the deployment method is relatively simple - you can see from
+the working job that it is using ``tftp`` to deploy.
 
 .. code-block:: yaml
 
@@ -268,9 +270,9 @@ see from the working job that it is using ``tftp`` to deploy.
      methods:
      - tftp
 
-**Always** check your YAML syntax. The YAML parser can provide links to
-small snippets of YAML,
-`like the one above <http://yaml-online-parser.appspot.com/?yaml=actions%3A%0A++deploy%3A%0A++++methods%3A%0A++++-+tftp%0A&type=json>`_
+**Always** check your YAML syntax. The YAML parser can provide links to small
+snippets of YAML, `like the one above
+<http://yaml-online-parser.appspot.com/?yaml=actions%3A%0A++deploy%3A%0A++++methods%3A%0A++++-+tftp%0A&type=json>`_
 
 The boot support is where things become more detailed.
 
@@ -286,12 +288,12 @@ The boot support is where things become more detailed.
            bootloader_prompt: Mustang
            boot_message: Starting kernel
 
-The bootloader prompt (at this stage) comes from the device type
-configuration. The boot message will later be supportable as image-specific.
-For now, you need whatever values work with the current state of the
-device. The ``boot_message`` is a string emitted during the boot which
-denotes a successful attempt to boot. There is no need to quote the string
-unless it contains an illegal character in YAML like a colon.
+The bootloader prompt (at this stage) comes from the device type configuration.
+The boot message will later be supportable as image-specific. For now, you need
+whatever values work with the current state of the device. The ``boot_message``
+is a string emitted during the boot which denotes a successful attempt to boot.
+There is no need to quote the string unless it contains an illegal character in
+YAML like a colon.
 
 Next are the commands for the deployment method itself:
 
@@ -310,26 +312,28 @@ Next are the commands for the deployment method itself:
    - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
    - boot
 
-These are retained with only formatting changes - after all, these are
-what the device needs to be able to boot.
+These are retained with only formatting changes - after all, these are what the
+device needs to be able to boot.
 
 #. Remove **trailing commas** (remnants of the old config)
-#. Remove one level of quote marks **unless** the command embeds a colon
-   (e.g. NFS), in which case the **whole line** is quoted.
+
+#. Remove one level of quote marks **unless** the command embeds a colon (e.g.
+   NFS), in which case the **whole line** is quoted.
+
 #. Make each line part of a list by prefixing with a hyphen and a space.
 
-.. note:: Trailing commas are known to cause problems on devices - check
-   the config carefully and be particularly watchful for failures where
-   the device reports ``cannot find device 'net0,'`` when working V1 jobs
-   would report using ``device 'net0'``. Commas are required in V1 but
-   YAML processing for V2 will include trailing commas as part of the
-   string, not part of the formatting.
+.. note:: Trailing commas are known to cause problems on devices - check the
+   config carefully and be particularly watchful for failures where the device
+   reports ``cannot find device 'net0,'`` when working V1 jobs would report
+   using ``device 'net0'``. Commas are required in V1 but YAML processing for
+   V2 will include trailing commas as part of the string, not part of the
+   formatting.
 
 Timeouts
 --------
 
-A process of trial and error will illuminate which timeouts are
-appropriate to set at this level.
+A process of trial and error will illuminate which timeouts are appropriate to
+set at this level.
 
 .. code-block:: yaml
 
@@ -395,14 +399,13 @@ Untested at this point, but this is the start of the integration.
 Writing a job submission in YAML
 ********************************
 
-.. warning:: Do **not** be tempted into writing a script to convert
-   the JSON to YAML. You need to understand what the job is doing and
-   why. e.g. the original job gives no clue that ``U-Boot`` is involved
-   nor that the required ``U-Boot`` parameters for this job are ``bootm``
-   and not ``bootz``. Any such attempts would re-introduce assumptions
-   that the refactoring is deliberately removing. Just because a file
-   has a particular name or suffix does not mean that the job can make
-   any safe assumptions about the content of that file.
+.. warning:: Do **not** be tempted into writing a script to convert the JSON to
+   YAML. You need to understand what the job is doing and why. e.g. the
+   original job gives no clue that ``U-Boot`` is involved nor that the required
+   ``U-Boot`` parameters for this job are ``bootm`` and not ``bootz``. Any such
+   attempts would re-introduce assumptions that the refactoring is deliberately
+   removing. Just because a file has a particular name or suffix does not mean
+   that the job can make any safe assumptions about the content of that file.
 
 Migrating a job for the mustang
 ===============================
@@ -456,8 +459,8 @@ Existing JSON::
 Identifying the elements of the job
 -----------------------------------
 
-Forget the ``deploy_linaro_kernel``, this is a deployment of a kernel,
-a DTB and an NFS root filesystem.
+Forget the ``deploy_linaro_kernel``, this is a deployment of a kernel, a DTB
+and an NFS root filesystem.
 
 Start with the top level structures:
 
@@ -495,8 +498,8 @@ Deploy
 Boot
 ^^^^
 
-Note that ``boot`` has the details of the autologin which will occur
-at the end of the boot action.
+Note that ``boot`` has the details of the autologin which will occur at the end
+of the boot action.
 
 .. code-block:: yaml
 
@@ -514,8 +517,8 @@ at the end of the boot action.
 Test
 ^^^^
 
-Note how the test action can have a name and the test definition can also
-have  a name, separate from the content of the YAML file.
+Note how the test action can have a name and the test definition can also have
+a name, separate from the content of the YAML file.
 
 .. code-block:: yaml
 
@@ -538,19 +541,20 @@ Complete YAML submission
 Writing a device type template
 ******************************
 
-The purpose of a template is to move as much common data out of each
-individual template and into the base template for sharing of code.
-Where parameters differ (e.g. the console port), these are supplied
-as variables. The device dictionary then only needs to supply information
-which is specific to that one device - usually including the serial
-connection command and the power commands.
+The purpose of a template is to move as much common data out of each individual
+template and into the base template for sharing of code. Where parameters
+differ (e.g. the console port), these are supplied as variables. The device
+dictionary then only needs to supply information which is specific to that one
+device - usually including the serial connection command and the power
+commands.
 
 The first point of reference with a new template is the ``lava-server``
-`base.jinja2 <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/base.jinja2>`_
+`base.jinja2
+<https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/base.jinja2>`_
 template and existing examples (e.g. `beaglebone-black
 <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/beaglebone-black.jinja2>`_)
-- templates live on the server, are populated with data from
-the database and the resulting YAML is sent to the dispatcher.
+- templates live on the server, are populated with data from the database and
+the resulting YAML is sent to the dispatcher.
 
 Starting a new device type template
 ===================================
@@ -566,15 +570,15 @@ For example, a new mustang template starts as::
 
 The content is a jinja2 template based directly on the working device jinja2
 template above. Where there are values, these are provided with defaults
-matching the currently working values. Where there are common blocks of
-code in ``base.jinja2``, these are pulled in using Jinja2 templates. The
-``commands`` block itself is left to the device dictionary (and picked
-up by ``base.jinja2``).
+matching the currently working values. Where there are common blocks of code in
+``base.jinja2``, these are pulled in using Jinja2 templates. The ``commands``
+block itself is left to the device dictionary (and picked up by
+``base.jinja2``).
 
-``ramdisk`` and ``nfs`` are particularly common deployment methods, so
-the majority of the commands are already available in ``base.jinja2``.
-These commands use ``{{ console_device }}`` and ``{{ baud_rate }}``,
-which need to be defined with defaults:
+``ramdisk`` and ``nfs`` are particularly common deployment methods, so the
+majority of the commands are already available in ``base.jinja2``. These
+commands use ``{{ console_device }}`` and ``{{ baud_rate }}``, which need to be
+defined with defaults:
 
 .. code-block:: jinja
 
@@ -587,9 +591,9 @@ which need to be defined with defaults:
      ramdisk: '{{ bootm_ramdisk_addr|default('0x4004000000') }}'
      dtb: '{{ bootm_dtb_addr|default('0x4003000000') }}'
 
-The actions are determined by the available support for this device,
-initially, templates can simply support the initial working configuration,
-more support can be added later.
+The actions are determined by the available support for this device, initially,
+templates can simply support the initial working configuration, more support
+can be added later.
 
 .. code-block:: jinja
 
@@ -663,10 +667,10 @@ Completed mustang template
 Creating a device dictionary for the device
 ===========================================
 
-Examples of exported device dictionaries exist in the ``lava-server``
-`codebase <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/bbb-01.yaml>`_
-for unit test support. The dictionary extends the new template and
-provides the device-specific values.
+Examples of exported device dictionaries exist in the ``lava-server`` `codebase
+<https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/bbb-01.yaml>`_
+for unit test support. The dictionary extends the new template and provides the
+device-specific values.
 
 .. code-block:: jinja
 
@@ -681,42 +685,39 @@ provides the device-specific values.
 Testing the template and dictionary
 ===================================
 
-``lava-tool`` has support for comparing the templates with working
-YAML files and this can be done using files already deployed or local
-changes prior to submission. To test the local files, create a new
-directory, add the YAML file used when calling ``lava-dispatch``
-directly and add two sub-directories::
+``lava-tool`` has support for comparing the templates with working YAML files
+and this can be done using files already deployed or local changes prior to
+submission. To test the local files, create a new directory, add the YAML file
+used when calling ``lava-dispatch`` directly and add two sub-directories::
 
  mkdir ./device-types
  mkdir ./devices
 
-Copy ``base.jinja2`` into the ``device-types`` directory, along with your
-new local template. Copy the device dictionary file to ``devices``. If
-your locally working jinja2 file is called ``working.jinja2``, the comparison
-would be::
+Copy ``base.jinja2`` into the ``device-types`` directory, along with your new
+local template. Copy the device dictionary file to ``devices``. If your locally
+working jinja2 file is called ``working.jinja2``, the comparison would be::
 
  $ lava-tool compare-device-conf --wdiff --dispatcher-config-dir . devices/mustang01.yaml working.jinja2
  $ lava-tool compare-device-conf --dispatcher-config-dir . devices/mustang01.yaml working.jinja2
 
-Iterate through the changes, testing any changes to the ``working.jinja2``
-at each stage, until you have no differences between the generated YAML
-and the working jinja2.
+Iterate through the changes, testing any changes to the ``working.jinja2`` at
+each stage, until you have no differences between the generated YAML and the
+working jinja2.
 
-Pay particular attention to whitespace and indentation which have a
-direct impact on the structure of the object represented by the file.
-``wdiff`` output is very useful for identifying content changes and
-it is often necessary to change the order of fields within a single
-command to get an appropriate match, even if that order has no actual
-effect. By ensuring that the content does match, it allows the comparison
-to show other changes like indents. Be prepared to change both the
-``working.jinja2`` and the template so that the indenting is the same in
-each even after commands have been substituted.
+Pay particular attention to whitespace and indentation which have a direct
+impact on the structure of the object represented by the file. ``wdiff`` output
+is very useful for identifying content changes and it is often necessary to
+change the order of fields within a single command to get an appropriate match,
+even if that order has no actual effect. By ensuring that the content does
+match, it allows the comparison to show other changes like indents. Be prepared
+to change both the ``working.jinja2`` and the template so that the indenting is
+the same in each even after commands have been substituted.
 
-.. note:: The snippets here are just examples. In particular, formatting
-   these examples for the documentation has changed some of the indents,
-   so take particular care to compare and fix the indents of your files
-   and ensure that your working YAML file continues to work as well as
-   to match the output of the template.
+.. note:: The snippets here are just examples. In particular, formatting these
+   examples for the documentation has changed some of the indents, so take
+   particular care to compare and fix the indents of your files and ensure that
+   your working YAML file continues to work as well as to match the output of
+   the template.
 
 Adapting the base commands to the device type
 ---------------------------------------------
@@ -745,16 +746,19 @@ Completing the migration
 ************************
 
 The device dictionary and the template need to be introduced into the
-``lava-server`` configuration and database entries created for the
-device type and device. Helpers may be implemented for this in due course
-but the process involves:
+``lava-server`` configuration and database entries created for the device type
+and device. Helpers may be implemented for this in due course but the process
+involves:
 
 #. Add a device type to lava_scheduler_app in the admin interface
-#. Populate fields (you can omit health check for now - pipeline health
-   checks are not yet ready).
-#. Add a device of the specified type to lava_scheduler_app in the
-   admin interface. Set the device as a pipeline device by checking the
-   "Pipeline Device" box.
+
+#. Populate fields (you can omit health check for now - pipeline health checks
+   are not yet ready).
+
+#. Add a device of the specified type to lava_scheduler_app in the admin
+   interface. Set the device as a pipeline device by checking the "Pipeline
+   Device" box.
+
 #. Add the template to the ``lava-server`` configuration::
 
    $ sudo cp device-types/mustang.jinja2 /etc/lava-server/dispatcher-config/device-types/
