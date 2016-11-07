@@ -7,12 +7,59 @@
 Deploying test images using LXC
 ###############################
 
-Uses CGroups (Linux kernel 2.6.24 and later) with isolated namespaces, using the
-same kernel as the host. The container provides a lightweight method to allow custom
-software to be used on the dispatcher. The container is used to provide transparent
+Containers are lightweight virtualization technology. LXC is a userspace
+interface for the Linux kernel containment features. Through a powerful API and
+simple tools, it lets Linux users easily create and manage system or application
+containers. The container provides a lightweight method to allow custom software
+to be used on the dispatcher. The container is used to provide transparent
 access.
 
-LXC can be available as a dedicated device-type as well as using the LXC :term:`protocol`.
+LAVA supports LXC containers both as a standalone device type and as dynamic
+transparent environments in order to interact with external devices. In either
+case the :ref:`LXC protocol <lxc_protocol_reference>` is used.
+
+.. _lava_lxc_device_type:
+
+Using LXC as Device Type
+************************
+
+LXC is a :term:`device type` of its own and devices could be added to
+dispatchers under this device type. A device of LXC device type is created
+within the dispatcher in which the device is configured, as illustrated in the
+following figure:
+
+.. image:: ./images/lxc-standalone.svg
+   :align: center
+   :alt: LXC standalone
+
+The LXC :term:`device type` uses the :ref:`LXC protocol
+<lxc_protocol_reference>` in order to share data elements across different
+actions within the job.
+
+Protocol elements
+=================
+
+.. code-block:: yaml
+
+ protocols:
+   lava-lxc:
+     name: lxc-device
+     distribution: fedora
+     release: '23'
+     arch: amd64
+
+  actions:
+  - deploy:
+    timeout:
+      minutes: 5
+    to: lxc
+    os: fedora
+
+Sample Job Definition
+=====================
+
+.. include:: examples/test-jobs/lxc-fedora.yaml
+   :code: yaml
 
 .. _lava_lxc_protocol_android:
 
@@ -30,7 +77,7 @@ LAVA Android Naming Conventions
 
 * **developer image** - a build of Android which, when deployed to a device, means that
   the device **is visible** to ``adb``. Devices configured this way will be able to have
-  the image replaced using any machine, just be connecting a suitable cable, so these images
+  the image replaced using any machine, just by connecting a suitable cable, so these images
   are not typically deployed onto hardware which will be sold to the customer without
   having this image replaced with a production image.
 
@@ -48,7 +95,7 @@ needing to deal with changes on the dispatcher:
 #. **Shared lock issues** - Tools can require use of ``flock`` and similar methods to
    distinguish a connection to one device from another.
 
-#. **Version disparaties** - different device versions, different OS versions, may require
+#. **Version disparities** - different device versions, different OS versions, may require
    different support in debug tools like ``adb`` and ``fastboot``.
 
 #. **hardware issues** - USB hub variability.
@@ -91,9 +138,15 @@ Requirements and Limitations
 Namespaces
 ==========
 
-* Ties related actions together
+Namespaces were introduced to handle use-cases specific to LXC, but it can be
+expanded to other use-cases as and when required. The primary purpose of
+namespaces is to tie related actions together. In a typical job definition where
+more than one deploy, boot and test actions are specified there should be a
+mechanism to relate which deploy is connected with a boot and test action. This
+is important since an overlay created during a deploy action will be consumed by
+a test action somewhere down the job definition. A namespace comes into place to
+connect these actions together.
 
-* Aids execution of actions in the desired order
 
 Protocol elements
 =================
@@ -122,6 +175,9 @@ Protocol elements
     - systemd
     - systemd-sysv
     os: debian
+
+Sample Job Definition
+=====================
 
 .. include:: examples/test-jobs/hi6220-hikey.yaml
    :code: yaml

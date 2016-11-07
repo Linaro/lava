@@ -354,4 +354,66 @@ to interface with :term:`VLANd` to support virtual local area networks in LAVA.
 LXC protocol
 ************
 
-.. # FIXME: more to be added here
+The LXC protocol in LAVA implements a minimal set of APIs in order to define the
+LXC container characteristics that will be shared by actions during the life
+cycle of a job. The protocol also takes care of graceful tear down of the LXC
+container at the end of the job.
+
+Protocol elements
+=================
+
+.. code-block:: yaml
+
+  protocols:
+    lava-lxc:
+      name: pipeline-lxc-test
+      template: debian
+      distribution: debian
+      release: sid
+      arch: amd64
+      mirror: http://ftp.us.debian.org/debian/
+      security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+The characteristics of the LXC container is defined by the following data
+elements that are accepted by the LXC protocol:
+
+* **name** *(mandatory)* - Name of the container that needs to be created. The
+  LXC protocol appends the job id along with the name of the container provided
+  by the user, by default. For example, if the name is given as
+  'pipeline-lxc-test' and the submitted job id is 51, then the resulting
+  transparent LXC container that will get created during the job execution would
+  be 'pipeline-lxc-test-51'. This appending of job id is in place in order to
+  ensure job repeatability, ie., when the same job is getting submitted more
+  than once simultaneously, this check will ensure unique name for the
+  container.
+
+* **template** *(optional)* - Templates are per distribution based pre-defined
+  scripts that are used to create LXC containers. Though there are many
+  distribution specific templates that are available in LXC, LAVA supports a
+  subset of the same. The following templates are supported, if no template is
+  specified, by default `download` template is assumed:
+
+  * download
+  * debian
+
+* **distribution** *(mandatory)* - The distribution of LXC container that should
+  be created, which applies to 'download' template. Though there is no effect
+  when this is specified for the 'debian' template, it is a mandatory data
+  element.
+
+* **release** *(mandatory)* - Specific release of the distribution specified
+  above. When releases are other than codenames such as a version number, the
+  value should be treated as a string, ie., when a number is specified, quote
+  it, so that it will be taken as a string.
+
+* **arch** *(mandatory)* - The architecture of the LXC container that should be
+  created, this is limited to the processor architecture on which the LAVA
+  dispatcher runs on.
+
+* **mirror** *(optional)* - Specifies the Debian mirror to use during
+  installation. This is specific to the 'debian' template. There is no effect
+  when this is specified for the 'download' template.
+
+* **security_mirror** *(optional)* - Specifies the Debian security mirror to use
+  during installation. This is specific to the 'debian' template. There is no
+  effect when this is specified for the 'download' template.

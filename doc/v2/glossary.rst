@@ -318,6 +318,15 @@ Glossary of terms
 
      .. seealso:: :ref:`multinode_api`.
 
+  namespace
+    A simple text label which is used to tie related actions together within a
+    test job submission where multiple deploy, boot or test actions are defined.
+    A common use case for namespaces is the use of :term:`lxc` in a test job where
+    some actions are to be executed inside the LXC and some on the :term:`DUT`.
+
+    .. seealso:: :term:`protocol`, :ref:`deploy_using_lxc` and
+       :ref:`lava_lxc_protocol_android`
+
   offline
     A status of a device which allows jobs to be submitted and reserved for the
     device but where the jobs will not start to run until the device is online.
