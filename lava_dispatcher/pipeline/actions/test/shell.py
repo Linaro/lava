@@ -216,16 +216,17 @@ class TestShellAction(TestAction):
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
         pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
-        if pre_command_list:
+        if pre_command_list and self.parameters['stage'] == 0:
             for command in pre_command_list:
                 connection.sendline(command)
 
         with connection.test_connection() as test_connection:
             # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
             test_connection.sendline(
-                "%s/bin/lava-test-runner %s" % (
+                "%s/bin/lava-test-runner %s/%s" % (
                     self.data["lava_test_results_dir"],
-                    self.data["lava_test_results_dir"]),
+                    self.data["lava_test_results_dir"],
+                    self.parameters['stage']),
                 delay=self.character_delay)
 
             self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
@@ -239,7 +240,7 @@ class TestShellAction(TestAction):
             while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
 
-        self.logger.debug(yaml.dump(self.report))
+        self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
 
     def parse_v2_case_result(self, data, fixupdict=None):
@@ -307,12 +308,15 @@ class TestShellAction(TestAction):
                 self.definition = params[0]
                 uuid = params[1]
                 self.start = time.time()
-                self.logger.debug("Starting test definition: %s" % self.definition)
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
                 # set the pattern for this run from pattern_dict
-                testdef_index = self.get_common_data('test-definition', 'testdef_index')
+                namespace = self.parameters.get('namespace', None)
+                if namespace:
+                    testdef_index = self.get_common_data(namespace, 'testdef_index')
+                else:
+                    testdef_index = self.get_common_data('test-definition', 'testdef_index')
                 uuid_list = self.get_common_data('repo-action', 'uuid-list')
-                for key, value in testdef_index.items():
+                for (key, value) in enumerate(testdef_index):
                     if self.definition == "%s_%s" % (key, value):
                         pattern = self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern']
                         fixup = self.job.context['test'][uuid_list[key]]['testdef_pattern']['fixupdict']
@@ -348,9 +352,14 @@ class TestShellAction(TestAction):
                 })
                 self.start = None
             elif name == "TESTCASE":
-                data = handle_testcase(params)
-                # get the fixup from the pattern_dict
-                res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
+                try:
+                    data = handle_testcase(params)
+                    # get the fixup from the pattern_dict
+                    res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
+                except (JobError, TestError) as exc:
+                    self.logger.error(str(exc))
+                    return True
+
                 p_res = self.data["test"][
                     self.signal_director.test_uuid
                 ].setdefault("results", OrderedDict())
@@ -361,37 +370,30 @@ class TestShellAction(TestAction):
                     raise JobError(
                         "Duplicate test_case_id in results: %s",
                         res["test_case_id"])
-                # check for measurements
-                calc = {}
-                if 'measurement' in res:
-                    calc['measurement'] = res['measurement']
-                if 'measurement' in res and 'units' in res:
-                    calc['units'] = res['units']
                 # turn the result dict inside out to get the unique
                 # test_case_id/testset_name as key and result as value
+                res_data = {
+                    'definition': self.definition,
+                    'case': res["test_case_id"],
+                    'result': res["result"]
+                }
+                # check for measurements
+                if 'measurement' in res:
+                    res_data['measurement'] = res['measurement']
+                    if 'units' in res:
+                        res_data['units'] = res['units']
+
                 if self.testset_name:
-                    res_data = {
-                        'definition': self.definition,
-                        'case': res["test_case_id"],
+                    res_data['set'] = self.testset_name
+                    self.report[res['test_case_id']] = {
                         'set': self.testset_name,
-                        'result': res["result"]
+                        'result': res['result']
                     }
-                    res_data.update(calc)
-                    self.logger.results(res_data)
-                    self.report.update({
-                        "set": self.testset_name,
-                        "case": res["test_case_id"],
-                        "result": res["result"]})
                 else:
-                    res_data = {
-                        'definition': self.definition,
-                        'case': res["test_case_id"],
-                        'result': res["result"]}
-                    res_data.update(calc)
-                    self.logger.results(res_data)
-                    self.report.update({
-                        res["test_case_id"]: res["result"]
-                    })
+                    self.report[res['test_case_id']] = res['result']
+                # Send the results back
+                self.logger.results(res_data)
+
             elif name == "TESTSET":
                 action = params.pop(0)
                 if action == "START":
@@ -420,25 +422,23 @@ class TestShellAction(TestAction):
                 res = self.signal_match.match(match.groupdict())
                 self.logger.debug("outer_loop_result: %s" % res)
                 ret_val = True
+
         elif event == 'test_case_result':
             res = test_connection.match.groupdict()
             if res:
-                # FIXME: make this a function
-                # check for measurements
-                calc = {}
-                if 'measurement' in res:
-                    calc['measurement'] = res['measurement']
-                if 'measurement' in res and 'units' in res:
-                    calc['units'] = res['units']
                 res_data = {
                     'definition': self.definition,
                     'case': res["test_case_id"],
-                    'result': res["result"]}
-                res_data.update(calc)
+                    'result': res["result"]
+                }
+                # check for measurements
+                if 'measurement' in res:
+                    res_data['measurement'] = res['measurement']
+                    if 'units' in res:
+                        res_data['units'] = res['units']
+
                 self.logger.results(res_data)
-                self.report.update({
-                    res["test_case_id"]: res["result"]
-                })
+                self.report[res["test_case_id"]] = res["result"]
             ret_val = True
 
         return ret_val

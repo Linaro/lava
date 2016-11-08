@@ -19,7 +19,7 @@ actions:
          url: http://mirror.centos.org/altarch/7/os/i386/images/pxeboot/initrd.img
          compression: xz
      preseed:
-         url: http://ironhide.bounceme.net/centos/installer/centos-ks-lab-i386.cfg
+         url: http://images.validation.linaro.org/functional-test-images/centos/centos-ks-lab-i386.cfg
      os: centos_installer
 
   - boot:

@@ -20,7 +20,7 @@ actions:
          url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/initrd.gz
          compression: gz
      preseed:
-         url: http://ironhide.bounceme.net/x86-32/preseed-lava.cfg
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/preseed-lava.cfg
      os: debian_installer
 
   - boot:

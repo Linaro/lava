@@ -22,7 +22,6 @@
 # imported by the parser to populate the list of subclasses.
 
 
-import yaml
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -165,33 +164,6 @@ class PowerOn(Action):
         return connection
 
 
-class FastBootRebootAction(Action):
-    """
-    This action calls fastboot reboot
-    """
-    def __init__(self):
-        super(FastBootRebootAction, self).__init__()
-        self.name = "reboot-fastboot"
-        self.summary = "attempt to fastboot soft reboot"
-        self.description = "soft reboot using fastboot"
-        self.command = ''
-
-    def validate(self):
-        super(FastBootRebootAction, self).validate()
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
-            command = self.job.device['commands']['soft_reset']
-            if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("Command '%s' failed" % command)
-            self.results = {"success": self.job.device.power_state}
-        return connection
-
-
 # FIXME: Unused action, but can give fine grained control.
 class LxcStop(Action):
     """
@@ -216,34 +188,6 @@ class LxcStop(Action):
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to stop lxc container: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-# FIXME: Unused action, but can give fine grained control.
-class LxcDestroy(Action):
-    """
-    Destroys the lxc container at the end of a job
-    """
-    def __init__(self):
-        super(LxcDestroy, self).__init__()
-        self.name = "lxc_destroy"
-        self.summary = "send destroy command"
-        self.description = "destroy the lxc container"
-
-    def validate(self):
-        super(LxcDestroy, self).validate()
-        self.errors = infrastructure_error('lxc-destroy')
-
-    def run(self, connection, args=None):
-        connection = super(LxcDestroy, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        if not lxc_name:
-            return connection
-        lxc_cmd = ['lxc-destroy', '-n', lxc_name]
-        command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
-            raise JobError("Unable to destroy lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
 
@@ -310,7 +254,5 @@ class FinalizeAction(Action):
         else:
             self.results = {'success': "Complete"}
             self.logger.info("Status: Complete")
-        with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
-            results.write(yaml.dump(self.job.pipeline.describe()))
         # from meliae import scanner
         # scanner.dump_all_objects('filename.json')

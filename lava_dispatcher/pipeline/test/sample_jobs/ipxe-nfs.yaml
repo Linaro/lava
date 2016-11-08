@@ -19,12 +19,12 @@ actions:
        minutes: 2
      to: tftp
      kernel:
-         url: http://ironhide.bounceme.net/x86-32/bzImage
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/bzImage
      nfsrootfs:
          url: http://totaljunk/fail.tar.xz
          compression: xz
      modules:
-         url: http://ironhide.bounceme.net/x86-32/modules.tar
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/modules.tar
      os: oe
 
   - boot:

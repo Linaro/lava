@@ -71,10 +71,18 @@ def decompress_file(infile, compression):
         raise RuntimeError('unable to decompress file %s: %s' % (infile, exc))
 
 
-def untar_file(infile, outdir):
+def untar_file(infile, outdir, member=None, outfile=None):
     try:
         tar = tarfile.open(infile)
-        tar.extractall(outdir)
-        tar.close()
+        if member:
+            file_obj = tar.extractfile(member)
+            target = open(outfile, 'wb')
+            target.write(file_obj.read())
+            target.close()
+            file_obj.close()
+            tar.close()
+        else:
+            tar.extractall(outdir)
+            tar.close()
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s" % infile)

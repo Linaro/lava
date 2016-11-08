@@ -104,14 +104,19 @@ class GitHelper(VCSHelper):
         super(GitHelper, self).__init__(url)
         self.binary = '/usr/bin/git'
 
-    def clone(self, dest_path, revision=None):
+    def clone(self, dest_path, revision=None, branch=None):
         logger = logging.getLogger('dispatcher')
         try:
             logger.debug("Running '%s clone %s %s'", self.binary, self.url,
                          dest_path)
-            subprocess.check_output([self.binary, 'clone', self.url,
-                                     dest_path],
-                                    stderr=subprocess.STDOUT)
+            if branch is not None:
+                subprocess.check_output([self.binary, 'clone', '-b', branch,
+                                         self.url, dest_path],
+                                        stderr=subprocess.STDOUT)
+            else:
+                subprocess.check_output([self.binary, 'clone', self.url,
+                                         dest_path],
+                                        stderr=subprocess.STDOUT)
 
             if revision is not None:
                 logger.debug("Running '%s checkout %s", self.binary,

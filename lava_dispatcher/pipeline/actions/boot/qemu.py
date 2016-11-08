@@ -61,11 +61,11 @@ class BootQEMU(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
+        if 'qemu' not in device['actions']['boot']['methods']:
+            return False
         if 'method' not in parameters:
             return False
         if parameters['method'] != 'qemu':
-            return False
-        if device['device_type'] != 'qemu':
             return False
         if parameters['method'] == 'monitor':
             return False
@@ -87,7 +87,7 @@ class BootMonitorQemu(Boot):
     def accepts(cls, device, parameters):
         if 'method' not in parameters:
             return False
-        if device['device_type'] != 'qemu':
+        if 'qemu' not in device['actions']['boot']['methods']:
             return False
         if parameters['method'] != 'monitor':
             return False
@@ -118,7 +118,6 @@ class BootQEMUImageAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
-        self.internal_pipeline.add_action(LinuxKernelMessages())
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
@@ -226,6 +225,8 @@ class CallQemuAction(Action):
             qemu_binary = which(boot['parameters']['command'])
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
+            self.sub_command.extend(
+                ['%s' % item for item in boot['parameters'].get('extra', [])])
         except AttributeError as exc:
             self.errors = "Unable to parse device options: %s %s" % (
                 exc, self.job.device['actions']['boot']['methods']['qemu'])
@@ -265,13 +266,21 @@ class CallQemuAction(Action):
         guest = self.get_common_data('guest', 'filename')
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
-            self.sub_command.append('-drive format=qcow2,file=%s,media=disk' % (os.path.realpath(guest)))
+            # interface is ide by default in qemu
+            interface = self.job.device['actions']['deploy']['methods']['image']['parameters']['guest'].get('interface', 'ide')
+            self.sub_command.append('-drive format=qcow2,file=%s,media=disk,if=%s' %
+                                    (os.path.realpath(guest), interface))
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
             mountpoint = self.data['lava_test_results_dir']
+            uuid = '/dev/disk/by-uuid/%s' % self.get_common_data('guest', 'UUID')
             shell_precommand_list.append('mkdir %s' % mountpoint)
-            shell_precommand_list.append('mount -L LAVA %s' % mountpoint)
+            # prepare_guestfs always uses ext2
+            shell_precommand_list.append('mount %s -t ext2 %s' % (uuid, mountpoint))
+            # debug line to show the effect of the mount operation
+            # also allows time for kernel messages from the mount operation to be processed.
+            shell_precommand_list.append('ls -la %s/bin/lava-test-runner' % mountpoint)
             self.set_common_data('lava-test-shell', 'pre-command-list', shell_precommand_list)
 
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))

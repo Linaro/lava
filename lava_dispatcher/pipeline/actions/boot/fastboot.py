@@ -78,7 +78,6 @@ class FastbootBootAction(Action):
         self.name = "boot-fastboot"
         self.summary = "attempt to fastboot boot"
         self.description = "fastboot boot into system"
-        self.command = ''
 
     def validate(self):
         super(FastbootBootAction, self).validate()

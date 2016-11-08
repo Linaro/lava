@@ -28,7 +28,6 @@ from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.boot.environment import (
     ExportDeviceEnvironment,
 )
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.connections.lxc import (
     ConnectLxc,
 )
@@ -88,7 +87,6 @@ class LxcStartAction(Action):
         self.name = "boot-lxc"
         self.summary = "attempt to boot"
         self.description = "boot into lxc container"
-        self.command = ''
 
     def validate(self):
         super(LxcStartAction, self).validate()

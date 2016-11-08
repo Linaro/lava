@@ -21,12 +21,12 @@ actions:
        minutes: 2
      to: tftp
      kernel:
-         url: http://ironhide.bounceme.net/x86-32/bzImage
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/bzImage
      ramdisk:
-         url: http://ironhide.bounceme.net/x86-32/rootfs.cpio.gz
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/rootfs.cpio.gz
          compression: gz
      modules:
-         url: http://ironhide.bounceme.net/x86-32/modules.tar.xz
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/modules.tar.xz
          compression: xz
      os: oe
 

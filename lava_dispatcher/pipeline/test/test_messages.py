@@ -74,7 +74,12 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         pass
 
     def wait(self):
-        return self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
+        ret = None
+        try:
+            ret = self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
+        except pexpect.EOF:
+            pass
+        return ret
 
 
 class TestBootMessages(unittest.TestCase):
@@ -97,20 +102,33 @@ class TestBootMessages(unittest.TestCase):
         child = pexpect.spawn('cat', [logfile])
         message_list = LinuxKernelMessages.get_kernel_prompts()
         self.assertIsNotNone(message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[2][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[3][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
         result = LinuxKernelMessages.parse_failures(connection)
+        self.assertEqual(len(result), 2)
         self.assertIn('success', result[0])
+        self.assertIn('panic', result[1])
         self.assertEqual(result[0]['success'], KERNEL_FREE_UNUSED_MSG)
+        self.assertEqual(result[1]['panic'], KERNEL_PANIC_MSG)
+        self.assertEqual(len(result), 2)
+        self.assertIn('panic', result[1])
+        self.assertIn('message', result[1])
+        self.assertTrue('Attempted to kill init' in str(result[1]['message']))
+        self.assertTrue('(unwind_backtrace) from' in str(result[1]['message']))
         message_list = LinuxKernelMessages.get_init_prompts()
-        self.assertIn(KERNEL_PANIC_MSG, message_list)
-        self.assertNotIn(KERNEL_FREE_UNUSED_MSG, message_list)
-        connection.prompt_str = message_list
-        result = LinuxKernelMessages.parse_failures(connection)
-        self.assertEqual(len(result), 1)
-        self.assertIn('panic', result[0])
-        self.assertIn('message', result[0])
-        self.assertTrue('Attempted to kill init' in str(result[0]['message']))
-        self.assertTrue('(unwind_backtrace) from' in str(result[0]['message']))
+        child = pexpect.spawn('cat', [logfile])
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(connection)
+        self.assertEqual(len(results), 1)
+        self.assertIn('panic', result[1])
+        self.assertIn('message', result[1])
+        self.assertTrue('Attempted to kill init' in str(result[1]['message']))
+        self.assertTrue('(unwind_backtrace) from' in str(result[1]['message']))
 
     def test_kernel_2(self):
         logfile = os.path.join(os.path.dirname(__file__), 'kernel-2.txt')
@@ -118,15 +136,20 @@ class TestBootMessages(unittest.TestCase):
         child = pexpect.spawn('cat', [logfile])
         message_list = LinuxKernelMessages.get_kernel_prompts()
         self.assertIsNotNone(message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[2][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[3][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
+        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(connection)
-        # traces as far as da227214a82491bf occur before Freeing init memory:
-        self.assertEqual(len(list(results)), 9)
+        self.assertEqual(len(list(results)), 14)
         message_list = LinuxKernelMessages.get_init_prompts()
-        connection.prompt_str = message_list
+        child = pexpect.spawn('cat', [logfile])
+        connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(connection)
-        # 5 more traces appear during init
-        self.assertEqual(len(list(results)), 5)
+        self.assertEqual(len(list(results)), 13)
 
     def test_kernel_ramdisk_alert(self):
         logfile = os.path.join(os.path.dirname(__file__), 'kernel-3.txt')
@@ -138,5 +161,17 @@ class TestBootMessages(unittest.TestCase):
         results = LinuxKernelMessages.parse_failures(connection)
         self.assertEqual(len(list(results)), 1)
         self.assertIn('message', results[0])
-        self.assertIn('success', results[0])
+        self.assertIn('alert', results[0])
+        self.assertNotIn('success', results[0])
         self.assertNotIn('panic', results[0])
+
+    def test_kernel_4(self):
+        logfile = os.path.join(os.path.dirname(__file__), 'kernel-4.txt')
+        self.assertTrue(os.path.exists(logfile))
+        child = pexpect.spawn('cat', [logfile])
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(connection)
+        self.assertIn('Stack', results[0]['message'].decode('utf-8'))
+        self.assertIn('Kernel panic', results[1]['message'].decode('utf-8'))

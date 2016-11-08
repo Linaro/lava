@@ -63,28 +63,31 @@ class BaseSignalHandler(object):
 
 class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
-    def match(self, data, fixupdict=None):
+    def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
         if not fixupdict:
             fixupdict = {}
 
         res = {}
         for key in data:
-            res[key] = data[key]
-
+            # Special cases for 'measurement'
             if key == 'measurement':
                 try:
-                    res[key] = decimal.Decimal(res[key])
+                    res['measurement'] = decimal.Decimal(data['measurement'])
                 except decimal.InvalidOperation:
-                    ret = res['measurement']
-                    del res['measurement']
-                    raise TestError("Invalid measurement %s", ret)
+                    raise TestError("Invalid measurement %s", data['measurement'])
 
+            # and 'result'
             elif key == 'result':
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
+                res['result'] = data['result']
+                if data['result'] in fixupdict:
+                    res['result'] = fixupdict[data['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    raise TestError('Bad test result: %s', res['result'])
+                    raise TestError('Bad test result: %s' % data['result'])
+
+            # or just copy the data
+            else:
+                res[key] = data[key]
 
         if 'test_case_id' not in res:
             raise TestError("Test case results without test_case_id (probably a sign of an "
@@ -149,7 +152,6 @@ class Connection(object):
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                # FIXME: determine how to access the zmq logger
                 # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
@@ -286,13 +288,13 @@ class Protocol(object):
     def set_up(self):
         raise NotImplementedError()
 
-    def configure(self, device, job):
+    def configure(self, device, job):  # pylint: disable=unused-argument
         self.configured = True
 
     def finalise_protocol(self, device=None):
         raise NotImplementedError()
 
-    def check_timeout(self, duration, data):
+    def check_timeout(self, duration, data):  # pylint: disable=unused-argument,no-self-use
         """
         Use if particular protocol calls can require a connection timeout
         larger than the default_connection_duration.
@@ -303,12 +305,12 @@ class Protocol(object):
         """
         return False
 
-    def _api_select(self, data):
+    def _api_select(self, data):  # pylint: disable=no-self-use
         if not data:
             return None
         raise NotImplementedError()
 
-    def __call__(self, args):
+    def __call__(self, args):  # pylint: disable=no-self-use
         """ Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
@@ -317,5 +319,5 @@ class Protocol(object):
         """
         return self._api_select(args)
 
-    def collate(self, reply_dict, params_dict):
+    def collate(self, reply_dict, params_dict):  # pylint: disable=unused-argument,no-self-use
         return None

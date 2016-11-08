@@ -37,7 +37,7 @@ from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.connection import Protocol
 # Bring in the strategy subclass lists, ignore pylint warnings.
-# pylint: disable=unused-import
+# pylint: disable=unused-import,too-many-arguments,too-many-nested-blocks,too-many-branches
 from lava_dispatcher.pipeline.actions.commands import CommandsAction
 import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies
@@ -45,7 +45,7 @@ import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
 
 
-def parse_action(job_data, name, device, pipeline, test_action):
+def parse_action(job_data, name, device, pipeline, test_action, count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -54,15 +54,16 @@ def parse_action(job_data, name, device, pipeline, test_action):
         parameters.update(pipeline.job.parameters['protocols'])
 
     if name == 'boot':
-        Boot.select(device, job_data[name])(pipeline, parameters)
+        Boot.select(device, parameters)(pipeline, parameters)
     elif name == 'test':
-        LavaTest.select(device, job_data[name])(pipeline, parameters)
-    elif name == 'deploy' and test_action and 'type' not in job_data[name]:
-        parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
-        Deployment.select(device, job_data[name])(pipeline, parameters)
-    elif name == 'deploy' and 'type' in job_data[name]:
+        # stage starts at 0
+        parameters['stage'] = count - 1
+        LavaTest.select(device, parameters)(pipeline, parameters)
+    elif name == 'deploy':
+        if 'type' not in parameters:
+            parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         parameters.update({'test_action': test_action})
-        Deployment.select(device, job_data[name])(pipeline, parameters)
+        Deployment.select(device, parameters)(pipeline, parameters)
 
 
 class JobParser(object):
@@ -149,10 +150,7 @@ class JobParser(object):
         self._timeouts(data, job)
 
         # some special handling is needed to tell the overlay classes about the presence or absence of a test action
-        test_action = True
-        test_list = [action for action in data['actions'] if 'test' in action]
-        if test_list and 'test' not in test_list[0]:
-            test_action = False
+        test_action = bool([action for action in data['actions'] if 'test' in action])
 
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
@@ -163,7 +161,8 @@ class JobParser(object):
                     action_data[name].update(self._map_context_defaults())
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
-                    parse_action(action_data, name, device, pipeline, test_action)
+                    parse_action(action_data, name, device, pipeline,
+                                 test_action, counts[name])
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
@@ -173,7 +172,8 @@ class JobParser(object):
                                 if repeat_action == 'yaml_line':
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
-                                parse_action(repeating, repeat_action, device, pipeline, test_action)
+                                parse_action(repeating, repeat_action, device,
+                                             pipeline, test_action, counts[name])
 
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects

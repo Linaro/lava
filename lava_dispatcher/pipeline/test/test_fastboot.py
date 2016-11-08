@@ -30,7 +30,6 @@ from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootAction
-from lava_dispatcher.pipeline.power import FastBootRebootAction
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -86,7 +85,6 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertEqual(
             job.device.pre_power_command,
             '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
-        self.assertIn(FastBootRebootAction, [obj.__class__ for obj in uefi_menu.internal_pipeline.actions])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
                      'lxc-create not installed')

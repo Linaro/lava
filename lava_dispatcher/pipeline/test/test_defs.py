@@ -27,6 +27,8 @@ import yaml
 import pexpect
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, PatternFixup
 from lava_dispatcher.pipeline.test.test_basic import Factory
@@ -103,6 +105,29 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
 #        self.assertIsNotNone(testdef.job.device['hostname'])
+
+    def test_name(self):
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdef.validate()
+        self.assertEqual([], testdef.errors)
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
+        parser = JobParser()
+        with open(kvm_yaml, 'r') as sample_job_data:
+            content = yaml.load(sample_job_data)
+        data = [block['test'] for block in content['actions'] if 'test' in block][0]
+        definitions = [block for block in data['definitions'] if 'path' in block][0]
+        definitions['name'] = 'smoke tests'
+        job = parser.parse(yaml.dump(content), device, 4212, None, None, None,
+                           output_dir='/tmp/')
+        deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdef.validate()
+        self.assertNotEqual([], testdef.errors)
+        self.assertIn('Invalid characters found in test definition name: smoke tests', job.pipeline.errors)
 
     def test_vcs_parameters(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
@@ -303,7 +328,7 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.job.validate()
         self.assertEqual(
             single_testdef.skip_list,
-            ['keys', 'sources', 'deps', 'steps', 'all']
+            ['keys', 'sources', 'deps', 'steps', 'git-repos', 'all']
         )
         self.assertEqual(single_testdef.skip_options, ['deps'])
 
@@ -353,21 +378,10 @@ class TestDefinitions(unittest.TestCase):
         self.assertIn('common', self.job.context)
         self.assertIn("test-definition", self.job.context['common'])
         self.assertIn("testdef_index", self.job.context['common']['test-definition'])
-        self.assertIn("test_list", self.job.context['common']['test-definition'])
         self.assertEqual(
             self.job.context['common']['test-definition']['testdef_index'],
-            {0: 'smoke-tests', 1: 'singlenode-advanced'}
+            ['smoke-tests', 'singlenode-advanced']
         )
-        test_list = self.job.context['common']['test-definition']['test_list']
-        self.assertEqual(len(test_list), 2)
-        self.assertIn('path', test_list[0])
-        self.assertIn('path', test_list[1])
-        self.assertIn('name', test_list[0])
-        self.assertIn('name', test_list[1])
-        self.assertEqual(test_list[0]['path'], 'ubuntu/smoke-tests-basic.yaml')
-        self.assertEqual(test_list[0]['name'], 'smoke-tests')
-        self.assertEqual(test_list[1]['path'], 'lava-test-shell/single-node/singlenode03.yaml')
-        self.assertEqual(test_list[1]['name'], 'singlenode-advanced')
         self.assertEqual(
             self.job.context['common']['test-runscript-overlay']['testdef_levels'],
             {
@@ -408,7 +422,7 @@ class TestDefinitions(unittest.TestCase):
         testdef_index = self.job.context['common']['test-definition']['testdef_index']
         start_run = '0_smoke-tests'
         uuid_list = definition.get_common_data('repo-action', 'uuid-list')
-        for key, value in testdef_index.items():
+        for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
                 self.assertEqual('4212_1.3.2.4.1', uuid_list[key])
                 self.assertEqual(

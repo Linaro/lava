@@ -19,8 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import yaml
 import unittest
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
@@ -95,3 +96,33 @@ class TestIsoJob(unittest.TestCase):
         self.assertNotIn('{emptyimage}', sub_command)
         self.assertNotIn('/tmp/tmp.00000/hd.img', sub_command)
         self.assertIn('/tmp/tmp.00000/hd.img', ' '.join(sub_command))
+
+    def test_timeout_inheritance(self):
+        """
+        test that classes pick up block timeouts
+
+        Each action in the internal_pipeline needs to pick up the timeout
+        specified in the job definition block for the top level parent action.
+        """
+        test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
+        with open(sample_job_file, 'r') as jobdef:
+            data = yaml.load(jobdef)
+        testdata = [block['test'] for block in data['actions'] if 'test' in block][0]
+        duration = (Timeout.parse(testdata['timeout']))
+        self.assertEqual(
+            duration,
+            test_retry.timeout.duration
+        )
+        shell = [action for action in test_retry.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+        self.assertEqual(
+            duration,
+            shell.timeout.duration
+        )
+        if shell.timeout.duration > shell.connection_timeout.duration:
+            self.assertEqual(
+                duration,
+                shell.timeout.duration
+            )
+        else:
+            self.fail("Incorrect timeout calculation")

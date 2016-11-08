@@ -95,16 +95,16 @@ class Poller(object):
                 delay = self.poll_delay
             except socket.error as e:
                 if e.errno == errno.ECONNREFUSED:
-                    logging.warning("Lava Coordinator refused connection on %s %s" %
-                                    (self.json_data['host'], self.json_data['port']))
+                    logging.warning("Lava Coordinator refused connection on %s %s",
+                                    self.json_data['host'], self.json_data['port'])
                 elif e.errno == errno.ECONNRESET:
-                    logging.warning("Connection to coordinator reset by peer on port %s" %
+                    logging.warning("Connection to coordinator reset by peer on port %s",
                                     self.json_data['port'])
                 else:
-                    logging.warning("socket error on connect: %d %s %s" %
-                                    (e.errno, self.json_data['host'], self.json_data['port']))
-                logging.debug("Trying again in %s seconds. Job will timeout in %s seconds" %
-                              (delay, self.json_data['timeout'] - waited))
+                    logging.warning("socket error on connect: %d %s %s",
+                                    e.errno, self.json_data['host'], self.json_data['port'])
+                logging.debug("Trying again in %s seconds. Job will timeout in %s seconds",
+                              delay, self.json_data['timeout'] - waited)
                 waited += delay
                 time.sleep(delay)
                 if waited >= self.json_data['timeout']:

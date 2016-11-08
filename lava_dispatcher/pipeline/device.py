@@ -123,3 +123,10 @@ class NewDevice(PipelineDevice):
 
         self['hostname'] = self.target
         self.setdefault('power_state', 'off')  # assume power is off at start of job
+
+    def check_config(self, job):
+        """
+        Validates the combination of the job and the device
+        *before* the Deployment actions are initialised.
+        """
+        raise NotImplementedError("check_config")

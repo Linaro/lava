@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import shutil
 
 from lava_dispatcher.pipeline.action import Action, Pipeline, JobError
 from lava_dispatcher.pipeline.logical import Deployment
@@ -32,14 +31,15 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     OverlayAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import (
-    mkdtemp,
     prepare_install_base,
-    copy_out_files,
-    tftpd_dir,
+    copy_out_files
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.constants import INSTALLER_IMAGE_MAX_SIZE
+from lava_dispatcher.pipeline.utils.constants import (
+    INSTALLER_IMAGE_MAX_SIZE,
+    LINE_SEPARATOR
+)
 
 
 class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attributes
@@ -57,41 +57,24 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
         self.name = 'deploy-iso-installer'
         self.description = 'setup deployment for emulated installer'
         self.summary = 'pull kernel and initrd out of iso'
-        self.suffix = None
-        try:
-            self.preseed_path = mkdtemp(basedir=tftpd_dir())
-        except OSError:
-            self.suffix = '/'
-            self.preseed_path = mkdtemp()  # unit test support
-        self.suffix = os.path.basename(self.preseed_path)
-
-    def cleanup(self):
-        """
-        The preseed file is downloaded to a directory offered by
-        apache2 on the dispatcher, not a normal tmp dir, so remove
-        the download directory during finalize.
-        """
-        dwn_dir = os.path.join(self.preseed_path, 'preseed')
-        if os.path.exists(dwn_dir):
-            self.logger.info("%s %s cleanup", dwn_dir, self.name)
-            shutil.rmtree(dwn_dir)
-        super(DeployIsoAction, self).cleanup()
+        self.preseed_path = None
 
     def validate(self):
         super(DeployIsoAction, self).validate()
-        if not os.path.exists(self.preseed_path):
-            self.errors = "Unable to make preseed file available."
-        if self.suffix:
-            self.data[self.name].setdefault('suffix', self.suffix)
-        self.data[self.name].setdefault('suffix', os.path.basename(self.preseed_path))
+        suffix = os.path.join(*self.preseed_path.split('/')[-2:])
+        self.data[self.name].setdefault('suffix', suffix)
+        self.set_common_data(
+            'lineseparator',
+            'os_linesep',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
 
     def populate(self, parameters):
+        self.preseed_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(IsoEmptyImage())
         # the preseed file needs to go into the dispatcher apache tmp directory.
         self.internal_pipeline.add_action(DownloaderAction('preseed', self.preseed_path))
-        iso_path = mkdtemp()
-        self.internal_pipeline.add_action(DownloaderAction('iso', iso_path))
+        self.internal_pipeline.add_action(DownloaderAction('iso', self.mkdtemp()))
         self.internal_pipeline.add_action(IsoPullInstaller())
         self.internal_pipeline.add_action(QemuCommandLine())
         # prepare overlay at this stage - make it available after installation.
@@ -114,7 +97,7 @@ class DeployIso(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
             return False
         if 'to' in parameters and parameters['to'] == 'iso-installer':
             if 'iso' in parameters and 'installation_size' in parameters['iso']:
@@ -152,7 +135,7 @@ class IsoEmptyImage(Action):
 
     def run(self, connection, args=None):
         # qemu-img create hd_img.img 2G
-        base_dir = mkdtemp()
+        base_dir = self.mkdtemp()
         output = os.path.join(base_dir, 'hd.img')
         self.logger.info("Creating base image of size: %s bytes", self.size)
         prepare_install_base(output, self.size)

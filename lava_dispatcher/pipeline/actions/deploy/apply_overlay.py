@@ -30,8 +30,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     LXC_PATH,
-    RAMDISK_FNAME,
-    DISPATCHER_DOWNLOAD_DIR,
+    RAMDISK_FNAME
 )
 from lava_dispatcher.pipeline.utils.installers import (
     add_late_command,
@@ -72,13 +71,14 @@ class ApplyOverlayGuest(Action):
     def run(self, connection, args=None):
         if not self.data['compress-overlay'].get('output'):
             raise RuntimeError("Unable to find the overlay")
-        guest_dir = mkdtemp()
+        guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_common_data('guest', 'filename', guest_file)
         blkid = prepare_guestfs(
             guest_file, self.data['compress-overlay'].get('output'),
             self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
         self.results = {'success': blkid}
+        self.set_common_data('guest', 'UUID', blkid)
         return connection
 
 
@@ -87,21 +87,23 @@ class ApplyOverlayImage(Action):
     def __init__(self):
         super(ApplyOverlayImage, self).__init__()
         self.name = "apply-overlay-image"
-        self.summary = "apply overlay via guestfs to test image"
+        self.summary = "apply overlay to test image"
+        self.description = "apply overlay via guestfs to the test image"
 
     def validate(self):
         super(ApplyOverlayImage, self).validate()
 
     def run(self, connection, args=None):
-        if not self.data['compress-overlay'].get('output'):
-            raise RuntimeError("Unable to find the overlay")
-        overlay = self.data['compress-overlay'].get('output')
-        self.logger.debug("Overlay: %s", overlay)
-        decompressed_image = self.data['download_action']['image']['file']
-        self.logger.debug("Image: %s", decompressed_image)
-        root_partition = self.parameters['image']['root_partition']
-        self.logger.debug("root_partition: %s", root_partition)
-        copy_in_overlay(decompressed_image, root_partition, overlay)
+        if self.data['compress-overlay'].get('output'):
+            overlay = self.data['compress-overlay'].get('output')
+            self.logger.debug("Overlay: %s", overlay)
+            decompressed_image = self.data['download_action']['image']['file']
+            self.logger.debug("Image: %s", decompressed_image)
+            root_partition = self.parameters['image']['root_partition']
+            self.logger.debug("root_partition: %s", root_partition)
+            copy_in_overlay(decompressed_image, root_partition, overlay)
+        else:
+            self.logger.debug("No overlay to deploy")
         return connection
 
 
@@ -153,20 +155,31 @@ class ApplyOverlayTftp(Action):
         directory = None
         nfs_url = None
         if self.parameters.get('nfsrootfs', None) is not None:
+            if not self.parameters['nfsrootfs'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to NFS")
+                return connection
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
             self.logger.info("Applying overlay to NFS")
         elif self.parameters.get('nfs_url', None) is not None:
+            if not self.parameters['nfs_url'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to persistent NFS")
+                return connection
             nfs_url = self.parameters.get('nfs_url')
             overlay_file = self.data['compress-overlay'].get('output')
             self.logger.info("Applying overlay to persistent NFS")
             # need to mount the persistent NFS here.
+            # We can't use self.mkdtemp() here because this directory should
+            # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
             try:
                 subprocess.check_output(['mount', '-t', 'nfs', nfs_url, directory])
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
         elif self.parameters.get('ramdisk', None) is not None:
+            if not self.parameters['ramdisk'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to ramdisk")
+                return connection
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
             self.logger.info("Applying overlay to ramdisk")
@@ -220,7 +233,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
             return connection
         connection = super(ExtractRootfs, self).run(connection, args)
         root = self.data['download_action'][self.param_key]['file']
-        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        root_dir = self.mkdtemp()
         untar_file(root, root_dir)
         self.set_common_data('file', self.file_key, root_dir)
         self.logger.debug("Extracted %s to %s", self.file_key, root_dir)
@@ -238,7 +251,6 @@ class ExtractNfsRootfs(ExtractRootfs):
         self.summary = "unpack nfsrootfs, ready to apply lava overlay"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
-        self.rootdir = DISPATCHER_DOWNLOAD_DIR
 
     def validate(self):
         super(ExtractNfsRootfs, self).validate()
@@ -261,19 +273,18 @@ class ExtractNfsRootfs(ExtractRootfs):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
         connection = super(ExtractNfsRootfs, self).run(connection, args)
-        root = self.data['download_action'][self.param_key]['file']
-        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        untar_file(root, root_dir)
+
         if 'prefix' in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]['prefix']
-            self.logger.warning("Adding '%s' prefix, any other content will not be visible." % prefix)
-            self.rootdir = os.path.join(root_dir, prefix)
-        else:
-            self.rootdir = root_dir
-        # sets the directory into which the overlay is unpacked and
-        # which is used in the substitutions into the bootloader command string.
-        self.set_common_data('file', self.file_key, self.rootdir)
-        self.logger.debug("Extracted %s to %s", self.file_key, self.rootdir)
+            self.logger.warning("Adding '%s' prefix, any other content will not be visible.",
+                                prefix)
+
+            # Grab the path already defined in super().run() and add the prefix
+            root_dir = self.get_common_data('file', self.file_key)
+            root_dir = os.path.join(root_dir, prefix)
+            # sets the directory into which the overlay is unpacked and which
+            # is used in the substitutions into the bootloader command string.
+            self.set_common_data('file', self.file_key, root_dir)
         return connection
 
 
@@ -305,10 +316,16 @@ class ExtractModules(Action):
         # as the kernel may need some modules to raise the network and
         # will need other modules to support operations within the NFS
         if self.parameters.get('nfsrootfs', None):
+            if not self.parameters['nfsrootfs'].get('install_modules', True):
+                self.logger.info("Skipping applying overlay to NFS")
+                return connection
             root = self.get_common_data('file', 'nfsroot')
             self.logger.info("extracting modules file %s to %s", modules, root)
             untar_file(modules, root)
         if self.parameters.get('ramdisk', None):
+            if not self.parameters['ramdisk'].get('install_modules', True):
+                self.logger.info("Not adding modules to the ramdisk.")
+                return
             root = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
             self.logger.info("extracting modules file %s to %s", modules, root)
             untar_file(modules, root)
@@ -332,20 +349,28 @@ class ExtractRamdisk(Action):
         self.name = "extract-overlay-ramdisk"
         self.summary = "extract the ramdisk"
         self.description = "extract ramdisk to a temporary directory"
+        self.skip = False
 
     def validate(self):
         super(ExtractRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
+        if not self.parameters['ramdisk'].get('install_modules', True) and \
+                not self.parameters['ramdisk'].get('install_overlay', True):
+            self.skip = True
+            return
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
+        if self.skip:
+            self.logger.info("Not extracting ramdisk.")
+            return
         connection = super(ExtractRamdisk, self).run(connection, args)
         ramdisk = self.data['download_action']['ramdisk']['file']
-        ramdisk_dir = mkdtemp()
+        ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
-        os.mkdir(extracted_ramdisk)
+        os.mkdir(extracted_ramdisk, 0o755)
         compression = self.parameters['ramdisk'].get('compression', None)
         suffix = ""
         if compression:
@@ -364,9 +389,9 @@ class ExtractRamdisk(Action):
         ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
-        cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')
+        cmd = ('cpio -iud -F %s' % ramdisk_data).split(' ')
         if not self.run_command(cmd):
-            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_data)
+            raise JobError('Unable to extract cpio arcive: %s - missing header definition (i.e. u-boot)?' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
         self.data[self.name]['extracted_ramdisk'] = extracted_ramdisk  # directory
@@ -385,10 +410,15 @@ class CompressRamdisk(Action):
         self.description = "recreate a ramdisk with the overlay applied."
         self.mkimage_arch = None
         self.add_header = None
+        self.skip = False
 
     def validate(self):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
+            return
+        if not self.parameters['ramdisk'].get('install_modules', True) and \
+                not self.parameters['ramdisk'].get('install_overlay', True):
+            self.skip = True
             return
         if 'parameters' in self.job.device['actions']['deploy']:
             self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
@@ -404,6 +434,8 @@ class CompressRamdisk(Action):
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
+            return connection
+        if self.skip:
             return connection
         connection = super(CompressRamdisk, self).run(connection, args)
         if 'extracted_ramdisk' not in self.data['extract-overlay-ramdisk']:
@@ -429,7 +461,7 @@ class CompressRamdisk(Action):
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
-            log = subprocess.check_output(cmd, shell=True)
+            log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
         except OSError as exc:
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
         # lazy-logging would mean that the quoting of cmd causes invalid YAML

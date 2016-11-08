@@ -11,7 +11,7 @@ timeouts:
   test:
     minutes: 3
   connection:
-    minutes: 25
+    minutes: 15
 
 priority: medium
 visibility: public
@@ -53,6 +53,8 @@ actions:
     - 'root@debian:~#'
 
 - test:
+    timeout:
+      minutes: 18
     definitions:
     - from: git
       repository: git://git.linaro.org/qa/test-definitions.git

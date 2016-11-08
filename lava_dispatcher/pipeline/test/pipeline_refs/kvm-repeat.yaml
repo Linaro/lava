@@ -11,33 +11,7 @@
     pipeline:
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
-    - class: actions.deploy.testdef.TestDefinitionAction
-      name: test-definition
-      pipeline:
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
@@ -49,7 +23,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -64,7 +37,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -79,7 +51,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -94,7 +65,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -109,7 +79,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -124,7 +93,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -139,7 +107,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -154,7 +121,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -169,7 +135,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -184,7 +149,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -199,7 +163,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -214,7 +177,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -229,7 +191,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -257,22 +218,6 @@
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
@@ -284,7 +229,6 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

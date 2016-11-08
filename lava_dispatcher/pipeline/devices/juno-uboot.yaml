@@ -98,9 +98,49 @@ actions:
           - setenv initrd_name ramdisk.img
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs nfsroot={SERVER_IP}:{NFSROOTFS} ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
+          - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs nfsroot={SERVER_IP}:{NFSROOTFS} ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug'
           - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; fdt addr {DTB_ADDR}; fdt resize; if afs load  ${initrd_name} {RAMDISK_ADDR} ; then   setenv initrd_param {RAMDISK_ADDR};   else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti {KERNEL_ADDR} ${initrd_param} {DTB_ADDR}'
+          - boot
+        usb:
+          commands:
+          - usb start
+          - usb info
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv fdt_addr 0x83000000
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv fdtfile board.dtb
+          - setenv initrd_addr 0x84000000
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv initrd_name ramdisk.img
+          - setenv kernel_addr 0x80080000
+          - setenv kernel_name norkern
+          - setenv bootargs 'console=ttyAMA0,115200n8 root={ROOT} rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
+          - setenv bootcmd 'afs load ${kernel_name} ${kernel_addr} ; afs load ${fdtfile} ${fdt_addr} ; fdt addr ${fdt_addr}; fdt resize; if afs load ${initrd_name} ${initrd_addr} ; then setenv initrd_param ${initrd_addr}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti ${kernel_addr} ${initrd_param} ${fdt_addr}'
           - boot
         use-defaults:
           commands:
           - boot
+
+timeouts:
+  connections:
+    dd-image:
+      minutes: 15
+    uboot-retry:
+      minutes: 2
+    u-boot-commands:
+      minutes: 2
+    auto-login:
+      minutes: 3
+  actions:
+    dd-image:
+      minutes: 15
+    u-boot-commands:
+      minutes: 5
+    nfs-deploy:
+      minutes: 20
+    download_retry:
+      minutes: 15
+    http_download:
+      minutes: 15

@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import yaml
 
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
@@ -206,7 +207,7 @@ class dispatch(DispatcherCommand):
                 from setproctitle import setproctitle
             except ImportError:
                 logging.warning(
-                    ("Unable to set import 'setproctitle', "
+                    ("Unable to import 'setproctitle', "
                      "process name cannot be changed"))
             else:
                 setproctitle("lava-dispatch [job: %s]" % self.args.job_id)
@@ -254,6 +255,7 @@ class dispatch(DispatcherCommand):
                 env_dut = None
 
             try:
+                # Generate the pipeline
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
                                        socket_addr=self.args.socket_addr,
@@ -261,6 +263,15 @@ class dispatch(DispatcherCommand):
                                        slave_cert=self.args.slave_cert,
                                        output_dir=self.args.output_dir,
                                        env_dut=env_dut)
+                # Generate the description
+                description = job.describe()
+                description_file = os.path.join(self.args.output_dir,
+                                                'description.yaml')
+                if not os.path.exists(self.args.output_dir):
+                    os.makedirs(self.args.output_dir)
+                    os.chmod(self.args.output_dir, 0o755)
+                with open(description_file, 'w') as f_describe:
+                    f_describe.write(yaml.dump(description))
 
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)

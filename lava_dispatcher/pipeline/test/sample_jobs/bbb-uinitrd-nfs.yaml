@@ -1,0 +1,54 @@
+device_type: beaglebone-black
+
+# This test job is not intended to be functional, certain elements
+# have been deliberately removed to exercise the unit tests.
+
+job_name: bbb unit test nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+    ramdisk:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+      # unit test support:
+      # compression: gz
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+      install_overlay: false
+    # commented out for the unit test - an actual job would need to supply appropriate modules with the specified kernel
+    # modules:
+    #   url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+    #   compression: gz
+    nfsrootfs:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: oe
+    dtb:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
+
+- boot:
+    method: u-boot
+    commands: nfs
+    type: bootz
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
