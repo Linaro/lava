@@ -65,6 +65,7 @@ actions:
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download:
           tool: /usr/bin/wget
+          prompt: HTTP request sent, awaiting response
           options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
 
   - boot:

@@ -46,13 +46,13 @@ actions:
      to: usb
      namespace: test-image
      os: oe
-     # do NOT use the name image as this breaks during download action
      image:
          url: http://releases.linaro.org/openembedded/juno-lsk/16.02/lt-vexpress64-openembedded_minimal-armv8-gcc-5.2_20160121-736.img.gz
          compression: gz
      device: SanDisk_Ultra # needs to be exposed in the device-specific UI
      download:
          tool: /usr/bin/wget
+         prompt: HTTP request sent, awaiting response
          options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
 
   - boot:

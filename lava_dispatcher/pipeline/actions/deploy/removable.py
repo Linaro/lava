@@ -117,6 +117,8 @@ class DDAction(Action):
             self.errors = "missing download tool for deployment"
         if 'options' not in self.parameters['download']:
             self.errors = "missing options for download tool"
+        if 'prompt' not in self.parameters['download']:
+            self.errors = "missing prompt for download tool"
         if not os.path.isabs(self.parameters['download']['tool']):
             self.errors = "download tool parameter needs to be an absolute path"
         uuid_required = False
@@ -174,21 +176,25 @@ class DDAction(Action):
         download_cmd = "%s %s" % (
             self.parameters['download']['tool'], download_options
         )
-
         dd_cmd = "dd of='%s' bs=4M" % device_path  # busybox dd does not support other flags
 
-        # We must ensure that the secondary media deployment has completed before handing over
-        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
-        # always have a constant string to match against
+        # set prompt to download prompt to ensure that the secondary deployment has started
         prompt_string = connection.prompt_str
-        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        connection.prompt_str = self.parameters['download']['prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         connection.sendline("%s | %s ; echo %s" % (download_cmd, dd_cmd, SECONDARY_DEPLOYMENT_MSG))
         self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
 
-        # set prompt back
+        # We must ensure that the secondary media deployment has completed before handing over
+        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
+        # always have a constant string to match against
+        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.wait(connection)
+
+        # set prompt back once secondary deployment is complete
         connection.prompt_str = prompt_string
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         return connection
@@ -216,7 +222,8 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
-        self.data[self.name].setdefault('suffix', os.path.basename(self.image_path))
+        suffix = os.path.join(*self.image_path.split('/')[-2:])
+        self.data[self.name].setdefault('suffix', suffix)
 
     def populate(self, parameters):
         """
