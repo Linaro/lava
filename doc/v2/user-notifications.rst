@@ -49,7 +49,7 @@ must be specified in full.
 
 Examples for user vs manual addressing:
 
-.. include:: examples/test-jobs/notifications.yaml
+.. include:: examples/source/notifications.yaml
    :code: yaml
    :start-after: # notify recipients block
    :end-before: # notify compare block
@@ -79,12 +79,12 @@ the notification block.
 
 Here are some comparing setup examples from test definition excerpts:
 
-.. include:: examples/test-jobs/notifications.yaml
+.. include:: examples/source/notifications.yaml
    :code: yaml
    :start-after: # notify compare block
    :end-before: # notify compare custom block
 
-.. include:: examples/test-jobs/notifications.yaml
+.. include:: examples/source/notifications.yaml
    :code: yaml
    :start-after: # notify compare custom block
 

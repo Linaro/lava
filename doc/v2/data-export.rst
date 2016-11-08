@@ -139,9 +139,29 @@ being enabled.
 
 .. seealso:: :ref:`configuring_event_notifications`
 
-Work is ongoing to create a simple ``lava-client`` library which can be used to
-connect to the push notifications and replace the need to poll on XML-RPC. In
-the meantime, if you are interested in using event notifications for a custom
-:term:`frontend`, you might want to look at the code for the example website:
-https://github.com/ivoire/ReactOWeb
+Write your own event notification client
+========================================
 
+It is quite straight forward to get events from ``lava-publisher``.
+
+Users can embed this example piece code in their own local client app to
+listen to the job and/or device events and act according to the return data.
+
+This script can also be used standalone from command line but is otherwise only
+an example.
+
+.. code-block:: bash
+
+ python zmq_client.py -j 357 -p tcp://127.0.0.1:5500 -t 1200
+
+
+zmq_client.py script:
+
+.. include:: examples/source/zmq_client.py
+   :code: python
+   :start-after: # START_CLIENT
+   :end-before: # END_CLIENT
+
+If you are interested in using event notifications for a custom :term:`frontend`,
+you might want also to look at the code for the ReactOWeb example website:
+https://github.com/ivoire/ReactOWeb
