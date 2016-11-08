@@ -40,6 +40,10 @@ takes a special parameter called `device_path` with which the usb path of the
 :term:`DUT` is exposed to LXC for Android testing. The `device_path` takes a
 list of paths (the path can be a symlink) which will get exposed to LXC.
 
+.. note:: Do not run `adb daemon` on the dispatcher host, which will grab the
+          :term:`DUT` and will hinder exposing it to LXC. Similarly, remove
+          `fastboot` packages from the dispatcher host.
+
 .. include:: examples/device-configurations/hi6220-hikey.yaml
    :code: yaml
 
