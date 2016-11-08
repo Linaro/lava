@@ -32,7 +32,7 @@ actions:
     images:
       rootfs:
         image_arg: -drive format=raw,file={rootfs}
-        url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         compression: gz
     os: debian
 
@@ -40,9 +40,14 @@ actions:
     method: qemu
     media: tmpfs
     prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
 
 # START-INLINE-TEST-BLOCK
 - test:
+    timeout:
+      minutes: 4
     definitions:
     - repository:
         metadata:
@@ -55,8 +60,11 @@ actions:
           - functional
         run:
           steps:
-          - apt update
-          - apt install apache2
+          - apt -q update
+          - apt -q -y install apache2
+          - lava-test-case dpkg --shell dpkg -s apache2
+      # remember to use -y to allow apt to proceed without interaction
+      # -q simplifies the apt output for logging.
       from: inline
       name: apache-server
       path: inline/apache-server.yaml

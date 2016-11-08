@@ -110,6 +110,10 @@ $(document).ready(function() {
                 alert('Operation failed, please try again or contact system administrator.');
             }
         });
+    });
 
+    $("#bug_link_form").on("submit", function() {
+        $("#submit_bug_link").click();
+        return false;
     });
 });

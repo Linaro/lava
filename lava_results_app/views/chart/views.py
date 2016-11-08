@@ -207,11 +207,9 @@ def chart_custom(request):
     content_type = Query.get_content_type(request.GET.get("entity"))
 
     chart_type = request.GET.get("type")
-    chart_type_choices = ChartQuery._meta.get_field_by_name(
-        'chart_type')[0].choices
+    chart_type_choices = ChartQuery._meta.get_field('chart_type').choices
     if not chart_type:
-        chart_type = ChartQuery._meta.get_field_by_name(
-            'chart_type')[0].default
+        chart_type = ChartQuery._meta.get_field('chart_type').default
     else:
         found = False
         for choice in chart_type_choices:

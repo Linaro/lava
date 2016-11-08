@@ -142,7 +142,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # default branding details
 BRANDING_ALT = "Linaro logo"
-BRANDING_ICON = 'lava-server/images/linaro-sprinkles.png'
+BRANDING_ICON = 'lava-server/images/logo.png'
 BRANDING_URL = 'http://www.linaro.org'
 BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22

@@ -46,7 +46,7 @@ pre.action {
     padding: 0.1em 0.4em;
 }
 
-#json-input {
+#definition-input {
     width: 900px;
     height: 400px;
     margin: 0px;
@@ -60,7 +60,7 @@ pre.action {
     margin-top: 10px;
 }
 
-#json-valid-container {
+#valid_container {
     border: 1px solid #cccccc;
     display: none;
     margin-top: 10px;

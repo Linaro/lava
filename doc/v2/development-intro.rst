@@ -1,3 +1,7 @@
+.. index:: jinja2, developer, developer guide, develop, contribute
+
+.. _developer_guide:
+
 LAVA developer guide
 ####################
 
@@ -55,13 +59,13 @@ access devices and debug test jobs.
 Developer workflows
 ===================
 
-.. note:: LAVA is developed using Debian packaging to ensure that
-   daemons and system-wide configuration is correctly updated with changes in
-   the codebase. There is **no support for pypi or python virtual environments
-   or installing directly from a git directory**. ``python-setuptools`` is used
-   but only  with ``sdist`` to create the tarballs to be used for the Debian
-   packaging, not for ``install``. Some dependencies of LAVA are not available
-   with pypi, for example ``python-guestfs``.
+.. note:: LAVA is developed using Debian packaging to ensure that daemons and
+   system-wide configuration is correctly updated with changes in the codebase.
+   There is **no support for pypi or python virtual environments or installing
+   directly from a git directory**. ``python-setuptools`` is used but only
+   with ``sdist`` to create the tarballs to be used for the Debian packaging,
+   not for ``install``. Some dependencies of LAVA are not available with pypi,
+   for example ``python-guestfs``.
 
 .. seealso:: :ref:`lava_on_debian` and a summary of the
   `Debian LAVA team activity <https://qa.debian.org/developer.php?email=pkg-linaro-lava-devel%40lists.alioth.debian.org>`_
@@ -98,8 +102,8 @@ Debian testing.
 Naming conventions and LAVA V2 architecture
 *******************************************
 
-Certain terms used in LAVA V2 have specific meanings, please be
-consistent in the use of the following terms:
+Certain terms used in LAVA V2 have specific meanings, please be consistent in
+the use of the following terms:
 
 **board**
   The physical hardware sitting in a rack or on a desk.
@@ -110,9 +114,14 @@ consistent in the use of the following terms:
   Connections will typically require a POSIX_ type shell.
 
 **device**
-  A database object in LAVA which stores configuration, information and status
-  relating to a single board. The device information can be represented in
-  export formats like YAML for use when the database is not accessible.
+  In ``lava-server``, a device is a database object in LAVA which stores
+  configuration, information and status relating to a single board. The device
+  information can be represented in export formats like YAML for use when the
+  database is not accessible.
+
+  In ``lava-dispatcher``, the database is not accessible so the scheduler
+  prepares a simple dictionary of values derived from the database and the
+  template to provide the information about the device.
 
 **device-type**
   A database object which collates similar devices into a group for purposes of
@@ -130,6 +139,20 @@ consistent in the use of the following terms:
 **dispatcher-master** or simply **master**
   A singleton process which starts and monitors test jobs running on one or
   more dispatchers by communicating with the slave using ZMQ.
+
+**dynamic data** - the Action base class provides access to dynamic data stores
+  which other actions can access. This provides the way for action classes to
+  share information like temporary paths of downloaded and / or modified files
+  and other data which is generated or calculated during the operation of the
+  pipeline. Use ``self.set_common_data`` to set the namespace, key and value
+  and ``self.get_common_data`` to retrieve the value using the namespace and
+  the key.
+
+**parameters**
+  A static, read-only, dictionary of values and available for the job and the
+  device. Parameters must not be modified by the codebase - use the
+  ``common_data`` primitives of the Action base class to copy parameters and
+  store the modified values as dynamic data.
 
 **pipeline**
   The name for the design of LAVA V2, based on how the actions to be executed
@@ -187,14 +210,19 @@ Wherever possible, all new sections of documentation should come with worked
 examples.
 
 * Add a testjob submission YAML file to ``doc/v2/examples/test-jobs``
+
 * If the change relates to or includes particular test definitions to
   demonstrate the new support, add a test definition YAML file to
   ``doc/v2/examples/test-definitions``
-* Use the `include options <http://docutils.sourceforge.net/docs/ref/rst/directives.html#include>`_
+
+* Use the `include options
+  <http://docutils.sourceforge.net/docs/ref/rst/directives.html#include>`_
   supported in RST to quote snippets of the test job or test definition YAML,
   following the examples of the existing examples.
+
 * Use comments **liberally** in the examples and link to existing terms and
   sections.
+
 * Read the comments in the ``doc/v2/index.rst`` file if you are adding new
   pages or altering section headings.
 
@@ -211,6 +239,7 @@ will be tidied up.
 
 * **lava-server** includes the ``lava_scheduler_app``, ``lava_results_app``,
   ``lava_server``, ``lava`` and ``linaro_django_xmlrpc`` components of LAVA V2.
+
 * **lava-dispatcher** includes the ``lava_dispatcher`` and ``lava_test_shell``
   components. All LAVA V2 dispatcher code lives in
   ``lava_dispatcher/pipeline``. Some ``lava_test_shell`` scripts remain in the
@@ -219,6 +248,8 @@ will be tidied up.
 
 There are also locations which provide device configurations to support the
 unit tests. Only the Jinja2 support is used by the installed packages,
+
+.. _developer_jinja2_support:
 
 Jinja2 support
 ==============
@@ -230,6 +261,9 @@ changes are checked in the unit-tests. When the package is installed, the
 ``/etc/lava-server/dispatcher-config/device-types/``. The contents of
 ``lava_scheduler_app/tests/devices`` is ignored by the packaging, these files
 exist solely to support the unit tests.
+
+.. seealso:: :ref:`unit_tests` and :ref:`testing_pipeline_code` for examples of
+   how to run individual unit tests or all unit tests within a class or module.
 
 Device dictionaries
 ===================
@@ -267,6 +301,45 @@ you don't run the risk of LAVA changed in a way that is incompatible with your
 changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
+
+.. _developer_planning:
+
+Planning
+========
+
+The LAVA software team use Jira_ for long term planning for new features and
+concepts. The JIRA instance used by LAVA is
+https://projects.linaro.org/browse/LAVA and anonymous access is available for
+anyone interested in LAVA to find out more about the future direction of LAVA.
+Not all features are available at this stage but all LAVA issues are visible
+individually. Not all issues will necesarily be delivered exactly as described,
+many descriptions are written well in advance of delivery of the feature.
+
+Many git commit messages within the LAVA codebase contain references to JIRA
+issues as ``LAVA-123`` etc. All references like this can be appended to a basic
+URL to find the details of that issue: ``https://projects.linaro.org/browse/``.
+e.g. the addition of this section on JIRA relates to ``LAVA-735`` which can be
+viewed as https://projects.linaro.org/browse/LAVA-735
+
+Within JIRA, there is a hierarchy of issues. *EPIC* is the highest level to
+group similar issues. *Stories* are each within a single EPIC and *sub-tasks*
+can exist within a single Story.
+
+This information is made available for interest and to make our development
+process open to the community. If you have comments or questions about anything
+visible within the LAVA project, please subscribe to one of the :ref:`mailing
+lists <mailing_lists>` and ask your questions there. For bugs in the current
+release, please continue to file bug reports using Bugzilla_.
+
+Many stories contain comments linking directly to one or more gerrit reviews
+related to that story. When the review is merged, the story will be marked as
+resolved with a *Fix Version* matching the git tag of the release containing
+the fix from the review.
+
+.. _Jira: http://www.atlassian.com/jira-software
+.. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+
+.. _community_contributions:
 
 Community contributions
 =======================
@@ -372,17 +445,3 @@ that someone can migrate the pull request to a review.
 .. note:: You will need to respond to comments on the review and the
    process of updating the review is **not** linked to the github pull request
    process.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   process.rst
-   development.rst
-   pipeline-design.rst
-   dispatcher-design.rst
-   pipeline-schema.rst
-   dispatcher-testing.rst
-   debian.rst
-   packaging.rst
-   developer-example.rst

@@ -29,7 +29,7 @@
           - boot") -%}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
-
+{% set base_ip_args = "ip=dhcp" %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
 {# Do not specify port or login (-p/-P or -l) here as this is now handled in the codebase. #}
@@ -104,6 +104,12 @@ commands:
 {% if power_on_command %}
     power_on: {{ power_on_command }}
 {% endif %}
+{% if pre_power_command %}
+    pre_power_command: {{ pre_power_command }}
+{% endif -%}
+{% if pre_os_command %}
+    pre_os_command: {{ pre_os_command }}
+{% endif -%}
 {% endif %}
 {% endblock -%}
 
@@ -115,7 +121,7 @@ parameters:
    {{ interface }}:
      sysfs: "{{ sysfs.get(interface) }}"
      mac: "{{ mac_addr.get(interface) }}"
-{% for switch, port in map.get(interface).iteritems() %}
+{% for switch, port in map.get(interface).items() %}
      switch: "{{ switch }}"
      port: {{ port }}
 {% endfor %}
@@ -137,30 +143,32 @@ parameters:
 timeouts:
   actions:
     apply-overlay-image:
-      seconds: {{ action_timeout_apply_overlay_image | default(120) }}
+      minutes: {{ action_timeout_apply_overlay_image | default(2) }}
     dd-image:
-      seconds: {{ action_timeout_dd_image | default(600) }}
+      minutes: {{ action_timeout_dd_image | default(10) }}
     download_retry:
-      seconds: {{ action_timeout_download_retry | default(300) }}
+      minutes: {{ action_timeout_download_retry | default(5) }}
     http_download:
-      seconds: {{ action_timeout_http_download | default(300) }}
+      minutes: {{ action_timeout_http_download | default(5) }}
     lava-test-shell:
-      seconds: {{ action_timeout_lava_test_shell | default(30) }}
+      minutes: {{ action_timeout_lava_test_shell | default(3) }}
     nfs-deploy:
-      seconds: {{ action_timeout_nfs_deploy | default(600) }}
+      minutes: {{ action_timeout_nfs_deploy | default(10) }}
     power_off:
       seconds: {{ action_timeout_power_off | default(5) }}
     u-boot-commands:
-      seconds: {{ action_timeout_u_boot_commands | default(60) }}
+      minutes: {{ action_timeout_u_boot_commands | default(3) }}
     umount-retry:
       seconds: {{ action_timeout_umount_retry | default(45) }}
+    auto-login-action:
+      minutes: {{ action_timeout_auto_login | default(2) }}
   connections:
     dd-image:
-      seconds: {{ connection_timeout_dd_image | default(600) }}
+      minutes: {{ connection_timeout_dd_image | default(10) }}
     uboot-retry:
-      seconds: {{ connection_timeout_uboot_retry | default(60) }}
+      minutes: {{ connection_timeout_uboot_retry | default(4) }}
     u-boot-commands:
-      seconds: {{ connection_timeout_u_boot_commands | default(60) }}
-    auto-login:
-      seconds: {{ connection_timeout_auto_login | default(120) }}
+      minutes: {{ connection_timeout_u_boot_commands | default(2) }}
+    auto-login-action:
+      minutes: {{ connection_timeout_auto_login | default(2) }}
 {% endblock -%}

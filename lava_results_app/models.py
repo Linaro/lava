@@ -241,11 +241,12 @@ class TestSuite(models.Model, Queryable):
 
         return attribute
 
+    @models.permalink
     def get_absolute_url(self):
         """
         Web friendly name for the test suite
         """
-        return urllib.quote("/results/%s/%s" % (self.job.id, self.name))
+        return ("lava.results.suite", [self.job.id, self.name])
 
     def __unicode__(self):
         """
@@ -832,6 +833,9 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
+    def has_view(self):
+        return QueryMaterializedView.view_exists(self.id)
+
     def get_results(self, user, limit=None, order_by=['-id']):
         """ Used to get query results for persistant queries.
 
@@ -922,7 +926,7 @@ class Query(models.Model):
 
                 # Handle conditions with choice fields.
                 condition_field_obj = condition.table.model_class()._meta.\
-                    get_field_by_name(condition.field)[0]
+                    get_field(condition.field)
                 if condition_field_obj.choices:
                     choices_reverse = dict(
                         (value, key) for key, value in dict(
@@ -974,7 +978,7 @@ class Query(models.Model):
                 query.save()
 
         try:
-            if not QueryMaterializedView.view_exists(self.id):
+            if not self.has_view():
                 QueryMaterializedView.create(self)
             elif self.is_changed:
                 QueryMaterializedView.drop(self.id)
@@ -1323,10 +1327,10 @@ class QueryCondition(models.Model):
 
 def _get_foreign_key_model(model, fieldname):
     """ Returns model if field is a foreign key, otherwise None. """
-    # FIXME: RemovedInDjango110Warning: 'get_field_by_name is an unofficial API
-    # that has been deprecated. You may be able to replace it with 'get_field()'
-    field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
-    if not m2m and direct and isinstance(field_object, models.ForeignKey):
+    field_object = model._meta.get_field(fieldname)
+    direct = not field_object.auto_created or field_object.concrete
+    if not field_object.many_to_many and direct and \
+       isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
     return None
 

@@ -73,7 +73,7 @@ def append_failure_comment(job, msg):
     logger.error(msg)
 
 
-def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements
+def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -126,17 +126,26 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
             logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
             return False
 
+        measurement = None
+        units = ''
+        if 'duration' in results:
+            measurement = results['duration']
+            units = 'seconds'
         try:
             # For lava test suite, the test (actions) can be seen two times.
             case = TestCase.objects.get(name=name, suite=suite)
             case.test_set = testset
             case.metadata = yaml.dump(results)
             case.result = result_val
+            case.measurement = measurement
+            case.units = units
         except TestCase.DoesNotExist:
             case = TestCase.objects.create(name=name,
                                            suite=suite,
                                            test_set=testset,
                                            metadata=yaml.dump(results),
+                                           measurement=measurement,
+                                           units=units,
                                            result=result_val)
         with transaction.atomic():
             case.save()
@@ -171,7 +180,15 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
     return True
 
 
-def _get_job_metadata(data):  # pylint: disable=too-many-branches
+def _add_parameter_metadata(prefix, definition, dictionary, label):
+    if 'parameters' in definition:
+        for paramkey, paramvalue in definition['parameters'].items():
+            if paramkey == 'yaml_line':
+                continue
+            dictionary['%s.%s.parameters.%s' % (prefix, label, paramkey)] = paramvalue
+
+
+def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
     if not isinstance(data, list):
         return None
     retval = {}
@@ -222,13 +239,16 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
             else:
                 for definition in definitions:
                     if definition['from'] == 'inline':
+                        run = definition['repository'].get('run', None)
                         # an inline repo without test cases will not get reported.
-                        if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                        if run and 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
                             prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
                         else:
                             # store the fact that an inline exists but would not generate any testcases
                             prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
                         retval['%s.inline.name' % prefix] = definition['name']
+                        _add_parameter_metadata(prefix=prefix, definition=definition,
+                                                dictionary=retval, label='inline')
                         retval['%s.inline.path' % prefix] = definition['path']
                     else:
                         prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
@@ -237,6 +257,8 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                         retval['%s.definition.path' % prefix] = definition['path']
                         retval['%s.definition.from' % prefix] = definition['from']
                         retval['%s.definition.repository' % prefix] = definition['repository']
+                        _add_parameter_metadata(prefix=prefix, definition=definition,
+                                                dictionary=retval, label='definition')
                     count += 1
     return retval
 
@@ -329,6 +351,9 @@ def map_metadata(description, job):
     testdata.save()
 
     # get job-action metadata
+    if description is None:
+        logger.warning("[%s] skipping empty description", job.id)
+        return
     action_values = _get_job_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
         if not key or not value:

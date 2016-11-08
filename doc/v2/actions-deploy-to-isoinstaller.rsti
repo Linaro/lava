@@ -1,0 +1,165 @@
+.. index:: iso installer, debian installer qemu
+
+.. _deploy_to_iso_installer:
+
+to: iso_installer
+*****************
+
+Provides QEMU operations using an operating system installer into a new image
+and then boot into the installed image to run the specified test definitions.
+
+.. note:: Currently only tested with Debian Installer.
+
+.. _deploy_to_iso_installer_images:
+
+images
+======
+
+The ISO and the preseed file can be tightly coupled but point releases of a
+stable release will typically continue to work with existing preseed files.
+LAVA tests of the installer tend to only install the base system in order to
+test kernel functionality rather than the operating system itself.
+
+.. _deploy_to_iso_installer_images_iso:
+
+iso
+---
+
+.. _deploy_to_iso_installer_images_iso_compression:
+
+compression
+^^^^^^^^^^^
+
+If the ISO is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_iso_installer_images_iso_image_arg:
+
+image_arg
+^^^^^^^^^
+
+QEMU requires ``,media=cdrom,readonly`` to handle the ISO correctly.
+
+.. _deploy_to_iso_installer_images_iso_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_iso_installer_images_iso_preseed:
+
+preseed
+-------
+
+Debian Installer can retrieve settings from a ``preseed`` file to allow the
+installation to proceed without prompting for information.
+
+.. _deploy_to_iso_installer_images_iso_preseed_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_iso_installer_iso:
+
+iso
+===
+
+..    .. _deploy_to_iso_installer_iso_iso_index:
+
+      iso_index
+      ---------
+
+       iso_index: 2
+
+.. _deploy_to_iso_installer_iso_kernel:
+
+kernel
+------
+
+Take an absolute path specified by the test writer to copy the kernel out of
+the specified iso so that necessary kernel options can be added to the default
+ISO boot commands.
+
+Paths to pull from the ISO need to start with ``/`` as the top level of the
+mounted ISO.
+
+Paths to pull from the ISO must also be unique.
+
+.. code-block:: yaml
+
+      kernel: /install.amd/vmlinuz
+
+.. _deploy_to_iso_installer_iso_initrd:
+
+initrd
+------
+
+Take an absolute path specified by the test writer to copy the kernel out of
+the specified iso so that necessary kernel options can be added to the default
+ISO boot commands.
+
+Paths to pull from the ISO need to start with ``/`` as the top level of the
+mounted ISO.
+
+Paths to pull from the ISO must also be unique.
+
+.. code-block:: yaml
+
+      initrd: /install.amd/initrd.gz
+
+.. _deploy_to_iso_installer_iso_console:
+
+console
+-------
+
+``console`` argument to pass to QEMU.
+
+.. code-block:: yaml
+
+      console: ttyS0,38400,n8
+
+.. _deploy_to_iso_installer_iso_installation_size:
+
+installation_size
+-----------------
+
+Size of the empty image to be provided to the installer. Typically a maximum of
+5G. Use megabytes for a smaller image, although ~1G is likely to be the
+smallest practical size
+
+.. code-block:: yaml
+
+      installation_size: 2G
+

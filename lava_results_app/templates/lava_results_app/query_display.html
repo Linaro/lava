@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load keep_spacing %}
 {% load django_tables2 %}
+{% load results_accessibility_tags %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
@@ -9,9 +10,11 @@
 
 {% block content %}
 
-<h2 class="modal-header">Query {{ query.name }} matches ({{ query.content_type.name }})
-  {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
-  <small><a href="{% url 'lava.results.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
+{% is_accessible_by query request.user as is_accessible %}
+
+<h2 class="modal-header">Query "{{ query.name }}" matches ({{ query.content_type.name }})
+  {% if is_accessible %}
+  <small><a href="{% url 'lava.results.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-eye-open"></span> Query settings</a></small>
   {% endif %}
 </h2>
 
@@ -32,9 +35,11 @@
         <div class="modal-body">
           <table class="table table-hover">
             <thead>
-              <th>Result</th>
-              <th>End time</th>
-              <th>Include</th>
+              <tr>
+                <th>Result</th>
+                <th>End time</th>
+                <th>Include</th>
+              </tr>
             </thead>
             <tbody>
               {% for result in omitted %}
@@ -61,8 +66,15 @@
   <small><a href="{% url 'lava.results.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
   <small><a href="{% url 'lava.results.chart_custom' %}?entity={{ entity }}&conditions={{ conditions }}&type=pass/fail" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-align-left"></span> View Chart</a></small>
   <small><a href="{% url 'lava.results.chart_add' %}?query_id={{ query.id }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-plus"></span> Create New Chart</a></small>
-<h4>Last updated: {% if query.is_live %} Live query{% else %}{{ query.last_updated | default:"Never" }}{% endif %}</h4>
-
+{% spaceless %}
+<h4>Last updated:
+    {% if query.is_live %} Live query
+    {% elif not conditions %}
+        Never
+    {% else %}
+        <span title="{{ query.last_updated }}">{{query.last_updated|timesince }} ago.
+    {% endif %}</h4>
+{% endspaceless %}
 {% render_table query_table %}
 
 {% endblock %}

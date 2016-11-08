@@ -54,12 +54,6 @@
 <script>
 $(document).ready(
   function() {
-    $("#hwinfo-modal").click(function (e) {
-        $("#hwinfo-content").html({{ worker.get_hardware_info }});
-    });
-    $("#swinfo-modal").click(function (e) {
-        $("#swinfo-content").html({{ worker.get_software_info }});
-    });
     $('.edit_desc').editable('{% url 'lava.scheduler.edit_worker_desc' %}',
     {
         indicator  : 'Saving ...',

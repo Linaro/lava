@@ -1,0 +1,105 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+
+device_type: d03
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
+
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+
+{% block character_delays %}
+{% endblock %}
+
+{% block vland %}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      grub:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
+          boot_message: {{ boot_message|default('Linux version') }}
+          send_char: True
+        ramdisk:
+          commands:
+          - net_bootp
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/ram0 {{ base_ip_args }}'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+        nfs:
+          commands:
+          - net_bootp
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+        debian-installer:
+          expect_shell: False
+          commands:
+          - net_bootp
+          - linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} efi=noruntime --- console={{ console_device }},{{ baud_rate }} debug verbose
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+        debian-installed:
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod part_msdos
+          - insmod chain
+          - ls
+          - ls {{ grub_installed_device }}
+          - sleep 10
+          - set
+          - set root={{ grub_installed_device }}
+          - sleep 10
+          - ls {{ grub_installed_device }}
+          - sleep 10
+          - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
+          - sleep 10
+          - boot
+
+{% endblock %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    installer-wait:
+      seconds: 5400
+    pdu_reboot:
+      seconds: 3000
+  connections:
+    pdu_reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    installer-wait:
+      seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock %}

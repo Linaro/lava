@@ -1,15 +1,21 @@
-Deployment instructions
+Installation instructions
 =======================
 
-TBD
+For latest information, see the lava-server documentation:
+https://staging.validation.linaro.org/static/docs/v2/first-installation.html
+https://staging.validation.linaro.org/static/docs/v2/installing_on_debian.html
 
-Installation
-============
+Support
+=======
 
-See INSTALL
+https://staging.validation.linaro.org/static/docs/v2/support.html
 
 Reporting Bugs
 ==============
 
 All bugs should be reported to Linaro at - 
 https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+
+LAVA features are planned using JIRA:
+https://projects.linaro.org/projects/LAVA
+

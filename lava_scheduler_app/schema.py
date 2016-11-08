@@ -20,6 +20,7 @@ def _deploy_tftp_schema():
         Required('to'): 'tftp',
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
+        Optional('nbdroot'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
     }, extra=True)
@@ -45,6 +46,15 @@ def _simple_params():
     return Schema({
         Any(str): str
     })
+
+
+def _context_schema():
+    return Schema({
+        Optional('arch'): str,
+        Optional('memory'): int,
+        Optional('netdevice'): str,
+        Optional('extra_options'): list
+    }, extra=True)
 
 
 def _job_boot_schema():
@@ -214,7 +224,7 @@ def _job_schema():
             Required('job_name'): All(str, Length(min=1, max=200)),
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
-            'context': _simple_params(),
+            'context': _context_schema(),
             'metadata': dict,
             'secrets': dict,
             'tags': [str],
@@ -268,6 +278,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'board_id': str,
         'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,

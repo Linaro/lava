@@ -1,0 +1,201 @@
+.. index:: deploy to fastboot
+
+.. _deploy_to_fastboot:
+
+to: fastboot
+************
+
+.. seealso:: :ref:`deploy_using_lxc`
+
+.. index:: deploy to fastboot images
+
+.. _deploy_to_fastboot_images:
+
+images
+======
+
+Fastboot deployments support a range of images to be downloaded and deployed to
+the device. The list of images will depend on the test job and the test device.
+The available elements determine the command arguments passed to ``fastboot``
+inside the LXC.
+
+* :ref:`deploy_to_fastboot_images_boot`
+* :ref:`deploy_to_fastboot_images_cache`
+* :ref:`deploy_to_fastboot_images_ptable`
+* :ref:`deploy_to_fastboot_images_system`
+* :ref:`deploy_to_fastboot_images_userdata`
+* :ref:`deploy_to_fastboot_images_vendor`
+
+.. index:: deploy to fastboot images boot
+
+.. _deploy_to_fastboot_images_boot:
+
+boot
+----
+
+.. index:: deploy to fastboot images boot url
+
+.. _deploy_to_fastboot_images_boot_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_fastboot_images_cache:
+
+cache
+-----
+
+.. index:: deploy to fastboot images cache url
+
+.. _deploy_to_fastboot_images_cache_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_fastboot_images_ptable:
+
+ptable
+------
+
+.. index:: deploy to fastboot images ptable url
+
+.. _deploy_to_fastboot_images_ptable_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. index:: deploy to fastboot images system
+
+.. _deploy_to_fastboot_images_system:
+
+system
+------
+
+archive
+^^^^^^^
+
+Some system images are compressed as a tarball (``.tar.gz``), these images
+need the ``archive`` option specified to unpack the system image correctly.
+
+::
+
+   archive: tar
+
+.. index:: deploy to fastboot images system url
+
+.. _deploy_to_fastboot_images_system_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. index:: deploy to fastboot images userdata
+
+.. _deploy_to_fastboot_images_userdata:
+
+userdata
+--------
+
+.. index:: deploy to fastboot images userdata url
+
+.. _deploy_to_fastboot_images_userdata_url:
+
+url
+^^^
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. index:: deploy to fastboot images vendor
+
+.. _deploy_to_fastboot_images_vendor:
+
+vendor
+------
+
+.. index:: deploy to fastboot images vendor url
+
+.. _deploy_to_fastboot_images_vendor_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+

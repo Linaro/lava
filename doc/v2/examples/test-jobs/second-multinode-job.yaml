@@ -1,6 +1,6 @@
-# Simple example of a LAVA MultiNode test using two Panda boards and a
-# Beaglebone-Black
-job_name: Second MultiNode job
+# Simple example of a LAVA MultiNode test using two beaglebone-black devices
+# and a cubietruck
+job_name: Second MultiNode job - NFS
 
 # Reasonable defaults for a simple job
 timeouts:
@@ -8,6 +8,8 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
+  connection:
+    minutes: 3
 priority: medium
 visibility: public
 
@@ -22,10 +24,10 @@ protocols:
   lava-multinode:
     roles:
       server:
-        device_type: beaglebone-black
+        device_type: cubietruck
         count: 1
       client:
-        device_type: panda
+        device_type: beaglebone-black
         count: 2
     timeout:
       minutes: 6
@@ -40,15 +42,20 @@ actions:
       minutes: 2
     to: tftp
     kernel:
-      url: http://images.validation.linaro.org/functional-test-images/panda/uImage
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
     ramdisk:
-      url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
       compression: gz
-      header: u-boot
       add-header: u-boot
-    os: oe
+    modules:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
     dtb:
-      url: http://images.validation.linaro.org/functional-test-images/am335x-boneblack.dtb
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/sun7i-a20-cubietruck.dtb
 
 - deploy:
     role:
@@ -61,16 +68,17 @@ actions:
     ramdisk:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
       compression: gz
-      header: u-boot
       # the bootloader needs a u-boot header on the modified ramdisk
       add-header: u-boot
     modules:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
       compression: gz
-    # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
-    os: oe
+    nfsrootfs:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
     dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/omap4-panda.dtb
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
 # END-DEPLOY-BLOCK
 
 # START-BOOT-BLOCK
@@ -79,20 +87,23 @@ actions:
     - client
     - server
     method: u-boot
-    commands: ramdisk
-    prompts:
-    # escape the brackets to ensure that the prompt does not match
-    # kernel debug lines which may mention initramfs
-    - '\(initramfs\)'
+    commands: nfs
     type: bootz
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@jessie:'
     timeout:
-      minutes: 2
+      minutes: 5
 # END-BOOT-BLOCK
 
 # START-TEST-CLIENT-BLOCK
 - test:
     role:
     - client
+    timeout:
+      minutes: 5
     definitions:
     - repository:
         metadata:
@@ -101,10 +112,9 @@ actions:
           description: "client waiting for server"
           os:
           - debian
-          scope:
-          - functional
         run:
           steps:
+          - lava-test-case client --shell uname -a
           - lava-wait server_installed
       from: inline
       name: client-wait
@@ -115,22 +125,23 @@ actions:
 - test:
     role:
     - server
+    timeout:
+      minutes: 5
     definitions:
     - repository:
         metadata:
           format: Lava-Test Test Definition 1.0
-          name: apache-client
+          name: apache-server
           description: "server installation"
           os:
           - debian
-          scope:
-          - functional
         run:
           steps:
-          - apt update
-          - apt install apache2
+          - apt -q update
+          - apt -q -y install apache2
+          - lava-test-case dpkg --shell dpkg -s apache2
           - lava-send server_installed
       from: inline
-      name: apache-client
-      path: inline/apache-client.yaml
+      name: apache-server
+      path: inline/apache-server.yaml
 # END-TEST-SERVER-BLOCK

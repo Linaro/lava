@@ -56,7 +56,8 @@ class ExtendedUserIRCForm(forms.ModelForm):
 @BreadCrumb(_("LAVA"))
 def index(request):
     # Load and render the template
-    return render(request, 'index.html', {})
+    return render(request, 'index.html',
+                  {'bread_crumb_trail': BreadCrumbTrail.leading_to(index)})
 
 
 @BreadCrumb(_("About you ({you})"),

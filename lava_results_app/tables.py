@@ -24,7 +24,7 @@ import django_tables2 as tables
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from lava.utils.lavatable import LavaTable
-from lava_scheduler_app.tables import DateColumn, RestrictedIDLinkColumn
+from lava_scheduler_app.tables import RestrictedIDLinkColumn
 from lava_results_app.models import (
     TestCase,
     BugLink,
@@ -53,13 +53,7 @@ class IndexResultsColumn(RestrictedIDLinkColumn):
 
     def render(self, record, table=None):
         user = table.context.get('request').user
-        device_type = record.job.job_device_type()
-        if not device_type:
-            return results_pklink(record.job)
-        elif device_type.owners_only:
-            if device_type.num_devices_visible_to(user) == 0:
-                return "Unavailable"
-        elif record.job.is_accessible_by(user):
+        if record.job.can_view(user):
             return results_pklink(record.job)
         else:
             return record.job.pk
@@ -79,12 +73,7 @@ class ResultsTable(LavaTable):
         Slightly different purpose to RestrictedIDLinkColumn.render
         """
         user = table.context.get('request').user
-        device_type = record.job.job_device_type()
-        if not device_type:
-            return record.job.dynamic_connection
-        elif device_type.owners_only:
-            return device_type.num_devices_visible_to(user) == 0
-        elif record.job.is_accessible_by(user):
+        if record.job.can_view(user):
             return True
         else:
             return False
@@ -167,7 +156,10 @@ class ResultsTable(LavaTable):
                 )
             )
 
-    job_id = JobRestrictionColumn(verbose_name='Test Job')
+    job_id = tables.Column(verbose_name='Job ID')
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/suite_actions_field.html")
+    actions.orderable = False
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')
@@ -175,16 +167,20 @@ class ResultsTable(LavaTable):
     total = tables.Column(accessor='job', verbose_name='Totals')
     logged = tables.Column(accessor='job', verbose_name='Logged')
     buglinks = tables.Column(accessor='job', verbose_name='Bug Links')
+    buglinks.orderable = False
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {
             'name': 'contains'
         }
+        sequence = {
+            'job_id', 'actions'
+        }
 
 
 class ResultsIndexTable(ResultsTable):
 
-    job_id = IndexResultsColumn(verbose_name='Job Results')
+    job_id = tables.Column(verbose_name='Job ID')
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')
@@ -211,8 +207,9 @@ class SuiteTable(LavaTable):
     result = tables.Column()
     measurement = tables.Column()
     units = tables.Column()
-    logged = DateColumn()
+    logged = tables.DateColumn()
     buglinks = tables.Column(accessor='suite', verbose_name='Bug Links')
+    buglinks.orderable = False
 
     def render_name(self, record):  # pylint: disable=no-self-use
         return mark_safe(

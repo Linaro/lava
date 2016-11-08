@@ -5,63 +5,61 @@
 Logging In
 ==========
 
-Each LAVA instance offers a :ref:`local_user` and may also be
-configured to an alternative authentication method:
+Each LAVA instance offers a :ref:`local_user` and may also be configured to an
+alternative authentication method:
 
 * :ref:`ldap_authentication`
 
-OpenID is no longer available for all installations of
-LAVA. Incompatible changes in the underlying django support made it
-impossible to support OpenID since the 2015.12 release.
+OpenID is no longer available for all installations of LAVA. Incompatible
+changes in the underlying django support made it impossible to support OpenID
+since the 2015.12 release.
 
 .. seealso:: :ref:`user_authentication` for more information.
 
-LDAP authentication relies on local configuration and may involve
-obtaining a privileged access token from the LDAP administrators.
+LDAP authentication relies on local configuration and may involve obtaining a
+privileged access token from the LDAP administrators.
 
 Local accounts remain available for all instances.
 
-Whichever authentication method is used, there is no difference in how
-users interact with LAVA once logged in.
+Whichever authentication method is used, there is no difference in how users
+interact with LAVA once logged in.
 
 .. _local_user:
 
 Local User Account
 ------------------
 
-A local user account may be created by an administrator within
-LAVA. The administrator may grant different permissions to the user to
-perform various operations within LAVA. A typical login screen will
-look something like the following.
+A local user account may be created by an administrator within LAVA. The
+administrator may grant different permissions to the user to perform various
+operations within LAVA. A typical login screen will look something like the
+following.
 
 .. image:: ./images/local-user-login.png
 
-To log in with a username and password, enter your credentials in the
-provided text boxes and click "Sign in with username and password"
-button.
+To log in with a username and password, enter your credentials in the provided
+text boxes and click "Sign in with username and password" button.
 
-Local user accounts can be particularly useful for automated users like
-build systems or continuous integration scripts using the XML-RPC API.
-The local admin can create the user with a secure password, log in as
-that user to create a token and then supply the token to the scripts.
+Local user accounts can be particularly useful for automated users like build
+systems or continuous integration scripts using the XML-RPC API. The local
+admin can create the user with a secure password, log in as that user to create
+a token and then supply the token to the scripts.
 
 Linaro lab users
 ----------------
 
 Linaro's central validation lab in Cambridge is accessible via
-https://validation.linaro.org/ . It is Linaro's core production
-instance of LAVA.
+https://validation.linaro.org/ . It is Linaro's core production instance of
+LAVA.
 
-This lab is configured to use Linaro LDAP. To log in, enter your
-details in the LDAP login fields.
+This lab is configured to use Linaro LDAP. To log in, enter your details in the
+LDAP login fields.
 
 .. note:: If your Linaro email is ``first.second@linaro.org`` then use
    ``first.second`` as your username.
 
 .. image:: ./images/ldap-user-login.png
 
-A successful authentication will redirect you to
-https://validation.linaro.org/
+A successful authentication will redirect you to https://validation.linaro.org/
 
 If you do not have a Linaro LDAP account, you can :ref:`register`.
 

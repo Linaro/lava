@@ -1,8 +1,8 @@
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          lava-publisher
-# Required-Start:    $network
-# Required-Stop:     $network
+# Required-Start:    $network $remote_fs
+# Required-Stop:     $network $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: LAVA events publisher
@@ -22,7 +22,8 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-server manage lava-publisher"        # short description
 NAME=lava-publisher                             # short server's name
 DAEMON="/usr/bin/lava-publisher"                # server's location
-DAEMON_ARGS="manage lava-publisher $LOGLEVEL"   # Arguments to run the daemon with
+OPTIONS="-u lavaserver -g lavaserver"
+DAEMON_ARGS="manage lava-publisher $LOGLEVEL $OPTIONS"   # Arguments to run the daemon with
 PIDFILE=/var/run/lava-publisher.pid
 SCRIPTNAME=/etc/init.d/lava-publisher
 

@@ -1,0 +1,187 @@
+.. # can refer to Android when *not* describing how to rebuild or modify AOSP.
+
+.. index:: deploy lxc test job, deploy android using lxc
+
+.. _deploy_using_lxc:
+
+Deploying test images using LXC
+###############################
+
+Containers are lightweight virtualization technology. LXC is a userspace
+interface for the Linux kernel containment features. Through a powerful API and
+simple tools, it lets Linux users easily create and manage system or
+application containers. The container provides a lightweight method to allow
+custom software to be used on the dispatcher. The container is used to provide
+transparent access.
+
+LAVA supports LXC containers both as a standalone device type and as dynamic
+transparent environments in order to interact with external devices. In either
+case the :ref:`LXC protocol <lxc_protocol_reference>` is used.
+
+.. _lava_lxc_device_type:
+
+Using LXC as Device Type
+************************
+
+LXC is a :term:`device type` of its own and devices could be added to
+dispatchers under this device type. A device of LXC device type is created
+within the dispatcher in which the device is configured, as illustrated in the
+following figure:
+
+.. image:: ./images/lxc-standalone.svg
+   :align: center
+   :alt: LXC standalone
+
+The LXC :term:`device type` uses the :ref:`LXC protocol
+<lxc_protocol_reference>` in order to share data elements across different
+actions within the job.
+
+Protocol elements
+=================
+
+.. code-block:: yaml
+
+ protocols:
+   lava-lxc:
+     name: lxc-device
+     distribution: fedora
+     release: '23'
+     arch: amd64
+
+  actions:
+  - deploy:
+    timeout:
+      minutes: 5
+    to: lxc
+    os: fedora
+
+Sample Job Definition
+=====================
+
+.. include:: examples/test-jobs/lxc-fedora.yaml
+   :code: yaml
+
+.. _lava_lxc_protocol_android:
+
+Using the LXC protocol to support Android
+*****************************************
+
+.. _lava_android_naming_conventions:
+
+LAVA Android Naming Conventions
+===============================
+
+* **production image** - a build of Android which, when deployed to a device,
+  means that the device is **not** visible to ``adb``. This is typically how a
+  device is configured when first sold to the consumer.
+
+* **developer image** - a build of Android which, when deployed to a device,
+  means that the device **is visible** to ``adb``. Devices configured this way
+  will be able to have the image replaced using any machine, just by connecting
+  a suitable cable, so these images are not typically deployed onto hardware
+  which will be sold to the customer without having this image replaced with a
+  production image.
+
+Introduction
+============
+
+Installing tools like ``adb`` and ``fastboot`` on the dispatcher can be
+problematic. Some of these issues arise from the need to put many different
+types of devices onto a single dispatcher, other issues arise from needing to
+use different versions of the build on the devices. Testing an old system may
+require downgrading support like ``openjdk``, new devices or new builds may
+require upgrading the same support. Containers isolate this variation so that
+each testjob can have a suitable container instead of needing to deal with
+changes on the dispatcher:
+
+#. **Shared lock issues** - Tools can require use of ``flock`` and similar
+   methods to distinguish a connection to one device from another.
+
+#. **Version disparities** - different device versions, different OS versions,
+   may require different support in debug tools like ``adb`` and ``fastboot``.
+
+#. **hardware issues** - USB hub variability.
+
+.. seealso:: :ref:`lxc_deploy` for more information on the administration of
+   LXC for LAVA.
+
+.. figure:: images/lxc.svg
+    :width: 80%
+    :align: center
+    :alt: LXC in LAVA
+
+Using the ``lava-lxc`` protocol, a Lava Test Shell is provided inside the LXC
+to support installing and configuring whatever tools, packages and files which
+the testjob will need to use. Installing ``adb`` in this test shell removes the
+need to have a POSIX type shell on the device. Files can be pushed and pulled
+from the device and executed using the Android support in the image.
+
+.. _lava_android_requirements:
+
+Requirements and Limitations
+============================
+
+#. The image deployed to the device **must** enable the Android Debug Bridge,
+   i.e. a :term:`developer image`. This means enabling developer access over
+   USB or TCP. This rules out the use of production images.
+
+#. A list of packages to install into the bare container to provide the
+   necessary tools to communicate with the device.
+
+#. The LXC depends on underlying kernel architecture. For armel, armhf, etc.
+   dispatcher should run on these architectures.
+
+#. Each distro has its own template and the templates do not have common
+   options. It can be difficult to have generic support for all distros.
+
+#. :term:`namespaces <namespace>` to relate different job actions to run in the
+   LXC and for the device.
+
+.. _namespaces_with_lxc:
+
+Namespaces
+==========
+
+Namespaces were introduced to handle use-cases specific to LXC, but it can be
+expanded to other use-cases as and when required. The primary purpose of
+namespaces is to tie related actions together. In a typical job definition
+where more than one deploy, boot and test actions are specified there should be
+a mechanism to relate which deploy is connected with a boot and test action.
+This is important since an overlay created during a deploy action will be
+consumed by a test action somewhere down the job definition. A namespace comes
+into place to connect these actions together.
+
+
+Protocol elements
+=================
+
+.. code-block:: yaml
+
+ protocols:
+   lava-lxc:
+     name: pipeline-lxc-test
+     template: debian
+     distribution: debian
+     release: sid
+     arch: amd64
+     mirror: http://ftp.us.debian.org/debian/
+     security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+  actions:
+  - deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+Sample Job Definition
+=====================
+
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+   :code: yaml

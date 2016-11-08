@@ -1,0 +1,75 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block content %}
+{% if job.status != job.COMPLETE %}
+<div class="alert alert-warning alert-dismissible" role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <strong>Warning!</strong> Job {{ job.id }} is {{ job.get_status_display }}, some timings are not available.
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-12">
+    <h3>Durations overall</h3>
+    <div class="progress">
+      {% for action in summary %}
+      <div class="progress-bar progress-bar-{% cycle 'success' 'warning' 'info' 'danger' %} {% cycle '' 'progress-bar-striped' %}" style="width: {{ action.2 }}%" title="{{ action.0 }} - {{ action.2|floatformat:"2" }}%">
+        {% if action.2 >= 10 %}{{ action.0 }} - {{ action.2|floatformat:"0" }}%{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <dl class="dl-horizontal">
+        {% for action in summary %}
+          <dt>{{ action.0 }}</dt>
+          <dd>{{ action.2|floatformat:"2" }}% ({{ action.1 }})</dd>
+        {% endfor %}
+        </dl>
+      </div>
+      <div class="col-md-6">
+        <dl class="dl-horizontal">
+          <dt>Total</dt>
+          <dd>{{ total_duration }}</dd>
+          <dt>Max</dt>
+          <dd>{{ max_duration }}</dd>
+          <dt>Mean</dt>
+          <dd>{{ mean_duration|floatformat:"2" }}</dd>
+        </dl>
+      </div>
+    </div>
+    <h3>Complete timing</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>Action</th>
+          <th>Duration (seconds)</th>
+          <th>Timeout (seconds)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for action in pipeline %}
+        {% if action.2 >= max_duration %}
+        <tr class="danger">
+        {% elif action.2 >= mean_duration %}
+        <tr class="warning">
+        {% else %}
+        <tr>
+        {% endif %}
+          <td>{{ action.0 }}</td>
+          <td>{{ action.1 }}</td>
+          <td>{{ action.2 }}</td>
+          {% if action.4 %}
+          <td><span class="label label-warning"><strong>{{ action.2 }} / {{ action.3|floatformat:"0" }}</strong></span></td>
+          {% else %}
+          <td>{{ action.3|floatformat:"0" }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

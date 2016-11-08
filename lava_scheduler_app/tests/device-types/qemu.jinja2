@@ -7,6 +7,7 @@ device_type: qemu
 
 # allow job context override - use a different variable name, undefined if not in job context
 {% set base_guest_fs_size = guestfs_size | default(512) %}
+{% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
 
 actions:
   deploy:
@@ -15,6 +16,7 @@ actions:
         parameters:
           guest:
             size: {{ base_guest_fs_size }}  # in Mb
+            interface: {{ qemu_guest_fs_interface }}
   boot:
     connections:
       serial:
@@ -25,14 +27,18 @@ actions:
           command:
 {% if arch == 'arm64' or arch == 'aarch64' %}
             qemu-system-aarch64
+{% elif arch == 'arm' %}
+            qemu-system-arm
 {% elif arch == 'amd64' %}
             qemu-system-x86_64
 {% elif arch == 'i386' %}
-            qemu-system-x86
+            qemu-system-i386
 {% endif %}
+          # used by installers to relate to the empty target device
           boot_options:
 {% if arch == 'arm64' or arch == 'aarch64' %}
             {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
+{% elif arch == 'arm' %}
 {% elif arch == 'amd64' %}
             {root: {{ boot_root|default('/dev/sda1') }},
              console: '{{ boot_console|default('ttyS0,115200') }}',
@@ -42,16 +48,25 @@ actions:
 {% endif %}
           options:
 {% block qemu_options %}
-{% if arch == 'arm64' or arch == 'aarch64' %}
-          - -cpu cortex-a57
-          - -machine virt
+{% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
+          - -cpu {{ cpu|default('cortex-a57') }}
+          - -machine {{ machine|default('virt') }}
+{% if vga %}
+          - {{ vga }}
+{% endif %}
+{% if serial %}
+          - {{ serial }}
+{% endif %}
 {% else %}
           - -cpu host
           - -enable-kvm
 {% endif %}
           - -nographic
-          - -net nic,model=virtio,macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
+          - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
           - -m {{ memory|default(512) }}
-          - -monitor none
-{% endblock %}
+          - -monitor {{ monitor|default('none') }}
+{% if extra_options %}
+          extra: {{ extra_options }}
+{% endif %}
+{% endblock -%}
 {% endblock %}

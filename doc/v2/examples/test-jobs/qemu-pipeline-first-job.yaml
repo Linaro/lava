@@ -23,6 +23,7 @@ metadata:
   docs-source: first-job
   docs-filename: qemu-pipeline-first-job.yaml
 
+# ACTION_BLOCK
 actions:
 - deploy:
     timeout:
@@ -31,14 +32,20 @@ actions:
     images:
       rootfs:
         image_arg: -drive format=raw,file={rootfs}
-        url: https://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
         compression: gz
     os: debian
 
+# BOOT_BLOCK
 - boot:
+    timeout:
+      minutes: 2
     method: qemu
     media: tmpfs
     prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
 
 - test:
     timeout:

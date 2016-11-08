@@ -24,6 +24,7 @@ import sys
 import fcntl
 import jinja2
 import logging
+import lzma
 import os
 import signal
 import time
@@ -36,11 +37,12 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
 from lava_scheduler_app.dbutils import (
     create_job, start_job,
-    fail_job, cancel_job, end_job,
+    fail_job, cancel_job,
+    parse_job_description,
     select_device,
 )
 from lava_results_app.dbutils import map_scanned_results
@@ -255,7 +257,9 @@ class Command(BaseCommand):
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
-        self.logger.debug("[CC] Receiving: %s", msg)
+        # This is way to verbose for production and should only be activated
+        # by (and for) developers
+        # self.logger.debug("[CC] Receiving: %s", msg)
 
         # 1: the hostname (see ZMQ documentation)
         hostname = msg[0]
@@ -296,38 +300,44 @@ class Command(BaseCommand):
             self.controler.send_multipart([hostname, 'PONG'])
             self.dispatcher_alive(hostname)
 
-        elif action == "ERROR":
-            try:
-                job_id = int(msg[2])
-                error_msg = str(msg[3])
-            except (IndexError, ValueError):
-                self.logger.error("Invalid message from <%s> '%s'", hostname, msg[:50])
-                return False
-            self.logger.error("[%d] Error: %s", job_id, error_msg)
-
-            self.dispatcher_alive(hostname)
-
         elif action == 'END':
-            status = TestJob.COMPLETE
             try:
                 job_id = int(msg[2])
                 job_status = int(msg[3])
+                error_msg = msg[4]
+                description = msg[5]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
             if job_status:
-                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
                 status = TestJob.INCOMPLETE
+                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
+                self.logger.error("[%d] Error: %s", job_id, error_msg)
+                # Set the failure comment
+                TestJob.objects.filter(id=job_id).update(failure_comment=error_msg)
             else:
+                status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
+
+            # Find the corresponding job and update the status
             try:
                 with transaction.atomic():
-                    job = TestJob.objects.select_for_update() \
-                                         .get(id=job_id)
+                    job = TestJob.objects.select_for_update().get(id=job_id)
                     if job.status == TestJob.CANCELING:
                         cancel_job(job)
-                    else:
-                        end_job(job, job_status=status)
+                    fail_job(job, fail_msg=error_msg, job_status=status)
+
+                # Save the description
+                filename = os.path.join(job.output_dir, 'description.yaml')
+                try:
+                    with open(filename, 'w') as f_description:
+                        f_description.write(lzma.decompress(description))
+                except (IOError, lzma.error) as exc:
+                    self.logger.error("[%d] Unable to dump 'description.yaml'",
+                                      job_id)
+                    self.logger.exception(exc)
+                parse_job_description(job)
+
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
             # ACK even if the job is unknown to let the dispatcher
@@ -396,6 +406,7 @@ class Command(BaseCommand):
                 # to allow for local firewalls etc. So the secondary connection is started on the
                 # remote worker of the "nominated" host.
                 # FIXME:
+                device = None
                 worker_host = job.lookup_worker
                 self.logger.info("[%d] START => %s (connection)", job.id,
                                  worker_host.hostname)
@@ -485,21 +496,7 @@ class Command(BaseCommand):
                     msg = "Infrastructure error: %s" % exc.message
 
                 self.logger.error("[%d] INCOMPLETE job", job.id)
-                job.status = TestJob.INCOMPLETE
-                if job.dynamic_connection:
-                    job.failure_comment = msg
-                    job.save()
-                else:
-                    new_status = Device.IDLE
-                    device.state_transition_to(
-                        new_status,
-                        message=msg,
-                        job=job)
-                    device.status = new_status
-                    device.current_job = None
-                    job.failure_comment = msg
-                    job.save()
-                    device.save()
+                fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
         return True
 
     def handle_canceling(self):

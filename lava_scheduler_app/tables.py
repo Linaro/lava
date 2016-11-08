@@ -45,16 +45,7 @@ class RestrictedIDLinkColumn(IDLinkColumn):
     def render(self, record, table=None):
         user = table.context.get('request').user
         device_type = record.job_device_type()
-        if not device_type:
-            return pklink(record)
-        elif device_type.owners_only:
-            if device_type.num_devices_visible_to(user) == 0:
-                return "Unavailable"
-            elif record.is_accessible_by(user):
-                return pklink(record)
-            else:
-                return "Private"
-        elif record.is_accessible_by(user):
+        if record.can_view(user):
             return pklink(record)
         else:
             return record.pk
@@ -64,20 +55,13 @@ def pklink(record):
     job_id = record.pk
     complete = ''
     button = ''
-    suffix = ''
     if isinstance(record, TestJob):
-        if record.is_pipeline:
-            suffix = '#bottom'
-        else:
-            suffix = '/log_file#bottom'
         if record.sub_jobs_list:
             job_id = record.sub_id
-        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of log" href="%s%s">' % (record.get_absolute_url(), suffix)
-        button = '<span class="glyphicon glyphicon-fast-forward"></span></a>'
     return mark_safe(
-        '<a href="%s" title="job summary">%s</a>&nbsp;%s%s' % (
+        '<a href="%s" title="job summary">%s</a>' % (
             record.get_absolute_url(),
-            escape(job_id), complete, button))
+            escape(job_id)))
 
 
 class ExpandedStatusColumn(tables.Column):
@@ -149,18 +133,8 @@ def all_jobs_with_custom_sort():
         "group").extra(select={'device_sort': 'coalesce('
                                               'actual_device_id, '
                                               'requested_device_id, requested_device_type_id)',
-                               'duration_sort': 'end_time - start_time'}).all()
+                               'duration_sort': "date_trunc('second', end_time - start_time)"}).all()
     return jobs.order_by('-submit_time')
-
-
-class DateColumn(tables.Column):
-
-    def __init__(self, **kw):
-        self._format = kw.get('date_format', settings.DATETIME_FORMAT)
-        super(DateColumn, self).__init__(**kw)
-
-    def render(self, value):
-        return filters.date(value, self._format)
 
 
 class JobTable(LavaTable):
@@ -178,12 +152,15 @@ class JobTable(LavaTable):
         super(JobTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")  # pylint: disable=invalid-name
+    id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn(format="Nd, g:ia")
+    end_time = tables.DateColumn(format="Nd, g:ia")
 
     def render_device(self, record):
         if record.actual_device:
@@ -233,12 +210,12 @@ class JobTable(LavaTable):
             'actual_device',
         ]
         fields = (
-            'id', 'status', 'priority', 'device',
+            'id', 'actions', 'status', 'priority', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
         sequence = (
-            'id', 'status', 'priority', 'device',
+            'id', 'actions', 'status', 'priority', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
@@ -265,10 +242,13 @@ class JobTable(LavaTable):
 
 class IndexJobTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn("Nd, g:ia")
+    end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(IndexJobTable, self).__init__(*args, **kwargs)
@@ -276,11 +256,11 @@ class IndexJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'status', 'priority', 'device',
+            'id', 'actions', 'status', 'priority', 'device',
             'description', 'submitter', 'submit_time'
         )
         sequence = (
-            'id', 'status', 'priority', 'device',
+            'id', 'actions', 'status', 'priority', 'device',
             'description', 'submitter', 'submit_time'
         )
         exclude = ('end_time', 'duration', )
@@ -301,14 +281,17 @@ class TagsColumn(tables.Column):
 
 class FailedJobTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
     failure_tags = TagsColumn()
     failure_comment = tables.Column()
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn("Nd, g:ia")
+    end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(FailedJobTable, self).__init__(*args, **kwargs)
@@ -316,18 +299,21 @@ class FailedJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'status', 'device', 'submit_time'
+            'id', 'actions', 'status', 'device', 'submit_time'
         )
         sequence = (
-            'id', 'status', 'device', 'submit_time'
+            'id', 'actions', 'status', 'device', 'submit_time'
         )
         exclude = ('submitter', 'end_time', 'priority', 'description')
 
 
 class LongestJobTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
     id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     status = tables.Column()
     status.orderable = False
     device = tables.Column(accessor='actual_device')
@@ -361,22 +347,26 @@ class LongestJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'status', 'device'
+            'id', 'actions', 'status', 'device'
         )
         sequence = (
-            'id', 'status', 'device'
+            'id', 'actions', 'status', 'device'
         )
         exclude = ('duration', 'end_time')
 
 
 class OverviewJobsTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
+    id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn("Nd, g:ia")
+    end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(OverviewJobsTable, self).__init__(*args, **kwargs)
@@ -384,21 +374,28 @@ class OverviewJobsTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'status', 'priority', 'device',
+            'id', 'actions', 'status', 'priority', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
+        )
+        sequence = (
+            'id', 'actions'
         )
 
 
 class RecentJobsTable(JobTable):
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = tables.Column(verbose_name="ID")
+    id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     log_level = tables.Column(accessor="definition", verbose_name="Log level")
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn("Nd, g:ia")
+    end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
@@ -417,12 +414,12 @@ class RecentJobsTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'status', 'priority',
+            'id', 'actions', 'status', 'priority',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
         sequence = (
-            'id', 'status', 'priority',
+            'id', 'actions', 'status', 'priority',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration', 'log_level'
         )
@@ -453,7 +450,7 @@ class DeviceHealthTable(LavaTable):
     {% endif %}
     ''')
     health_status = tables.Column()
-    last_report_time = DateColumn(
+    last_report_time = tables.DateColumn(
         verbose_name="last report time",
         accessor="last_health_report_job.end_time")
     last_health_report_job = tables.Column("last report job")
@@ -694,14 +691,18 @@ class DeviceTransitionTable(LavaTable):
 
 class QueueJobsTable(JobTable):
 
-    id = RestrictedIDLinkColumn(accessor="id")
+    id = tables.Column(verbose_name="ID")
+    id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     in_queue = tables.TemplateColumn('''
     for {{ record.submit_time|timesince }}
     ''')
     in_queue.orderable = False
-    submit_time = DateColumn()
-    end_time = DateColumn()
+    submit_time = tables.DateColumn("Nd, g:ia")
+    end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(QueueJobsTable, self).__init__(*args, **kwargs)
@@ -709,12 +710,12 @@ class QueueJobsTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'device', 'description', 'submitter', 'submit_time',
-            'in_queue'
+            'id', 'actions', 'device', 'description', 'submitter',
+            'submit_time', 'in_queue'
         )
         sequence = (
-            'id', 'device', 'description', 'submitter', 'submit_time',
-            'in_queue'
+            'id', 'actions', 'device', 'description', 'submitter',
+            'submit_time', 'in_queue'
         )
         exclude = ('status', 'priority', 'end_time', 'duration')
 

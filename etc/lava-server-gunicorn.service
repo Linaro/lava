@@ -1,0 +1,17 @@
+[Unit]
+Description=lavaserver
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User=lavaserver
+Group=lavaserver
+Restart=always
+
+ExecStart=/usr/bin/gunicorn --workers=4 --log-level=debug lava_server.wsgi
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+
+PrivateTmp=true

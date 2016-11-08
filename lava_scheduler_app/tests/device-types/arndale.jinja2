@@ -65,6 +65,6 @@ actions:
 {{ base_uboot_commands }}
 {{ base_uboot_addr_commands }}
 {{ base_tftp_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 ip=dhcp'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_ip_args }}'
 {{ base_tftp_uboot_bootcmd }}
 {% endblock %}

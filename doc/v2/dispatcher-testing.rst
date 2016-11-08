@@ -1,40 +1,42 @@
+.. index:: developer testing, running unit tests
+
 .. _testing_pipeline_code:
 
 Testing the new design
-**********************
+######################
 
-To test the new design after making changes, use the
-:ref:`unit_tests`. During development, it is useful to only run
-selected tests, although remember that **all** tests must pass before
-proposing the change as a review.
+To test the new design after making changes, use the :ref:`unit_tests`. During
+development, it is useful to only run selected tests, although remember that
+**all** tests must pass before proposing the change as a review.
 
-In each case, ensure that your local packages are up to date and
-rebase your local development branch against master if ``git pull``
-fetches new commits. If your branch needed to be updated, always build
-and install your local packages.
+In each case, ensure that your local packages are up to date and rebase your
+local development branch against master if ``git pull`` fetches new commits. If
+your branch needed to be updated, always build and install your local packages.
 
 .. seealso:: :ref:`developer_build_version`
 
 lava-server
-===========
+***********
 
 ::
 
  $ ./lava_server/manage test
 
-``lava-server`` has several components, see the contents of ``ci-run`` for the full list. Each component
-can be tested separately::
+``lava-server`` has several components, see the contents of ``ci-run`` for the
+full list. Each component can be tested separately::
 
  $ ./lava_server/manage test lava_scheduler_app
 
-To run particular tests in a specific file, add e.g. ``test_device.py`` to the command::
+To run particular tests in a specific file, add e.g. ``test_device.py`` to the
+command::
 
  $ ./lava_server/manage test lava_scheduler_app.tests.test_device
 
-.. note:: the ``tests`` directory needs to be specified (instead of the test process discovering
-   all tests) and the filename lacks the ``.py`` suffix.
+.. note:: the ``tests`` directory needs to be specified (instead of the test
+   process discovering all tests) and the filename lacks the ``.py`` suffix.
 
-Add the class name to run all tests within that class within the specified file.
+Add the class name to run all tests within that class within the specified
+file.::
 
  $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates
 
@@ -48,8 +50,39 @@ The same path can also be passed to ``./ci-run``::
 
 This adds the ``pep8`` check before running the test(s).
 
+Jinja2 templates
+================
+
+#. All jinja2 templates in ``lava_scheduler_app/tests/device-types/`` will be
+   tested using a basic check in
+   ``lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates``
+   for YAML syntax. This renders the template without a device dictionary and
+   checks that the output is valid YAML. This test will fail with syntax errors
+   in variables, jinja2 blocks, inheritance and whitespace indent errors.
+
+#. Add a new unit test to the ``TestTemplates`` class in the same unit test
+   file when any jinja2 template fails to parse. Change the ``DEBUG`` setting
+   to ``True`` to see the rendered output and use the `Online YAML Parser
+   <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to identify the
+   problems with the YAML output. Once the basic validation passes, add an
+   initial device dictionary, following the examples and identify specific
+   values in the output which can be asserted
+
+#. Compare the output of the template with a realistic device dictionary, using
+   the unit test, with the test YAML used when developing the underlying
+   support. If this is a fix for an existing template, you can generate the
+   relevant output on the master branch and verify against the changes in the
+   local branch.
+
+#. Completed templates need to be installed into
+   ``/etc/lava-server/dispatcher-config/device-types/`` before testjobs can be
+   submitted through XML-RPC. The ``lava-master`` daemon does **not** need to
+   be restarted, the next submitted testjob will use the modified template(s).
+
+.. seealso:: :ref:`adding_known_device`.
+
 lava-dispatcher
-===============
+***************
 
 ::
 
@@ -62,37 +95,35 @@ without the call to ``discover``::
 
  $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
-The call references the path to the python module, the class and then the test function within that
-class. To run all tests in a class, omit the function. To run all tests in a file, omit the class
-and the function.
+The call references the path to the python module, the class and then the test
+function within that class. To run all tests in a class, omit the function. To
+run all tests in a file, omit the class and the function.
 
 Sets of tests can also be executed from the :file:`./ci-run` script
 of ``lava-dispatcher`` as well::
 
  $ ./ci-run --test-suite lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
-Also, install the updated ``lava-dispatcher`` package and use it to
-inspect the output of the pipeline using the ``--validate`` switch to
-``lava-dispatch``::
+Also, install the updated ``lava-dispatcher`` package and use it to inspect the
+output of the pipeline using the ``--validate`` switch to ``lava-dispatch``::
 
  $ sudo lava-dispatch --validate --target ./devices/kvm01.yaml ./sample_jobs/kvm.yaml --output-dir=/tmp/test
 
-.. note:: The refactoring has changed the behaviour of ``target`` - the
-   value **must** be a path to a YAML file, not a hostname. This is
-   because the refactored dispatcher has no local configuration, so the
-   master sends the entire device configuration to the dispatcher as a
-   single YAML file.
+.. note:: The refactoring has changed the behaviour of ``target`` - the value
+   **must** be a path to a YAML file, not a hostname. This is because the
+   refactored dispatcher has no local configuration, so the master sends the
+   entire device configuration to the dispatcher as a single YAML file.
 
 .. seealso:: :ref:`unit_tests` for information on running the full set of
    unit tests on ``lava-server`` and ``lava-dispatcher``.
 
-The structure of any one job will be the same each time it is run (subject
-to changes in the developing codebase). Each different job will have a
-different pipeline structure. Do not rely on any of the pipeline levels
-have any specific labels. When writing unit tests, only use checks based
-on ``isinstance`` or ``self.name``. (The description and summary fields
-are subject to change to make the validation output easier to understand
-whereas ``self.name`` is a strict class-based label.)
+The structure of any one job will be the same each time it is run (subject to
+changes in the developing codebase). Each different job will have a different
+pipeline structure. Do not rely on any of the pipeline levels have any specific
+labels. When writing unit tests, only use checks based on ``isinstance`` or
+``self.name``. (The description and summary fields are subject to change to
+make the validation output easier to understand whereas ``self.name`` is a
+strict class-based label.)
 
 Sample pipeline description output
 ==================================
@@ -367,40 +398,40 @@ The code can be executed::
 
  $ sudo lava-dispatch --target kvm01 lava_dispatcher/pipeline/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
 
-* During development, there may be images left mounted at the end of
-  the run. Always check the output of ``mount``.
-* Files in ``/tmp/test`` are not removed at the start or end of a job as
-  these would eventually form part of the result bundle and would also be
-  in a per-job temporary directory (created by the scheduler). To be certain
-  of what logs were created by each run, clear the directory each time.
+* During development, there may be images left mounted at the end of the run.
+  Always check the output of ``mount``.
+
+* Files in ``/tmp/test`` are not removed at the start or end of a job as these
+  would eventually form part of the result bundle and would also be in a
+  per-job temporary directory (created by the scheduler). To be certain of what
+  logs were created by each run, clear the directory each time.
 
 Compatibility with the old dispatcher LavaTestShell
 ***************************************************
 
-The hacks and workarounds in the old LavaTestShell classes may need to
-be marked and retained until such time as either the new model replaces
-the old or the bug can be fixed in both models. Whereas the submission
-schema, log file structure and result bundle schema have thrown away any
-backwards compatibility, LavaTestShell will need to at least attempt to
-retain compatibility while improving the overall design and integrating
-the test shell operations into the new classes.
+The hacks and workarounds in the old LavaTestShell classes may need to be
+marked and retained until such time as either the new model replaces the old or
+the bug can be fixed in both models. Whereas the submission schema, log file
+structure and result bundle schema have thrown away any backwards
+compatibility, LavaTestShell will need to at least attempt to retain
+compatibility while improving the overall design and integrating the test shell
+operations into the new classes.
 
 Current possible issues include:
 
-* ``testdef.yaml`` is hardcoded into ``lava-test-runner`` when this could
-  be a parameter fed into the overlay from the VCS handlers.
-* Dependent test definitions had special handling because certain YAML
-  files had to be retained when the overlay was taken from the dispatcher
-  and installed onto the device. This approach leads to long delays and
-  the need to use wget on the device to apply the test definition overlay
-  as a separate operation during LavaTestShell. The new classes should
-  be capable of creating a complete overlay prior to the device being
-  booted which allows for the entire VCS repo to be retained. This may
-  change behaviour.
+* ``testdef.yaml`` is hardcoded into ``lava-test-runner`` when this could be a
+  parameter fed into the overlay from the VCS handlers.
 
- * If dependent test definitions use custom signal handlers, this may
-   not work - it would depend on how the job parameters are handled
-   by the new classes.
+* Dependent test definitions had special handling because certain YAML files
+  had to be retained when the overlay was taken from the dispatcher and
+  installed onto the device. This approach leads to long delays and the need to
+  use wget on the device to apply the test definition overlay as a separate
+  operation during LavaTestShell. The new classes should be capable of creating
+  a complete overlay prior to the device being booted which allows for the
+  entire VCS repo to be retained. This may change behaviour.
+
+* If dependent test definitions use custom signal handlers, this may not work
+  - it would depend on how the job parameters are handled by the new classes.
 
 .. _retry_diagnostic:
 
@@ -410,32 +441,30 @@ Logical actions
 RetryAction subclassing
 =======================
 
-For a RetryAction to validate, the RetryAction subclass must be a wrapper
-class around a new internal_pipeline to allow the RetryAction.run()
-function to handle all of the retry functionality in one place.
+For a RetryAction to validate, the RetryAction subclass must be a wrapper class
+around a new internal_pipeline to allow the RetryAction.run() function to
+handle all of the retry functionality in one place.
 
-An Action which needs to support ``failure_retry`` or which wants to
-use RetryAction support internally, needs a new class added which derives
-from RetryAction, sets a useful name, summary and description and defines
-a populate() function which creates the internal_pipeline. The Action
-with the customised run() function then gets added to the internal_pipeline
-of the RetryAction subclass - without changing the inheritance of the
-original Action.
+An Action which needs to support ``failure_retry`` or which wants to use
+RetryAction support internally, needs a new class added which derives from
+RetryAction, sets a useful name, summary and description and defines a
+populate() function which creates the internal_pipeline. The Action with the
+customised run() function then gets added to the internal_pipeline of the
+RetryAction subclass - without changing the inheritance of the original Action.
 
 .. _diagnostic_actions:
 
 Diagnostic subclasses
 =====================
 
-To add Diagnostics, add subclasses of DiagnosticAction to the list of
-supported Diagnostic classes in the Job class. Each subclass must define
-a trigger classmethod which is unique across all Diagnostic subclasses.
-(The trigger string is used as an index in a generator hash of classes.)
-Trigger strings are only used inside the Diagnostic class. If an Action
-catches a JobError or InfrastructureError exception and wants to
-allow a specific Diagnostic class to run, import the relevant Diagnostic
-subclass and add the trigger to the current job inside the exception
-handling of the Action:
+To add Diagnostics, add subclasses of DiagnosticAction to the list of supported
+Diagnostic classes in the Job class. Each subclass must define a trigger
+classmethod which is unique across all Diagnostic subclasses. (The trigger
+string is used as an index in a generator hash of classes.) Trigger strings are
+only used inside the Diagnostic class. If an Action catches a JobError or
+InfrastructureError exception and wants to allow a specific Diagnostic class to
+run, import the relevant Diagnostic subclass and add the trigger to the current
+job inside the exception handling of the Action:
 
 .. code-block:: python
 
@@ -449,76 +478,75 @@ handling of the Action:
 Actions should only append triggers which are relevant to the JobError or
 InfrastructureError exception about to be raised inside an Action.run()
 function. Multiple triggers can be appended to a single exception. The
-exception itself is still raised (so that a RetryAction container will
-still operate).
+exception itself is still raised (so that a RetryAction container will still
+operate).
 
 .. hint:: A DownloadAction which fails to download a file could
           append a DiagnosticAction class which runs ``ifconfig`` or
           ``route`` just before raising a JobError containing the
           404 message.
 
-If the error to be diagnosed does not raise an exception, append the
-trigger in a conditional block and emit a JobError or InfrastructureError
-exception with a useful message.
+If the error to be diagnosed does not raise an exception, append the trigger in
+a conditional block and emit a JobError or InfrastructureError exception with a
+useful message.
 
 Do not clear failed results of previous attempts when running a Diagnostic
-class - the fact that a Diagnostic was required is an indication that the
-job had some kind of problem.
+class - the fact that a Diagnostic was required is an indication that the job
+had some kind of problem.
 
 Avoid overloading common Action classes with Diagnostics, add a new Action
-subclass and change specific Strategy classes (Deployment, Boot, Test)
-to use the new Action.
+subclass and change specific Strategy classes (Deployment, Boot, Test) to use
+the new Action.
 
 Avoid chaining Diagnostic classes - if a Diagnostic requires a command to
-exist, it must check that the command does exist. Raise a RuntimeError if
-a Strategy class leads to a Diagnostic failing to execute.
+exist, it must check that the command does exist. Raise a RuntimeError if a
+Strategy class leads to a Diagnostic failing to execute.
 
 It is an error to add a Diagnostic class to any Pipeline. Pipeline Actions
-should be restricted to classes which have an effect on the Test itself,
-not simply reporting information.
+should be restricted to classes which have an effect on the Test itself, not
+simply reporting information.
 
 .. _adjuvants:
 
 Adjuvants - skipping actions and using helper actions
 =====================================================
 
-Sometimes, a particular test image will support the expected command
-but a subsequent image would need an alternative. Generally, the expectation
-is that the initial command should work, therefore the fallback or helper
-action should not be needed. The refactoring offers support for this
-situation using Adjuvants.
+Sometimes, a particular test image will support the expected command but a
+subsequent image would need an alternative. Generally, the expectation is that
+the initial command should work, therefore the fallback or helper action should
+not be needed. The refactoring offers support for this situation using
+Adjuvants.
 
-An Adjuvant is a helper action which exists in the normal pipeline but
-which is normally skipped, unless the preceding Action sets a key in the
-PipelineContext that the adjuvant is required. A successful operation of
-the adjuvant clears the key in the context.
+An Adjuvant is a helper action which exists in the normal pipeline but which is
+normally skipped, unless the preceding Action sets a key in the PipelineContext
+that the adjuvant is required. A successful operation of the adjuvant clears
+the key in the context.
 
-One example is the ``reboot`` command. Normal user expectation is that
-a ``reboot`` command as root will successfully reboot the device but
-LAVA needs to be sure that a reboot actually does occur, so usually
-uses a hard reset PDU command after a timeout. The refactoring allows
-LAVA to distinguish between a job where the soft reboot worked and a
-job where the PDU command became necessary, without causing the test
-itself to fail simply because the job didn't use a hard reset.
+One example is the ``reboot`` command. Normal user expectation is that a
+``reboot`` command as root will successfully reboot the device but LAVA needs
+to be sure that a reboot actually does occur, so usually uses a hard reset PDU
+command after a timeout. The refactoring allows LAVA to distinguish between a
+job where the soft reboot worked and a job where the PDU command became
+necessary, without causing the test itself to fail simply because the job
+didn't use a hard reset.
 
-If the ResetDevice Action determines that a reboot happened (by matching
-a pexpect on the bootloader initialisation), then nothing happens and the
-Adjuvant action (in this case, HardResetDevice) is marked in the results
-as skipped. If the soft reboot fails, the ResetDevice Action marks this
-result as failed but also sets a key in the PipelineContext so that the
-HardResetDevice action then executes.
+If the ResetDevice Action determines that a reboot happened (by matching a
+pexpect on the bootloader initialisation), then nothing happens and the
+Adjuvant action (in this case, HardResetDevice) is marked in the results as
+skipped. If the soft reboot fails, the ResetDevice Action marks this result as
+failed but also sets a key in the PipelineContext so that the HardResetDevice
+action then executes.
 
-Unlike Diagnostics, Adjuvants are an integral part of the pipeline and
-show up in the verification output and the results, whether executed
-or not. An Adjuvant is not a simple retry, it is a different action,
-typically a more aggressive or forced action. In an ideal world, the
-adjuvant would never be required.
+Unlike Diagnostics, Adjuvants are an integral part of the pipeline and show up
+in the verification output and the results, whether executed or not. An
+Adjuvant is not a simple retry, it is a different action, typically a more
+aggressive or forced action. In an ideal world, the adjuvant would never be
+required.
 
-A similar situation exists with firmware upgrades. In this case, the
-adjuvant is skipped if the firmware does not need upgrading. The
-preceding Action would not be set as a failure in this situation but
-LAVA would still be able to identify which jobs updated the firmware
-and which did not.
+A similar situation exists with firmware upgrades. In this case, the adjuvant
+is skipped if the firmware does not need upgrading. The preceding Action would
+not be set as a failure in this situation but LAVA would still be able to
+identify which jobs updated the firmware and which did not.
 
 .. _connections_and_signals:
 
@@ -527,37 +555,35 @@ Connections, Actions and the SignalDirector
 
 Most deployment Action classes run without needing a Connection. Once a
 Connection is established, the Action may need to run commands over that
-Connection. At this point, the Action delegates the maintenance of
-the run function to the Connection pexpect. i.e. the Action.run() is
-blocked, waiting for Connection.run_command() (or similar) to return
-and the Connection needs to handle timeouts, signals and other interaction
-over the connection. This role is taken on by the internal SignalDirector
-within each Connection. Unlike the old model, Connections have their
-own directors which takes the multinode and LMP workload out of the
-singlenode operations.
+Connection. At this point, the Action delegates the maintenance of the run
+function to the Connection pexpect. i.e. the Action.run() is blocked, waiting
+for Connection.run_command() (or similar) to return and the Connection needs to
+handle timeouts, signals and other interaction over the connection. This role
+is taken on by the internal SignalDirector within each Connection. Unlike the
+old model, Connections have their own directors which takes the multinode and
+LMP workload out of the singlenode operations.
 
 Detecting power state
 =====================
 
-Devices on your desk can behave differently to those in the lab under
-full automation. Under automation, the ``hard_reset`` and ``power_off``
-support means that the device is likely to be powered off when the first
-connection atttempt is made. On the desk, the device may spend more time
-powered on (even if the device is not running a usable system, for example
-the NFS location will be deleted when the previous job ends). So when
-writing connection classes and actions which initiate connections,
-check the power state of the device first.
+Devices on your desk can behave differently to those in the lab under full
+automation. Under automation, the ``hard_reset`` and ``power_off`` support
+means that the device is likely to be powered off when the first connection
+atttempt is made. On the desk, the device may spend more time powered on (even
+if the device is not running a usable system, for example the NFS location will
+be deleted when the previous job ends). So when writing connection classes and
+actions which initiate connections, check the power state of the device first.
 
-#. An Action initiating a connection needs to know if it should wait
-   for a prompt. In the run function, add::
+#. An Action initiating a connection needs to know if it should wait for a
+   prompt. In the run function, add::
 
      if self.job.device.power_state not in ['on', 'off']:
          self.wait(connection)
 
-#. The next Action should be a ResetDevice action which understands the
-   power state and determines whether to call the ``hard_reset`` commands
-   or to attempt a soft reboot. In the populate function, ensure the
-   correct ordering is in place::
+#. The next Action should be a ResetDevice action which understands the power
+   state and determines whether to call the ``hard_reset`` commands or to
+   attempt a soft reboot. In the populate function, ensure the correct ordering
+   is in place::
 
      self.internal_pipeline.add_action(MenuConnect())
      self.internal_pipeline.add_action(ResetDevice())
@@ -590,26 +616,31 @@ Construct your pipeline to use Actions in the order:
 
 So, for a U-Boot operation, this results in a pipeline like:
 
-* UBootCommandOverlay - substitutes dynamic and device-specific data
-  into the U-Boot command list specified in the device configuration.
-* ConnectDevice - establishes a serial connection to the device, as
-  specified by the device configuration
+* UBootCommandOverlay - substitutes dynamic and device-specific data into the
+  U-Boot command list specified in the device configuration.
+
+* ConnectDevice - establishes a serial connection to the device, as specified
+  by the device configuration
+
 * UBootRetry - wraps the subsequent actions in a retry
 
- * UBootInterrupt - sets the ``Hit any key`` prompt in a new connection
- * ResetDevice - sends the reboot command to the device
- * ExpectShellSession - waits for the specified prompt to match
- * UBootCommandsAction - issues the commands to U-Boot
+* UBootInterrupt - sets the ``Hit any key`` prompt in a new connection
+
+* ResetDevice - sends the reboot command to the device
+
+* ExpectShellSession - waits for the specified prompt to match
+
+* UBootCommandsAction - issues the commands to U-Boot
 
 .. _starting_connections:
 
 Starting a connection
 ---------------------
 
-Typically, a Connection is started by an Action within the Pipeline.
-The call to start a Connection must not return until all operations on
-that Connection are complete or the Pipeline determines that the
-Connection needs to be terminated.
+Typically, a Connection is started by an Action within the Pipeline. The call
+to start a Connection must not return until all operations on that Connection
+are complete or the Pipeline determines that the Connection needs to be
+terminated.
 
 Using debug logs
 ****************
@@ -627,8 +658,8 @@ The refactored dispatcher has a different approach to logging:
 Examples
 ========
 
-Actual representation of the logs in the UI will change - these examples
-are the raw content of the output YAML.
+Actual representation of the logs in the UI will change - these examples are
+the raw content of the output YAML.
 
 .. code-block:: yaml
 
@@ -679,23 +710,29 @@ are the raw content of the output YAML.
      remove-tgz: pass, tar-tgz: pass}
  - {debug: 'lava-test-shell duration: 26.88', ts: '2015-09-07T09:43:14.065956'}
 
+.. index:: developer debugging slaves
+
 .. _debugging_slaves:
 
 Debugging on the slave dispatcher
 *********************************
 
-Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted
-YAML files. These files are then passed to :file:`lava-dispatch` when
-the job starts. To reproduce issues on the slave, the original files
-are retained in a temporary directory after the job has completed. As
-long as the slave has not been rebooted since the job started, the files
-will be retained in :file:`/tmp/lava-dispatcher/slave/<JOB_ID>/`. These
-can then be used to re-run the job on the command line. Also in this
-directory, there is an ``err`` file which tracks any exceptions caught
-by the slave during the job run - these are sent back to the master and
-appear as a failure comment. Exceptions of this kind can then generate
-bug reports so that the dispatcher code handles the issue instead of it
-falling back to the slave daemon to handle.
+Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted YAML
+files but are then deleted when the test job ends.
+
+Equivalent files can be prepared using the ``lava-server manage
+device-dictionary`` ``review`` option to output the device configuration YAML.
+To re-run the job on the slave, pass this configuration as the ``--target``
+option to ``lava-dispatch`` and specify a temporary ``--output-dir`` and the
+test job definition.
+
+.. note:: MultiNode test jobs produce a specific test job for each node in the
+   group. The original MultiNode definition **cannot** be executed by
+   ``lava-dispatch`` on the command line and the job definition for a single
+   node within a MultiNode group will also need editing before it can be run
+   without reference to the other nodes.
+
+.. index:: developer: adding new classes
 
 .. _adding_new_classes:
 
@@ -704,77 +741,83 @@ Adding new classes
 
 See also :ref:`mapping_yaml_to_code`:
 
-The expectation is that new tasks for the dispatcher will be created
-by adding more specialist Actions and organising the existing Action
-classes into a new pipeline for the new task.
+The expectation is that new tasks for the dispatcher will be created by adding
+more specialist Actions and organising the existing Action classes into a new
+pipeline for the new task.
 
 Adding new behaviour is a two step process:
 
-- always add a new Action, usually with an internal pipeline, to
-  implement the new behaviour
-- add a new Strategy class which creates a suitable pipeline to use
-  that Action.
+- always add a new Action, usually with an internal pipeline, to implement the
+  new behaviour
 
-A Strategy class may use conditionals to select between a number of
-top level Strategy Action classes, for example ``DeployImageAction``
-is a top level Strategy Action class for the DeployImage strategy. If
-used, this conditional **must only operate on job parameters and the
-device** as the selection function is a ``classmethod``.
+- add a new Strategy class which creates a suitable pipeline to use that
+  Action.
 
-A test Job will consist of multiple strategies, one for each of the
-listed *actions* in the YAML file. Typically, this may include a
-Deployment strategy, a Boot strategy and a Test strategy.
-Jobs can have multiple deployment, boot, or test actions.
-Strategies add top level Actions to the main pipeline in the order
-specified by the parser. For the parser to select the new strategy,
-the ``strategies.py`` module for the relevant type of action
-needs to import the new subclass. There should be no need to modify
-the parser itself.
+A Strategy class may use conditionals to select between a number of top level
+Strategy Action classes, for example ``DeployImageAction`` is a top level
+Strategy Action class for the DeployImage strategy. If used, this conditional
+**must only operate on job parameters and the device** as the selection
+function is a ``classmethod``.
 
-A single top level Strategy Action implements a single strategy for
-the outer Pipeline. The use of :ref:`retry_diagnostic` can provide
-sufficient complexity without adding conditionals to a single top level
-Strategy Action class. Image deployment actions will typically include a
-conditional to check if a Test action is required later so that the
-test definitions can be added to the overlay during deployment.
+A test Job will consist of multiple strategies, one for each of the listed
+*actions* in the YAML file. Typically, this may include a Deployment strategy,
+a Boot strategy and a Test strategy. Jobs can have multiple deployment, boot,
+or test actions. Strategies add top level Actions to the main pipeline in the
+order specified by the parser. For the parser to select the new strategy, the
+``strategies.py`` module for the relevant type of action needs to import the
+new subclass. There should be no need to modify the parser itself.
+
+A single top level Strategy Action implements a single strategy for the outer
+Pipeline. The use of :ref:`retry_diagnostic` can provide sufficient complexity
+without adding conditionals to a single top level Strategy Action class. Image
+deployment actions will typically include a conditional to check if a Test
+action is required later so that the test definitions can be added to the
+overlay during deployment.
 
 Re-use existing Action classes wherever these can be used without changes.
 
 If two or more Action classes have very similar behaviour, re-factor to make a
 new base class for the common behaviour and retain the specialised classes.
 
-Strategy selection via select() must only ever rely on the device and the
-job parameters. Add new parameters to the job to distinguish strategies, e.g.
-the boot method or deployment method.
+Strategy selection via select() must only ever rely on the device and the job
+parameters. Add new parameters to the job to distinguish strategies, e.g. the
+boot method or deployment method.
 
-#. A Strategy class is simply a way to select which top level Action
-   class is instantiated.
+#. A Strategy class is simply a way to select which top level Action class is
+   instantiated.
+
 #. A top level Action class creates an internal pipeline in ``populate()``
 
    * Actions are added to the internal pipeline to do the rest of the work
 
 #. a top level Action will generally have a basic ``run()`` function which
    calls ``run_actions`` on the internal pipeline.
-#. Ensure that the ``accepts`` routine can uniquely identify this
-   strategy without interfering with other strategies. (:ref:`new_classes_unit_test`)
-#. Respect the existing classes - reuse wherever possible and keep all
-   classes as pure as possible. There should be one class for each type
-   of operation and no more, so to download a file onto the dispatcher
-   use the DownloaderAction whether that is an image or a dtb. If the
-   existing class does not do everything required, inherit from it and
-   add functionality.
-#. Respect the directory structure - a strategies module should not need
-   to import anything from outside that directory. Keep modules together
-   with modules used in the same submission YAML stanza.
-#. Expose all configuration in the YAML, not python. There are FIXMEs
-   in the code to remedy situations where this is not yet happening but
-   avoid adding code which makes this problem worse. Extend the device
-   or submission YAML structure if new values are needed.
-#. Take care with YAML structure. Always check your YAML changes in the
-   online YAML parser as this often shows where a simple hyphen can
-   dramatically change the complexity of the data.
-#. Cherry-pick existing classes alongside new classes to create new
-   pipelines and keep all Action classes to a single operation.
+
+#. Ensure that the ``accepts`` routine can uniquely identify this strategy
+without interfering with other strategies. (:ref:`new_classes_unit_test`)
+
+#. Respect the existing classes - reuse wherever possible and keep all classes
+   as pure as possible. There should be one class for each type of operation
+   and no more, so to download a file onto the dispatcher use the
+   DownloaderAction whether that is an image or a dtb. If the existing class
+   does not do everything required, inherit from it and add functionality.
+
+#. Respect the directory structure - a strategies module should not need to
+   import anything from outside that directory. Keep modules together with
+   modules used in the same submission YAML stanza.
+
+#. Expose all configuration in the YAML, not python. There are FIXMEs in the
+   code to remedy situations where this is not yet happening but avoid adding
+   code which makes this problem worse. Extend the device or submission YAML
+   structure if new values are needed.
+
+#. Take care with YAML structure. Always check your YAML changes in the online
+   YAML parser as this often shows where a simple hyphen can dramatically
+   change the complexity of the data.
+
+#. Cherry-pick existing classes alongside new classes to create new pipelines
+   and keep all Action classes to a single operation.
+
 #. Code defensively:
 
    #. check that parameters exist in validation steps.
@@ -787,18 +830,17 @@ the boot method or deployment method.
 Always add unit tests for new classes
 =====================================
 
-Wherever a new class is added, that new class can be tested - if only
-to be sure that it is correctly initialised and added to the pipeline
-at the correct level. Always create a new file in the tests directory
-for new functionality. All unit tests need to be in a file with the
-``test_`` prefix and add a new YAML file to the sample_jobs so that
-the strategies to select the new code can be tested. See :ref:`yaml_job`.
+Wherever a new class is added, that new class can be tested - if only to be
+sure that it is correctly initialised and added to the pipeline at the correct
+level. Always create a new file in the tests directory for new functionality.
+All unit tests need to be in a file with the ``test_`` prefix and add a new
+YAML file to the sample_jobs so that the strategies to select the new code can
+be tested. See :ref:`yaml_job`.
 
-Often the simplest way to understand the available parameters and how
-new statements in the device configuration or job submission show up
-inside the classes is to use a unit test. To run a single unit-test,
-for example test_function in a class called TestExtra in a file
-called test_extra.py, use::
+Often the simplest way to understand the available parameters and how new
+statements in the device configuration or job submission show up inside the
+classes is to use a unit test. To run a single unit-test, for example
+test_function in a class called TestExtra in a file called test_extra.py, use::
 
  $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_extra.TestExtra.test_function
 
@@ -817,19 +859,18 @@ Example python code:
 Group similar operations
 ========================
 
-When using a connection to a device, group calls over that connection to
-calls which are expected to return within a consistent timeout for that
-class. If the final command from the class starts a longer running process,
-e.g. boot, set the connection prompt to look for a message which will be
-seen on that connection within a similar timeframe to all the other calls
-made by that class. This allows test writers to correctly choose the
-timeout to extend.
+When using a connection to a device, group calls over that connection to calls
+which are expected to return within a consistent timeout for that class. If the
+final command from the class starts a longer running process, e.g. boot, set
+the connection prompt to look for a message which will be seen on that
+connection within a similar timeframe to all the other calls made by that
+class. This allows test writers to correctly choose the timeout to extend.
 
 Add documentation
 =================
 
-Add to the documentation when adding new classes which implement new
-dispatcher actions, parameters or behaviour.
+Add to the documentation when adding new classes which implement new dispatcher
+actions, parameters or behaviour.
 
 Online YAML checker
 ===================
@@ -887,34 +928,33 @@ the results, start up a python interactive shell in the same directory::
  collapsed in 0.4s
  >>> s = om.summarize(); s
 
-.. note:: The python interpreter, the ``setup.py``
-          configuration and other tools may allocate memory as part
-          of the test, so the figures in the output may be larger than
-          it would seem for a small test. A basic test may give a
-          summary of 12Mb, total size. Figures above 100Mb should
-          prompt a check on what is using the extra memory.
+.. note:: The python interpreter, the ``setup.py`` configuration and other
+   tools may allocate memory as part of the test, so the figures in the output
+   may be larger than it would seem for a small test. A basic test may give a
+   summary of 12Mb, total size. Figures above 100Mb should prompt a check on
+   what is using the extra memory.
 
 Pre-boot deployment manipulation
 ********************************
 
-.. note:: These provisions are under development and are likely to
-          change substantially. e.g. it may be possible to do a lot
-          of these tasks using secondary media and secondary connections.
+.. note:: These provisions are under development and are likely to change
+   substantially. e.g. it may be possible to do a lot of these tasks using
+   secondary media and secondary connections.
 
-There are several situations where an environment needs to be setup in
-a contained and tested manner and then used for one or multiple LAVA
-test operations.
+There are several situations where an environment needs to be setup in a
+contained and tested manner and then used for one or multiple LAVA test
+operations.
 
-One solution is to use MultiNode and this works well when the device
-under test supports a secondary connection, e.g. ethernet.
+One solution is to use MultiNode and this works well when the device under test
+supports a secondary connection, e.g. ethernet.
 
-MultiNode has requirements on a POSIX-type command line shell to be
-able to pass messages, e.g. busybox.
+MultiNode has requirements on a POSIX-type command line shell to be able to
+pass messages, e.g. busybox.
 
 QEMU tests involve downloading a pre-built chroot based on a stable
-distribution release of a foreign architecture and running tests inside
-that chroot.
+distribution release of a foreign architecture and running tests inside that
+chroot.
 
-Android tests may involve setting up a VM or a configured chroot to
-expose USB devices while retaining the ability to use different
-versions of tools for different tests.
+Android tests may involve setting up a VM or a configured chroot to expose USB
+devices while retaining the ability to use different versions of tools for
+different tests.

@@ -23,6 +23,9 @@ device_type: mustang-uefi
 {% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
 
 {# Consists of a list of dictionaries to enforce the order #}
+{# tilde converts all operands to strings and concatenates in jinja2
+see http://jinja.pocoo.org/docs/dev/templates/#other-operators
+#}
 {% set menu_action_list = [
 {'item': 'Boot Manager'},
 {'wait': 'Choice:'},
@@ -52,7 +55,7 @@ device_type: mustang-uefi
 {'wait': "File path of the FDT :"},
 {'enter': '{DTB}'},
 {'wait': 'Arguments to pass to the binary:'},
-{'enter': "console=" ~ console_device ~ "," ~ baud_rate ~ " " ~ base_early_printk ~ " debug root=/dev/nfs rw " ~ base_nfsroot_args ~ " ip=dhcp"},
+{'enter': "console=" ~ console_device ~ "," ~ baud_rate ~ " " ~ base_early_printk ~ " debug root=/dev/nfs rw " ~ base_nfsroot_args ~ " " ~ base_ip_args ~ ""},
 {'wait': 'Description for this new Entry:'},
 {'enter': '{TEST_MENU_NAME}'},
 {'wait': "Choice:"},

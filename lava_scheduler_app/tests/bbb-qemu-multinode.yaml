@@ -14,12 +14,12 @@ protocols:
     roles:
       server:
         device_type: beaglebone-black
-        count: 1
+        count: 2
       client:
         context:
           arch: amd64
         device_type: qemu
-        count: 1
+        count: 2
 
 actions:
 - deploy:

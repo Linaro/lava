@@ -1,8 +1,8 @@
 Deploying an ipmi/pxe-boot Device
 =================================
 
-This page describes the hardware and software setup for IPMI/PXE-boot,
-such as the setup used by LAVA for a Calxeda Highbank target.
+This page describes the hardware and software setup for IPMI/PXE-boot, such as
+the setup used by LAVA for a Calxeda Highbank target.
 
 
 Machines for Dispatching a Job
@@ -14,8 +14,8 @@ also servers for serving the master address and master images for pxe booting.
 
 The following diagram assumes the configuration for a Calxeda Highbank target.
 Specifically, it shows an ethernet port dedicated to ipmi/serial communications
-and a separate port used for booting the pxe image and also used as the target's
-network connection.
+and a separate port used for booting the pxe image and also used as the
+target's network connection.
 
 .. image:: images/ipmi_pxe/pxe_machines.png
 
@@ -34,10 +34,10 @@ dispatcher.
 Dispatch Steps
 --------------
 
-The target boots using pxe boot for any modifications that are needed to install
-the test image or to install or read files from the target. The target is booted
-from its own local media (i.e. a disk drive) for running the actual image and
-tests.
+The target boots using pxe boot for any modifications that are needed to
+install the test image or to install or read files from the target. The target
+is booted from its own local media (i.e. a disk drive) for running the actual
+image and tests.
 
 .. image:: images/ipmi_pxe/ipmi_pxe_lava_sequence.png
 
@@ -49,8 +49,8 @@ Configuration
 Installing ipmitool
 ...................
 
-The first configuration step is to get ipmitool installed. On Ubuntu,
-this is very easy to do::
+The first configuration step is to get ipmitool installed. On Ubuntu, this is
+very easy to do::
 
   $ apt install ipmitool
 
@@ -63,8 +63,8 @@ Address Configuration
 .....................
 
 Device address configuration will vary for different targets. It is important
-to make sure that ipmitool can communicate with the target and that there is
-at least one ethernet port for use by the test image.
+to make sure that ipmitool can communicate with the target and that there is at
+least one ethernet port for use by the test image.
 
 The specific address used for ipmi commands is specified in each target config
 file.
@@ -86,7 +86,8 @@ controlling the node, and two for networking.
 There is no requirement that the nodes be named in any particular way. Lava
 requires two things with respect to addresses:
 
-* the control channel address or name must be specified in the device configuration file
+* the control channel address or name must be specified in the device
+  configuration file
 
 * eth0 must be served an address via dhcp.
 
@@ -112,8 +113,8 @@ calxeda machine number 2, node number 1::
 ipmitool usage
 ..............
 
-ipmitool is used to control power on the device, to select the boot source,
-and to open a serial terminal to the device.
+ipmitool is used to control power on the device, to select the boot source, and
+to open a serial terminal to the device.
 
 powering on the device::
 
@@ -156,28 +157,28 @@ Serial over LAN input issues
 ............................
 
 Some PXE bootloaders are unable to buffer serial input, causing loss of
-characters. To simulate interactive command input, a delay can be added
-between characters sent to the bootloader using the ``bootloader_serial_delay_ms``
+characters. To simulate interactive command input, a delay can be added between
+characters sent to the bootloader using the ``bootloader_serial_delay_ms``
 option in the device-type configuration. Values are specified in milliseconds::
 
   bootloader_serial_delay_ms = 300
 
-Some Serial over LAN (SOL) controllers are similarly unable to process
-bursts of input over the serial connection. The controller drops the
-serial connection and outputs the error::
+Some Serial over LAN (SOL) controllers are similarly unable to process bursts
+of input over the serial connection. The controller drops the serial connection
+and outputs the error::
 
   SOL session closed by BMC
 
-To avoid this problem, set a delay to use between each character sent
-over the serial line during the operation of the test shell::
+To avoid this problem, set a delay to use between each character sent over the
+serial line during the operation of the test shell::
 
   test_shell_serial_delay_ms = 100
 
 busybox httpd + wget
 ....................
 
-busybox httpd is used to serve files from the target to the dispatcher.
-wget can then be used to download the files.
+busybox httpd is used to serve files from the target to the dispatcher. wget
+can then be used to download the files.
 
 Execute on the target:
 
@@ -251,8 +252,8 @@ The default configuration is specified in default-arm-highbank:
   append console=ttyAMA0 nosplash break
   kernel files/highbank/vmlinuz
 
-The kernel and initrd are then placed in the locations that are specified
-in the config file:
+The kernel and initrd are then placed in the locations that are specified in
+the config file:
 
 */var/lib/tftpboot/master/files/highbank (directory listing)*
 
@@ -271,9 +272,9 @@ An initrd can be created from a running ubuntu system
 
 2. Set up busybox for initrd.
 
-Note: It is important to include a full-featured version of busybox. This version
-must support the 'busybox --install -s' command to automatically install links
-to commands that can then be called from a bash shell.
+Note: It is important to include a full-featured version of busybox. This
+version must support the 'busybox --install -s' command to automatically
+install links to commands that can then be called from a bash shell.
 
 Copy the correct version of busybox into /usr/lib/initramfs-tools/bin:
 
@@ -312,8 +313,8 @@ Copy the correct version of busybox into /usr/lib/initramfs-tools/bin:
 
 3. Specify additional binaries and libraries that you need in a new initrd.
 
-Note: The busybox command implements many commands by default, but it is best to
-include the actual binaries for each command since the busybox versions
+Note: The busybox command implements many commands by default, but it is best
+to include the actual binaries for each command since the busybox versions
 generally provide limited functionality.
 
 Commands that are required in the initrd image include:
@@ -409,7 +410,8 @@ For example:
 Debugging with initrd
 ---------------------
 
-The following are some steps to get a usable machine after pxe booting in initrd.
+The following are some steps to get a usable machine after pxe booting in
+initrd.
 
 Set up networking and mount drives::
 
@@ -420,9 +422,9 @@ Set up networking and mount drives::
   (initrd) mount /dev/sda2 /mnt
   (initrd) mount /dev/sda1 /mnt/boot
 
-Note: The boot directory on the root partition may contain files;
-if you mount the boot partition at /mnt/boot you will not see the
-files that are in the same directory on the root partition.
+Note: The boot directory on the root partition may contain files; if you mount
+the boot partition at /mnt/boot you will not see the files that are in the same
+directory on the root partition.
 
 
 Getting files to the target::

@@ -79,6 +79,34 @@ field_changed = function() {
     }
 }
 
+
+add_refresh_click_event = function() {
+    $("#query_refresh").click(function() {
+        $.ajax({
+            url: "+refresh",
+            type: 'POST',
+	    data: {csrfmiddlewaretoken: csrf_token},
+	    beforeSend: function () {
+                $('#refresh_loading_dialog').show();
+            },
+            success: function(data, textStatus, jqXHR){
+		$('#refresh_loading_dialog').hide();
+		if (data[0] == true) {
+		    $('#last_updated').html(data[1]);
+                    $("#query_results").removeClass('disabled');
+                    $("#query_results").attr('title', '');
+		} else {
+		    bootbox.alert("Update failed: " + data[2]);
+		}
+            },
+	    error: function(data, status, error) {
+                $('#refresh_loading_dialog').hide();
+                bootbox.alert('Operation failed, please try again or contact system administrator.');
+            }
+        });
+    });
+}
+
 $(document).ready(function () {
     // Define callbacks and events.
 
@@ -125,11 +153,16 @@ $(document).ready(function () {
                         $("#condition_row_" + $("#condition_id").val()).html(
                             condition_row_html);
                     } else {
-
                         $("#conditions_container").find("tbody").append(
                             '<tr id="condition_row_' + data[0].pk + '">' +
                                 condition_row_html + '</tr>'
                         );
+                        if (is_live == "False") {
+                            // Enable 'Run query' button.
+                            $("#query_refresh").removeClass('disabled');
+                            $("#query_refresh").attr('title', '');
+                            add_refresh_click_event();
+                        }
                     }
                     $(dialog_selector).modal('hide');
                 }
@@ -151,28 +184,9 @@ $(document).ready(function () {
     }
     init_loading_dialog();
 
-    $("#query_refresh").click(function() {
-        $.ajax({
-            url: "+refresh",
-            type: 'POST',
-	    data: {csrfmiddlewaretoken: csrf_token},
-	    beforeSend: function () {
-                $('#refresh_loading_dialog').show();
-            },
-            success: function(data, textStatus, jqXHR){
-		$('#refresh_loading_dialog').hide();
-		if (data[0] == true) {
-		    $('#last_updated').html(data[1]);
-		} else {
-		    bootbox.alert("Update failed: " + data[2]);
-		}
-            },
-	    error: function(data, status, error) {
-                $('#refresh_loading_dialog').hide();
-                bootbox.alert('Operation failed, please try again or contact system administrator.');
-            }
-        });
-    });
+    if (query_conditions != '') {
+        add_refresh_click_event();
+    }
 
     $("#id_table option:first").remove();
     $("#id_table").change(function () {

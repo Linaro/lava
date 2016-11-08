@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 240 240"
+   xml:space="preserve"
+   id="svg3536"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="LAVA-Logo_standard.svg"
+   width="240"
+   height="240"
+   inkscape:export-filename="/home/steve/linaro/lava/lava/lava-server.git/doc/v2/images/lava.png"
+   inkscape:export-xdpi="9"
+   inkscape:export-ydpi="9"><metadata
+     id="metadata3564"><rdf:RDF><cc:Work
+         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+     id="defs3562" /><sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1356"
+     inkscape:window-height="747"
+     id="namedview3560"
+     showgrid="false"
+     inkscape:zoom="1.4060152"
+     inkscape:cx="226.58023"
+     inkscape:cy="120"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg3536" /><style
+     type="text/css"
+     id="style3538">
+	.st0{display:none;}
+	.st1{display:inline;}
+	.st2{fill:#99CC33;}
+	.st3{fill:#FFFFFF;}
+	.st4{fill:#343433;}
+	.st5{font-family:'Roboto-Bold';}
+	.st6{font-size:110.6092px;}
+	.st7{font-family:'Roboto-Light';}
+	.st8{font-size:68.7016px;}
+	.st9{fill:#666666;}
+	.st10{fill:#F4D30B;}
+	.st11{fill:#0084AB;}
+</style><g
+     id="BG"
+     class="st0"
+     style="display:none" /><g
+     id="g3550"
+     inkscape:export-xdpi="90"
+     inkscape:export-ydpi="90"
+     transform="translate(8,-26)"><g
+       id="g3552"><path
+         style="fill:#f4d30b"
+         inkscape:connector-curvature="0"
+         id="path3554"
+         d="M 145.8,44.8 C 132.6,32 115.2,25 96.8,25 57.8,25 26,56.8 26,95.8 c 0,12.3 3.2,24.5 9.4,35.2 l 2.1,3.6 8.1,-6.3 -1.5,-2.7 c -5.1,-9 -7.8,-19.3 -7.8,-29.7 0,-33.3 27.1,-60.4 60.4,-60.4 15.5,0 30.2,5.9 41.5,16.6 l 2.3,2.1 8.4,-6.6 -3.1,-2.8 z"
+         class="st10" /><path
+         style="fill:#0084ab"
+         inkscape:connector-curvature="0"
+         id="path3556"
+         d="m 158.3,60.7 -2.1,-3.6 -8.4,6.6 1.5,2.7 c 5.1,9 7.7,19.2 7.7,29.6 0,33.3 -27.1,60.4 -60.4,60.4 -15.5,0 -30.2,-5.9 -41.4,-16.5 l -2.3,-2.1 -8.1,6.4 3,2.9 c 13.3,12.7 30.7,19.7 49,19.7 39,0 70.8,-31.8 70.8,-70.8 0,-12.5 -3.2,-24.7 -9.3,-35.3 z"
+         class="st11" /></g><polygon
+       style="fill:#99cc33"
+       id="polygon3558"
+       points="81.8,100 81.8,213 195.8,213 171.1,183 112.8,183 112.8,75.3 "
+       class="st2" /></g></svg>

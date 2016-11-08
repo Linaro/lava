@@ -116,6 +116,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
         self.assertIn('context', data)
+        self.assertIn('priority', data)
         self.assertEqual(data['context']['arch'], self.conf['arch'])
 
     def test_make_device(self):
@@ -133,6 +134,13 @@ class PipelineDeviceTags(TestCaseWithFactory):
         TestJob.from_yaml_and_user(
             self.factory.make_job_json(),
             self.factory.make_user())
+
+    def test_priority(self):
+        self.factory.make_device(self.device_type, 'fakeqemu3')
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(),
+            self.factory.make_user())
+        self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
         Tag.objects.all().delete()
@@ -328,19 +336,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(assigned, device2)
         self.assertEqual(set(device2.tags.all()), set(server_job.tags.all()))
 
-    def test_invalid_device(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        job_def = yaml.load(job.definition)
-        job_ctx = job_def.get('context', {})
-        device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
-        del device_config['device_type']
-        parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, None, None, output_dir='/tmp')
-
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
         self.assertTrue(device.is_pipeline)
@@ -404,6 +399,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'tftp_mac': 'FF:01:00:69:AA:CC',
             'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
             'console_device': 'ttyAMX0',
+            'base_ip_args': 'ip=dhcp'
         }
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
@@ -1060,12 +1056,21 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         device_dict = DeviceDictionary(hostname='bbb-01')
         device_dict.parameters = {
             'bootloader_prompt': '=>',
             'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-02')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6005',
             'extends': 'beaglebone-black.jinja2',
         }
         device_dict.save()
@@ -1076,6 +1081,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_object_list:
             definition = yaml.load(job.definition)
             self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            sub_ids = [job.sub_id for job in job_object_list]
+            self.assertEqual(len(set(sub_ids)), len(sub_ids))
             if job.requested_device_type.name == 'qemu':
                 job.actual_device = Device.objects.get(hostname='fakeqemu1')
             elif job.requested_device_type.name == 'beaglebone-black':
@@ -1120,6 +1127,45 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
+
+    def test_multinode_essential(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        bbb_type = self.factory.make_device_type('beaglebone-black')
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-01')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        device_dict = DeviceDictionary(hostname='bbb-02')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6005',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'bbb-qemu-multinode.yaml'), 'r'))
+        self.assertIn('protocols', submission)
+        self.assertIn(MultinodeProtocol.name, submission['protocols'])
+        submission['protocols'][MultinodeProtocol.name]['roles']['server']['essential'] = True
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        for job in job_object_list:
+            definition = yaml.load(job.definition)
+            role = definition['protocols'][MultinodeProtocol.name]['role']
+            self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            if role == 'client':
+                self.assertFalse(job.essential_role)
+            elif role == 'server':
+                self.assertTrue(job.essential_role)
+            else:
+                self.fail("Unexpected role: %s" % role)
 
 
 class VlanInterfaces(TestCaseWithFactory):

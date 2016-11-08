@@ -11,7 +11,6 @@ import jinja2
 import datetime
 import logging
 import simplejson
-from traceback import format_exc
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
@@ -30,8 +29,6 @@ from lava_scheduler_app.models import (
 )
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import JobError
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -433,7 +430,7 @@ def _validate_idle_device(job, device):
     if jobs:
         logger.warning(
             "%s (which has current_job %s) is already referenced by %d jobs %s",
-            device.hostname, device.current_job, len(jobs), [job.id for job in jobs])
+            device.hostname, device.current_job, len(jobs), [j.id for j in jobs])
         if len(jobs) == 1:
             logger.warning(
                 "Fixing up a broken device reservation for %s on %s",
@@ -551,7 +548,7 @@ def assign_jobs():
                     device.current_job = job
                     # implicit device save in state_transition_to()
                     device.state_transition_to(
-                        Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job)
+                        Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job, master=True)
             except IntegrityError:
                 # Retry in the next call to _assign_jobs
                 logger.warning(
@@ -580,7 +577,7 @@ def create_job(job, device):
     device.current_job = job
     new_status = Device.RESERVED
     msg = "Reserved for job %d" % job.id
-    device.state_transition_to(new_status, message=msg, job=job)
+    device.state_transition_to(new_status, message=msg, job=job, master=True)
     device.status = new_status
     # Save the result
     job.save()
@@ -599,7 +596,7 @@ def start_job(job):
     new_status = Device.RUNNING
     job.save()
     if not job.dynamic_connection:
-        device.state_transition_to(new_status, message=msg, job=job)
+        device.state_transition_to(new_status, message=msg, job=job, master=True)
         device.status = new_status
         # Save the result
         device.save()
@@ -611,11 +608,14 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
     in the same multinode group.
     If not multinode, simply wraps end_job.
     """
-    if not job.is_multinode:
+    if not job.is_multinode or not job.essential_role:
         end_job(job, fail_msg=fail_msg, job_status=job_status)
         return
     for failed_job in job.sub_jobs_list:
-        end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
+        if job == failed_job:
+            end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
+        else:
+            end_job(failed_job, fail_msg=fail_msg, job_status=TestJob.CANCELING)
 
 
 def handle_health(job):
@@ -642,7 +642,7 @@ def handle_health(job):
         # would go into running with no current job, so we need OFFLINE
         # so that put_into_online_mode goes to IDLE.
         # FIXME: once V1 code is removed, standardise this state machine.
-        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job)
+        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job, master=True)
     elif job.status == TestJob.COMPLETE:
         device.health_status = Device.HEALTH_PASS
     elif job.status == TestJob.CANCELED:
@@ -674,7 +674,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     # Transition device only if it's not in OFFLINE/ING mode
     # (by failed health check job which already transitions it)
     if device.status not in [Device.OFFLINE, Device.OFFLINING]:
-        device.state_transition_to(Device.IDLE, message=msg, job=job)
+        device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     device.current_job = None
     # Save the result
     job.save()
@@ -689,7 +689,7 @@ def cancel_job(job):
         return
     msg = "Job %d cancelled" % job.id
     device = handle_health(job)
-    device.state_transition_to(Device.IDLE, message=msg, job=job)
+    device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
@@ -749,7 +749,6 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
     # Load job definition to get the variables for template rendering
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
-    parser = JobParser()
     device = None
     device_object = None
     if not job.dynamic_connection:
@@ -792,49 +791,32 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         if 'target' not in device_object:
             device_object.target = device.hostname
         device_object['hostname'] = device.hostname
+    return device
 
-    # write the pipeline description to the job output directory.
-    # Can only validate this job for this device, even with multinode
-    # dynamic connections still get the device config of the host
+
+def parse_job_description(job):
+    filename = os.path.join(job.output_dir, 'description.yaml')
+    logger = logging.getLogger('dispatcher-master')
     try:
-        logger.info("[%d] Parsing definition", job.id)
-        # pass (unused) output_dir just for validation as there is no zmq socket either.
-        pipeline_job = parser.parse(
-            job.definition, device_object,
-            job.id, None, None, None, output_dir=job.output_dir)
-    except (
-            AttributeError, JobError, NotImplementedError,
-            KeyError, TypeError, RuntimeError) as exc:
-        exc = format_exc(exc)
-        logger.error('[%d] parser error: %s', job.id, exc)
-        fail_job(job, fail_msg=exc)
-        return None
+        with open(filename, 'r') as f_describe:
+            description = f_describe.read()
+        pipeline = yaml.load(description)
+    except (IOError, yaml.YAMLError):
+        logger.error("'Unable to open and parse '%s'", filename)
+        return
 
-    pipeline = pipeline_job.describe()
-    if not os.path.exists(job.output_dir):
-        os.makedirs(job.output_dir)
-    pipeline_dump = yaml.dump(pipeline)
-    with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-        describe_yaml.write(pipeline_dump)
-    if not map_metadata(pipeline_dump, job):
+    if not map_metadata(description, job):
         logger.warning("[%d] unable to map metadata", job.id)
 
     # add the compatibility result from the master to the definition for comparison on the slave.
-    if 'compatibility' in pipeline:
-        try:
-            compat = int(pipeline['compatibility'])
-        except ValueError:
-            logger.error("[%d] Unable to parse job compatibility: %s",
-                         job.id, pipeline['compatibility'])
-            compat = 0
-        job.pipeline_compatibility = compat
-        job.save(update_fields=['pipeline_compatibility'])
-    else:
-        logger.error("[%d] Unable to identify job compatibility.", job.id)
-        fail_job(job, fail_msg='Unknown compatibility')
-        return None
-
-    return device
+    try:
+        compat = int(pipeline['compatibility'])
+    except ValueError:
+        logger.error("[%d] Unable to parse job compatibility: %s",
+                     job.id, pipeline['compatibility'])
+        compat = 0
+    job.pipeline_compatibility = compat
+    job.save(update_fields=['pipeline_compatibility'])
 
 
 def device_type_summary(visible=None):

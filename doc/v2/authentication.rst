@@ -1,39 +1,40 @@
+.. index:: user authentication
+
 .. _user_authentication:
 
-User authentication
-===================
+Configuring user authentication
+===============================
 
-LAVA frontend is developed using Django_ web application framework
-and user authentication and authorization is based on standard `Django
-auth subsystems`_. This means that it is fairly easy to integrate authentication
-against any source for which Django backend exists. Discussed below are
+The LAVA frontend is developed using the Django_ web application framework and
+user authentication and authorization is based on the standard `Django auth
+subsystems`_. This means that it is fairly easy to integrate authentication
+against any source for which a Django backend exists. Discussed below are the
 tested and supported authentication methods for LAVA.
 
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
 .. note:: The previous OpenID support is not compatible with newer versions of django
-   (versions 1.8 or later). As of LAVA version 2016.8, versions of django
-   older than 1.8 are not supported, so installing this version will **remove**
-   the OpenID support.
+   (versions 1.8 or later). As of LAVA version 2016.8, versions of django older
+   than 1.8 are not supported, so installing this version will **remove** the
+   OpenID support.
 
-Local Django user accounts are supported. When using local Django
-user accounts, new user accounts need to be created by Django admin prior
-to use.
+Local Django user accounts are supported. When using local Django user
+accounts, new user accounts need to be created by Django admin prior to use.
 
 .. _ldap_authentication:
 
 Using Lightweight Directory Access Protocol (LDAP)
 --------------------------------------------------
 
-LAVA server could be configured to authenticate via Lightweight
-Directory Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_
-backend for LDAP authentication.
+LAVA server could be configured to authenticate via Lightweight Directory
+Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_ backend for LDAP
+authentication.
 
 .. _`django_auth_ldap`: http://www.pythonhosted.org/django-auth-ldap/
 
-Your chosen LDAP server is configured using the following parameters
-in ``/etc/lava-server/settings.conf`` (JSON syntax)::
+Your chosen LDAP server is configured using the following parameters in
+``/etc/lava-server/settings.conf`` (JSON syntax)::
 
   "AUTH_LDAP_SERVER_URI": "ldap://ldap.example.com",
   "AUTH_LDAP_BIND_DN": "",
