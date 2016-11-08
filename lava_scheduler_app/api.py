@@ -258,9 +258,10 @@ class SchedulerAPI(ExposedAPI):
         Return value
         ------------
         This function returns an XML-RPC array in which each item is a list of
-        device hostname, device type, device state and current running job id. For example:
+        device hostname, device type, device state, current running job id and
+        if device is pipeline. For example:
 
-        [['panda01', 'panda', 'running', 164], ['qemu01', 'qemu', 'idle', None]]
+        [['panda01', 'panda', 'running', 164, False], ['qemu01', 'qemu', 'idle', None, True]]
         """
 
         devices_list = []
@@ -271,7 +272,7 @@ class SchedulerAPI(ExposedAPI):
                 continue
             devices_list.append(dev)
 
-        return [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None))
+        return [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None, dev.is_pipeline))
                 for dev in devices_list]
 
     def all_device_types(self):
