@@ -1,0 +1,40 @@
+device_type: qemu
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+          guest:
+            size: 512  # in Mb
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      qemu:
+        parameters:
+          command:
+            qemu-system-aarch64
+          boot_options:
+            root: '/dev/vda2 rw rootwait'
+            console: 'ttyAMA0 115200'
+            ip: dhcp
+            mem: 1024M
+            boot_order: c  # See qemu-system man page for -boot [order=drives] option - arch-specific
+          options:
+            - -cpu cortex-a57
+            - -machine virt
+            - -nographic
+            - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
+            - -m 2048
+            - -monitor none
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    umount-retry:
+      seconds: 57
+    lava-test-shell:
+      seconds: 30

@@ -106,11 +106,11 @@ class MonitorBootloaderAutoBoot(Action):
         connection = super(MonitorBootloaderAutoBoot, self).run(connection, args)
         params = self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']
         connection.prompt_str = params.get('autoboot_prompt', UBOOT_AUTOBOOT_PROMPT)
-        self.logger.debug("Waiting for prompt: %s" % connection.prompt_str)
+        self.logger.debug("Waiting for prompt: %s", connection.prompt_str)
         self.wait(connection)
         # allow for auto_login
         connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Waiting for prompt: %s" % connection.prompt_str)
+        self.logger.debug("Waiting for prompt: %s", connection.prompt_str)
         self.wait(connection)
         return connection
 

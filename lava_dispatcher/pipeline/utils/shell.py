@@ -20,7 +20,6 @@
 
 import logging
 import os
-import pexpect
 from stat import S_IXUSR
 from lava_dispatcher.pipeline.action import InfrastructureError, TestError
 

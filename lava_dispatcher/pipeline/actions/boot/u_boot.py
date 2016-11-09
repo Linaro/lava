@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
+    UBOOT_INTERRUPT_CHARACTER,
     UBOOT_DEFAULT_CMD_TIMEOUT,
     BOOT_MESSAGE,
 )
@@ -202,13 +203,21 @@ class UBootInterrupt(Action):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
         connection = super(UBootInterrupt, self).run(connection, args)
-        self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
-        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
-        # command = self.job.device['commands'].get('interrupt', '\n')
-        self.wait(connection)
-        connection.sendline(' \n')
         device_methods = self.job.device['actions']['boot']['methods']
+        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
+        interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
+        # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
+        interrupt_char = device_methods['u-boot']['parameters'].get('interrupt_char', UBOOT_INTERRUPT_CHARACTER)
+        # vendor u-boot builds may require one or more control characters
+        interrupt_control_chars = device_methods['u-boot']['parameters'].get('interrupt_ctrl_list', [])
+        self.logger.debug("Changing prompt to '%s'", interrupt_prompt)
+        connection.prompt_str = interrupt_prompt
+        self.wait(connection)
+        if interrupt_control_chars:
+            for char in interrupt_control_chars:
+                connection.sendcontrol(char)
+        else:
+            connection.sendline('%s\n' % interrupt_char)
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.wait(connection)
         return connection
@@ -241,7 +250,7 @@ class UBootSecondaryMedia(Action):
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
 
-        self.set_common_data('file', 'kernel', self.parameters['kernel'])
+        self.set_common_data('file', 'kernel', self.parameters.get('kernel', ''))
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])

@@ -25,13 +25,13 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
     QCowConversionAction,
 )
+from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
@@ -44,9 +44,9 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        path = mkdtemp()
+        path = self.mkdtemp()
         if 'uefi' in parameters:
-            uefi_path = mkdtemp()
+            uefi_path = self.mkdtemp()
             download = DownloaderAction('uefi', uefi_path)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
@@ -65,6 +65,13 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
         self.internal_pipeline.add_action(ApplyOverlayGuest())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
+    def validate(self):
+        super(DeployImagesAction, self).validate()
+        self.set_common_data(
+            'lineseparator',
+            'os_linesep',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
+
 
 class DeployMonitoredAction(DeployAction):
 
@@ -76,7 +83,7 @@ class DeployMonitoredAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        path = mkdtemp()
+        path = self.mkdtemp()
         for image in parameters['images'].keys():
             if image != 'yaml_line':
                 download = DownloaderAction(image, path)
@@ -106,7 +113,46 @@ class DeployMonitoredQEMU(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
+            return False
+        if parameters['to'] != 'tmpfs':
+            return False
+        # lookup if the job parameters match the available device methods
+        if 'images' not in parameters:
+            # python3 compatible
+            # FIXME: too broad
+            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
+            return False
+        if 'type' not in parameters.keys():
+            return False
+        if parameters['type'] != 'monitor':
+            return False
+        return True
+
+
+class DeployMonitoredPyOCD(Deployment):
+    """
+    Strategy class for a PyOCD deployment not using
+    the POSIX Lava Test Shell overlays.
+    """
+    compatibility = 4
+
+    def __init__(self, parent, parameters):
+        super(DeployMonitoredPyOCD, self).__init__(parent)
+        self.action = DeployMonitoredAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        """
+        As a classmethod, this cannot set data
+        in the instance of the class.
+        This is *not* the same as validation of the action
+        which can use instance data.
+        """
+        if 'pyocd' not in device['actions']['deploy']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False
@@ -154,7 +200,7 @@ class DeployImages(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        if device['device_type'] != 'qemu':
+        if 'image' not in device['actions']['deploy']['methods']:
             return False
         if parameters['to'] != 'tmpfs':
             return False

@@ -39,6 +39,9 @@ MAX_RETRY = 5
 # u-boot auto boot prompt
 UBOOT_AUTOBOOT_PROMPT = "Hit any key to stop autoboot"
 
+# u-boot interrupt character
+UBOOT_INTERRUPT_CHARACTER = ' '
+
 # u-boot default timeout for commands
 UBOOT_DEFAULT_CMD_TIMEOUT = 90
 
@@ -113,7 +116,7 @@ BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
 
 # Timeout for USB devices to settle and show up
-USB_SHOW_UP_TIMEOUT = 20
+USB_SHOW_UP_TIMEOUT = 30
 
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string
@@ -122,6 +125,8 @@ KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'
 KERNEL_FREE_INIT_MSG = 'Freeing init memory'
 # exception
 KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+# stack trace
+KERNEL_TRACE_MSG = 'Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 # unhandled fault
 KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
 # panic
@@ -143,3 +148,10 @@ SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
 
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
+
+# override os.linesep which is platform-dependent based on the dispatcher, not device.
+LINE_SEPARATOR = '\r\n'
+
+# valid characters in components of a test definition name
+# excludes whitespace and punctuation (except hyphen and underscore)
+DEFAULT_TESTDEF_NAME_CLASS = r'^[\w\d\_\-]+$'

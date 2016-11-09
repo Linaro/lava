@@ -508,7 +508,8 @@ class Target(object):
             connection.expect(self.config.interrupt_boot_prompt,
                               timeout=self.config.bootloader_timeout)
             if self.config.interrupt_boot_control_character:
-                connection.sendcontrol(self.config.interrupt_boot_control_character)
+                for ch in self.config.interrupt_boot_control_character:
+                    connection.sendcontrol(ch)
             else:
                 connection.send(self.config.interrupt_boot_command)
             # Record the time it takes to enter the bootloader.

@@ -42,10 +42,10 @@ actions:
     images:
         hdimg:
           image_arg: -drive if=none,file={hdimg},id=hd0,format=raw -device virtio-blk-device,drive=hd0
-          url: http://ironhide.bounceme.net/luvos/luv-live-image.img
+          url: http://images.validation.linaro.org/functional-test-images/luvos/luv-live-image.img
         bios:
           image_arg: -bios {bios}
-          url: http://ironhide.bounceme.net/luvos/QEMU_EFI.fd
+          url: http://images.validation.linaro.org/functional-test-images/luvos/QEMU_EFI.fd
 
 - boot:
     method: monitor

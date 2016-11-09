@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
-import os
 import pexpect
 import sys
 import time
@@ -31,7 +30,10 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
-from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
+from lava_dispatcher.pipeline.utils.constants import (
+    SHELL_SEND_DELAY,
+    LINE_SEPARATOR
+)
 
 
 class ShellLogger(object):
@@ -70,11 +72,6 @@ class ShellLogger(object):
         sys.stdout.flush()
         sys.stderr.flush()
 
-    def __del__(self):
-        # Only needed for processes that does not end output with a new line.
-        if self.line:
-            self.write('\n')
-
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     """
@@ -98,6 +95,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         )
         self.name = "ShellCommand"
         self.logger = logger
+        # os.linesep is based on the interpreter running the dispatcher, not the target device
+        self.linesep = LINE_SEPARATOR
         # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
@@ -117,7 +116,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         else:
             self.logger.debug({"sending": s})
         self.send(s, delay, send_char)
-        self.send(os.linesep, delay)
+        self.send(self.linesep, delay)
 
     def sendcontrol(self, char):
         self.logger.debug("sendcontrol: %s", char)
@@ -129,6 +128,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
         sent = 0
+        if not string:
+            return sent
         delay = float(delay) / 1000
         if send_char:
             for char in string:

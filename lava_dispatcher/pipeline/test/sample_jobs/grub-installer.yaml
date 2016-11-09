@@ -20,7 +20,7 @@ actions:
          url: https://builds.96boards.org/releases/reference-platform/components/debian-installer/16.03/debian-installer/arm64/initrd.gz
          compression: gz
      preseed:
-         url: http://ironhide.bounceme.net/d02/preseed-lava.cfg
+         url: http://images.validation.linaro.org/functional-test-images/d02/preseed-lava.cfg
      os: debian_installer
 
   - boot:

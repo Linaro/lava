@@ -23,10 +23,10 @@ actions:
      kernel:
          url: http://storage.kernelci.org/next/next-20160120/arm-multi_v7_defconfig+CONFIG_LKDTM=y/zImage
      nfsrootfs:
-         url: http://ironhide.bounceme.net/debian-jessie-arm64-rootfs.tar.gz
+         url: http://images.validation.linaro.org/functional-test-images/debian-jessie-arm64-rootfs.tar.gz
          compression: gz
      modules:
-         url: http://ironhide.bounceme.net/tk1/modules.tar.xz
+         url: http://images.validation.linaro.org/functional-test-images/tk1/modules.tar.xz
          compression: xz
 
      os: oe

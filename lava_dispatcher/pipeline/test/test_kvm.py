@@ -295,6 +295,33 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
 
+    def test_extra_options(self):
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm-inline.yaml')
+        with open(kvm_yaml) as sample_job_data:
+            job_data = yaml.load(sample_job_data)
+        device['actions']['boot']['methods']['qemu']['parameters']['extra'] = yaml.load("""
+                  - -smp
+                  - 1
+                  - -global
+                  - virtio-blk-device.scsi=off
+                  - -device virtio-scsi-device,id=scsi
+                  - --append "console=ttyAMA0 root=/dev/vda rw"
+                  """)
+        self.assertIsInstance(device['actions']['boot']['methods']['qemu']['parameters']['extra'][1], int)
+        parser = JobParser()
+        job = parser.parse(yaml.dump(job_data), device, 4212, None, None, None,
+                           output_dir='/tmp/')
+        job.validate()
+        boot_image = [action for action in job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        qemu = [action for action in boot_qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.assertIsInstance(qemu.sub_command, list)
+        [self.assertIsInstance(item, str) for item in qemu.sub_command]
+        self.assertIn('virtio-blk-device.scsi=off', qemu.sub_command)
+        self.assertIn('1', qemu.sub_command)
+        self.assertNotIn(1, qemu.sub_command)
+
     def test_pipeline(self):
         description_ref = pipeline_reference('kvm-inline.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
@@ -319,7 +346,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         inline_repo.data['test-definition'] = {'overlay_dir': location}
 
         inline_repo.run(None)
-        yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
+        yaml_file = os.path.join(location, '0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, 'r') as f_in:
             testdef = yaml.load(f_in)
@@ -352,6 +379,7 @@ class TestAutoLogin(unittest.TestCase):
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
+        self.job.validate()
 
         bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
@@ -362,6 +390,8 @@ class TestAutoLogin(unittest.TestCase):
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
+
+        self.assertIsNotNone(autologinaction.get_common_data('lineseparator', 'os_linesep'))
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
@@ -454,7 +484,7 @@ class TestAutoLogin(unittest.TestCase):
         bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
-        autologinaction.parameters.update({'prompts': 'root@debian:~#'})
+        autologinaction.parameters.update({'prompts': ['root@debian:~#']})
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()

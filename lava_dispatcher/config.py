@@ -312,6 +312,7 @@ class DeviceSchema(schema.Schema):
     uimage_xip = schema.BoolOption(default=False)
     append_dtb = schema.BoolOption(default=False)
     prepend_blob = schema.StringOption(default=None)
+    ramdisk_raw = schema.BoolOption(default=False)
 
     # for dynamic_vm devices
     dynamic_vm_backend_device_type = schema.StringOption(default='kvm')

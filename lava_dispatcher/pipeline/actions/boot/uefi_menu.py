@@ -31,7 +31,7 @@ from lava_dispatcher.pipeline.menus.menus import (
     MenuReset
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.power import ResetDevice, FastBootRebootAction
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
@@ -76,23 +76,27 @@ class UEFIMenuInterrupt(MenuInterrupt):
 
     def __init__(self):
         super(UEFIMenuInterrupt, self).__init__()
-        self.interrupt_prompt = None
-        self.interrupt_string = None
+        self.name = 'uefi-menu-interrupt'
+        self.summary = 'interrupt for uefi menu'
+        self.description = 'interrupt for uefi menu'
 
     def validate(self):
         super(UEFIMenuInterrupt, self).validate()
         params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
-        self.interrupt_prompt = params['interrupt_prompt']
-        self.interrupt_string = params['interrupt_string']
+        if 'interrupt_prompt' not in params:
+            self.errors = "Missing interrupt prompt"
+        if 'interrupt_string' not in params:
+            self.errors = "Missing interrupt string"
 
     def run(self, connection, args=None):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
         connection = super(UEFIMenuInterrupt, self).run(connection, args)
-        connection.prompt_str = self.interrupt_prompt
+        params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
+        connection.prompt_str = params['interrupt_prompt']
         self.wait(connection)
-        connection.raw_connection.send(self.interrupt_string)
+        connection.raw_connection.send(params['interrupt_string'])
         return connection
 
 
@@ -214,8 +218,6 @@ class UefiMenuAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'commands' in parameters and 'fastboot' in parameters['commands']:
             self.internal_pipeline.add_action(UefiSubstituteCommands())
-            self.internal_pipeline.add_action(MenuConnect())
-            self.internal_pipeline.add_action(FastBootRebootAction())
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(UefiMenuSelector())
             self.internal_pipeline.add_action(MenuReset())
@@ -230,5 +232,3 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(MenuReset())
             self.internal_pipeline.add_action(AutoLoginAction())
             self.internal_pipeline.add_action(ExportDeviceEnvironment())
-            self.internal_pipeline.add_action(ConnectLxc())
-            self.internal_pipeline.add_action(WaitForAdbDevice())

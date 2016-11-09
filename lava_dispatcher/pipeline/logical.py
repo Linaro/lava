@@ -60,7 +60,9 @@ class RetryAction(Action):
                     return new_connection
             except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
-                self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
+                self.logger.error(msg)
+                self.errors = msg
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
