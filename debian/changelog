@@ -1,3 +1,146 @@
+lava-server (2016.11-1) unstable; urgency=medium
+
+  * New production release aimed at Stretch. 
+    Release details available at:
+    https://projects.linaro.org/browse/LAVA-789?filter=12078
+  * Drop dependency on libapache2-mod-uwsgi and libapache2-mod-wsgi.
+    Replaced by dependency on gunicorn.
+  * Require sphinx 1.4 or later for correct theme support.
+  * Downgrade linaro-image-tools and fuse to Recommends
+  * Update compat version.
+  * Highlights of upstream changes:
+    Note about removing adb and fastboot packages in LXC admin doc.
+    LAVA-789 - Document LXC support in V2
+    LAVA-788 - link to sub_jobs_list from results
+    Expand user notification documentation.
+    Move jinja template tests to unittest
+    Adding target interface entries to juno-uboot.jinja2
+    Add docs on notifications
+    Update home page documentation links
+    Improve documentation on metadata and job_name
+    Fix up glossary page
+    Tweak docs handling standard test jobs
+    Example jobs need auto_login support
+    Fix missing create_device_database ref
+    Port the documentation change for essential roles
+    Tweak the doc build options
+    Add notes on multiple hacking sessions
+    Update debugging docs for tmp file changes
+    LAVA-65 document recording measurements
+    LAVA-780 stop referring to wheezy images
+    Avoid crash in master on early failure
+    Remove beautify.js and fix yaml URL submission.
+    Update screenshot for cancel button fix
+    Fix visibility of the Cancel and Admin buttons
+    Update docs to reinstate web UI submission
+    Add a helper to add devices from cmd line
+    Remove old link about LAVA packaging which contains stale information.
+    LAVA-749 - Add actions column to results pages.
+    Ensure lava-server-gunicorn restarts cleanly
+    results: do not crash if the description is empty
+    Job submission UI for v2.
+    Add copy to clipboard button for job definition.
+    Turn all action durations into result measurements
+    Updating juno-uboot.jinja2
+    Add a log file for gunicorn logs.
+    Fix the LAVA logo
+    Ensure the V2 layout is included on jessie.
+    bootstrap: do not use the minified CSS
+    Results: fix HTML syntax
+    Use sensible default for interrupt string in HiKey jinja.
+    LAVA-749 - Improve query pages
+    Fix unit test to have unique test definition names
+    Add pre_* commands to base.jinja2 that will be applied conditionally.
+    Remove unused dependendies on lava_dispatcher
+    Fix a variable redefinition in list comprehension
+    Update contents and organise toctree
+    Allow changing the timeouts for auto-login-action
+    Add documentation on QEMU standard kernel tests
+    Remove old mention of JSON
+    master: set the failure_comment
+    Add a template for highbank using base-uboot
+    Remove hardcoded values from base
+    Fix profile page error due to wrong device health history url reference.
+    metadata: fix a crash if the description is invalid
+    Cover lava-coordinator in changes for V1 workers
+    LAVA-522 Link in existing docs on replacing vmgroups
+    Extend the qemu options docs
+    Fix index links and debugging doc links
+    LAVA-735 describe anonymous access to JIRA
+    qemu.jinja2: use qemu-system-i386 for i386
+    Extend docs for disabling V1 on a master.
+    Fix HTTP 500 on query views when a group is used.
+    LAVA-765 V1 MultiNode sub_id correction
+    Fix jinja2 syntax issues in base-uboot
+    Fix sub_id assignment in V2
+    Improved debugging docs
+    Add content for growing your lab.
+    Improve first device and first job pages
+    Update apache docs for gunicorn
+    Update hacking sessions and lava-network docs
+    Enable vland for overdrive
+    Fix uWSGI configuration file
+    Add notes on removing V1 from dispatchers
+    Add a helper to add device types from cmd line
+    DeviceType admin: fix has_health_check computation
+    Replace ip=dhcp with {{ base_ip_args }}
+    timing: add the corresponding timeout
+    Fix typo in the title of the result download link
+    Add ip=dhcp for juno with a base default
+    Fix page to show health history of my devices and not my device type.
+    Fix error on 'Devices Health History' page in django 1.10
+    Fix user profile page error in django 1.10
+    Create a base uboot jinja template
+    Use Gunicorn instead of uWSGI
+    wsgi: use the Django public API
+    index: add the missing title
+    Mark support for LAVA in Debian testing.
+    Expand the context schema for extra_options
+    Add the new LAVA logo to the front page of the V2 docs
+    Warn if a pipeline device does not have a template
+    master: don't generate the description
+    Add nxp-k64f jinja2
+    Add nrf52-nitrogen jinja2
+    Add drafts of new logos with SVG.
+    Extend base timeouts and convert to minutes
+    Handle inline definitions using only install steps
+    job details: removed unused template variable
+    master: don't print too many logs in debug
+    Fix build errors and simplify index pages
+    Add support for overdrive device type
+    Fix bad lookups into the glossary
+    Switch ASCII art to the existing SVG
+    Update dispatcher actions
+    Improve timing warning message
+    Document the principles of a CI Loop
+    master: remove the need for the ERROR message
+    Expand job_details doc string with available keys
+    Replace 1.10 deprecated get_field_by_name with get_field method.
+    Add support for extra QEMU options
+    LAVA-747 - Report parameters as result metadata
+    Switch from using png to svg for the architecture diagram
+    Add a page to display the pipeline timings
+    Expand glossary and add sections on parameters
+    Add D03 device type to pipeline
+    Add an introduction to results in LAVA.
+    Add docs on the standard test jobs
+    Simplify and clarify the "first install" docs
+    LAVA-584 - expand for  sub-types of device-types
+    LAVA-706 - codebase structure
+    Port submission priority support to V2
+    Adopt a similar contents layout to the django docs
+    Device dictionary output
+    Extend qemu jinja template for cortex-m3
+    Pipeline log: use a better icon for download
+    Update bootstrap from 3.1.1 to 3.3.7
+    Fix relative url for suite results
+    Add nbdroot as optional parameter to the schema
+    Update qemu/kvm templates to allow overriding of guestfs interface
+    LAVA-93 mark some roles as essential
+  
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 09 Nov 2016 11:49:24 +0000
+
 lava-server (2016.9-1) unstable; urgency=medium
 
   * 2016.9 production release
