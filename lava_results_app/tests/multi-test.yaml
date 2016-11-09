@@ -60,7 +60,7 @@ actions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
       path: lava-test-shell/single-node/singlenode02.yaml
-      name: singlenode-intermediate
+      name: singlenode-intermediate-2
 
 - test:
     timeout:

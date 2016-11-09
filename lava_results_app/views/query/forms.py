@@ -117,7 +117,7 @@ class QueryConditionForm(forms.ModelForm):
 
                 # Choices validation
                 field_object = form_data["table"].model_class()._meta.\
-                    get_field_by_name(form_data["field"])[0]
+                    get_field(form_data["field"])
                 choices = field_object.choices
                 if choices and form_data["value"] not in \
                    dict(choices).values():

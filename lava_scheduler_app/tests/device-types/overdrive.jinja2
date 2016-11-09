@@ -1,0 +1,88 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+
+device_type: overdrive
+{% set console_device = console_device | default('ttyAMA0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set kernel_args = kernel_args | default('acpi=force r8169.use_dac=1') %}
+{% block character_delays %}
+{% endblock %}
+
+{% block vland %}
+{{ super() }}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      grub:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
+          boot_message: {{ boot_message|default('Linux version') }}
+          send_char: True
+        ramdisk:
+          commands:
+          - insmod net
+          - insmod efinet
+          - insmod tftp
+          - insmod gzio
+          - insmod part_gpt
+          - insmod efi_gop
+          - set net_default_server={SERVER_IP}
+          - 'linux (tftp)/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} {{ base_ip_args }}'
+          - initrd (tftp)/{RAMDISK}
+          - devicetree (tftp)/{DTB}
+          - boot
+        nfs:
+          commands:
+          - insmod net
+          - insmod efinet
+          - insmod tftp
+          - insmod gzio
+          - insmod part_gpt
+          - insmod efi_gop
+          - set net_default_server={SERVER_IP}
+          - 'linux (tftp)/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw'
+          - initrd (tftp)/{RAMDISK}
+          - devicetree (tftp)/{DTB}
+          - boot
+{% endblock %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    pdu_reboot:
+      seconds: 3000
+  connections:
+    pdu_reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock %}

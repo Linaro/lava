@@ -241,3 +241,11 @@ def markup_metadata(key, value):
 @register.filter()
 def markup_completion(data):
     return [key for key, _ in data.items() if 'test' in key]
+
+
+@register.assignment_tag
+def can_view(record, user):
+    try:
+        return record.can_view(user)
+    except:
+        return False

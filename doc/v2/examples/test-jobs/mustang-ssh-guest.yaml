@@ -1,0 +1,164 @@
+job_name: secondary connection using a mustang and ssh
+
+timeouts:
+  action:
+    minutes: 3
+  job:
+    minutes: 30
+  connection:
+    minutes: 3
+
+# PROTOCOLS_BLOCK
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        connection: ssh
+        count: 3
+        expect_role: host
+        host_role: host
+        request: lava-start
+        timeout:
+          minutes: 15
+      host:
+        count: 1
+        device_type: mustang
+        timeout:
+          minutes: 10
+
+priority: medium
+visibility: public
+
+metadata:
+  docs-source: actions-deploy-to-ssh
+  docs-filename: mustang-ssh-guest.yaml
+
+actions:
+- deploy:
+    role:
+    - host
+    authorize: ssh
+    dtb:
+      url: http://images-internal/mustang/mustang.dtb_1.11
+    kernel:
+      url: http://images-internal/mustang/uImage_1.11
+    nfsrootfs:
+      url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+      compression: gz
+    os: debian
+    timeout:
+      minutes: 5
+    to: tftp
+
+# DEPLOY_SSH_BLOCK
+- deploy:
+    role:
+    - guest
+    connection: ssh
+    os: debian
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-wait
+        # messageID matches hostID
+        messageID: ipv4
+        message:
+          # the key of the message matches value of the host_key
+          # the value of the message gets substituted
+          ipaddr: $ipaddr
+        timeout:  # delay_start timeout
+          minutes: 5
+    timeout:
+      seconds: 30
+    to: ssh
+
+# BOOT_HOST_BLOCK
+- boot:
+    role:
+    - host
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    commands: nfs
+    prompts:
+    - 'root@linaro-nano:'
+    method: u-boot
+    timeout:
+      minutes: 5
+    type: bootm
+
+- boot:
+    role:
+    - guest
+    method: ssh
+    prompts:
+    - 'root@linaro-nano:'
+    - 'lava-test:'
+    parameters:
+      hostID: ipv4  # messageID
+      host_key: ipaddr  # message key
+    timeout:
+      minutes: 3
+
+- test:
+    role:
+    - host
+    definitions:
+    - from: inline
+      name: ssh-inline
+      path: inline/ssh-install.yaml
+      repository:
+        install:
+          deps:
+          - openssh-server
+        metadata:
+          description: install step
+          format: Lava-Test Test Definition 1.0
+          name: install-ssh
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - ls -al /root/.ssh/
+          - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+          - lava-send lava_start
+          - lava-sync clients
+    - from: git
+      name: smoke-tests
+      path: ubuntu/smoke-tests-basic.yaml
+      repository: 'git://git.linaro.org/qa/test-definitions.git'
+    timeout:
+      minutes: 30
+
+- test:
+    role:
+    - guest
+    definitions:
+    - from: git
+      name: pre-smoke-tests
+      path: ubuntu/smoke-tests-basic.yaml
+      repository: 'git://git.linaro.org/qa/test-definitions.git'
+    - from: inline
+      name: ssh-client
+      path: inline/ssh-client.yaml
+      repository:
+        metadata:
+          description: client complete
+          format: Lava-Test Test Definition 1.0
+          name: client-ssh
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - tar -tzf /$(pwd|awk -F'-' '{print $2}'|awk -F'/' '{print $1}')-overlay*.tar.gz
+          - lava-sync clients
+    - from: git
+      name: post-smoke-tests
+      path: ubuntu/smoke-tests-basic.yaml
+      repository: 'git://git.linaro.org/qa/test-definitions.git'
+    timeout:
+      minutes: 5

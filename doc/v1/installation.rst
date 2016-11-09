@@ -383,7 +383,7 @@ overlap.
 
 The ``favicon`` is configurable via the Apache configuration::
 
- Alias /favicon.ico /usr/share/lava-server/static/lava-server/images/linaro-sprinkles.png
+ Alias /favicon.ico /usr/share/lava-server/static/lava-server/images/logo.png
 
 LAVA Dispatcher network configuration
 =====================================

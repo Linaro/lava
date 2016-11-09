@@ -45,16 +45,16 @@
 <p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% else %}
-<p>You can use the <a href="{% url 'lava.scheduler.job.submit_wizard' %}">Job Submission Wizard GUI</a> for submitting jobs.</p>
-<p>Otherwise, paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
+<p>You can use the <a href="{% url 'lava.scheduler.job.submit_wizard' %}">Job Submission Wizard GUI</a> for submitting jobs (used for deprecated V1 only).</p>
+<p>Otherwise, paste your job definition here. Alternatively, you can paste a URL to your job definition file.</p>
 
 <form action="" method="post">
   {% csrf_token %}
   <div>
-    <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
+    <textarea id="definition-input" name="definition-input" placeholder="Enter your job definition or link to a job definition here.">{{ definition_input }}</textarea>
     <div id="busyIndicator"></div>
     <div>
-      <div id="json-valid-container">
+      <div id="valid_container">
       </div>
       <div>
         <input type="checkbox" name="is_favorite" id="is_favorite" {% if is_favorite %} checked {% endif %} />
@@ -64,7 +64,7 @@
         <input type="hidden" name="is_resubmit" value="true">
         <button class="btn btn-primary" id="validate" type="button">Validate</button>
         <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
-        <span id="validation_note">(Note: Please validate JSON before job submission.)</span>
+        <span id="validation_note">(Note: Please validate definition before job submission.)</span>
       </div>
     </div>
   </div>
@@ -82,7 +82,7 @@
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.min.js"></script>
 <script type="text/javascript">
-  var remote_json_url = '{% url 'lava.scheduler.get_remote_json' %}';
+  var remote_definition_url = '{% url 'lava.scheduler.get_remote_definition' %}';
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.min.js"></script>

@@ -2,12 +2,15 @@
 {% load i18n %}
 {% load keep_spacing %}
 {% load django_tables2 %}
+{% load results_accessibility_tags %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
 {% endblock %}
 
 {% block content %}
+
+{% is_accessible_by chart request.user as is_accessible %}
 
 <h1>Chart {{ chart.name }} <small><a href="{% url 'lava.results.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
 
@@ -72,15 +75,13 @@
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
     <div class="btn-group btn-group-justified">
-      {% if chart.owner == request.user or request.user.is_superuser or chart.group in request.user.groups.all %}
+      {% if is_accessible %}
       <div class="btn-group">
         <a href="{{ chart.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>
       <div class="btn-group">
         <a href="{{ chart.get_absolute_url }}/+delete" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
       </div>
-      {% endif %}
-      {% if chart.owner == request.user or request.user.is_superuser or chart.group in request.user.groups.all %}
       <div class="btn-group">
         <a href="{{ chart.get_absolute_url }}/+toggle-published" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
 	  {% if chart.is_published %}

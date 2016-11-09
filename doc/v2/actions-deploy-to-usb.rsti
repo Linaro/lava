@@ -1,0 +1,83 @@
+.. _deploy_to_usb:
+
+to: usb
+*******
+
+.. # not available yet .. seealso:: :ref:`secondary_media_example`
+
+.. there are no example test jobs for this action.
+
+Deploy unchanged images to secondary USB media. Any bootloader inside the image
+will **not** be used. Instead, the files needed for the boot are specified in
+the deployment. The entire physical device is available to the secondary
+deployment. Secondary relates to the expected requirement of a primary boot
+(e.g. ramdisk or NFS) which provides a suitable working environment to deploy
+the image directly to the secondary device. See :ref:`secondary_media`.
+
+Not all devices support USB media.
+
+The test writer needs to provide the following information about the image:
+
+.. index:: secondary media usb kernel
+
+.. _deploy_to_usb_kernel:
+
+kernel
+======
+
+* **kernel**: The path, within the image, to the kernel which
+  will be used by the bootloader.
+
+.. index:: secondary media usb ramdisk
+
+.. _deploy_to_usb_ramdisk:
+
+ramdisk
+=======
+
+* **ramdisk**: (optional). If used, must be a path, within the
+  image, which the bootloader can use.
+
+.. index:: secondary media usb dtb
+
+.. _deploy_to_usb_dtb:
+
+dtb
+===
+
+* **dtb**: The path, within the image, to the dtb which will be used by the
+  bootloader.
+
+.. index:: secondary media usb uuid
+
+.. _deploy_to_usb_uuid:
+
+UUID
+====
+
+* **UUID**: The UUID of the partition which contains the root filesystem of the
+  booted image.
+
+.. index:: secondary media usb boot_part
+
+.. _deploy_to_usb_boot_part:
+
+boot_part
+=========
+
+* **boot_part**: the partition on the media from which the bootloader can read
+  the kernel, ramdisk & dtb.
+
+.. note:: If the image mounts the boot partition at a mounpoint below the root
+   directory of the image, the path to files within that partition must **not**
+   include that mountpoint. The bootloader will read the files directly from
+   the partition.
+
+The UUID can be obtained by writing the image to local media and checking the
+contents of ``/dev/disk/by-uuid``
+
+The ramdisk may need adjustment for some bootloaders (like U-Boot), so mount
+the local media and use something like::
+
+ mkimage -A arm -T ramdisk -C none -d /mnt/boot/init.. /mnt/boot/init..u-boot
+

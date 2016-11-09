@@ -1,0 +1,56 @@
+commands:
+    connect: telnet localhost 0000
+    hard_reset: /usr/bin/pduclient --daemon services --hostname pdu00 --command reboot --port 00
+    power_off: /usr/bin/pduclient --daemon services --hostname pdu00 --command off --port 00
+    power_on: /usr/bin/pduclient --daemon services --hostname pdu00 --command on --port 00
+    pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 0000 -m sync -u 00
+    adb_command: adb -s 12312BA123B123B1
+    fastboot_command: fastboot -u -s 12312BA123B123B1
+device_type: hi6220-hikey
+adb_serial_number: 12312BA123B123B1
+fastboot_serial_number: 12312BA123B123B1
+device_path: ['/dev/hikey01']  # This is a symlink created for HiKey using a
+                               # udev rule.
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      uefi-menu:
+        parameters:
+          interrupt_prompt: "Android Fastboot mode"
+          interrupt_string: 'x'
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Booting Linux Kernel..."
+          send_char: True
+          character_delay: 10
+        fastboot:
+        - select:
+            items:
+             - 'boot from eMMC'
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 600
+    power_off:
+      seconds: 10

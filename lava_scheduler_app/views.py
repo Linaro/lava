@@ -1,4 +1,5 @@
-from collections import defaultdict
+# pylint: disable=too-many-lines,invalid-name
+from collections import defaultdict, OrderedDict
 import copy
 import yaml
 import json
@@ -8,6 +9,7 @@ import simplejson
 import StringIO
 import datetime
 import urllib2
+import re
 import sys
 
 from django import forms
@@ -31,7 +33,6 @@ from django.shortcuts import (
 from django.template import loader
 from django.db.models import Q, Count
 from django.utils import timezone
-
 from django_tables2 import (
     RequestConfig,
 )
@@ -50,20 +51,22 @@ from lava_scheduler_app.logfile_helper import (
 )
 from lava_scheduler_app.models import (
     Device,
+    DeviceDictionary,
     DeviceType,
     DeviceStateTransition,
     Tag,
     TestJob,
     TestJobUser,
     JSONDataError,
-    validate_job_json,
+    validate_job,
     DevicesUnavailableException,
     Worker,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     initiate_health_check_job,
-    device_type_summary
+    device_type_summary,
+    testjob_submission
 )
 from dashboard_app.models import BundleStream
 
@@ -592,24 +595,24 @@ def mydevice_list(request):
         request=request))
 
 
-@BreadCrumb("My Device Type Health History", parent=index)
-def mydevice_type_health_history_log(request):
-    prefix = "mydthealthhistory_"
-    mydthhistory_data = MyDTHealthHistoryView(request,
-                                              model=DeviceStateTransition,
-                                              table_class=DeviceTypeTransitionTable)
-    mydthhistory_table = DeviceTypeTransitionTable(
-        mydthhistory_data.get_table_data(prefix),
+@BreadCrumb("My Devices Health History", parent=index)
+def mydevices_health_history_log(request):
+    prefix = "mydeviceshealthhistory_"
+    mydeviceshhistory_data = MyDevicesHealthHistoryView(request,
+                                                        model=DeviceStateTransition,
+                                                        table_class=DeviceTypeTransitionTable)
+    mydeviceshhistory_table = DeviceTypeTransitionTable(
+        mydeviceshhistory_data.get_table_data(prefix),
         prefix=prefix,
     )
     config = RequestConfig(request,
-                           paginate={"per_page": mydthhistory_table.length})
-    config.configure(mydthhistory_table)
-    template = loader.get_template("lava_scheduler_app/mydevice_type_health_history_log.html")
+                           paginate={"per_page": mydeviceshhistory_table.length})
+    config.configure(mydeviceshhistory_table)
+    template = loader.get_template("lava_scheduler_app/mydevices_health_history_log.html")
     return HttpResponse(template.render(
         {
-            'mydthealthhistory_table': mydthhistory_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
+            'mydeviceshealthhistory_table': mydeviceshhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevices_health_history_log),
         },
         request=request))
 
@@ -619,17 +622,10 @@ def get_restricted_job(user, pk, request=None):
     accessibility to the object.
     """
     job = TestJob.get_by_job_number(pk)
-    device_type = job.job_device_type()
-    if not device_type:
-        # dynamic connection - might need to still be restricted?
+    if job.can_view(user):
         return job
-    if device_type.num_devices_visible_to(user) == 0:
-        raise Http404()
-    if utils.check_user_auth(user, job, request=request):
-        return job
-    if not job.is_accessible_by(user) and not user.is_superuser:
+    else:
         raise PermissionDenied()
-    return job
 
 
 def filter_device_types(user):
@@ -1053,12 +1049,11 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
-
         use_wizard = request.POST.get("wizard", None)
 
         if request.is_ajax():
             try:
-                validate_job_json(request.POST.get("json-input"))
+                validate_job(request.POST.get("definition-input"))
                 return HttpResponse(simplejson.dumps("success"))
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
@@ -1073,15 +1068,16 @@ def job_submit(request):
                 response_data["error"] = str(e)
 
             job_definition = _prepare_template(request)
-            response_data["json_input"] = str(job_definition).replace("'", '"')
+            response_data["definition_input"] = str(job_definition).replace(
+                "'", '"')
             template = loader.get_template("lava_scheduler_app/job_submit.html")
             return HttpResponse(template.render(
                 response_data, request=request))
 
         else:
             try:
-                json_data = request.POST.get("json-input")
-                job = TestJob.from_json_and_user(json_data, request.user)
+                definition_data = request.POST.get("definition-input")
+                job = testjob_submission(definition_data, request.user)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -1094,17 +1090,19 @@ def job_submit(request):
                         user=request.user, test_job=job)
                     testjob_user.is_favorite = True
                     testjob_user.save()
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(
                     response_data, request=request))
 
-            except (JSONDataError, ValueError, DevicesUnavailableException) \
-                    as e:
+            except Exception as e:
                 response_data["error"] = str(e)
                 response_data["context_help"] = "lava scheduler submit job",
-                response_data["json_input"] = request.POST.get("json-input")
+                response_data["definition_input"] = request.POST.get(
+                    "definition-input")
                 response_data["is_favorite"] = request.POST.get("is_favorite")
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(
                     response_data, request=request))
 
@@ -1349,7 +1347,6 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'description_file': description_filename(job.id),
             'log_data': log_data,
             'default_section': default_section,
         })
@@ -1417,7 +1414,6 @@ def job_definition(request, pk):
             'pipeline': description.get('pipeline', []),
             'job_file_present': bool(log_file),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         request=request))
@@ -1690,6 +1686,80 @@ def job_pipeline_sections(request, pk):
     return response
 
 
+@BreadCrumb("Job timing", parent=job_detail, needs=['pk'])
+def job_pipeline_timing(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if job.status == TestJob.SUBMITTED:
+        raise Http404
+
+    def dump_levels(conf):
+        lvls = []
+        for action in conf['pipeline']:
+            # In-depth first as that's the order when parsing the log file
+            if 'pipeline' in action:
+                lvls.extend(dump_levels({'pipeline': action['pipeline']}))
+            lvls.append((action['name'], action['level'], action['timeout']['duration']))
+        return lvls
+
+    try:
+        description = yaml.load(open(os.path.join(job.output_dir, 'description.yaml')))
+        logs = yaml.load(open(os.path.join(job.output_dir, 'output.yaml')))
+    except IOError:
+        raise Http404
+
+    # Add the validation that is not part of the description file
+    levels = [('validate', '0', '0')]
+    levels.extend(dump_levels(description))
+    # Pattern for the logs
+    pattern = re.compile('^(?P<action>[\\w_-]+) duration: (?P<duration>\\d+\\.\\d+)$')
+
+    index = 0
+    data = {}
+    for line in logs:
+        try:
+            match = pattern.match(line['msg'])
+        except TypeError:
+            continue
+        if match is not None:
+            d = match.groupdict()
+            timeout = float(levels[index][2])
+            try:
+                data[levels[index][1]] = (d['action'], float(d['duration']), timeout)
+            except ValueError:
+                # Set it to 0 if this is not a float
+                data[levels[index][1]] = (d['action'], 0.0, timeout)
+            index += 1
+
+    # Build the data objects for the template
+    # max, mean and summary and the completed (sorted) pipeline
+    actions = data.keys()
+    actions.sort()
+    pipeline = []
+    total_duration = 0
+    max_duration = 0
+    summary = []
+    for lvl in actions:
+        action = data[lvl][0]
+        duration = data[lvl][1]
+        timeout = data[lvl][2]
+        max_duration = max(max_duration, duration)
+        duration_close = duration >= timeout * 0.9 if timeout else False
+        pipeline.append((lvl, action, duration, timeout, duration_close))
+        if '.' not in lvl:
+            total_duration += duration
+            summary.append([action, duration, 0])
+
+    for index, action in enumerate(summary):
+        summary[index][2] = action[1] / total_duration * 100
+
+    return render(request, 'lava_scheduler_app/job_pipeline_timing.html',
+                  {'job': job, 'pipeline': pipeline, 'summary': summary,
+                   'total_duration': total_duration,
+                   'mean_duration': total_duration / len(actions),
+                   'max_duration': max_duration,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk)})
+
+
 def job_pipeline_incremental(request, pk):
     # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
     job = get_restricted_job(request.user, pk)
@@ -1925,8 +1995,8 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             try:
-                job = TestJob.from_json_and_user(
-                    request.POST.get("json-input"), request.user)
+                job = testjob_submission(request.POST.get("definition-input"),
+                                         request.user)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -1935,16 +2005,18 @@ def job_resubmit(request, pk):
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
-            except (JSONDataError, ValueError, DevicesUnavailableException) \
-                    as e:
+            except SubmissionError as e:
                 response_data["error"] = str(e)
-                response_data["json_input"] = request.POST.get("json-input")
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+                response_data["definition_input"] = request.POST.get(
+                    "definition-input")
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
+                return HttpResponse(
+                    template.render(response_data, request=request))
         else:
             if request.is_ajax():
                 try:
-                    validate_job_json(request.POST.get("json-input"))
+                    validate_job(request.POST.get("definition-input"))
                     return HttpResponse(simplejson.dumps("success"))
                 except Exception as e:
                     return HttpResponse(simplejson.dumps(str(e)),
@@ -1980,13 +2052,15 @@ def job_resubmit(request, pk):
                     "nor in the same group as the submitter. Please provide a bundle stream."
 
             try:
-                response_data["json_input"] = definition
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+                response_data["definition_input"] = definition
+                template = loader.get_template(
+                    "lava_scheduler_app/job_submit.html")
+                return HttpResponse(
+                    template.render(response_data, request=request))
             except (JSONDataError, ValueError, DevicesUnavailableException) \
                     as e:
                 response_data["error"] = str(e)
-                response_data["json_input"] = definition
+                response_data["definition_input"] = definition
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
@@ -2063,15 +2137,15 @@ def job_json(request, pk):
 
 
 @post_only
-def get_remote_json(request):
-    """Fetches remote json file."""
+def get_remote_definition(request):
+    """Fetches remote job definition file."""
     url = request.POST.get("url")
 
     try:
         data = urllib2.urlopen(url).read()
-        # Validate that the data at the location is really JSON.
+        # Validate that the data at the location is really JSON or YAML.
         # This is security based check so noone can misuse this url.
-        simplejson.loads(data)
+        yaml.load(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
                             content_type="application/json")
@@ -2199,16 +2273,16 @@ class DTHealthHistoryView(JobTableView):
         )
 
 
-class MyDTHealthHistoryView(JobTableView):
+class MyDevicesHealthHistoryView(JobTableView):
 
     def __init__(self, request, **kwargs):
-        super(MyDTHealthHistoryView, self).__init__(request, **kwargs)
+        super(MyDevicesHealthHistoryView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
         states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
 
         return DeviceStateTransition.objects.select_related(
-            'device__hostname', 'created_by'
+            'device', 'created_by'
         ).filter(
             (Q(old_state__in=states) | Q(new_state__in=states)),
             created_by=self.request.user
@@ -2287,9 +2361,15 @@ def device_detail(request, pk):
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
 
+    mismatch = False
+
     overrides = None
     if device.is_pipeline:
         overrides = []
+        path = utils.jinja_template_path(system=True)
+        devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % device.device_type.name)
+        mismatch = not os.path.exists(devicetype_file)
+
     template = loader.get_template("lava_scheduler_app/device.html")
     return HttpResponse(template.render(
         {
@@ -2325,6 +2405,52 @@ def device_detail(request, pk):
             'next_device': next_device,
             'previous_device': previous_device,
             'overrides': overrides,
+            'template_mismatch': mismatch,
+        },
+        request=request))
+
+
+@BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
+def device_dictionary(request, pk):
+    # Find the device and raise 404 if we are not allowed to see it
+    try:
+        device = Device.objects.select_related('device_type', 'user').get(pk=pk)
+    except Device.DoesNotExist:
+        raise Http404()
+
+    # Any user that can access to a device_type can
+    # see all the devices even if they are for owners_only
+    if device.device_type.owners_only:
+        if device.device_type.num_devices_visible_to(request.user) == 0:
+            raise Http404('No device matches the given query.')
+
+    if not device.is_pipeline:
+        raise Http404
+    device_dict = DeviceDictionary.get(device.hostname)
+    if device_dict:
+        device_dict = device_dict.to_dict()
+    dictionary = OrderedDict()
+    vland = OrderedDict()
+    extra = {}
+    sequence = utils.device_dictionary_sequence()
+    for item in sequence:
+        if item in device_dict['parameters'].keys():
+            dictionary[item] = device_dict['parameters'][item]
+    vlan_sequence = utils.device_dictionary_vlan()
+    for item in vlan_sequence:
+        if item in device_dict['parameters'].keys():
+            vland[item] = yaml.dump(device_dict['parameters'][item], default_flow_style=False)
+    for item in set(device_dict['parameters'].keys()) - set(sequence) - set(vlan_sequence):
+        extra[item] = device_dict['parameters'][item]
+    template = loader.get_template("lava_scheduler_app/devicedictionary.html")
+    return HttpResponse(template.render(
+        {
+            'device': device,
+            'dictionary': dictionary,
+            'vland': vland,
+            'extra': extra,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_dictionary, pk=pk),
+            'context_help': ['lava-scheduler-device-dictionary'],
         },
         request=request))
 

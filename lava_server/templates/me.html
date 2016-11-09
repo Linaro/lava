@@ -18,7 +18,7 @@
       <dd><span title="{{ user.date_joined }}">
           {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
-      <dd><a href="{% url 'django.contrib.auth.views.password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
+      <dd><a href="{% url 'password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
       <dt>IRC settings</dt>
       <dd>Server: {{ user.extendeduser.irc_server|default:"None" }}; Handle: {{ user.extendeduser.irc_handle|default:"None" }};<a data-toggle="modal" href="#irc_modal"> Update</a></dd>
     </dl>
@@ -97,7 +97,7 @@
       <li>
         <a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
       </li>
-      <li><a href="{% url 'lava.scheduler.mydevice_type_health_history_log' %}"><span
+      <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span
               class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a></li>
     </div>
   </div>

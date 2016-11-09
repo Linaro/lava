@@ -29,6 +29,16 @@
 </div>
 {% endif %}
 
+{% if can_admin and device.is_pipeline and template_mismatch %}
+  <div class="alert alert-warning">
+    <strong>Configuration Error: template-mismatch.</strong>
+  <p>The '{{ device.device_type }}' device type has no matching jinja2 template.
+      Pipeline (V2) jobs requesting this device type will not be able to start until
+     a template is available on the master.
+  </p>
+  </div>
+{% endif %}
+
 {% block device_heading %}{% endblock %}
 
 <div class="row">
@@ -41,27 +51,7 @@
       <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
 {% if device.is_pipeline %}
     <dt>Configuration</dt>
-  <dd><a href="#" data-toggle="modal" id="devicedict-modal"
-         data-target="#devicedictModal"> Device Dictionary</a>
-    <div class="modal fade" id="devicedictModal" tabindex="-1" role="dialog" aria-labelledby="devicedictLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title" id="devicedictLabel">Device Dictionary for {{ device.hostname }}</h4>
-          </div>
-          <div class="modal-body">
-            <div id="devicedict-content">
-            <pre>{{ device.device_dictionary_yaml }}</pre>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </dd>
+    <dd><a href="{{ device.get_absolute_url }}/devicedict">Device Dictionary</a></dd>
 {% endif %}
       <dt>Description</dt>
       <dd>{{ device.get_description|default:"<i>None</i>"|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>

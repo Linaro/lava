@@ -11,16 +11,6 @@ device_path: {{ device_path }}
 {#  #}
 {% endblock %}
 
-{% block commands %}
-{{ super() }}
-{% if pre_power_command %}
-    pre_power_command: {{ pre_power_command }}
-{% endif -%}
-{% if pre_os_command %}
-    pre_os_command: {{ pre_os_command }}
-{% endif -%}
-{% endblock %}
-
 actions:
   deploy:
     methods:
@@ -37,7 +27,7 @@ actions:
       uefi-menu:
         parameters:
           interrupt_prompt: {{ interrupt_prompt|default("Android Fastboot mode") }}
-          interrupt_string: {{ interrupt_string|default(' ') }}
+          interrupt_string: {{ interrupt_string|default("'x'") }}
           item_markup:
             - "["
             - "]"

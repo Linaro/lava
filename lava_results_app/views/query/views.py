@@ -94,7 +94,7 @@ class UserQueryView(LavaView):
     def get_queryset(self):
         return Query.objects.filter(
             is_archived=False,
-            owner=self.request.user).order_by('name')
+            owner__id=self.request.user.id).order_by('name')
 
 
 class OtherQueryView(LavaView):
@@ -105,7 +105,8 @@ class OtherQueryView(LavaView):
         other_queries = Query.objects.filter(
             is_archived=False,
             is_published=True,
-            query_group=None).order_by('name')
+            query_group=None).exclude(
+                owner__id=self.request.user.id).order_by('name')
 
         return other_queries
 
@@ -121,7 +122,8 @@ class GroupQueryView(LavaView):
         group_queries = Query.objects.filter(
             is_archived=False,
             is_published=True,
-            query_group=self.query_group).order_by('name')
+            query_group=self.query_group).exclude(
+                owner__id=self.request.user.id).order_by('name')
 
         return group_queries
 
@@ -192,19 +194,17 @@ def query_list(request):
     discrete_data.update(other_query_table.prepare_discrete_data(other_view))
     terms_data.update(other_query_table.prepare_terms_data(other_view))
 
-    if request.user.is_authenticated():
-        prefix = "user_"
-        view = UserQueryView(request, model=Query, table_class=UserQueryTable)
-        user_query_table = UserQueryTable(view.get_table_data(prefix),
-                                          prefix=prefix)
-        config = RequestConfig(request,
-                               paginate={"per_page": user_query_table.length})
-        config.configure(user_query_table)
-        search_data.update(user_query_table.prepare_search_data(view))
-        discrete_data.update(user_query_table.prepare_discrete_data(view))
-        terms_data.update(user_query_table.prepare_terms_data(view))
-    else:
-        user_query_table = None
+    prefix = "user_"
+    view = UserQueryView(request, model=Query, table_class=UserQueryTable)
+    user_query_table = UserQueryTable(view.get_table_data(prefix),
+                                      prefix=prefix)
+    config = RequestConfig(request,
+                           paginate={"per_page": user_query_table.length})
+    config.configure(user_query_table)
+    search_data.update(user_query_table.prepare_search_data(view))
+    discrete_data.update(user_query_table.prepare_discrete_data(view))
+    terms_data.update(user_query_table.prepare_terms_data(view))
+
     template = loader.get_template('lava_results_app/query_list.html')
     return HttpResponse(template.render(
         {
@@ -281,10 +281,11 @@ def query_custom(request):
         raise InvalidContentTypeError(
             "Wrong table name in entity param. Please refer to query docs.")
 
+    conditions = Query.parse_conditions(content_type,
+                                        request.GET.get("conditions"))
     view = QueryCustomResultView(
         content_type=content_type,
-        conditions=Query.parse_conditions(content_type,
-                                          request.GET.get("conditions")),
+        conditions=conditions,
         request=request,
         model=content_type.model_class(),
         table_class=QUERY_CONTENT_TYPE_TABLE[content_type.model_class()]
@@ -306,7 +307,7 @@ def query_custom(request):
     return HttpResponse(template.render(
         {
             'query_table': table,
-
+            'conditions': conditions,
             'terms_data': table.prepare_terms_data(view),
             'search_data': table.prepare_search_data(view),
             'discrete_data': table.prepare_discrete_data(view),
@@ -320,19 +321,16 @@ def query_custom(request):
 @BreadCrumb("Query ~{username}/{name}", parent=query_list,
             needs=['username', 'name'])
 @login_required
-@ownership_required
 def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
     query_conditions = Query.serialize_conditions(
         query.querycondition_set.all())
-    view_exists = QueryMaterializedView.view_exists(query.id)
     template = loader.get_template('lava_results_app/query_detail.html')
     return HttpResponse(template.render(
         {
             'query': query,
             'query_conditions': query_conditions,
-            'view_exists': view_exists,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name),
             'context_help': ['lava-queries-charts'],
@@ -441,15 +439,10 @@ def query_toggle_published(request, username, name):
 
 @BreadCrumb("Copy", parent=query_detail, needs=['username', 'name'])
 @login_required
-@ownership_required
 def query_copy(request, username, name):
     query = get_object_or_404(Query, owner__username=username, name=name)
-
-    if not request.user.is_superuser:
-        if query.owner != request.user:
-            if not query.group or not request.user.groups.filter(
-                    name=query.group.name).exists():
-                raise PermissionDenied()
+    query.owner = request.user
+    query.is_published = False
 
     return query_form(
         request,

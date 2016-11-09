@@ -165,7 +165,7 @@ for regex in regexes:
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
-BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/linaro-sprinkles.png')
+BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/logo.png')
 BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)

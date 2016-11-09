@@ -1,7 +1,9 @@
-Administrator Guide
-###################
+.. index:: administrator guide
 
 .. _admin_introduction:
+
+Understanding the Pipeline - an administrator guide
+###################################################
 
 Introduction
 ************
@@ -10,51 +12,15 @@ Administrators who are familiar with the terminology of the pipeline and
 templates can skip this section. If so, move on to
 :ref:`pipeline_device_requirements`.
 
-Information sources
-===================
-
-The pipeline tests repository
------------------------------
-
-This git repository holds working examples of a range of different jobs for a
-range of different devices. These jobs are routinely submitted as functional
-tests of upcoming releases of the LAVA software.
-
-https://git.linaro.org/lava-team/refactoring.git
-
-Not every combination of deployment method or boot method can be expressed for
-all supported devices but we aim to have at least one example of each
-deployment method and each boot method on at least one supported device.
-
-Check the ``standard`` directory for tests which use
-:ref:`gold standard images <providing_gold_standard_files>`.
-
-The lava-dispatcher pipeline source code
-----------------------------------------
-
-As well as the source code, the ``devices`` and ``device_types`` directories in this
-git repository contain YAML examples of device and device type configuration. These are
-the raw forms which are used on the ``lava-dispatch`` command line and are useful for
-debugging and starting to create support for your own devices.
-
-https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
-
-The lava-server unit test support
----------------------------------
-
-The `Jinja2`_ device-type templates here are used for the unit tests and also
-become the default :term:`device type` templates when the packages are built.
-The ``devices`` directory contains working device dictionary examples for these
-device types.
-
-https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
-
 .. index:: templates
 
 .. _device_type_templates:
 
-About device type templates
-===========================
+Device type templates
+*********************
+
+Device type templates exist on the master in the
+``/etc/lava-server/dispatcher-config/device-types/`` directory.
 
 Although the example templates include jinja markup, the template itself is
 YAML. The files use the ``.jinja2`` filename extension to make it easier for
@@ -83,10 +49,10 @@ the jinja markup. Jinja is used to:
   template and that variable is not set in the device dictionary, it becomes
   available for the job submission to set that variable.
 
-About the device dictionary
-===========================
+Device dictionary
+*****************
 
-In the early stages, the device dictionary can be very simple:
+The device dictionary is a file. In the early stages, it can be very simple:
 
 .. code-block:: jinja
 
@@ -104,8 +70,15 @@ To remove a variable from a device dictionary, simply remove or comment out the
 variable in the file. When the file is uploaded, the complete device dictionary
 for that device is replaced with the content of the file.
 
+It is recommended to keep device dictionary files in version control of some
+kind to make it easier to track changes. The :ref:`administrative interface
+<django_admin_interface>` tracks when and who changed the device dictionary but
+not the detail of what was changed within it.
+
 .. seealso:: :ref:`updating_device_dictionary_using_xmlrpc` and
-   :ref:`updating_device_dictionary_on_command_line`
+   :ref:`updating_device_dictionary_on_command_line` for information on how to
+   use the new file to update the device dictionary. (Needs superuser
+   permissions on that instance.)
 
 The `Jinja template documentation
 <http://jinja.pocoo.org/docs/dev/templates/>`_ gives more information on jinja
@@ -117,7 +90,7 @@ of blocks, is **only** to be done in the device type template.
 .. _checking_templates:
 
 Checking your templates
------------------------
+=======================
 
 Whenever you modify a device type template, take care to respect the
 indentation within the file. You can (temporarily) copy your template into
@@ -141,17 +114,20 @@ Finally, although the final configuration sent to the dispatcher will be
 stripped of comments, it is **strongly recommended** to use **comments**
 liberally in all your YAML files, including device type templates.
 
+.. seealso:: :ref:`developer_jinja2_support` and
+   :ref:`testing_templates_dictionaries`
+
 Finding your way around the files
 =================================
 
 * Start with a device-type YAML file from the dispatcher which is similar to
-  the one you want to support. Modify the YAML using the `Online YAML parser
-  <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to make sure you
-  **always** have valid YAML. This is the basis of your device type template.
-  Use **comments** liberally, this is YAML remember.
+  the one you want to support. Modify the YAML and verify using the `Online
+  YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to
+  make sure you **always** have valid YAML. This is the basis of your device
+  type template. Use **comments** liberally, this is YAML remember.
 
 * Compare that with the device-specific YAML which is what the dispatcher will
-  actually see. Again, modify the YAML using the `Online YAML parser
+  actually see. Again, modify the YAML and verify using the `Online YAML parser
   <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ and make sure you
   **always** have valid YAML. This is what your device type template will need
   to produce.
@@ -161,6 +137,46 @@ Finding your way around the files
 
 * Create a minimal device dictionary file which simply extends your initial
   device type template.
+
+Information sources
+===================
+
+The pipeline tests repository
+-----------------------------
+
+This git repository holds working examples of a range of different jobs for a
+range of different devices. These jobs are routinely submitted as functional
+tests of upcoming releases of the LAVA software.
+
+https://git.linaro.org/lava-team/refactoring.git
+
+Not every combination of deployment method or boot method can be expressed for
+all supported devices but we aim to have at least one example of each
+deployment method and each boot method on at least one supported device.
+
+Check the ``standard`` directory for tests which use
+:ref:`gold standard images <providing_gold_standard_files>`.
+
+The lava-dispatcher pipeline source code
+----------------------------------------
+
+As well as the source code, the ``devices`` and ``device_types`` directories in
+this git repository contain YAML examples of device and device type
+configuration. These are the raw forms which are used on the ``lava-dispatch``
+command line and are useful for debugging and starting to create support for
+your own devices.
+
+https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
+
+The lava-server unit test support
+---------------------------------
+
+The `Jinja2`_ device-type templates here are used for the unit tests and also
+become the default :term:`device type` templates when the packages are built.
+The ``devices`` directory contains working device dictionary examples for these
+device types.
+
+https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
 
 .. index:: pipeline device requirements
 
@@ -176,16 +192,16 @@ includes but is not restricted to:
 Hardware Requirements
 =====================
 
-* **Serial** - the principle method for connecting to any device during
-  an automated test is serial. If a specific baud rate or particular UART
+* **Serial** - the principle method for connecting to any device during an
+  automated test is serial. If a specific baud rate or particular UART
   connections are required, these must be declared clearly.
 
-* **Network** - tests will need a method for delivering files to the
-  device using the bootloader. Unless the bootloader has full support for
-  wireless connections, physical ethernet is required.
+* **Network** - tests will need a method for delivering files to the device
+  using the bootloader. Unless the bootloader has full support for wireless
+  connections, physical ethernet is required.
 
-* **Power** - automation requires that the board can be reliably reset
-  by removing and then reapplying power. The board must support this in an
+* **Power** - automation requires that the board can be reliably reset by
+  removing and then reapplying power. The board must support this in an
   automatic manner, without needing human intervention to press a reset button
   or similar. If such a button is present, each device will need to be modified
   to remove that barrier.
@@ -193,33 +209,33 @@ Hardware Requirements
 Software Requirements
 =====================
 
-* **Interruptable** - for example, ``uBoot`` must be configured to emit
-  a recognisable message and wait for a sufficient number of seconds for a
+* **Interruptable** - for example, ``uBoot`` must be configured to emit a
+  recognisable message and wait for a sufficient number of seconds for a
   keyboard interrupt to get to a prompt.
 
 * **Network aware** - most common deployments will need to pull files
   over a network using TFTP.
 
-* **Stable** - the bootloader is the rescue system for the device and
-  needs to be reliable - if the test causes a kernel panic or hardware lockup,
-  resetting the board (by withdrawing and re-applying power) **must always**
-  put the board back to the same bootloader operation as a standard power-on
-  from cold. Note that USB serial connections can be a particular problem by
-  allowing the device to continue to receive some power when the power supply
-  itself is disconnected.
+* **Stable** - the bootloader is the rescue system for the device and needs to
+  be reliable - if the test causes a kernel panic or hardware lockup, resetting
+  the board (by withdrawing and re-applying power) **must always** put the
+  board back to the same bootloader operation as a standard power-on from cold.
+  Note that USB serial connections can be a particular problem by allowing the
+  device to continue to receive some power when the power supply itself is
+  disconnected.
 
-* **Configurable** - the bootloader needs to be configured over the
-  serial connection during a test. Such configuration support needs to be
-  robust and not lock up the device in case of invalid user input.
+* **Configurable** - the bootloader needs to be configured over the serial
+  connection during a test. Such configuration support needs to be robust and
+  not lock up the device in case of invalid user input.
 
-* **Accessible** - the bootloader will need to be updated by lab admins
-  from time to time and this should be as trivial as possible, e.g. by simply
+* **Accessible** - the bootloader will need to be updated by lab admins from
+  time to time and this should be as trivial as possible, e.g. by simply
   copying a binary to a known location using an established protocol, not some
   board-specific routine requiring special software.
 
-* **Flexible** - the bootloader should support as wide a range of
-  deployments as possible, without needing changes to the bootloader itself.
-  e.g. only having support for uncompressed kernel images would be a problem.
+* **Flexible** - the bootloader should support as wide a range of deployments
+  as possible, without needing changes to the bootloader itself. e.g. only
+  having support for uncompressed kernel images would be a problem.
 
 With such a bootloader installed on the device, the test writer has a wide
 range of possible deployments and boot methods.
@@ -235,6 +251,8 @@ Adding support for a device of a known type
    supported in the pipeline. The configuration for the old dispatcher is very
    different to pipeline support - the intrinsic data of load addresses and
    ports remains but the layout has changed.
+
+.. seealso:: :ref:`migrating_known_device_example`
 
 A known device type for the pipeline means that a template file exists in
 :file:`/etc/lava-server/dispatcher-config/device-types/`.
@@ -256,7 +274,7 @@ marked as a pipeline device in the admin interface. See
 .. _obtain_known_device_config:
 
 Obtaining configuration of a known device
-=========================================
+*****************************************
 
 The simplest way to start is to download the working configuration of a device
 of the same known device type using `XML-RPC
@@ -335,7 +353,7 @@ diff::
 .. _create_entry_known_type:
 
 Creating a new device entry for a known device type
-===================================================
+***************************************************
 
 If this device does not already exist in the database of the instance, it will
 need to be created by the admins. This step is similar to how devices were
@@ -358,7 +376,16 @@ the changes.
 .. _create_device_dictionary:
 
 Creating a device dictionary for the device
-===========================================
+*******************************************
+
+.. seealso:: :ref:`updating_device_dictionary` to add a device dictionary to
+   a new pipeline device.
+
+Existing devices
+================
+
+Admins are able to export the device dictionary of existing devices in the
+original ``jinja2`` syntax, ready for modification.
 
 The local YAML file downloaded using :command:`get-pipeline-device-config`,
 whether XML-RPC or :file:`lava-tool` is the result of combining a device
@@ -427,7 +454,7 @@ and the Jinja2 formatting used to update the device dictionary.
 .. _updating_device_dictionary:
 
 Updating a device dictionary
-============================
+****************************
 
 The populated dictionary now needs to be updated in the database of the
 instance.
@@ -448,7 +475,7 @@ dictionary on the command line.
 .. _updating_device_dictionary_with_lava_tool:
 
 Using lava-tool
----------------
+===============
 
 .. note:: Ensure you update to the latest version of
    :ref:`lava_tool <lava_tool>` (>= 0.14) support to use
@@ -486,7 +513,7 @@ database for that device.
 .. _updating_device_dictionary_using_xmlrpc:
 
 Using XML-RPC
--------------
+=============
 
 Superusers can use ``import_device_dictionary`` to update a Jinja2 string for a
 specified Device hostname:
@@ -518,7 +545,7 @@ be edited and used to update the device dictionary information.
 .. _updating_device_dictionary_on_command_line:
 
 Using the command line
-----------------------
+======================
 
 ::
 
@@ -538,10 +565,3 @@ If the dictionary does exist and the file is valid, you should see output::
 
 Updating the device dictionary replaces any previous device dictionary
 for the specified device.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   pipeline-admin-example.rst
-   pipeline-debug.rst

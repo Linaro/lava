@@ -30,12 +30,14 @@ from django.core.management.base import BaseCommand
 
 
 class Monitor(threading.Thread):
-    def __init__(self, stop):
+    def __init__(self, stop, log_file):
         super(Monitor, self).__init__()
         self.stop = stop
+        self.log_file = log_file
 
     def run(self):
         logger = logging.getLogger('publisher')
+        logger.addHandler(logging.FileHandler(self.log_file))
 
         context = zmq.Context.instance()
         socket = context.socket(zmq.PULL)
@@ -59,6 +61,10 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--level',
                             default='DEBUG',
                             help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
+
+        parser.add_argument('-f', '--log-file',
+                            default='/var/log/lava-server/lava-publisher.log',
+                            help="Logging file path")
 
         parser.add_argument('-u', '--user',
                             default='lavaserver',
@@ -90,6 +96,8 @@ class Command(BaseCommand):
         return True
 
     def handle(self, *args, **options):
+        self.logger.addHandler(logging.FileHandler(options['log_file']))
+
         if options['level'] == 'ERROR':
             self.logger.setLevel(logging.ERROR)
         elif options['level'] == 'WARN':
@@ -123,7 +131,7 @@ class Command(BaseCommand):
 
             self.logger.debug("Starting the monitor")
             stop_monitor = threading.Event()
-            monitor = Monitor(stop_monitor)
+            monitor = Monitor(stop_monitor, options['log_file'])
             monitor.start()
 
         self.logger.info("Starting the Proxy")

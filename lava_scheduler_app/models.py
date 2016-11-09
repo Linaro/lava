@@ -805,7 +805,7 @@ class Device(RestrictedResource):
         )
 
     def state_transition_to(self, new_status, user=None, message=None,
-                            job=None):
+                            job=None, master=False):
         logger = logging.getLogger('dispatcher-master')
         try:
             dst_obj = DeviceStateTransition.objects.create(
@@ -818,6 +818,8 @@ class Device(RestrictedResource):
         self.save()
         if user:
             self.log_admin_entry(user, "DeviceStateTransition [%d] %s" % (dst_obj.id, message))
+        elif master:
+            logger.info("Master transitioning with message %s" % message)
         else:
             logger.warning("Empty user passed to state_transition_to() with message %s" % message)
         return True
@@ -840,7 +842,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
@@ -856,7 +858,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
@@ -868,7 +870,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "put into looping mode: %s: %s" % (self.HEALTH_CHOICES[self.health_status][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
@@ -878,7 +880,7 @@ class Device(RestrictedResource):
         if user:
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s" % reason)
+            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
     def too_long_since_last_heartbeat(self):
         """This is same as worker heartbeat.
@@ -1201,6 +1203,14 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
+    priorities = dict([(j.upper(), i) for i, j in TestJob.PRIORITY_CHOICES])
+    priority = TestJob.MEDIUM
+    if 'priority' in job_data:
+        priority_key = job_data['priority'].upper()
+        if priority_key not in priorities:
+            raise SubmissionException("Invalid job priority: %r" % priority_key)
+        priority = priorities[priority_key]
+
     public_state = True
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
@@ -1226,6 +1236,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   health_check=False,
                   user=user, is_public=public_state,
                   visibility=visibility,
+                  priority=priority,
                   is_pipeline=True)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.
@@ -1699,6 +1710,23 @@ class TestJob(RestrictedResource):
             return None
 
     @property
+    def essential_role(self):  # pylint: disable=too-many-return-statements
+        if not (self.is_multinode or self.is_vmgroup or self.is_pipeline):
+            return False
+        data = yaml.load(self.definition)
+        # would be nice to use reduce here but raising and catching TypeError is slower
+        # than checking 'if .. in ' - most jobs will return False.
+        if 'protocols' not in data:
+            return False
+        if 'lava-multinode' not in data['protocols']:
+            return False
+        if 'role' not in data['protocols']['lava-multinode']:
+            return False
+        if 'essential' not in data['protocols']['lava-multinode']:
+            return False
+        return data['protocols']['lava-multinode']['essential']
+
+    @property
     def device_role(self):  # pylint: disable=too-many-return-statements
         if not (self.is_multinode or self.is_vmgroup):
             return "Error"
@@ -2019,15 +2047,56 @@ class TestJob(RestrictedResource):
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
             job_list = []
-            try:
-                parent_id = (TestJob.objects.latest('id')).id + 1
-            except:  # pylint: disable=bare-except
-                parent_id = 1
+            # parent_id must be the id of the .0 sub_id
+            # each sub_id must relate back to that parent
+            # this is fixed in V2 in a much cleaner way.
+            role = node_json.keys()[0]
+
+            device_type = DeviceType.objects.get(
+                name=node_json[role][0]["device_type"])
+            # cannot set sub_id until parent_id is known.
+            job = TestJob(
+                submitter=submitter,
+                requested_device=target,
+                description=job_name,
+                requested_device_type=device_type,
+                definition=simplejson.dumps(node_json[role][0],
+                                            sort_keys=True,
+                                            indent=4 * ' '),
+                original_definition=simplejson.dumps(json_data,
+                                                     sort_keys=True,
+                                                     indent=4 * ' '),
+                multinode_definition=json_data,
+                health_check=health_check, user=user, group=group,
+                is_public=is_public,
+                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
+                target_group=target_group)
+            job.save()
+            # Add tags as defined per role for each job.
+            taglist = _get_tag_list(node_json[role][0].get("tags", []))
+            if taglist:
+                for tag in Tag.objects.filter(name__in=taglist):
+                    job.tags.add(tag)
+            # This save is important though we have one few lines
+            # above, because, in order to add to the tags table we need
+            # a foreign key reference from the jobs table which happens
+            # with the previous job.save(). The following job.save()
+            # ensures the tags are saved properly with references.
+            job.save()
+            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
+            job.sub_id = "%d.0" % parent_id
+            job.save(update_fields=['sub_id'])
+            job_list.append(job)
             child_id = 0
 
+            # node_json is a dictionary, not a list.
             for role in node_json:
                 role_count = len(node_json[role])
                 for c in range(0, role_count):
+                    if child_id == 0:
+                        # already done .0 to get the parent_id
+                        child_id = 1
+                        continue
                     device_type = DeviceType.objects.get(
                         name=node_json[role][c]["device_type"])
                     sub_id = '.'.join([str(parent_id), str(child_id)])
@@ -2074,15 +2143,50 @@ class TestJob(RestrictedResource):
             vm_group = str(uuid.uuid4())
             node_json = utils.split_vm_job(job_data, vm_group)
             job_list = []
-            try:
-                parent_id = (TestJob.objects.latest('id')).id + 1
-            except:  # pylint: disable=bare-except
-                parent_id = 1
+            # parent_id must be the id of the .0 sub_id
+            # each sub_id must relate back to that parent
+            # this is fixed in V2 in a much cleaner way.
+
+            role = node_json.keys()[0]
+            device_type = DeviceType.objects.get(
+                name=node_json[role][0]["device_type"])
+            # cannot set sub_id until parent_id is known.
+            job = TestJob(
+                submitter=submitter,
+                requested_device=target,
+                description=job_name,
+                requested_device_type=device_type,
+                definition=simplejson.dumps(node_json[role][0],
+                                            sort_keys=True,
+                                            indent=4 * ' '),
+                original_definition=simplejson.dumps(json_data,
+                                                     sort_keys=True,
+                                                     indent=4 * ' '),
+                vmgroup_definition=json_data,
+                health_check=health_check, user=user, group=group,
+                is_public=is_public,
+                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
+                vm_group=vm_group)
+            job.save()
+            # Add tags as defined per role for each job.
+            taglist = _get_tag_list(node_json[role][0].get("tags", []))
+            if taglist:
+                for tag in Tag.objects.filter(name__in=taglist):
+                    job.tags.add(tag)
+            job.save()
+            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
+            job.sub_id = "%d.0" % parent_id
+            job.save(update_fields=['sub_id'])
+            job_list.append(job)
             child_id = 0
 
             for role in node_json:
                 role_count = len(node_json[role])
                 for c in range(0, role_count):
+                    if child_id == 0:
+                        # already done .0 to get the parent_id
+                        child_id = 1
+                        continue
                     name = node_json[role][c]["device_type"]
                     try:
                         device_type = DeviceType.objects.get(name=name)
@@ -2176,13 +2280,17 @@ class TestJob(RestrictedResource):
         :param user:  the user making the request
         :return: True or False
         """
+        if self._can_admin(user):
+            return True
+        device_type = self.job_device_type()
+        if device_type and device_type.owners_only:
+            if device_type.num_devices_visible_to(user) == 0:
+                return False
         if self.is_public:
             return True
         if not self.is_pipeline:
             # old jobs will be private, only pipeline extends beyond this level
             return self.is_accessible_by(user)
-        if self._can_admin(user):
-            return True
         logger = logging.getLogger('lava_scheduler_app')
         if self.visibility == self.VISIBLE_PUBLIC:
             # logical error
@@ -2232,9 +2340,6 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        if self.is_pipeline:
-            # FIXME: allow resubmission once UI submission of YAML is also supported.
-            return False
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
@@ -2696,7 +2801,7 @@ class TestJob(RestrictedResource):
                     break
 
             kwargs["query"]["compare_index"] = compare_index
-            if compare_index is not None:
+            if compare_index is not None and self.notification.blacklist:
                 # Get testsuites diffs between current job and latest complete
                 # job from query.
                 new_suites = self.testsuite_set.all().exclude(

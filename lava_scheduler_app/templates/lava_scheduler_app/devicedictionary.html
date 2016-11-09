@@ -1,0 +1,51 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block content %}
+
+{% if device.device_type.owners_only %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <p><strong><i>{{  device.device_type.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ device.device_type }}</i> can see this information.
+</div>
+{% endif %}
+
+<h2>Device Dictionary for {{ device.hostname }} - {{ device.device_type }}
+    {{ device.device_type.architecture|default:'' }}</h2>
+
+<div class="container-fluid">
+<div class="row">
+    <h4 class="modal-header">Commands</h4>
+    <dl class="dl-horizontal">
+    {% for key, value in dictionary.items %}
+        <dt>{{ key }}</dt>
+        <dd><pre>{{ value }}</pre></dd>
+    {% endfor %}
+    </dl>
+</div>
+
+{% if extra %}
+<div class="row">
+    <h4 class="modal-header">Other parameters</h4>
+    <dl class="dl-horizontal">
+    {% for key, value in extra.items %}
+        <dt>{{ key }}</dt>
+        <dd><pre>{{ value }}</pre></dd>
+    {% endfor %}
+    </dl>
+</div>
+{% endif %}
+
+{% if vland %}
+<div class="row">
+    <h4 class="modal-header">VLANd parameters</h4>
+    <dl class="dl-horizontal">
+    {% for key, value in vland.items %}
+        <dt>{{ key }}</dt>
+        <dd><pre>{{ value }}</pre></dd>
+    {% endfor %}
+    </dl>
+</div>
+{% endif %}
+</div>
+{% endblock %}

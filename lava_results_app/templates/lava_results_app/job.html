@@ -31,28 +31,39 @@
     {% endif %}
 
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h4 class="modal-header">Exports
         </h4>
     <dl class="dl-horizontal">
-    <dt>Test results :</dt>
-    <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
-       title="Download results as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a
-            class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml' job.id %}"
-       title="Download results as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
-    <dt>Job metadata :</dt>
-    <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
-       title="Download metadata as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+      <dt>Test results :</dt>
+      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
+         title="Download results as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a
+              class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml' job.id %}"
+         title="Download results as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+      <dt>Job metadata :</dt>
+      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
+         title="Download metadata as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
     </dl>
   </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h4 class="modal-header">Actions</h4>
-    <dl class="dl-horizontal">
-      <div class="btn-group">
-        <a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
-      </div>
-    </dl>
+    <a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
   </div>
+{% if job.is_multinode %}
+   <div class="col-md-4">
+     <h4 class="modal-header">Multinode group</h4>
+     <dl class="dl-horizontal">
+{% for role in job.sub_jobs_list %}
+  {% if role.id != job.id %}
+     <dt>{{ role.device_role }} :</dt>
+     <dd><a href="{{ role.results_link }}">{{ role.sub_id }}</a> ({{ role.id }})</dd>
+  {% else %}
+     <dt>{{ role.device_role }} :</dt>
+     <dd>{{ role.sub_id }} ({{ role.id }})</dd>
+  {% endif %}
+{% endfor %}
+   </div>
+{% endif %}
 </div>
     {% render_table suite_table %}
 <div class="panel-group" id="results_accordion">
@@ -81,28 +92,38 @@
           the job.
       </p>
       <p>Metadata submitted as part of the job submission is also included, if present.</p>
-        <dl class="dl-horizontal">
+       <div class="row">
+       <div class="col-xs-6">
+        <ul>
           {% for key, value in metadata.items %}
               {% if 'target' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ key|markup_metadata:value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ key|markup_metadata:value }}</li>
               {% elif 'deploy' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ value }}</li>
               {% elif 'omit.' in key %}
                   <!-- inline without test cases -->
               {% elif 'boot' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ value }}</li>
               {% elif 'test' in key %}
-                  <dt>{{ key|metadata_key}}</dt>
-                  <dd>{{ key|markup_metadata:value }}</dd>
+                  <li><b>{{ key|metadata_key}}</b>:
+                  {{ key|markup_metadata:value }}</li>
+              {% elif 'parameters' in key %}
+                  <li><b>{{ key|metadata_key }}</b>:
+                  <ul>{% for paramkey, paramvalue in value.items %}
+                      <li>{{ paramkey }}: {{ paramvalue }}</li>
+                      {% endfor %}
+                  </ul></li>
               {% else %}
-                  <dt>{{ key }}</dt>
-                  <dd>{{ value }}</dd>
+                  <li><b>{{ key }}</b>:
+                  {{ value }}</li>
               {% endif %}
           {% endfor %}
-        </dl>
+        </ul>
+        </div>
+        </div>
       </div>
     </div>
   {% endspaceless %}

@@ -121,7 +121,8 @@
 
   <div class="tab-pane active" id="YAML">
 <h4 class="modal-header">Definition</h4>
-<pre>{{ job.display_definition }}</pre>
+<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span id="job_definition_text">{{ job.display_definition }}</span>
+</pre>
  </div>
   <div class="tab-pane" id="pipeline">
       <h2>Pipeline Description <a
@@ -200,6 +201,11 @@ timeouts:
 </div>
 {% else %}
 <h4 class="modal-header">Definition</h4>
-<pre>{{ job.display_definition }}</pre>
+<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span id="job_definition_text">{{ job.display_definition }}</span>
+</pre>
 {% endif %}
 {% endblock content %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-definition.min.js"></script>
+{% endblock %}

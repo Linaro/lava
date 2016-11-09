@@ -1,0 +1,73 @@
+.. index:: secondary media sata
+
+.. _deploy_to_sata:
+
+to: sata
+********
+
+Deploy unchanged images to secondary SATA media. Any bootloader inside the
+image will **not** be used. Instead, the files needed for the boot are
+specified in the deployment. The entire physical device is available to the
+secondary deployment. Secondary relates to the expected requirement of a
+primary boot (e.g. ramdisk or NFS) which provides a suitable working
+environment to deploy the image directly to the secondary device. See
+:ref:`secondary_media`.
+
+Not all devices support SATA media.
+
+The test writer needs to provide the following information about the image:
+
+.. index:: secondary media sata kernel
+
+.. _deploy_to_sata_kernel:
+
+kernel
+======
+
+* **kernel**: The path, within the image, to the kernel which will be used by
+  the bootloader.
+
+.. index:: secondary media sata ramdisk
+
+.. _deploy_to_sata_ramdisk:
+
+ramdisk
+=======
+
+* **ramdisk**: (optional). If used, must be a path, within the image, which the
+  bootloader can use.
+
+.. index:: secondary media sata dtb
+
+.. _deploy_to_sata_dtb:
+
+dtb
+===
+
+* **dtb**: The path, within the image, to the dtb which will be used by the
+  bootloader.
+
+.. index:: secondary media sata uuid
+
+.. _deploy_to_sata_uuid:
+
+UUID
+====
+
+* **UUID**: The UUID of the partition which contains the root filesystem of the
+  booted image.
+
+.. index:: secondary media sata boot_part
+
+.. _deploy_to_sata_boot_part:
+
+boot_part
+=========
+
+* **boot_part**: the partition on the media from which the bootloader can read
+  the kernel, ramdisk & dtb.
+
+.. note:: If the image mounts the boot partition at a mounpoint below the root
+   directory of the image, the path to files within that partition must **not**
+   include that mountpoint. The bootloader will read the files directly from
+   the partition.

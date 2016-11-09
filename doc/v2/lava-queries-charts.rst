@@ -1,3 +1,5 @@
+.. index:: using test results, queries
+
 .. _result_queries:
 
 Using Test Results
@@ -5,6 +7,8 @@ Using Test Results
 
 LAVA result visualization
 *************************
+
+.. _queries:
 
 LAVA Queries
 ============
@@ -25,32 +29,29 @@ Conditions
 ----------
 
 You can add multiple conditions to each query where the query results must
-satisfy **all** conditions in order to be displayed.
-Conditions can span through multiple object sets so for example user can query
-the Jobs that have test cases in which particular field satisfies a condition.
-List of supported fields which can be used as condition field is available
-as autocomplete list in the condition 'Field name' field.
-You can also add conditions with fields in the object set which is queried
-(i.e. if test jobs are query object set user can add conditions such as
-submitter, device, priority, status...).
+satisfy **all** conditions in order to be displayed. Conditions can span
+through multiple object sets so for example user can query the Jobs that have
+test cases in which particular field satisfies a condition. List of supported
+fields which can be used as condition field is available as autocomplete list
+in the condition 'Field name' field. You can also add conditions with fields in
+the object set which is queried (i.e. if test jobs are query object set user
+can add conditions such as submitter, device, priority, status...).
 
 It is also possible to add conditions using custom metadata. Since metadata can
 contain custom field names, keep in mind that the query might not return
 desired results since those field names are not validated when adding
-conditions.
-This also means you can add the condition even if the field in the metadata is
-is not yet present in the system.
+conditions. This also means you can add the condition even if the field in the
+metadata is is not yet present in the system.
 
 Caching queries
 ---------------
 
 Queries can be live or cached. Cached queries data can be refreshed either
 through UI or via the XML-RPC API call by creator or someone in group assigned
-to the query.
-Please keep in mind, live queries are executed whenever someone visits the
-query page or refreshes it. Viewing a live query will usually take longer than
-a cached query, sometimes markedly longer. Live queries can stress the LAVA
-server which can cause the query to timeout.
+to the query. Please keep in mind, live queries are executed whenever someone
+visits the query page or refreshes it. Viewing a live query will usually take
+longer than a cached query, sometimes markedly longer. Live queries can stress
+the LAVA server which can cause the query to timeout.
 
 When adding/updating and removing conditions, query is **not** automatically
 updated. This needs to be done either through UI after updating the conditions
@@ -61,10 +62,10 @@ Authorization and admin
 
 Queries which are not published are visible exclusively to the query owner.
 When query is published, it's results are generally visible to all users,
-permitting the user has access to the jobs which provide the results.
-All the authorization is managed through test jobs visibility rules,  meaning
-that individual results will be omitted in the query display list depending on
-user authorization to see the specific jobs.
+permitting the user has access to the jobs which provide the results. All the
+authorization is managed through test jobs visibility rules,  meaning that
+individual results will be omitted in the query display list depending on user
+authorization to see the specific jobs.
 
 Besides owner of the specific query, administration of the query can be allowed
 to a group in the system as well, through the 'Group edit permission' option.
@@ -88,7 +89,7 @@ The query string format looks like this::
   entity=$(object_name)&conditions=$(object_name)__$(field_name)__$(operator)__$value,$(object_name)__$(field_name)__$(operator)__$value,...
 
 .. note:: object_name can be omitted if it's the same as the query object set.
-	  Operator is one of the following - exact, iexact, contains, gt, lt.
+   Operator is one of the following - exact, iexact, contains, gt, lt.
 
 
 `Example Query by URL <https://playground.validation.linaro.org/results/query/+custom?entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
@@ -220,28 +221,26 @@ page:
     :width: 700
     :height: 300
 
-From there you can edit, remove or publish the chart. Furthermore, you
-can review, add and remove queries associated with this chart from this page.
+From there you can edit, remove or publish the chart. Furthermore, you can
+review, add and remove queries associated with this chart from this page.
 
 User can also create new charts from queries. On the query display page, a
 simple click on the button will create the chart with this particular query
-already added to the chart (with default settings).
-There's also a posibility of only viewing the chart for particular query
-without making it permanent in the system (also from query display).
+already added to the chart (with default settings). There's also a posibility
+of only viewing the chart for particular query without making it permanent in
+the system (also from query display).
 
 Once chart is published, you can assign it to a chart group:
 
 Chart grouping
 --------------
 
-Once Chart is published, you can see the "Chart group label"
-field on the chart detail page.
-Clicking the field allows you to edit the grouping for that chart.
-If you want to assign the existing chart groups to this chart, just
-start typing the group name and the autocomplete field will display all the
-existing chart group starting with that term.
-If the chart group you enter does not exist, it will be
-automatically created and assigned to this chart.
+Once Chart is published, you can see the "Chart group label" field on the chart
+detail page. Clicking the field allows you to edit the grouping for that chart.
+If you want to assign the existing chart groups to this chart, just start
+typing the group name and the autocomplete field will display all the existing
+chart group starting with that term. If the chart group you enter does not
+exist, it will be automatically created and assigned to this chart.
 
 Removing the chart group label from the chart group field will unassign this
 chart from any chart group. At that point, if the chart group you just
@@ -255,12 +254,16 @@ Chart permissions
 
 Once Chart is published, you can see the ownership options on the chart detail
 page.
+
 First field displays the "maintainer" username of the user who created this
 chart (this field cannot be changed).
+
 The second field is where the system group editing rights can be added.
+
 All users belonging to this system group (you can check your group membership
 on the Profile page) will be able to edit/update this particular chart as if
 they were maintainers.
+
 This field cannot be used to enable users to see the data in the chart if they
 are not able to for other authorization reasons (no device permissions or test
 job visibility permissions).
@@ -355,8 +358,11 @@ Print menu
 
 There are three options in the print menu:
  * Download as csv - downloads CSV file with all the test data from this chart
+
  * View as image - displays only chart as an image in a new tab
- * This chart by URL - opens a new tab with manually set conditions and object set
+
+ * This chart by URL - opens a new tab with manually set conditions and object
+   set
 
 .. _charts_legend:
 
@@ -368,6 +374,7 @@ which is active.
 
 Legend is also interactive. You can shuffle the items in the legend with drag
 and drop and also turn on/off particular legend items.
+
 The advantage to this is that the indices in the chart can overlap so in order
 to use the interactivity you might need to change the order of the legend
 items.
@@ -375,16 +382,16 @@ items.
 Chart using metadata
 ^^^^^^^^^^^^^^^^^^^^
 
-By default, charts will use date and time to diplay results.
-User can change this behavior and use a custom attribute (i.e. build number)
-to plot the result data. This setting can be changed in the chart settings -
-'xaxis attribute' field.
+By default, charts will use date and time to diplay results. User can change
+this behavior and use a custom attribute (i.e. build number) to plot the result
+data. This setting can be changed in the chart settings - 'xaxis attribute'
+field.
 
 If the field is empty, the date/time will be used to plot the data. Users
 should keep in mind that this setting is a free text field so if the custom
-attribute set is not found in the system, no results will be shown.
-Similarly, if particular test result does not contain the custom attribute that
-is set, that result will be omitted from chart.
+attribute set is not found in the system, no results will be shown. Similarly,
+if particular test result does not contain the custom attribute that is set,
+that result will be omitted from chart.
 
 Omitting Chart Results
 ----------------------
@@ -393,9 +400,8 @@ Ability to omit specific results from charts is available through plot click
 event.
 
 Omitting results from chart will actually omit it from the underlying query,
-thus actively omitting it from all charts which include that query.
-It is not possible to omit results from custom charts or charts by URL from
-queries.
+thus actively omitting it from all charts which include that query. It is not
+possible to omit results from custom charts or charts by URL from queries.
 
 Keep in mind that the charts can have tightly packed plot points so you might
 end up omitting the wrong results. Keep caution by reducing the date range or
@@ -410,10 +416,3 @@ compared to queries, the chart type. New URL paramater is named "type" and can
 take values of pass/fail, measurement and attributes.
 
 `Example Chart by URL <https://playground.validation.linaro.org/results/chart/+custom?type=pass/fail&entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   data-export.rst
-   custom-result-handling.rst

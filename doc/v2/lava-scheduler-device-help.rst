@@ -12,7 +12,9 @@ Static device information
   link all jobs, results and device information to a specific device
   configuration.
 
-* **Device type** See :term:`device type`
+* **Device type** See :term:`device type`.
+
+  .. seealso:: :ref:`jinja_template_triage` and :ref:`template_mismatch`
 
 * **Device version** - Optional field which can be edited by the lab
   administrators.

@@ -63,14 +63,14 @@ actions:
 {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
-            {{ base_nfsroot_args }} {{ base_kernel_args }} ip=dhcp'"
+            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_nfs_uboot_bootcmd }}
         ramdisk:
           commands:
 {{ base_uboot_commands }}
 {{ base_uboot_addr_commands }}
 {{ base_tftp_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} ip=dhcp'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'
 {{ base_tftp_uboot_bootcmd }}
         usb:
           commands:
@@ -81,6 +81,6 @@ actions:
           - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
           - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} ip=dhcp'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'
 {{ base_uboot_bootcmd }}
 {% endblock %}

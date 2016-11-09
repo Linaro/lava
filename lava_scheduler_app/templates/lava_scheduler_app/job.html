@@ -79,10 +79,10 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-md-6">
-    <h4 class="modal-header">Logs</h4>
+  <div class="col-md-12">
+    <h4 class="modal-header">Actions</h4>
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
         class="glyphicon glyphicon-fast-forward"></span></a></li>
@@ -96,9 +96,8 @@
           <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
         {% endif %}
         </ul>
-      <hr/>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         {% if job.is_pipeline %}
           {% if job.is_multinode %}
@@ -115,19 +114,14 @@
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
             {% if job.is_pipeline %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
             {% else %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle <span class="glyphicon glyphicon-signal"></span></a></li>
             {% endif %}
         {% endif %}
         </ul>
       </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <h4 class="modal-header">Actions</h4>
-    <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
         {% if show_cancel %}
           {% if job.is_multinode %}
@@ -154,7 +148,7 @@
         {% endif %}
         </ul>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
         {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
           {% if job.is_multinode %}
@@ -180,6 +174,7 @@
     </div>
   </div>
 </div>
+<hr/>
 {% if job.is_multinode or job.is_vmgroup %}
 <div class="row">
   <div class="col-md-6">

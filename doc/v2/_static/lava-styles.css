@@ -1,0 +1,13 @@
+/* override the default bootstrap theme here - we want the logo to
+display in the nav bar alongside "LAVA" */
+.navbar-brand > img {
+    display: inline;
+}
+/* Hide the navbar "site" menu which doesn't work for us */
+li.dropdown.globaltoc-container {
+    display: none;
+}
+/* Add an extra style to let us float graphics */
+.fig-float {
+    float: right;
+}

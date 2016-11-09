@@ -24,7 +24,7 @@ def create_environ(env_file):
 
 
 def handler(settings, ddst):
-    import django.core.handlers.wsgi
+    import django.core.wsgi
 
     env_file = "/etc/lava-server/env.yaml"
     if os.path.exists(env_file):
@@ -34,19 +34,3 @@ def handler(settings, ddst):
     os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = ddst
 
     return get_wsgi_application()
-
-
-class WSGIRecipe(object):
-    def __init__(self, buildout, name, options):
-        self.options = options
-        self.options['lava-server-settings-template'] = buildout[
-            'instance']['lava-server-settings-template']
-
-    def make_wsgi_file(self):
-        pass
-
-    def install(self):
-        pass
-
-    def update(self):
-        pass
