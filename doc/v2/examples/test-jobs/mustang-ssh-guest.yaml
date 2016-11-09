@@ -137,7 +137,7 @@ actions:
     - guest
     definitions:
     - from: git
-      name: smoke-tests
+      name: pre-smoke-tests
       path: ubuntu/smoke-tests-basic.yaml
       repository: 'git://git.linaro.org/qa/test-definitions.git'
     - from: inline
@@ -157,7 +157,7 @@ actions:
           - tar -tzf /$(pwd|awk -F'-' '{print $2}'|awk -F'/' '{print $1}')-overlay*.tar.gz
           - lava-sync clients
     - from: git
-      name: smoke-tests
+      name: post-smoke-tests
       path: ubuntu/smoke-tests-basic.yaml
       repository: 'git://git.linaro.org/qa/test-definitions.git'
     timeout:
