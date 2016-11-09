@@ -58,3 +58,6 @@ lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/la
 # Running a VM on a device under test needs a usable SSH private key
 # which is only usable during the test
 lava-dispatcher: non-standard-file-perm usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava 0600 != 0644
+
+lava-dispatcher: spelling-error-in-changelog slave slave (duplicate word) slave
+

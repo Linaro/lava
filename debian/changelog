@@ -1,3 +1,84 @@
+lava-dispatcher (2016.11-1) unstable; urgency=medium
+
+  * New production release aimed at Stretch.
+    Release details available at:
+    https://projects.linaro.org/browse/LAVA-789?filter=12078
+  * Update compat
+  * Highlights of upstream changes:
+    Ensure namespace is available to the test shell.
+    cpio output is not an error
+    Downgrade message match failure to a warning
+    Fix up usage of LXC with a device
+    Only attempt lxc-destroy if the container exists based on exitstatus.
+    Drop ShellLogger __del__ command
+    Improve accepts for monitored QEMU
+    Strategy needs to check methods, not device_type
+    Support parallel (pbzip2) compressed bzip2 files
+    Allow vendor U-Boot builds using Ctrl interrupts
+    Improve cpio extract command line and error message
+    slave: do not send None as error code
+    slave: send a SIGINT to lava-dispatch to cancel
+    Making target IP and MAC addresses available in lava test shell
+    TestShell: allow multiple test shells
+    Fix kernel message detection for panic
+    testdef: remove unused common data
+    Fix the logic regarding the pipeline building
+    shell: make testdef_index common data a list
+    device/target: allow multiple boot control chars
+    Add 943907AEVAL1F to pyocd deploy supported devices
+    Check if container exists before destroying.
+    Do not generate results.yaml
+    Fix uefi_menu pipeline for fastboot.
+    slave: move tmp files to /var/
+    Add device to lxc only when it is available.
+    device-types: add Amlogic meson8b-odroidc1 board
+    LAVA-755 - use UUID for guest, not label.
+    slave: send an error code when err is not empty
+    Fix git-repos reference in inline test definition.
+    Allow a different bootloader interrupt character
+    Make pipeline logging python3 compatible
+    slave: fix a crash under python3
+    device-types: add Amlogic meson-gxbb-p200 board
+    device-types: add TI da850-lcdk
+    bootloader: add ramdisk_raw option
+    Detect invalid characters in testdefinition name
+    Fix timeout inheritance from job definition blocks
+    Set the right permis when creating the ramdisk dir
+    ci-run: exclude the .eggs directory
+    tests: Close the file descriptors
+    Fix root directory of V2 apache config
+    LAVA-760 - Trim LXC log output
+    Require a summary and description to validate
+    Additional changes for removable media usage
+    Fix extra_options to always be a list of strings
+    Do not set kernel type for all 'kernel' YAML keys
+    Action: re-raised the exception without modification
+    LAVA-748 ensure test definition names are unique
+    Change sample jobs urls to images.v.l.o
+    Allow testdefinitions without run steps
+    Generate the pipeline description on the slave
+    slave: fix the END message parameters
+    Use the QEMU extra options where available
+    slave: resend the END message if the ack was lost
+    slave: send the error file along with the END message
+    Move tmp files to /var/lib/lava/dispatcher/job_id/
+    Only extract the nfsrootfs once.
+    Use the uboot interrupt prompt from templates
+    Improve LXC HiKey support.
+    Don't end test shell at invalid testcase name
+    SignalMatch: simplify and fix exception message
+    Shell: improve report formatting
+    Shell: factorize handling of measurements
+    RetryAction: log errors
+    Shell: factorize signal handling
+    Move override and log_results functions into Action
+    Initial support for PyOCD
+    Use \r\n for newlines
+    Allow guest drive interface to be specified
+    allow-modify functionality added
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 09 Nov 2016 11:56:32 +0000
+
 lava-dispatcher (2016.9-1) unstable; urgency=medium
 
   * 2016.9 production release
