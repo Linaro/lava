@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ipxe import (
     BootloaderAction,
+    BootloaderCommandsAction,
     BootloaderCommandOverlay
 )
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
@@ -111,6 +112,10 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         params = job.device['actions']['boot']['methods']['ipxe']['parameters']
         boot_message = params.get('boot_message', BOOT_MESSAGE)
         self.assertIsNotNone(boot_message)
+        bootloader_action = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
+        bootloader_retry = [action for action in bootloader_action.internal_pipeline.actions if action.name == 'bootloader-retry'][0]
+        commands = [action for action in bootloader_retry.internal_pipeline.actions if action.name == 'bootloader-commands'][0]
+        self.assertEqual(commands.character_delay, 250)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, BootloaderAction):
