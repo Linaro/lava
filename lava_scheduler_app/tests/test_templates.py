@@ -115,6 +115,11 @@ class TestTemplates(unittest.TestCase):
                                             if item.endswith(','):
                                                 self.fail("%s ends with a comma" % item)
         self.assertEqual(depth, 8)
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        job_ctx = {'boot_character_delay': 150}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertEqual(150, template_dict['character_delays']['boot'])
 
     def test_beaglebone_black_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
