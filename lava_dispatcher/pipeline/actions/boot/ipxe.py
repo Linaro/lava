@@ -303,7 +303,7 @@ class BootloaderCommandsAction(Action):
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         i = 1
-        self.logger.debug("Using character delay: %s", self.character_delay)
+        self.logger.debug("Using character delay: %s milliseconds.", self.character_delay)
         for line in self.data[self.type]['commands']:
             connection.sendline(line, delay=self.character_delay, send_char=True)
             if i != (len(self.data[self.type]['commands'])):
