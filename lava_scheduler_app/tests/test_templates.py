@@ -116,10 +116,39 @@ class TestTemplates(unittest.TestCase):
                                                 self.fail("%s ends with a comma" % item)
         self.assertEqual(depth, 8)
         test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        job_ctx = {}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+
+        self.assertIsNotNone(template_dict['actions']['boot']['methods']['ipxe']['nfs']['commands'])
+
+        self.assertIsNotNone(template_dict['timeouts']['connections']['bootloader-commands'])
+        self.assertEqual(template_dict['timeouts']['connections']['bootloader-commands']['minutes'], 5)
+
+        # uses default value from template
+        self.assertEqual(500, template_dict['character_delays']['boot'])
+
+        # override template in job context
         job_ctx = {'boot_character_delay': 150}
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         self.assertEqual(150, template_dict['character_delays']['boot'])
+
+        # add device dictionary override
+        # overrides the template default
+        data += """{% set boot_character_delay = 400 %}"""
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        job_ctx = {}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertEqual(400, template_dict['character_delays']['boot'])
+
+        # job context does not override device dictionary
+        job_ctx = {'boot_character_delay': 150}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertNotEqual(150, template_dict['character_delays']['boot'])
+        self.assertEqual(400, template_dict['character_delays']['boot'])
 
     def test_beaglebone_black_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
@@ -179,7 +208,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         self.assertTrue(self.validate_data('staging-panda-01', data))
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=False)
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('u-boot-commands', template_dict['timeouts']['actions'])

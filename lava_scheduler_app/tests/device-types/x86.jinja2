@@ -1,4 +1,8 @@
 {% extends 'base.jinja2' %}
+
+# in milliseconds
+{% set boot_character_delay = boot_character_delay | default(500) %}
+
 {% block body %}
 device_type: x86
 
@@ -8,11 +12,6 @@ device_type: x86
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-
-{# adds the parameters: top level block #}
-{% block vland %}
-{{ super() }}
-{% endblock %}
 
 actions:
   deploy:
@@ -45,9 +44,7 @@ actions:
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} ip=eth0:dhcp"
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
-          - ' '
           - initrd tftp://{SERVER_IP}/{RAMDISK}
-          - ' '
           - boot
         ramdisk:
           commands:
@@ -65,16 +62,16 @@ actions:
 timeouts:
   actions:
     bootloader-retry:
-      seconds: 120
+      minutes: 2
     bootloader-interrupt:
-      seconds: 300
+      minutes: 5
     bootloader-commands:
-      seconds: 300
+      minutes: 5
   connections:
     bootloader-retry:
-      seconds: 120
+      minutes: 2
     bootloader-interrupt:
-      seconds: 300
+      minutes: 5
     bootloader-commands:
-      seconds: 300
+      minutes: 5
 {% endblock %}
