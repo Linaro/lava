@@ -2085,7 +2085,12 @@ class TestJob(RestrictedResource):
             job.save()
             parent_id = job.id  # all jobs in this group must share this as part of the sub_id
             job.sub_id = "%d.0" % parent_id
-            job.save(update_fields=['sub_id'])
+            # Add sub_id to the generated job dictionary.
+            node_json[role][0]["sub_id"] = job.sub_id
+            job.definition = simplejson.dumps(node_json[role][0],
+                                              sort_keys=True,
+                                              indent=4 * ' ')
+            job.save(update_fields=['sub_id', 'definition'])
             job_list.append(job)
             child_id = 0
 
@@ -2176,7 +2181,12 @@ class TestJob(RestrictedResource):
             job.save()
             parent_id = job.id  # all jobs in this group must share this as part of the sub_id
             job.sub_id = "%d.0" % parent_id
-            job.save(update_fields=['sub_id'])
+            # Add sub_id to the generated job dictionary.
+            node_json[role][0]["sub_id"] = job.sub_id
+            job.definition = simplejson.dumps(node_json[role][0],
+                                              sort_keys=True,
+                                              indent=4 * ' ')
+            job.save(update_fields=['sub_id', 'definition'])
             job_list.append(job)
             child_id = 0
 
