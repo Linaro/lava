@@ -265,10 +265,8 @@ class SchedulerAPI(ExposedAPI):
         """
 
         devices_list = []
-        for dev in Device.objects.all():
+        for dev in Device.objects.exclude(status=Device.RETIRED).select_related('current_job', 'device_type'):
             if not dev.is_visible_to(self.user):
-                continue
-            if dev.status == Device.RETIRED:
                 continue
             devices_list.append(dev)
 
