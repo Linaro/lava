@@ -38,7 +38,10 @@ from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.actions.boot.fastboot import WaitForAdbDevice
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_UEFI_LABEL_CLASS
+from lava_dispatcher.pipeline.utils.constants import (
+    DEFAULT_UEFI_LABEL_CLASS,
+    UEFI_LINE_SEPARATOR
+)
 
 
 class UefiMenu(Boot):
@@ -146,6 +149,7 @@ class UefiMenuSelector(SelectorMenuAction):
         if not connection:
             return connection
         connection.prompt_str = self.selector.prompt
+        connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
         connection = super(UefiMenuSelector, self).run(connection, args)

@@ -135,6 +135,11 @@ class AutoLoginAction(Action):
 
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
+        # linesep should come from deployment_data as from now on it is OS dependent
+        linesep = self.get_common_data('environment', 'line_separator')
+        connection.raw_connection.linesep = linesep if linesep else LINE_SEPARATOR
+        self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
+
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if not params:
@@ -146,13 +151,6 @@ class AutoLoginAction(Action):
             # already matched one of the prompts
         else:
             self.logger.info("Waiting for the login prompt")
-
-            # over-riding lineseparator
-            linesep = self.get_common_data('lineseparator', 'os_linesep')
-            if not linesep:
-                linesep = os.linesep
-            connection.raw_connection.linesep = linesep
-            self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
             connection.prompt_str.append(params['login_prompt'])
 
             # wait for a prompt or kernel messages

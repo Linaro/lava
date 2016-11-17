@@ -22,6 +22,7 @@ import os
 import yaml
 
 from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 
 
 class DeployDeviceEnvironment(Action):
@@ -64,6 +65,12 @@ class DeployDeviceEnvironment(Action):
 
         else:
             self.logger.info("no device environment specified")
+
+        self.set_common_data(
+            'environment',
+            'line_separator',
+            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR)
+        )
 
     def _create_environment(self):
         """Generate the env variables for the device."""

@@ -390,11 +390,11 @@ class TestAutoLogin(unittest.TestCase):
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
-
-        self.assertIsNotNone(autologinaction.get_common_data('lineseparator', 'os_linesep'))
+        autologinaction.set_common_data('environment', 'line_separator', 'testsep')
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
+        self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)

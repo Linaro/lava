@@ -23,10 +23,6 @@
 
 # pylint: disable=anomalous-backslash-in-string
 
-# Delay between each character sent to the shell. This is required for some
-# slow serial consoles.
-SHELL_SEND_DELAY = 0.05
-
 # Default timeout for shell operations
 SHELL_DEFAULT_TIMEOUT = 60
 
@@ -149,8 +145,10 @@ SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
 
-# override os.linesep which is platform-dependent based on the dispatcher, not device.
-LINE_SEPARATOR = '\r\n'
+# Set a default newline seperator for pexpect, override as necessary
+LINE_SEPARATOR = '\n'
+# other newline separators
+UEFI_LINE_SEPARATOR = '\r\n'
 
 # valid characters in components of a test definition name
 # excludes whitespace and punctuation (except hyphen and underscore)
