@@ -242,4 +242,5 @@ class FastbootTarget(Target):
         self.proc.sendline("")
         self.proc.sendline('export PS1="%s"' % self.tester_ps1)
 
+
 target_class = FastbootTarget

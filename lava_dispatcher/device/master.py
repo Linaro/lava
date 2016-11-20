@@ -799,6 +799,7 @@ class MasterImageTarget(Target):
                                               'fail')
             raise
 
+
 target_class = MasterImageTarget
 
 
