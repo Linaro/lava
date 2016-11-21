@@ -16,10 +16,15 @@ device_type: overdrive
 
 actions:
   deploy:
+    connections:
+      lxc:
+      serial:
     methods:
+      lxc:
       tftp:
   boot:
     connections:
+      lxc:
       serial:
     methods:
       grub:
