@@ -794,6 +794,7 @@ def device_type_detail(request, pk):
     bits_width = dt.bits.width if dt.bits else ''
     cpu_name = dt.cpu_model if dt.cpu_model else ''
     desc = dt.description if dt.description else ''
+    aliases = ', '.join([alias.name for alias in dt.aliases.all()])
 
     if dt.health_check_job == "":
         health_freq_str = ""
@@ -812,6 +813,7 @@ def device_type_detail(request, pk):
             'arch_bits': bits_width,
             'cores': core_string,
             'cpu_model': cpu_name,
+            'aliases': aliases,
             'description': desc,
             'search_data': search_data,
             "discrete_data": discrete_data,

@@ -13,7 +13,7 @@ Glossary of terms
    expected to need to read the entire glossary to find the information. FIXME
    - need to add many more terms here
 
-**A** [ :term:`action level` ]
+**A** [ :term:`action level` ] [ :term:`alias` ]
 
 **C** [ :term:`chart` ] [ :term:`ci loop` ]
 
@@ -75,6 +75,14 @@ Glossary of terms
     the level as the location: ``job/8360/definition#2.4.5``
 
     .. seealso:: :ref:`pipeline_construction`
+
+  alias
+    A string which can be used to relate the descriptive device-type name to a
+    particular list of aliases which could be used to lookup the matching
+    device-type. This can be useful to list the :term:`device tree blobs <DTB>`
+    which can be used with this device-type. (Aliases cannot be used in job
+    submissions directly.) Multiple device-types are allowed to share the one
+    or more aliases.
 
   chart
     A chart allows users to track :term:`results` over time using

@@ -6,7 +6,7 @@ from django.db.models import Q
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
-    Architecture, ProcessorFamily, BitWidth, Core
+    Architecture, ProcessorFamily, Alias, BitWidth, Core
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -312,6 +312,10 @@ class DeviceTypeAdmin(admin.ModelAdmin):
             return obj.cpu_model
         return ''
 
+    def list_of_aliases(self, obj):
+        if obj.aliases:
+            return ', '.join([alias.name for alias in obj.aliases])
+
     def bit_count(self, obj):
         if obj.bits:
             return obj.bits
@@ -374,6 +378,7 @@ admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(Architecture)
 admin.site.register(ProcessorFamily)
+admin.site.register(Alias)
 admin.site.register(BitWidth)
 admin.site.register(Core)
 admin.site.register(JobFailureTag)

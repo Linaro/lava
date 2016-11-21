@@ -265,8 +265,10 @@ class SchedulerAPI(ExposedAPI):
         """
 
         devices_list = []
-        for dev in Device.objects.exclude(status=Device.RETIRED).select_related('current_job', 'device_type'):
+        for dev in Device.objects.all():
             if not dev.is_visible_to(self.user):
+                continue
+            if dev.status == Device.RETIRED:
                 continue
             devices_list.append(dev)
 
@@ -316,6 +318,46 @@ class SchedulerAPI(ExposedAPI):
             all_device_types.append(device_type)
 
         return all_device_types
+
+    def get_device_type_by_alias(self, alias):
+        """
+        Name
+        ----
+
+        `get_device_type_by_alias` (`alias`)
+
+        Description
+        -----------
+        Get the matching device-type(s) for the specified alias. It is
+        possible that more than one device-type can be returned, depending
+        on local admin configuration. An alias can be used to provide the
+        link between the device-type name and the Device Tree name.
+        It is possible for multiple device-types to have the same alias
+        (to assist in transitions and migrations).
+        The specified alias string can be a partial match, returning all
+        device-types which have an alias name containing the requested
+        string.
+
+        Arguments
+        ---------
+        `alias`: string
+            Name of the alias to lookup
+
+        Return value
+        ------------
+        This function returns a dictionary containing the alias as the key
+        and a list of device-types which use that alias as the value. If the
+        specified alias does not match any device-type, the dictionary contains
+        an empty list for the alias key.
+
+        {'apq8016-sbc': ['dragonboard410c']}
+        {'ompa4-panda': ['panda', 'panda-es']}
+        """
+
+        aliases = DeviceType.objects.filter(aliases__name__contains=alias)
+        return {
+            alias: [device_type.name for device_type in aliases]
+        }
 
     def get_device_status(self, hostname):
         """

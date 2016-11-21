@@ -223,6 +223,19 @@ class ProcessorFamily(models.Model):
         return self.pk
 
 
+class Alias(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Alias for this device-type',
+        help_text=u'e.g. the device tree name(s)',
+        max_length=200,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
         primary_key=True,
@@ -276,6 +289,12 @@ class DeviceType(models.Model):
         blank=True,
         null=True,
         editable=True,
+    )
+
+    aliases = models.ManyToManyField(
+        Alias,
+        related_name='device_types',
+        blank=True,
     )
 
     bits = models.ForeignKey(
