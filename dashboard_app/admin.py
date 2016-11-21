@@ -128,6 +128,8 @@ def cleanup_bundle_stream_selected(modeladmin, request, queryset):
             else:
                 my_queryset = my_queryset | bundle_stream.bundles.all()
     return delete_selected(my_modeladmin, request, my_queryset)
+
+
 cleanup_bundle_stream_selected.short_description = "Clean up selected %(verbose_name_plural)s"
 
 
@@ -273,6 +275,7 @@ class TestDefinitionAdmin(admin.ModelAdmin):
             'fields': ('target_dev_types', 'environment', 'mime_type',
                        'target_os', 'content')}),
     )
+
 
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Bundle, BundleAdmin)

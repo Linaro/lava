@@ -35,6 +35,7 @@ def expire_user_action(modeladmin, request, queryset):  # pylint: disable=unused
             user.user_permissions.remove(permission)
         user.save()
 
+
 expire_user_action.short_description = 'Expire user account'
 
 
@@ -64,6 +65,8 @@ def online_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action")
+
+
 online_action.short_description = "take online"
 
 
@@ -71,6 +74,8 @@ def online_action_without_health_check(modeladmin, request, queryset):  # pylint
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action", True)
+
+
 online_action_without_health_check.short_description = \
     "take online without manual health check"
 
@@ -84,6 +89,8 @@ def retire_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
                 new_state=new_status, message="retiring", job=None).save()
             device.status = new_status
             device.save()
+
+
 retire_action.short_description = "retire"
 
 
@@ -91,6 +98,8 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     for testjob in queryset:
         if testjob.can_cancel(request.user):
             testjob.cancel(request.user)
+
+
 cancel_action.short_description = 'cancel selected jobs'
 
 
@@ -98,6 +107,8 @@ def health_unknown(modeladmin, request, queryset):  # pylint: disable=unused-arg
     for device in queryset.filter(health_status=Device.HEALTH_PASS):
         device.health_status = Device.HEALTH_UNKNOWN
         device.save()
+
+
 health_unknown.short_description = "set health_status to unknown"
 
 
@@ -336,6 +347,8 @@ def hide_worker_action(modeladmin, request, queryset):  # pylint: disable=unused
     for worker in queryset.filter(display=True):
         worker.display = False
         worker.save()
+
+
 hide_worker_action.short_description = "Hide selected worker(s)"
 
 
@@ -343,6 +356,8 @@ def show_worker_action(modeladmin, request, queryset):  # pylint: disable=unused
     for worker in queryset.filter(display=False):
         worker.display = True
         worker.save()
+
+
 show_worker_action.short_description = "Show selected worker(s)"
 
 

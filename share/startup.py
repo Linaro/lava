@@ -40,4 +40,6 @@ print(" - creating rollback function")
 
 def rollback():
     transaction.rollback()
+
+
 print("=============================")

@@ -53,4 +53,5 @@ class AnalyticsNode(template.Node):
         else:
             return ''
 
+
 register.tag('analytics', do_get_analytics)

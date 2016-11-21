@@ -47,6 +47,7 @@ def find_data_files(srcdir, *wildcards):
         [os.path.basename(f) for f in glob.glob(os.path.normpath(os.path.join(srcdir, '*')))])
     return file_list
 
+
 SRCDIR = os.path.join('.', 'lava_scheduler_app', 'tests', 'device-types')
 DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 

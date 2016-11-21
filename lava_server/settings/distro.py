@@ -255,4 +255,5 @@ EVENT_TOPIC = distro_settings.get_setting("EVENT_TOPIC", EVENT_TOPIC)
 def set_timeout(connection, **kw):
     connection.cursor().execute("SET statement_timeout to 30000")
 
+
 connection_created.connect(set_timeout)

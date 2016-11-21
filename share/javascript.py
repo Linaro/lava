@@ -169,5 +169,6 @@ def main():
     uglify('debian', data, os.getcwd(), args.remove, args.simulate)
     return 0
 
+
 if __name__ == '__main__':
     sys.exit(main())
