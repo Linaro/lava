@@ -153,3 +153,6 @@ UEFI_LINE_SEPARATOR = '\r\n'
 # valid characters in components of a test definition name
 # excludes whitespace and punctuation (except hyphen and underscore)
 DEFAULT_TESTDEF_NAME_CLASS = r'^[\w\d\_\-]+$'
+
+# Limit repetitive messages
+METADATA_MESSAGE_LIMIT = 8192

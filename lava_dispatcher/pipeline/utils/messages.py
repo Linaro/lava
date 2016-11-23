@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_PANIC_MSG,
     KERNEL_TRACE_MSG,
     KERNEL_INIT_ALERT,
+    METADATA_MESSAGE_LIMIT,
 )
 
 
@@ -132,7 +133,7 @@ class LinuxKernelMessages(Action):
                 # this is allowable behaviour, not a failure.
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': message
+                    'message': message[:METADATA_MESSAGE_LIMIT]
                 })
                 continue
             elif index == cls.PANIC or index == cls.EXCEPTION:
@@ -140,7 +141,7 @@ class LinuxKernelMessages(Action):
                     action.logger.error("%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': message
+                    'message': message[:METADATA_MESSAGE_LIMIT]
                 })
                 continue
             elif index and index >= cls.FREE_UNUSED:
