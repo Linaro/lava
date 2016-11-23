@@ -215,6 +215,24 @@ protocol:
 Device tags are only relevant during scheduling of the testjob and have no
 meaning to the dispatcher.
 
+.. index:: checksum
+
+.. _testjob_checksums:
+
+Using checksums
+===============
+
+If an MD5 or SHA256 checksum is provided alongside the URL of the file to be
+used in a test job, the downloaded content will be checked against the provided
+checksum. The test job will fail as ``Incomplete`` if the checksum fails to
+match.
+
+Avoid using URLs which include shortcuts like ``latest`` when providing
+the checksum. Specify the full URL to ensure consistency between tests.
+
+.. seealso:: :ref:`standard_kernel_initramfs_rootfs` and
+   :ref:`make_tests_verbose`
+
 Using LAVA Test Shell
 =====================
 

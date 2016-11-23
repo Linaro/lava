@@ -137,13 +137,32 @@ going on. If you are starting with a new test device or new boot files, make it
 easy to diagnose problems later by adding diagnostics early in the process. In
 general, it is much easier to debug a failed test when it is clear about what
 it expects to be happening than one which just stops or says "error" in the
-middle of a test.
+middle of a test. The presence of debug information in a known working test job
+can be invaluable when checking why a different test job or test case failed.
 
-* If your test configures a network interfaces, add the output of ``ifconfig``
-  or ``ip a show`` afterwards to show that it worked.
+* If your test configures one or more **network interfaces**, add the output of
+  ``ifconfig`` or ``ip a show`` afterwards to show that it worked. Consider
+  adding calls to ``route`` or running ``cat /etc/resolv.conf`` as well.
 
-* If your test uses a specific block device or filesystem, add the output of
-  ``df`` or ``mount`` to show what devices and filesystems are available.
+* If your test uses a specific **block device** or **filesystem**, add the
+  output of ``df`` or ``mount`` to show what devices and filesystems are
+  available.
+
+* Check the **kernel support** available inside the test image by running
+  commands to output details into the test job log file. Once you know which
+  parts of ``/dev/``, ``/proc/`` and ``/sys`` are relevant to the commands used
+  in your test definition, use ``grep`` and ``cat`` to ensure that details
+  about the available support are available when you come to debug the test
+  job.
+
+* Check the available **kernel modules** using ``lsmod`` or by outputting the
+  contents of ``modules.dep``, depending on the configuration of the kernel
+  used in the test job.
+
+* Use the :term:`metadata` to reference the **build log** and **configuration**
+  of files used in the test job, especially the kernel, initramfs and / or NFS.
+
+  .. seealso:: :ref:`local_files_pitfalls`
 
 .. _set_x:
 
@@ -171,6 +190,25 @@ will give the following output::
  + echo yes
  yes
 
+.. index:: debug output
+
+.. _retain_debug_output:
+
+Provide debug data in all test jobs
+***********************************
+
+The debug statements used when the test definitions are being developed can be
+retained in the final test definitions for later reference. It is much better
+to have the debug information available in every test than to have to resubmit
+the test job only to find that the problem is intermittent or can only be
+reproduced in particular operations.
+
+Debug checks which become common across a range of test job definitions or
+which are particularly important for quick triage can also be run as test cases
+so that the presence or absence of a critical element of the test shows up as a
+pass or fail. Many such checks will need to use scripts to isolate the relevant
+information from the available data in ``proc`` or ``dmesg`` etc.
+
 .. index:: pitfalls
 
 .. _common_pitfalls:
@@ -181,6 +219,42 @@ Common pitfalls
 There are some common mistakes using LAVA which can cause issues. If you are
 experiencing weird problems with your test job, maybe considering these will
 help.
+
+.. _local_files_pitfalls:
+
+Handling locally built files
+============================
+
+Triage will be a lot easier if you follow these guidelines when using files
+you have built or modified yourself in LAVA test jobs:
+
+* Use a :ref:`checksums <testjob_checksums>` on all downloaded copies of
+  locally rebuilt files. Frequent rebuilds lead to confusion about whether the
+  file you have just built is the same file as the test job uses. Even when you
+  are sure you have updated the file correctly, there may be caches between the
+  upload location and the worker.
+
+* **Always** update the :term:`metadata` every time a local file is rebuilt for
+  use in a testjob. Include details of what was changed to require the file to
+  be rebuilt and when that change was made.
+
+* **Always** include and update files describing the configuration of the locally
+  built file. If building a kernel, enabling ``/proc/config.gz`` can save large
+  amounts of time in triage. Upload the full configuration and build log of all
+  files and include the URL to those files in the :term:`metadata`. It can be
+  very difficult for anyone to help you debug your test jobs if the details of
+  how the test job files were built is not available. Consider using version
+  control software for the test job definitions, configuration files, build
+  logs or changelogs to make it easier to track what has changed. When
+  rebuilding local files for your test jobs, please remember:
+  :ref:`change_one_thing`.
+
+* **Retain old copies** of locally built files, especially if test jobs using
+  those files ran successfully.
+
+* **Compare** your configuration with known working test jobs.
+
+  .. seealso:: :ref:`using_gold_standard_files`.
 
 .. _shell_operators_yaml:
 
