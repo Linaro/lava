@@ -99,7 +99,6 @@ class OverlayAction(DeployAction):
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         namespace = self.parameters.get('namespace', None)
         if namespace:
-            self.action_namespaces.append(namespace)
             self.set_common_data(namespace, 'lava_test_results_dir',
                                  lava_test_results_dir)
             lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']

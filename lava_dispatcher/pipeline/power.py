@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     TestError,
     JobError,
+    action_namespaces,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -242,6 +243,16 @@ class FinalizeAction(Action):
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
+
+        # Finalize all connections associated with each namespace.
+        namespaces = action_namespaces(self.job.parameters)
+        if namespaces:
+            for namespace in namespaces:
+                connection = self.get_common_data(namespace, 'connection',
+                                                  deepcopy=False)
+                if connection:
+                    connection.finalise()
+
         for protocol in self.job.protocols:
             protocol.finalise_protocol(self.job.device)
         if self.errors:

@@ -175,6 +175,7 @@ class TestShellAction(TestAction):
                 if "repository" not in testdef:
                     self.errors = "Repository missing from test definition"
         self._reset_patterns()
+        namespace = self.parameters.get('namespace', self.name)
         super(TestShellAction, self).validate()
 
     def run(self, connection, args=None):
@@ -188,6 +189,13 @@ class TestShellAction(TestAction):
         if "boot-result" not in self.data:
             raise RuntimeError("No boot action result found")
         connection = super(TestShellAction, self).run(connection, args)
+
+        # Get the connection, specific to this namespace
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            connection = self.get_common_data(namespace, 'connection',
+                                              deepcopy=False)
+
         if self.data["boot-result"] != "success":
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})
@@ -213,12 +221,18 @@ class TestShellAction(TestAction):
         connection.sendline(connection.check_char)
         self.wait(connection)
 
+        namespace = self.parameters.get('namespace', self.name)
+        stage = self.get_common_data(namespace, 'stages')
+
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
         pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
-        if pre_command_list and self.parameters['stage'] == 0:
+        if pre_command_list and stage == 0:
             for command in pre_command_list:
                 connection.sendline(command)
+
+        self.logger.debug("Using %s" % self.data["lava_test_results_dir"])
+        connection.sendline('ls -alr %s/%s' % (self.data["lava_test_results_dir"], stage))
 
         with connection.test_connection() as test_connection:
             # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
@@ -226,7 +240,7 @@ class TestShellAction(TestAction):
                 "%s/bin/lava-test-runner %s/%s" % (
                     self.data["lava_test_results_dir"],
                     self.data["lava_test_results_dir"],
-                    self.parameters['stage']),
+                    stage),
                 delay=self.character_delay)
 
             self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")

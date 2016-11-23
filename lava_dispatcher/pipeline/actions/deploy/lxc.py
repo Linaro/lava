@@ -101,7 +101,6 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.data['lava_test_results_dir'] = lava_test_results_dir
         namespace = self.parameters.get('namespace', None)
         if namespace:
-            self.action_namespaces.append(namespace)
             self.set_common_data(namespace, 'lava_test_results_dir',
                                  lava_test_results_dir)
             lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']

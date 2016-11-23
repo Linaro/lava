@@ -203,6 +203,7 @@ class RepoAction(Action):
             location = self.get_common_data(namespace, 'location')
             lava_test_results_dir = self.get_common_data(namespace,
                                                          'lava_test_results_dir')
+            self.logger.debug("[%s namespace] Using %s at stage %s", namespace, lava_test_results_dir, self.stage)
         elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
         else:
@@ -583,6 +584,7 @@ class TestDefinitionAction(TestAction):
         self.summary = "loading test definitions"
         self.test_list = None
         self.stages = 0
+        self.run_levels = {}
 
     def populate(self, parameters):
         """
@@ -617,6 +619,11 @@ class TestDefinitionAction(TestAction):
                 # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
                 handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
                 handler.stage = self.stages
+                self.run_levels[testdef['name']] = self.stages
+                if namespace:
+                    self.set_common_data(namespace, 'stages', self.stages)
+                else:
+                    self.set_common_data('lava-test-shell', 'stages', self.stages)
 
                 # copy details into the overlay, one per handler but the same class each time.
                 overlay = TestOverlayAction()
@@ -711,9 +718,10 @@ class TestDefinitionAction(TestAction):
 
         connection = super(TestDefinitionAction, self).run(connection, args)
 
-        self.logger.debug("lava-test-runner.conf")
-        for stage in range(0, self.stages):
+        for name, stage in self.run_levels.items():
+            self.logger.debug("lava-test-runner.conf name %s stage %s", name, stage)
             path = '%s/%s' % (self.data[self.name]['overlay_dir'], stage)
+            self.logger.debug("Using lava-test-runner path: %s", path)
             with open('%s/%s/lava-test-runner.conf' % (self.data[self.name]['overlay_dir'], stage), 'a') as runner_conf:
                 for handler in self.internal_pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
@@ -971,20 +979,27 @@ class TestRunnerAction(TestOverlayAction):
             current.update(self.testdef_levels)
         else:
             current = self.testdef_levels
-        self.set_common_data(self.name, 'testdef_levels', current)
+        if namespace:
+            self.set_common_data(namespace, 'testdef_levels', current)
+        else:
+            self.set_common_data(self.name, 'testdef_levels', current)
 
     def run(self, connection, args=None):
         connection = super(TestRunnerAction, self).run(connection, args)
+        namespace = self.parameters.get('namespace', None)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-
-        testdef_levels = self.get_common_data('test-runscript-overlay', 'testdef_levels')
+        if namespace:
+            testdef_levels = self.get_common_data(namespace, 'testdef_levels')
+        else:
+            testdef_levels = self.get_common_data('test-runscript-overlay', 'testdef_levels')
         with open(yaml_file, 'r') as test_file:
             testdef = yaml.safe_load(test_file)
 
+        self.logger.debug("runner path: %s test_uuid %s", runner_path, self.test_uuid)
         filename = '%s/run.sh' % runner_path
         content = self.handle_parameters(testdef)
 

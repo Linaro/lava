@@ -21,7 +21,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.action import JobError, action_namespaces
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -145,7 +145,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
         download_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
         overlay_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        self.assertEqual(['test-image'], overlay_action.action_namespaces)
+        self.assertEqual({'test-image', 'master-image'}, action_namespaces(overlay_action.job.parameters))
         self.assertIn('lava_test_results_dir', deploy_action.data)
         self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
         self.assertIsInstance(deploy_action, MassStorage)

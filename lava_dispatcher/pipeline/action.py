@@ -397,7 +397,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
         self.section = None
         self.connection_timeout = Timeout(self.name)
-        self.action_namespaces = []
         self.character_delay = 0
 
     # public actions (i.e. those who can be referenced from a job file) must
@@ -917,3 +916,15 @@ class Timeout(object):
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         self.duration = max(min(OVERRIDE_CLAMP_DURATION, duration), 1)  # FIXME: needs support in /etc/
+
+
+def action_namespaces(parameters=None):
+    """Iterates through the job parameters to identify all the action
+    namespaces."""
+    namespaces = set()
+    for action in parameters['actions']:
+        for name in action:
+            if isinstance(action[name], dict):
+                if action[name].get('namespace', None):
+                    namespaces.add(action[name].get('namespace', None))
+    return namespaces

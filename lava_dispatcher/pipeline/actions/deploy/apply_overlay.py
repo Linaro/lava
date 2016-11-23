@@ -69,13 +69,18 @@ class ApplyOverlayGuest(Action):
             self.errors = "Device configuration does not specify size of guest filesystem."
 
     def run(self, connection, args=None):
-        if not self.data['compress-overlay'].get('output'):
+        overlay_file = self.data['compress-overlay'].get('output', None)
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            overlay_file = self.get_common_data(namespace, 'output')
+        if not overlay_file:
             raise RuntimeError("Unable to find the overlay")
+        self.logger.debug("Overlay: %s", overlay_file)
         guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_common_data('guest', 'filename', guest_file)
         blkid = prepare_guestfs(
-            guest_file, self.data['compress-overlay'].get('output'),
+            guest_file, overlay_file,
             self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
         self.results = {'success': blkid}
         self.set_common_data('guest', 'UUID', blkid)
@@ -94,14 +99,17 @@ class ApplyOverlayImage(Action):
         super(ApplyOverlayImage, self).validate()
 
     def run(self, connection, args=None):
-        if self.data['compress-overlay'].get('output'):
-            overlay = self.data['compress-overlay'].get('output')
-            self.logger.debug("Overlay: %s", overlay)
+        overlay_file = self.data['compress-overlay'].get('output', None)
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            overlay_file = self.get_common_data(namespace, 'output')
+        if overlay_file:
+            self.logger.debug("Overlay: %s", overlay_file)
             decompressed_image = self.data['download_action']['image']['file']
             self.logger.debug("Image: %s", decompressed_image)
             root_partition = self.parameters['image']['root_partition']
             self.logger.debug("root_partition: %s", root_partition)
-            copy_in_overlay(decompressed_image, root_partition, overlay)
+            copy_in_overlay(decompressed_image, root_partition, overlay_file)
         else:
             self.logger.debug("No overlay to deploy")
         return connection
@@ -151,14 +159,16 @@ class ApplyOverlayTftp(Action):
 
     def run(self, connection, args=None):
         connection = super(ApplyOverlayTftp, self).run(connection, args)
-        overlay_file = None
         directory = None
         nfs_url = None
+        overlay_file = self.data['compress-overlay'].get('output', None)
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            overlay_file = self.get_common_data(namespace, 'output')
         if self.parameters.get('nfsrootfs', None) is not None:
             if not self.parameters['nfsrootfs'].get('install_overlay', True):
                 self.logger.info("Skipping applying overlay to NFS")
                 return connection
-            overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
             self.logger.info("Applying overlay to NFS")
         elif self.parameters.get('nfs_url', None) is not None:
@@ -166,7 +176,6 @@ class ApplyOverlayTftp(Action):
                 self.logger.info("Skipping applying overlay to persistent NFS")
                 return connection
             nfs_url = self.parameters.get('nfs_url')
-            overlay_file = self.data['compress-overlay'].get('output')
             self.logger.info("Applying overlay to persistent NFS")
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
@@ -180,11 +189,9 @@ class ApplyOverlayTftp(Action):
             if not self.parameters['ramdisk'].get('install_overlay', True):
                 self.logger.info("Skipping applying overlay to ramdisk")
                 return connection
-            overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
             self.logger.info("Applying overlay to ramdisk")
         elif self.parameters.get('rootfs', None) is not None:
-            overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'root')
         else:
             self.logger.debug("No overlay directory")
@@ -509,7 +516,7 @@ class ApplyLxcOverlay(Action):
 
     def run(self, connection, args=None):
         connection = super(ApplyLxcOverlay, self).run(connection, args)
-        overlay_file = self.data['compress-overlay'].get('output')
+        overlay_file = self.data['compress-overlay'].get('output', None)
         if overlay_file is None:
             self.logger.debug("skipped %s", self.name)
             return connection
