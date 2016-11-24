@@ -46,7 +46,7 @@ from lava_scheduler_app.dbutils import (
     parse_job_description,
     select_device,
 )
-from lava_results_app.dbutils import map_scanned_results
+from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
@@ -211,18 +211,6 @@ class Command(BaseCommand):
                 job_id, message)
             return
 
-        if message_lvl == "results":
-            try:
-                job = TestJob.objects.get(pk=job_id)
-            except TestJob.DoesNotExist:
-                self.logger.error("[%s] Unknown job id", job_id)
-                return
-            ret = map_scanned_results(results=message_msg, job=job)
-            if not ret:
-                self.logger.warning(
-                    "[%s] Unable to map scanned results: %s",
-                    job_id, message)
-
         # Clear filename
         if '/' in level or '/' in name:
             self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
@@ -242,6 +230,19 @@ class Command(BaseCommand):
             self.logger.info("[%s] Receiving logs from a new job", job_id)
             mkdir(os.path.dirname(filename))
             self.logs[job_id] = FileHandler(filename)
+
+        if message_lvl == "results":
+            try:
+                job = TestJob.objects.get(pk=job_id)
+            except TestJob.DoesNotExist:
+                self.logger.error("[%s] Unknown job id", job_id)
+                return
+            meta_filename = create_metadata_store(message_msg, job, level)
+            ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
+            if not ret:
+                self.logger.warning(
+                    "[%s] Unable to map scanned results: %s",
+                    job_id, message)
 
         # Mark the file handler as used
         # TODO: try to use a more pythonnic way

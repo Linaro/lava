@@ -33,7 +33,9 @@
   {% if testcase.action_metadata %}
   <ul class="list-unstyled">
   {% for key, value in testcase.action_metadata.items %}
-  {% if value.items %}
+  {% if key == 'extra' and extra_source %}
+      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ extra_source }}</pre></li>
+  {% elif value.items %}
     <li><strong>{{ key }}</strong><ul>
     {% for k, v in value.items %}
       <li><strong>{{ k }}</strong>: {{ v }}</li>

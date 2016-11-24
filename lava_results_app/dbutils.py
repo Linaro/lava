@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import yaml
 import urllib
 import logging
@@ -74,11 +75,24 @@ def append_failure_comment(job, msg):
     logger.error(msg)
 
 
-def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+def create_metadata_store(results, job, level):
+    if 'extra' not in results:
+        return None
+    stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
+    meta_filename = os.path.join(job.output_dir, 'metadata', stub)
+    if not os.path.exists(os.path.dirname(meta_filename)):
+        os.mkdir(os.path.dirname(meta_filename))
+    with open(meta_filename, 'a') as extra_store:
+        yaml.dump(results['extra'], extra_store)
+    return meta_filename
+
+
+def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
     :param job: the current test job
+    :param meta_filename: YAML store for results metadata
     :return: False on error, else True
     """
     logger = logging.getLogger('dispatcher-master')
@@ -91,9 +105,14 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
         append_failure_comment(job, "Missing some keys (\"definition\", \"case\" or \"result\") in %s" % results)
         return False
 
+    if 'extra' in results:
+        results['extra'] = meta_filename
+
     metadata_check = yaml.dump(results)
     if len(metadata_check) > 4096:  # bug 2471 - test_length unit test
-        append_failure_comment(job, "[%d] Error in handling results metadata %s" % (job.id, metadata_check))
+        msg = "[%d] Result metadata is too long. %s" % (job.id, metadata_check)
+        logger.error(msg)
+        append_failure_comment(job, msg)
         return False
 
     suite, created = TestSuite.objects.get_or_create(name=results["definition"], job=job)
@@ -408,6 +427,16 @@ def export_testcase(testcase):
     duration = float(actiondata.duration) if actiondata else ''
     timeout = actiondata.timeout if actiondata else ''
     level = actiondata.action_level if actiondata else None
+    metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
+    extra_source = []
+    extra_data = metadata.get('extra', None)
+    if extra_data and isinstance(extra_data, unicode) and os.path.exists(extra_data):
+        with open(metadata['extra'], 'r') as extra_file:
+            items = yaml.load(extra_file, Loader=yaml.CLoader)
+        # hide the !!python OrderedDict prefix from the output.
+        for key, value in items.items():
+            extra_source.append({key: value})
+        metadata['extra'] = extra_source
     casedict = {
         'name': str(testcase.name),
         'job': str(testcase.suite.job_id),
@@ -419,7 +448,7 @@ def export_testcase(testcase):
         'timeout': str(timeout),
         'logged': str(testcase.logged),
         'level': str(level),
-        'metadata': dict(testcase.action_metadata) if testcase.action_metadata else {},
+        'metadata': metadata,
         'url': str(testcase.get_absolute_url()),
     }
     return casedict
