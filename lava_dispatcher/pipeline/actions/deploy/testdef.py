@@ -659,7 +659,7 @@ class TestDefinitionAction(TestAction):
                     self.set_common_data(namespace, 'testdef_index', index)
                 else:
                     self.set_common_data(self.name, 'testdef_index', index)
-            self.stages += 1
+                self.stages += 1
 
     def validate(self):
         """
@@ -728,6 +728,7 @@ class TestDefinitionAction(TestAction):
             with open('%s/%s/lava-test-runner.conf' % (self.data[self.name]['overlay_dir'], stage), 'a') as runner_conf:
                 for handler in self.internal_pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
+                        self.logger.debug("Writing to runner_conf %s %s" % (self.name, stage))
                         runner_conf.write(handler.runner)
 
         return connection

@@ -224,35 +224,36 @@ class TestShellAction(TestAction):
         namespace = self.parameters.get('namespace', self.name)
         stage = self.get_common_data(namespace, 'stages')
 
-        # use the string instead of self.name so that inheriting classes (like multinode)
-        # still pick up the correct command.
-        pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
-        if pre_command_list and stage == 0:
-            for command in pre_command_list:
-                connection.sendline(command)
+        for running in xrange(stage + 1):
+            # use the string instead of self.name so that inheriting classes (like multinode)
+            # still pick up the correct command.
+            pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
+            if pre_command_list and running == 0:
+                for command in pre_command_list:
+                    connection.sendline(command)
 
-        self.logger.debug("Using %s" % self.data["lava_test_results_dir"])
-        connection.sendline('ls -alr %s/%s' % (self.data["lava_test_results_dir"], stage))
+            self.logger.debug("Using %s" % self.data["lava_test_results_dir"])
+            connection.sendline('ls -l %s/' % (self.data["lava_test_results_dir"]))
 
-        with connection.test_connection() as test_connection:
-            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-            test_connection.sendline(
-                "%s/bin/lava-test-runner %s/%s" % (
-                    self.data["lava_test_results_dir"],
-                    self.data["lava_test_results_dir"],
-                    stage),
-                delay=self.character_delay)
+            with connection.test_connection() as test_connection:
+                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                test_connection.sendline(
+                    "%s/bin/lava-test-runner %s/%s" % (
+                        self.data["lava_test_results_dir"],
+                        self.data["lava_test_results_dir"],
+                        running),
+                    delay=self.character_delay)
 
-            self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
-            if self.timeout.duration > self.connection_timeout.duration:
-                self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
-                test_connection.timeout = self.timeout.duration
-            else:
-                self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
-                test_connection.timeout = self.connection_timeout.duration
+                self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+                if self.timeout.duration > self.connection_timeout.duration:
+                    self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                    test_connection.timeout = self.timeout.duration
+                else:
+                    self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
+                    test_connection.timeout = self.connection_timeout.duration
 
-            while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                pass
+                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                    pass
 
         self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
