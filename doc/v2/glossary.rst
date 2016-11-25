@@ -143,6 +143,8 @@ Glossary of terms
     requesting tags, remember to include a description of what the tagged
     device can provide to a Test Job.
 
+    .. seealso:: :ref:`device_tags_example`
+
   device type
     The common type of a number of devices in LAVA. The device type may have a
     :term:`health check` defined. Devices with the same device type will run
