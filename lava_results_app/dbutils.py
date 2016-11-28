@@ -264,10 +264,8 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
 
 
 def _get_device_metadata(data):
-    hostname = data.get('hostname', None)
     devicetype = data.get('device_type', None)
     return {
-        'target.hostname': hostname,
         'target.device_type': devicetype
     }
 

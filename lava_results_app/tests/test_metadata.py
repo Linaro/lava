@@ -159,7 +159,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_values = _get_device_metadata(pipeline['device'])
         self.assertEqual(
             device_values,
-            {'target.hostname': 'fakeqemu1', 'target.device_type': 'qemu'}
+            {'target.device_type': 'qemu'}
         )
         del pipeline['device']['device_type']
         self.assertNotIn('device_type', pipeline['device'])
