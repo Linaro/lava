@@ -73,10 +73,7 @@ class ResultsTable(LavaTable):
         Slightly different purpose to RestrictedIDLinkColumn.render
         """
         user = table.context.get('request').user
-        if record.job.can_view(user):
-            return True
-        else:
-            return False
+        return bool(record.job.can_view(user))
 
     def render_name(self, record, table=None):
         if not self._check_job(record, table):
