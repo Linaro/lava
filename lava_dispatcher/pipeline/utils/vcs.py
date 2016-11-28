@@ -22,7 +22,7 @@ import sys
 import logging
 import os
 import subprocess
-
+import yaml
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
@@ -57,7 +57,7 @@ class BzrHelper(VCSHelper):
                                          str(revision), self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
-                commit_id = str(revision)
+                commit_id = revision
             else:
                 logger.debug("Running '%s branch %s'", self.binary, self.url)
                 subprocess.check_output([self.binary, 'branch', self.url,
@@ -68,18 +68,17 @@ class BzrHelper(VCSHelper):
                                                     env=env).strip().decode('utf-8')
 
         except subprocess.CalledProcessError as exc:
+            exc_command = [i.strip() for i in exc.cmd]
             if sys.version > '3':
-                exc_message = str(exc)
-                logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': exc_message,
-                    'output': str(exc).split('\n')})
+                exc_message = str(exc)  # pylint: disable=redefined-variable-type
+                exc_output = str(exc).split('\n')
             else:
-                exc_message = exc.message
-                logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': [i.strip() for i in exc_message],
-                    'output': exc.output.split('\n')})
+                exc_message = [i.strip() for i in exc.message],  # pylint: disable=redefined-variable-type
+                exc_output = exc.output.split('\n')
+            logger.exception(yaml.dump({
+                'command': exc_command,
+                'message': exc_message,
+                'output': exc_output}))
             raise InfrastructureError("Unable to fetch bzr repository '%s'"
                                       % (self.url))
         finally:
@@ -130,18 +129,17 @@ class GitHelper(VCSHelper):
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
             logger = logging.getLogger('dispatcher')
+            exc_command = [i.strip() for i in exc.cmd]
             if sys.version > '3':
-                exc_message = str(exc)
-                logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': exc_message,
-                    'output': str(exc).split('\n')})
+                exc_message = str(exc)  # pylint: disable=redefined-variable-type
+                exc_output = str(exc).split('\n')
             else:
-                exc_message = exc.message
-                logger.exception({
-                    'command': [i.strip() for i in exc.cmd],
-                    'message': [i.strip() for i in exc_message],
-                    'output': exc.output.split('\n')})
+                exc_message = [i.strip() for i in exc.message],  # pylint: disable=redefined-variable-type
+                exc_output = exc.output.split('\n')
+            logger.exception(yaml.dump({
+                'command': exc_command,
+                'message': exc_message,
+                'output': exc_output}))
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
 
@@ -155,6 +153,9 @@ class TarHelper(VCSHelper):
         super(TarHelper, self).__init__(url)
         self.binary = None
 
+    def clone(self, dest_path, revision=None, branch=None):
+        super(TarHelper, self).clone(dest_path, revision, branch)
+
 
 class URLHelper(VCSHelper):
     # TODO: implement URLHelper
@@ -162,3 +163,6 @@ class URLHelper(VCSHelper):
     def __init__(self, url):
         super(URLHelper, self).__init__(url)
         self.binary = None
+
+    def clone(self, dest_path, revision=None, branch=None):
+        super(URLHelper, self).clone(dest_path, revision, branch)
