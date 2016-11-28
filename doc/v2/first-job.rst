@@ -102,7 +102,7 @@ the following:
 
 The first job mentioned above uses a more complex test definition:
 
-https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/smoke-tests-basic.yaml
+https://git.linaro.org/qa/test-definitions.git/tree/ubuntu/smoke-tests-basic.yaml
 
 The metadata in a test definition is for the maintenance of that test
 definition and covers details like the maintainer, the kinds of devices which

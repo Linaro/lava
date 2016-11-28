@@ -148,7 +148,7 @@ Notes
   correctly, resulting in the secondary connection jobs being incomplete. A
   final test definition of smoke tests or other quick checks could be useful.
 
-https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/mustang-ssh-guest.yaml
+https://git.linaro.org/lava-team/refactoring.git/tree/mustang-ssh-guest.yaml
 
 .. code-block:: yaml
 

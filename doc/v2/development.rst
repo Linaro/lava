@@ -394,7 +394,7 @@ unit tests::
 The list of python3 dependencies needed for the pipeline unit tests is
 maintained as part of the functional tests:
 
-https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/dispatcher-pipeline-python3.yaml
+https://git.linaro.org/lava-team/refactoring.git/tree/functional/dispatcher-pipeline-python3.yaml
 
 From time to time, reviews may add more python dependencies - check on the
 :ref:`mailing_lists` if your tests start to fail after rebasing on current

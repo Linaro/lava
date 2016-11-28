@@ -33,7 +33,7 @@ Job definitions in version control
 It is normally recommended to also store your test job YAML files in the
 repository. This helps others who may want to use your test definitions.::
 
-  https://git.linaro.org/lava-team/refactoring.git/blob_plain/HEAD:/panda-multinode.yaml
+  https://git.linaro.org/lava-team/refactoring.git/tree/panda-multinode.yaml
 
 There are numerous test repositories in use daily in Linaro that may be good
 examples for you, including:
