@@ -58,13 +58,6 @@ class ConnectLxc(Action):
             self.logger.debug("No LXC device requested")
             return connection
 
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            connection = self.get_common_data(namespace, 'connection',
-                                              deepcopy=False)
-            if connection:
-                return connection
-
         if 'device_path' in list(self.job.device.keys()):
             device_path = self.job.device['device_path']
             if not isinstance(device_path, list):
@@ -98,6 +91,13 @@ class ConnectLxc(Action):
                 self.logger.warning("device_path is None")
         else:
             self.logger.debug("No device path defined for this device.")
+
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            connection = self.get_common_data(namespace, 'connection',
+                                              deepcopy=False)
+            if connection:
+                return connection
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
