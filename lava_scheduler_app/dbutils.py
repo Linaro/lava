@@ -811,9 +811,10 @@ def parse_job_description(job):
     # add the compatibility result from the master to the definition for comparison on the slave.
     try:
         compat = int(pipeline['compatibility'])
-    except ValueError:
+    except (TypeError, ValueError):
+        compat = pipeline['compatibility'] if pipeline is not None else None
         logger.error("[%d] Unable to parse job compatibility: %s",
-                     job.id, pipeline['compatibility'])
+                     job.id, compat)
         compat = 0
     job.pipeline_compatibility = compat
     job.save(update_fields=['pipeline_compatibility'])
