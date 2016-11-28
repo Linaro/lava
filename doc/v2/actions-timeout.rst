@@ -191,20 +191,20 @@ connection, this timeout will have no effect.
    the default connection timeout and ``connections``, ``<action_name>``
    followed by a value for the individual connection timeout for that action.
 
-.. _usb_showup_timeout:
+.. _usb_device_wait_timeout:
 
-USB device showup timeout
-=========================
+USB device wait timeout
+=======================
 
 When USB devices are disconnected and connected, it needs some time to settle
 down, to get recognized by udev - the time required may vary based on various
-factors. The `usb-showup` timeout applies during the entire job run. The
-default value for USB showup timeout is 30 seconds.
+factors. The `usb-device-wait` timeout applies during the entire job run. The
+default value for USB device wait timeout is 30 seconds.
 
 .. code-block:: yaml
 
  timeouts:
    job:
      minutes: 15
-   usb-showup:
+   usb-device-wait:
      seconds: 20

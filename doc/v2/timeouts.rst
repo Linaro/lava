@@ -254,4 +254,4 @@ specific connection timeout which can be longer or shorter than the default.
      http_download:
        minutes: 2
 
-.. seealso:: :ref:`usb_showup_timeout`
+.. seealso:: :ref:`usb_device_wait_timeout`
