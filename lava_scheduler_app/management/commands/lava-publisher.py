@@ -68,11 +68,11 @@ class Command(BaseCommand):
 
         parser.add_argument('-u', '--user',
                             default='lavaserver',
-                            help="Run the process under this user. It should be the same user as the wsgi process.")
+                            help="Run the process under this user. It should be the same user as the gunicorn process.")
 
         parser.add_argument('-g', '--group',
                             default='lavaserver',
-                            help="Run the process under this group. It should be the same group as the wsgi process.")
+                            help="Run the process under this group. It should be the same group as the gunicorn process.")
 
     def drop_priviledges(self, user, group):
         try:
