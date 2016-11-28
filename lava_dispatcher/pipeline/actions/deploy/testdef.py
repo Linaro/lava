@@ -41,7 +41,8 @@ from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_V1_FIXUP,
     DEFAULT_V1_PATTERN,
-    DEFAULT_TESTDEF_NAME_CLASS
+    DEFAULT_TESTDEF_NAME_CLASS,
+    DISPATCHER_DOWNLOAD_DIR,
 )
 
 
@@ -79,11 +80,11 @@ def get_deployment_testdefs(parameters=None):
             namespace = action['deploy'].get('namespace', None)
             test_dict[yaml_line] = []
             deploy_list = get_deployment_tests(parameters, yaml_line)
-        for action in deploy_list:
-            if 'test' in action:
-                if namespace and namespace == action['test'].get(
+        for deploy_action in deploy_list:
+            if 'test' in deploy_action:
+                if namespace and namespace == deploy_action['test'].get(
                         'namespace', None):
-                    test_dict[yaml_line].append(action['test']['definitions'])
+                    test_dict[yaml_line].append(deploy_action['test']['definitions'])
         deploy_list = []
     return test_dict
 
@@ -209,6 +210,7 @@ class RepoAction(Action):
         else:
             location = self.data['lava-overlay']['location']
             lava_test_results_dir = self.data['lava_test_results_dir']
+            self.logger.debug("Using %s", lava_test_results_dir)
         if not os.path.exists(location):
             raise RuntimeError("Overlay location does not exist")
 
@@ -461,6 +463,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.store_testdef(self.parameters['repository'], 'inline',
                            self.parameters.get('revision',
                                                sha1.hexdigest()))
+        return connection
 
 
 class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
@@ -910,13 +913,23 @@ class TestInstallAction(TestOverlayAction):
             if 'steps' not in self.skip_options:
                 steps = testdef['install'].get('steps', [])
                 if steps:
+                    # Allow install steps to use the git-repo directly
+                    # fake up the directory as it will be after the overlay is applied
+                    # os.path.join refuses if the directory does not exist on the dispatcher
+                    base = len(DISPATCHER_DOWNLOAD_DIR.split('/')) + 2
+                    # skip job_id/action-tmpdir/ as well
+                    install_dir = '/' + '/'.join(runner_path.split('/')[base:])
+                    install_file.write("cd %s\n" % install_dir)
+                    install_file.write("pwd\n")
                     for cmd in steps:
                         install_file.write('%s\n' % cmd)
 
             if 'git-repos' not in self.skip_options:
                 repos = testdef['install'].get('git-repos', [])
                 for repo in repos:
-                    dest_path = runner_path
+                    # tests should expect git clone https://path/dir/repo.git to create ./repo/
+                    subdir = repo.replace('.git', '', len(repo) - 1)  # drop .git from the end, if present
+                    dest_path = os.path.join(runner_path, os.path.basename(subdir))
                     commit_id = None
                     if isinstance(repo, str):
                         commit_id = GitHelper(repo).clone(dest_path)
@@ -934,7 +947,6 @@ class TestInstallAction(TestOverlayAction):
                                 raise RuntimeError(
                                     "Destination path is unacceptable %s" %
                                     destination)
-                                continue
                         commit_id = GitHelper(url).clone(dest_path,
                                                          branch=branch)
                     if commit_id is None:
