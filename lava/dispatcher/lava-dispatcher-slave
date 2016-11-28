@@ -211,7 +211,10 @@ class Job(object):
                 LOG.exception(exc)
             with open(err_file, "a") as errlog:
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
-            self.cancel()
+            # The process has not started
+            # The END message will be sent the next time
+            # check_job_status is run
+            self.status = Job.ENDING
 
     def cancel(self):
         """Cancel the job and kill the process."""
@@ -615,7 +618,7 @@ def check_job_status(jobs, sock, last_jobs_check):
             # Terminate processes that where not collected last time and that are
             # too long to end.
             if now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
-                LOG.info("[%d] Job not finishing => terminating")
+                LOG.info("[%d] Job not finishing => terminating", job_id)
                 # Just terminate the proc and let the next iteration will send the
                 # signal for us.
                 jobs[job_id].proc.terminate()
