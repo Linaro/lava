@@ -369,3 +369,24 @@ class TestTemplates(unittest.TestCase):
         self.assertIn(
             'set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr intel_mmio=on mmio=on ip=eth0:dhcp',
             template_dict['actions']['boot']['methods']['ipxe']['nfs']['commands'])
+
+    def test_extra_nfs_opts(self):
+        data = """{% extends 'panda.jinja2' %}
+{% set connection_command = 'telnet serial4 7012' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
+        job_ctx = {}
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if line.startswith("setenv nfsargs"):
+                self.assertIn(',tcp,hard,intr ', line)
+        job_ctx = {'extra_nfsroot_args': ',nolock'}
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if line.startswith("setenv nfsargs"):
+                self.assertIn(',tcp,hard,intr,nolock ', line)

@@ -1,5 +1,6 @@
 {# Base Kernel options #}
 {% set base_kernel_args = '' %}
+{% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_uboot_commands = (
 "          - setenv autoload no
@@ -28,7 +29,7 @@
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot") -%}
 
-{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
 {% set base_ip_args = "ip=dhcp" %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}

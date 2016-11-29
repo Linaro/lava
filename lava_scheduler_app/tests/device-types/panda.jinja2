@@ -6,7 +6,6 @@ device_type: panda
 {% set baud_rate = baud_rate | default(115200) %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {% block vland %}

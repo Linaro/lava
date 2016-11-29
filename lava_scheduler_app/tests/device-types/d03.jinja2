@@ -6,8 +6,6 @@ device_type: d03
 {% set baud_rate = baud_rate | default(115200) %}
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
-
 {% block character_delays %}
 {% endblock %}
 

@@ -43,7 +43,6 @@ character_delays:
 {% endif %}
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 {% set action_timeout_u_boot_commands = action_timeout_u_boot_commands | default(3) %}
 {% set connection_timeout_u_boot_commands = connection_timeout_u_boot_commands | default(2) %}
