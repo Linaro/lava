@@ -354,6 +354,9 @@ def map_metadata(description, job):
     if description is None:
         logger.warning("[%s] skipping empty description", job.id)
         return
+    if 'job' not in description_data:
+        logger.warning("[%s] skipping description without a job.", job.id)
+        return
     action_values = _get_job_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
         if not key or not value:

@@ -35,32 +35,33 @@ Definitions
 repository
 ==========
 
-a publicly readable repository location.
+A publicly readable repository location.
 
 from
 ====
 
-the type of the repository is **not** guessed, it **must** be specified
-explicitly. Support is planned for ``bzr``, ``url``, ``file`` and ``tar``.
+The type of the repository is **not** guessed, it **must** be specified
+explicitly. Support is available for ``bzr`` and ``git``. Support is planned
+for ``url`` and ``tar``.
 
 git
 ---
 
-a remote git repository which needs to be cloned by the dispatcher.
+A remote git repository which needs to be cloned by the dispatcher.
 
 inline
 ------
 
- a simple test definition present in the same file as the job submission,
- instead of from a separate file or VCS repository. This allows tests to be run
- based on a single file. When combined with ``file://`` URLs to the ``deploy``
- parameters, this allows tests to run without needing external access. See
- :ref:`inline_test_definition_example`.
+A simple test definition present in the same file as the job submission,
+instead of from a separate file or VCS repository. This allows tests to be run
+based on a single file. When combined with ``file://`` URLs to the ``deploy``
+parameters, this allows tests to run without needing external access. See
+:ref:`inline_test_definition_example`.
 
 path
 ----
 
-the path within that repository to the YAML file containing the test
+The path within that repository to the YAML file containing the test
 definition.
 
 name
