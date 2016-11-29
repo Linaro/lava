@@ -222,7 +222,8 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         # create the preseed.cfg url
         # needs to be an IP address for DI, DNS is not available.
         # PRESEED_URL='http://10.15.0.32/tmp/d-i/jessie/preseed.cfg'
-        self.preseed_url = 'tftp://%s/' % dispatcher_ip()
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
+        self.preseed_url = 'tftp://%s/' % ip_addr
 
         self.sub_command.append(' -drive format=raw,file={emptyimage} ')
         self.sub_command.append(self.boot_order)

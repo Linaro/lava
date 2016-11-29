@@ -180,10 +180,7 @@ class UefiSubstituteCommands(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UefiSubstituteCommands, self).run(connection, max_end_time, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
             '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),

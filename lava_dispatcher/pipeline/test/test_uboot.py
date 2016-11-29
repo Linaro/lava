@@ -165,10 +165,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(None)
         parsed = []
         kernel_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']
         ramdisk_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']

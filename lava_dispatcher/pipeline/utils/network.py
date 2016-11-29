@@ -40,14 +40,18 @@ def dispatcher_gateway():
     return gateways['default'][netifaces.AF_INET][0]
 
 
-def dispatcher_ip():
+def dispatcher_ip(dispatcher_config):
     """
     Retrieves the IP address of the interface associated
     with the current default gateway.
     """
+    try:
+        return dispatcher_config["dispatcher_ip"]
+    except (KeyError, TypeError):
+        pass
     gateways = netifaces.gateways()
     if 'default' not in gateways:
-        raise InfrastructureError("Unable to find default gateway")
+        raise InfrastructureError("Unable to find dispatcher 'default' gateway")
     iface = gateways['default'][netifaces.AF_INET][1]
     addr = netifaces.ifaddresses(iface)
     return addr[netifaces.AF_INET][0]['addr']

@@ -298,10 +298,7 @@ class BootloaderCommandOverlay(Action):
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
         connection = super(BootloaderCommandOverlay, self).run(connection, max_end_time, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
 
         substitutions = {
             '{SERVER_IP}': ip_addr,

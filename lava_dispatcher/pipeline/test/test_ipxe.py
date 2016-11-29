@@ -157,10 +157,8 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(None)
+        parsed = []
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
 

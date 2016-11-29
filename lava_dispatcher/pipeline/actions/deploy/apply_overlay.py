@@ -604,10 +604,11 @@ class ConfigurePreseedFile(Action):
                 add_late_command(self.get_namespace_data(action='download_action', label='preseed', key='file'),
                                  self.parameters["deployment_data"]["installer_extra_cmd"])
             if self.parameters.get('os', None) == "centos_installer":
+                ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
                 overlay = self.get_namespace_data(
                     action='download_action', label='file', key='overlay')
                 substitutions = {
-                    '{OVERLAY_URL}': 'tftp://' + dispatcher_ip() + '/' + overlay
+                    '{OVERLAY_URL}': 'tftp://' + ip_addr + '/' + overlay
                 }
                 post_command = substitute([self.parameters["deployment_data"]["installer_extra_cmd"]], substitutions)
                 add_to_kickstart(self.get_namespace_data(action='download_action', label='preseed', key='file'), post_command[0])
