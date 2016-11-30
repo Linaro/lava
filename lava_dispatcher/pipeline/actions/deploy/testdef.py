@@ -1023,6 +1023,7 @@ class TestRunnerAction(TestOverlayAction):
             for line in content:
                 runsh.write(line)
             runsh.write('set -e\n')
+            runsh.write('set -x\n')
             # use the testdef_index value for the testrun name to handle repeats at source
             runsh.write('export TESTRUN_ID=%s\n' % testdef_levels[self.level])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
