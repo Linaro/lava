@@ -204,7 +204,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def pipeline_cleanup(self):
+    def cleanup(self):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
@@ -212,21 +212,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         for child in self.actions:
             child.cleanup()
             if child.internal_pipeline:
-                child.internal_pipeline.pipeline_cleanup()
-
-    def cleanup_actions(self, connection, message):
-        if not self.job.pipeline:
-            # is this only unit-tests doing this?
-            return
-        for child in self.job.pipeline.actions:
-            if child.internal_pipeline:
-                child.internal_pipeline.pipeline_cleanup()
-        # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
-        for child in self.job.pipeline.actions:
-            # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
-            if child.name == 'finalize':
-                child.errors = message
-                child.run(connection, None)
+                child.internal_pipeline.cleanup()
 
     def _diagnose(self, connection):
         """
@@ -259,7 +245,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            self.cleanup_actions(None, "Cancelled")
+            self.job.cleanup(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
@@ -311,7 +297,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.exception(traceback.format_exc())
                     action.errors = msg
                     action.cleanup()
-                    self.cleanup_actions(connection, None)
+                    self.job.cleanup(connection, None)
                     # report action errors so that the last part of the message is the most relevant.
                     raise RuntimeError(action.errors)
                 except KeyboardInterrupt:
@@ -329,7 +315,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     connection = new_connection
             except KeyboardInterrupt:
                 action.elapsed_time = time.time() - start
-                self.cleanup_actions(connection, "Cancelled")
+                self.job.cleanup(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
                 if sys.version > '3':
@@ -348,7 +334,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # a RetryAction should not cleanup the pipeline until the last retry has failed
                 # but the failing action may be inside an internal pipeline of the retry
                 if not self.parent:  # top level pipeline, no retries left
-                    self.cleanup_actions(connection, exc_message)
+                    self.job.cleanup(connection, exc_message)
                 raise
         return connection
 

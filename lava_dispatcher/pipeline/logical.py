@@ -69,7 +69,7 @@ class RetryAction(Action):
             if "boot-result" not in self.data:
                 self.data['boot-result'] = 'failed'
             # tried and failed
-            self.job.pipeline.cleanup_actions(connection, self.errors)
+            self.job.cleanup(connection, self.errors)
             raise JobError(self.errors)
         return connection
 

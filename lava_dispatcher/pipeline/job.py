@@ -155,7 +155,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             try:
                 protocol.configure(self.device, self)
             except KeyboardInterrupt:
-                self.pipeline.cleanup_actions(connection=None, message="Canceled")
+                self.cleanup(connection=None, message="Canceled")
                 self.logger.info("Canceled")
                 return 1  # equivalent to len(self.pipeline.errors)
             except (JobError, RuntimeError, KeyError, TypeError) as exc:
@@ -190,7 +190,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             try:
                 protocol.set_up()
             except KeyboardInterrupt:
-                self.pipeline.cleanup_actions(connection=None, message="Canceled")
+                self.cleanup(connection=None, message="Canceled")
                 self.logger.info("Canceled")
                 return 1  # equivalent to len(self.pipeline.errors)
             except (JobError, RuntimeError, KeyError, TypeError) as exc:
@@ -205,3 +205,14 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.logger.exception(self.pipeline.errors)
             return len(self.pipeline.errors)
         return 0
+
+    def cleanup(self, connection, message):
+        self.pipeline.cleanup()
+        # exit out of the pipeline & run the Finalize action to close the
+        # connection and poweroff the device
+        for child in self.pipeline.actions:
+            # rely on the action name here - use isinstance if pipeline moves
+            # into a dedicated module.
+            if child.name == 'finalize':
+                child.errors = message
+                child.run(connection, None)
