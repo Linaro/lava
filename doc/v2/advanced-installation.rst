@@ -227,16 +227,81 @@ The ``favicon`` is configurable via the Apache configuration::
 
  Alias /favicon.ico /usr/share/lava-server/static/lava-server/images/logo.png
 
-LAVA Dispatcher network configuration
-=====================================
+.. index:: security upgrades, unattended upgrades
 
-``/etc/lava-dispatcher/lava-dispatcher.conf`` supports overriding the
-``LAVA_SERVER_IP`` with the currently active IP address using a list of network
-interfaces specified in the ``LAVA_NETWORK_IFACE`` instead of a fixed IP
-address, e.g. for LAVA installations on laptops and other devices which change
-network configuration between jobs. The interfaces in the list should include
-the interface which a remote worker can use to serve files to all devices
-connected to this worker.
+.. _unattended_upgrades:
+
+Unattended upgrades
+===================
+
+Debian provides a package which can be installed to keep the computer current
+with the latest security (and other) updates automatically. If you plan to use
+it, you should have some means to monitor your systems, such as installing the
+``apt-listchanges`` package and configuring it to send you emails about
+updates and a working email configuration on each machine.
+
+This service is recommended for LAVA instances but is not part of LAVA itself.
+Please read the Debian wiki instructions carefully. If unattended upgrades are
+used, ensure that the master and all workers are similarly configured and this
+includes creating a working email configuration on each worker.
+
+.. seealso:: https://wiki.debian.org/UnattendedUpgrades
+
+Example changes
+---------------
+
+``/etc/apt/apt.conf.d/50unattended-upgrades``
+
+The default installation of ``unattended-upgrades`` enables automatic upgrades
+for all security updates::
+
+   Unattended-Upgrade::Origins-Pattern {
+
+        "origin=Debian,codename=jessie,label=Debian-Security";
+   };
+
+
+Optionally add automatic updates from the :ref:`lava_repositories` if those are
+in use::
+
+   Unattended-Upgrade::Origins-Pattern {
+
+        "origin=Debian,codename=jessie,label=Debian-Security";
+        "origin=Linaro,label=Lava";
+   };
+
+Other repositories can be added to the upgrade by checking the output of
+``apt-cache policy``, e.g.::
+
+ release v=8.1,o=Linaro,a=unstable,n=sid,l=Lava,c=main
+
+Relates to an origin (``o``) of ``Linaro`` and a label (``l``) of ``Lava``.
+
+When configuring unattended upgrades for the master or any worker which still
+supports LAVA V1, PostgreSQL will need to be added to the
+``Package-Blacklist``. Although services like PostgreSQL do get security
+updates and these updates **are** important to apply, ``unattended-upgrades``
+does not currently restart other services which are dependent on the service
+being upgraded. Admins still need to watch for security updates to PostgreSQL
+and apply the update manually, restarting services like ``lavapdu-runner``,
+``lava-master`` and ``lava-server``::
+
+   Unattended-Upgrade::Package-Blacklist {
+        "postgresql-9.4";
+   };
+
+Email notifications also need to be configured.
+
+::
+
+   Unattended-Upgrade::Mail "admins@myinstance.org";
+
+   Unattended-Upgrade::MailOnlyOnError "true";
+
+With these changes to ``/etc/apt/apt.conf.d/50unattended-upgrades``, the rest
+of the setup is as described on the Debian wiki.
+
+https://wiki.debian.org/UnattendedUpgrades#automatic_call_via_.2Fetc.2Fapt.2Fapt.conf.d.2F20auto-upgrades
 
 .. index:: event notifications - configuration
 
