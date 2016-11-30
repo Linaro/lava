@@ -200,7 +200,7 @@ class JobParser(object):
         pipeline.add_action(finalize)
         finalize.populate(self._map_context_defaults())
         data['output_dir'] = output_dir
-        job.set_pipeline(pipeline)
+        job.pipeline = pipeline
         if 'compatibility' in data:
             try:
                 job_c = int(job.compatibility)

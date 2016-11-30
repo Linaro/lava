@@ -76,7 +76,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][3]
+                overlay = action.pipeline.actions[3]
                 testdef = overlay.internal_pipeline.actions[2]
         self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
@@ -169,7 +169,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         overlay = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                for child in action.pipeline.children[action.pipeline]:
+                for child in action.pipeline.actions:
                     if isinstance(child, OverlayAction):
                         overlay = child
                         break
@@ -208,7 +208,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
-        apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
+        apply_overlay = deploy.pipeline.actions[4]
         self.assertIsNotNone(apply_overlay)
 
 

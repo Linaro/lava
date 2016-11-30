@@ -93,27 +93,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     of the per-action log handler.
     """
     def __init__(self, parent=None, job=None, parameters=None):
-        self.children = {}
         self.actions = []
-        self.summary = "pipeline"
         self.parent = None
-        if parameters is None:
-            parameters = {}
-        self.parameters = parameters
+        self.parameters = {} if parameters is None else parameters
         self.job = job
         self.branch_level = 1  # the level of the last added child
-        if not parent:
-            self.children = {self: self.actions}
-        elif not parent.level:
-            raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
-        else:
+        if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
                 raise RuntimeError("Internal pipelines need an Action as a parent")
+            if not parent.level:
+                raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
             self.branch_level = parent.level
-            if parent.job:
-                self.job = parent.job
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
@@ -126,13 +118,12 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
         self.actions.append(action)
-        action.level = "%s.%s" % (self.branch_level, len(self.actions))
         # FIXME: if this is only happening in unit test, this has to be fixed later on
         if self.job:  # should only be None inside the unit tests
             action.job = self.job
         if self.parent:  # action
-            self.children[self] = self.actions
             self.parent.pipeline = self
+            action.level = "%s.%s" % (self.branch_level, len(self.actions))
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
@@ -150,6 +141,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # pylint: disable=protected-access
         # FIXME: only the last test is really useful. The first ones are only
         # needed to run the tests that do not use a device and job.
+        # TODO: factorize this in one loop
         if self.job is not None and self.job.device is not None:
             # set device level overrides
             overrides = self.job.device.get('timeouts', {})

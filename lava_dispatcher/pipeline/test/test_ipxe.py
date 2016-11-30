@@ -156,7 +156,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         job = Job(4212, None, None, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
-        job.set_pipeline(pipeline)
+        job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
         try:

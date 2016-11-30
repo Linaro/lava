@@ -41,7 +41,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, TestShellRetry):
-                testshell = action.pipeline.children[action.pipeline][0]
+                testshell = action.pipeline.actions[0]
                 break
         self.assertIsInstance(testshell, TestShellAction)
         self.assertNotIn('boot-result', testshell.data)
@@ -65,7 +65,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, TestShellRetry):
-                testshell = action.pipeline.children[action.pipeline][0]
+                testshell = action.pipeline.actions[0]
                 break
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns('exit', None, ''))

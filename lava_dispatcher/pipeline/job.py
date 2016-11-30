@@ -61,7 +61,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.parameters = parameters
         self.__context__ = PipelineContext()
         self.pipeline = None
-        self.actions = None
         self.connection = None
         self.triggers = []  # actions can add trigger strings to the run a diagnostic
         self.diagnostics = [
@@ -85,10 +84,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.logger.setMetadata("0", "validate")
         else:
             self.logger.addHandler(logging.StreamHandler())
-
-    def set_pipeline(self, pipeline):
-        self.pipeline = pipeline
-        self.actions = pipeline.children
 
     @property
     def context(self):

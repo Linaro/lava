@@ -380,7 +380,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         pipeline.add_action(TestAdjuvant.FakeAction())
         pipeline.add_action(TestAdjuvant.FailingAdjuvant())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.validate()
@@ -389,7 +389,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         pipeline.add_action(TestAdjuvant.FakeAction())
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         actions = []
         for action in self.fakejob.pipeline.actions:
@@ -402,7 +402,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         pipeline.add_action(TestAdjuvant.FakeAction())
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.fakejob.run()
         self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': 'base class trigger'})
@@ -411,7 +411,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         pipeline.add_action(TestAdjuvant.SafeAction())
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.fakejob.run()
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
@@ -610,7 +610,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.FakeAction()
         action.timeout = Timeout(action.name, duration=seconds)
         pipeline.add_action(action)
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.run()
@@ -622,7 +622,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.SafeAction()
         action.timeout = Timeout(action.name, duration=seconds)
         pipeline.add_action(action)
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         try:
             self.fakejob.run()
@@ -636,7 +636,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
         pipeline.add_action(FinalizeAction())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.run()
@@ -648,7 +648,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
         pipeline.add_action(FinalizeAction())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         try:
             self.fakejob.run()
@@ -667,7 +667,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(TestTimeout.FakeSafeAction())
         pipeline.add_action(TestTimeout.FakeSafeAction())
         pipeline.add_action(FinalizeAction())
-        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         try:
             self.fakejob.run()

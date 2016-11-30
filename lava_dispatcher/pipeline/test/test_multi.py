@@ -116,7 +116,7 @@ class TestMultiDeploy(unittest.TestCase):
         self.assertIsNotNone(device)
         job.device = device
         job.parameters['output_dir'] = mkdtemp()
-        job.set_pipeline(pipeline)
+        job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data['actions']:
             for name in action_data:
