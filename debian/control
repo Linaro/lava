@@ -58,8 +58,8 @@ Architecture: all
 Section: metapackages
 Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
  lava-dev, lava-tool, lavapdu-client, ntp | ntpdate, tftpd-hpa,
- openssh-client, schroot, lxc, rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, linaro-image-tools
+ openssh-client, lxc, rsync, bridge-utils, ${misc:Depends}
+Recommends: lavapdu-daemon, linaro-image-tools, schroot
 Suggests: vmdebootstrap
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
