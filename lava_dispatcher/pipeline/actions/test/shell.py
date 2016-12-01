@@ -258,41 +258,6 @@ class TestShellAction(TestAction):
         self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
 
-    def parse_v2_case_result(self, data, fixupdict=None):
-        # FIXME: Ported from V1 - still needs integration
-        if not fixupdict:
-            fixupdict = {}
-        res = {}
-        for key in data:
-            res[key] = data[key]
-
-            if key == 'measurement':
-                # Measurement accepts non-numeric values, but be careful with
-                # special characters including space, which may distrupt the
-                # parsing.
-                res[key] = res[key]
-
-            elif key == 'result':
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
-                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    logging.error('Bad test result: %s', res['result'])
-                    res['result'] = 'unknown'
-
-        if 'test_case_id' not in res:
-            self.logger.warning(
-                """Test case results without test_case_id (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
-
-        if 'result' not in res:
-            self.logger.warning(
-                """Test case results without result (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
-            self.logger.warning('Setting result to "unknown"')
-            res['result'] = 'unknown'
-
-        return res
-
     def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
         """
         Defines the base set of pattern responses.
@@ -338,6 +303,7 @@ class TestShellAction(TestAction):
                         self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
                         self.pattern.update(pattern, fixup)
                         self.logger.info("Enabling test definition pattern %r" % pattern)
+                        self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
                 self.logger.results({
                     "definition": "lava",
                     "case": self.definition,
@@ -434,12 +400,15 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 self.logger.warning("err: lava_test_shell has timed out (test_case)")
             else:
-                res = self.signal_match.match(match.groupdict())
+                res = self.signal_match.match(match.groupdict(), fixupdict=self.pattern.fixupdict())
                 self.logger.debug("outer_loop_result: %s" % res)
                 ret_val = True
 
         elif event == 'test_case_result':
             res = test_connection.match.groupdict()
+            fixupdict = self.pattern.fixupdict()
+            if res['result'] in fixupdict:
+                res['result'] = fixupdict[res['result']]
             if res:
                 res_data = {
                     'definition': self.definition,

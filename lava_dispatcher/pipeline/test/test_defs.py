@@ -70,6 +70,8 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        with open(os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml'), 'r') as params:
+            self.testdef = yaml.safe_load(params)
 
     def test_testdef(self):
         testdef = overlay = None
@@ -81,6 +83,8 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
+        self.assertEqual(testdef.run_levels,
+                         {'smoke-tests': 0, 'singlenode-advanced': 1})
         if not testdef.valid:
             # python3 compatible
             print(testdef.errors)  # pylint: disable=superfluous-parens
@@ -100,6 +104,12 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             else:
                 self.fail("%s does not match GitRepoAction or TestOverlayAction" % type(repo_action))
             repo_action.validate()
+            if hasattr(repo_action, 'uuid'):
+                repo_action.data['test'] = {repo_action.uuid: {}}
+                repo_action.store_testdef(self.testdef, 'git', 'abcdef')
+                self.assertEqual(
+                    repo_action.data['test'][repo_action.uuid]['testdef_pattern'],
+                    self.testdef['parse'])
             self.assertTrue(repo_action.valid)
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
