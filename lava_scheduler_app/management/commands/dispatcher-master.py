@@ -479,21 +479,23 @@ class Command(BaseCommand):
                 return
 
             except jinja2.TemplateNotFound as exc:
-                self.logger.error("Template not found: '%s'", exc.message)
+                self.logger.error("[%d] Template not found: '%s'",
+                                  job.id, exc.message)
                 msg = "Infrastructure error: Template not found: '%s'" % \
                       exc.message
             except jinja2.TemplateSyntaxError as exc:
-                self.logger.error("Template syntax error in '%s', line %d: %s",
-                                  exc.name, exc.lineno, exc.message)
+                self.logger.error("[%d] Template syntax error in '%s', line %d: %s",
+                                  job.id, exc.name, exc.lineno, exc.message)
                 msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
                       (exc.name, exc.lineno, exc.message)
             except IOError as exc:
-                self.logger.error("Unable to read '%s': %s",
-                                  exc.filename, exc.strerror)
+                self.logger.error("[%d] Unable to read '%s': %s",
+                                  job.id, exc.filename, exc.strerror)
                 msg = "Infrastructure error: cannot open '%s': %s" % \
                       (exc.filename, exc.strerror)
             except yaml.YAMLError as exc:
-                self.logger.error("Unable to parse job definition: %s", exc)
+                self.logger.error("[%d] Unable to parse job definition: %s",
+                                  job.id, exc)
                 msg = "Infrastructure error: cannot parse job definition: %s" % \
                       exc
             else:
