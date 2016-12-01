@@ -20,6 +20,7 @@
 
 # pylint: disable=wrong-import-order
 
+import errno
 import sys
 import fcntl
 import jinja2
@@ -87,16 +88,21 @@ def get_env_string(filename):
     """
     Returns the string after checking for YAML errors which would cause issues later.
     """
-    if not os.path.exists(filename):
-        return ''
     logger = logging.getLogger('dispatcher-master')
-    env_str = str(open(filename, 'r').read())
     try:
-        yaml.load(env_str)
-    except yaml.ScannerError as exc:
-        logger.exception("%s is not valid YAML (%s) - skipping", filename, exc)
-        env_str = ''
-    return env_str
+        with open(filename, "r") as f_in:
+            env_str = f_in.read()
+        yaml.safe_load(env_str)
+        return env_str
+    except IOError as exc:
+        # This is ok if the file does not exist
+        if exc.errno == errno.ENOENT:
+            return ''
+        raise
+    except yaml.YAMLError as exc:
+        # Raise an IOError because the caller uses yaml.YAMLError for a
+        # specific usage. Allows here to specify the faulty filename.
+        raise IOError("", "Not a valid YAML file", filename)
 
 
 class Command(BaseCommand):
@@ -411,7 +417,7 @@ class Command(BaseCommand):
             else:
                 device = select_device(job, self.dispatchers)
                 if not device:
-                    return False
+                    return
                 # selecting device can change the job
                 job = TestJob.objects.get(id=job.id)
                 self.logger.info("[%d] Assigning %s device", job.id, device)
@@ -421,7 +427,7 @@ class Command(BaseCommand):
                         msg = "Infrastructure error: Invalid worker information"
                         self.logger.error("[%d] %s", job.id, msg)
                         fail_job(job, msg, TestJob.INCOMPLETE)
-                        return False
+                        return
 
                     # Launch the job
                     create_job(job, device)
@@ -434,7 +440,7 @@ class Command(BaseCommand):
                         msg = "Infrastructure error: Invalid worker information"
                         self.logger.error("[%d] %s", job.id, msg)
                         fail_job(job, msg, TestJob.INCOMPLETE)
-                        return False
+                        return
                     self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
                                      device.worker_host.hostname, device.hostname)
                     worker_host = device.worker_host
@@ -459,43 +465,43 @@ class Command(BaseCommand):
                             # FIXME: rationalise and streamline
                             self.controler.send_multipart(
                                 [str(worker_host.hostname),
-                                 'START', str(group_job.id), self.export_definition(group_job),
+                                 'START', str(group_job.id),
+                                 self.export_definition(group_job),
                                  str(device_configuration),
                                  env_str, env_dut_str])
 
                 self.controler.send_multipart(
                     [str(worker_host.hostname),
-                     'START', str(job.id), self.export_definition(job),
+                     'START', str(job.id),
+                     self.export_definition(job),
                      str(device_configuration),
                      env_str, env_dut_str])
+                return
 
-            except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
-                if isinstance(exc, jinja2.TemplateNotFound):
-                    self.logger.error("Template not found: '%s'", exc.message)
-                    msg = "Infrastructure error: Template not found: '%s'" % \
-                          exc.message
-                elif isinstance(exc, jinja2.TemplateSyntaxError):
-                    self.logger.error("Template syntax error in '%s', line %d: %s",
-                                      exc.name, exc.lineno, exc.message)
-                    msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
-                          (exc.name, exc.lineno, exc.message)
-                elif isinstance(exc, IOError):
-                    self.logger.error("Unable to read '%s': %s",
-                                      options['env'], exc.strerror)
-                    msg = "Infrastructure error: cannot open '%s': %s" % \
-                          (options['env'], exc.strerror)
-                elif isinstance(exc, yaml.YAMLError):
-                    self.logger.error("Unable to parse job definition: %s",
-                                      exc)
-                    msg = "Infrastructure error: cannot parse job definition: %s" % \
-                          exc
-                else:
-                    self.logger.exception(exc)
-                    msg = "Infrastructure error: %s" % exc.message
+            except jinja2.TemplateNotFound as exc:
+                self.logger.error("Template not found: '%s'", exc.message)
+                msg = "Infrastructure error: Template not found: '%s'" % \
+                      exc.message
+            except jinja2.TemplateSyntaxError as exc:
+                self.logger.error("Template syntax error in '%s', line %d: %s",
+                                  exc.name, exc.lineno, exc.message)
+                msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
+                      (exc.name, exc.lineno, exc.message)
+            except IOError as exc:
+                self.logger.error("Unable to read '%s': %s",
+                                  exc.filename, exc.strerror)
+                msg = "Infrastructure error: cannot open '%s': %s" % \
+                      (exc.filename, exc.strerror)
+            except yaml.YAMLError as exc:
+                self.logger.error("Unable to parse job definition: %s", exc)
+                msg = "Infrastructure error: cannot parse job definition: %s" % \
+                      exc
+            else:
+                self.logger.exception(exc)
+                msg = "Infrastructure error: %s" % exc.message
 
-                self.logger.error("[%d] INCOMPLETE job", job.id)
-                fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
-        return True
+            self.logger.error("[%d] INCOMPLETE job", job.id)
+            fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
 
     def handle_canceling(self):
         for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
@@ -640,11 +646,10 @@ class Command(BaseCommand):
                 # CANCEL and START messages
                 if now - last_db_access > DB_LIMIT:
                     last_db_access = now
-                    # Dispatch jobs
+
                     # TODO: make this atomic
-                    # only pick up pipeline jobs with devices in Reserved state
-                    if not self.process_jobs(options):
-                        continue
+                    # Dispatch pipeline jobs with devices in Reserved state
+                    self.process_jobs(options)
 
                     # Handle canceling jobs
                     self.handle_canceling()
