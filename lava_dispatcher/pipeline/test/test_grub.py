@@ -230,3 +230,10 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn('bootloader-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
+
+    def test_grub_with_monitor(self):
+        factory = Factory()
+        job = factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
+        job.validate()
+        description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))

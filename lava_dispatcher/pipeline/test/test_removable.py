@@ -118,8 +118,9 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
         self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
+        tftp_deploy_action = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         self.assertIsNotNone(deploy_action)
-        test_dir = deploy_action.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        test_dir = deploy_action.get_namespace_data(action='test', label='results', key='lava_test_results_dir', parameters=tftp_deploy_action.parameters)
         self.assertIsNotNone(test_dir)
         self.assertIn('/lava-', test_dir)
         self.assertIsInstance(deploy_action, MassStorage)

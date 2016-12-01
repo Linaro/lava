@@ -93,6 +93,8 @@ class OverlayAction(DeployAction):
         super(OverlayAction, self).validate()
         self.scripts_to_copy = glob.glob(os.path.join(self.lava_test_dir, 'lava-*'))
         # Distro-specific scripts override the generic ones
+        if not self.test_needs_overlay(self.parameters):
+            return
         distro = self.parameters['deployment_data']['distro']
         distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
@@ -120,14 +122,15 @@ class OverlayAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if any('ssh' in data for data in self.job.device['actions']['deploy']['methods']):
-            # only devices supporting ssh deployments add this action.
-            self.internal_pipeline.add_action(SshAuthorize())
-        self.internal_pipeline.add_action(VlandOverlayAction())
-        self.internal_pipeline.add_action(MultinodeOverlayAction())
-        self.internal_pipeline.add_action(TestDefinitionAction())
-        self.internal_pipeline.add_action(CompressOverlay())
-        self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
+        if self.test_needs_overlay(parameters):
+            if any('ssh' in data for data in self.job.device['actions']['deploy']['methods']):
+                # only devices supporting ssh deployments add this action.
+                self.internal_pipeline.add_action(SshAuthorize())
+            self.internal_pipeline.add_action(VlandOverlayAction())
+            self.internal_pipeline.add_action(MultinodeOverlayAction())
+            self.internal_pipeline.add_action(TestDefinitionAction())
+            self.internal_pipeline.add_action(CompressOverlay())
+            self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
     def run(self, connection, args=None):
         """

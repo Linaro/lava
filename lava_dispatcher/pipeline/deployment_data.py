@@ -89,7 +89,6 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_shell_file': None,
 })
 
-
 ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",

@@ -223,8 +223,9 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
             self.errors = "No device specified for mass storage deployment"
         if not self.valid:
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+            self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
         if 'device' in self.parameters:
             self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
@@ -242,12 +243,15 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.image_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(CustomisationAction())
-        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         if 'image' in parameters:
             download = DownloaderAction('image', path=self.image_path)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyOverlayImage())
+            if self.test_needs_overlay(parameters):
+                self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())
         # FIXME: could support tarballs too
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())

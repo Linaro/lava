@@ -141,7 +141,8 @@ class Factory(object):
             with open(kvm_yaml) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, None, None,
                                    output_dir=output_dir)
-        except NotImplementedError:
+        except NotImplementedError as exc:
+            print(exc)
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job

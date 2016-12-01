@@ -853,6 +853,33 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 }
             )
 
+    def test_needs_deployment(self, parameters):
+        needs_deployment = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].needs_deployment_data():
+                    needs_deployment = True
+        return needs_deployment
+
+    def test_has_shell(self, parameters):
+        has_shell = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].has_shell():
+                    has_shell = True
+        return has_shell
+
+    def test_needs_overlay(self, parameters):
+        needs_overlay = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].needs_overlay():
+                    needs_overlay = True
+        return needs_overlay
+
 
 class Timeout(object):
     """

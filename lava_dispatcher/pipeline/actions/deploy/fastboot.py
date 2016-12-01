@@ -98,6 +98,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
 
     def validate(self):
         super(FastbootAction, self).validate()
+        if not self.test_needs_deployment(self.parameters):
+            return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)

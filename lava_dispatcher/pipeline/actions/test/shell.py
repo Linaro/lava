@@ -74,6 +74,18 @@ class TestShell(LavaTest):
         else:
             return False
 
+    @classmethod
+    def needs_deployment_data(cls):
+        return True
+
+    @classmethod
+    def needs_overlay(cls):
+        return True
+
+    @classmethod
+    def has_shell(cls):
+        return True
+
 
 class TestShellRetry(RetryAction):
 

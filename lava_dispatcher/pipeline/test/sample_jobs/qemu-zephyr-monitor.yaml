@@ -1,0 +1,48 @@
+# This job is stupid. You'd never deploy zephyr and try to run normal tests on it,
+# but I needed a real OS for deployment, that does not have a shell, to test
+# autologinaction gets added to the pipeline
+
+device_type: qemu
+
+job_name: qemu-zephyr-normaltest
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    to: tmpfs
+    images:
+      app:
+        image_arg: --alt x86_app --download {app}
+        url: http://ironhide.bounceme.net/arduino101/zephyr.bin
+      sensor_core:
+        image_arg: --alt sensor_core --download {sensor_core}
+        url: http://ironhide.bounceme.net/arduino101/arc.bin
+      ble_core:
+        image_arg: --alt ble_core --download {ble_core}
+        url: http://ironhide.bounceme.net/arduino101/ble_core/image.bin
+
+- boot:
+    method: qemu
+    timeout:
+      minutes: 10
+
+- test:
+    monitors:
+    - name: Test AES128
+      start: tc_start()
+      end: PROJECT EXECUTION
+      pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
+      fixupdict:
+        PASS: pass
+        FAIL: fail
+
+context:
+  arch: arm

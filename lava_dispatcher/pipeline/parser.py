@@ -45,11 +45,13 @@ import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
 
 
-def parse_action(job_data, name, device, pipeline, test_action, count):
+def parse_action(job_data, name, device, pipeline, test_info, count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
     parameters = job_data[name]
+    parameters.update({'namespace': parameters.get('namespace', 'common')})
+    parameters.update({'test_info': test_info})
     if 'protocols' in pipeline.job.parameters:
         parameters.update(pipeline.job.parameters['protocols'])
 
@@ -60,9 +62,9 @@ def parse_action(job_data, name, device, pipeline, test_action, count):
         parameters['stage'] = count - 1
         LavaTest.select(device, parameters)(pipeline, parameters)
     elif name == 'deploy':
-        if 'type' not in parameters:
-            parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
-        parameters.update({'test_action': test_action})
+        if parameters['namespace'] in test_info:
+            if any([testclass for testclass in test_info[parameters['namespace']] if testclass['class'].needs_deployment_data()]):
+                parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         Deployment.select(device, parameters)(pipeline, parameters)
 
 
@@ -133,7 +135,6 @@ class JobParser(object):
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
-
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
         self.context['default_connection_duration'] = Timeout.default_duration()
@@ -149,8 +150,20 @@ class JobParser(object):
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
-        # some special handling is needed to tell the overlay classes about the presence or absence of a test action
-        test_action = bool([action for action in data['actions'] if 'test' in action])
+        # deploy and boot classes can populate the pipeline differently depending
+        # on the test action type they are linked with (via namespacing).
+        # This code builds an information dict for each namespace which is then
+        # passed as a parameter to each Action class to use.
+        test_info = {}
+        test_actions = ([action for action in data['actions'] if 'test' in action])
+        for test_action in test_actions:
+            test_parameters = test_action['test']
+            test_type = LavaTest.select(device, test_parameters)
+            namespace = test_parameters.get('namespace', 'common')
+            if namespace in test_info:
+                test_info[namespace].append({'class': test_type, 'parameters': test_parameters})
+            else:
+                test_info.update({namespace: [{'class': test_type, 'parameters': test_parameters}]})
 
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
@@ -162,7 +175,7 @@ class JobParser(object):
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     parse_action(action_data, name, device, pipeline,
-                                 test_action, counts[name])
+                                 test_info, counts[name])
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
@@ -173,7 +186,7 @@ class JobParser(object):
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
                                 parse_action(repeating, repeat_action, device,
-                                             pipeline, test_action, counts[name])
+                                             pipeline, test_info, counts[name])
 
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects

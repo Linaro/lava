@@ -48,6 +48,12 @@ class BootAction(RetryAction):
 
     name = 'boot'
 
+    def has_prompts(self, parameters):
+        return ('prompts' in parameters)
+
+    def has_boot_finished(self, parameters):
+        return ('boot_finished' in parameters)
+
 
 class AutoLoginAction(Action):
     """

@@ -160,8 +160,7 @@ class TestLxcWithDevices(unittest.TestCase):
         self.assertEqual('smoke-tests-bbb', namespace_tests[0][0]['name'])
         self.assertEqual(
             'smoke-tests-bbb',
-            identify_test_definitions(self.job.parameters, namespace)[0][0]['name'])
-        print(get_test_action_namespaces(self.job.parameters))
+            test_def.test_list[0]['name'])
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
         self.assertIsNotNone(runner.testdef_levels)

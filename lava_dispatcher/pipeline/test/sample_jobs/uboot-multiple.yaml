@@ -19,6 +19,7 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     namespace: boot1
      timeout:
        minutes: 2
      to: tftp
@@ -32,6 +33,7 @@ actions:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
+     namespace: boot1
      method: u-boot
      commands: nfs
      type: bootz
@@ -41,6 +43,7 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     namespace: boot2
      timeout:
        minutes: 4
      to: tftp
@@ -54,6 +57,7 @@ actions:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
+     namespace: boot2
      method: u-boot
      commands: ramdisk
      type: bootz

@@ -28,14 +28,7 @@
 - class: actions.deploy.fastboot.FastbootAction
   name: fastboot-deploy
   pipeline:
-  - class: actions.deploy.overlay.OverlayAction
-    name: lava-overlay
-    pipeline:
-    - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
-    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
-    - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
-    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
-    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
   - {class: actions.deploy.fastboot.EnterFastbootAction, name: enter_fastboot_action}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - class: actions.deploy.download.DownloaderAction

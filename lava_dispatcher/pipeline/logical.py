@@ -294,6 +294,18 @@ class LavaTest(object):
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
+    @classmethod
+    def needs_deployment_data(cls):
+        return NotImplementedError("needs_deployment_data %s" % cls)
+
+    @classmethod
+    def needs_overlay(cls):
+        return NotImplementedError("needs_overlay %s" % cls)
+
+    @classmethod
+    def has_shell(cls):
+        return NotImplementedError("has_shell %s" % cls)
+
 
 class PipelineContext(object):  # pylint: disable=too-few-public-methods
     """

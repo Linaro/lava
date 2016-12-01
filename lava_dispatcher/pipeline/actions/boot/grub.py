@@ -93,14 +93,16 @@ class GrubMainAction(BootAction):
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterrupt())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
-        if self.expect_shell:
+        if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExpectShellSession())  # wait
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            if self.test_has_shell(parameters):
+                self.internal_pipeline.add_action(ExpectShellSession())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
-            self.logger.debug("Doing a boot without a shell (installer)")
-            self.internal_pipeline.add_action(InstallerWait())
-            self.internal_pipeline.add_action(PowerOff())
+            if self.has_boot_finished(parameters):
+                self.logger.debug("Doing a boot without a shell (installer)")
+                self.internal_pipeline.add_action(InstallerWait())
+                self.internal_pipeline.add_action(PowerOff())
 
     def run(self, connection, args=None):
         connection = super(GrubMainAction, self).run(connection, args)

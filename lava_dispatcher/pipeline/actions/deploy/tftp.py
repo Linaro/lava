@@ -98,10 +98,10 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             return
         if 'nfsrootfs' in self.parameters and 'nfs_url' in self.parameters:
             self.errors = "Only one of nfsrootfs or nfs_url can be specified"
-        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_base % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_base % self.job.job_id
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='tftp', key='suffix', value=suffix)
@@ -131,4 +131,5 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())

@@ -97,9 +97,8 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 '1.3.3.8': '1_android-meminfo',
                 '1.3.3.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
-        for testdefs in testdef.test_list:
-            for testdef in testdefs:
-                self.assertEqual('git', testdef['from'])
+        for testdef in testdef.test_list:
+            self.assertEqual('git', testdef['from'])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
                      'lxc-create not installed')
@@ -116,7 +115,8 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.actions[0]
+                if action.parameters['namespace'] == 'tlxc':
+                    overlay = action.pipeline.actions[2]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))

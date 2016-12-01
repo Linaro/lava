@@ -42,8 +42,10 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestInstallAction,
     TestRunnerAction,
 )
+from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
@@ -219,8 +221,8 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
-        apply_overlay = deploy.pipeline.actions[4]
-        self.assertIsNotNone(apply_overlay)
+        self.assertIsInstance(deploy.pipeline.actions[0], DownloaderAction)
+        self.assertEqual(len(deploy.pipeline.actions), 1)  # deploy without test only needs DownloaderAction
 
 
 class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -386,26 +388,26 @@ class TestDefinitions(unittest.TestCase):
 
     def test_definition_lists(self):
         self.job.validate()
+        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)
         self.assertIn("test-definition", self.job.context['common'])
-        self.assertIn("testdef_index", self.job.context['common']['test-definition']['test-definition'])
+        self.assertIsNotNone(definition.get_namespace_data(action=definition.name, label='test-definition', key='testdef_index'))
         self.assertEqual(
-            self.job.context['common']['test-definition']['test-definition']['testdef_index'],
+            definition.get_namespace_data(action=definition.name, label='test-definition', key='testdef_index'),
             ['smoke-tests', 'singlenode-advanced']
         )
         self.assertEqual(
-            self.job.context['common']['test-runscript-overlay']['test-runscript-overlay']['testdef_levels'],
+            git_repos[0].get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'),
             {
                 '1.3.2.4.4': '0_smoke-tests',
                 '1.3.2.4.8': '1_singlenode-advanced'
             }
         )
-        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
-        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
-        git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
-        #  uuid = "%s_%s" % (self.job.job_id, self.level)
         self.assertEqual(
             {repo.uuid for repo in git_repos},
             {'4212_1.3.2.4.1', '4212_1.3.2.4.5'}
