@@ -310,7 +310,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                   """)
         self.assertIsInstance(device['actions']['boot']['methods']['qemu']['parameters']['extra'][1], int)
         parser = JobParser()
-        job = parser.parse(yaml.dump(job_data), device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(job_data), device, 4212, None, "",
                            output_dir='/tmp/')
         job.validate()
         boot_image = [action for action in job.pipeline.actions if action.name == 'boot_image_retry'][0]
@@ -606,7 +606,7 @@ class TestChecksum(unittest.TestCase):
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None, output_dir='/tmp/')
+            job = parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         download = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry'][0]
         helper = [action for action in download.internal_pipeline.actions if action.name == 'file_download'][0]

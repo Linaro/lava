@@ -41,7 +41,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         yaml = os.path.join(os.path.dirname(__file__), sample_job)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -78,7 +78,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         try:
             job.validate()
         except JobError:
@@ -108,7 +108,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
@@ -172,7 +172,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, bbb, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, bbb, 4212, None, "", output_dir='/tmp/')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('usb', bbb['parameters']['media'].keys())
@@ -189,7 +189,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         job.validate()
         boot_params = [
             methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][1]['boot']

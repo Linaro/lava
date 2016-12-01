@@ -127,7 +127,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -140,7 +140,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
         except NotImplementedError as exc:
             print(exc)
@@ -317,7 +317,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
                                output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -325,12 +325,12 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(job)
         job_def['compatibility'] = job.compatibility + 1
         self.assertRaises(
-            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, None, None,
+            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, "",
             mkdtemp()
         )
         job_def['compatibility'] = 0
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
                                output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet

@@ -1,0 +1,5 @@
+# Configuration example
+# Each dispatcher might have a configuration file like this one.
+
+# Only set this key, if this dispatcher has many IPs
+#dispatcher_ip: <this-dispatcher-ip>

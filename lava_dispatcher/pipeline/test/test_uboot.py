@@ -56,7 +56,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -159,7 +159,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        job = Job(4212, None, None, None, parameters)
+        job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.pipeline = pipeline
@@ -286,7 +286,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None,
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, "",
                                output_dir='/tmp/')
         job.validate()
         sample_job_data.close()
@@ -338,7 +338,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
         self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, None, None,
+        job = parser.parse(sample_job_string, device, 4212, None, "",
                            output_dir='/tmp')
         job.validate()
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]

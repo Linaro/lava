@@ -45,7 +45,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, None, None,
+            job = parser.parse(sample_job_data, device, 4577, None, "",
                                output_dir=output_dir)
         return job
 
@@ -55,7 +55,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, None, None,
+            job = parser.parse(sample_job_data, device, 4577, None, "",
                                output_dir=output_dir)
         return job
 
@@ -169,7 +169,7 @@ class TestLxcWithDevices(unittest.TestCase):
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/bbb-01.yaml'))
-        job = parser.parse(yaml.dump(data), device, 4577, None, None, None,
+        job = parser.parse(yaml.dump(data), device, 4577, None, "",
                            output_dir=mkdtemp())
         job.validate()
         lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]

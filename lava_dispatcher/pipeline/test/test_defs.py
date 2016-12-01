@@ -132,7 +132,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         data = [block['test'] for block in content['actions'] if 'test' in block][0]
         definitions = [block for block in data['definitions'] if 'path' in block][0]
         definitions['name'] = 'smoke tests'
-        job = parser.parse(yaml.dump(content), device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(content), device, 4212, None, "",
                            output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]

@@ -107,13 +107,14 @@ class TestMultiDeploy(unittest.TestCase):
 
     def test_multi_deploy(self):
         self.assertIsNotNone(self.parsed_data)
-        job = Job(4212, None, None, None, self.parsed_data)
+        job = Job(4212, self.parsed_data, None)
         job.timeout = Timeout("Job", Timeout.parse({'minutes': 2}))
         pipeline = Pipeline(job=job)
         device = TestMultiDeploy.FakeDevice()
         self.assertIsNotNone(device)
         job.device = device
         job.parameters['output_dir'] = mkdtemp()
+        job.setup_logging()
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data['actions']:
@@ -162,7 +163,7 @@ class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public
         self.assertEqual(len(block['definitions']), 2)
         self.assertEqual(block['definitions'][1], block['definitions'][0])
         parser = JobParser()
-        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, "",
                            output_dir='/tmp/')
         self.assertIsNotNone(job)
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]

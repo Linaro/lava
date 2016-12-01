@@ -49,7 +49,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -144,7 +144,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        job = Job(4212, None, None, None, parameters)
+        job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.pipeline = pipeline

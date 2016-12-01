@@ -131,8 +131,8 @@ class JobParser(object):
         }
 
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, job_id, socket_addr, master_cert,
-              slave_cert, output_dir=None, env_dut=None):
+    def parse(self, content, device, job_id, zmq_config, dispatcher_config,
+              output_dir=None, env_dut=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -140,12 +140,20 @@ class JobParser(object):
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
         self.context['default_connection_duration'] = Timeout.default_duration()
-        job = Job(job_id, socket_addr, master_cert, slave_cert, data)
+        job = Job(job_id, data, zmq_config)
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
         job.parameters['target'] = device.target
+        # Load the dispatcher config
+        job.parameters['dispatcher'] = {}
+        if dispatcher_config is not None:
+            job.parameters['dispatcher'] = yaml.load(dispatcher_config)
+
+        # Setup the logging now that we have the parameters
+        job.setup_logging()
+
         level_tuple = Protocol.select_all(job.parameters)
         # sort the list of protocol objects by the protocol class level.
         job.protocols = [item[0](job.parameters, job_id) for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])]

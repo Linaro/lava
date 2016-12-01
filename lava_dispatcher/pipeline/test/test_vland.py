@@ -129,7 +129,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         vprotocol.set_up()
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
         ret = vprotocol.configure(self.device, job)
         if not ret:
@@ -177,7 +177,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(VlandProtocol.name, alpha_data['protocols'])
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
         description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -222,7 +222,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         job.validate()
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
         self.assertTrue(vprotocol.valid)
@@ -249,7 +249,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': ['spurious']}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         self.assertRaises(JobError, job.validate)
 
     def test_primary_interface(self):
@@ -260,7 +260,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             if self.device['parameters']['interfaces'][interface]['tags'] == []:
                 self.device['parameters']['interfaces'][interface]['tags'] = None
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
