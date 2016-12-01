@@ -51,7 +51,11 @@ from lava_results_app.dbutils import map_scanned_results
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
-
+# Current version of the protocol
+# The slave does send the protocol version along with the HELLO and HELLO_RETRY
+# messages. If both version are not identical, the connection is refused by the
+# master.
+PROTOCOL_VERSION = 1
 # TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
@@ -274,6 +278,18 @@ class Command(BaseCommand):
         # Handle the actions
         if action == 'HELLO' or action == 'HELLO_RETRY':
             self.logger.info("%s => %s", hostname, action)
+
+            # Check the protocol version
+            try:
+                slave_version = int(msg[2])
+            except (IndexError, ValueError):
+                self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+                return False
+            if slave_version != PROTOCOL_VERSION:
+                self.logger.error("<%s> using protocol v%d while master is using v%d",
+                                  hostname, slave_version, PROTOCOL_VERSION)
+                return False
+
             self.controler.send_multipart([hostname, 'HELLO_OK'])
             # If the dispatcher is known and sent an HELLO, means that
             # the slave has restarted
