@@ -467,7 +467,7 @@ class Command(BaseCommand):
                 job_ctx = job_def.get('context', {})
 
                 # Load device configuration
-                device_configuration = None \
+                device_configuration = '' \
                     if job.dynamic_connection else device.load_device_configuration(job_ctx)
 
                 env_str = get_env_string(options['env'])
