@@ -64,6 +64,7 @@ else:
 # Default values for:
 # timeouts (in seconds)
 # zmq socket send high water mark
+PROTOCOL_VERSION = 1
 TIMEOUT = 5
 JOBS_CHECK_INTERVAL = 5
 FINISH_MAX_DURATION = 60
@@ -417,8 +418,9 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
             else:
                 LOG.info("Unexpected message from the master: %s", message)
 
-    LOG.debug("Sending new %s message to the master", retry_msg)
-    send_multipart_u(sock, [retry_msg])
+    LOG.debug("Sending new %s message to the master (are they both running the same version?)", retry_msg)
+    # TODO: count the number of messages and re-connect if needed
+    send_multipart_u(sock, [retry_msg, str(PROTOCOL_VERSION)])
     return False
 
 
@@ -734,7 +736,7 @@ def main():
 
     hello_msg = "HELLO"
     LOG.debug("Greeting the master => '%s'", hello_msg)
-    send_multipart_u(sock, [hello_msg])
+    send_multipart_u(sock, [hello_msg, str(PROTOCOL_VERSION)])
 
     while not connect_to_master(master, poller, pipe_r, sock, timeout):
         pass
