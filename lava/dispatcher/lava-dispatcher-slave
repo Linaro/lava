@@ -130,8 +130,8 @@ class Job(object):
         with open(os.path.join(self.base_dir, "job.yaml"), "w") as f_job:
             f_job.write(definition)
         with open(os.path.join(self.base_dir, "device.yaml"), "w") as f_device:
-            if device_definition:  # an empty file for secondary connections
-                f_device.write(device_definition)
+            # Will be empty for secondary connections
+            f_device.write(device_definition)
 
     def create_environ(self):
         """Generate the env variables for the job."""
