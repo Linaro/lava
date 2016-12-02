@@ -437,7 +437,7 @@ class TestTemplates(unittest.TestCase):
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, panda, 4577, None, None, None,
+            job = parser.parse(sample_job_data, panda, 4577, None, "",
                                output_dir='/tmp')
         os.close(fd)
         job.validate()

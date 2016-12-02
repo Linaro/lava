@@ -510,7 +510,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, None, None, output_dir=job.output_dir)
+                job.id, None, "", output_dir=job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -891,7 +891,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, None, None,
+                        check_job.id, None, "",
                         output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
@@ -1023,7 +1023,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser = JobParser()
         pipeline_job = parser.parse(
             yaml.dump(client_submission), parser_device,
-            4212, None, None, None, output_dir='/tmp/test')
+            4212, None, "", output_dir='/tmp/test')
         pipeline = pipeline_job.describe()
         from lava_results_app.dbutils import _get_job_metadata
         meta_dict = _get_job_metadata(pipeline['job']['actions'])
@@ -1123,7 +1123,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 # pass (unused) output_dir just for validation as there is no zmq socket either.
                 pipeline_job = parser.parse(
                     job.definition, parser_device,
-                    job.id, None, None, None,
+                    job.id, None, "",
                     output_dir=job.output_dir)
             except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                 self.fail('[%s] parser error: %s' % (job.sub_id, exc))
