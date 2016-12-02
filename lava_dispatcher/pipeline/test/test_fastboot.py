@@ -85,6 +85,21 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertEqual(
             job.device.pre_power_command,
             '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
+        lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        job.validate()
+        self.assertEqual(
+            {
+                '1.2.3.20': '4_android-optee',
+                '1.2.3.4': '0_get-adb-serial',
+                '1.2.3.12': '2_android-busybox',
+                '1.2.3.8': '1_android-meminfo',
+                '1.2.3.16': '3_android-ping-dns'},
+            testdef.get_common_data(testdef.parameters['namespace'], 'testdef_levels'))
+        for testdefs in testdef.test_list:
+            for testdef in testdefs:
+                self.assertEqual('git', testdef['from'])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
                      'lxc-create not installed')

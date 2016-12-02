@@ -987,7 +987,10 @@ class TestRunnerAction(TestOverlayAction):
                 self.testdef_levels[self.level] = "%s_%s" % (count, name)
         if not self.testdef_levels:
             self.errors = "Unable to identify test definition names"
-        current = self.get_common_data(self.name, 'testdef_levels')
+        if namespace:
+            current = self.get_common_data(namespace, 'testdef_levels')
+        else:
+            current = self.get_common_data(self.name, 'testdef_levels')
         if current:
             current.update(self.testdef_levels)
         else:
