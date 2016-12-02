@@ -331,6 +331,23 @@ automated.
 Hints
 =====
 
+The LAVA software and lab teams have built up a set hints relating to the
+integration of new device-types. The further a device deviates from one or more
+of these hints, the harder it will become to automate such a device. Always
+remember that the way that the device is supported **must** scale to large labs
+which already contain a range of other devices, each with their own issues. It
+is **not** acceptable to add a new device-type which is incompatible with
+devices which are already supported or which imposes restrictions on how many
+devices of any type can be used in any one lab.
+
+* **serial port** - LAVA expects to automate devices by interacting with the
+  serial port immediately after power is applied to the device. The bootloader
+  **must** interact with the serial port. If a serial port is not available on
+  the device, suitable additional hardware **must** be provided before
+  integration can begin. All messages about the boot process must be visible
+  using the serial port and the serial port should remain usable for the
+  duration of all test jobs on the device.
+
 * **UBoot** - if the device supports UBoot then this is a useful beginning.
   However, the build of UBoot on the device can hinder integration due to the
   wide range of configuration options and behavioural changes available inside
@@ -340,10 +357,22 @@ Hints
   bootloader to booting a kernel of your own choice, this will greatly assist
   in integrating the device into LAVA.
 
+  #. **Configuration** - ensure that the UBoot build supports a string which
+     can be used to interrupt UBoot and that once interrupted, the prompt is
+     set to a usable string like ``=>`` or ``uboot#`` etc. Make sure that the
+     configuration supports TFTP using commands sent over the serial port. The
+     timeout for interrupting the boot process **must** be configurable.
+
 * **Android** - LAVA relies on :abbr:`ADB (Android Debug Bridge)` and
-  ``fastboot`` to control an Android device. Support for ADB **must** be
+``fastboot`` to control an Android device. Support for ADB **must** be
   enabled in **every** image running on the device or LAVA will lose the
-  ability to access, reboot or deploy to the device.
+  ability to access, reboot or deploy to the device. The fastboot serial number
+  **must** be unique **and** modifiable by the admin in case an existing device
+  is already using that number. The device needs a reliable way to enter
+  fastboot mode from power on. Typically, if the boot partition is erased, this
+  will force the bootloader into fastboot mode. The device needs to implement
+  the ``fastboot boot <boot img>`` command, so that the test image can be
+  loaded directly into memory and executed.
 
 * **Battery Power** - devices which have internal batteries become difficult to
   reliably automate for a few issues, unless the battery can be permanently
@@ -366,4 +395,16 @@ Hints
   ``power_off_command``). Sometimes this power leak can cause the device to
   ``latch`` into a particular bootloader mode or other state which prevents the
   automation from proceeding.
+
+* **Networking**
+
+  #. **Ethernet** - all devices using ethernet interfaces in LAVA **must**
+     have a unique MAC address on each interface. The MAC address **must** be
+     persistent across reboots but also be modifiable by admins in case it does
+     conflict with some other board in the same lab. No assumptions about fixed
+     IP addresses, address ranges or pre-defined routes. If more than one
+     interface is available, the boot process **must** be configurable to
+     always use the same interface every time the device is booted.
+
+  #. **WiFi** - is not currently supported as a method of booting devices.
 
