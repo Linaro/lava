@@ -22,6 +22,7 @@ import re
 import sys
 import time
 import yaml
+import decimal
 import logging
 import pexpect
 from collections import OrderedDict
@@ -360,7 +361,11 @@ class TestShellAction(TestAction):
                 }
                 # check for measurements
                 if 'measurement' in res:
-                    res_data['measurement'] = res['measurement']
+                    try:
+                        measurement = decimal.Decimal(res['measurement'])
+                    except decimal.InvalidOperation:
+                        raise TestError("Invalid measurement %s", res['measurement'])
+                    res_data['measurement'] = measurement
                     if 'units' in res:
                         res_data['units'] = res['units']
 
@@ -417,7 +422,11 @@ class TestShellAction(TestAction):
                 }
                 # check for measurements
                 if 'measurement' in res:
-                    res_data['measurement'] = res['measurement']
+                    try:
+                        measurement = decimal.Decimal(res['measurement'])
+                    except decimal.InvalidOperation:
+                        raise TestError("Invalid measurement %s", res['measurement'])
+                    res_data['measurement'] = measurement
                     if 'units' in res:
                         res_data['units'] = res['units']
 
