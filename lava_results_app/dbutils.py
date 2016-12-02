@@ -20,6 +20,7 @@ import yaml
 import urllib
 import logging
 import django
+import decimal
 from django.db import transaction
 from lava_results_app.models import (
     TestSuite,
@@ -31,7 +32,7 @@ from lava_results_app.models import (
 )
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.pipeline.action import Timeout
-# pylint: disable=no-member
+# pylint: disable=no-member,too-many-locals,too-many-nested-blocks
 
 if django.VERSION > (1, 10):
     from django.urls.exceptions import NoReverseMatch
@@ -169,14 +170,17 @@ def map_scanned_results(results, job):  # pylint: disable=too-many-branches,too-
         if result not in TestCase.RESULT_MAP:
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
             return False
-        TestCase.objects.create(
-            name=name,
-            suite=suite,
-            test_set=testset,
-            result=TestCase.RESULT_MAP[result],
-            measurement=measurement,
-            units=units
-        ).save()
+        try:
+            TestCase.objects.create(
+                name=name,
+                suite=suite,
+                test_set=testset,
+                result=TestCase.RESULT_MAP[result],
+                measurement=measurement,
+                units=units
+            ).save()
+        except decimal.InvalidOperation:
+            logger.exception("[%d] Unable to create test case %s", job.id, name)
     return True
 
 
