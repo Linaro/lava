@@ -3,8 +3,33 @@
 
 {% block content %}
 <h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
+{% if not test_cases %}
+{%  for testset in sets %}
+    <h2>Test Set: {{ testset.name }}</h2>
+    {% for testcase in testset.test_cases.all %}
+        <dl class="dl-horizontal">
+        <dt>Test Case:</dt>
+        <dd><a href="{{ testcase.get_absolute_url }}">{{ testcase.name }}</a></dd>
+        <dt>Result:</dt>
+        <dd>{{ testcase.result_code }}</dd>
+        {% if testcase.measurement %}
+        <dt>Measurement:</dt>
+        <dd>{{ testcase.measurement }} {{ testcase.units }}</dd>
+        {% endif %}
+        </dl>
+    {% endfor %}
+{% endfor %}
+{% endif %}
 {% for testcase in test_cases %}
+  {% if testcase.test_set %}
+  <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
+  {% endif %}
   <h3>{{ testcase.name }} <a href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}"><span class="glyphicon glyphicon-chevron-right"></span></a></h3>
+  {% if testcase.test_set %}
+      {% if test_cases|length > 1 %}
+      <a href="{{ testcase.get_absolute_url }}">{{ testcase.test_set }}/{{ testcase.name }}</a>
+      {% endif %}
+  {% endif %}
   {% if testcase.action_metadata %}
   <ul class="list-unstyled">
   {% for key, value in testcase.action_metadata.items %}

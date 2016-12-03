@@ -331,11 +331,13 @@ def testcase(request, job, pk, case):
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
+    test_sets = TestSet.objects.filter(name=case, suite=test_suite)
     template = loader.get_template("lava_results_app/case.html")
     return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(testcase, pk=pk, job=job.id, case=case),
             'job': job,
+            'sets': test_sets,
             'suite': test_suite,
             'job_link': pklink(job),
             'test_cases': test_cases,
