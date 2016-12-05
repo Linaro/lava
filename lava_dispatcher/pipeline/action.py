@@ -98,7 +98,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         self.parent = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
-        self.branch_level = 1  # the level of the last added child
         if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
@@ -106,7 +105,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if not parent.level:
                 raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
-            self.branch_level = parent.level
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
@@ -124,7 +122,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             action.job = self.job
         if self.parent:  # action
             self.parent.pipeline = self
-            action.level = "%s.%s" % (self.branch_level, len(self.actions))
+            action.level = "%s.%s" % (self.parent.level, len(self.actions))
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
@@ -349,9 +347,14 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         within those pipelines. Parameters are to be
         treated as inmutable.
         """
-        self.__summary__ = None
-        self.__description__ = None
-        self.__level__ = None
+        # The level of this action within the pipeline. Levels start at one and
+        # each pipeline within an command uses a level within the level of the
+        # parent pipeline.
+        # First command in Outer pipeline: 1
+        # First command in pipeline within outer pipeline: 1.1
+        # Level is set during pipeline creation and must not be changed
+        # subsequently except by RetryCommand.
+        self.level = None
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
@@ -372,36 +375,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
     name = None
-
-    @property
-    def description(self):
-        """
-        The description of the command, set by each instance of
-        each class inheriting from Action.
-        Used in the pipeline to explain what the commands will
-        attempt to do.
-        :return: a string created by the instance.
-        """
-        return self.__description__
-
-    @description.setter
-    def description(self, description):
-        self.__description__ = description
-
-    @property
-    def summary(self):
-        """
-        A short summary of this instance of a class inheriting
-        from Action. May be None.
-        Can be used in the pipeline to summarise what the commands
-        will attempt to do.
-        :return: a string or None.
-        """
-        return self.__summary__
-
-    @summary.setter
-    def summary(self, summary):
-        self.__summary__ = summary
+    # A short summary of this instance of a class inheriting from Action.  May
+    # be None.
+    summary = None
+    # Used in the pipeline to explain what the commands will attempt to do.
+    description = None
 
     @property
     def data(self):
@@ -441,24 +419,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     @property
     def valid(self):
         return len([x for x in self.errors if x]) == 0
-
-    @property
-    def level(self):
-        """
-        The level of this action within the pipeline. Levels
-        start at one and each pipeline within an command uses
-        a level within the level of the parent pipeline.
-        First command in Outer pipeline: 1
-        First command in pipeline within outer pipeline: 1.1
-        level is set during pipeline creation and must not
-        be changed subsequently except by RetryCommand..
-        :return: a string
-        """
-        return self.__level__
-
-    @level.setter
-    def level(self, value):
-        self.__level__ = value
 
     @property
     def parameters(self):

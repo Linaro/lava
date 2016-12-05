@@ -73,10 +73,6 @@ class RetryAction(Action):
             raise JobError(self.errors)
         return connection
 
-    # FIXME: needed?
-    def __call__(self, connection):
-        self.run(connection)
-
 
 class DiagnosticAction(Action):
 
