@@ -364,7 +364,7 @@ devices of any type can be used in any one lab.
      timeout for interrupting the boot process **must** be configurable.
 
 * **Android** - LAVA relies on :abbr:`ADB (Android Debug Bridge)` and
-``fastboot`` to control an Android device. Support for ADB **must** be
+  ``fastboot`` to control an Android device. Support for ADB **must** be
   enabled in **every** image running on the device or LAVA will lose the
   ability to access, reboot or deploy to the device. The fastboot serial number
   **must** be unique **and** modifiable by the admin in case an existing device
