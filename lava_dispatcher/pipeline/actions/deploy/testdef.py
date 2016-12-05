@@ -667,7 +667,6 @@ class TestDefinitionAction(TestAction):
         the internal pipeline then looks inside the job definition for details of the tests to deploy.
         Jobs with no test actions defined (empty test_list) are explicitly allowed.
         """
-        super(TestDefinitionAction, self).validate()
         if not self.job:
             self.errors = "missing job object"
             return
@@ -691,7 +690,7 @@ class TestDefinitionAction(TestAction):
                     res = exp.match(testdef['name'])
                     if not res:
                         self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
-        self.internal_pipeline.validate_actions()
+        super(TestDefinitionAction, self).validate()
 
     def run(self, connection, args=None):
         """
