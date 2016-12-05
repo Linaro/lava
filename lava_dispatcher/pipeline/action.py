@@ -118,8 +118,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         self._check_action(action)
         self.actions.append(action)
         # FIXME: if this is only happening in unit test, this has to be fixed later on
-        if self.job:  # should only be None inside the unit tests
-            action.job = self.job
+        # should only be None inside the unit tests
+        action.job = self.job
         if self.parent:  # action
             self.parent.pipeline = self
             action.level = "%s.%s" % (self.parent.level, len(self.actions))
@@ -489,7 +489,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
-            self.errors.extend(self.internal_pipeline.errors)  # pylint: disable=maybe-no-member
 
     def populate(self, parameters):
         """
