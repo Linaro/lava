@@ -66,8 +66,8 @@ class RetryAction(Action):
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
-            if "boot-result" not in self.data:
-                self.data['boot-result'] = 'failed'
+            res = 'failed' if self.errors else 'success'
+            self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
             # tried and failed
             self.job.cleanup(connection, self.errors)
             raise JobError(self.errors)
@@ -319,4 +319,4 @@ class PipelineContext(object):  # pylint: disable=too-few-public-methods
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
     def __init__(self):
-        self.pipeline_data = {'common': {}}
+        self.pipeline_data = {}

@@ -405,7 +405,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.fakejob.run()
-        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': 'base class trigger'})
+        self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
 
     def test_run_action(self):
         pipeline = TestAction.FakePipeline(job=self.fakejob)
@@ -416,45 +416,45 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.run()
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
-        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': False})
+        self.assertEqual(self.fakejob.context, {'fake-key': False})
 
-    def test_common_data(self):
+    def test_namespace_data(self):
         """
-        common data uses copies, not references
+        namespace data uses copies, not references
 
         This allows actions to refer to the common data and manipulate it without affecting other actions.
         """
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAdjuvant.SafeAction()
         pipeline.add_action(action)
-        action.set_common_data("fake", "string value", "test string")
-        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
-        test_string = action.get_common_data('fake', 'string value')
-        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
+        action.set_namespace_data(action='test', label="fake", key="string value", value="test string")
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
+        test_string = action.get_namespace_data(action='test', label='fake', key='string value')
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
         self.assertEqual(test_string, 'test string')
         test_string += "extra data"
-        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
         self.assertNotEqual(test_string, 'test string')
-        self.assertNotEqual(action.get_common_data('fake', 'string value'), test_string)
-        action.set_common_data("fake", "list value", [1, 2, 3])
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
-        test_list = action.get_common_data('fake', 'list value')
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
-        self.assertEqual(action.get_common_data('fake', 'list value'), test_list)
+        self.assertNotEqual(action.get_namespace_data(action='test', label='fake', key='string value'), test_string)
+        action.set_namespace_data(action='test', label="fake", key="list value", value=[1, 2, 3])
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
+        test_list = action.get_namespace_data(action='test', label='fake', key='list value')
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), test_list)
         test_list.extend([4, 5, 6])
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
-        self.assertNotEqual(action.get_common_data('fake', 'list value'), test_list)
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
+        self.assertNotEqual(action.get_namespace_data(action='test', label='fake', key='list value'), test_list)
         self.assertEqual(test_list, [1, 2, 3, 4, 5, 6])
 
         # test support for the more risky reference method
-        reference_list = action.get_common_data('fake', 'list value', deepcopy=False)
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
-        self.assertEqual(action.get_common_data('fake', 'list value'), reference_list)
+        reference_list = action.get_namespace_data(action='test', label='fake', key='list value', deepcopy=False)
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), reference_list)
         reference_list.extend([7, 8, 9])
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3, 7, 8, 9])
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3, 7, 8, 9])
         self.assertEqual(reference_list, [1, 2, 3, 7, 8, 9])
         reference_list = [4, 5, 6]
-        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3, 7, 8, 9])
+        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3, 7, 8, 9])
         self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
 
 

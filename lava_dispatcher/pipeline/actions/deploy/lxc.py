@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyLxcOverlay
+from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
@@ -98,19 +99,16 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.errors = infrastructure_error('lxc-create')
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.data['lava_test_results_dir'] = lava_test_results_dir
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            self.set_common_data(namespace, 'lava_test_results_dir',
-                                 lava_test_results_dir)
-            lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
-            self.set_common_data(namespace, 'lava_test_sh_cmd',
-                                 lava_test_sh_cmd)
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
+        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+        self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
                                           parameters=parameters)
         self.internal_pipeline.add_action(LxcCreateAction())
+        # needed if export device environment is also to be used
+        self.internal_pipeline.add_action(DeployDeviceEnvironment())
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ApplyLxcOverlay())
 
@@ -134,7 +132,7 @@ class LxcCreateAction(DeployAction):
                      if protocol.name == LxcProtocol.name]
         if protocols:
             protocol = protocols[0]
-            self.set_common_data('lxc', 'name', protocol.lxc_name)
+            self.set_namespace_data(action=self.name, label='lxc', key='name', value=protocol.lxc_name)
             self.lxc_data['lxc_name'] = protocol.lxc_name
             self.lxc_data['lxc_distribution'] = protocol.lxc_dist
             self.lxc_data['lxc_release'] = protocol.lxc_release
@@ -193,7 +191,19 @@ class LxcAddDeviceAction(Action):
 
     def run(self, connection, args=None):
         connection = super(LxcAddDeviceAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(
+        #     action='lxc-create-action',
+        #     label='lxc',
+        #     key='name'
+        # )
         if 'device_path' in list(self.job.device.keys()):
             device_path = self.job.device['device_path']
             if not isinstance(device_path, list):

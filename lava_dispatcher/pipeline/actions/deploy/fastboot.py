@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.utils.constants import (
     FASTBOOT_REBOOT_TIMEOUT
 )
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 
 
 def fastboot_accept(device, parameters):
@@ -97,14 +98,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         super(FastbootAction, self).validate()
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.data['lava_test_results_dir'] = lava_test_results_dir
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            self.set_common_data(namespace, 'lava_test_results_dir',
-                                 lava_test_results_dir)
-            lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
-            self.set_common_data(namespace, 'lava_test_sh_cmd',
-                                 lava_test_sh_cmd)
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
+        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+        self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -160,7 +156,16 @@ class EnterFastbootAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(EnterFastbootAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
         fastboot_serial_number = self.job.device['fastboot_serial_number']
 
         # Try to enter fastboot mode with adb.
@@ -212,9 +217,7 @@ class FastbootUpdateAction(DeployAction):
 
     def validate(self):
         super(FastbootUpdateAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['image']:
+        if not self.get_namespace_data(action='download_action', label='image', key='file'):
             self.errors = "no file specified for fastboot"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -223,8 +226,16 @@ class FastbootUpdateAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(FastbootUpdateAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['image']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='image', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -258,7 +269,15 @@ class FastbootRebootAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(FastbootRebootAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                         '-s', serial_number, 'reboot']
@@ -284,9 +303,7 @@ class ApplyPtableAction(DeployAction):
 
     def validate(self):
         super(ApplyPtableAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['ptable']:
+        if not self.get_namespace_data(action='download_action', label='ptable', key='file'):
             self.errors = "no file specified for fastboot ptable image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -295,8 +312,16 @@ class ApplyPtableAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyPtableAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['ptable']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='ptable', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -323,9 +348,7 @@ class ApplyBootAction(DeployAction):
 
     def validate(self):
         super(ApplyBootAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['boot']:
+        if not self.get_namespace_data(action='download_action', label='boot', key='file'):
             self.errors = "no file specified for fastboot boot image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -335,8 +358,16 @@ class ApplyBootAction(DeployAction):
     def run(self, connection, args=None):
         connection = super(ApplyBootAction, self).run(connection, args)
         serial_number = self.job.device['fastboot_serial_number']
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['boot']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='boot', key='file')
         dst = copy_to_lxc(lxc_name, src)
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                         '-s', serial_number, 'flash', 'boot', dst]
@@ -362,9 +393,7 @@ class ApplyCacheAction(DeployAction):
 
     def validate(self):
         super(ApplyCacheAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['cache']:
+        if not self.get_namespace_data(action='download_action', label='cache', key='file'):
             self.errors = "no file specified for fastboot cache image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -373,8 +402,16 @@ class ApplyCacheAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyCacheAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['cache']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='cache', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -401,9 +438,7 @@ class ApplyUserdataAction(DeployAction):
 
     def validate(self):
         super(ApplyUserdataAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['userdata']:
+        if not self.get_namespace_data(action='download_action', label='userdata', key='file'):
             self.errors = "no file specified for fastboot userdata image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -412,8 +447,16 @@ class ApplyUserdataAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyUserdataAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['userdata']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='userdata', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -440,9 +483,7 @@ class ApplySystemAction(DeployAction):
 
     def validate(self):
         super(ApplySystemAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['system']:
+        if not self.get_namespace_data(action='download_action', label='system', key='file'):
             self.errors = "no file specified for fastboot system image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -451,8 +492,16 @@ class ApplySystemAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplySystemAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['system']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='system', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -479,9 +528,7 @@ class ApplyVendorAction(DeployAction):
 
     def validate(self):
         super(ApplyVendorAction, self).validate()
-        if 'download_action' not in self.data:
-            raise RuntimeError("download-action missing: %s" % self.name)
-        if 'file' not in self.data['download_action']['vendor']:
+        if not self.get_namespace_data(action='download_action', label='vendor', key='file'):
             self.errors = "no file specified for fastboot vendor image"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
@@ -490,8 +537,16 @@ class ApplyVendorAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyVendorAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        src = self.data['download_action']['vendor']['file']
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        src = self.get_namespace_data(action='download_action', label='vendor', key='file')
         dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',

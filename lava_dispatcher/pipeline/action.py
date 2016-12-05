@@ -559,7 +559,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             self.errors = "%s action has no section set" % self
 
         # Collect errors from internal pipeline actions
-        self.job.context.setdefault(self.name, {})
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
             self.errors.extend(self.internal_pipeline.errors)  # pylint: disable=maybe-no-member
@@ -663,8 +662,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 reply = protocol(call_dict)
                 message = protocol.collate(reply, call_dict)
                 if message:
-                    self.logger.info("Setting common data key %s to %s", message[0], message[1])
-                    self.set_common_data(protocol.name, message[0], message[1])
+                    self.logger.info("Setting namespace data key %s to %s", message[0], message[1])
+                    self.set_namespace_data(
+                        action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
     def run(self, connection, args=None):
         """
@@ -749,27 +749,53 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
-    def get_common_data(self, ns, key, deepcopy=True):  # pylint: disable=invalid-name
+    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
         """
-        Get a common data value from the specified namespace using the specified key.
+        Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
         manipulate lists and dicts based on common data without altering the values used by other actions.
-        If deepcopy is False, the reference is used - meaning that certain operations on common data
-        values other than simple strings will be able to modify the common data without calls to set_common_data.
+        :param action: Name of the action which set the data or a commonly shared string used to
+            correlate disparate actions
+        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
+            values. Can be set to the same as the action.
+        :param key: The lookup key for the requested value within the data defined by
+            data[namespace][action][label]
+        :param deepcopy: If deepcopy is False, the reference is used - meaning that certain operations on the
+            namespaced data values other than simple strings will be able to modify the data without calls to
+            set_namespace_data.
+        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
+            will not have been set in the action at that point.
         """
-        if ns not in self.data['common']:
+        params = parameters if parameters else self.parameters
+        namespace = params.get('namespace', 'common')
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)
+        if value is None:
             return None
-        value = self.data['common'][ns].get(key, None)
+        value = self.data[namespace][action][label].get(key, None)
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_common_data(self, ns, key, value):  # pylint: disable=invalid-name
+    def set_namespace_data(self, action, label, key, value, parameters=None):
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
+        :param action: Name of the action which set the data or a commonly shared string used to
+            correlate disparate actions
+        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
+            values. Can be set to the same as the action.
+        :param key: The lookup key for the requested value within the data defined by
+            data[namespace][action][label]
+        :param value: The value to set into the namespace data, can be an object.
+        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
+            will not have been set in the action at that point.
         """
-        # ensure the key exists
-        self.data['common'].setdefault(ns, {})
-        self.data['common'][ns][key] = value
+        params = parameters if parameters else self.parameters
+        namespace = params.get('namespace', 'common')
+        if not label or not key:
+            self.errors = "Invalid call to set_namespace_data: %s" % action
+        self.data.setdefault(namespace, {})
+        self.data[namespace].setdefault(action, {})
+        self.data[namespace][action].setdefault(label, {})
+        self.data[namespace][action][label][key] = value
 
     def wait(self, connection):
         if not connection:

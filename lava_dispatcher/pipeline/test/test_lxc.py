@@ -32,6 +32,8 @@ from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.pipeline.actions.boot.lxc import BootAction
+from lava_dispatcher.pipeline.actions.deploy.testdef import identify_test_definitions
+from lava_dispatcher.pipeline.actions.deploy.overlay import get_test_action_namespaces
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -144,6 +146,22 @@ class TestLxcWithDevices(unittest.TestCase):
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        namespace = test_def.parameters.get('namespace', None)
+        self.assertIsNotNone(namespace)
+        test_actions = [action for action in self.job.parameters['actions'] if 'test' in action]
+        for action in test_actions:
+            if 'namespace' in action['test']:
+                if action['test']['namespace'] == namespace:
+                    self.assertEqual(action['test']['definitions'][0]['name'], 'smoke-tests-bbb')
+        namespace_tests = [action['test']['definitions'] for action in test_actions
+                           if 'namespace' in action['test'] and action['test']['namespace'] == namespace]
+        self.assertEqual(len(namespace_tests), 1)
+        self.assertEqual(len(test_actions), 2)
+        self.assertEqual('smoke-tests-bbb', namespace_tests[0][0]['name'])
+        self.assertEqual(
+            'smoke-tests-bbb',
+            identify_test_definitions(self.job.parameters, namespace)[0][0]['name'])
+        print(get_test_action_namespaces(self.job.parameters))
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
         self.assertIsNotNone(runner.testdef_levels)

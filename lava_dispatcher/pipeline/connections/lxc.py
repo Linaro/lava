@@ -53,7 +53,11 @@ class ConnectLxc(Action):
             self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, args=None):
-        lxc_name = self.get_common_data('lxc', 'name')
+        lxc_name = self.get_namespace_data(
+            action='lxc-create-action',
+            label='lxc',
+            key='name'
+        )
         if not lxc_name:
             self.logger.debug("No LXC device requested")
             return connection
@@ -92,12 +96,9 @@ class ConnectLxc(Action):
         else:
             self.logger.debug("No device path defined for this device.")
 
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            connection = self.get_common_data(namespace, 'connection',
-                                              deepcopy=False)
-            if connection:
-                return connection
+        connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
+        if connection:
+            return connection
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
@@ -114,7 +115,7 @@ class ConnectLxc(Action):
         connection.connected = True
         connection = super(ConnectLxc, self).run(connection, args)
         connection.prompt_str = self.parameters['prompts']
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
-        if namespace:
-            self.set_common_data(namespace, 'connection', connection)
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

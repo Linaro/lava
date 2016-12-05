@@ -94,8 +94,8 @@ class LxcStartAction(Action):
 
     def run(self, connection, args=None):
         connection = super(LxcStartAction, self).run(connection, args)
-        lxc_cmd = ['lxc-start', '-n', self.get_common_data('lxc', 'name'),
-                   '-d']
+        lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
+        lxc_cmd = ['lxc-start', '-n', lxc_name, '-d']
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to start lxc container: %s" %

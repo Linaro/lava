@@ -124,7 +124,7 @@ class TestMultiDeploy(unittest.TestCase):
                 parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual(
-                    {'common': {}},
+                    {},
                     test_deploy.action.data
                 )
                 counts[name] += 1
@@ -143,10 +143,10 @@ class TestMultiDeploy(unittest.TestCase):
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         job.run()
-        self.assertNotEqual(pipeline.actions[0].data, {'common': {}, 'fake_deploy': pipeline.actions[0].parameters})
-        self.assertEqual(pipeline.actions[1].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
+        self.assertNotEqual(pipeline.actions[0].data, {'fake_deploy': pipeline.actions[0].parameters})
+        self.assertEqual(pipeline.actions[1].data, {'fake_deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared
-        self.assertEqual(pipeline.actions[2].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
+        self.assertEqual(pipeline.actions[2].data, {'fake_deploy': pipeline.actions[2].parameters})
 
 
 class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -172,7 +172,7 @@ class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public
         overlay = [action for action in tftp.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         runscript = [action for action in testdef.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
-        testdef_index = runscript.get_common_data('test-definition', 'testdef_index')
+        testdef_index = runscript.get_namespace_data(action='test-definition', label='test-definition', key='testdef_index')
         self.assertEqual(len(block['definitions']), len(testdef_index))
         runscript.validate()
         self.assertIsNotNone(runscript.errors)

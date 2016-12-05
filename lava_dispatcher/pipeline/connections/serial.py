@@ -59,12 +59,9 @@ class ConnectDevice(Action):
         self.errors = infrastructure_error(exe)
 
     def run(self, connection, args=None):
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            connection = self.get_common_data(namespace, 'connection',
-                                              deepcopy=False)
-            if connection:
-                return connection
+        connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
+        if connection:
+            return connection
 
         if isinstance(connection, SimpleSession):
             self.logger.debug("Already connected")
@@ -85,8 +82,7 @@ class ConnectDevice(Action):
         connection = super(ConnectDevice, self).run(connection, args)
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
-        if namespace:
-            self.set_common_data(namespace, 'connection', connection)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
         # # if the board is running, wait for a prompt - if not, skip.
         # if self.job.device.power_state is 'off':

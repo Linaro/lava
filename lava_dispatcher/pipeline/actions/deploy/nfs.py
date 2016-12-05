@@ -93,7 +93,8 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if 'nfsrootfs' in self.parameters and 'nfs_url' in self.parameters:
             self.errors = "Only one of nfsrootfs or nfs_url can be specified"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()

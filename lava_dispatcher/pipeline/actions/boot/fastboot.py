@@ -88,7 +88,11 @@ class FastbootBootAction(Action):
 
     def run(self, connection, args=None):
         connection = super(FastbootBootAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        lxc_name = self.get_namespace_data(
+            action='lxc-create-action',
+            label='lxc',
+            key='name'
+        )
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                         '-s', serial_number, 'reboot']
@@ -99,7 +103,8 @@ class FastbootBootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -125,7 +130,11 @@ class WaitForAdbDevice(Action):
         if 'lxc' not in self.job.device['actions']['boot']['methods']:
             return connection
         connection = super(WaitForAdbDevice, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        lxc_name = self.get_namespace_data(
+            action='lxc-create-action',
+            label='lxc',
+            key='name'
+        )
         if not lxc_name:
             self.logger.debug("No LXC device requested")
             return connection

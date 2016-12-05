@@ -136,10 +136,11 @@ class DDAction(Action):
             if 'root_part' in self.boot_params[self.parameters['device']]:
                 self.errors = "'root_part' is not valid for %s as a UUID is required" % self.job.device.hostname
         if self.parameters['device'] in self.boot_params:
-            self.set_common_data(
-                'u-boot',
-                'boot_part',
-                self.boot_params[self.parameters['device']]['device_id']
+            self.set_namespace_data(
+                action=self.name,
+                label='u-boot',
+                key='boot_part',
+                value=self.boot_params[self.parameters['device']]['device_id']
             )
 
     def run(self, connection, args=None):
@@ -149,10 +150,12 @@ class DDAction(Action):
         device to write directly to the secondary media, without needing to cache on the device.
         """
         connection = super(DDAction, self).run(connection, args)
-        if 'file' not in self.data['download_action']['image']:
+        file = self.get_namespace_data(action='download_action', label='image', key='file')
+        if not file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
-        decompressed_image = os.path.basename(self.data['download_action']['image']['file'])
+        decompressed_image = os.path.basename(self.get_namespace_data(
+            action='download_action', label='image', key='file'))
         try:
             device_path = os.path.realpath(
                 "/dev/disk/by-id/%s" %
@@ -160,8 +163,10 @@ class DDAction(Action):
         except OSError:
             raise JobError("Unable to find disk by id %s" %
                            self.boot_params[self.parameters['device']]['uuid'])
-
-        suffix = "%s/%s" % ("tmp", self.data['storage-deploy'].get('suffix', ''))
+        storage_suffix = self.get_namespace_data(action='storage_deploy', label='storage', key='suffix')
+        if not storage_suffix:
+            storage_suffix = ''
+        suffix = "%s/%s" % ("tmp", storage_suffix)
 
         # As the test writer can use any tool we cannot predict where the
         # download URL will be positioned in the download command.
@@ -219,11 +224,11 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
         if 'device' in self.parameters:
-            self.set_common_data('u-boot', 'device', self.parameters['device'])
+            self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
-        self.data[self.name].setdefault('suffix', suffix)
+        self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)
 
     def populate(self, parameters):
         """

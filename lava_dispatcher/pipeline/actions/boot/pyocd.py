@@ -101,9 +101,11 @@ class MonitorPyOCDAction(Action):
             self.errors = "board_id unset"
         substitutions = {}
         commands = ['-b ' + self.job.device['board_id']]
-        for action in self.data['download_action'].keys():
-            image_arg = self.data['download_action'][action].get('image_arg', None)
-            action_arg = self.data['download_action'][action].get('file', None)
+        namespace = self.parameters.get('namespace', 'common')
+        download_keys = self.data[namespace]['download_action']
+        for action in download_keys():
+            image_arg = self.get_namespace_data(action='download_action', label=action, key='image_arg')
+            action_arg = self.get_namespace_data(action='download_action', label=action, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue
@@ -120,6 +122,6 @@ class MonitorPyOCDAction(Action):
             pass
         else:
             raise JobError("%s command failed" % (self.sub_command))
-
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

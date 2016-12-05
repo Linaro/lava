@@ -160,11 +160,12 @@ class MonitorQemuAction(Action):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
         commands = []
-        for action in self.data['download_action'].keys():
-            if action == 'offset' or action == 'available_loops' or action == 'uefi':
+        namespace = self.parameters.get('namespace', 'common')
+        for label in self.data[namespace]['download_action'].keys():
+            if label == 'offset' or label == 'available_loops' or label == 'uefi':
                 continue
-            image_arg = self.data['download_action'][action].get('image_arg', None)
-            action_arg = self.data['download_action'][action].get('file', None)
+            image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
+            action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue
@@ -198,7 +199,8 @@ class MonitorQemuAction(Action):
         # FIXME: the shell needs to wait for something
 
         # FIXME: tests with multiple boots need to be handled too.
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         # FIXME: from here, go into the new test action.
         return shell_connection
 
@@ -234,20 +236,21 @@ class CallQemuAction(Action):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
         commands = []
-        for action in self.data['download_action'].keys():
-            if action == 'offset' or action == 'available_loops' or action == 'uefi':
+        namespace = self.parameters.get('namespace', 'common')
+        for label in self.data[namespace]['download_action'].keys():
+            if label == 'offset' or label == 'available_loops' or label == 'uefi':
                 continue
-            image_arg = self.data['download_action'][action].get('image_arg', None)
-            action_arg = self.data['download_action'][action].get('file', None)
+            image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
+            action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue
-            substitutions["{%s}" % action] = action_arg
+            substitutions["{%s}" % label] = action_arg
             commands.append(image_arg)
         self.sub_command.extend(substitute(commands, substitutions))
         if not self.sub_command:
             self.errors = "No QEMU command to execute"
-        uefi_dir = self.get_common_data('image', 'uefi_dir')
+        uefi_dir = self.get_namespace_data(action='deployimages', label='image', key='uefi_dir')
         if uefi_dir:
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
@@ -263,7 +266,7 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         # initialise the first Connection object, a command line shell into the running QEMU.
-        guest = self.get_common_data('guest', 'filename')
+        guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             # interface is ide by default in qemu
@@ -273,15 +276,15 @@ class CallQemuAction(Action):
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
-            mountpoint = self.data['lava_test_results_dir']
-            uuid = '/dev/disk/by-uuid/%s' % self.get_common_data('guest', 'UUID')
+            mountpoint = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+            uuid = '/dev/disk/by-uuid/%s' % self.get_namespace_data(action='apply-overlay-guest', label='guest', key='UUID')
             shell_precommand_list.append('mkdir %s' % mountpoint)
             # prepare_guestfs always uses ext2
             shell_precommand_list.append('mount %s -t ext2 %s' % (uuid, mountpoint))
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
             shell_precommand_list.append('ls -la %s/bin/lava-test-runner' % mountpoint)
-            self.set_common_data('lava-test-shell', 'pre-command-list', shell_precommand_list)
+            self.set_namespace_data(action='test', label='lava-test-shell', key='pre-command-list', value=shell_precommand_list)
 
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))
         shell = ShellCommand(' '.join(self.sub_command), self.timeout, logger=self.logger)
@@ -295,7 +298,9 @@ class CallQemuAction(Action):
         shell_connection = super(CallQemuAction, self).run(shell_connection, args)
 
         # FIXME: tests with multiple boots need to be handled too.
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection
 
 

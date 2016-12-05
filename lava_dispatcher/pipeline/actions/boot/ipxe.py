@@ -130,10 +130,11 @@ class BootloaderRetry(BootAction):
         super(BootloaderRetry, self).validate()
         if 'bootloader_prompt' not in self.job.device['actions']['boot']['methods'][self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
-        self.set_common_data(
-            'bootloader_prompt',
-            'prompt',
-            self.job.device['actions']['boot']['methods'][self.type]['parameters']['bootloader_prompt']
+        self.set_namespace_data(
+            action=self.name,
+            label='bootloader_prompt',
+            key='prompt',
+            value=self.job.device['actions']['boot']['methods'][self.type]['parameters']['bootloader_prompt']
         )
 
     def run(self, connection, args=None):
@@ -143,7 +144,8 @@ class BootloaderRetry(BootAction):
             connection.prompt_str = self.parameters['prompts']
         connection.timeout = self.connection_timeout
         self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -228,8 +230,6 @@ class BootloaderCommandOverlay(Action):
                 self.lava_mac = params['lava_mac']
             else:
                 self.errors = "lava_mac is not a valid mac address"
-        self.data.setdefault(self.type, {})
-        self.data[self.type].setdefault('commands', [])
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, args=None):
@@ -246,32 +246,36 @@ class BootloaderCommandOverlay(Action):
         except InfrastructureError as exc:
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         substitutions = {
-            '{SERVER_IP}': ip_addr
+            '{SERVER_IP}': ip_addr,
+            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
+            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
+            '{LAVA_MAC}': self.lava_mac,
         }
-        substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
-        substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
-        substitutions['{LAVA_MAC}'] = self.lava_mac
-        nfs_url = self.get_common_data('nfs_url', 'nfsroot')
-        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
-            substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
+        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
+        if nfs_root:
+            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
         elif nfs_url:
             substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_common_data('nfs_url', 'serverip')
+            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
+                action='persistent-nfs-overlay',
+                label='nfs_url', key='serverip')
 
-        substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
+        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
         if self.use_bootscript:
             script = "/script.ipxe"
-            bootscript = self.get_common_data('tftp', 'tftp_dir') + script
+            bootscript = self.get_namespace_data(action='tftp-deploy', label='tftp', key='tftp_dir') + script
             bootscripturi = "tftp://%s/%s" % (ip_addr, os.path.dirname(substitutions['{KERNEL}']) + script)
             write_bootscript(substitute(self.commands, substitutions), bootscript)
             bootscript_commands = ['dhcp net0', "chain %s" % bootscripturi]
-            self.data[self.type]['commands'] = bootscript_commands
+            self.set_namespace_data(action=self.name, label=self.type, key='commands', value=bootscript_commands)
+            self.logger.debug("Parsed boot commands: %s", '; '.join(bootscript_commands))
         else:
-            self.data[self.type]['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s",
-                          '; '.join(self.data[self.type]['commands']))
+            subs = substitute(self.commands, substitutions)
+            self.set_namespace_data(action='bootloader-overlay', label=self.type, key='commands', value=subs)
+            self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
         return connection
 
 
@@ -290,8 +294,6 @@ class BootloaderCommandsAction(Action):
 
     def validate(self):
         super(BootloaderCommandsAction, self).validate()
-        if self.type not in self.data:
-            self.errors = "Unable to read bootloader context data"
         # get prompt_str from device parameters
         self.params = self.job.device['actions']['boot']['methods'][self.type]['parameters']
 
@@ -304,9 +306,10 @@ class BootloaderCommandsAction(Action):
         self.wait(connection)
         i = 1
         self.logger.debug("Using character delay: %s milliseconds.", self.character_delay)
-        for line in self.data[self.type]['commands']:
+        commands = self.get_namespace_data(action='bootloader-overlay', label=self.type, key='commands')
+        for line in commands:
             connection.sendline(line, delay=self.character_delay, send_char=True)
-            if i != (len(self.data[self.type]['commands'])):
+            if i != (len(commands)):
                 self.wait(connection)
                 i += 1
         # allow for auto_login

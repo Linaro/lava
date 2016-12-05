@@ -80,7 +80,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
             ['tftp-deploy', 'grub-main-action', 'lava-test-retry', 'finalize']
         )
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        self.assertTrue(tftp.get_common_data('tftp', 'ramdisk'))
+        self.assertTrue(tftp.get_namespace_data(action=tftp.name, label='tftp', key='ramdisk'))
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
@@ -209,8 +209,9 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
             for action in overlay.internal_pipeline.actions:
                 if action.name == 'extract-nfsrootfs':
                     extract = action
-        self.assertIn('lava_test_results_dir', overlay.data)
-        self.assertIn('/lava-', overlay.data['lava_test_results_dir'])
+        test_dir = overlay.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        self.assertIsNotNone(test_dir)
+        self.assertIn('/lava-', test_dir)
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 

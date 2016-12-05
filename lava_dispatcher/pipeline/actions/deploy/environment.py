@@ -53,23 +53,28 @@ class DeployDeviceEnvironment(Action):
             self.env = self.job.parameters['env_dut']
             environment = self._create_environment()
 
-            self.set_common_data(
-                'environment',
-                'shell_file',
-                self.parameters['deployment_data']['lava_test_shell_file'])
+            self.set_namespace_data(
+                action=self.name,
+                label='environment',
+                key='shell_file',
+                value=self.parameters['deployment_data']['lava_test_shell_file']
+            )
 
-            self.set_common_data(
-                'environment',
-                'env_dict',
-                environment)
+            self.set_namespace_data(
+                action=self.name,
+                label='environment',
+                key='env_dict',
+                value=environment
+            )
 
         else:
             self.logger.info("no device environment specified")
 
-        self.set_common_data(
-            'environment',
-            'line_separator',
-            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR)
+        self.set_namespace_data(
+            action=self.name,
+            label='environment',
+            key='line_separator',
+            value=self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR)
         )
 
     def _create_environment(self):

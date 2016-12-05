@@ -156,7 +156,8 @@ class UefiMenuSelector(SelectorMenuAction):
         self.logger.debug("Looking for %s", self.boot_message)
         connection.prompt_str = self.boot_message
         self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -186,13 +187,14 @@ class UefiSubstituteCommands(Action):
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
-            '{RAMDISK}': self.get_common_data('file', 'ramdisk'),
-            '{KERNEL}': self.get_common_data('file', 'kernel'),
-            '{DTB}': self.get_common_data('file', 'dtb'),
+            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
+            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
+            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
             'TEST_MENU_NAME': "LAVA %s test image" % self.parameters['commands']
         }
-        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
-            substitution_dictionary['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsroot')
+        if nfs_root:
+            substitution_dictionary['{NFSROOTFS}'] = nfs_root
         for item in self.items:
             if 'enter' in item['select']:
                 item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)[0]
@@ -212,10 +214,11 @@ class UefiMenuAction(BootAction):
 
     def validate(self):
         super(UefiMenuAction, self).validate()
-        self.set_common_data(
-            'bootloader_prompt',
-            'prompt',
-            self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt']
+        self.set_namespace_data(
+            action=self.name,
+            label='bootloader_prompt',
+            key='prompt',
+            value=self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt']
         )
 
     def populate(self, parameters):

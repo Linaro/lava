@@ -98,10 +98,11 @@ class TestMonitorAction(TestAction):
 
     def run(self, connection, args=None):
         # Sanity test: could be a missing deployment for some actions
-        if "boot-result" not in self.data:
+        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
+        if res != 'success':
             raise RuntimeError("No boot action result found")
         connection = super(TestMonitorAction, self).run(connection, args)
-        if self.data["boot-result"] != "success":
+        if res != "success":
             self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"

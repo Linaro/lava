@@ -91,12 +91,12 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         job.validate()
         self.assertEqual(
             {
-                '1.2.3.20': '4_android-optee',
-                '1.2.3.4': '0_get-adb-serial',
-                '1.2.3.12': '2_android-busybox',
-                '1.2.3.8': '1_android-meminfo',
-                '1.2.3.16': '3_android-ping-dns'},
-            testdef.get_common_data(testdef.parameters['namespace'], 'testdef_levels'))
+                '1.3.3.20': '4_android-optee',
+                '1.3.3.4': '0_get-adb-serial',
+                '1.3.3.12': '2_android-busybox',
+                '1.3.3.8': '1_android-meminfo',
+                '1.3.3.16': '3_android-ping-dns'},
+            testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
         for testdefs in testdef.test_list:
             for testdef in testdefs:
                 self.assertEqual('git', testdef['from'])

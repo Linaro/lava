@@ -504,7 +504,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                     for params in action.parameters['protocols'][protocol.name]:
                         api_calls = [params for name in params if name == 'action' and params[name] == action.name]
                         for call in api_calls:
-                            action.set_common_data(protocol.name, action.name, call)
+                            action.set_namespace_data(action=protocol.name, label=protocol.name, key=action.name, value=call)
                             client_calls.update(call)
 
         # now pretend that another job has called lava-send with the same messageID, this would be the reply to the

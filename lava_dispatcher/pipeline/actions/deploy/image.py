@@ -50,7 +50,7 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
             # uefi option of QEMU needs a directory, not the filename
-            self.set_common_data('image', 'uefi_dir', uefi_path)  # just the path, not the filename
+            self.set_namespace_data(action=self.name, label='image', key='uefi_dir', value=uefi_path, parameters=parameters)
             # alternatively use the -bios option and standard image args
         for image in parameters['images'].keys():
             if image != 'yaml_line':

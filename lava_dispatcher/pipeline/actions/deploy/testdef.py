@@ -54,12 +54,14 @@ def identify_test_definitions(parameters, namespace=None):
     # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
     if namespace:
         test_actions = [action for action in parameters['actions'] if 'test' in action]
-        namespace_tests = [action['test']['definitions'] for action in test_actions if 'namespace' in action['test'] and action['test']['namespace'] == namespace]
+        namespace_tests = [action['test']['definitions'] for action in test_actions
+                           if 'namespace' in action['test'] and action['test']['namespace'] == namespace]
         return namespace_tests
     test_list = [action['test']['definitions'] for action in parameters['actions'] if 'test' in action]
     repeat_list = [action['repeat'] for action in parameters['actions'] if 'repeat' in action]
     if repeat_list:
-        test_list.extend([testdef['test']['definitions'] for testdef in repeat_list[0]['actions'] if 'test' in testdef])
+        test_list.extend([testdef['test']['definitions']
+                          for testdef in repeat_list[0]['actions'] if 'test' in testdef])
     return test_list
 
 
@@ -173,15 +175,20 @@ class RepoAction(Action):
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
         super(RepoAction, self).validate()
+
         # FIXME: unused
         # list of levels involved in the repo actions for this overlay
-        uuid_list = self.get_common_data('repo-action', 'uuid-list')
+        uuid_list = self.get_namespace_data(
+            action='repo-action',
+            label='repo-action',
+            key='uuid-list'
+        )
         if uuid_list:
             if self.uuid not in uuid_list:
                 uuid_list.append(self.uuid)
         else:
             uuid_list = [self.uuid]
-        self.set_common_data('repo-action', 'uuid-list', uuid_list)
+        self.set_namespace_data(action='repo-action', label='repo-action', key='uuid-list', value=uuid_list)
 
     def run(self, connection, args=None):
         """
@@ -191,45 +198,31 @@ class RepoAction(Action):
         unpack an overlay.tgz after mounting.
         """
         connection = super(RepoAction, self).run(connection, args)
-        # FIXME: standardise on set_common_data and get_common_data
-        self.data.setdefault('test', {})
-        self.data['test'].setdefault(self.uuid, {})
-        self.data['test'][self.uuid].setdefault('runner_path', {})
-        self.data['test'][self.uuid].setdefault('overlay_path', {})
 
         if args is None or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
-        if 'namespace' in self.parameters:
-            namespace = self.parameters['namespace']
-            location = self.get_common_data(namespace, 'location')
-            lava_test_results_dir = self.get_common_data(namespace,
-                                                         'lava_test_results_dir')
-            self.logger.debug("[%s namespace] Using %s at stage %s", namespace, lava_test_results_dir, self.stage)
-        elif 'location' not in self.data['lava-overlay']:
+        location = self.get_namespace_data(action='test', label='shared', key='location')
+        lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        self.logger.debug("Using %s at stage %s", lava_test_results_dir, self.stage)
+        if not location:
             raise RuntimeError("Missing lava overlay location")
-        else:
-            location = self.data['lava-overlay']['location']
-            lava_test_results_dir = self.data['lava_test_results_dir']
-            self.logger.debug("Using %s", lava_test_results_dir)
         if not os.path.exists(location):
             raise RuntimeError("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
-        self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
+        runner_path = os.path.join(
             args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
             str(self.stage),
             'tests',
             args['test_name']
         )
+        self.set_namespace_data(action='uuid', label='runner_path', key=args['test_name'], value=runner_path)
         # the location written into the lava-test-runner.conf (needs a line ending)
-        self.runner = "%s\n" % self.data['test'][self.uuid]['runner_path'][args['test_name']]
+        self.runner = "%s\n" % runner_path
 
-        self.data['test'][self.uuid]['overlay_path'][args['test_name']] = os.path.join(
-            self.data['test-definition']['overlay_dir'],
-            str(self.stage),
-            'tests',
-            args['test_name']
-        )
+        overlay_base = self.get_namespace_data(action='test', label='test-definition', key='overlay_dir')
+        overlay_path = os.path.join(overlay_base, str(self.stage), 'tests', args['test_name'])
+        self.set_namespace_data(action='uuid', label='overlay_path', key=args['test_name'], value=overlay_path)
 
         # FIXME - is this needed? - the issue here is that the new model does not use fs.tgz
         # therefore, there may not be the same need to collate the dependent testdefs, all of the
@@ -248,7 +241,7 @@ class RepoAction(Action):
         The Connection stores raw results in the same test dict.
         The main TestAction can then process the results.
         """
-        self.data['test'][self.uuid]['testdef_metadata'] = \
+        val = \
             {'os': testdef['metadata'].get('os', ''),
              'devices': testdef['metadata'].get('devices', ''),
              'environment': testdef['metadata'].get('environment', ''),
@@ -256,20 +249,20 @@ class RepoAction(Action):
              'project_name': testdef['metadata']['name']}
 
         if commit_id is not None:
-            self.data['test'][self.uuid]['testdef_metadata']['commit_id'] = commit_id
+            val['commit_id'] = commit_id
 
+        self.set_namespace_data(action='test', label=self.uuid, key='testdef_metadata', value=val)
         if 'parse' in testdef:
             pattern = testdef['parse'].get('pattern', '')
             fixup = testdef['parse'].get('fixupdict', '')
         else:
             pattern = self.default_pattern
             fixup = self.default_fixupdict
-        self.data['test'][self.uuid].setdefault('testdef_pattern', {})
-        self.data['test'][self.uuid]['testdef_pattern'].update({'pattern': pattern})
-        self.data['test'][self.uuid]['testdef_pattern'].update({'fixupdict': fixup})
-        self.logger.debug("uuid=%s testdef=%s",
-                          self.uuid,
-                          self.data['test'][self.uuid]['testdef_pattern'])
+        ret = {'testdef_pattern': {}}
+        ret['testdef_pattern'].update({'pattern': pattern})
+        ret['testdef_pattern'].update({'fixupdict': fixup})
+        self.set_namespace_data(action='test', label=self.uuid, key='testdef_pattern', value=ret)
+        self.logger.debug("uuid=%s testdef=%s", self.uuid, ret)
 
 
 class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
@@ -315,7 +308,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         connection = super(GitRepoAction, self).run(connection, self.parameters)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
+
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise RuntimeError("Directory already exists and is not empty - duplicate Action?")
 
@@ -385,7 +379,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         connection = super(BzrRepoAction, self).run(connection, self.parameters)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=args['test_name'])
 
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
@@ -443,7 +437,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         connection = super(InlineRepoAction, self).run(connection, self.parameters)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         # Grab the inline test definition
         testdef = self.parameters['repository']
@@ -477,6 +471,9 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.summary = "unpack tar test repo"
         self.vcs_binary = "/bin/tar"
 
+    def validate(self):
+        super(TarRepoAction, self).validate()
+
     @classmethod
     def accepts(cls, repo_type):
         if repo_type == 'tar':
@@ -488,8 +485,8 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         Extracts the provided encoded tar archive into tmpdir.
         """
         connection = super(TarRepoAction, self).run(connection, args)
-        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
-        temp_tar = os.path.join(self.data['test-definition']['overlay_dir'], "tar-repo.tar")
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_dir', key=self.parameters['test_name'])
+        temp_tar = os.path.join(runner_path, '..', '..', "tar-repo.tar")
 
         try:
             if not os.path.isdir(runner_path):
@@ -538,7 +535,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def run(self, connection, args=None):
         """Download the provided test definition file into tmpdir."""
         super(UrlRepoAction, self).run(connection, args)
-        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_dir', key=self.parameters['test_name'])
 
         try:
             if not os.path.isdir(runner_path):
@@ -601,10 +598,7 @@ class TestDefinitionAction(TestAction):
         namespace = parameters.get('namespace', None)
         self.test_list = identify_test_definitions(self.job.parameters, namespace)
         if self.test_list:
-            if namespace:
-                self.set_common_data(namespace, 'test_list', self.test_list[0])
-            else:
-                self.set_common_data(self.name, 'test_list', self.test_list[0])
+            self.set_namespace_data(action=self.name, label=self.name, key='test_list', value=self.test_list[0], parameters=parameters)
         for testdefs in self.test_list:
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
@@ -623,10 +617,9 @@ class TestDefinitionAction(TestAction):
                 handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
                 handler.stage = self.stages
                 self.run_levels[testdef['name']] = self.stages
-                if namespace:
-                    self.set_common_data(namespace, 'stages', self.stages)
-                else:
-                    self.set_common_data('lava-test-shell', 'stages', self.stages)
+                self.set_namespace_data(
+                    action='test-definition', label='lava-test-shell',
+                    key='stages', value=self.stages, parameters=parameters)
 
                 # copy details into the overlay, one per handler but the same class each time.
                 overlay = TestOverlayAction()
@@ -655,10 +648,8 @@ class TestDefinitionAction(TestAction):
                 self.internal_pipeline.add_action(overlay)
                 self.internal_pipeline.add_action(installer)
                 self.internal_pipeline.add_action(runsh)
-                if namespace:
-                    self.set_common_data(namespace, 'testdef_index', index)
-                else:
-                    self.set_common_data(self.name, 'testdef_index', index)
+                self.set_namespace_data(
+                    action='test-definition', label='test-definition', key='testdef_index', value=index, parameters=parameters)
                 self.stages += 1
 
     def validate(self):
@@ -700,31 +691,29 @@ class TestDefinitionAction(TestAction):
         :param args: Not used.
         :return: the received Connection.
         """
-        if 'namespace' in self.parameters:
-            namespace = self.parameters['namespace']
-            location = self.get_common_data(namespace, 'location')
-            lava_test_results_dir = self.get_common_data(namespace,
-                                                         'lava_test_results_dir')
-        elif 'location' not in self.data['lava-overlay']:
+        location = self.get_namespace_data(action='test', label='shared', key='location')
+        lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        if not location:
             raise RuntimeError("Missing lava overlay location")
-        else:
-            location = self.data['lava-overlay']['location']
-            lava_test_results_dir = self.data['lava_test_results_dir']
         if not os.path.exists(location):
             raise RuntimeError("Unable to find overlay location")
         self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
-        self.data[self.name]['overlay_dir'] = os.path.abspath(
+        overlay_base = os.path.abspath(
             "%s/%s" % (location, lava_test_results_dir))
+        self.set_namespace_data(
+            action='test', label='test-definition', key='overlay_dir',
+            value=overlay_base
+        )
 
         connection = super(TestDefinitionAction, self).run(connection, args)
 
         for name, stage in self.run_levels.items():
             self.logger.debug("lava-test-runner.conf name %s stage %s", name, stage)
-            path = '%s/%s' % (self.data[self.name]['overlay_dir'], stage)
+            path = '%s/%s' % (overlay_base, stage)
             self.logger.debug("Using lava-test-runner path: %s", path)
-            with open('%s/%s/lava-test-runner.conf' % (self.data[self.name]['overlay_dir'], stage), 'a') as runner_conf:
+            with open('%s/%s/lava-test-runner.conf' % (overlay_base, stage), 'a') as runner_conf:
                 for handler in self.internal_pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
                         self.logger.debug("Writing to runner_conf %s %s" % (self.name, stage))
@@ -791,7 +780,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
     def run(self, connection, args=None):
         connection = super(TestOverlayAction, self).run(connection, args)
-        runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         # FIXME: check the existence at the same time as the open.
@@ -812,7 +801,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
         # FIXME: does this match old-world test-shell & is it needed?
         with open('%s/testdef_metadata' % runner_path, 'w') as metadata:
-            metadata.write(yaml.safe_dump(self.data['test'][self.test_uuid]['testdef_metadata']))
+            content = self.get_namespace_data(action='test', label=self.test_uuid, key='testdef_metadata')
+            metadata.write(yaml.safe_dump(content))
 
         # Need actions for the run.sh script (calling parameter support in base class)
         # and install script (also calling parameter support here.)
@@ -862,9 +852,9 @@ class TestInstallAction(TestOverlayAction):
                 self.skip_options = self.parameters['skip_install']
         super(TestInstallAction, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, args=None):  # pylint: disable=too-many-statements
         connection = super(TestInstallAction, self).run(connection, args)
-        runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         if not os.path.exists(yaml_file):
@@ -970,13 +960,14 @@ class TestRunnerAction(TestOverlayAction):
         self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
     def validate(self):
-        namespace = self.parameters.get('namespace', None)
-        if namespace:
-            testdef_index = self.get_common_data(namespace, 'testdef_index')
-        else:
-            testdef_index = self.get_common_data('test-definition', 'testdef_index')
+        testdef_index = self.get_namespace_data(
+            action='test-definition',
+            label='test-definition',
+            key='testdef_index'
+        )
         if not testdef_index:
             self.errors = "Unable to identify test definition index"
+            return
         if len(testdef_index) != len(set(testdef_index)):
             self.errors = "Test definition names need to be unique."
         # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
@@ -986,31 +977,21 @@ class TestRunnerAction(TestOverlayAction):
                 self.testdef_levels[self.level] = "%s_%s" % (count, name)
         if not self.testdef_levels:
             self.errors = "Unable to identify test definition names"
-        if namespace:
-            current = self.get_common_data(namespace, 'testdef_levels')
-        else:
-            current = self.get_common_data(self.name, 'testdef_levels')
+        current = self.get_namespace_data(action=self.name, label=self.name, key='testdef_levels')
         if current:
             current.update(self.testdef_levels)
         else:
             current = self.testdef_levels
-        if namespace:
-            self.set_common_data(namespace, 'testdef_levels', current)
-        else:
-            self.set_common_data(self.name, 'testdef_levels', current)
+        self.set_namespace_data(action=self.name, label=self.name, key='testdef_levels', value=current)
 
     def run(self, connection, args=None):
         connection = super(TestRunnerAction, self).run(connection, args)
-        namespace = self.parameters.get('namespace', None)
-        runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-        if namespace:
-            testdef_levels = self.get_common_data(namespace, 'testdef_levels')
-        else:
-            testdef_levels = self.get_common_data('test-runscript-overlay', 'testdef_levels')
+        testdef_levels = self.get_namespace_data(action=self.name, label=self.name, key='testdef_levels')
         with open(yaml_file, 'r') as test_file:
             testdef = yaml.safe_load(test_file)
 
@@ -1029,7 +1010,8 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('set -x\n')
             # use the testdef_index value for the testrun name to handle repeats at source
             runsh.write('export TESTRUN_ID=%s\n' % testdef_levels[self.level])
-            runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
+            runsh.write('cd %s\n' % self.get_namespace_data(
+                action='uuid', label='runner_path', key=self.parameters['test_name']))
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             steps = testdef.get('run', {}).get('steps', [])

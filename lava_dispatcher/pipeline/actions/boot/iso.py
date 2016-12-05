@@ -91,24 +91,24 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
 
     def run(self, connection, args=None):
         # substitutions
-        substitutions = {'{emptyimage}': self.get_common_data('prepare-empty-image', 'output')}
-        sub_command = self.get_common_data('prepare-qemu-commands', 'sub_command')
+        substitutions = {'{emptyimage}': self.get_namespace_data(action='prepare-empty-image', label='prepare-empty-image', key='output')}
+        sub_command = self.get_namespace_data(action='prepare-qemu-commands', label='prepare-qemu-commands', key='sub_command')
         sub_command = substitute(sub_command, substitutions)
         command_line = ' '.join(sub_command)
 
         commands = []
         # get the download args in run()
-        image_arg = self.data['download_action']['iso'].get('image_arg', None)
-        action_arg = self.data['download_action']['iso'].get('file', None)
+        image_arg = self.get_namespace_data(action='download_action', label='iso', key='image_arg')
+        action_arg = self.get_namespace_data(action='download_action', label='iso', key='file')
         substitutions["{%s}" % 'iso'] = action_arg
         commands.append(image_arg)
         command_line += ' '.join(substitute(commands, substitutions))
 
-        preseed_file = self.get_common_data('file', 'preseed')
+        preseed_file = self.get_namespace_data(action='download_action', label='file', key='preseed')
         if not preseed_file:
             raise JobError("Unable to identify downloaded preseed filename.")
         substitutions = {'{preseed}': preseed_file}
-        append_args = self.get_common_data('prepare-qemu-commands', 'append')
+        append_args = self.get_namespace_data(action='prepare-qemu-commands', label='prepare-qemu-commands', key='append')
         append_args = substitute([append_args], substitutions)
         command_line += ' '.join(append_args)
 
@@ -119,7 +119,8 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.get_common_data('prepare-qemu-commands', 'prompts')
+        shell_connection.prompt_str = self.get_namespace_data(
+            action='prepare-qemu-commands', label='prepare-qemu-commands', key='prompts')
         shell_connection = super(IsoCommandLine, self).run(shell_connection, args)
         return shell_connection
 
@@ -177,19 +178,19 @@ class IsoRebootAction(Action):
         qemu needs help to reboot after running the debian installer
         and typically the boot is quiet, so there is almost nothing to log.
         """
-        base_image = self.get_common_data('prepare-empty-image', 'output')
+        base_image = self.get_namespace_data(action='prepare-empty-image', label='prepare-empty-image', key='output')
         self.sub_command.append('-drive format=raw,file=%s' % base_image)
-        guest = self.get_common_data('guest', 'filename')
+        guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             self.sub_command.append('-drive format=qcow2,file=%s,media=disk' % (os.path.realpath(guest)))
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
-            mountpoint = self.data['lava_test_results_dir']
+            mountpoint = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
             shell_precommand_list.append('mkdir %s' % mountpoint)
             shell_precommand_list.append('mount -L LAVA %s' % mountpoint)
-            self.set_common_data('lava-test-shell', 'pre-command-list', shell_precommand_list)
+            self.set_namespace_data(action='test', label='lava-test-shell', key='pre-command-list', value=shell_precommand_list)
 
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))
         shell = ShellCommand(' '.join(self.sub_command), self.timeout, logger=self.logger)
@@ -201,6 +202,7 @@ class IsoRebootAction(Action):
         shell_connection = super(IsoRebootAction, self).run(shell_connection, args)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
-        self.logger.debug("boot-result: %s", self.data['boot-result'])
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.logger.debug("boot-result: %s", res)
         return shell_connection

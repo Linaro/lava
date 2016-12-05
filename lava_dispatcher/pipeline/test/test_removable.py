@@ -99,9 +99,9 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(mass_storage)
         self.assertIn('device', mass_storage.parameters)
         self.assertIn(mass_storage.parameters['device'], cubie['parameters']['media']['usb'])
-        self.assertIsNotNone(mass_storage.get_common_data('u-boot', 'device'))
+        self.assertIsNotNone(mass_storage.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
         u_boot_params = cubie['actions']['boot']['methods']['u-boot']
-        self.assertEqual(mass_storage.get_common_data('bootloader_prompt', 'prompt'), u_boot_params['parameters']['bootloader_prompt'])
+        self.assertEqual(mass_storage.get_namespace_data(action='uboot-retry', label='bootloader_prompt', key='prompt'), u_boot_params['parameters']['bootloader_prompt'])
 
     def test_deployment(self):
         job_parser = JobParser()
@@ -118,17 +118,21 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
         self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
-        self.assertIn('lava_test_results_dir', deploy_action.data)
-        self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
+        self.assertIsNotNone(deploy_action)
+        test_dir = deploy_action.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        self.assertIsNotNone(test_dir)
+        self.assertIn('/lava-', test_dir)
         self.assertIsInstance(deploy_action, MassStorage)
         self.assertIn('image', deploy_action.parameters.keys())
         dd_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'dd-image'][0]
         self.assertEqual(
             dd_action.boot_params[dd_action.parameters['device']]['uuid'],
             'usb-SanDisk_Ultra_20060775320F43006019-0:0')
-        self.assertEqual('0', '%s' % dd_action.get_common_data('u-boot', 'boot_part'))
-        self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
-        self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
+        self.assertIsNotNone(dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
+        self.assertIsNotNone(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
+        self.assertEqual('0', '%s' % dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
+        self.assertTrue(type(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')) is str)
+        self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
 
     def test_juno_deployment(self):
         factory = Factory()
@@ -144,10 +148,12 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertNotIn('boot_part', job.device['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
         download_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
+        self.assertIsNotNone(download_action)
         overlay_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         self.assertEqual({'test-image', 'master-image'}, action_namespaces(overlay_action.job.parameters))
-        self.assertIn('lava_test_results_dir', deploy_action.data)
-        self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
+        test_dir = download_action.get_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir')
+        self.assertIsNotNone(test_dir)
+        self.assertIn('/lava-', test_dir)
         self.assertIsInstance(deploy_action, MassStorage)
         self.assertIn('image', deploy_action.parameters.keys())
 
@@ -190,7 +196,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertGreater(len(job.pipeline.actions), 1)
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
         u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[2]
-        self.assertIsNotNone(u_boot_action.get_common_data('u-boot', 'device'))
+        self.assertIsNotNone(u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
         self.assertEqual(u_boot_action.name, "uboot-overlay")
 
         methods = cubie['actions']['boot']['methods']
@@ -198,7 +204,8 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('usb', methods['u-boot'])
         self.assertIn('commands', methods['u-boot']['usb'])
         commands_list = methods['u-boot']['usb']['commands']
-        device_id = u_boot_action.get_common_data('u-boot', 'device')
+        device_id = u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device')
+        self.assertIsNotNone(device_id)
         substitutions = {
             '{BOOTX}': "%s %s %s %s" % (
                 u_boot_action.parameters['type'],
