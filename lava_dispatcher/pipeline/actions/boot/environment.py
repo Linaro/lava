@@ -34,6 +34,7 @@ class ExportDeviceEnvironment(Action):
         self.env = []
 
     def validate(self):
+        super(ExportDeviceEnvironment, self).validate()
         shell_file = self.get_namespace_data(action='deploy-device-env',
                                              label='environment', key='shell_file')
         environment = self.get_namespace_data(action='deploy-device-env',

@@ -85,9 +85,6 @@ class GrubMainAction(BootAction):
         self.summary = "run grub boot from power to system"
         self.expect_shell = True
 
-    def validate(self):
-        super(GrubMainAction, self).validate()
-
     def populate(self, parameters):
         self.expect_shell = parameters.get('expect_shell', True)
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

@@ -49,6 +49,7 @@ class OffsetAction(DeployAction):
         self.key = key
 
     def validate(self):
+        super(OffsetAction, self).validate()
         if not self.get_namespace_data(action='download_action', label=self.key, key='file'):
             self.errors = "no file specified to calculate offset"
 
@@ -96,6 +97,7 @@ class LoopCheckAction(DeployAction):
         self.key = key
 
     def validate(self):
+        super(LoopCheckAction, self).validate()
         if len(glob.glob('/sys/block/loop*')) <= 0:
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
@@ -138,6 +140,7 @@ class LoopMountAction(RetryAction):
         self.key = key
 
     def validate(self):
+        super(LoopMountAction, self).validate()
         lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_base % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
@@ -186,11 +189,6 @@ class MountAction(DeployAction):
         self.description = "mount with offset"
         self.summary = "mount loop"
         self.key = key
-
-    def validate(self):
-        if not self.job:
-            raise RuntimeError("No job object supplied to action")
-        self.internal_pipeline.validate_actions()
 
     def populate(self, parameters):
         """

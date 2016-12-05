@@ -186,9 +186,6 @@ class LxcAddDeviceAction(Action):
         self.retries = 10
         self.sleep = 10
 
-    def validate(self):
-        super(LxcAddDeviceAction, self).validate()
-
     def run(self, connection, args=None):
         connection = super(LxcAddDeviceAction, self).run(connection, args)
         # this is the device namespace - the lxc namespace is not accessible

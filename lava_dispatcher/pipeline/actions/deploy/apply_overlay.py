@@ -93,9 +93,6 @@ class ApplyOverlayImage(Action):
         self.summary = "apply overlay to test image"
         self.description = "apply overlay via guestfs to the test image"
 
-    def validate(self):
-        super(ApplyOverlayImage, self).validate()
-
     def run(self, connection, args=None):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file:
@@ -231,11 +228,6 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
         self.use_tarfile = True
         self.use_lzma = False
 
-    def validate(self):
-        super(ExtractRootfs, self).validate()
-        if not self.parameters.get(self.param_key, None):  # idempotency
-            return
-
     def run(self, connection, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
@@ -309,11 +301,6 @@ class ExtractModules(Action):
         self.name = "extract-modules"
         self.summary = "extract kernel modules"
         self.description = "extract supplied kernel modules"
-
-    def validate(self):
-        super(ExtractModules, self).validate()
-        if not self.parameters.get('modules', None):  # idempotency
-            return
 
     def run(self, connection, args=None):
         if not self.parameters.get('modules', None):  # idempotency
@@ -578,11 +565,6 @@ class ConfigurePreseedFile(Action):
         self.name = "configure-preseed-file"
         self.summary = "add commands to installer config"
         self.description = "add commands to automated installers, to copy the lava test overlay to the installed system"
-
-    def validate(self):
-        super(ConfigurePreseedFile, self).validate()
-        if not self.parameters.get('preseed', None):
-            return
 
     def run(self, connection, args=None):
         if self.parameters["deployment_data"].get('installer_extra_cmd', None):

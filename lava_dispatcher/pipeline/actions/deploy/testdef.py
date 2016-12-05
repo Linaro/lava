@@ -742,6 +742,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         self.test_uuid = None  # Match the overlay to the handler
 
     def validate(self):
+        super(TestOverlayAction, self).validate()
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
 
@@ -960,6 +961,7 @@ class TestRunnerAction(TestOverlayAction):
         self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
     def validate(self):
+        super(TestRunnerAction, self).validate()
         testdef_index = self.get_namespace_data(
             action='test-definition',
             label='test-definition',

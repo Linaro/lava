@@ -64,9 +64,6 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
         self.internal_pipeline.add_action(ApplyOverlayGuest())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
-    def validate(self):
-        super(DeployImagesAction, self).validate()
-
 
 class DeployMonitoredAction(DeployAction):
 
