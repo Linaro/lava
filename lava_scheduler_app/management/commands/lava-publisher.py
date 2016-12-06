@@ -18,38 +18,21 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import fcntl
 import grp
 import logging
 import logging.handlers
 import os
 import pwd
 import signal
-import threading
 import zmq
+from zmq.utils.strtypes import b
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
 FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
-
-
-class Monitor(threading.Thread):
-    def __init__(self, stop):
-        super(Monitor, self).__init__()
-        self.stop = stop
-
-    def run(self):
-        logger = logging.getLogger('publisher.monitor')
-        context = zmq.Context.instance()
-        socket = context.socket(zmq.PULL)
-        socket.connect('inproc:///monitor')
-
-        logger.debug("Waiting for messages on the proxy")
-        while not self.stop.is_set():
-            # TODO: add a timeout
-            data = socket.recv_multipart()
-            logger.debug(data)
 
 
 class Command(BaseCommand):
@@ -62,7 +45,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-l', '--level',
                             default='DEBUG',
-                            help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
+                            help="Logging level (ERROR, WARN, INFO, DEBUG) "
+                                 "Default: DEBUG")
 
         parser.add_argument('-f', '--log-file',
                             default='/var/log/lava-server/lava-publisher.log',
@@ -70,11 +54,13 @@ class Command(BaseCommand):
 
         parser.add_argument('-u', '--user',
                             default='lavaserver',
-                            help="Run the process under this user. It should be the same user as the gunicorn process.")
+                            help="Run the process under this user. It should "
+                                 "be the same user as the gunicorn process.")
 
         parser.add_argument('-g', '--group',
                             default='lavaserver',
-                            help="Run the process under this group. It should be the same group as the gunicorn process.")
+                            help="Run the process under this group. It should "
+                                 "be the same group as the gunicorn process.")
 
     def drop_priviledges(self, user, group):
         try:
@@ -83,13 +69,15 @@ class Command(BaseCommand):
         except KeyError:
             self.logger.error("Unable to lookup the user or the group")
             return False
-        self.logger.debug("Switching to (%s(%d), %s(%d))", user, user_id, group, group_id)
+        self.logger.debug("Switching to (%s(%d), %s(%d))",
+                          user, user_id, group, group_id)
 
         try:
             os.setgid(group_id)
             os.setuid(user_id)
         except OSError:
-            self.logger.error("Unable to the set (user, group)=(%s, %s)", user, group)
+            self.logger.error("Unable to the set (user, group)=(%s, %s)",
+                              user, group)
             return False
 
         # Set a restrictive umask (rw-rw-r--)
@@ -112,44 +100,76 @@ class Command(BaseCommand):
             self.logger.setLevel(logging.DEBUG)
 
         if not settings.EVENT_NOTIFICATION:
-            self.logger.error("'EVENT_NOTIFICATION' is set to False, LAVA won't generated any events")
+            self.logger.error("'EVENT_NOTIFICATION' is set to False, "
+                              "LAVA won't generated any events")
 
         self.logger.info("Dropping priviledges")
         if not self.drop_priviledges(options['user'], options['group']):
             self.logger.error("Unable to drop priviledges")
             return
 
-        self.logger.info("Creating the ZMQ proxy")
+        self.logger.info("Creating the input socket at %s",
+                         settings.INTERNAL_EVENT_SOCKET)
         context = zmq.Context.instance()
         pull = context.socket(zmq.PULL)
         pull.bind(settings.INTERNAL_EVENT_SOCKET)
+        poller = zmq.Poller()
+        poller.register(pull, zmq.POLLIN)
+
+        # Mask signals and create a pipe that will receive a bit for each
+        # signal received. Poll the pipe along with the zmq socket so that we
+        # can only be interrupted while reading data.
+        (pipe_r, pipe_w) = os.pipe()
+        flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
+        fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+        def signal_to_pipe(signum, frame):
+            # Send the signal number on the pipe
+            os.write(pipe_w, b(chr(signum)))
+
+        signal.signal(signal.SIGHUP, signal_to_pipe)
+        signal.signal(signal.SIGINT, signal_to_pipe)
+        signal.signal(signal.SIGTERM, signal_to_pipe)
+        signal.signal(signal.SIGQUIT, signal_to_pipe)
+        poller.register(pipe_r, zmq.POLLIN)
+
+        # Create the default publishing socket
+        self.logger.info("Creating the publication socket at %s",
+                         settings.EVENT_SOCKET)
         pub = context.socket(zmq.PUB)
         pub.bind(settings.EVENT_SOCKET)
+        # Create the additional PUSH sockets
+        self.logger.info("Creating the additional sockets:")
+        additional_sockets = []
+        for url in settings.EVENT_ADDITIONAL_SOCKETS:
+            self.logger.info(" * %s", url)
+            sock = context.socket(zmq.PUSH)
+            # Allow zmq to keep 10000 pending messages in each queue
+            sock.setsockopt(zmq.SNDHWM, 10000)
+            sock.connect(url)
+            additional_sockets.append(sock)
 
-        # Create the monitoring thread only in DEBUG
-        monitor_in = None
-        monitor = None
-        if options['level'] == 'DEBUG':
-            monitor_in = context.socket(zmq.PUSH)
-            monitor_in.bind('inproc:///monitor')
+        self.logger.info("Starting the proxy")
+        while True:
+            try:
+                sockets = dict(poller.poll(None))
+            except zmq.error.ZMQError as exc:
+                self.logger.error("Received a ZMQ error: %s", exc)
+                continue
 
-            self.logger.debug("Starting the monitor")
-            stop_monitor = threading.Event()
-            monitor = Monitor(stop_monitor)
-            monitor.start()
+            if sockets.get(pipe_r) == zmq.POLLIN:
+                self.logger.info("Received a signal, leaving")
+                break
 
-        self.logger.info("Starting the Proxy")
-        try:
-            # When ignored, a SIGTERM will raise a ZMQBaseError that we can
-            # catch to leave cleanly.
-            signal.signal(signal.SIGTERM, lambda signum, frame: {})
-            zmq.proxy(pull, pub, monitor_in)
-        except (KeyboardInterrupt, zmq.error.ZMQBaseError):
-            self.logger.info("Received Ctrl+C, leaving")
-            if monitor_in is not None:
-                # Stop the monitor thread
-                stop_monitor.set()
-                # and send a message to unlock the socket
-                monitor_in.send('Finishing the monitor')
-                monitor.join()
-        self.logger.info("Ending the publisher")
+            if sockets.get(pull) == zmq.POLLIN:
+                msg = pull.recv_multipart()
+                self.logger.debug("Forwarding: %s", msg)
+                pub.send_multipart(msg)
+                for (i, sock) in enumerate(additional_sockets):
+                    # Send in non blocking mode and print an error message if
+                    # the HWM is reached (because the receiver does not grab
+                    # the messages fast enough).
+                    try:
+                        sock.send_multipart(msg, flags=zmq.DONTWAIT)
+                    except zmq.error.Again:
+                        self.logger.warning("Fail to forward to socket %d", i)

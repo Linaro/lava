@@ -336,11 +336,28 @@ The default values for the event notification settings are:
  "INTERNAL_EVENT_SOCKET": "ipc:///tmp/lava.events",
  "EVENT_SOCKET": "tcp://*:5500",
  "EVENT_NOTIFICATION": false,
+ "EVENT_ADDITIONAL_SOCKETS": []
 
 The ``INTERNAL_EVENT_SOCKET`` does not usually need to be changed.
 
 Services which will receive these events **must** be able to connect to the
 ``EVENT_SOCKET``. Depending on your local configuration, this may involve
 opening the specified port on a firewall.
+
+With this configuration, LAVA will publish events to the ``EVENT_SOCKET`` only,
+using a `zmq PUB socket <http://api.zeromq.org/4-2:zmq-socket#toc7>`__.
+
+.. note:: This type of socket is realy powerful to publish messages to a large
+   audience. However, In case of a network breakage, the client nor the server
+   will notice that the connection was lost and might miss events.
+
+To publish events on an unrelable network (like Internet) and for a small set of
+known listeners, you can use the ``EVENT_ADDITIONAL_SOCKETS``. The publisher
+will connect to this list of endpoints with a `zmq PUSH socket
+<http://api.zeromq.org/4-2:zmq-socket#toc12>`__ for each endpoints.
+
+These sockets are configured to keep a queue of 10000 messages for each
+endpoints. No messages will be lost, as long as less than 10000 messages are
+waiting in the queue.
 
 .. seealso:: :ref:`publishing_events`
