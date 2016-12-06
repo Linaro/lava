@@ -979,11 +979,11 @@ class SchedulerAPI(ExposedAPI):
         jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
         return xmlrpclib.Binary(jinja_str.encode('UTF-8'))
 
-    def validate_pipeline_devices(self, hostname=None):
+    def validate_pipeline_devices(self, name=None):
         """
         Name
         ----
-        `validate_pipeline_device` [`device_hostname`]
+        `validate_pipeline_device` [`name`]
 
         Description
         -----------
@@ -996,10 +996,13 @@ class SchedulerAPI(ExposedAPI):
 
         Arguments
         ---------
-        `device_hostname`: string
-            Device hostname to validate.
-        If a device hostname is not specified, all pipeline devices
-        are checked.
+        `name`: string
+            Can be device hostname or device type name.
+        If name is specified, method will search for either a matching device
+        hostname or matching device type name in which case it will only
+        validate that(those) device(s).
+        If not specified, this method will validate all non-retired devices
+        in the system.
 
         Return value
         ------------
@@ -1012,17 +1015,22 @@ class SchedulerAPI(ExposedAPI):
         `
 
         """
-        if not hostname:
+        if not name:
             devices = Device.objects.filter(
                 Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
         else:
             devices = Device.objects.filter(
-                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=hostname))
-        if not devices and hostname:
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(
+                    device_type__name=name))
+            if not devices:
+                devices = Device.objects.filter(
+                    Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=name))
+        if not devices and name:
             raise xmlrpclib.Fault(
-                404, "No pipeline device found with hostname %s" % hostname
+                404,
+                "No devices found with hostname or device type name %s" % name
             )
-        if not devices and not hostname:
+        if not devices and not name:
             raise xmlrpclib.Fault(
                 404, "No pipeline device found on this instance."
             )
