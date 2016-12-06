@@ -20,8 +20,10 @@
 
 import grp
 import logging
+import logging.handlers
 import os
 import pwd
+import signal
 import threading
 import zmq
 
@@ -29,16 +31,16 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
+FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
+
+
 class Monitor(threading.Thread):
-    def __init__(self, stop, log_file):
+    def __init__(self, stop):
         super(Monitor, self).__init__()
         self.stop = stop
-        self.log_file = log_file
 
     def run(self):
-        logger = logging.getLogger('publisher')
-        logger.addHandler(logging.FileHandler(self.log_file))
-
+        logger = logging.getLogger('publisher.monitor')
         context = zmq.Context.instance()
         socket = context.socket(zmq.PULL)
         socket.connect('inproc:///monitor')
@@ -96,7 +98,9 @@ class Command(BaseCommand):
         return True
 
     def handle(self, *args, **options):
-        self.logger.addHandler(logging.FileHandler(options['log_file']))
+        handler = logging.handlers.WatchedFileHandler(options['log_file'])
+        handler.setFormatter(logging.Formatter(FORMAT))
+        self.logger.addHandler(handler)
 
         if options['level'] == 'ERROR':
             self.logger.setLevel(logging.ERROR)
@@ -131,13 +135,16 @@ class Command(BaseCommand):
 
             self.logger.debug("Starting the monitor")
             stop_monitor = threading.Event()
-            monitor = Monitor(stop_monitor, options['log_file'])
+            monitor = Monitor(stop_monitor)
             monitor.start()
 
         self.logger.info("Starting the Proxy")
         try:
+            # When ignored, a SIGTERM will raise a ZMQBaseError that we can
+            # catch to leave cleanly.
+            signal.signal(signal.SIGTERM, lambda signum, frame: {})
             zmq.proxy(pull, pub, monitor_in)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, zmq.error.ZMQBaseError):
             self.logger.info("Received Ctrl+C, leaving")
             if monitor_in is not None:
                 # Stop the monitor thread
@@ -145,3 +152,4 @@ class Command(BaseCommand):
                 # and send a message to unlock the socket
                 monitor_in.send('Finishing the monitor')
                 monitor.join()
+        self.logger.info("Ending the publisher")
