@@ -117,14 +117,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     def reader(self):
         raise NotImplementedError
 
-    def cleanup(self):
-        nested_tmp_dir = os.path.join(self.path, self.key)
-        self.logger.debug("%s cleanup", self.name)
-        if os.path.exists(nested_tmp_dir):
-            self.logger.debug("Cleaning up temporary tree.")
-            shutil.rmtree(nested_tmp_dir)
+    def cleanup(self, connection, message):
+        if os.path.exists(self.path):
+            self.logger.debug("Cleaning up download directory: %s", self.path)
+            shutil.rmtree(self.path)
         self.set_namespace_data(action='download_action', label=self.key, key='file', value='')
-        super(DownloadHandler, self).cleanup()
+        super(DownloadHandler, self).cleanup(connection, message)
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)

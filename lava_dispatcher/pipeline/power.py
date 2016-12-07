@@ -238,6 +238,7 @@ class FinalizeAction(Action):
         self.section = 'finalize'
         self.summary = "finalize the job"
         self.description = "finish the process and cleanup"
+        self.ran = False
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
@@ -249,6 +250,7 @@ class FinalizeAction(Action):
         So call the finalise() function of the connection which knows about the raw_connection inside.
         The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
+        self.ran = True
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
@@ -270,5 +272,8 @@ class FinalizeAction(Action):
         else:
             self.results = {'success': "Complete"}
             self.logger.info("Status: Complete")
-        # from meliae import scanner
-        # scanner.dump_all_objects('filename.json')
+
+    def cleanup(self, connection, message):
+        self.errors = message
+        if not self.ran:
+            self.run(connection, None)

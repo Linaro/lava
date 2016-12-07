@@ -204,15 +204,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
         for child in self.actions:
-            child.cleanup()
-            if child.internal_pipeline:
-                child.internal_pipeline.cleanup()
+            child.cleanup(connection, message)
 
     def _diagnose(self, connection):
         """
@@ -258,13 +256,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
                 action.logger.error(msg)
                 action.errors = msg
-                final = self.job.pipeline.actions[-1]
-                if final.name == "finalize":
-                    final.run(connection, None)
-                else:
-                    msg = "Invalid job pipeline - no finalize action to run after job timeout."
-                    action.logger.error(msg)
-                    raise RuntimeError(msg)
                 raise JobError(msg)
 
             # Begin the action
@@ -296,7 +287,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
                     action.logger.exception(traceback.format_exc())
                     action.errors = msg
-                    action.cleanup()
                     self.job.cleanup(connection, None)
                     # report action errors so that the last part of the message is the most relevant.
                     raise RuntimeError(action.errors)
@@ -330,7 +320,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.log_action_results()
                 action.logger.exception(str(exc))
                 self._diagnose(connection)
-                action.cleanup()
+                action.cleanup(connection, None)
                 # a RetryAction should not cleanup the pipeline until the last retry has failed
                 # but the failing action may be inside an internal pipeline of the retry
                 if not self.parent:  # top level pipeline, no retries left
@@ -688,7 +678,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -701,7 +691,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         Use contextmanagers or signal handlers to clean up any resources when there are no errors,
         instead of using cleanup().
         """
-        pass
+        if self.internal_pipeline:
+            self.internal_pipeline.cleanup(connection, message)
 
     def explode(self):
         """

@@ -207,12 +207,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         return 0
 
     def cleanup(self, connection, message):
-        self.pipeline.cleanup()
         # exit out of the pipeline & run the Finalize action to close the
-        # connection and poweroff the device
-        for child in self.pipeline.actions:
-            # rely on the action name here - use isinstance if pipeline moves
-            # into a dedicated module.
-            if child.name == 'finalize':
-                child.errors = message
-                child.run(connection, None)
+        # connection and poweroff the device (the cleanup action will do that
+        # for us)
+        self.pipeline.cleanup(connection, message)

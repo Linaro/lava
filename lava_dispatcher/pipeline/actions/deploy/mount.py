@@ -167,7 +167,8 @@ class LoopMountAction(RetryAction):
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
         return connection
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
+        super(LoopMountAction, self).cleanup(connection, message)
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):

@@ -142,7 +142,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
             self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
 
-        def cleanup(self):
+        def cleanup(self, connection, message):
             pass
 
     class DiagnoseCheck(DiagnosticAction):
