@@ -2555,9 +2555,9 @@ class TestJob(RestrictedResource):
         Returns JOB object.
         """
         if '.' in str(job_id):
-            job = get_object_or_404(TestJob.objects, sub_id=job_id)
+            job = TestJob.objects.get(sub_id=job_id)
         else:
-            job = get_object_or_404(TestJob.objects, pk=job_id)
+            job = TestJob.objects.get(pk=job_id)
         return job
 
     @property

@@ -621,7 +621,10 @@ def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
-    job = TestJob.get_by_job_number(pk)
+    try:
+        job = TestJob.get_by_job_number(pk)
+    except TestJob.DoesNotExist:
+        raise Http404("No TestJob matches the given query.")
     if job.can_view(user):
         return job
     else:
