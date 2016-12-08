@@ -231,7 +231,8 @@ class ApplyOverlayTftp(Action):
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
             if not suffix:
                 suffix = ''
-            self.set_namespace_data(action=self.name, label='file', key='overlay', value=os.path.join(suffix, os.path.basename(overlay_file)))
+            self.set_namespace_data(action=self.name, label='file', key='overlay',
+                                    value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)))
         if nfs_url:
             subprocess.check_output(['umount', directory])
             os.rmdir(directory)  # fails if the umount fails
@@ -400,7 +401,7 @@ class ExtractRamdisk(Action):
         if self.skip:
             self.logger.info("Not extracting ramdisk.")
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
-            filename = os.path.join(suffix, os.path.basename(ramdisk))
+            filename = os.path.join(suffix, "ramdisk", os.path.basename(ramdisk))
             # declare the original ramdisk as the name to be used later.
             self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=filename)
             return
@@ -532,7 +533,7 @@ class CompressRamdisk(Action):
                 suffix = ''
             self.set_namespace_data(
                 action=self.name,
-                label='file', key='ramdisk', value=os.path.join(suffix, os.path.basename(final_file)))
+                label='file', key='ramdisk', value=os.path.join(suffix, "ramdisk", os.path.basename(final_file)))
         else:
             self.set_namespace_data(
                 action=self.name,
