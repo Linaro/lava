@@ -200,6 +200,7 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
+        self.assertEqual(template_dict['device_path'], ['/dev/bus/usb/000'])
 
     def test_panda_template(self):
         data = """{% extends 'panda.jinja2' %}
