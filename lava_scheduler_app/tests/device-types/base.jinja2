@@ -137,7 +137,14 @@ parameters:
 {% endif %}
 {% endblock -%}
 
-{% block body %}{% endblock -%}
+{% block body %}
+{% if fastboot_serial_number %}
+   flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
+                     'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2',
+                     'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor',
+                     'system', 'cache', 'userdata']) }}
+{% endif -%}
+{% endblock -%}
 
 {% block timeouts %}
 timeouts:
