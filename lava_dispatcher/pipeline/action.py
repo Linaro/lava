@@ -236,16 +236,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
-        def cancelling_handler(*args):  # pylint: disable=unused-argument
-            """
-            Catches KeyboardInterrupt or SIGTERM from anywhere below the top level
-            pipeline and allow cleanup actions to happen on all actions,
-            not just the ones directly related to the currently running action.
-            """
-            self.job.cleanup(None, "Cancelled")
-            signal.signal(signal.SIGINT, signal.default_int_handler)
-            raise KeyboardInterrupt
-
         timeout_start = time.time()
         for action in self.actions:
             if self.job and self.job.timeout and time.time() > timeout_start + self.job.timeout.duration:
@@ -263,6 +253,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
             # Add action start timestamp to the log message
+            # Log in INFO for root actions and in DEBUG for the other actions
             msg = 'start: %s %s (max %ds)' % (action.level,
                                               action.name,
                                               action.timeout.duration)
@@ -270,27 +261,36 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.logger.info(msg)
             else:
                 action.logger.debug(msg)
+
             start = time.time()
             try:
-                if not self.parent:
-                    signal.signal(signal.SIGINT, cancelling_handler)
-                    signal.signal(signal.SIGTERM, cancelling_handler)
-                try:
-                    with action.timeout.action_timeout():
-                        new_connection = action.run(connection, args)
-                # overly broad exceptions will cause issues with RetryActions
-                # always ensure the unit tests continue to pass with changes here.
-                except (ValueError, KeyError, NameError, SyntaxError, OSError,
-                        TypeError, RuntimeError, AttributeError):
-                    action.elapsed_time = time.time() - start
-                    msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
-                    action.logger.exception(traceback.format_exc())
-                    action.errors = msg
-                    self.job.cleanup(connection, None)
-                    # report action errors so that the last part of the message is the most relevant.
-                    raise RuntimeError(action.errors)
-                except KeyboardInterrupt:
-                    raise KeyboardInterrupt
+                with action.timeout.action_timeout():
+                    new_connection = action.run(connection, args)
+            # overly broad exceptions will cause issues with RetryActions
+            # always ensure the unit tests continue to pass with changes here.
+            except (AttributeError, KeyError, NameError, OSError, SyntaxError,
+                    TypeError, ValueError) as exc:
+                action.logger.exception(exc)
+                # TODO: clean the error message
+                msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+                action.logger.exception(traceback.format_exc())
+                action.errors = msg
+                # report action errors so that the last part of the message is the most relevant.
+                raise RuntimeError(action.errors)
+            except (InfrastructureError, JobError, RuntimeError, TestError) as exc:
+                if sys.version > '3':
+                    exc_message = str(exc)
+                else:
+                    exc_message = exc.message
+                action.errors = exc_message
+                # set results including retries
+                if "boot-result" not in action.data:
+                    action.data['boot-result'] = 'failed'
+                action.log_action_results()
+                action.logger.exception(exc_message)
+                self._diagnose(connection)
+                raise
+            finally:
                 action.elapsed_time = time.time() - start
                 # Add action end timestamp to the log message
                 msg = "%s duration: %.02f" % (action.name,
@@ -300,31 +300,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 action.log_action_results()
-                if new_connection:
-                    connection = new_connection
-            except KeyboardInterrupt:
-                action.elapsed_time = time.time() - start
-                self.job.cleanup(connection, "Cancelled")
-                sys.exit(1)
-            except (JobError, InfrastructureError) as exc:
-                if sys.version > '3':
-                    exc_message = str(exc)
-                else:
-                    exc_message = exc.message
-                action.errors = exc_message
-                action.elapsed_time = time.time() - start
-                # set results including retries
-                if "boot-result" not in action.data:
-                    action.data['boot-result'] = 'failed'
-                action.log_action_results()
-                action.logger.exception(str(exc))
-                self._diagnose(connection)
-                action.cleanup(connection, None)
-                # a RetryAction should not cleanup the pipeline until the last retry has failed
-                # but the failing action may be inside an internal pipeline of the retry
-                if not self.parent:  # top level pipeline, no retries left
-                    self.job.cleanup(connection, exc_message)
-                raise
+            if new_connection:
+                connection = new_connection
         return connection
 
     def prepare_actions(self):

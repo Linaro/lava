@@ -21,13 +21,14 @@
 import atexit
 import logging
 import errno
+import signal
 import shutil
 import tempfile
 import time
 import os
 import yaml
 
-from lava_dispatcher.pipeline.action import JobError, InfrastructureError
+from lava_dispatcher.pipeline.action import JobError, InfrastructureError, TestError
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
@@ -179,6 +180,16 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         finally:
             self.logger.info("validate duration: %.02f", time.time() - start)
 
+    def cancelling_handler(*_):
+        """
+        Catches KeyboardInterrupt or SIGTERM and raise
+        KeyboardInterrupt that will go through all the stack frames. We then
+        cleanup the job and report the errors.
+        """
+        signal.signal(signal.SIGINT, signal.default_int_handler)
+        signal.signal(signal.SIGTERM, signal.default_int_handler)
+        raise KeyboardInterrupt
+
     def run(self):
         """
         Top level routine for the entire life of the Job, using the job level timeout.
@@ -186,28 +197,62 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        for protocol in self.protocols:
-            try:
-                protocol.set_up()
-            except KeyboardInterrupt:
-                self.cleanup(connection=None, message="Canceled")
-                self.logger.info("Canceled")
-                return 1  # equivalent to len(self.pipeline.errors)
-            except (JobError, RuntimeError, KeyError, TypeError) as exc:
-                raise JobError(exc)
-            if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
-                self.logger.exception(msg)
-                raise JobError(msg)
+        return_code = 0
+        error_msg = None
+        try:
+            # Set the signal handler
+            signal.signal(signal.SIGINT, self.cancelling_handler)
+            signal.signal(signal.SIGTERM, self.cancelling_handler)
 
-        self.pipeline.run_actions(self.connection)
-        if self.pipeline.errors:
-            self.logger.exception(self.pipeline.errors)
-            return len(self.pipeline.errors)
-        return 0
+            # Setup the protocols
+            for protocol in self.protocols:
+                try:
+                    protocol.set_up()
+                except (KeyError, TypeError) as exc:
+                    self.logger.error("Unable to setup the protocols")
+                    self.logger.exception(exc)
+                    raise RuntimeError(exc)
+                if not protocol.valid:
+                    msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                    self.logger.exception(msg)
+                    raise JobError(msg)
+
+            # Run the pipeline and wait for exceptions
+            self.pipeline.run_actions(self.connection)
+        except InfrastructureError as exc:
+            error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
+                        "Please report it to the LAVA admin."
+            return_code = 1
+        except JobError as exc:
+            error_msg = "JobError: your job cannot terminate cleanly."
+            return_code = 2
+        except KeyboardInterrupt:
+            error_msg = "KeyboardInterrupt: the job was canceled or had timeouted."
+            return_code = 3
+        except RuntimeError:
+            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
+            return_code = 4
+        except TestError:
+            error_msg = "TestError: a test failed to run, look at the error message."
+            return_code = 5
+        except Exception as exc:
+            self.logger.exception(traceback.format_exc())
+            error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
+            return_code = 6
+
+        # Cleanup now
+        self.cleanup(self.connection, None)
+
+        # Print the final status
+        if error_msg is not None:
+            self.logger.error(error_msg)
+        else:
+            self.logger.info("Job finished correctly")
+        return return_code
 
     def cleanup(self, connection, message):
         # exit out of the pipeline & run the Finalize action to close the
         # connection and poweroff the device (the cleanup action will do that
         # for us)
+        self.logger.info("Cleaning after the job")
         self.pipeline.cleanup(connection, message)

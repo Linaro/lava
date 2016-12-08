@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import time
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -58,19 +57,36 @@ class RetryAction(Action):
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return new_connection
-            except (JobError, InfrastructureError, TestError) as exc:
+            # Do not retry for RuntimeError (as it's a bug in LAVA)
+            except (InfrastructureError, JobError, TestError) as exc:
+                # Print the error message
                 self.retries += 1
-                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries,
+                                                              self.max_retries, exc)
                 self.logger.error(msg)
                 self.errors = msg
+                # Cleanup the action to allow for a safe restart
+                self.cleanup(connection, msg)
+
+                # re-raise if this is the last loop
+                if self.retries == self.max_retries - 1:
+                    self.errors = "%s retries failed for %s" % (self.retries, self.name)
+                    res = 'failed' if self.errors else 'success'
+                    self.set_namespace_data(action='boot', label='shared',
+                                            key='boot-result', value=res)
+                    raise
+
+                # Wait some time before retrying
                 time.sleep(self.sleep)
+
+        # If we are repeating, check that all repeat were a success.
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
             res = 'failed' if self.errors else 'success'
             self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
             # tried and failed
-            self.job.cleanup(connection, self.errors)
-            raise JobError(self.errors)
+            # TODO: raise the right exception
+            JobError(self.errors)
         return connection
 
 

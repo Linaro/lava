@@ -39,6 +39,13 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 # pylint: disable=too-few-public-methods
 
+class DummyLogger(object):
+    def info(*args, **kwargs):
+        pass
+
+    def error(*args, **kwargs):
+        pass
+
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
@@ -247,6 +254,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
 
         def __init__(self, parameters):
             super(TestAdjuvant.FakeJob, self).__init__(4212, None, None, None, parameters)
+            self.logger = DummyLogger()
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -404,7 +412,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.fakejob.run()
+        self.assertEqual(self.fakejob.run(), 0)
         self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
 
     def test_run_action(self):
@@ -413,7 +421,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.fakejob.run()
+        self.assertEqual(self.fakejob.run(), 0)
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
         self.assertEqual(self.fakejob.context, {'fake-key': False})
@@ -464,6 +472,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self, parameters):
             super(TestTimeout.FakeJob, self).__init__(4212, None, None, None, parameters)
+            self.logger = DummyLogger()
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -612,8 +621,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+        # run() returns 2 for JobError
+        self.assertEqual(self.fakejob.run(), 2)
 
     def test_action_complete(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -624,10 +633,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        self.assertEqual(self.fakejob.run(), 0)
 
     def test_job_timeout(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -638,8 +644,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+        # run() returns 2 for JobError
+        self.assertEqual(self.fakejob.run(), 2)
 
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -650,10 +656,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        # run() returns 0 in case of success
+        self.assertEqual(self.fakejob.run(), 0)
 
     def test_long_job_safe(self):
         self.fakejob.timeout.duration = 8
@@ -669,7 +673,4 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        self.assertEqual(self.fakejob.run(), 0)
