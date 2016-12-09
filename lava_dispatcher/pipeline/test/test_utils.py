@@ -253,14 +253,14 @@ class TestClasses(unittest.TestCase):
 
     def test_summary_exists(self):
         for subclass in Action.__subclasses__():
-            if not subclass.name:
+            if not hasattr(subclass, 'name'):
                 continue
             if not hasattr(subclass, 'summary') and subclass.name not in self.allowed:
                 self.fail(subclass)
 
-    def test_definition_exists(self):
+    def test_description_exists(self):
         for subclass in Action.__subclasses__():
-            if not subclass.name:
+            if not hasattr(subclass, 'name'):
                 continue
-            if not hasattr(subclass, 'definition') and subclass.name not in self.allowed:
+            if not hasattr(subclass, 'description') and subclass.name not in self.allowed:
                 self.fail(subclass)
