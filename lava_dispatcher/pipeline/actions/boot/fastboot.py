@@ -26,7 +26,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 
 
 class BootFastboot(Boot):
@@ -64,8 +64,7 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootBootAction())
-        self.internal_pipeline.add_action(ConnectLxc())
-        self.internal_pipeline.add_action(WaitForAdbDevice())
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
 
 
 class FastbootBootAction(Action):
@@ -105,45 +104,4 @@ class FastbootBootAction(Action):
             self.results = {'status': status}
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
-        return connection
-
-
-class WaitForAdbDevice(Action):
-    """
-    Waits for device that gets connected using adb.
-    """
-
-    def __init__(self):
-        super(WaitForAdbDevice, self).__init__()
-        self.name = "wait-for-adb-device"
-        self.summary = "Waits for adb device"
-        self.description = "Waits for availability of adb device"
-        self.prompts = []
-
-    def validate(self):
-        if 'adb_serial_number' in self.job.device:
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
-        super(WaitForAdbDevice, self).validate()
-
-    def run(self, connection, args=None):
-        if 'lxc' not in self.job.device['actions']['boot']['methods']:
-            return connection
-        connection = super(WaitForAdbDevice, self).run(connection, args)
-        lxc_name = self.get_namespace_data(
-            action='lxc-create-action',
-            label='lxc',
-            key='name'
-        )
-        if not lxc_name:
-            self.logger.debug("No LXC device requested")
-            return connection
-        serial_number = self.job.device['adb_serial_number']
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
-        self.logger.debug("Starting adb daemon")
-        self.run_command(adb_cmd)
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
-                   '-s', serial_number, 'wait-for-device']
-        self.logger.debug("%s: Waiting for device", serial_number)
-        self.run_command(adb_cmd)
         return connection

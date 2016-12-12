@@ -55,8 +55,7 @@
   name: fastboot_boot
   pipeline:
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
-  - {class: connections.lxc.ConnectLxc, name: connect-lxc}
-  - {class: actions.boot.fastboot.WaitForAdbDevice, name: wait-for-adb-device}
+  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

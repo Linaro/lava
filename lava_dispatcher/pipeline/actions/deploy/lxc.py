@@ -197,6 +197,7 @@ class LxcAddDeviceAction(Action):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
+            self.logger.debug("No LXC device requested")
             self.errors = "Unable to use fastboot"
             return connection
         # lxc_name = self.get_namespace_data(
