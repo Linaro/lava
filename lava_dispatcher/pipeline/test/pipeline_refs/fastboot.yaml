@@ -42,17 +42,15 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.fastboot.ApplyBootAction, name: fastboot_apply_boot_action}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.fastboot.ApplyUserdataAction, name: fastboot_apply_userdata_action}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.fastboot.ApplySystemAction, name: fastboot_apply_system_action}
+  - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot_flash_action}
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot_boot
   pipeline:

@@ -33,9 +33,11 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.utils.constants import (
-    FASTBOOT_REBOOT_TIMEOUT
+    FASTBOOT_REBOOT_TIMEOUT,
 )
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+
+# pylint: disable=too-many-return-statements
 
 
 def fastboot_accept(device, parameters):
@@ -112,22 +114,14 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(LxcAddDeviceAction())
 
-        image_keys = list(parameters['images'].keys())
         fastboot_dir = self.mkdtemp()
-        # Add the required actions
-        checks = [('image', FastbootUpdateAction),
-                  ('ptable', ApplyPtableAction),
-                  ('boot', ApplyBootAction),
-                  ('cache', ApplyCacheAction),
-                  ('userdata', ApplyUserdataAction),
-                  ('system', ApplySystemAction),
-                  ('vendor', ApplyVendorAction)]
-        for (key, cls) in checks:
-            if key in image_keys:
-                download = DownloaderAction(key, fastboot_dir)
+        for image in parameters['images'].keys():
+            if image != 'yaml_line':
+                download = DownloaderAction(image, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
                 self.internal_pipeline.add_action(download)
-                self.internal_pipeline.add_action(cls())
+
+        self.internal_pipeline.add_action(FastbootFlashAction())
 
 
 class EnterFastbootAction(DeployAction):
@@ -202,30 +196,30 @@ class EnterFastbootAction(DeployAction):
         return connection
 
 
-class FastbootUpdateAction(DeployAction):
+class FastbootFlashAction(DeployAction):
     """
-    Fastboot update image.
+    Fastboot flash image.
     """
 
     def __init__(self):
-        super(FastbootUpdateAction, self).__init__()
-        self.name = "fastboot_update_action"
-        self.description = "fastboot update image"
-        self.summary = "fastboot update"
+        super(FastbootFlashAction, self).__init__()
+        self.name = "fastboot_flash_action"
+        self.description = "fastboot_flash"
+        self.summary = "fastboot flash"
         self.retries = 3
         self.sleep = 10
 
     def validate(self):
-        super(FastbootUpdateAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='image', key='file'):
-            self.errors = "no file specified for fastboot"
+        super(FastbootFlashAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'flash_cmds_order' not in self.job.device:
+            self.errors = "device flash commands order missing"
 
     def run(self, connection, args=None):
-        connection = super(FastbootUpdateAction, self).run(connection, args)
+        connection = super(FastbootFlashAction, self).run(connection, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -234,16 +228,24 @@ class FastbootUpdateAction(DeployAction):
         if not lxc_name:
             self.errors = "Unable to use fastboot"
             return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='image', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, '-w', 'update', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to update image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
+        # Order flash commands so that some commands take priority over others
+        flash_cmds_order = self.job.device['flash_cmds_order']
+        flash_cmds = set(self.data['download_action'].keys()).difference(
+            set(flash_cmds_order))
+        flash_cmds = flash_cmds_order + list(flash_cmds)
+
+        for flash_cmd in flash_cmds:
+            src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
+            if not src:
+                continue
+            dst = copy_to_lxc(lxc_name, src)
+            serial_number = self.job.device['fastboot_serial_number']
+            fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                            '-s', serial_number, 'flash', flash_cmd, dst]
+            command_output = self.run_command(fastboot_cmd)
+            if command_output and 'error' in command_output:
+                raise JobError("Unable to flash %s using fastboot: %s",
+                               flash_cmd, command_output)  # FIXME: JobError needs a unit test
         return connection
 
 
@@ -284,275 +286,5 @@ class FastbootRebootAction(DeployAction):
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to reboot using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplyPtableAction(DeployAction):
-    """
-    Fastboot deploy ptable image.
-    """
-
-    def __init__(self):
-        super(ApplyPtableAction, self).__init__()
-        self.name = "fastboot_apply_ptable_action"
-        self.description = "fastboot apply ptable image"
-        self.summary = "fastboot apply ptable"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplyPtableAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='ptable', key='file'):
-            self.errors = "no file specified for fastboot ptable image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplyPtableAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='ptable', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'ptable', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply ptable image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplyBootAction(DeployAction):
-    """
-    Fastboot deploy boot image.
-    """
-
-    def __init__(self):
-        super(ApplyBootAction, self).__init__()
-        self.name = "fastboot_apply_boot_action"
-        self.description = "fastboot apply boot image"
-        self.summary = "fastboot apply boot"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplyBootAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='boot', key='file'):
-            self.errors = "no file specified for fastboot boot image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplyBootAction, self).run(connection, args)
-        serial_number = self.job.device['fastboot_serial_number']
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='boot', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'boot', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply boot image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplyCacheAction(DeployAction):
-    """
-    Fastboot deploy cache image.
-    """
-
-    def __init__(self):
-        super(ApplyCacheAction, self).__init__()
-        self.name = "fastboot_apply_cache_action"
-        self.description = "fastboot apply cache image"
-        self.summary = "fastboot apply cache"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplyCacheAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='cache', key='file'):
-            self.errors = "no file specified for fastboot cache image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplyCacheAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='cache', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'cache', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply cache image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplyUserdataAction(DeployAction):
-    """
-    Fastboot deploy userdata image.
-    """
-
-    def __init__(self):
-        super(ApplyUserdataAction, self).__init__()
-        self.name = "fastboot_apply_userdata_action"
-        self.description = "fastboot apply userdata image"
-        self.summary = "fastboot apply userdata"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplyUserdataAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='userdata', key='file'):
-            self.errors = "no file specified for fastboot userdata image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplyUserdataAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='userdata', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'userdata', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply userdata image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplySystemAction(DeployAction):
-    """
-    Fastboot deploy system image.
-    """
-
-    def __init__(self):
-        super(ApplySystemAction, self).__init__()
-        self.name = "fastboot_apply_system_action"
-        self.description = "fastboot apply system image"
-        self.summary = "fastboot apply system"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplySystemAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='system', key='file'):
-            self.errors = "no file specified for fastboot system image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplySystemAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='system', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'system', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply system image using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class ApplyVendorAction(DeployAction):
-    """
-    Fastboot deploy vendor image.
-    """
-
-    def __init__(self):
-        super(ApplyVendorAction, self).__init__()
-        self.name = "fastboot_apply_vendor_action"
-        self.description = "fastboot apply vendor image"
-        self.summary = "fastboot apply vendor"
-        self.retries = 3
-        self.sleep = 10
-
-    def validate(self):
-        super(ApplyVendorAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label='vendor', key='file'):
-            self.errors = "no file specified for fastboot vendor image"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(ApplyVendorAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        src = self.get_namespace_data(action='download_action', label='vendor', key='file')
-        dst = copy_to_lxc(lxc_name, src)
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', 'vendor', dst]
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to apply vendor image using fastboot: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
