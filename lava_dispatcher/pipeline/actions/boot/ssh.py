@@ -214,11 +214,12 @@ class ScpOverlayUnpack(Action):
         connection = super(ScpOverlayUnpack, self).run(connection, args)
         if not connection:
             raise RuntimeError("Cannot unpack, no connection available.")
-        filename = self.get_namespace_data(action='prepare-scp-overlay', label='prepare-scp-overlay', key='overlay')
+        filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
         tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

@@ -44,7 +44,7 @@ class SShSession(ShellSession):
         super(SShSession, self).finalise()
 
     def disconnect(self, reason):
-        self.sendline('logout')
+        self.sendline('logout', disconnecting=True)
         self.connected = False
 
 
