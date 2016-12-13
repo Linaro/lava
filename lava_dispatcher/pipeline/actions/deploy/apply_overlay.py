@@ -379,11 +379,15 @@ class ExtractRamdisk(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
+        ramdisk = self.get_namespace_data(action='download_action', label='ramdisk', key='file')
         if self.skip:
             self.logger.info("Not extracting ramdisk.")
+            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
+            filename = os.path.join(suffix, os.path.basename(ramdisk))
+            # declare the original ramdisk as the name to be used later.
+            self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=filename)
             return
         connection = super(ExtractRamdisk, self).run(connection, args)
-        ramdisk = self.get_namespace_data(action='download_action', label='ramdisk', key='file')
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk, 0o755)
