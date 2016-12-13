@@ -18,7 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.action import Action
+import pyudev
+from lava_dispatcher.pipeline.action import (
+    Action,
+    InfrastructureError
+)
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     AUTOLOGIN_DEFAULT_TIMEOUT,
@@ -190,4 +194,45 @@ class AutoLoginAction(Action):
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
+        return connection
+
+
+class WaitUSBDeviceAction(Action):
+
+    def __init__(self):
+        super(WaitUSBDeviceAction, self).__init__()
+        self.name = "wait-usb-device"
+        self.description = "wait for udev to see USB device"
+        self.summary = self.description
+        self.board_id = '0000000000'
+        self.usb_vendor_id = '0000'
+        self.usb_product_id = '0000'
+
+    def validate(self):
+        super(WaitUSBDeviceAction, self).validate()
+        try:
+            self.usb_vendor_id = self.job.device['usb_vendor_id']
+            self.usb_product_id = self.job.device['usb_product_id']
+            self.board_id = self.job.device['board_id']
+        except AttributeError as exc:
+            raise InfrastructureError(exc)
+        except (KeyError, TypeError):
+            self.errors = "Invalid parameters for %s" % self.name
+        if self.job.device['board_id'] == '0000000000':
+            self.errors = "board_id unset"
+        if self.job.device['usb_vendor_id'] == '0000':
+            self.errors = 'usb_vendor_id unset'
+        if self.job.device['usb_product_id'] == '0000':
+            self.errors = 'usb_product_id unset'
+
+    def run(self, connection, args=None):
+        self.logger.info("Waiting for USB device... %s:%s %s", self.usb_vendor_id, self.usb_product_id, self.board_id)
+        context = pyudev.Context()
+        monitor = pyudev.Monitor.from_netlink(context)
+        monitor.filter_by('usb', 'usb_device')
+        for device in iter(monitor.poll, None):
+            if (device.get('ID_SERIAL_SHORT', '') == str(self.board_id)) \
+               and (device.get('ID_VENDOR_ID', '') == str(self.usb_vendor_id)) \
+               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)):
+                break
         return connection

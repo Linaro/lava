@@ -1,0 +1,40 @@
+device_type: arduino101
+
+commands:
+  connect: telnet ratchet 7001
+  hard_reset: curl -s -o /dev/null http://192.168.25.38/30000/09 && sleep 1 && curl -s -o /dev/null http://192.168.25.38/30000/08
+  power_off: curl -s -o /dev/null http://192.168.25.38/30000/08
+  power_on: curl -s -o /dev/null http://192.168.25.38/30000/09
+
+board_id: 'AE6642EK61803JN'
+usb_vendor_id: 8087
+usb_product_id: 0aba
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      dfu:
+        parameters:
+          command:
+            dfu-util
+      qemu:
+        
+
+timeouts:
+  actions:
+    wait-usb-device:
+      seconds: 10
+    flash-dfu:
+      seconds: 30
+  connections:
+    wait-usb-device:
+      seconds: 10
+    flash-dfu:
+      seconds: 30
