@@ -95,6 +95,14 @@ actions:
 {{ base_uboot_tftp_commands }}
           - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args}} {{ juno_kernel_args }}'
 {{ base_uboot_tftp_bootcmd }}
+        ramdisk-tftp-usb:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_commands_juno_extras }}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ juno_kernel_args }}'
+{{ base_uboot_tftp_bootcmd }}
         tftp-local-ramdisk-nfsroot:
           commands:
 {{ base_uboot_commands }}
