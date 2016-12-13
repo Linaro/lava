@@ -104,12 +104,12 @@ class TestMonitorAction(TestAction):
     def validate(self):
         super(TestMonitorAction, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # Sanity test: could be a missing deployment for some actions
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if res != 'success':
             raise RuntimeError("No boot action result found")
-        connection = super(TestMonitorAction, self).run(connection, args)
+        connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
         if res != "success":
             self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})

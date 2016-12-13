@@ -50,10 +50,10 @@ class RetryAction(Action):
         if not self.internal_pipeline:
             raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         while self.retries < self.max_retries:
             try:
-                new_connection = self.internal_pipeline.run_actions(connection)
+                new_connection = self.internal_pipeline.run_actions(connection, max_end_time)
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return new_connection
@@ -107,7 +107,7 @@ class DiagnosticAction(Action):
     def trigger(cls):
         raise NotImplementedError("Define in the subclass: %s" % cls)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Log the requested diagnostic.
         Raises NotImplementedError if subclass has omitted a trigger classmethod.
@@ -142,7 +142,7 @@ class AdjuvantAction(Action):
         except NotImplementedError:
             self.errors = "Adjuvant action without a key: %s" % self.name
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if not self.valid or self.key() not in self.data:

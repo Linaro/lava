@@ -127,7 +127,7 @@ class ConnectSsh(Action):
                 self.command.extend(['-i', self.identity_file])
             self.command.extend(self.ssh_port)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if connection:
             self.logger.debug("Already connected")
             return connection
@@ -160,7 +160,7 @@ class ConnectSsh(Action):
                 self.command, shell.exitstatus, shell.readlines()))
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
-        connection = super(ConnectSsh, self).run(connection, args)
+        connection = super(ConnectSsh, self).run(connection, max_end_time, args)
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         connection.connected = True

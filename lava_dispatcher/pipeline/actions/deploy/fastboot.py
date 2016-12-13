@@ -160,8 +160,8 @@ class EnterFastbootAction(DeployAction):
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
 
-    def run(self, connection, args=None):
-        connection = super(EnterFastbootAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -226,8 +226,8 @@ class FastbootFlashAction(DeployAction):
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
 
-    def run(self, connection, args=None):
-        connection = super(FastbootFlashAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

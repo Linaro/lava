@@ -190,7 +190,7 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super(TestShellAction, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Common run function for subclasses which define custom patterns
         boot-result is a simple sanity test and only supports the most recent boot
@@ -201,7 +201,7 @@ class TestShellAction(TestAction):
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if not res:
             raise RuntimeError("No boot action result found")
-        connection = super(TestShellAction, self).run(connection, args)
+        connection = super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
         connection = self.get_namespace_data(

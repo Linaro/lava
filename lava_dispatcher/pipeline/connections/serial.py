@@ -58,7 +58,7 @@ class ConnectDevice(Action):
             self.errors = "Unable to parse the connection command %s" % command
         self.errors = infrastructure_error(exe)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
         if connection:
             return connection
@@ -79,7 +79,7 @@ class ConnectDevice(Action):
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super(ConnectDevice, self).run(connection, args)
+        connection = super(ConnectDevice, self).run(connection, max_end_time, args)
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)

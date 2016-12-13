@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     ACTION_TIMEOUT,
     OVERRIDE_CLAMP_DURATION
 )
+from lava_dispatcher.pipeline.utils.strings import seconds_to_str
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -233,38 +234,26 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-
-        timeout_start = time.time()
+    def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
-            if self.job and self.job.timeout and time.time() > timeout_start + self.job.timeout.duration:
-                # affects all pipelines, including internal
-                # the action which overran the timeout has been allowed to complete.
-                name = self.job.parameters.get('job_name', '?')
-                msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
-                action.logger.error(msg)
-                action.errors = msg
-                raise JobError(msg)
-
             # Begin the action
             # TODO: this shouldn't be needed
             # The ci-test does not set the default logging class
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
-            # Add action start timestamp to the log message
-            # Log in INFO for root actions and in DEBUG for the other actions
-            msg = 'start: %s %s (max %ds)' % (action.level,
-                                              action.name,
-                                              action.timeout.duration)
-            if self.parent is None:
-                action.logger.info(msg)
-            else:
-                action.logger.debug(msg)
-
-            start = time.time()
             try:
-                with action.timeout.action_timeout():
-                    new_connection = action.run(connection, args)
+                with action.timeout(max_end_time) as action_max_end_time:
+                    # Add action start timestamp to the log message
+                    # Log in INFO for root actions and in DEBUG for the other actions
+                    timeout = seconds_to_str(action_max_end_time - action.timeout.start)
+                    msg = 'start: %s %s (timeout %s)' % (action.level, action.name, timeout)
+                    if self.parent is None:
+                        action.logger.info(msg)
+                    else:
+                        action.logger.debug(msg)
+
+                    new_connection = action.run(connection,
+                                                action_max_end_time, args)
             # overly broad exceptions will cause issues with RetryActions
             # always ensure the unit tests continue to pass with changes here.
             except (AttributeError, KeyError, NameError, OSError, SyntaxError,
@@ -286,10 +275,10 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 self._diagnose(connection)
                 raise
             finally:
-                action.elapsed_time = time.time() - start
                 # Add action end timestamp to the log message
-                msg = "%s duration: %.02f" % (action.name,
-                                              action.elapsed_time)
+                duration = round(action.timeout.elapsed_time)
+                msg = "end: %s %s (duration %s)" % (action.level, action.name,
+                                                    seconds_to_str(duration))
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
@@ -331,7 +320,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.internal_pipeline = None
         self.__parameters__ = {}
         self.__errors__ = []
-        self.elapsed_time = None
         self.job = None
         self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
@@ -587,7 +575,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.set_namespace_data(
                         action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -605,7 +593,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         self.call_protocols()
         if self.internal_pipeline:
-            return self.internal_pipeline.run_actions(connection, args)
+            return self.internal_pipeline.run_actions(connection, max_end_time, args)
         if connection:
             connection.timeout = self.connection_timeout
         return connection
@@ -763,13 +751,13 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
-                "duration": self.elapsed_time,
+                "duration": self.timeout.elapsed_time,
                 "result": "fail" if self.errors else "pass",
                 "extra": self.results})
             self.results.update(
                 {
                     'level': self.level,
-                    'duration': self.elapsed_time,
+                    'duration': self.timeout.elapsed_time,
                     'timeout': self.timeout.duration,
                     'connection-timeout': self.connection_timeout.duration
                 }
@@ -820,6 +808,8 @@ class Timeout(object):
     """
     def __init__(self, name, duration=ACTION_TIMEOUT, protected=False):
         self.name = name
+        self.start = 0
+        self.elapsed_time = -1
         self.duration = duration  # Actions can set timeouts higher than the clamp.
         self.protected = protected
 
@@ -835,33 +825,42 @@ class Timeout(object):
         """
         if not isinstance(data, dict):
             raise RuntimeError("Invalid timeout data")
-        days = 0
-        hours = 0
-        minutes = 0
-        seconds = 0
-        if 'days' in data:
-            days = data['days']
-        if 'hours' in data:
-            hours = data['hours']
-        if 'minutes' in data:
-            minutes = data['minutes']
-        if 'seconds' in data:
-            seconds = data['seconds']
-        duration = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        duration = datetime.timedelta(days=data.get('days', 0),
+                                      hours=data.get('hours', 0),
+                                      minutes=data.get('minutes', 0),
+                                      seconds=data.get('seconds', 0))
         if not duration:
             return Timeout.default_duration()
         return duration.total_seconds()
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
-        raise JobError("%s timed out after %s seconds" % (self.name, int(self.duration)))
+        duration = int(time.time() - self.start)
+        raise JobError("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
-    def action_timeout(self):
+    def __call__(self, action_max_end_time=None):
+        self.start = time.time()
+        if action_max_end_time is None:
+            # action_max_end_time is None when cleaning the pipeline after a
+            # timeout.
+            # In this case, the job timeout is not taken into account.
+            max_end_time = self.start + self.duration
+        else:
+            max_end_time = min(action_max_end_time, self.start + self.duration)
+
+        duration = int(max_end_time - self.start)
+        if duration <= 0:
+            # If duration is lower than 0, then the timeout should be raised now.
+            # Calling signal.alarm in this case will only deactivate the alarm
+            # (by passing 0 or the unsigned value).
+            self._timed_out(None, None)
+
         signal.signal(signal.SIGALRM, self._timed_out)
-        signal.alarm(int(self.duration))
-        yield
+        signal.alarm(duration)
+        yield max_end_time
         # clear the timeout alarm, the action has returned
         signal.alarm(0)
+        self.elapsed_time = time.time() - self.start
 
     def modify(self, duration):
         """

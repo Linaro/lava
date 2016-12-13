@@ -136,7 +136,7 @@ class FlashDFUAction(Action):
         if len(self.exec_list) < 1:
             self.errors = "No DFU command to execute"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         count = 1
         for dfu_command in self.exec_list:
             if count == (len(self.exec_list)):

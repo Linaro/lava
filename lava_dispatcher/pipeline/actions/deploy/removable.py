@@ -143,13 +143,13 @@ class DDAction(Action):
                 value=self.boot_params[self.parameters['device']]['device_id']
             )
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Retrieve the decompressed image from the dispatcher by calling the tool specified
         by the test writer, from within the test image of the first deployment, using the
         device to write directly to the secondary media, without needing to cache on the device.
         """
-        connection = super(DDAction, self).run(connection, args)
+        connection = super(DDAction, self).run(connection, max_end_time, args)
         file = self.get_namespace_data(action='download_action', label='image', key='file')
         if not file:
             self.logger.debug("Skipping %s - nothing downloaded")

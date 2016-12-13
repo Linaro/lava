@@ -51,7 +51,7 @@ class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-me
             self.ran = False
             super(TestPipelineInit.FakeAction, self).__init__()
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.ran = True
 
         def post_process(self):
@@ -157,7 +157,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             super(TestPipeline.FakeAction, self).__init__()
             self.name = "fake-action"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             time.sleep(1)
             self.ran = True
 
@@ -353,7 +353,7 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
             super(TestFakeActions.KeepConnection, self).__init__()
             self.name = "keep-connection"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             pass
 
         def post_process(self):
@@ -364,7 +364,7 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
             super(TestFakeActions.MakeNewConnection, self).__init__()
             self.name = "make-new-connection"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             new_connection = object()
             return new_connection
 
@@ -383,25 +383,25 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         pipe = Pipeline()
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
-        pipe.run_actions(None)
+        pipe.run_actions(None, None)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
-        self.assertNotEqual(self.sub0.elapsed_time, 0)
-        self.assertNotEqual(self.sub1.elapsed_time, 0)
+        self.assertNotEqual(self.sub0.timeout.elapsed_time, 0)
+        self.assertNotEqual(self.sub1.timeout.elapsed_time, 0)
 
     def test_keep_connection(self):
 
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.KeepConnection())
         conn = object()
-        self.assertIs(conn, pipe.run_actions(conn))
+        self.assertIs(conn, pipe.run_actions(conn, None))
 
     def test_change_connection(self):
 
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
-        self.assertIsNot(conn, pipe.run_actions(conn))
+        self.assertIsNot(conn, pipe.run_actions(conn, None))
 
 
 class TestStrategySelector(unittest.TestCase):

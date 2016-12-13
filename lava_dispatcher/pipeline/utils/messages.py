@@ -164,7 +164,7 @@ class LinuxKernelMessages(Action):
         if not self.messages:
             self.errors = "Unable to build a list of kernel messages to monitor."
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             return connection
         if not self.existing_prompt:

@@ -231,7 +231,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 action='download_action', label='type', key=self.key,
                 value=self.parameters[self.key].get('type', None))
 
-    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_size, last_value):
             """ Compute progress when the size is unknown """
             condition = downloaded_size >= last_value + 25 * 1024 * 1024
@@ -245,7 +245,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024 * 1024))) if condition else "")
 
-        connection = super(DownloadHandler, self).run(connection, args)
+        connection = super(DownloadHandler, self).run(connection, max_end_time, args)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
@@ -502,8 +502,8 @@ class QCowConversionAction(Action):
         self.summary = "qcow conversion"
         self.key = key
 
-    def run(self, connection, args=None):
-        connection = super(QCowConversionAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(QCowConversionAction, self).run(connection, max_end_time, args)
         fname = self.get_namespace_data(
             action='download_action',
             label=self.key,

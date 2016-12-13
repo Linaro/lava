@@ -45,3 +45,9 @@ def substitute(command_list, dictionary):
             line = line.replace(key, value)
         parsed.append(line)
     return parsed
+
+
+def seconds_to_str(time):
+    hours, remainder = divmod(int(round(time)), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return "%02d:%02d:%02d" % (hours, minutes, seconds)

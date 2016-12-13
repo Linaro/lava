@@ -121,8 +121,8 @@ class ExpectBootloaderSession(Action):
         self.summary = "Expect a bootloader prompt"
         self.description = "Wait for a u-boot shell"
 
-    def run(self, connection, args=None):
-        connection = super(ExpectBootloaderSession, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(ExpectBootloaderSession, self).run(connection, max_end_time, args)
         device_methods = self.job.device['actions']['boot']['methods']
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.logger.debug("%s: Waiting for prompt", self.name)
@@ -162,8 +162,8 @@ class UBootRetry(BootAction):
             value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, args=None):
-        connection = super(UBootRetry, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootRetry, self).run(connection, max_end_time, args)
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
@@ -204,10 +204,10 @@ class UBootInterrupt(Action):
         if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(UBootInterrupt, self).run(connection, args)
+        connection = super(UBootInterrupt, self).run(connection, max_end_time, args)
         device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
@@ -335,8 +335,8 @@ class UBootPrepareKernelAction(Action):
                 elif self.type == 'image' and self.kernel_type == 'zimage':
                     self.errors = "Can't convert a zimage to image"
 
-    def run(self, connection, args=None):
-        connection = super(UBootPrepareKernelAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootPrepareKernelAction, self).run(connection, max_end_time, args)
         if not self.kernel_type:
             return connection  # idempotency
         old_kernel = self.get_namespace_data(

@@ -66,7 +66,7 @@ class RebootDevice(Action):
         self.description = "attempt to reboot the running device"
         self.reboot_prompt = None
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
@@ -77,7 +77,7 @@ class RebootDevice(Action):
                 raise InfrastructureError("Command '%s' failed" % command)
             self.results = {"success": self.job.device.power_state}
         else:
-            connection = super(RebootDevice, self).run(connection, args)
+            connection = super(RebootDevice, self).run(connection, max_end_time, args)
             connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
             connection.timeout = self.connection_timeout
             connection.sendline("reboot")
@@ -123,8 +123,8 @@ class PDUReboot(AdjuvantAction):
     def key(cls):
         return 'pdu_reboot'
 
-    def run(self, connection, args=None):
-        connection = super(PDUReboot, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(PDUReboot, self).run(connection, max_end_time, args)
         if not self.adjuvant:
             return connection
         if not self.job.device.hard_reset_command:
@@ -152,8 +152,8 @@ class PowerOn(Action):
         self.summary = "send power_on command"
         self.description = "supply power to device"
 
-    def run(self, connection, args=None):
-        connection = super(PowerOn, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(PowerOn, self).run(connection, max_end_time, args)
         if self.job.device.power_state is 'off':
             if self.job.device.pre_power_command:
                 command = self.job.device.pre_power_command
@@ -185,8 +185,8 @@ class LxcStop(Action):
         super(LxcStop, self).validate()
         self.errors = infrastructure_error('lxc-stop')
 
-    def run(self, connection, args=None):
-        connection = super(LxcStop, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcStop, self).run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(
             action='lxc-create-action',
             label='lxc',
@@ -212,8 +212,8 @@ class PowerOff(Action):
         self.summary = "send power_off command"
         self.description = "discontinue power to device"
 
-    def run(self, connection, args=None):
-        connection = super(PowerOff, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(PowerOff, self).run(connection, max_end_time, args)
         if not hasattr(self.job.device, 'power_state'):
             return connection
         if self.job.device.power_state is 'on':  # allow for '' and skip
@@ -244,14 +244,14 @@ class FinalizeAction(Action):
         self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
         self.internal_pipeline.add_action(PowerOff())
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
         The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         self.ran = True
-        connection = super(FinalizeAction, self).run(connection, args)
+        connection = super(FinalizeAction, self).run(connection, max_end_time, args)
         if connection:
             connection.finalise()
 
@@ -276,4 +276,4 @@ class FinalizeAction(Action):
     def cleanup(self, connection, message):
         self.errors = message
         if not self.ran:
-            self.run(connection, None)
+            self.run(connection, None, None)

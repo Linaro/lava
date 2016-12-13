@@ -109,8 +109,8 @@ class GrubMainAction(BootAction):
                 self.internal_pipeline.add_action(InstallerWait())
                 self.internal_pipeline.add_action(PowerOff())
 
-    def run(self, connection, args=None):
-        connection = super(GrubMainAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(GrubMainAction, self).run(connection, max_end_time, args)
         if self.expect_shell:
             self.logger.debug("Setting default test shell prompt")
             if not connection.prompt_str:
@@ -150,10 +150,10 @@ class BootloaderInterrupt(Action):
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterrupt, self).run(connection, args)
+        connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
         self.logger.debug("Changing prompt to '%s'", GRUB_BOOT_PROMPT)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = GRUB_BOOT_PROMPT
@@ -178,8 +178,8 @@ class InstallerWait(Action):
         if "boot_finished" not in self.parameters:
             self.errors = "Missing boot_finished string"
 
-    def run(self, connection, args=None):
-        connection = super(InstallerWait, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(InstallerWait, self).run(connection, max_end_time, args)
         wait_string = self.parameters['boot_finished']
         msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)

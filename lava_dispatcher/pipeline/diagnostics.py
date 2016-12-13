@@ -36,8 +36,8 @@ class DiagnoseNetwork(DiagnosticAction):
     def trigger(cls):
         return "network"
 
-    def run(self, connection, args=None):
-        connection = super(DiagnoseNetwork, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(DiagnoseNetwork, self).run(connection, max_end_time, args)
         return connection
 
 
@@ -55,8 +55,8 @@ class DiagnoseTargetNetwork(DiagnosticAction):
     def trigger(cls):
         return "target-network"
 
-    def run(self, connection, args=None):
-        connection = super(DiagnoseTargetNetwork, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(DiagnoseTargetNetwork, self).run(connection, max_end_time, args)
         return connection
 
 
@@ -74,7 +74,7 @@ class DiagnoseUBoot(DiagnosticAction):
     def trigger(cls):
         return "uboot-printenv"
 
-    def run(self, connection, args=None):
-        connection = super(DiagnoseUBoot, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(DiagnoseUBoot, self).run(connection, max_end_time, args)
         # FIXME: write the support for reset, including running PDU command
         return connection

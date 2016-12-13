@@ -142,8 +142,8 @@ class BootloaderRetry(BootAction):
             value=self.job.device['actions']['boot']['methods'][self.type]['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, args=None):
-        connection = super(BootloaderRetry, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
@@ -181,10 +181,10 @@ class BootloaderInterrupt(Action):
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterrupt, self).run(connection, args)
+        connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
         self.logger.debug("Changing prompt to '%s'", IPXE_BOOT_PROMPT)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = IPXE_BOOT_PROMPT

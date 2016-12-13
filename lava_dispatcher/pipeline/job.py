@@ -25,6 +25,7 @@ import signal
 import shutil
 import tempfile
 import time
+import traceback
 import os
 import yaml
 
@@ -215,7 +216,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                     raise JobError(msg)
 
             # Run the pipeline and wait for exceptions
-            self.pipeline.run_actions(self.connection)
+            with self.timeout() as max_end_time:
+                self.pipeline.run_actions(self.connection, max_end_time)
         except InfrastructureError as exc:
             error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
                         "Please report it to the LAVA admin."
@@ -224,7 +226,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             error_msg = "JobError: your job cannot terminate cleanly."
             return_code = 2
         except KeyboardInterrupt:
-            error_msg = "KeyboardInterrupt: the job was canceled or had timeouted."
+            error_msg = "KeyboardInterrupt: the job was canceled."
             return_code = 3
         except RuntimeError:
             error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."

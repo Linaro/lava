@@ -346,7 +346,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         inline_repo.set_namespace_data(action='test', label='shared', key='location', value=location)
         inline_repo.set_namespace_data(action='test', label='test-definiton', key='overlay_dir', value=location)
 
-        inline_repo.run(None)
+        inline_repo.run(None, None)
         yaml_file = os.path.join(location, '0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, 'r') as f_in:
@@ -396,7 +396,7 @@ class TestAutoLogin(unittest.TestCase):
             key='line_separator', value='testsep')
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, None)
         self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
         self.assertIn('lava-test: # ', conn.prompt_str)
@@ -464,7 +464,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, None)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
@@ -493,7 +493,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, None)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
@@ -520,7 +520,7 @@ class TestChecksum(unittest.TestCase):
             'md5sum': '6ea432ac3c23210c816551782346ed1c',
             'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_checksum_match_fail(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -537,7 +537,7 @@ class TestChecksum(unittest.TestCase):
             'sha256sum': '92d6ff900d0c3656ab3f214ce6efd708f898fc5e259111111111111111111111'}}})
         httpdownloadaction.validate()
 
-        self.assertRaises(JobError, httpdownloadaction.run, None)
+        self.assertRaises(JobError, httpdownloadaction.run, None, None)
 
     def test_download_no_images_no_checksum(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -551,7 +551,7 @@ class TestChecksum(unittest.TestCase):
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({'rootfs': {'url': httpdownloadaction.url}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_no_images_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -568,7 +568,7 @@ class TestChecksum(unittest.TestCase):
                        'md5sum': '6ea432ac3c23210c816551782346ed1c',
                        'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_no_images_match_fail(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -585,7 +585,7 @@ class TestChecksum(unittest.TestCase):
                        'md5sum': '6ea432ac3c232122222221782346ed1c',
                        'sha256sum': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
-        self.assertRaises(JobError, httpdownloadaction.run, None)
+        self.assertRaises(JobError, httpdownloadaction.run, None, None)
 
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)

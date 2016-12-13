@@ -137,7 +137,7 @@ class AutoLoginAction(Action):
             self.results = {'fail': parsed}
             self.logger.warning("Kernel warnings or errors detected.")
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
         def check_prompt_characters(chk_prompt):
@@ -231,7 +231,7 @@ class WaitUSBDeviceAction(Action):
         if self.job.device['usb_product_id'] == '0000':
             self.errors = 'usb_product_id unset'
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         self.logger.info("Waiting for USB device... %s:%s %s", self.usb_vendor_id, self.usb_product_id, self.board_id)
         context = pyudev.Context()
         monitor = pyudev.Monitor.from_netlink(context)
@@ -289,7 +289,7 @@ class BootloaderCommandOverlay(Action):
                 self.errors = "lava_mac is not a valid mac address"
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Read data from the download action and replace in context
         Use common data for all values passed into the substitutions so that
@@ -297,7 +297,7 @@ class BootloaderCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
-        connection = super(BootloaderCommandOverlay, self).run(connection, args)
+        connection = super(BootloaderCommandOverlay, self).run(connection, max_end_time, args)
         try:
             ip_addr = dispatcher_ip()
         except InfrastructureError as exc:
@@ -379,10 +379,10 @@ class BootloaderCommandsAction(Action):
         self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection = super(BootloaderCommandsAction, self).run(connection, args)
+        connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)

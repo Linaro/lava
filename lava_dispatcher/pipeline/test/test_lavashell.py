@@ -108,6 +108,6 @@ class TestShellResults(unittest.TestCase):   # pylint: disable=too-many-public-m
             self.summary = "fake action for unit tests"
             self.description = "fake, do not use outside unit tests"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.count += 1
             raise JobError("fake error")

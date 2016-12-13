@@ -151,7 +151,7 @@ class CallQemuAction(Action):
         if uefi_dir:
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         CommandRunner expects a pexpect.spawn connection which is the return value
         of target.device.power_on executed by boot in the old dispatcher.
@@ -192,7 +192,7 @@ class CallQemuAction(Action):
         shell_connection = ShellSession(self.job, shell)
         if not shell_connection.prompt_str and self.parameters['method'] == 'qemu':
             shell_connection.prompt_str = self.parameters['prompts']
-        shell_connection = super(CallQemuAction, self).run(shell_connection, args)
+        shell_connection = super(CallQemuAction, self).run(shell_connection, max_end_time, args)
 
         # FIXME: tests with multiple boots need to be handled too.
         res = 'failed' if self.errors else 'success'
