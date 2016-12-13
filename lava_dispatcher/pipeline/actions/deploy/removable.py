@@ -201,6 +201,7 @@ class DDAction(Action):
         # set prompt back once secondary deployment is complete
         connection.prompt_str = prompt_string
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
