@@ -154,8 +154,7 @@ class DDAction(Action):
         if not file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
-        decompressed_image = os.path.basename(self.get_namespace_data(
-            action='download_action', label='image', key='file'))
+        decompressed_image = os.path.basename(file)
         try:
             device_path = os.path.realpath(
                 "/dev/disk/by-id/%s" %
@@ -163,7 +162,7 @@ class DDAction(Action):
         except OSError:
             raise JobError("Unable to find disk by id %s" %
                            self.boot_params[self.parameters['device']]['uuid'])
-        storage_suffix = self.get_namespace_data(action='storage_deploy', label='storage', key='suffix')
+        storage_suffix = self.get_namespace_data(action='storage-deploy', label='storage', key='suffix')
         if not storage_suffix:
             storage_suffix = ''
         suffix = "%s/%s" % ("tmp", storage_suffix)
