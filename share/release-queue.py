@@ -36,6 +36,7 @@ class Commit(object):
         self.change_id = change_id
 
         self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id]).decode('utf-8')
+        self.hash = subprocess.check_output(['git', 'rev-parse', '--short', self.commit_id]).decode('utf-8').strip()
         break_next_time = False
 
         for line in self.obj.split('\n'):
@@ -56,7 +57,7 @@ class Commit(object):
         return "%02d/%02d/%d %02d:%02d" % (t.tm_mon, t.tm_mday, t.tm_year, t.tm_hour, t.tm_min)
 
     def render(self):
-        return "%s (%s %s): %s" % (self.get_time(), self.commit_id, self.change_id, self.message)
+        return "%s %s (%s %s): %s" % (self.get_time(), self.hash, self.commit_id, self.change_id, self.message)
 
 
 def get_change_ids(branch):
@@ -121,7 +122,7 @@ def main():
     commits.sort(key=lambda x: x.time, reverse=True)
     if args.changelog:
         for c in commits:
-            print(c.message)
+            print("%s %s" % (c.hash, c.message))
     else:
         for c in commits:
             print(c.render())
