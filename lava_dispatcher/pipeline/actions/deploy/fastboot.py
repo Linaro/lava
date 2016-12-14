@@ -230,7 +230,8 @@ class FastbootFlashAction(DeployAction):
             return connection
         # Order flash commands so that some commands take priority over others
         flash_cmds_order = self.job.device['flash_cmds_order']
-        flash_cmds = set(self.data['download_action'].keys()).difference(
+        namespace = self.parameters.get('namespace', 'common')
+        flash_cmds = set(self.data[namespace]['download_action'].keys()).difference(
             set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
 
