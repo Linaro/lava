@@ -771,7 +771,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)
         if value is None:
             return None
-        value = self.data[namespace][action][label].get(key, None)
         return copy.deepcopy(value) if deepcopy else value
 
     def set_namespace_data(self, action, label, key, value, parameters=None):
