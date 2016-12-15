@@ -106,12 +106,12 @@ unselect_error_line = function() {
 
 select_error_line = function(error) {
     // Selects the appropriate line in text area based on the parsed error msg.
-    line_string = error.match(/line \d+/).toString();
-    $(".lineno").removeClass("lineselect");
-
+    line_string = error.match(/line \d+/);
     if (line_string) {
-        line_number = parseInt(line_string.split(" ")[1]);
+        line_string = line_string.toString();
+        $(".lineno").removeClass("lineselect");
 
+        line_number = parseInt(line_string.split(" ")[1]);
         $("#lineno"+line_number).addClass("lineselect");
 
         // Scroll the textarea to the highlighted line.
