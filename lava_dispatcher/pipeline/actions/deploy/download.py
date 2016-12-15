@@ -37,7 +37,6 @@ import zlib
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
-    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import RetryAction
@@ -112,8 +111,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.proxy = None
         self.url = url
         self.key = key
-        # Store the files in a sub-directory to keep the path unique
-        self.path = os.path.join(path, key)
+        self.path = path
         self.size = -1
 
     def reader(self):
@@ -131,14 +129,16 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
-        # Handle unmodified filename
-        # Also files without suffixes, e.g. kernel images
-        if not modify or len(parts) == 1:
-            return (os.path.join(path, filename),
-                    None)
+        suffix = parts[-1]
+        if not modify:
+            filename = os.path.join(path, filename)
+            suffix = None
+        elif len(parts) == 1:  # handle files without suffixes, e.g. kernel images
+            filename = os.path.join(path, ''.join(parts[-1]))
+            suffix = None
         else:
-            return (os.path.join(path, '.'.join(parts[:-1])),
-                    parts[-1])
+            filename = os.path.join(path, '.'.join(parts[:-1]))
+        return filename, suffix
 
     @contextlib.contextmanager
     def _decompressor_stream(self):  # pylint: disable=too-many-branches
@@ -191,14 +191,11 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             dwnld_file.write(buff)
 
         try:
-            # Create a sub-directory. Will be removed in cleanup().
-            os.mkdir(self.path, 0o755)
-            with open(fname, 'wb') as dwnld_file:
-                yield (write, fname)
-        except (IOError, OSError) as exc:
-            msg = "Unable to open %s: %s" % (fname, exc.strerror)
-            self.logger.error(msg)
-            raise InfrastructureError(msg)
+            dwnld_file = open(fname, 'wb')
+            yield (write, fname)
+        finally:
+            if dwnld_file:
+                dwnld_file.close()
 
     def validate(self):
         super(DownloadHandler, self).validate()
@@ -344,17 +341,22 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
-            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp',
-                                             key='suffix')
-            self.set_namespace_data(action='download_action', label='file', key=self.key,
-                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
+            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
+            if not suffix:
+                suffix = ''
+            self.set_namespace_data(
+                action='download_action', label='file', key=self.key,
+                value=os.path.join(suffix, os.path.basename(fname)))
         elif self.parameters['to'] == 'iso-installer':
-            suffix = self.get_namespace_data(action='deploy-iso-installer',
-                                             label='iso', key='suffix')
-            self.set_namespace_data(action='download_action', label='file', key=self.key,
-                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
+            suffix = self.get_namespace_data(action='deploy-iso-installer', label='iso', key='suffix')
+            if not suffix:
+                suffix = ''
+            self.set_namespace_data(
+                action='download_action', label='file', key=self.key,
+                value=os.path.join(suffix, os.path.basename(fname)))
         else:
-            self.set_namespace_data(action='download_action', label='file', key=self.key, value=fname)
+            self.set_namespace_data(
+                action='download_action', label='file', key=self.key, value=fname)
         self.logger.info("md5sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
                                                                                        label=self.key, key='md5')))
         self.logger.info("sha256sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
