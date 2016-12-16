@@ -533,7 +533,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = Device.objects.get(hostname="fakebbb")
         self.assertEqual('beaglebone-black', device.device_type.name)
         self.assertTrue(device.is_pipeline)
-        context_overrides = map_context_overrides('base.jinja2', 'beaglebone-black.jinja2', system=False)
+        context_overrides = map_context_overrides('base-uboot.jinja2', 'beaglebone-black.jinja2', system=False)
         job_ctx = {
             'base_uboot_commands': 'dummy commands',
             'usb_uuid': 'dummy usb uuid',
@@ -1028,11 +1028,11 @@ class TestYamlMultinode(TestCaseWithFactory):
         from lava_results_app.dbutils import _get_job_metadata
         self.assertEqual(
             {
-                'test.0.definition.name': 'multinode-basic',
-                'test.0.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
-                'test.0.definition.from': 'git',
-                'boot.0.method': 'qemu',
-                'test.0.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
+                'test.0.common.definition.name': 'multinode-basic',
+                'test.0.common.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
+                'test.0.common.definition.from': 'git',
+                'boot.0.common.method': 'qemu',
+                'test.0.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
             },
             _get_job_metadata(pipeline['job']['actions'])
         )

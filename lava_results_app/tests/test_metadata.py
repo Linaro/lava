@@ -202,15 +202,15 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertEqual(
             retval,
             {
-                'test.1.definition.from': 'git',
-                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
-                'test.0.definition.name': 'smoke-tests',
-                'test.1.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
-                'boot.0.method': 'qemu',
-                'test.1.definition.name': 'singlenode-advanced',
-                'test.0.definition.from': 'git',
-                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml',
-                'test.1.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
+                'test.1.common.definition.from': 'git',
+                'test.0.common.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.common.definition.name': 'smoke-tests',
+                'test.1.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
+                'boot.0.common.method': 'qemu',
+                'test.1.common.definition.name': 'singlenode-advanced',
+                'test.0.common.definition.from': 'git',
+                'test.0.common.definition.path': 'ubuntu/smoke-tests-basic.yaml',
+                'test.1.common.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
         )
 
     def test_parameter_support(self):  # pylint: disable=too-many-locals
@@ -242,10 +242,10 @@ class TestMetaTypes(TestCaseWithFactory):
                 continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_job_metadata(pipeline['job']['actions'])
-        self.assertIn('test.0.definition.parameters.VARIABLE_NAME_2', retval)
-        self.assertIn('test.0.definition.parameters.VARIABLE_NAME_1', retval)
-        self.assertEqual(retval['test.0.definition.parameters.VARIABLE_NAME_1'], 'first variable value')
-        self.assertEqual(retval['test.0.definition.parameters.VARIABLE_NAME_2'], 'second value')
+        self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_2', retval)
+        self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_1', retval)
+        self.assertEqual(retval['test.0.common.definition.parameters.VARIABLE_NAME_1'], 'first variable value')
+        self.assertEqual(retval['test.0.common.definition.parameters.VARIABLE_NAME_2'], 'second value')
 
     def test_job_multi(self):
         MetaType.objects.all().delete()
