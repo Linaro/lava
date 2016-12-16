@@ -29,7 +29,7 @@ actions:
     images:
         app:
           image_arg: --alt x86_app --download {app}
-          url: http://snapshots.linaro.org/components/kernel/zephyr/zephyr/arduino_101/462/tests/benchmark/app_kernel/test/zephyr.bin
+          url: http://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/arduino_101/462/tests/benchmark/app_kernel/test/zephyr.bin
         sensor_core:
           image_arg: --alt sensor_core --download {sensor_core}
           url: http://ironhide.bounceme.net/arduino101/arc.bin

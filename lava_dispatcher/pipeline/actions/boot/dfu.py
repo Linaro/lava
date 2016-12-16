@@ -121,10 +121,11 @@ class FlashDFUAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
-        for action in self.data['download_action'].keys():
+        namespace = self.parameters['namespace']
+        for action in self.data[namespace]['download_action'].keys():
             dfu_full_command = []
-            image_arg = self.data['download_action'][action].get('image_arg', None)
-            action_arg = self.data['download_action'][action].get('file', None)
+            image_arg = self.data[namespace]['download_action'][action].get('image_arg', None)
+            action_arg = self.data[namespace]['download_action'][action].get('file', None)
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue
@@ -152,6 +153,6 @@ class FlashDFUAction(Action):
                 error = "command failed: %s" % dfu
                 self.errors = error
             count += 1
-
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

@@ -19,15 +19,10 @@ actions:
     timeout:
       minutes: 3
     to: tmpfs
-    os: zephyr
-    #type: monitor
     images:
         app:
           image_arg: --alt x86_app --download {app}
-          url: http://snapshots.linaro.org/components/kernel/zephyr/zephyr/arduino_101/462/tests/kernel/test_common/test/zephyr.bin
-        #sensor_core:
-        #  image_arg: --alt sensor_core --download {sensor_core}
-        #  url: http://snapshots.linaro.org/components/kernel/zephyr/zephyr/arduino_101_sss/462/samples/hello_world/nanokernel/test/zephyr.bin
+          url: http://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/arduino_101/462/tests/kernel/test_common/test/zephyr.bin
 
 - boot:
     method: dfu
