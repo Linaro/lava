@@ -97,7 +97,7 @@ setup(
         'nose',
         'pyzmq',
         'configobj',
-        'pyudev'
+        'pyudev >= 0.21'
     ],
     test_suite='lava_dispatcher.tests.test_suite',
     tests_require=[
