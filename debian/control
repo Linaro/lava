@@ -30,7 +30,7 @@ Recommends: ntp, git, kpartx, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64 i386],
  qemu-system-arm (>= 2.0.0) [armhf arm64], qemu-system-aarch64 (>= 2.0.0) [arm64],
  libguestfs-tools [amd64 i386], nfs-kernel-server, rpcbind,
- python-setproctitle, u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.0),
+ python-setproctitle, u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.6),
  bridge-utils, rsync, sshfs
 Suggests: bzr
 Description: Linaro Automated Validation Architecture dispatcher
