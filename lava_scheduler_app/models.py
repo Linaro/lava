@@ -1670,7 +1670,8 @@ class TestJob(RestrictedResource):
         return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 
     def output_file(self):
-        output_path = os.path.join(self.output_dir, 'output.txt')
+        filename = 'output.yaml' if self.is_pipeline else 'output.txt'
+        output_path = os.path.join(self.output_dir, filename)
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
         else:
