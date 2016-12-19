@@ -204,7 +204,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
 
 
 def _add_parameter_metadata(prefix, definition, dictionary, label):
-    if 'parameters' in definition:
+    if 'parameters' in definition and isinstance(definition['parameters'], dict):
         for paramkey, paramvalue in definition['parameters'].items():
             if paramkey == 'yaml_line':
                 continue

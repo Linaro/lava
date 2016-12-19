@@ -81,7 +81,8 @@ def _job_definition_schema():
             Required('repository'): Any(_inline_schema(), str),
             Required('from'): str,
             Required('name'): str,
-            Required('path'): str
+            Required('path'): str,
+            Optional('parameters'): dict,
         }
     ], extra=True)
 
