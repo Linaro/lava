@@ -28,7 +28,7 @@ actions:
     images:
         zephyr:
           image_arg: '-kernel {zephyr}'
-          url: 'http://snapshots.linaro.org/components/kernel/zephyr/gccarmemb/qemu_cortex_m3/470/tests/kernel/test_task/test/zephyr.bin'
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/qemu_cortex_m3/test_task-zephyr.bin
 
 - boot:
     namespace: matt

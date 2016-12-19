@@ -29,13 +29,13 @@ actions:
     images:
         app:
           image_arg: --alt x86_app --download {app}
-          url: http://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/arduino_101/462/tests/benchmark/app_kernel/test/zephyr.bin
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/arduino_101/app_kernel-zephyr.bin
         sensor_core:
           image_arg: --alt sensor_core --download {sensor_core}
-          url: http://ironhide.bounceme.net/arduino101/arc.bin
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/arduino_101/sensor_core-arc.bin
         ble_core:
           image_arg: --alt ble_core --download {ble_core}
-          url: http://ironhide.bounceme.net/arduino101/ble_core/image.bin
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/arduino_101/ble_core-image.bin
 
 - boot:
     method: dfu
