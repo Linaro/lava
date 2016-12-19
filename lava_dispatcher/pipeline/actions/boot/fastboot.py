@@ -19,14 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction
+from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.shell import ExpectShellSession
 
 
 class BootFastboot(Boot):
@@ -65,6 +69,14 @@ class BootFastbootAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootBootAction())
         self.internal_pipeline.add_action(LxcAddDeviceAction())
+        # Check if the device has a power state such as HiKey, Dragonboard,
+        # etc. against device that doesn't like Nexus, etc. Currently, this is
+        # the way to distinguish between both these kinds of devices.
+        if hasattr(self.job.device, 'power_state'):
+            if self.job.device.power_state in ['on', 'off']:
+                self.internal_pipeline.add_action(AutoLoginAction())
+                self.internal_pipeline.add_action(ExpectShellSession())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class FastbootBootAction(Action):
@@ -87,16 +99,27 @@ class FastbootBootAction(Action):
 
     def run(self, connection, args=None):
         connection = super(FastbootBootAction, self).run(connection, args)
-        lxc_name = self.get_namespace_data(
-            action='lxc-create-action',
-            label='lxc',
-            key='name'
-        )
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
+                          lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
+        boot_img = self.get_namespace_data(action='download_action',
+                                           label='boot', key='file')
+        if not boot_img:
+            raise JobError("Boot image not found, unable to boot")
+        else:
+            boot_img = os.path.join('/', os.path.basename(boot_img))
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'reboot']
+                        '-s', serial_number, 'boot', boot_img]
         command_output = self.run_command(fastboot_cmd)
-        if command_output and 'rebooting' not in command_output:
+        if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
             status = [status.strip() for status in command_output.split(

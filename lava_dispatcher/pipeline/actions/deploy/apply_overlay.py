@@ -39,7 +39,8 @@ from lava_dispatcher.pipeline.utils.installers import (
 from lava_dispatcher.pipeline.utils.filesystem import (
     mkdtemp,
     prepare_guestfs,
-    copy_in_overlay
+    copy_in_overlay,
+    copy_overlay_to_sparse_fs,
 )
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
@@ -102,6 +103,35 @@ class ApplyOverlayImage(Action):
             root_partition = self.parameters['image']['root_partition']
             self.logger.debug("root_partition: %s", root_partition)
             copy_in_overlay(decompressed_image, root_partition, overlay_file)
+        else:
+            self.logger.debug("No overlay to deploy")
+        return connection
+
+
+class ApplyOverlaySparseRootfs(Action):
+
+    def __init__(self):
+        super(ApplyOverlaySparseRootfs, self).__init__()
+        self.name = "apply-overlay-sparse-rootfs"
+        self.summary = "apply overlay to sparse rootfs image"
+        self.description = "apply overlay to sparse rootfs image"
+
+    def validate(self):
+        super(ApplyOverlaySparseRootfs, self).validate()
+        self.errors = infrastructure_error('/usr/bin/simg2img')
+        self.errors = infrastructure_error('/bin/mount')
+        self.errors = infrastructure_error('/bin/umount')
+        self.errors = infrastructure_error('/usr/bin/img2simg')
+
+    def run(self, connection, args=None):
+        overlay_file = self.get_namespace_data(action='compress-overlay',
+                                               label='output', key='file')
+        if overlay_file:
+            self.logger.debug("Overlay: %s", overlay_file)
+            decompressed_image = self.get_namespace_data(
+                action='download_action', label='rootfs', key='file')
+            self.logger.debug("Image: %s", decompressed_image)
+            copy_overlay_to_sparse_fs(decompressed_image, overlay_file)
         else:
             self.logger.debug("No overlay to deploy")
         return connection

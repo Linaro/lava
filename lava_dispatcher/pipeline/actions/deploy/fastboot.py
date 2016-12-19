@@ -27,7 +27,12 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
-from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseRootfs
+from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.pipeline.actions.deploy.overlay import (
+    CustomisationAction,
+    OverlayAction,
+)
 from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
@@ -108,7 +113,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(OverlayAction())
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(CustomisationAction())
+            self.internal_pipeline.add_action(OverlayAction())
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
                 self.internal_pipeline.add_action(ConnectDevice())
@@ -122,7 +129,13 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 download = DownloaderAction(image, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
                 self.internal_pipeline.add_action(download)
-
+                if image == 'rootfs':
+                    if self.test_needs_overlay(parameters):
+                        self.internal_pipeline.add_action(
+                            ApplyOverlaySparseRootfs())
+                    if self.test_needs_deployment(parameters):
+                        self.internal_pipeline.add_action(
+                            DeployDeviceEnvironment())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
 
@@ -160,7 +173,6 @@ class EnterFastbootAction(DeployAction):
         if not lxc_name:
             self.errors = "Unable to use fastboot"
             return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
         fastboot_serial_number = self.job.device['fastboot_serial_number']
 
@@ -168,15 +180,12 @@ class EnterFastbootAction(DeployAction):
         adb_serial_number = self.job.device['adb_serial_number']
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
                    adb_serial_number, 'devices']
-        command_output = self.run_command(adb_cmd)
+        command_output = self.run_command(adb_cmd, allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
             adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                        '-s', adb_serial_number, 'reboot-bootloader']
             command_output = self.run_command(adb_cmd)
-            if command_output and 'error' in command_output:
-                raise JobError("Unable to enter fastboot: %s" %
-                               command_output)  # FIXME: JobError needs a unit test
             return connection
 
         # Enter fastboot mode with fastboot.
@@ -242,6 +251,8 @@ class FastbootFlashAction(DeployAction):
             if not src:
                 continue
             dst = copy_to_lxc(lxc_name, src)
+            if flash_cmd in ['boot']:
+                continue
             serial_number = self.job.device['fastboot_serial_number']
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                             '-s', serial_number, 'flash', flash_cmd, dst]

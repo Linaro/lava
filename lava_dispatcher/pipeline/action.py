@@ -571,7 +571,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         pass
 
-    def run_command(self, command_list, allow_silent=False):
+    def run_command(self, command_list, allow_silent=False, allow_fail=False):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -608,12 +608,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.errors = exc.output.strip().decode('utf-8')
                 else:
                     self.errors = str(exc)
-                self.logger.exception(
-                    '[%s] command %s\nmessage %s\noutput %s\n',
-                    self.name,
-                    [i.strip() for i in exc.cmd],
-                    str(exc),
-                    str(exc).split('\n'))
+                msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
+                    self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
             else:
                 if exc.output:
                     self.errors = exc.output.strip()
@@ -621,12 +617,15 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.errors = exc.message
                 else:
                     self.errors = str(exc)
-                self.logger.exception(
-                    "[%s] command %s\nmessage %s\noutput %s\nexit code %s",
-                    self.name,
-                    [i.strip() for i in exc.cmd],
-                    [i.strip() for i in exc.message],
+                msg = "[%s] command %s\nmessage %s\noutput %s\nexit code %s" % (
+                    self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
+
+            if exc.returncode != 0 and allow_fail:
+                self.logger.info(msg)
+                self.errors == []
+            else:
+                self.logger.exception(msg)
 
         # allow for commands which return no output
         if not log and allow_silent:

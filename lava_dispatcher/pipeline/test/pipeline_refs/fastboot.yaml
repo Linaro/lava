@@ -15,6 +15,10 @@
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyLxcOverlay, name: apply-lxc-overlay}
@@ -28,7 +32,6 @@
 - class: actions.deploy.fastboot.FastbootAction
   name: fastboot-deploy
   pipeline:
-  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
   - {class: actions.deploy.fastboot.EnterFastbootAction, name: enter_fastboot_action}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - class: actions.deploy.download.DownloaderAction
@@ -49,6 +52,10 @@
   pipeline:
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
