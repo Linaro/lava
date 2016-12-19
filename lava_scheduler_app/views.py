@@ -2431,9 +2431,12 @@ def device_dictionary(request, pk):
 
     if not device.is_pipeline:
         raise Http404
+
     device_dict = DeviceDictionary.get(device.hostname)
-    if device_dict:
-        device_dict = device_dict.to_dict()
+    if not device_dict:
+        raise Http404
+
+    device_dict = device_dict.to_dict()
     dictionary = OrderedDict()
     vland = OrderedDict()
     extra = {}
