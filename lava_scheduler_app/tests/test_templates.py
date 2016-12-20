@@ -368,7 +368,7 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
         self.assertIn(
-            'set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr intel_mmio=on mmio=on ip=eth0:dhcp',
+            'set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr intel_mmio=on mmio=on ip=dhcp',
             template_dict['actions']['boot']['methods']['ipxe']['nfs']['commands'])
 
     def test_extra_nfs_opts(self):

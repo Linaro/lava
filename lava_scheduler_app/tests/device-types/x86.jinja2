@@ -2,7 +2,6 @@
 
 # in milliseconds
 {% set boot_character_delay = boot_character_delay | default(500) %}
-
 {% block body %}
 device_type: x86
 
@@ -41,7 +40,7 @@ actions:
           commands:
           - dhcp net0
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
-          - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} ip=eth0:dhcp"
+          - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
           - boot
@@ -49,11 +48,9 @@ actions:
           commands:
           - dhcp net0
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
-          - set extraargs init=/sbin/init {{ base_kernel_args }} {{ base_ip_args }}
+          - set extraargs {{ base_kernel_args }} {{ base_ip_args }}
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
-          - ' '
           - initrd tftp://{SERVER_IP}/{RAMDISK}
-          - ' '
           - boot
 {% endblock %}
 
