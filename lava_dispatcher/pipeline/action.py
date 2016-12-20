@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import re
 import logging
 import sys
 import copy
@@ -270,24 +269,20 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             # always ensure the unit tests continue to pass with changes here.
             except (AttributeError, KeyError, NameError, OSError, SyntaxError,
                     TypeError, ValueError) as exc:
-                action.logger.exception(exc)
-                # TODO: clean the error message
-                msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+                exc_message = str(exc)
+                action.logger.error(exc_message)
                 action.logger.exception(traceback.format_exc())
-                action.errors = msg
-                # report action errors so that the last part of the message is the most relevant.
-                raise RuntimeError(action.errors)
+                action.errors = exc_message
+                # Raise a RuntimeError that will be correctly classified later
+                raise RuntimeError(exc_message)
             except (InfrastructureError, JobError, RuntimeError, TestError) as exc:
-                if sys.version > '3':
-                    exc_message = str(exc)
-                else:
-                    exc_message = exc.message
+                exc_message = str(exc)
                 action.errors = exc_message
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
                 action.log_action_results()
-                action.logger.exception(exc_message)
+                action.logger.error(exc_message)
                 self._diagnose(connection)
                 raise
             finally:
@@ -552,7 +547,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 self.logger.info(msg)
                 self.errors == []
             else:
-                self.logger.exception(msg)
+                self.logger.error(msg)
 
         # allow for commands which return no output
         if not log and allow_silent:
