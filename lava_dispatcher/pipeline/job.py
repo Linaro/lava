@@ -134,7 +134,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 if exc.errno != errno.EEXIST:
                     # When running unit tests
                     base_dir = tempfile.mkdtemp(prefix='pipeline-')
-                    atexit.register(shutil.rmtree, base_dir)
+                    atexit.register(shutil.rmtree, base_dir, ignore_errors=True)
             # Save the path for the next calls
             self.tmp_dir = base_dir
 
