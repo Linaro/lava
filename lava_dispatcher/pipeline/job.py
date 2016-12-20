@@ -154,7 +154,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             except KeyboardInterrupt:
                 self.cleanup(connection=None, message="Canceled")
                 self.logger.info("Canceled")
-                return 1  # equivalent to len(self.pipeline.errors)
+                raise JobError("Canceled")
             except (JobError, RuntimeError, KeyError, TypeError) as exc:
                 raise JobError(exc)
             if not protocol.valid:
@@ -169,6 +169,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         try:
             self.pipeline.validate_actions()
         except (JobError, InfrastructureError) as exc:
+            self.cleanup(connection=None, message="Invalid job definition")
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
