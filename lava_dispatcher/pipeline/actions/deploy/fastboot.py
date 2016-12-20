@@ -37,9 +37,6 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
-from lava_dispatcher.pipeline.utils.constants import (
-    FASTBOOT_REBOOT_TIMEOUT,
-)
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 
 # pylint: disable=too-many-return-statements
@@ -260,45 +257,4 @@ class FastbootFlashAction(DeployAction):
             if command_output and 'error' in command_output:
                 raise JobError("Unable to flash %s using fastboot: %s",
                                flash_cmd, command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class FastbootRebootAction(DeployAction):
-    """
-    Fastboot Reboot.
-    """
-
-    def __init__(self):
-        super(FastbootRebootAction, self).__init__()
-        self.name = "fastboot_reboot_action"
-        self.description = "fastboot reboot"
-        self.summary = "fastboot reboot"
-        self.retries = 3
-        self.sleep = FASTBOOT_REBOOT_TIMEOUT
-
-    def validate(self):
-        super(FastbootRebootAction, self).validate()
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
-
-    def run(self, connection, args=None):
-        connection = super(FastbootRebootAction, self).run(connection, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
-        # lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'reboot']
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise JobError("Unable to reboot using fastboot: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
         return connection

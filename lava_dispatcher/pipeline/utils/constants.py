@@ -87,9 +87,6 @@ ACTION_TIMEOUT = 30
 # Android tmp directory
 ANDROID_TMP_DIR = '/data/local/tmp'
 
-# Default timeout for fastboot reboot
-FASTBOOT_REBOOT_TIMEOUT = 10
-
 # LXC container path
 LXC_PATH = "/var/lib/lxc"
 
