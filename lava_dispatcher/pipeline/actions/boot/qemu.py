@@ -140,7 +140,7 @@ class CallQemuAction(Action):
             image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
             action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
             if not image_arg or not action_arg:
-                self.errors = "Missing image_arg for %s. " % action
+                self.errors = "Missing image_arg for %s. " % label
                 continue
             substitutions["{%s}" % label] = action_arg
             commands.append(image_arg)
