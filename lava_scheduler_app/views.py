@@ -2372,8 +2372,11 @@ def device_detail(request, pk):
     if device.is_pipeline:
         overrides = []
         path = utils.jinja_template_path(system=True)
-        devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % device.device_type.name)
-        mismatch = not os.path.exists(devicetype_file)
+        device_dict = DeviceDictionary.get(device.hostname)
+        if device_dict:
+            extends = device_dict.to_dict()['parameters']['extends']
+            devicetype_file = os.path.join(path, 'device-types', '%s' % extends)
+            mismatch = not os.path.exists(devicetype_file)
 
     template = loader.get_template("lava_scheduler_app/device.html")
     return HttpResponse(template.render(
