@@ -597,6 +597,8 @@ class ConfigurePreseedFile(Action):
         self.description = "add commands to automated installers, to copy the lava test overlay to the installed system"
 
     def run(self, connection, args=None):
+        if 'deployment_data' not in self.parameters:
+            return connection
         if self.parameters["deployment_data"].get('installer_extra_cmd', None):
             if self.parameters.get('os', None) == "debian_installer":
                 add_late_command(self.get_namespace_data(action='download_action', label='preseed', key='file'),
@@ -609,3 +611,4 @@ class ConfigurePreseedFile(Action):
                 }
                 post_command = substitute([self.parameters["deployment_data"]["installer_extra_cmd"]], substitutions)
                 add_to_kickstart(self.get_namespace_data(action='download_action', label='preseed', key='file'), post_command[0])
+        return connection

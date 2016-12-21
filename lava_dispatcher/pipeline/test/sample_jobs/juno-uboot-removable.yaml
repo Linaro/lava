@@ -1,81 +1,109 @@
-# Sample JOB definition for a juno u-boot removable media job
-
 device_type: juno
 
-job_name: juno-uboot-removable
+job_name: juno-uboot-android-removable
 timeouts:
   job:
-    minutes: 15
+    minutes: 90            # timeout for the whole job (default: ??h)
   action:
-   minutes: 5
+    minutes: 10         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  actions:
+    u-boot-interrupt:
+      seconds: 120
+    u-boot-commands:
+      seconds: 120
+    auto-login-action:
+      seconds: 300
+    uboot-retry:
+      seconds: 180
+    dd-image:
+      seconds: 900
+    http_download:
+      seconds: 600
+  connections:
+    u-boot-interrupt:
+      seconds: 120
+    u-boot-commands:
+      seconds: 120
+    auto-login-action:
+      seconds: 300
+    uboot-retry:
+      seconds: 180
+    dd-image:
+      seconds: 900
+    http_download:
+      seconds: 600
 priority: medium
 visibility: public
 
 actions:
-
   - deploy:
+     namespace: openembedded
      timeout:
        minutes: 2
      to: tftp
-     namespace: master-image
-     kernel:
-         url: http://images.validation.linaro.org/juno/kernel/Image
      os: oe
+     kernel:
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/Image
      dtb:
-         url: http://images.validation.linaro.org/juno/kernel/juno.dtb
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/juno.dtb
+     ramdisk:
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/ramdisk.img
+         header: u-boot
+         install_overlay: False
+         install_modules: False
      nfsrootfs:
-         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
+         url: http://ironhide.bounceme.net/deano-my-lad/linaro-image-lamp-genericarmv8-20150921-770.rootfs.tar.gz
          compression: gz
 
   - boot:
+     namespace: openembedded
      method: u-boot
-     namespace: master-image
-     commands: tftp
+     commands: ramdisk-tftp
      type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:
-       - '/ #'
-       - 'linaro-test'
-       - 'root@debian:~#'
-       - 'root@genericarmv8:~#'
+       - 'root@(.*):~#'
 
   - deploy:
+     namespace: android
      timeout:
-       minutes: 10
+       minutes: 40
      to: usb
-     namespace: test-image
-     os: oe
+     os: android
      image:
-         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/lt-vexpress64-openembedded_minimal-armv8-gcc-5.2_20160121-736.img.gz
-         compression: gz
-     device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+         url: http://releases.linaro.org/members/arm/android/juno/16.09/juno.img.bz2
+         compression: bz2
+     device: SanDiskCruzerBlade
      download:
          tool: /usr/bin/wget
          prompt: HTTP request sent, awaiting response
          options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
 
+  - deploy:
+     namespace: android
+     timeout:
+       minutes: 2
+     to: tftp
+     os: android
+     kernel:
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/Image
+     ramdisk:
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/ramdisk.img
+         header: u-boot
+         install_overlay: False
+         install_modules: False
+     dtb:
+         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/juno.dtb
+
   - boot:
+     namespace: android
      method: u-boot
-     namespace: test-image
-     commands: use-defaults
      type: booti
+     commands: ramdisk-tftp-usb
+     timeout:
+       minutes: 5
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:
-       - '/ #'
-       - 'linaro-test'
-       - 'root@debian:~#'
-       - 'root@genericarmv8:~#'
-
-  - test:
-     namespace: test-image
-     failure_retry: 3
-     name: juno-basics
-     timeout:
-       minutes: 5
-     definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
-           from: git
-           path: openembedded/smoke-tests-basic.yaml
-           name: smoke-tests
+       - 'root@(.*):~#'

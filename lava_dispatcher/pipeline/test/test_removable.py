@@ -147,16 +147,21 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('uuid', job.device['parameters']['media']['usb'][deploy_params['device']])
         self.assertIn('device_id', job.device['parameters']['media']['usb'][deploy_params['device']])
         self.assertNotIn('boot_part', job.device['parameters']['media']['usb'][deploy_params['device']])
-        deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
-        download_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
+        tftp_deploys = [action for action in job.pipeline.actions if action.name == 'tftp-deploy']
+        self.assertEqual(len(tftp_deploys), 2)
+        first_deploy = tftp_deploys[0]
+        second_deploy = tftp_deploys[1]
+        self.assertIsNotNone(first_deploy)
+        self.assertIsNotNone(second_deploy)
+        self.assertEqual('openembedded', first_deploy.parameters['namespace'])
+        self.assertEqual('android', second_deploy.parameters['namespace'])
+        self.assertNotIn('deployment_data', first_deploy.parameters)
+        self.assertNotIn('deployment_data', second_deploy.parameters)
+        storage_deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
+        download_action = [
+            action for action in storage_deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
         self.assertIsNotNone(download_action)
-        overlay_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        self.assertEqual({'test-image', 'master-image'}, action_namespaces(overlay_action.job.parameters))
-        test_dir = download_action.get_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir')
-        self.assertIsNotNone(test_dir)
-        self.assertIn('/lava-', test_dir)
-        self.assertIsInstance(deploy_action, MassStorage)
-        self.assertIn('image', deploy_action.parameters.keys())
+        self.assertEqual('android', storage_deploy_action.parameters['namespace'])
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_primary_media(self):
