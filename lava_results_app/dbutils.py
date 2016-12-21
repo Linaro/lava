@@ -375,6 +375,9 @@ def map_metadata(description, job):
     if description is None:
         logger.warning("[%s] skipping empty description", job.id)
         return
+    if not description_data:
+        logger.warning("[%s] skipping invalid description data", job.id)
+        return
     if 'job' not in description_data:
         logger.warning("[%s] skipping description without a job.", job.id)
         return
