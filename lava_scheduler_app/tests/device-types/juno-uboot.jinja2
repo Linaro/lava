@@ -48,6 +48,15 @@ actions:
       nfs:
       tftp:
       usb:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
     connections:
       adb:
       lxc:
@@ -58,9 +67,11 @@ actions:
       adb:
       lxc:
       serial:
+      ssh:
     # list of boot methods which this device supports.
     methods:
       lxc:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: VExpress64
