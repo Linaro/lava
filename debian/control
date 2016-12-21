@@ -56,8 +56,9 @@ Description: Linaro Automated Validation Architecture server
 Package: lava
 Architecture: all
 Section: metapackages
-Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
- lava-dev, lava-tool, lavapdu-client, ntp | ntpdate, tftpd-hpa,
+Depends: lava-server (= ${binary:Version}), lava-server-doc,
+ lava-dispatcher, lava-coordinator, lava-dev, lava-tool,
+ lavapdu-client, ntp | ntpdate, tftpd-hpa,
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
 Recommends: lavapdu-daemon, linaro-image-tools, schroot
 Suggests: vmdebootstrap
