@@ -42,3 +42,6 @@ run:
 
 parse:
     pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+    fixupdict:
+      pass: PASS
+      fail: UNKNOWN

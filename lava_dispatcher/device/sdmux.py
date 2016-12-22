@@ -278,4 +278,5 @@ class SDMuxTarget(Target):
     def get_device_version(self):
         return self.config.sdmux_version
 
+
 target_class = SDMuxTarget

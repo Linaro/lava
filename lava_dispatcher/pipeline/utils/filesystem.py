@@ -24,11 +24,15 @@ import shutil
 import tarfile
 import tempfile
 import guestfs
+import subprocess
 from configobj import ConfigObj
 
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.constants import LXC_PATH
-from lava_dispatcher.pipeline.utils.compression import decompress_file
+from lava_dispatcher.pipeline.utils.compression import (
+    decompress_file,
+    untar_file,
+)
 
 
 def rmtree(directory):
@@ -230,3 +234,22 @@ def copy_to_lxc(lxc_name, src):
         raise JobError("Unable to copy image: %s" % src)
 
     return os.path.join('/', filename)
+
+
+def copy_overlay_to_sparse_fs(image, overlay):
+    """copy_overlay_to_sparse_fs
+    """
+    mnt_dir = mkdtemp()
+    ext4_img = image + '.ext4'
+    subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
+                            stderr=subprocess.STDOUT)
+    subprocess.check_output(['/bin/mount', '-o', 'loop', ext4_img, mnt_dir],
+                            stderr=subprocess.STDOUT)
+    if os.path.exists(overlay[:-3]):
+        os.unlink(overlay[:-3])
+    decompressed_overlay = decompress_file(overlay, 'gz')
+    untar_file(decompressed_overlay, mnt_dir)
+    subprocess.check_output(['/bin/umount', mnt_dir], stderr=subprocess.STDOUT)
+    subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
+                            stderr=subprocess.STDOUT)
+    os.remove(ext4_img)

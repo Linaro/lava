@@ -83,20 +83,21 @@ class ScpOverlay(DeployAction):
         self.items = [
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_dir = lava_test_results_base % self.job.job_id
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         tar_flags = parameters['deployment_data']['tar_flags'] if 'tar_flags' in parameters['deployment_data'].keys() else ''
-        self.set_common_data(self.name, 'tar_flags', tar_flags)
+        self.set_namespace_data(action=self.name, label=self.name, key='tar_flags', value=tar_flags, parameters=parameters)
         self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
                 download = DownloaderAction(item, path=self.mkdtemp())
                 download.max_retries = 3
                 self.internal_pipeline.add_action(download, parameters)
-                self.set_common_data('scp', item, True)
+                self.set_namespace_data(action=self.name, label='scp', key=item, value=True, parameters=parameters)
         # we might not have anything to download, just the overlay to push
         self.internal_pipeline.add_action(PrepareOverlayScp())
         # prepare the device environment settings in common data for enabling in the boot step
@@ -118,13 +119,18 @@ class PrepareOverlayScp(Action):
 
     def validate(self):
         super(PrepareOverlayScp, self).validate()
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
-        environment = self.get_common_data('environment', 'env_dict')
+        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_dir = lava_test_results_base % self.job.job_id
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
+        environment = self.get_namespace_data(
+            action='deploy-device-env',
+            label='environment',
+            key='env_dict'
+        )
         if not environment:
             environment = {}
         environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
-        self.set_common_data('environment', 'env_dict', environment)
+        self.set_namespace_data(action=self.name, label='environment', key='env_dict', value=environment)
         if 'protocols' in self.parameters:
             # set run to call the protocol, retrieve the data and store.
             for params in self.parameters['protocols'][MultinodeProtocol.name]:
@@ -140,7 +146,7 @@ class PrepareOverlayScp(Action):
                     self.errors = "Missing message block for scp deployment"
                     return
                 self.host_keys.append(params['messageID'])
-        self.set_common_data(self.name, 'overlay', self.host_keys)
+        self.set_namespace_data(action=self.name, label=self.name, key='overlay', value=self.host_keys)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -149,10 +155,12 @@ class PrepareOverlayScp(Action):
 
     def run(self, connection, args=None):
         connection = super(PrepareOverlayScp, self).run(connection, args)
-        self.logger.info("Preparing to copy: %s", os.path.basename(self.data['compress-overlay'].get('output')))
-        self.set_common_data('scp-deploy', 'overlay', self.data['compress-overlay'].get('output'))
+        overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+        self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
+        self.set_namespace_data(action=self.name, label='scp-deploy', key='overlay', value=overlay_file)
         for host_key in self.host_keys:
-            data = self.get_common_data(MultinodeProtocol.name, host_key)
+            data = self.get_namespace_data(
+                action=MultinodeProtocol.name, label=MultinodeProtocol.name, key=host_key)
             if not data:
                 self.logger.warning("Missing data for host_key %s", host_key)
                 continue
@@ -162,6 +170,7 @@ class PrepareOverlayScp(Action):
                     self.logger.error("Mismatched replacement key %s and received data %s",
                                       replacement_key, list(data.keys()))
                     continue
-                self.set_common_data(self.name, host_key, str(data[replacement_key]))
-                self.logger.info("data %s replacement key is %s", host_key, self.get_common_data(self.name, host_key))
+                self.set_namespace_data(action=self.name, label=self.name, key=host_key, value=str(data[replacement_key]))
+                self.logger.info("data %s replacement key is %s", host_key, self.get_namespace_data(
+                    action=MultinodeProtocol.name, label=self.name, key=host_key))
         return connection

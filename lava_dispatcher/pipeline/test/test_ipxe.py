@@ -20,6 +20,7 @@
 
 
 import os
+import sys
 import yaml
 import tarfile
 import unittest
@@ -27,6 +28,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ipxe import (
     BootloaderAction,
+    BootloaderCommandsAction,
     BootloaderCommandOverlay
 )
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
@@ -81,7 +83,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             ['tftp-deploy', 'bootloader-action', 'lava-test-retry', 'finalize']
         )
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        self.assertTrue(tftp.get_common_data('tftp', 'ramdisk'))
+        self.assertTrue(tftp.get_namespace_data(action=tftp.name, label='tftp', key='ramdisk'))
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
@@ -111,6 +113,10 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         params = job.device['actions']['boot']['methods']['ipxe']['parameters']
         boot_message = params.get('boot_message', BOOT_MESSAGE)
         self.assertIsNotNone(boot_message)
+        bootloader_action = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
+        bootloader_retry = [action for action in bootloader_action.internal_pipeline.actions if action.name == 'bootloader-retry'][0]
+        commands = [action for action in bootloader_retry.internal_pipeline.actions if action.name == 'bootloader-commands'][0]
+        self.assertEqual(commands.character_delay, 250)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, BootloaderAction):
@@ -151,7 +157,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         job = Job(4212, None, None, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
-        job.set_pipeline(pipeline)
+        job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
         try:
@@ -202,8 +208,9 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             for action in overlay.internal_pipeline.actions:
                 if action.name == 'extract-nfsrootfs':
                     extract = action
-        self.assertIn('lava_test_results_dir', overlay.data)
-        self.assertIn('/lava-', overlay.data['lava_test_results_dir'])
+        test_dir = overlay.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        self.assertIsNotNone(test_dir)
+        self.assertIn('/lava-', test_dir)
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
@@ -270,7 +277,9 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
                  if action.name == 'bootloader-retry'][0]
         expect = [action for action in retry.internal_pipeline.actions
                   if action.name == 'expect-shell-connection'][0]
-        self.assertNotEqual(check, expect.parameters)
+        if sys.version < '3':
+            # skipping in 3 due to "RecursionError: maximum recursion depth exceeded in comparison"
+            self.assertNotEqual(check, expect.parameters)
 
     def test_xz_nfs(self):
         factory = Factory()
@@ -282,3 +291,10 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
         self.assertIn('compression', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
+
+    def test_ipxe_with_monitor(self):
+        factory = Factory()
+        job = factory.create_job('sample_jobs/ipxe-monitor.yaml')
+        job.validate()
+        description_ref = pipeline_reference('ipxe-monitor.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))

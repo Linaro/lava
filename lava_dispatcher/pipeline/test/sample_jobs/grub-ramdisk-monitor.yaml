@@ -1,0 +1,38 @@
+device_type: d02
+
+job_name: d02-grub-boot
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+visibility: public
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 10
+     to: tftp
+     ramdisk:
+         url: http://storage.kernelci.org/images/rootfs/buildroot/arm64/tests/rootfs.cpio.gz
+         compression: gz
+     kernel:
+         url: http://images.validation.linaro.org/d02/20151209-1510/Image
+     dtb:
+         url: http://images.validation.linaro.org/d02/20151209-1510/hip05-d02.dtb
+     os: oe
+
+  - boot:
+      method: grub
+      commands: ramdisk
+
+  - test:
+      monitors:
+      - name: Test AES128
+        start: tc_start()
+        end: PROJECT EXECUTION
+        pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
+        fixupdict:
+          PASS: pass
+          FAIL: fail

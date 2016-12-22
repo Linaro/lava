@@ -137,10 +137,11 @@ class BootloaderDefaultsRetry(BootAction):
 
     def validate(self):
         super(BootloaderDefaultsRetry, self).validate()
-        self.set_common_data(
-            'bootloader_prompt',
-            'prompt',
-            self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']['bootloader_prompt']
+        self.set_namespace_data(
+            action=self.name,
+            label='bootloader_prompt',
+            key='prompt',
+            value=self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']['bootloader_prompt']
         )
 
     def run(self, connection, args=None):
@@ -152,5 +153,6 @@ class BootloaderDefaultsRetry(BootAction):
         connection.timeout = self.connection_timeout
         self.wait(connection)
         self.logger.error(self.errors)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

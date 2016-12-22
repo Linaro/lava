@@ -64,6 +64,7 @@ else:
 # Default values for:
 # timeouts (in seconds)
 # zmq socket send high water mark
+PROTOCOL_VERSION = 1
 TIMEOUT = 5
 JOBS_CHECK_INTERVAL = 5
 FINISH_MAX_DURATION = 60
@@ -130,8 +131,8 @@ class Job(object):
         with open(os.path.join(self.base_dir, "job.yaml"), "w") as f_job:
             f_job.write(definition)
         with open(os.path.join(self.base_dir, "device.yaml"), "w") as f_device:
-            if device_definition:  # an empty file for secondary connections
-                f_device.write(device_definition)
+            # Will be empty for secondary connections
+            f_device.write(device_definition)
 
     def create_environ(self):
         """Generate the env variables for the job."""
@@ -206,13 +207,15 @@ class Job(object):
         except Exception as exc:  # pylint: disable=broad-except
             # daemon must always continue running even if the job crashes
             if hasattr(exc, "child_traceback"):
-                LOG.exception(
-                    {exc.strerror: exc.child_traceback.split("\n")})
+                LOG.exception(exc.child_traceback)
             else:
                 LOG.exception(exc)
             with open(err_file, "a") as errlog:
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
-            self.cancel()
+            # The process has not started
+            # The END message will be sent the next time
+            # check_job_status is run
+            self.status = Job.ENDING
 
     def cancel(self):
         """Cancel the job and kill the process."""
@@ -415,8 +418,9 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
             else:
                 LOG.info("Unexpected message from the master: %s", message)
 
-    LOG.debug("Sending new %s message to the master", retry_msg)
-    send_multipart_u(sock, [retry_msg])
+    LOG.debug("Sending new %s message to the master (are they both running the same version?)", retry_msg)
+    # TODO: count the number of messages and re-connect if needed
+    send_multipart_u(sock, [retry_msg, str(PROTOCOL_VERSION)])
     return False
 
 
@@ -616,7 +620,7 @@ def check_job_status(jobs, sock, last_jobs_check):
             # Terminate processes that where not collected last time and that are
             # too long to end.
             if now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
-                LOG.info("[%d] Job not finishing => terminating")
+                LOG.info("[%d] Job not finishing => terminating", job_id)
                 # Just terminate the proc and let the next iteration will send the
                 # signal for us.
                 jobs[job_id].proc.terminate()
@@ -732,7 +736,7 @@ def main():
 
     hello_msg = "HELLO"
     LOG.debug("Greeting the master => '%s'", hello_msg)
-    send_multipart_u(sock, [hello_msg])
+    send_multipart_u(sock, [hello_msg, str(PROTOCOL_VERSION)])
 
     while not connect_to_master(master, poller, pipe_r, sock, timeout):
         pass

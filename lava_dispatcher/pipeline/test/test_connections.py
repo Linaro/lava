@@ -163,7 +163,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
     def test_tar_command(self):
         self.job.validate()
         login = [item for item in self.job.pipeline.actions if item.name == 'login-ssh'][0]
-        tar_flags = login.get_common_data('scp-overlay', 'tar_flags')
+        tar_flags = login.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         self.assertIsNotNone(tar_flags)
         self.assertEqual('--warning no-timestamp', tar_flags)
 
@@ -199,7 +199,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         scp_overlay = [item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay'][0]
         prepare = [item for item in scp_overlay.internal_pipeline.actions if item.name == 'prepare-scp-overlay'][0]
         self.assertEqual(prepare.host_keys, ['ipv4'])
-        self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
+        self.assertEqual(prepare.get_namespace_data(action=prepare.name, label=prepare.name, key='overlay'), prepare.host_keys)
         params = prepare.parameters['protocols'][MultinodeProtocol.name]
         for call_dict in [call for call in params if 'action' in call and call['action'] == prepare.name]:
             del call_dict['yaml_line']
@@ -227,24 +227,29 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn(  # ipv4
             login.parameters['parameters']['hostID'],
             prepare.host_keys)
-        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': '172.16.200.165'})
-        self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
+        prepare.set_namespace_data(
+            action=MultinodeProtocol.name, label=MultinodeProtocol.name,
+            key='ipv4', value={'ipaddr': '172.16.200.165'})
+        self.assertEqual(prepare.get_namespace_data(
+            action=prepare.name, label=prepare.name, key='overlay'), prepare.host_keys)
         self.assertIn(
             login.parameters['parameters']['host_key'],
-            prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID']))
-        host_data = prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID'])
+            prepare.get_namespace_data(
+                action=MultinodeProtocol.name, label=MultinodeProtocol.name, key=login.parameters['parameters']['hostID']))
+        host_data = prepare.get_namespace_data(
+            action=MultinodeProtocol.name, label=MultinodeProtocol.name, key=login.parameters['parameters']['hostID'])
         self.assertEqual(
             host_data[login.parameters['parameters']['host_key']],
             '172.16.200.165'
         )
-        data = scp_overlay.get_common_data(MultinodeProtocol.name, 'ipv4')
+        data = scp_overlay.get_namespace_data(action=MultinodeProtocol.name, label=MultinodeProtocol.name, key='ipv4')
         if 'protocols' in scp_overlay.parameters:
             for params in scp_overlay.parameters['protocols'][MultinodeProtocol.name]:
                 (replacement_key, placeholder) = [
                     (key, value)for key, value in params['message'].items() if key != 'yaml_line'][0]
                 self.assertEqual(data[replacement_key], '172.16.200.165')
                 self.assertEqual(placeholder, '$ipaddr')
-        environment = scp_overlay.get_common_data('environment', 'env_dict')
+        environment = scp_overlay.get_namespace_data(action=prepare.name, label='environment', key='env_dict')
         self.assertIsNotNone(environment)
         self.assertIn('LANG', environment.keys())
         self.assertIn('C', environment.values())

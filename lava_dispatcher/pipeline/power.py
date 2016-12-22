@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     TestError,
     JobError,
+    action_namespaces,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -85,8 +86,13 @@ class RebootDevice(Action):
             connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
         self.results = {"success": connection.prompt_str}
         self.data[PDUReboot.key()] = False
-        if 'bootloader_prompt' in self.data['common']:
-            self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
+        reboot_prompt = self.get_namespace_data(
+            action='uboot-retry',
+            label='bootloader_prompt',
+            key='prompt'
+        )
+        if reboot_prompt:
+            self.reboot_prompt = reboot_prompt
         try:
             self.wait(connection)
         except TestError:
@@ -181,7 +187,11 @@ class LxcStop(Action):
 
     def run(self, connection, args=None):
         connection = super(LxcStop, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        lxc_name = self.get_namespace_data(
+            action='lxc-create-action',
+            label='lxc',
+            key='name'
+        )
         if not lxc_name:
             return connection
         lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
@@ -242,6 +252,12 @@ class FinalizeAction(Action):
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
+
+        # Finalize all connections associated with each namespace.
+        connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
+        if connection:
+            connection.finalise()
+
         for protocol in self.job.protocols:
             protocol.finalise_protocol(self.job.device)
         if self.errors:

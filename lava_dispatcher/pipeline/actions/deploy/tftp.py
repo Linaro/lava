@@ -30,7 +30,6 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import tftpd_dir
 
@@ -99,11 +98,13 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             return
         if 'nfsrootfs' in self.parameters and 'nfs_url' in self.parameters:
             self.errors = "Only one of nfsrootfs or nfs_url can be specified"
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_base % self.job.job_id
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
-        self.data[self.name].setdefault('suffix', suffix)
+        self.set_namespace_data(action=self.name, label='tftp', key='suffix', value=suffix)
         self.errors = infrastructure_error('in.tftpd')
 
         # Check that the tmp directory is in the tftpd_dir or in /tmp for the
@@ -115,16 +116,10 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
            not tftp_dir.startswith(tmp_dir):
             self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
 
-        # allow change of lineseparator on sendline during later stages of boot
-        self.set_common_data(
-            'lineseparator',
-            'os_linesep',
-            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
-
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.set_common_data('tftp', 'tftp_dir', self.tftp_dir)
+        self.set_namespace_data(action=self.name, label='tftp', key='tftp_dir', value=self.tftp_dir, parameters=parameters)
 
         for key in ['ramdisk', 'kernel', 'dtb', 'nfsrootfs', 'modules', 'preseed']:
             if key in parameters:
@@ -132,8 +127,9 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
                 self.internal_pipeline.add_action(download)
                 if key == 'ramdisk':
-                    self.set_common_data('tftp', 'ramdisk', True)
+                    self.set_namespace_data(action=self.name, label='tftp', key='ramdisk', value=True, parameters=parameters)
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())

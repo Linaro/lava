@@ -22,6 +22,7 @@ import re
 import sys
 import time
 import yaml
+import decimal
 import logging
 import pexpect
 from collections import OrderedDict
@@ -72,6 +73,18 @@ class TestShell(LavaTest):
             return True
         else:
             return False
+
+    @classmethod
+    def needs_deployment_data(cls):
+        return True
+
+    @classmethod
+    def needs_overlay(cls):
+        return True
+
+    @classmethod
+    def has_shell(cls):
+        return True
 
 
 class TestShellRetry(RetryAction):
@@ -185,10 +198,17 @@ class TestShellAction(TestAction):
         A missing boot-result could be a missing deployment for some actions.
         """
         # Sanity test: could be a missing deployment for some actions
-        if "boot-result" not in self.data:
+        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
+        if not res:
             raise RuntimeError("No boot action result found")
         connection = super(TestShellAction, self).run(connection, args)
-        if self.data["boot-result"] != "success":
+
+        # Get the connection, specific to this namespace
+        connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection', deepcopy=False)
+
+        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
+        if res != "success":
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
@@ -201,7 +221,7 @@ class TestShellAction(TestAction):
 
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
-        self.set_common_data(self.name, 'pattern_dictionary', pattern_dict)
+        self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
 
         self.logger.info("Executing test definitions using %s" % connection.name)
         if not connection.prompt_str:
@@ -215,68 +235,41 @@ class TestShellAction(TestAction):
 
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
-        pre_command_list = self.get_common_data("lava-test-shell", 'pre-command-list')
-        if pre_command_list and self.parameters['stage'] == 0:
-            for command in pre_command_list:
-                connection.sendline(command)
+        stage = self.get_namespace_data(action='test-definition', label='lava-test-shell', key='stages')
+        pre_command_list = self.get_namespace_data(action='test', label="lava-test-shell", key='pre-command-list')
+        lava_test_results_dir = self.get_namespace_data(
+            action='test', label='results', key='lava_test_results_dir')
 
-        with connection.test_connection() as test_connection:
-            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-            test_connection.sendline(
-                "%s/bin/lava-test-runner %s/%s" % (
-                    self.data["lava_test_results_dir"],
-                    self.data["lava_test_results_dir"],
-                    self.parameters['stage']),
-                delay=self.character_delay)
+        for running in xrange(stage + 1):
+            if pre_command_list and running == 0:
+                for command in pre_command_list:
+                    connection.sendline(command)
 
-            self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
-            if self.timeout.duration > self.connection_timeout.duration:
-                self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
-                test_connection.timeout = self.timeout.duration
-            else:
-                self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
-                test_connection.timeout = self.connection_timeout.duration
+            self.logger.debug("Using %s" % lava_test_results_dir)
+            connection.sendline('ls -l %s/' % lava_test_results_dir)
 
-            while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                pass
+            with connection.test_connection() as test_connection:
+                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                test_connection.sendline(
+                    "%s/bin/lava-test-runner %s/%s" % (
+                        lava_test_results_dir,
+                        lava_test_results_dir,
+                        running),
+                    delay=self.character_delay)
+
+                self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+                if self.timeout.duration > self.connection_timeout.duration:
+                    self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                    test_connection.timeout = self.timeout.duration
+                else:
+                    self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
+                    test_connection.timeout = self.connection_timeout.duration
+
+                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                    pass
 
         self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
-
-    def parse_v2_case_result(self, data, fixupdict=None):
-        # FIXME: Ported from V1 - still needs integration
-        if not fixupdict:
-            fixupdict = {}
-        res = {}
-        for key in data:
-            res[key] = data[key]
-
-            if key == 'measurement':
-                # Measurement accepts non-numeric values, but be careful with
-                # special characters including space, which may distrupt the
-                # parsing.
-                res[key] = res[key]
-
-            elif key == 'result':
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
-                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    logging.error('Bad test result: %s', res['result'])
-                    res['result'] = 'unknown'
-
-        if 'test_case_id' not in res:
-            self.logger.warning(
-                """Test case results without test_case_id (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
-
-        if 'result' not in res:
-            self.logger.warning(
-                """Test case results without result (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
-            self.logger.warning('Setting result to "unknown"')
-            res['result'] = 'unknown'
-
-        return res
 
     def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
         """
@@ -310,19 +303,18 @@ class TestShellAction(TestAction):
                 self.start = time.time()
                 self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
                 # set the pattern for this run from pattern_dict
-                namespace = self.parameters.get('namespace', None)
-                if namespace:
-                    testdef_index = self.get_common_data(namespace, 'testdef_index')
-                else:
-                    testdef_index = self.get_common_data('test-definition', 'testdef_index')
-                uuid_list = self.get_common_data('repo-action', 'uuid-list')
+                testdef_index = self.get_namespace_data(action='test-definition', label='test-definition',
+                                                        key='testdef_index')
+                uuid_list = self.get_namespace_data(action='repo-action', label='repo-action', key='uuid-list')
                 for (key, value) in enumerate(testdef_index):
                     if self.definition == "%s_%s" % (key, value):
-                        pattern = self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern']
-                        fixup = self.job.context['test'][uuid_list[key]]['testdef_pattern']['fixupdict']
+                        pattern_dict = self.get_namespace_data(action='test', label=uuid_list[key], key='testdef_pattern')
+                        pattern = pattern_dict['testdef_pattern']['pattern']
+                        fixup = pattern_dict['testdef_pattern']['fixupdict']
                         self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
                         self.pattern.update(pattern, fixup)
                         self.logger.info("Enabling test definition pattern %r" % pattern)
+                        self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
                 self.logger.results({
                     "definition": "lava",
                     "case": self.definition,
@@ -360,9 +352,11 @@ class TestShellAction(TestAction):
                     self.logger.error(str(exc))
                     return True
 
-                p_res = self.data["test"][
-                    self.signal_director.test_uuid
-                ].setdefault("results", OrderedDict())
+                p_res = self.get_namespace_data(action='test', label=self.signal_director.test_uuid, key='results')
+                if not p_res:
+                    p_res = OrderedDict()
+                    self.set_namespace_data(
+                        action='test', label=self.signal_director.test_uuid, key='results', value=p_res)
 
                 # prevent losing data in the update
                 # FIXME: support parameters and retries
@@ -379,7 +373,11 @@ class TestShellAction(TestAction):
                 }
                 # check for measurements
                 if 'measurement' in res:
-                    res_data['measurement'] = res['measurement']
+                    try:
+                        measurement = decimal.Decimal(res['measurement'])
+                    except decimal.InvalidOperation:
+                        raise TestError("Invalid measurement %s", res['measurement'])
+                    res_data['measurement'] = measurement
                     if 'units' in res:
                         res_data['units'] = res['units']
 
@@ -419,12 +417,15 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 self.logger.warning("err: lava_test_shell has timed out (test_case)")
             else:
-                res = self.signal_match.match(match.groupdict())
+                res = self.signal_match.match(match.groupdict(), fixupdict=self.pattern.fixupdict())
                 self.logger.debug("outer_loop_result: %s" % res)
                 ret_val = True
 
         elif event == 'test_case_result':
             res = test_connection.match.groupdict()
+            fixupdict = self.pattern.fixupdict()
+            if res['result'] in fixupdict:
+                res['result'] = fixupdict[res['result']]
             if res:
                 res_data = {
                     'definition': self.definition,
@@ -433,7 +434,11 @@ class TestShellAction(TestAction):
                 }
                 # check for measurements
                 if 'measurement' in res:
-                    res_data['measurement'] = res['measurement']
+                    try:
+                        measurement = decimal.Decimal(res['measurement'])
+                    except decimal.InvalidOperation:
+                        raise TestError("Invalid measurement %s", res['measurement'])
+                    res_data['measurement'] = measurement
                     if 'units' in res:
                         res_data['units'] = res['units']
 

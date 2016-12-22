@@ -141,7 +141,8 @@ class Factory(object):
             with open(kvm_yaml) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, None, None,
                                    output_dir=output_dir)
-        except NotImplementedError:
+        except NotImplementedError as exc:
+            print(exc)
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
@@ -162,7 +163,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
 
     def test_create_empty_pipeline(self):
         pipe = Pipeline()
-        self.assertEqual(pipe.children, {pipe: []})
+        self.assertEqual(pipe.actions, [])
 
     def test_add_action_to_pipeline(self):
         action = Action()
@@ -180,8 +181,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         with self.assertRaises(RuntimeError):
             pipe.add_action(pipe)
         pipe.add_action(action)
-        self.assertNotEqual(pipe.children, {pipe: []})
-        self.assertEqual(pipe.children, {pipe: [action]})
+        self.assertEqual(pipe.actions, [action])
         self.assertEqual(action.level, "1")
         try:
             simplejson.loads(pipe.describe())
@@ -195,7 +195,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         action.summary = "starter"
         pipe = Pipeline()
         pipe.add_action(action)
-        self.assertEqual(len(pipe.children[pipe]), 1)
+        self.assertEqual(len(pipe.actions), 1)
         self.assertEqual(action.level, "1")
         action = Action()
         action.name = "child_action"
@@ -205,7 +205,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             Pipeline(action)
         pipe.add_action(action)
         self.assertEqual(action.level, "2")
-        self.assertEqual(len(pipe.children[pipe]), 2)
+        self.assertEqual(len(pipe.actions), 2)
         # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
         retry_pipe = Pipeline(action)
         action = Action()
@@ -213,7 +213,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         action.description = "action inside the internal pipe"
         action.summary = "child"
         retry_pipe.add_action(action)
-        self.assertEqual(len(retry_pipe.children[retry_pipe]), 1)
+        self.assertEqual(len(retry_pipe.actions), 1)
         self.assertEqual(action.level, "2.1")
 
     def test_complex_pipeline(self):  # pylint: disable=too-many-statements
@@ -329,21 +329,21 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             pass
         self.assertIsNotNone(job)
 
-    def test_common_data(self):
+    def test_namespace_data(self):
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
         self.assertIsNotNone(job)
         test_action = job.pipeline.actions[0]
         test_action.validate()
-        test_action.set_common_data('ns', 'simple', 1)
-        self.assertEqual(test_action.get_common_data('ns', 'simple'), 1)
-        test_action.set_common_data('ns', 'dict', {'key': False})
-        self.assertEqual(test_action.get_common_data('ns', 'dict'), {'key': False})
-        test_action.set_common_data('ns', 'list', [1, 2, 3, '4'])
-        self.assertEqual(test_action.get_common_data('ns', 'list'), [1, 2, 3, '4'])
-        test_action.set_common_data('ns', 'dict2', {'key': {'nest': True}})
-        self.assertEqual(test_action.get_common_data('ns', 'dict2'), {'key': {'nest': True}})
-        self.assertNotEqual(test_action.get_common_data('unknown', 'simple'), 1)
+        test_action.set_namespace_data('common', 'label', 'simple', 1)
+        self.assertEqual(test_action.get_namespace_data('common', 'label', 'simple'), 1)
+        test_action.set_namespace_data('common', 'ns', 'dict', {'key': False})
+        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'dict'), {'key': False})
+        test_action.set_namespace_data('common', 'ns', 'list', [1, 2, 3, '4'])
+        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'list'), [1, 2, 3, '4'])
+        test_action.set_namespace_data('common', 'ns', 'dict2', {'key': {'nest': True}})
+        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'dict2'), {'key': {'nest': True}})
+        self.assertNotEqual(test_action.get_namespace_data('common', 'unknown', 'simple'), 1)
 
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods

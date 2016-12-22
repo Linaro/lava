@@ -1,0 +1,42 @@
+device_type: qemu
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+          guest:
+            size: 512  # in Mb
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      qemu:
+        parameters:
+          command:
+            qemu-system-arm
+          boot_options:
+            root: '/dev/vda2 rw rootwait'
+            console: 'ttyAMA0 115200'
+            ip: dhcp
+            mem: 1024M
+            boot_order: c  # See qemu-system man page for -boot [order=drives] option - arch-specific
+          options:
+            - -cpu cortex-m3
+            - -M lm3s6965evb
+            - -nographic
+            - -m 2048
+            - -monitor none
+            - -net nic,model=stellaris -net user
+            - -serial mon:stdio
+            - -vga none
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    umount-retry:
+      seconds: 57
+    lava-test-shell:
+      seconds: 30

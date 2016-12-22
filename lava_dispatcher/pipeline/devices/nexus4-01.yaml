@@ -2,6 +2,8 @@ device_type: nexus4
 adb_serial_number: 04f228d1d9c76f39
 fastboot_serial_number: 04f228d1d9c76f39
 device_path: ['/dev/bus/usb/001']
+flash_cmds_order: ['update', 'ptable', 'partition', 'boot', 'vendor',
+                  'system', 'cache', 'userdata']
 
 actions:
   deploy:

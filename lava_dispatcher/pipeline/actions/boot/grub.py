@@ -85,9 +85,6 @@ class GrubMainAction(BootAction):
         self.summary = "run grub boot from power to system"
         self.expect_shell = True
 
-    def validate(self):
-        super(GrubMainAction, self).validate()
-
     def populate(self, parameters):
         self.expect_shell = parameters.get('expect_shell', True)
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -96,14 +93,16 @@ class GrubMainAction(BootAction):
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterrupt())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
-        if self.expect_shell:
+        if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExpectShellSession())  # wait
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            if self.test_has_shell(parameters):
+                self.internal_pipeline.add_action(ExpectShellSession())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
-            self.logger.debug("Doing a boot without a shell (installer)")
-            self.internal_pipeline.add_action(InstallerWait())
-            self.internal_pipeline.add_action(PowerOff())
+            if self.has_boot_finished(parameters):
+                self.logger.debug("Doing a boot without a shell (installer)")
+                self.internal_pipeline.add_action(InstallerWait())
+                self.internal_pipeline.add_action(PowerOff())
 
     def run(self, connection, args=None):
         connection = super(GrubMainAction, self).run(connection, args)
@@ -114,7 +113,8 @@ class GrubMainAction(BootAction):
             connection.timeout = self.connection_timeout
             connection.sendline("#")  # poke the shell so test-shell has something to match
             self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -180,7 +180,8 @@ class InstallerWait(Action):
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)
         connection.prompt_str = wait_string
         self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -217,8 +218,6 @@ class BootloaderCommandOverlay(Action):
         elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
             self.errors = "No commands found in parameters"
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
-        self.data.setdefault(self.type, {})
-        self.data[self.type].setdefault('commands', [])
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, args=None):
@@ -235,26 +234,29 @@ class BootloaderCommandOverlay(Action):
         except InfrastructureError as exc:
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         substitutions = {
-            '{SERVER_IP}': ip_addr
+            '{SERVER_IP}': ip_addr,
+            '{PRESEED_CONFIG}': self.get_namespace_data(action='download_action', label='file', key='preseed'),
+            '{PRESEED_LOCAL}': self.get_namespace_data(action='compress-ramdisk', label='file', key='preseed_local'),
+            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
+            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
+            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel')
         }
-        substitutions['{PRESEED_CONFIG}'] = self.get_common_data('file', 'preseed')
-        substitutions['{PRESEED_LOCAL}'] = self.get_common_data('file', 'preseed_local')
-        substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
-        substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
-        substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
-        nfs_url = self.get_common_data('nfs_url', 'nfsroot')
-        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
-            substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+
+        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
+        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
+        if nfs_root:
+            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
         elif nfs_url:
             substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_common_data('nfs_url', 'serverip')
+            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='serverip')
 
-        substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
+        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
 
-        self.data[self.type]['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(self.data[self.type]['commands']))
+        subs = substitute(self.commands, substitutions)
+        self.set_namespace_data(action='bootloader-overlay', label=self.type, key='commands', value=subs)
+        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
         return connection
 
 
@@ -273,8 +275,6 @@ class BootloaderCommandsAction(Action):
 
     def validate(self):
         super(BootloaderCommandsAction, self).validate()
-        if self.type not in self.data:
-            self.errors = "Unable to read bootloader context data"
         # get prompt_str from device parameters
         self.params = self.job.device['actions']['boot']['methods'][self.type]['parameters']
 
@@ -286,9 +286,11 @@ class BootloaderCommandsAction(Action):
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         i = 1
-        for line in self.data[self.type]['commands']:
+        commands = self.get_namespace_data(action='bootloader-overlay', label=self.type, key='commands')
+
+        for line in commands:
             connection.sendline(line, delay=self.character_delay, send_char=True)
-            if i != (len(self.data[self.type]['commands'])):
+            if i != (len(commands)):
                 self.wait(connection)
                 i += 1
         # allow for auto_login

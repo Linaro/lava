@@ -16,7 +16,6 @@ context:
 actions:
   - deploy:
       to: tmpfs
-      type: monitor
       images:
         rootfs:
           url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
@@ -24,7 +23,7 @@ actions:
           compression: gz
 
   - boot:
-      method: monitor
+      method: qemu
       media: tmpfs
       failure_retry: 2
 

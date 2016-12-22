@@ -86,6 +86,7 @@ class KexecAction(Action):
         self.summary = "attempt to kexec new kernel"
         self.description = "call kexec with specified arguments"
         self.command = ''
+        self.load_command = ''
 
     def validate(self):
         super(KexecAction, self).validate()

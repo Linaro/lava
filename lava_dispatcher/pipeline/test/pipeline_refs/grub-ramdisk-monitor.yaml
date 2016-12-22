@@ -1,0 +1,43 @@
+- class: actions.deploy.tftp.TftpAction
+  name: tftp-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.apply_overlay.PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    pipeline:
+    - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, name: extract-nfsrootfs}
+    - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
+    - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
+    - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+    - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+    - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
+    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+- class: actions.boot.grub.GrubMainAction
+  name: grub-main-action
+  pipeline:
+  - {class: actions.boot.grub.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reboot-device
+    pipeline:
+    - {class: power.RebootDevice, name: soft-reboot}
+    - {class: power.PDUReboot, name: pdu_reboot}
+    - {class: power.PowerOn, name: power_on}
+  - {class: actions.boot.grub.BootloaderInterrupt, name: bootloader-interrupt}
+  - {class: actions.boot.grub.BootloaderCommandsAction, name: bootloader-commands}
+- {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power_off}

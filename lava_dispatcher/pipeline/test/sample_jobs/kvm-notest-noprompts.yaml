@@ -1,0 +1,40 @@
+# Sample JOB definition for a KVM
+
+device_type: qemu
+
+job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 5            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 1         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  test:
+    minutes: 3
+priority: medium
+visibility: public
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        os: debian
+        images:
+          disk1:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            compression: gz
+            image_arg: -drive format=raw,file={disk1}
+          disk2:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            compression: gz
+            image_arg: -drive format=raw,file={disk2}
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        connection: serial
+        failure_retry: 2
+
+context:
+  arch: amd64

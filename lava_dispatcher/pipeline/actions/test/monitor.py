@@ -20,6 +20,7 @@
 
 import pexpect
 
+from collections import OrderedDict
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     InfrastructureError,
@@ -57,6 +58,18 @@ class TestMonitor(LavaTest):
         else:
             return False
 
+    @classmethod
+    def needs_deployment_data(cls):
+        return False
+
+    @classmethod
+    def needs_overlay(cls):
+        return False
+
+    @classmethod
+    def has_shell(cls):
+        return False
+
 
 class TestMonitorRetry(RetryAction):
 
@@ -89,19 +102,15 @@ class TestMonitorAction(TestAction):
         self.patterns = {}
 
     def validate(self):
-        # Extend the list of patterns when creating subclasses.
-        self.patterns.update({
-            "eof": pexpect.EOF,
-            "timeout": pexpect.TIMEOUT,
-        })
         super(TestMonitorAction, self).validate()
 
     def run(self, connection, args=None):
         # Sanity test: could be a missing deployment for some actions
-        if "boot-result" not in self.data:
+        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
+        if res != 'success':
             raise RuntimeError("No boot action result found")
         connection = super(TestMonitorAction, self).run(connection, args)
-        if self.data["boot-result"] != "success":
+        if res != "success":
             self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
@@ -114,10 +123,13 @@ class TestMonitorAction(TestAction):
 
             self.fixupdict = monitor.get('fixupdict')
 
-            self.patterns.update({
-                "end": monitor['end'],
-                "test_result": monitor['pattern'],
-            })
+            # pattern order is important because we want to match the end before
+            # it can possibly get confused with a test result
+            self.patterns = OrderedDict()
+            self.patterns["eof"] = pexpect.EOF
+            self.patterns["timeout"] = pexpect.TIMEOUT
+            self.patterns["end"] = monitor['end']
+            self.patterns["test_result"] = monitor['pattern']
 
             # Find the start string before parsing any output.
             connection.prompt_str = monitor['start']
@@ -125,7 +137,7 @@ class TestMonitorAction(TestAction):
             self.logger.info("ok: start string found, lava test monitoring started")
 
             with connection.test_connection() as test_connection:
-                while self._keep_running(test_connection):
+                while self._keep_running(test_connection, timeout=test_connection.timeout):
                     pass
 
         return connection

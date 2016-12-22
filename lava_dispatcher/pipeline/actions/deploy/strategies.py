@@ -25,7 +25,6 @@
 
 from lava_dispatcher.pipeline.actions.deploy.image import (
     DeployImages,
-    DeployMonitoredQEMU,
     DeployMonitoredPyOCD
 )
 from lava_dispatcher.pipeline.actions.deploy.tftp import Tftp

@@ -1,0 +1,57 @@
+# Zephyr JOB definition for QEMU
+device_type: 'qemu'
+job_name: 'zephyr-upstream kernel-task-api-test'
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 2
+priority: medium
+visibility: public
+
+context:
+  arch: arm
+  cpu: cortex-m3
+  machine: lm3s6965evb
+  model: 'model=stellaris'
+  serial: '-serial mon:stdio'
+  vga: '-vga none'
+
+actions:
+- deploy:
+    namespace: matt
+    timeout:
+      minutes: 3
+    to: tmpfs
+    #type: monitor
+    images:
+        zephyr:
+          image_arg: '-kernel {zephyr}'
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/qemu_cortex_m3/test_task-zephyr.bin
+
+- boot:
+    namespace: matt
+    #method: monitor
+    method: qemu
+    timeout:
+      minutes: 2
+
+- test:
+    namespace: matt
+    monitors:
+    - name: Test Microkernel Task API
+      start: tc_start()
+      end: PROJECT EXECUTION
+      pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
+      fixupdict:
+        PASS: pass
+        FAIL: fail
+
+metadata:
+  build-url: https://ci.linaro.org/jenkins/job/zephyr-upstream/PLATFORM=qemu_cortex_m3,ZEPHYR_GCC_VARIANT=gccarmemb,label=docker-xenial-amd64/470/
+  build-log: https://ci.linaro.org/jenkins/job/zephyr-upstream/PLATFORM=qemu_cortex_m3,ZEPHYR_GCC_VARIANT=gccarmemb,label=docker-xenial-amd64/470/consoleText
+  zephyr-gcc-variant: gccarmemb
+  platform: qemu_cortex_m3
+  git-url: https://git.linaro.org/zephyrproject-org/zephyr.git
+  git-commit: b0c0548a

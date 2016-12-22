@@ -85,6 +85,20 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertEqual(
             job.device.pre_power_command,
             '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
+        lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        job.validate()
+        self.assertEqual(
+            {
+                '1.3.3.20': '4_android-optee',
+                '1.3.3.4': '0_get-adb-serial',
+                '1.3.3.12': '2_android-busybox',
+                '1.3.3.8': '1_android-meminfo',
+                '1.3.3.16': '3_android-ping-dns'},
+            testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
+        for testdef in testdef.test_list:
+            self.assertEqual('git', testdef['from'])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
                      'lxc-create not installed')
@@ -101,7 +115,8 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][0]
+                if action.parameters['namespace'] == 'tlxc':
+                    overlay = action.pipeline.actions[2]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))

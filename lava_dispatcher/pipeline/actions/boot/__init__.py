@@ -18,8 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-from lava_dispatcher.pipeline.action import Action
+import pyudev
+from lava_dispatcher.pipeline.action import (
+    Action,
+    InfrastructureError
+)
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     AUTOLOGIN_DEFAULT_TIMEOUT,
@@ -48,6 +51,12 @@ class BootAction(RetryAction):
     """
 
     name = 'boot'
+
+    def has_prompts(self, parameters):
+        return ('prompts' in parameters)
+
+    def has_boot_finished(self, parameters):
+        return ('boot_finished' in parameters)
 
 
 class AutoLoginAction(Action):
@@ -135,6 +144,15 @@ class AutoLoginAction(Action):
 
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
+        # linesep should come from deployment_data as from now on it is OS dependent
+        linesep = self.get_namespace_data(
+            action='deploy-device-env',
+            label='environment',
+            key='line_separator'
+        )
+        connection.raw_connection.linesep = linesep if linesep else LINE_SEPARATOR
+        self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
+
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if not params:
@@ -146,13 +164,6 @@ class AutoLoginAction(Action):
             # already matched one of the prompts
         else:
             self.logger.info("Waiting for the login prompt")
-
-            # over-riding lineseparator
-            linesep = self.get_common_data('lineseparator', 'os_linesep')
-            if not linesep:
-                linesep = os.linesep
-            connection.raw_connection.linesep = linesep
-            self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
             connection.prompt_str.append(params['login_prompt'])
 
             # wait for a prompt or kernel messages
@@ -183,4 +194,45 @@ class AutoLoginAction(Action):
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
+        return connection
+
+
+class WaitUSBDeviceAction(Action):
+
+    def __init__(self):
+        super(WaitUSBDeviceAction, self).__init__()
+        self.name = "wait-usb-device"
+        self.description = "wait for udev to see USB device"
+        self.summary = self.description
+        self.board_id = '0000000000'
+        self.usb_vendor_id = '0000'
+        self.usb_product_id = '0000'
+
+    def validate(self):
+        super(WaitUSBDeviceAction, self).validate()
+        try:
+            self.usb_vendor_id = self.job.device['usb_vendor_id']
+            self.usb_product_id = self.job.device['usb_product_id']
+            self.board_id = self.job.device['board_id']
+        except AttributeError as exc:
+            raise InfrastructureError(exc)
+        except (KeyError, TypeError):
+            self.errors = "Invalid parameters for %s" % self.name
+        if self.job.device['board_id'] == '0000000000':
+            self.errors = "board_id unset"
+        if self.job.device['usb_vendor_id'] == '0000':
+            self.errors = 'usb_vendor_id unset'
+        if self.job.device['usb_product_id'] == '0000':
+            self.errors = 'usb_product_id unset'
+
+    def run(self, connection, args=None):
+        self.logger.info("Waiting for USB device... %s:%s %s", self.usb_vendor_id, self.usb_product_id, self.board_id)
+        context = pyudev.Context()
+        monitor = pyudev.Monitor.from_netlink(context)
+        monitor.filter_by('usb', 'usb_device')
+        for device in iter(monitor.poll, None):
+            if (device.get('ID_SERIAL_SHORT', '') == str(self.board_id)) \
+               and (device.get('ID_VENDOR_ID', '') == str(self.usb_vendor_id)) \
+               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)):
+                break
         return connection

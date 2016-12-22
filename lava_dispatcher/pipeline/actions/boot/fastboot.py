@@ -19,14 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
+from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.shell import ExpectShellSession
 
 
 class BootFastboot(Boot):
@@ -64,8 +68,15 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootBootAction())
-        self.internal_pipeline.add_action(ConnectLxc())
-        self.internal_pipeline.add_action(WaitForAdbDevice())
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        # Check if the device has a power state such as HiKey, Dragonboard,
+        # etc. against device that doesn't like Nexus, etc. Currently, this is
+        # the way to distinguish between both these kinds of devices.
+        if hasattr(self.job.device, 'power_state'):
+            if self.job.device.power_state in ['on', 'off']:
+                self.internal_pipeline.add_action(AutoLoginAction())
+                self.internal_pipeline.add_action(ExpectShellSession())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class FastbootBootAction(Action):
@@ -88,53 +99,32 @@ class FastbootBootAction(Action):
 
     def run(self, connection, args=None):
         connection = super(FastbootBootAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
+                          lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
+        boot_img = self.get_namespace_data(action='download_action',
+                                           label='boot', key='file')
+        if not boot_img:
+            raise JobError("Boot image not found, unable to boot")
+        else:
+            boot_img = os.path.join('/', os.path.basename(boot_img))
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'reboot']
+                        '-s', serial_number, 'boot', boot_img]
         command_output = self.run_command(fastboot_cmd)
-        if command_output and 'rebooting' not in command_output:
+        if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
-        return connection
-
-
-class WaitForAdbDevice(Action):
-    """
-    Waits for device that gets connected using adb.
-    """
-
-    def __init__(self):
-        super(WaitForAdbDevice, self).__init__()
-        self.name = "wait-for-adb-device"
-        self.summary = "Waits for adb device"
-        self.description = "Waits for availability of adb device"
-        self.prompts = []
-
-    def validate(self):
-        if 'adb_serial_number' in self.job.device:
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
-        super(WaitForAdbDevice, self).validate()
-
-    def run(self, connection, args=None):
-        if 'lxc' not in self.job.device['actions']['boot']['methods']:
-            return connection
-        connection = super(WaitForAdbDevice, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        if not lxc_name:
-            self.logger.debug("No LXC device requested")
-            return connection
-        serial_number = self.job.device['adb_serial_number']
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
-        self.logger.debug("Starting adb daemon")
-        self.run_command(adb_cmd)
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
-                   '-s', serial_number, 'wait-for-device']
-        self.logger.debug("%s: Waiting for device", serial_number)
-        self.run_command(adb_cmd)
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
