@@ -93,27 +93,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     of the per-action log handler.
     """
     def __init__(self, parent=None, job=None, parameters=None):
-        self.children = {}
         self.actions = []
-        self.summary = "pipeline"
         self.parent = None
-        if parameters is None:
-            parameters = {}
-        self.parameters = parameters
+        self.parameters = {} if parameters is None else parameters
         self.job = job
         self.branch_level = 1  # the level of the last added child
-        if not parent:
-            self.children = {self: self.actions}
-        elif not parent.level:
-            raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
-        else:
+        if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
                 raise RuntimeError("Internal pipelines need an Action as a parent")
+            if not parent.level:
+                raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
             self.branch_level = parent.level
-            if parent.job:
-                self.job = parent.job
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
@@ -126,13 +118,12 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
         self.actions.append(action)
-        action.level = "%s.%s" % (self.branch_level, len(self.actions))
         # FIXME: if this is only happening in unit test, this has to be fixed later on
         if self.job:  # should only be None inside the unit tests
             action.job = self.job
         if self.parent:  # action
-            self.children[self] = self.actions
             self.parent.pipeline = self
+            action.level = "%s.%s" % (self.branch_level, len(self.actions))
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
@@ -150,6 +141,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # pylint: disable=protected-access
         # FIXME: only the last test is really useful. The first ones are only
         # needed to run the tests that do not use a device and job.
+        # TODO: factorize this in one loop
         if self.job is not None and self.job.device is not None:
             # set device level overrides
             overrides = self.job.device.get('timeouts', {})
@@ -212,7 +204,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def pipeline_cleanup(self):
+    def cleanup(self):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
@@ -220,21 +212,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         for child in self.actions:
             child.cleanup()
             if child.internal_pipeline:
-                child.internal_pipeline.pipeline_cleanup()
-
-    def cleanup_actions(self, connection, message):
-        if not self.job.pipeline:
-            # is this only unit-tests doing this?
-            return
-        for child in self.job.pipeline.actions:
-            if child.internal_pipeline:
-                child.internal_pipeline.pipeline_cleanup()
-        # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
-        for child in self.job.pipeline.actions:
-            # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
-            if child.name == 'finalize':
-                child.errors = message
-                child.run(connection, None)
+                child.internal_pipeline.cleanup()
 
     def _diagnose(self, connection):
         """
@@ -267,7 +245,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            self.cleanup_actions(None, "Cancelled")
+            self.job.cleanup(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
@@ -319,7 +297,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.exception(traceback.format_exc())
                     action.errors = msg
                     action.cleanup()
-                    self.cleanup_actions(connection, None)
+                    self.job.cleanup(connection, None)
                     # report action errors so that the last part of the message is the most relevant.
                     raise RuntimeError(action.errors)
                 except KeyboardInterrupt:
@@ -337,7 +315,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     connection = new_connection
             except KeyboardInterrupt:
                 action.elapsed_time = time.time() - start
-                self.cleanup_actions(connection, "Cancelled")
+                self.job.cleanup(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
                 if sys.version > '3':
@@ -356,7 +334,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # a RetryAction should not cleanup the pipeline until the last retry has failed
                 # but the failing action may be inside an internal pipeline of the retry
                 if not self.parent:  # top level pipeline, no retries left
-                    self.cleanup_actions(connection, exc_message)
+                    self.job.cleanup(connection, exc_message)
                 raise
         return connection
 
@@ -397,7 +375,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
         self.section = None
         self.connection_timeout = Timeout(self.name)
-        self.action_namespaces = []
         self.character_delay = 0
 
     # public actions (i.e. those who can be referenced from a job file) must
@@ -582,7 +559,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             self.errors = "%s action has no section set" % self
 
         # Collect errors from internal pipeline actions
-        self.job.context.setdefault(self.name, {})
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
             self.errors.extend(self.internal_pipeline.errors)  # pylint: disable=maybe-no-member
@@ -595,7 +571,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         pass
 
-    def run_command(self, command_list, allow_silent=False):
+    def run_command(self, command_list, allow_silent=False, allow_fail=False):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -632,12 +608,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.errors = exc.output.strip().decode('utf-8')
                 else:
                     self.errors = str(exc)
-                self.logger.exception(
-                    '[%s] command %s\nmessage %s\noutput %s\n',
-                    self.name,
-                    [i.strip() for i in exc.cmd],
-                    str(exc),
-                    str(exc).split('\n'))
+                msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
+                    self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
             else:
                 if exc.output:
                     self.errors = exc.output.strip()
@@ -645,12 +617,15 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.errors = exc.message
                 else:
                     self.errors = str(exc)
-                self.logger.exception(
-                    "[%s] command %s\nmessage %s\noutput %s\nexit code %s",
-                    self.name,
-                    [i.strip() for i in exc.cmd],
-                    [i.strip() for i in exc.message],
+                msg = "[%s] command %s\nmessage %s\noutput %s\nexit code %s" % (
+                    self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
+
+            if exc.returncode != 0 and allow_fail:
+                self.logger.info(msg)
+                self.errors == []
+            else:
+                self.logger.exception(msg)
 
         # allow for commands which return no output
         if not log and allow_silent:
@@ -686,8 +661,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 reply = protocol(call_dict)
                 message = protocol.collate(reply, call_dict)
                 if message:
-                    self.logger.info("Setting common data key %s to %s", message[0], message[1])
-                    self.set_common_data(protocol.name, message[0], message[1])
+                    self.logger.info("Setting namespace data key %s to %s", message[0], message[1])
+                    self.set_namespace_data(
+                        action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
     def run(self, connection, args=None):
         """
@@ -772,27 +748,52 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
-    def get_common_data(self, ns, key, deepcopy=True):  # pylint: disable=invalid-name
+    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
         """
-        Get a common data value from the specified namespace using the specified key.
+        Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
         manipulate lists and dicts based on common data without altering the values used by other actions.
-        If deepcopy is False, the reference is used - meaning that certain operations on common data
-        values other than simple strings will be able to modify the common data without calls to set_common_data.
+        :param action: Name of the action which set the data or a commonly shared string used to
+            correlate disparate actions
+        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
+            values. Can be set to the same as the action.
+        :param key: The lookup key for the requested value within the data defined by
+            data[namespace][action][label]
+        :param deepcopy: If deepcopy is False, the reference is used - meaning that certain operations on the
+            namespaced data values other than simple strings will be able to modify the data without calls to
+            set_namespace_data.
+        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
+            will not have been set in the action at that point.
         """
-        if ns not in self.data['common']:
+        params = parameters if parameters else self.parameters
+        namespace = params.get('namespace', 'common')
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)
+        if value is None:
             return None
-        value = self.data['common'][ns].get(key, None)
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_common_data(self, ns, key, value):  # pylint: disable=invalid-name
+    def set_namespace_data(self, action, label, key, value, parameters=None):
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
+        :param action: Name of the action which set the data or a commonly shared string used to
+            correlate disparate actions
+        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
+            values. Can be set to the same as the action.
+        :param key: The lookup key for the requested value within the data defined by
+            data[namespace][action][label]
+        :param value: The value to set into the namespace data, can be an object.
+        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
+            will not have been set in the action at that point.
         """
-        # ensure the key exists
-        self.data['common'].setdefault(ns, {})
-        self.data['common'][ns][key] = value
+        params = parameters if parameters else self.parameters
+        namespace = params.get('namespace', 'common')
+        if not label or not key:
+            self.errors = "Invalid call to set_namespace_data: %s" % action
+        self.data.setdefault(namespace, {})
+        self.data[namespace].setdefault(action, {})
+        self.data[namespace][action].setdefault(label, {})
+        self.data[namespace][action][label][key] = value
 
     def wait(self, connection):
         if not connection:
@@ -850,6 +851,33 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     'connection-timeout': self.connection_timeout.duration
                 }
             )
+
+    def test_needs_deployment(self, parameters):
+        needs_deployment = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].needs_deployment_data():
+                    needs_deployment = True
+        return needs_deployment
+
+    def test_has_shell(self, parameters):
+        has_shell = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].has_shell():
+                    has_shell = True
+        return has_shell
+
+    def test_needs_overlay(self, parameters):
+        needs_overlay = False
+        if parameters['namespace'] in parameters['test_info']:
+            testclasses = parameters['test_info'][parameters['namespace']]
+            for testclass in testclasses:
+                if testclass['class'].needs_overlay():
+                    needs_overlay = True
+        return needs_overlay
 
 
 class Timeout(object):
@@ -917,3 +945,15 @@ class Timeout(object):
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         self.duration = max(min(OVERRIDE_CLAMP_DURATION, duration), 1)  # FIXME: needs support in /etc/
+
+
+def action_namespaces(parameters=None):
+    """Iterates through the job parameters to identify all the action
+    namespaces."""
+    namespaces = set()
+    for action in parameters['actions']:
+        for name in action:
+            if isinstance(action[name], dict):
+                if action[name].get('namespace', None):
+                    namespaces.add(action[name].get('namespace', None))
+    return namespaces

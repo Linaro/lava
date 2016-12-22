@@ -117,6 +117,8 @@ class DDAction(Action):
             self.errors = "missing download tool for deployment"
         if 'options' not in self.parameters['download']:
             self.errors = "missing options for download tool"
+        if 'prompt' not in self.parameters['download']:
+            self.errors = "missing prompt for download tool"
         if not os.path.isabs(self.parameters['download']['tool']):
             self.errors = "download tool parameter needs to be an absolute path"
         uuid_required = False
@@ -134,10 +136,11 @@ class DDAction(Action):
             if 'root_part' in self.boot_params[self.parameters['device']]:
                 self.errors = "'root_part' is not valid for %s as a UUID is required" % self.job.device.hostname
         if self.parameters['device'] in self.boot_params:
-            self.set_common_data(
-                'u-boot',
-                'boot_part',
-                self.boot_params[self.parameters['device']]['device_id']
+            self.set_namespace_data(
+                action=self.name,
+                label='u-boot',
+                key='boot_part',
+                value=self.boot_params[self.parameters['device']]['device_id']
             )
 
     def run(self, connection, args=None):
@@ -147,10 +150,11 @@ class DDAction(Action):
         device to write directly to the secondary media, without needing to cache on the device.
         """
         connection = super(DDAction, self).run(connection, args)
-        if 'file' not in self.data['download_action']['image']:
+        file = self.get_namespace_data(action='download_action', label='image', key='file')
+        if not file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
-        decompressed_image = os.path.basename(self.data['download_action']['image']['file'])
+        decompressed_image = os.path.basename(file)
         try:
             device_path = os.path.realpath(
                 "/dev/disk/by-id/%s" %
@@ -158,8 +162,10 @@ class DDAction(Action):
         except OSError:
             raise JobError("Unable to find disk by id %s" %
                            self.boot_params[self.parameters['device']]['uuid'])
-
-        suffix = "%s/%s" % ("tmp", self.data['storage-deploy'].get('suffix', ''))
+        storage_suffix = self.get_namespace_data(action='storage-deploy', label='storage', key='suffix')
+        if not storage_suffix:
+            storage_suffix = ''
+        suffix = "%s/%s" % ("tmp", storage_suffix)
 
         # As the test writer can use any tool we cannot predict where the
         # download URL will be positioned in the download command.
@@ -174,23 +180,28 @@ class DDAction(Action):
         download_cmd = "%s %s" % (
             self.parameters['download']['tool'], download_options
         )
-
         dd_cmd = "dd of='%s' bs=4M" % device_path  # busybox dd does not support other flags
 
-        # We must ensure that the secondary media deployment has completed before handing over
-        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
-        # always have a constant string to match against
+        # set prompt to download prompt to ensure that the secondary deployment has started
         prompt_string = connection.prompt_str
-        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        connection.prompt_str = self.parameters['download']['prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         connection.sendline("%s | %s ; echo %s" % (download_cmd, dd_cmd, SECONDARY_DEPLOYMENT_MSG))
         self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
 
-        # set prompt back
+        # We must ensure that the secondary media deployment has completed before handing over
+        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
+        # always have a constant string to match against
+        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.wait(connection)
+
+        # set prompt back once secondary deployment is complete
         connection.prompt_str = prompt_string
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -212,11 +223,13 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
             self.errors = "No device specified for mass storage deployment"
         if not self.valid:
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+            self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
         if 'device' in self.parameters:
-            self.set_common_data('u-boot', 'device', self.parameters['device'])
-        self.data[self.name].setdefault('suffix', os.path.basename(self.image_path))
+            self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
+        suffix = os.path.join(*self.image_path.split('/')[-2:])
+        self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)
 
     def populate(self, parameters):
         """
@@ -230,12 +243,15 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.image_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(CustomisationAction())
-        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         if 'image' in parameters:
             download = DownloaderAction('image', path=self.image_path)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(ApplyOverlayImage())
+            if self.test_needs_overlay(parameters):
+                self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())
         # FIXME: could support tarballs too
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())

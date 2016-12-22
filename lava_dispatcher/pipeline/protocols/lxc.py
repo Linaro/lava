@@ -78,20 +78,20 @@ class LxcProtocol(Protocol):
         """Called by Finalize action to power down and clean up the assigned
         device.
         """
-        # Reboot devices that have adb serial number.
-        if 'adb_serial_number' in device:
-            reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(
-                self.lxc_name)
-            self.logger.debug("%s protocol: executing '%s'", self.name,
-                              reboot_cmd)
-            shell = ShellCommand("%s\n" % reboot_cmd, self.system_timeout,
-                                 logger=self.logger)
-            # execute the command.
-            shell.expect(pexpect.EOF)
-            if shell.exitstatus:
-                self.logger.debug("%s command exited %d: %s",
-                                  reboot_cmd, shell.exitstatus,
-                                  shell.readlines())
+        # Reboot devices to bootloader if required, based on the availability
+        # of power cycle option and adb_serial_number.
+        if 'adb_serial_number' in device and hasattr(device, 'power_state'):
+            if device.power_state not in ['on', 'off']:
+                reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
+                self.logger.debug("%s protocol: executing '%s'", self.name,
+                                  reboot_cmd)
+                shell = ShellCommand("%s\n" % reboot_cmd, self.system_timeout,
+                                     logger=self.logger)
+                # execute the command.
+                shell.expect(pexpect.EOF)
+                if shell.exitstatus:
+                    self.logger.debug("%s command exited %d: %s", reboot_cmd,
+                                      shell.exitstatus, shell.readlines())
 
         # ShellCommand executes the destroy command after checking for the
         # existance of the container

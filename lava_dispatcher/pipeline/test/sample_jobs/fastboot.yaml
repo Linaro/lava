@@ -41,7 +41,6 @@ actions:
         minutes: 15
       to: fastboot
       namespace: droid
-      connection: lxc
       images:
         boot:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
@@ -62,10 +61,19 @@ actions:
   - test:
       namespace: tlxc
       timeout:
-        minutes: 5
-      connection: lxc
+        minutes: 10
       definitions:
-      - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+      - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
         from: git
-        path: debian/get-adb-serial.yaml
-        name: get-adb-serial
+        path: lava-test-shell/android/get-adb-serial.yaml
+        name: get-device-serial
+
+  - test:
+      namespace: tlxc
+      timeout:
+        minutes: 5
+      definitions:
+      - repository: git://git.linaro.org/qa/test-definitions.git
+        from: git
+        path: ubuntu/smoke-tests-basic.yaml
+        name: smoke-tests-lxc

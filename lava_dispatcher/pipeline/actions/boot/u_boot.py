@@ -142,18 +142,19 @@ class UBootRetry(BootAction):
         self.internal_pipeline.add_action(ExpectBootloaderSession())  # wait
         # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(UBootCommandsAction())
-        # Add AutoLoginAction unconditionally as this action does nothing if
-        # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())  # wait
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        if self.has_prompts(parameters):
+            self.internal_pipeline.add_action(AutoLoginAction())
+            if self.test_has_shell(parameters):
+                self.internal_pipeline.add_action(ExpectShellSession())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
         super(UBootRetry, self).validate()
-        self.set_common_data(
-            'bootloader_prompt',
-            'prompt',
-            self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
+        self.set_namespace_data(
+            action=self.name,
+            label='bootloader_prompt',
+            key='prompt',
+            value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
     def run(self, connection, args=None):
@@ -165,11 +166,10 @@ class UBootRetry(BootAction):
         connection.timeout = self.connection_timeout
         self.wait(connection)
         # Log an error only when needed
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         if self.errors:
             self.logger.error(self.errors)
-            self.data['boot-result'] = 'failed'
-        else:
-            self.data['boot-result'] = 'success'
         return connection
 
 
@@ -250,22 +250,24 @@ class UBootSecondaryMedia(Action):
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
 
-        self.set_common_data('file', 'kernel', self.parameters.get('kernel', ''))
-        self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
-        self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
-        self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
+        self.set_namespace_data(action=self.name, label='file', key='kernel', value=self.parameters.get('kernel', ''))
+        self.set_namespace_data(action=self.name, label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
+        self.set_namespace_data(action=self.name, label='file', key='dtb', value=self.parameters.get('dtb', ''))
+        self.set_namespace_data(action=self.name, label='uuid', key='root', value=self.parameters['root_uuid'])
         media_params = self.job.device['parameters']['media'][self.parameters['commands']]
-        if self.get_common_data('u-boot', 'device') not in media_params:
+        if self.get_namespace_data(action='storage-deploy', label='u-boot', key='device') not in media_params:
             self.errors = "%s does not match requested media type %s" % (
-                self.get_common_data('u-boot', 'device'), self.parameters['commands']
+                self.get_namespace_data(
+                    action='storage-deploy', label='u-boot', key='device'), self.parameters['commands']
             )
         if not self.valid:
             return
-        self.set_common_data(
-            'uuid',
-            'boot_part',
-            '%s:%s' % (
-                media_params[self.get_common_data('u-boot', 'device')]['device_id'],
+        self.set_namespace_data(
+            action=self.name,
+            label='uuid',
+            key='boot_part',
+            value='%s:%s' % (
+                media_params[self.get_namespace_data(action='storage-deploy', label='u-boot', key='device')]['device_id'],
                 self.parameters['boot_part']
             )
         )
@@ -302,8 +304,6 @@ class UBootCommandOverlay(Action):
         elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
             self.errors = "No commands found in parameters"
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
-        self.data.setdefault('u-boot', {})
-        self.data['u-boot'].setdefault('commands', [])
         if 'type' not in self.parameters:
             self.errors = "No boot type specified in device parameters."
         else:
@@ -335,7 +335,8 @@ class UBootCommandOverlay(Action):
         substitutions['{KERNEL_ADDR}'] = kernel_addr
         substitutions['{DTB_ADDR}'] = dtb_addr
         substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
-        if not self.get_common_data('tftp', 'ramdisk') and not self.get_common_data('file', 'ramdisk'):
+        if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
+                and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
             ramdisk_addr = '-'
         bootcommand = self.parameters['type']
         if self.parameters['type'] == 'uimage':
@@ -347,25 +348,29 @@ class UBootCommandOverlay(Action):
         substitutions['{BOOTX}'] = "%s %s %s %s" % (
             bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
 
-        substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
-        substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
-        substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
+        substitutions['{RAMDISK}'] = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
+        substitutions['{KERNEL}'] = self.get_namespace_data(action='download_action', label='file', key='kernel')
+        substitutions['{DTB}'] = self.get_namespace_data(action='download_action', label='file', key='dtb')
 
-        nfs_url = self.get_common_data('nfs_url', 'nfsroot')
-        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
-            substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
+        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
+        if nfs_root:
+            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
         elif nfs_url:
-
             substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_common_data('nfs_url', 'serverip')
+            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
+                action='persistent-nfs-overlay',
+                label='nfs_url', key='serverip')
 
-        substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media',
+                                                          label='uuid', key='root')  # UUID label, not a file
+        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media',
+                                                               label='uuid', key='boot_part')
 
-        self.data.setdefault('u-boot', {})
-        self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(self.data['u-boot']['commands']))
+        subs = substitute(self.commands, substitutions)
+        self.set_namespace_data(action='uboot-overlay', label='u-boot', key='commands', value=subs)
+        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
         return connection
 
 
@@ -383,8 +388,6 @@ class UBootCommandsAction(Action):
 
     def validate(self):
         super(UBootCommandsAction, self).validate()
-        if 'u-boot' not in self.data:
-            self.errors = "Unable to read uboot context data"
         # get prompt_str from device parameters
         self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
 
@@ -394,7 +397,8 @@ class UBootCommandsAction(Action):
         connection = super(UBootCommandsAction, self).run(connection, args)
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        for line in self.data['u-boot']['commands']:
+        commands = self.get_namespace_data(action='uboot-overlay', label='u-boot', key='commands')
+        for line in commands:
             self.wait(connection)
             connection.sendline(line, delay=self.character_delay)
         # allow for auto_login
@@ -438,7 +442,11 @@ class UBootPrepareKernelAction(Action):
     def validate(self):
         super(UBootPrepareKernelAction, self).validate()
         self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        self.kernel_type = self.get_common_data('type', 'kernel')
+        self.kernel_type = self.get_namespace_data(
+            action='download_action',
+            label='type',
+            key='kernel'
+        )
         if 'type' in self.parameters:
             self.type = str(self.parameters['type']).lower()
         if self.type:
@@ -462,8 +470,12 @@ class UBootPrepareKernelAction(Action):
         connection = super(UBootPrepareKernelAction, self).run(connection, args)
         if not self.kernel_type:
             return connection  # idempotency
-        old_kernel = self.get_common_data('file', 'kernel')
-        filename = self.data['download_action']['kernel']['file']
+        old_kernel = self.get_namespace_data(
+            action='download_action',
+            label='file',
+            key='kernel'
+        )
+        filename = self.get_namespace_data(action='download_action', label='kernel', key='file')
         load_addr = self.job.device['parameters'][self.type]['kernel']
         if 'text_offset' in self.job.device['parameters']:
             load_addr = self.job.device['parameters']['text_offset']
@@ -472,10 +484,16 @@ class UBootPrepareKernelAction(Action):
             self.logger.debug("Converting image to uimage")
             self.create_uimage(filename, load_addr, False, arch, 'uImage')
             new_kernel = os.path.dirname(old_kernel) + '/uImage'
-            self.set_common_data('file', 'kernel', new_kernel)
+            # overwriting namespace data
+            self.set_namespace_data(
+                action='download_action',
+                label='file', key='kernel', value=new_kernel)
         elif (self.type == "uimage" or self.type == "bootm") and self.kernel_type == "zimage":
             self.logger.debug("Converting zimage to uimage")
             self.create_uimage(filename, load_addr, False, arch, 'uImage')
             new_kernel = os.path.dirname(old_kernel) + '/uImage'
-            self.set_common_data('file', 'kernel', new_kernel)
+            # overwriting namespace data
+            self.set_namespace_data(
+                action='download_action',
+                label='file', key='kernel', value=new_kernel)
         return connection

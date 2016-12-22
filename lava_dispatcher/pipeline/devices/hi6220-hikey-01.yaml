@@ -10,6 +10,9 @@ device_type: hi6220-hikey
 adb_serial_number: 0123456789
 fastboot_serial_number: 96B0201601000691
 device_path: ['/dev/hikey01']
+flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
+                  'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
+                  'vendor', 'system', 'cache', 'userdata', ]
 
 actions:
   deploy:

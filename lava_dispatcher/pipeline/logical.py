@@ -66,10 +66,10 @@ class RetryAction(Action):
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
-            if "boot-result" not in self.data:
-                self.data['boot-result'] = 'failed'
+            res = 'failed' if self.errors else 'success'
+            self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
             # tried and failed
-            self.job.pipeline.cleanup_actions(connection, self.errors)
+            self.job.cleanup(connection, self.errors)
             raise JobError(self.errors)
         return connection
 
@@ -294,6 +294,18 @@ class LavaTest(object):
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
+    @classmethod
+    def needs_deployment_data(cls):
+        return NotImplementedError("needs_deployment_data %s" % cls)
+
+    @classmethod
+    def needs_overlay(cls):
+        return NotImplementedError("needs_overlay %s" % cls)
+
+    @classmethod
+    def has_shell(cls):
+        return NotImplementedError("has_shell %s" % cls)
+
 
 class PipelineContext(object):  # pylint: disable=too-few-public-methods
     """
@@ -319,4 +331,4 @@ class PipelineContext(object):  # pylint: disable=too-few-public-methods
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
     def __init__(self):
-        self.pipeline_data = {'common': {}}
+        self.pipeline_data = {}

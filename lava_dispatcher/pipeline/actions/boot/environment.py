@@ -34,8 +34,11 @@ class ExportDeviceEnvironment(Action):
         self.env = []
 
     def validate(self):
-        shell_file = self.get_common_data('environment', 'shell_file')
-        environment = self.get_common_data('environment', 'env_dict')
+        super(ExportDeviceEnvironment, self).validate()
+        shell_file = self.get_namespace_data(action='deploy-device-env',
+                                             label='environment', key='shell_file')
+        environment = self.get_namespace_data(action='deploy-device-env',
+                                              label='environment', key='env_dict')
         if not environment:
             return
         # Append export commands to the shell init file.
@@ -51,7 +54,11 @@ class ExportDeviceEnvironment(Action):
 
         connection = super(ExportDeviceEnvironment, self).run(connection, args)
 
-        shell_file = self.get_common_data('environment', 'shell_file')
+        shell_file = self.get_namespace_data(
+            action='deploy-device-env',
+            label='environment',
+            key='shell_file'
+        )
 
         for line in self.env:
             connection.sendline(line, delay=self.character_delay)

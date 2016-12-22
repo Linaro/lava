@@ -112,12 +112,12 @@ class Scp(ConnectSsh):
             self.errors = "Unable to use %s without ssh deployment" % self.name
         if 'ssh' not in self.job.device['actions']['boot']['methods']:
             self.errors = "Unable to use %s without ssh boot" % self.name
-        if self.get_common_data("prepare-scp-overlay", self.key):
+        if self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key):
             self.primary = False
         elif 'host' not in self.job.device['actions']['deploy']['methods']['ssh']:
             self.errors = "Invalid device or job configuration, missing host."
         if not self.primary and len(
-                self.get_common_data("prepare-scp-overlay", self.key)) != 1:
+                self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)) != 1:
             self.errors = "Invalid number of host_keys"
         if 'port' in self.job.device['actions']['deploy']['methods']['ssh']:
             port = str(self.job.device['actions']['deploy']['methods']['ssh']['port'])
@@ -129,15 +129,15 @@ class Scp(ConnectSsh):
                 self.scp.extend(params['options'])
 
     def run(self, connection, args=None):
-        path = self.get_common_data(self.name, self.key)
+        path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
         if not path:
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error("%s: could not find details of '%s'", self.name, self.key)
             return connection
-        overrides = self.get_common_data("prepare-scp-overlay", self.key)
+        overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
         if not self.primary:
             self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
-            self.host = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
+            self.host = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
             self.logger.debug("Using common data for host: %s", self.host)
         elif not self.host:
             self.errors = "%s: could not find host for deployment" % self.name
@@ -162,8 +162,9 @@ class Scp(ConnectSsh):
         self.run_command(command)
         connection = super(Scp, self).run(connection, args)
         self.results = {'success': 'ssh deployment'}
-        self.set_common_data('scp-overlay-unpack', 'overlay', destination)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -180,18 +181,23 @@ class PrepareSsh(Action):
 
     def validate(self):
         if 'parameters' in self.parameters and 'hostID' in self.parameters['parameters']:
-            self.set_common_data('ssh-connection', 'host', True)
+            self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=True)
         else:
-            self.set_common_data('ssh-connection', 'host', False)
+            self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=False)
             self.primary = True
 
     def run(self, connection, args=None):
         connection = super(PrepareSsh, self).run(connection, args)
         if not self.primary:
-            host_data = self.get_common_data(MultinodeProtocol.name, self.parameters['parameters']['hostID'])
-            self.set_common_data(
-                'ssh-connection', 'host_address',
-                host_data[self.parameters['parameters']['host_key']]
+            host_data = self.get_namespace_data(
+                action=MultinodeProtocol.name,
+                label=MultinodeProtocol.name,
+                key=self.parameters['parameters']['hostID'])
+            self.set_namespace_data(
+                action=self.name,
+                label='ssh-connection',
+                key='host_address',
+                value=host_data[self.parameters['parameters']['host_key']]
             )
         return connection
 
@@ -208,12 +214,14 @@ class ScpOverlayUnpack(Action):
         connection = super(ScpOverlayUnpack, self).run(connection, args)
         if not connection:
             raise RuntimeError("Cannot unpack, no connection available.")
-        filename = self.get_common_data(self.name, 'overlay')
-        tar_flags = self.get_common_data('scp-overlay', 'tar_flags')
+        filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
+        tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 

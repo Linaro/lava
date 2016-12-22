@@ -30,10 +30,7 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
-from lava_dispatcher.pipeline.utils.constants import (
-    SHELL_SEND_DELAY,
-    LINE_SEPARATOR
-)
+from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
 
 
 class ShellLogger(object):
@@ -95,10 +92,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         )
         self.name = "ShellCommand"
         self.logger = logger
-        # os.linesep is based on the interpreter running the dispatcher, not the target device
+        # set a default newline character, but allow actions to override as neccessary
         self.linesep = LINE_SEPARATOR
-        # serial can be slow, races do funny things, so allow for a delay
-        self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
@@ -112,9 +107,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         :param send_char: send one character or entire string
         """
         if delay:
-            self.logger.debug({"sending": s, "delay": "%s millisecond" % delay})
+            self.logger.debug({"sending": s + self.linesep, "delay": "%s millisecond" % delay})
         else:
-            self.logger.debug({"sending": s})
+            self.logger.debug({"sending": s + self.linesep})
         self.send(s, delay, send_char)
         self.send(self.linesep, delay)
 

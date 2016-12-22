@@ -403,6 +403,7 @@ else:
 default_config_path = os.path.join(os.path.dirname(__file__),
                                    'default-config/lava-dispatcher')
 
+
 custom_config_path = None
 custom_config_file = None
 

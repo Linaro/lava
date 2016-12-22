@@ -42,8 +42,10 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestInstallAction,
     TestRunnerAction,
 )
+from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
@@ -70,17 +72,21 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        with open(os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml'), 'r') as params:
+            self.testdef = yaml.safe_load(params)
 
     def test_testdef(self):
         testdef = overlay = None
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][3]
+                overlay = action.pipeline.actions[3]
                 testdef = overlay.internal_pipeline.actions[2]
         self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
+        self.assertEqual(testdef.run_levels,
+                         {'smoke-tests': 0, 'singlenode-advanced': 1})
         if not testdef.valid:
             # python3 compatible
             print(testdef.errors)  # pylint: disable=superfluous-parens
@@ -100,6 +106,13 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             else:
                 self.fail("%s does not match GitRepoAction or TestOverlayAction" % type(repo_action))
             repo_action.validate()
+            # FIXME
+            # if hasattr(repo_action, 'uuid'):
+            #     repo_action.data['test'] = {repo_action.uuid: {}}
+            #     repo_action.store_testdef(self.testdef, 'git', 'abcdef')
+            #     self.assertEqual(
+            #         repo_action.data['test'][repo_action.uuid]['testdef_pattern'],
+            #         self.testdef['parse'])
             self.assertTrue(repo_action.valid)
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
@@ -169,7 +182,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         overlay = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                for child in action.pipeline.children[action.pipeline]:
+                for child in action.pipeline.actions:
                     if isinstance(child, OverlayAction):
                         overlay = child
                         break
@@ -208,8 +221,8 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
-        apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
-        self.assertIsNotNone(apply_overlay)
+        self.assertIsInstance(deploy.pipeline.actions[0], DownloaderAction)
+        self.assertEqual(len(deploy.pipeline.actions), 1)  # deploy without test only needs DownloaderAction
 
 
 class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -375,32 +388,32 @@ class TestDefinitions(unittest.TestCase):
 
     def test_definition_lists(self):
         self.job.validate()
+        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)
         self.assertIn("test-definition", self.job.context['common'])
-        self.assertIn("testdef_index", self.job.context['common']['test-definition'])
+        self.assertIsNotNone(definition.get_namespace_data(action=definition.name, label='test-definition', key='testdef_index'))
         self.assertEqual(
-            self.job.context['common']['test-definition']['testdef_index'],
+            definition.get_namespace_data(action=definition.name, label='test-definition', key='testdef_index'),
             ['smoke-tests', 'singlenode-advanced']
         )
         self.assertEqual(
-            self.job.context['common']['test-runscript-overlay']['testdef_levels'],
+            git_repos[0].get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'),
             {
                 '1.3.2.4.4': '0_smoke-tests',
                 '1.3.2.4.8': '1_singlenode-advanced'
             }
         )
-        tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
-        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
-        git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
-        #  uuid = "%s_%s" % (self.job.job_id, self.level)
         self.assertEqual(
             {repo.uuid for repo in git_repos},
             {'4212_1.3.2.4.1', '4212_1.3.2.4.5'}
         )
         self.assertEqual(
-            set(git_repos[0].get_common_data('test-runscript-overlay', 'testdef_levels').values()),
+            set(git_repos[0].get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels').values()),
             {'1_singlenode-advanced', '0_smoke-tests'}
         )
         # fake up a run step
@@ -419,9 +432,10 @@ class TestDefinitions(unittest.TestCase):
                 '4212_1.3.2.4.5': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}},
                 '4212_1.3.2.4.1': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}}}
         )
-        testdef_index = self.job.context['common']['test-definition']['testdef_index']
+        testdef_index = self.job.context['common']['test-definition']['test-definition']['testdef_index']
         start_run = '0_smoke-tests'
-        uuid_list = definition.get_common_data('repo-action', 'uuid-list')
+        uuid_list = definition.get_namespace_data(action='repo-action', label='repo-action', key='uuid-list')
+        self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
                 self.assertEqual('4212_1.3.2.4.1', uuid_list[key])

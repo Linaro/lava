@@ -36,10 +36,7 @@ from lava_dispatcher.pipeline.utils.filesystem import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.constants import (
-    INSTALLER_IMAGE_MAX_SIZE,
-    LINE_SEPARATOR
-)
+from lava_dispatcher.pipeline.utils.constants import INSTALLER_IMAGE_MAX_SIZE
 
 
 class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attributes
@@ -62,11 +59,7 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
     def validate(self):
         super(DeployIsoAction, self).validate()
         suffix = os.path.join(*self.preseed_path.split('/')[-2:])
-        self.data[self.name].setdefault('suffix', suffix)
-        self.set_common_data(
-            'lineseparator',
-            'os_linesep',
-            self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR))
+        self.set_namespace_data(action=self.name, label='iso', key='suffix', value=suffix)
 
     def populate(self, parameters):
         self.preseed_path = self.mkdtemp()
@@ -139,7 +132,7 @@ class IsoEmptyImage(Action):
         output = os.path.join(base_dir, 'hd.img')
         self.logger.info("Creating base image of size: %s bytes", self.size)
         prepare_install_base(output, self.size)
-        self.set_common_data(self.name, 'output', output)
+        self.set_namespace_data(action=self.name, label=self.name, key='output', value=output)
         self.results = {'success': output}
         return connection
 
@@ -173,7 +166,7 @@ class IsoPullInstaller(Action):
         unique_values = set()
         for key, value in self.files.items():
             unique_values.add(value)
-            self.set_common_data(self.name, key, os.path.basename(value))
+            self.set_namespace_data(action=self.name, label=self.name, key=key, value=os.path.basename(value))
         if len(unique_values) != len(self.files.values()):
             self.errors = "filenames to extract from installer image must be unique."
 
@@ -183,7 +176,11 @@ class IsoPullInstaller(Action):
         # cp ./iso/install.amd/initrd.gz initrd.gz
         """
         # need download location
-        iso_download = self.data['download_action']['iso'].get('file', None)
+        iso_download = self.get_namespace_data(
+            action='download_action',
+            label='iso',
+            key='file'
+        )
         if not iso_download:
             raise JobError("Download of installer image failed.")
         destination = os.path.dirname(iso_download)
@@ -191,7 +188,7 @@ class IsoPullInstaller(Action):
         for key, value in self.files.items():
             filename = os.path.join(destination, os.path.basename(value))
             self.logger.info("filename: %s size: %s", filename, os.stat(filename)[6])
-            self.set_common_data(self.name, key, filename)
+            self.set_namespace_data(action=self.name, label=self.name, key=key, value=filename)
         self.results = {'success': self.files.values()}
         return connection
 
@@ -237,14 +234,14 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
             self.parameters['deployment_data']['netcfg'],
             self.preseed_url,
             self.console)
-        self.set_common_data(self.name, 'prompts', self.parameters['deployment_data']['prompts'])
-        self.set_common_data(self.name, 'append', self.command_line)
+        self.set_namespace_data(action=self.name, label=self.name, key='prompts', value=self.parameters['deployment_data']['prompts'])
+        self.set_namespace_data(action=self.name, label=self.name, key='append', value=self.command_line)
 
     def run(self, connection, args=None):
         # include kernel and initrd from IsoPullInstaller
-        kernel = self.get_common_data('pull-installer-files', 'kernel')
-        initrd = self.get_common_data('pull-installer-files', 'initrd')
+        kernel = self.get_namespace_data(action='pull-installer-files', label='pull-installer-files', key='kernel')
+        initrd = self.get_namespace_data(action='pull-installer-files', label='pull-installer-files', key='initrd')
         self.sub_command.append(" -kernel %s " % kernel)
         self.sub_command.append(" -initrd %s " % initrd)
-        self.set_common_data(self.name, 'sub_command', self.sub_command[:])
+        self.set_namespace_data(action=self.name, label=self.name, key='sub_command', value=self.sub_command[:])
         return connection

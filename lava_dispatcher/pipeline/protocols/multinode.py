@@ -394,7 +394,7 @@ class MultinodeProtocol(Protocol):
         """
         Retrieve values from reply to the call for this action
         possibly multiple key:value pairs.
-        Arguments: reply - self.get_common_data(protocol.name, self.name)
+        Arguments: reply - self.get_namespace_data(action=protocol.name, label=protocol.name, key=self.name)
                    params - dict containing the message to match to the reply
         params will not be modified, the return value is a *tuple* where the first value
         is the identifier to be used by other actions wanting this data (typically the API call or messageID)

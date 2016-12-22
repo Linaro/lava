@@ -75,27 +75,11 @@
   name: storage-deploy
   pipeline:
   - {class: actions.deploy.overlay.CustomisationAction, name: customise}
-  - class: actions.deploy.overlay.OverlayAction
-    name: lava-overlay
-    pipeline:
-    - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
-    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
-    - class: actions.deploy.testdef.TestDefinitionAction
-      name: test-definition
-      pipeline:
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
-    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
   - {class: actions.deploy.removable.DDAction, name: dd-image}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
@@ -116,8 +100,6 @@
     - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
     - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-    - {class: shell.ExpectShellSession, name: expect-shell-connection}
-    - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

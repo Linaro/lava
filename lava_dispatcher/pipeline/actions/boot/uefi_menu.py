@@ -36,9 +36,11 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
-from lava_dispatcher.pipeline.actions.boot.fastboot import WaitForAdbDevice
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_UEFI_LABEL_CLASS
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.utils.constants import (
+    DEFAULT_UEFI_LABEL_CLASS,
+    UEFI_LINE_SEPARATOR
+)
 
 
 class UefiMenu(Boot):
@@ -146,13 +148,15 @@ class UefiMenuSelector(SelectorMenuAction):
         if not connection:
             return connection
         connection.prompt_str = self.selector.prompt
+        connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
         connection = super(UefiMenuSelector, self).run(connection, args)
         self.logger.debug("Looking for %s", self.boot_message)
         connection.prompt_str = self.boot_message
         self.wait(connection)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection
 
 
@@ -182,13 +186,14 @@ class UefiSubstituteCommands(Action):
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
-            '{RAMDISK}': self.get_common_data('file', 'ramdisk'),
-            '{KERNEL}': self.get_common_data('file', 'kernel'),
-            '{DTB}': self.get_common_data('file', 'dtb'),
+            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
+            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
+            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
             'TEST_MENU_NAME': "LAVA %s test image" % self.parameters['commands']
         }
-        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
-            substitution_dictionary['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsroot')
+        if nfs_root:
+            substitution_dictionary['{NFSROOTFS}'] = nfs_root
         for item in self.items:
             if 'enter' in item['select']:
                 item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)[0]
@@ -208,10 +213,11 @@ class UefiMenuAction(BootAction):
 
     def validate(self):
         super(UefiMenuAction, self).validate()
-        self.set_common_data(
-            'bootloader_prompt',
-            'prompt',
-            self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt']
+        self.set_namespace_data(
+            action=self.name,
+            label='bootloader_prompt',
+            key='prompt',
+            value=self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt']
         )
 
     def populate(self, parameters):
@@ -221,8 +227,8 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(UefiMenuSelector())
             self.internal_pipeline.add_action(MenuReset())
-            self.internal_pipeline.add_action(ConnectLxc())
-            self.internal_pipeline.add_action(WaitForAdbDevice())
+            self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(LxcAddDeviceAction())
         else:
             self.internal_pipeline.add_action(UefiSubstituteCommands())
             self.internal_pipeline.add_action(MenuConnect())

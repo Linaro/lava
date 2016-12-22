@@ -371,4 +371,5 @@ class BootloaderTarget(MasterImageTarget):
                     partition, directory) as path:
                 yield path
 
+
 target_class = BootloaderTarget

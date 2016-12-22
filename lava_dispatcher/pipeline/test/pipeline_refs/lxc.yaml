@@ -2,6 +2,7 @@
   name: lxc-deploy
   pipeline:
   - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:

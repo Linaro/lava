@@ -1,0 +1,47 @@
+# Sample JOB definition for an ipxe job
+
+device_type: x86
+
+job_name: x86-pipeline
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+visibility: public
+
+# example old-style job: https://staging.validation.linaro.org/scheduler/job/113682/definition
+
+actions:
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/bzImage
+     ramdisk:
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/rootfs.cpio.gz
+         compression: gz
+     modules:
+         url: http://images.validation.linaro.org/functional-test-images/x86-32/modules.tar.xz
+         compression: xz
+     os: oe
+
+  - boot:
+     method: ipxe
+     commands: ramdisk
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+
+  - test:
+      monitors:
+      - name: monitor-kernel
+        start: 'ACPI: bus type PCI registered'
+        end: 'Freeing initrd memory:'
+        pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
+        fixupdict:
+          PASS: pass
+          FAIL: fail

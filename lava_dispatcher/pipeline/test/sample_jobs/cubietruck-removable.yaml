@@ -13,6 +13,7 @@ visibility: public
 
 actions:
   - deploy:
+      namespace: boot1
       timeout:
         minutes: 4
       to: tftp
@@ -34,6 +35,7 @@ actions:
         url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/sun7i-a20-cubietruck.dtb
 
   - boot:
+      namespace: boot1
       method: u-boot
       commands: nfs
       type: bootz
@@ -45,6 +47,7 @@ actions:
       timeout:
         minutes: 2
   - test:
+      namespace: boot1
       timeout:
         minutes: 5
       definitions:
@@ -55,6 +58,7 @@ actions:
     # secondary media - use the first deploy to get to a system which can deploy the next
     # in testing, assumed to already be deployed
   - deploy:
+        namespace: boot2
         timeout:
           minutes: 10
         to: usb
@@ -65,9 +69,11 @@ actions:
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download:
           tool: /usr/bin/wget
+          prompt: HTTP request sent, awaiting response
           options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
 
   - boot:
+        namespace: boot2
         method: u-boot
         commands: usb
         parameters:

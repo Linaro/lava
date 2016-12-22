@@ -96,7 +96,8 @@ setup(
         'netifaces >= 0.10.0',
         'nose',
         'pyzmq',
-        'configobj'
+        'configobj',
+        'pyudev >= 0.21'
     ],
     test_suite='lava_dispatcher.tests.test_suite',
     tests_require=[

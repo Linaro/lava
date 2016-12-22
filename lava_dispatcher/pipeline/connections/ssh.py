@@ -44,7 +44,7 @@ class SShSession(ShellSession):
         super(SShSession, self).finalise()
 
     def disconnect(self, reason):
-        self.sendline('logout')
+        self.sendline('logout', disconnecting=True)
         self.connected = False
 
 
@@ -136,10 +136,11 @@ class ConnectSsh(Action):
 
         params = self._check_params()
         command = self.command[:]  # local copy for idempotency
-        overrides = self.get_common_data("prepare-scp-overlay", self.key)
+        overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
         host_address = None
         if overrides:
-            host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
+            host_address = str(self.get_namespace_data(
+                action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
         if host_address:
             self.logger.info("Using common data to retrieve host_address for secondary connection.")
             command_str = " ".join(str(item) for item in command)
@@ -164,5 +165,6 @@ class ConnectSsh(Action):
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         connection.connected = True
         self.wait(connection)
-        self.data["boot-result"] = 'failed' if self.errors else 'success'
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

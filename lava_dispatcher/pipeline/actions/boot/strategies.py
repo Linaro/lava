@@ -23,8 +23,9 @@
 
 # pylint: disable=unused-import
 
-from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU, BootMonitorQemu
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
 from lava_dispatcher.pipeline.actions.boot.pyocd import BootMonitorPyOCD
+from lava_dispatcher.pipeline.actions.boot.dfu import DFU
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot
 from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec
 from lava_dispatcher.pipeline.actions.boot.ssh import SshLogin, Schroot
