@@ -1,3 +1,51 @@
+lava-dispatcher (2016.12-1) unstable; urgency=medium
+
+  * New production release
+    19fd79a9 Update preseed support for namespace changes
+    ef352abf Update zephyr sample jobs to use LAVA functional test urls
+    1301258a LAVA-498 - Support dragonboard-410c with lxc
+    1e0b60d2 Ensure pyudev version is >= 0.21
+    7d6a8134 Update the DFU boot code for namespace changes
+    161e8b47 Ensure installer tests share the final connection
+    567ddf0d remove duplicate call
+    e49bd971 Fix namespace error in flash_cmds_order retrieval.
+    cb04549d Set connection for secondary media deployments
+    dcd75e7b Use correct suffix for secondary media deployments
+    2a7b386f Declare the original ramdisk as compressed
+    fd73e937 Support DFU devices
+    6aa7280c LAVA-504 - Dynamic fastboot partition support in pipeline
+    9228901a LAVA-809 - Show HiKey kernel boot messages
+    774c7557 Extend namespace fixes for secondary connections
+    dc5bec22 Action: Always call super() in validate()
+    9b983cdf GitRepoAction: do not call validate twice
+    bd112aab Make namespaces common to all dynamic data operations
+    2e83e2ca Prevent invalid measurements being reported
+    1768c181 Fix testlevels for multi-test LXC jobs
+    0a49da8e Give namespaces to all actions and support simpler code flow
+    2423a123 slave: send the protocol version with HELLO message
+    983d3775 Ensure fixupdict is checked in test_case_result
+    08f79918 slave: writing an empty string to a file is valid
+    c6f382ef Move cleanup_actions from Action to Job
+    bc56ca24 Remove unused Action, Pipeline and Job members
+    1256f31e Run.sh should use set -x
+    a726be8f Allow install-steps to use the git-repo directly
+    b0ca553a Create a useful exception message
+    077aca26 slave: don't crash when lava-dispatch can't start
+    543ed4af Honor USB device wait timeout and add device before returning connection
+    0e07089f Fix problem with duplicate test shells failing
+    f14747c1 Use dnf instead of yum on Fedora version greater than or equal to 22.
+    efdaabc1 More fix for usage of LXC with a device.
+    2d188baa Limit repetitive kernel message log entries
+    c3455a11 Allow newline line separator to be overriden per bootloader
+    01a482f6 Fix for Debian reproducible builds.
+    62c07465 Indicate that character delay is in milliseconds
+    c1f79680 Remove hardcoded character delay in ipxe
+    e43552b3 Fixing secondary media deployment
+    e885c881 device-types: add Renesas r8a7795 Salvator-X board
+    1374289b device-types: add Amlogic meson-gxbb-odroidc2
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 22 Dec 2016 11:48:13 +0000
+
 lava-dispatcher (2016.11-1) unstable; urgency=medium
 
   * New production release aimed at Stretch.
