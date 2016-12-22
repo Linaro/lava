@@ -1,3 +1,67 @@
+lava-server (2016.12-1) unstable; urgency=medium
+
+  * New production release
+    541ba7b0a Enable ssh secondary connections on juno-uboot
+    2d6bb2fcc Handle errors which cause invalid description data
+    b19b9648a Fix template_mismatch check to use extends
+    d7f71eae3 Update ipxe x86 nfs to use base_ip_args
+    fa6b8b3ab Add a note on release-notes on lava-announce
+    d46d6e4fd Protect against invalid parameter submissions
+    431fd2fc0 Allow pipeline jobs to be used with XML-RPC job_output
+    f3bf855ba Add Copy to clipboard functionality to MultiNode
+    86950e985 LAVA-745 - expose device_path for all types
+    083d67d54 Add device-type template for arduino101
+    fd99c576e Fix UI submission error.
+    708a38a23 Add SSH support for overdrive
+    e838de3ba Update Linaro lab links to actual site
+    d8e127b74 Allow flash_cmds_order to be set
+    92eefe4aa Adding extra boot commands for secondary media on Juno
+    8f860a1e9 Keep result blocks on a single line with MultiNode
+    3b1d6654e LAVA-499 - Device type template for dragonboard-410c
+    5c46ea4ab Provide a default fastboot flash commands order.
+    a61ab2501 Download results XMLRPC support.
+    347fb3fd3 Allow to forward the messages to additional sockets
+    4d0753c3a Allow validate_pipeline devices to filter by device type name.
+    a859e5ede publisher: improve logging and fix logfile owner
+    9f9bd71b9 Correctly expose TestSet data in results
+    c6f9b1df8 Handle decimal conversion error in test case
+    1769d8b6b Expand hints on new device-types
+    eec1ca1d0 master: expect a protocol version with HELLO messages
+    cd8d109f7 master: add the job id to the log messages
+    a0ac2d66a Add absolute_url to job_details API.
+    951ab9f68 master: device configuration is empty for secondary media
+    c0575503d master: improve error reporting when reading env file
+    f551daa49 Add notes on unattended upgrades
+    1d2e25d1d Allow override of nfsroot options, not arguments
+    edaad5419 Update docs to reflect reality of from: support
+    09503a482 Manually revert d31a8462: errors are already saved
+    3516b856d add some notes on packages needed for LXC usage
+    b5ee513bb Rename 'usb-showup' to 'usb-device-wait'
+    406832582 Drop misleading hostname from device metadata
+    6a6ee6f4d Handle change to git.linaro.org frontend
+    d85f99e1b Fix crash when description.yaml is empty
+    080499d18 Remove references to wsgi
+    267d22302 Paste job definition to clipboard as text and not as HTML.
+    ef09a9698 add a link to the device tag glossary entry
+    08bd011a4 Update aliases migration for review change
+    7010775b6 Move metadata extra content to files
+    95ed9a3ba Expand notes on debugging test jobs and test cases
+    6d772bb0d Update for pycodestyle pep8 failures
+    dd58a1182 LAVA-798 - lookup device-types by alias
+    104feb593 Enable LXC for existing device-types.
+    376a80021 LAVA-797 - Document changing USB_SHOW_UP_TIMEOUT in job
+    3e8dbfeca all_devices() api call to do one big query instead of many small ones.
+    d27f7a4d5 Fix for Debian reproducible builds.
+    ac8bb8e2a Fix bug #2596 - No result collected for multinode jobs
+    7b3adad0a All jobs will have a definition, so show it by default.
+    1e6992f6b Set boot_character_delay in x86 template
+    5cc0a4746 Extend x86 unit test to check character_delay support
+    ad4f8780f Combine interfaces block for juno and vland
+    bb2ecf716 Allow changing the timeout for u-boot-interrupt
+    19de59978 Add stm32-carbon jinja2
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 22 Dec 2016 11:50:17 +0000
+
 lava-server (2016.11-1) unstable; urgency=medium
 
   * New production release aimed at Stretch. 
