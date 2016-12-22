@@ -16,6 +16,8 @@ basic information on the type of device.
 
 #. **Processor Family** (e.g. OMAP4, Exynos)
 
+#. **Alias** (e.g. omap4-panda, omap4-panda-es)
+
 #. **CPU model** (often empty but may contain a list of model strings which are
    all equivalent within this device type).
 

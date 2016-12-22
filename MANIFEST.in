@@ -38,8 +38,6 @@ include doc/v1/_static/*
 include doc/v2/_static/*
 include doc/v1/linaro_dashboard_bundle/*
 include man/*
-include etc/debug.wsgi
-include etc/lava-default.conf
 include etc/lava-master
 include etc/lava-master.init
 include etc/lava-master.service
@@ -50,13 +48,9 @@ include etc/lava-server.conf
 include etc/lava-server.gunicorn
 include etc/lava-server-gunicorn.init
 include etc/lava-server-gunicorn.service
-include etc/lava-server.uwsgi.conf
 include etc/env.yaml
 include etc/logrotate.d/*
-include etc/lava-server.wsgi
 include etc/settings.conf
-include etc/uwsgi.ini
-include etc/uwsgi.reload
 include fake-dispatcher
 include version.py
 recursive-include etc/dispatcher-config README

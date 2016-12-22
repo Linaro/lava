@@ -27,7 +27,6 @@ import jinja2
 import socket
 import logging
 import urlparse
-import simplejson
 import subprocess
 import datetime
 import netifaces
@@ -37,8 +36,6 @@ from collections import OrderedDict
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
-from lava_server.settings.getsettings import Settings
-from lava_server.settings.config_file import ConfigFile
 from lava_scheduler_app.schema import SubmissionException
 
 

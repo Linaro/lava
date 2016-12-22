@@ -73,5 +73,6 @@ def main():
     django_options.extend(options.command)
     execute_from_command_line(django_options)
 
+
 if __name__ == "__main__":
     main()

@@ -47,6 +47,7 @@ class AttributesForm(forms.Form):
     name = forms.CharField(max_length=1024)
     value = forms.CharField(max_length=1024)
 
+
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
 

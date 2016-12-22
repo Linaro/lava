@@ -47,6 +47,7 @@ def find_data_files(srcdir, *wildcards):
         [os.path.basename(f) for f in glob.glob(os.path.normpath(os.path.join(srcdir, '*')))])
     return file_list
 
+
 SRCDIR = os.path.join('.', 'lava_scheduler_app', 'tests', 'device-types')
 DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 
@@ -106,10 +107,6 @@ setup(
     data_files=[
         ('/etc/lava-server',
          ['etc/settings.conf',
-          'etc/uwsgi.ini',
-          'etc/debug.wsgi',
-          'etc/lava-server.wsgi',
-          'etc/uwsgi.reload',
           'etc/env.yaml']),
         ('/etc/apache2/sites-available',
          ['etc/lava-server.conf']),
@@ -118,7 +115,7 @@ setup(
           'etc/logrotate.d/lava-master-log',
           'etc/logrotate.d/lava-publisher-log',
           'etc/logrotate.d/lava-scheduler-log',
-          'etc/logrotate.d/lava-server-uwsgi-log']),
+          'etc/logrotate.d/lava-server-gunicorn-log']),
         ('/usr/share/lava-server',
          ['instance.template']),
         ('/usr/share/lava-server',

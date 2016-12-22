@@ -24,7 +24,7 @@ $(document).ready(
     function() {
         $("#copy_link").on("click", function() {
 
-            tmp_element = create_tmp_element($("#job_definition_text").html());
+            tmp_element = create_tmp_element($("#job_definition_text").text());
             tmp_element.select();
             try {
                 var success = document.execCommand('copy');

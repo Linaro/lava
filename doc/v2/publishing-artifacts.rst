@@ -37,6 +37,11 @@ from a shell script:
 Thanks to these secrets, the test writer can push files to an external server
 that he does control.
 
+.. caution:: Do not use **personal** secrets as the secret is visible to any
+   operation within the test shell and this may compromise the security of
+   your personal accounts. Always create a dedicated account for automated
+   submissions and only give that account minimal permissions to create the
+   automated uploads.
 
 Linaro LAVA-lab
 ===============
@@ -44,8 +49,10 @@ Linaro LAVA-lab
 The Linaro lab team provides and maintains a default web server that test
 writers can use to publish artifacts.
 
+https://archive.validation.linaro.org/
+
 In order to use this server, you should ask admins for:
-* an account on the server (and a token)
+* an account on the server (and a token) for automated submissions
 * a directory where to upload your files
 
 This token should be provided to the device, thanks to the **secrets**
@@ -57,14 +64,14 @@ inside a custom script so that the secret is not visible in the output of
 
 .. code-block:: shell
 
-    curl -F 'path=@file_to_publish.ext' -F 'token=1234567890' https://files.linaro.org/artifacts/my/directory/
+    curl -F 'path=@file_to_publish.ext' -F 'token=1234567890' https://archive.validation.linaro.org/artifacts/my-directory/
 
 .. note:: It remains the responsibility of the user to keep the secret hidden
    - tokens can be revoked if misused.
 
 The server will return the full url to the file you just published. You can
 also list all files stored in the server by browsing
-https://files.linaro.org/artifacts/
+https://archive.validation.linaro.org/artifacts/
 
 .. note:: Keep in mind that each file will be automatically deleted after some
           days and that quotas applies to each directories. For the Cambridge

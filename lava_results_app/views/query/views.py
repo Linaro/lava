@@ -58,7 +58,6 @@ from lava_results_app.models import (
     QueryGroup,
     QueryCondition,
     QueryOmitResult,
-    QueryMaterializedView,
     QueryUpdatedError,
     TestCase,
     TestSuite,

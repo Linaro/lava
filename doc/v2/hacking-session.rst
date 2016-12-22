@@ -88,9 +88,9 @@ definitions, some optional:
 * ``IRC_SERVER``: (optional) The IRC network to use for notifications, used if
   IRC_USER is also set. This defaults to ``irc.freenode.net``
 
-.. _hacking-session-debian.yaml: https://git.linaro.org/lava-team/hacking-session.git/blob_plain/HEAD:/hacking-session-debian.yaml
-.. _hacking-session-fedora.yaml: https://git.linaro.org/lava-team/hacking-session.git/blob_plain/HEAD:/hacking-session-fedora.yaml
-.. _hacking-session-oe.yaml: https://git.linaro.org/lava-team/hacking-session.git/blob_plain/HEAD:/hacking-session-oe.yaml
+.. _hacking-session-debian.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-debian.yaml
+.. _hacking-session-fedora.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-fedora.yaml
+.. _hacking-session-oe.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-oe.yaml
 .. _example: https://staging.validation.linaro.org/scheduler/job/138105/definition
 
 Starting a Hacking Session

@@ -271,7 +271,7 @@ final operation.
 Complete Multinode test definition
 ==================================
 
-https://git.linaro.org/lava-team/refactoring.git/blob_plain/HEAD:/bbb-ssh-guest.yaml
+https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
 
 .. code-block:: yaml
 

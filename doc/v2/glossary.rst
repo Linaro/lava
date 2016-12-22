@@ -13,7 +13,7 @@ Glossary of terms
    expected to need to read the entire glossary to find the information. FIXME
    - need to add many more terms here
 
-**A** [ :term:`action level` ]
+**A** [ :term:`action level` ] [ :term:`alias` ]
 
 **C** [ :term:`chart` ] [ :term:`ci loop` ]
 
@@ -76,6 +76,14 @@ Glossary of terms
 
     .. seealso:: :ref:`pipeline_construction`
 
+  alias
+    A string which can be used to relate the descriptive device-type name to a
+    particular list of aliases which could be used to lookup the matching
+    device-type. This can be useful to list the :term:`device tree blobs <DTB>`
+    which can be used with this device-type. (Aliases cannot be used in job
+    submissions directly.) Multiple device-types are allowed to share the one
+    or more aliases.
+
   chart
     A chart allows users to track :term:`results` over time using
     :term:`queries <query>`.
@@ -134,6 +142,8 @@ Glossary of terms
     only be created or assigned to a particular device by a lab admin. When
     requesting tags, remember to include a description of what the tagged
     device can provide to a Test Job.
+
+    .. seealso:: :ref:`device_tags_example`
 
   device type
     The common type of a number of devices in LAVA. The device type may have a

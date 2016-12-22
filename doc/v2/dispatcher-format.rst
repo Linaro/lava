@@ -320,7 +320,7 @@ configuration for that job will use::
 
 This mechanism holds for variables set by the base template as well::
 
- {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) %}
+ {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 Pipeline Device Configuration
 =============================

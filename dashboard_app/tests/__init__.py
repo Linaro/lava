@@ -58,4 +58,5 @@ def load_tests_from_submodules(_locals):
                 if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
                     _locals[attr] = obj
 
+
 load_tests_from_submodules(locals())

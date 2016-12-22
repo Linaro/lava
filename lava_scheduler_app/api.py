@@ -319,6 +319,46 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def get_device_type_by_alias(self, alias):
+        """
+        Name
+        ----
+
+        `get_device_type_by_alias` (`alias`)
+
+        Description
+        -----------
+        Get the matching device-type(s) for the specified alias. It is
+        possible that more than one device-type can be returned, depending
+        on local admin configuration. An alias can be used to provide the
+        link between the device-type name and the Device Tree name.
+        It is possible for multiple device-types to have the same alias
+        (to assist in transitions and migrations).
+        The specified alias string can be a partial match, returning all
+        device-types which have an alias name containing the requested
+        string.
+
+        Arguments
+        ---------
+        `alias`: string
+            Name of the alias to lookup
+
+        Return value
+        ------------
+        This function returns a dictionary containing the alias as the key
+        and a list of device-types which use that alias as the value. If the
+        specified alias does not match any device-type, the dictionary contains
+        an empty list for the alias key.
+
+        {'apq8016-sbc': ['dragonboard410c']}
+        {'ompa4-panda': ['panda', 'panda-es']}
+        """
+
+        aliases = DeviceType.objects.filter(aliases__name__contains=alias)
+        return {
+            alias: [device_type.name for device_type in aliases]
+        }
+
     def get_device_status(self, hostname):
         """
         Name
@@ -556,7 +596,7 @@ class SchedulerAPI(ExposedAPI):
         target_group, visibility, requested_device_id, pipeline_compatibility,
         submit_time, is_public, _old_status, actual_device_id, definition,
         sub_id, requested_device_type_id, _results_bundle_id, end_time,
-        group_id
+        group_id, absolute_url
         """
         self._authenticate()
         if not job_id:
@@ -565,6 +605,7 @@ class SchedulerAPI(ExposedAPI):
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
+            job.absolute_url = job.get_absolute_url()
         except PermissionDenied:
             raise xmlrpclib.Fault(
                 401, "Permission denied for user to job %s" % job_id)
@@ -938,11 +979,11 @@ class SchedulerAPI(ExposedAPI):
         jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
         return xmlrpclib.Binary(jinja_str.encode('UTF-8'))
 
-    def validate_pipeline_devices(self, hostname=None):
+    def validate_pipeline_devices(self, name=None):
         """
         Name
         ----
-        `validate_pipeline_device` [`device_hostname`]
+        `validate_pipeline_device` [`name`]
 
         Description
         -----------
@@ -955,10 +996,13 @@ class SchedulerAPI(ExposedAPI):
 
         Arguments
         ---------
-        `device_hostname`: string
-            Device hostname to validate.
-        If a device hostname is not specified, all pipeline devices
-        are checked.
+        `name`: string
+            Can be device hostname or device type name.
+        If name is specified, method will search for either a matching device
+        hostname or matching device type name in which case it will only
+        validate that(those) device(s).
+        If not specified, this method will validate all non-retired devices
+        in the system.
 
         Return value
         ------------
@@ -971,17 +1015,22 @@ class SchedulerAPI(ExposedAPI):
         `
 
         """
-        if not hostname:
+        if not name:
             devices = Device.objects.filter(
                 Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
         else:
             devices = Device.objects.filter(
-                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=hostname))
-        if not devices and hostname:
+                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(
+                    device_type__name=name))
+            if not devices:
+                devices = Device.objects.filter(
+                    Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=name))
+        if not devices and name:
             raise xmlrpclib.Fault(
-                404, "No pipeline device found with hostname %s" % hostname
+                404,
+                "No devices found with hostname or device type name %s" % name
             )
-        if not devices and not hostname:
+        if not devices and not name:
             raise xmlrpclib.Fault(
                 404, "No pipeline device found on this instance."
             )

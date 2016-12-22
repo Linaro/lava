@@ -66,5 +66,6 @@ def main():
     else:
         print(connection.scheduler.validate_pipeline_devices())
 
+
 if __name__ == '__main__':
     main()

@@ -6,7 +6,6 @@ device_type: beaglebone-black
 {% set baud_rate = baud_rate | default(115200) %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {# adds the parameters: top level block #}
@@ -32,9 +31,14 @@ actions:
     parameters:
       add_header: u-boot
       mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
+    connections:
+      lxc:
+      serial:
+      ssh:
     methods:
       tftp:
       usb:
+      lxc:
       ssh:
         options:
 {{ ssh_options }}
@@ -46,9 +50,11 @@ actions:
     connections:
       serial:
       ssh:
+      lxc:
     methods:
       kexec:
       ssh:
+      lxc:
       u-boot:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}

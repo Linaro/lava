@@ -81,7 +81,8 @@ def _job_definition_schema():
             Required('repository'): Any(_inline_schema(), str),
             Required('from'): str,
             Required('name'): str,
-            Required('path'): str
+            Required('path'): str,
+            Optional('parameters'): dict,
         }
     ], extra=True)
 
@@ -278,6 +279,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'flash_cmds_order': list,
         'board_id': str,
         'device_path': [str],
         'device_type': All(str, Length(min=1)),

@@ -621,7 +621,10 @@ def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
-    job = TestJob.get_by_job_number(pk)
+    try:
+        job = TestJob.get_by_job_number(pk)
+    except TestJob.DoesNotExist:
+        raise Http404("No TestJob matches the given query.")
     if job.can_view(user):
         return job
     else:
@@ -794,6 +797,7 @@ def device_type_detail(request, pk):
     bits_width = dt.bits.width if dt.bits else ''
     cpu_name = dt.cpu_model if dt.cpu_model else ''
     desc = dt.description if dt.description else ''
+    aliases = ', '.join([alias.name for alias in dt.aliases.all()])
 
     if dt.health_check_job == "":
         health_freq_str = ""
@@ -812,6 +816,7 @@ def device_type_detail(request, pk):
             'arch_bits': bits_width,
             'cores': core_string,
             'cpu_model': cpu_name,
+            'aliases': aliases,
             'description': desc,
             'search_data': search_data,
             "discrete_data": discrete_data,
@@ -2367,8 +2372,11 @@ def device_detail(request, pk):
     if device.is_pipeline:
         overrides = []
         path = utils.jinja_template_path(system=True)
-        devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % device.device_type.name)
-        mismatch = not os.path.exists(devicetype_file)
+        device_dict = DeviceDictionary.get(device.hostname)
+        if device_dict:
+            extends = device_dict.to_dict()['parameters']['extends']
+            devicetype_file = os.path.join(path, 'device-types', '%s' % extends)
+            mismatch = not os.path.exists(devicetype_file)
 
     template = loader.get_template("lava_scheduler_app/device.html")
     return HttpResponse(template.render(
@@ -2426,9 +2434,12 @@ def device_dictionary(request, pk):
 
     if not device.is_pipeline:
         raise Http404
+
     device_dict = DeviceDictionary.get(device.hostname)
-    if device_dict:
-        device_dict = device_dict.to_dict()
+    if not device_dict:
+        raise Http404
+
+    device_dict = device_dict.to_dict()
     dictionary = OrderedDict()
     vland = OrderedDict()
     extra = {}

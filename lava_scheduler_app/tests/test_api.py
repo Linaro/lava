@@ -11,10 +11,12 @@ from django.contrib.auth.models import Permission, User
 from django.utils import timezone
 from lava_scheduler_app.models import (
     Device,
+    DeviceType,
     Tag,
     TestJob,
     TemporaryDevice,
     validate_yaml,
+    Alias,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
@@ -311,6 +313,27 @@ actions:
             {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02', 'offline_by': ''},
             server.scheduler.get_device_status('black02')
         )
+
+    def test_type_aliases(self):
+        aliases = DeviceType.objects.filter(aliases__name__contains='black')
+        retval = {
+            'black': [device_type.name for device_type in aliases]
+        }
+        self.assertEqual(retval, {'black': []})
+        device_type = self.factory.make_device_type('beaglebone-black')
+        alias = Alias.objects.create(name='am335x-boneblack')
+        device_type.aliases.add(alias)
+        aliases = DeviceType.objects.filter(aliases__name__contains='black')
+        retval = {
+            'black': [device_type.name for device_type in aliases]
+        }
+        self.assertEqual(retval, {'black': ['beaglebone-black']})
+        alias.delete()
+        aliases = DeviceType.objects.filter(aliases__name__contains='black')
+        retval = {
+            'black': [device_type.name for device_type in aliases]
+        }
+        self.assertEqual(retval, {'black': []})
 
     # comment out the decorator to run this queue timing test
     @unittest.skip('Developer only - timing test')

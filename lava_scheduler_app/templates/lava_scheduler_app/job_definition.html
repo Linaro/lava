@@ -121,8 +121,14 @@
 
   <div class="tab-pane active" id="YAML">
 <h4 class="modal-header">Definition</h4>
-<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span id="job_definition_text">{{ job.display_definition }}</span>
+{% if job.is_multinode %}
+<pre>{{ job.display_definition }}</pre>
+{% else %}
+<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
+   class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
+    id="job_definition_text">{{ job.display_definition }}</span>
 </pre>
+{% endif %}
  </div>
   <div class="tab-pane" id="pipeline">
       <h2>Pipeline Description <a
@@ -201,8 +207,14 @@ timeouts:
 </div>
 {% else %}
 <h4 class="modal-header">Definition</h4>
-<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span id="job_definition_text">{{ job.display_definition }}</span>
+{% if job.is_multinode %}
+<pre>{{ job.display_definition }}</pre>
+{% else %}
+<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
+   class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
+    id="job_definition_text">{{ job.display_definition }}</span>
 </pre>
+{% endif %}
 {% endif %}
 {% endblock content %}
 

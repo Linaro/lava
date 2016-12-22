@@ -166,8 +166,8 @@ the ``--append`` option to QEMU.
    to fail unpredictably. Ensure you specify the checksums of the rootfs so
    that the UUID is correct for the downloaded file.
 
-When using checksums, avoid URLs including shortcuts like ``latest``. Specify
-the full URL to ensure consistency between tests.
+When using :ref:`checksums <testjob_checksums>`, avoid URLs including shortcuts like
+``latest``. Specify the full URL to ensure consistency between tests.
 
 .. note:: The initramfs in this test job is used to mount the root filesystem
    which is a standard Debian build. The deployment can therefore specify the

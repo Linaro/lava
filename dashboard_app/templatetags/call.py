@@ -62,4 +62,5 @@ def do_call(parser, token):
     parser.delete_first_token()
     return CallNode(func, args, name, nodelist)
 
+
 do_call = register.tag('call', do_call)

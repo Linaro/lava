@@ -1,5 +1,6 @@
 {# Base Kernel options #}
 {% set base_kernel_args = '' %}
+{% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_uboot_commands = (
 "          - setenv autoload no
@@ -28,7 +29,7 @@
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot") -%}
 
-{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
 {% set base_ip_args = "ip=dhcp" %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
@@ -113,6 +114,20 @@ commands:
 {% endif %}
 {% endblock -%}
 
+{% if device_path %}
+{# LXC support for adding energy probes etc. #}
+device_path: {{ device_path }}
+{% endif %}
+
+{% block fastboot %}
+{% if fastboot_serial_number %}
+flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
+                     'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2',
+                     'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor',
+                     'system', 'cache', 'userdata']) }}
+{% endif -%}
+{% endblock -%}
+
 {% block vland %}
 parameters:
 {% if interfaces %}
@@ -158,6 +173,8 @@ timeouts:
       seconds: {{ action_timeout_power_off | default(5) }}
     u-boot-commands:
       minutes: {{ action_timeout_u_boot_commands | default(3) }}
+    u-boot-interrupt:
+      seconds: {{ action_timeout_u_boot_interrupt | default(30) }}
     umount-retry:
       seconds: {{ action_timeout_umount_retry | default(45) }}
     auto-login-action:
@@ -171,4 +188,6 @@ timeouts:
       minutes: {{ connection_timeout_u_boot_commands | default(2) }}
     auto-login-action:
       minutes: {{ connection_timeout_auto_login | default(2) }}
+    u-boot-interrupt:
+      seconds: {{ connection_timeout_u_boot_interrupt | default(30) }}
 {% endblock -%}

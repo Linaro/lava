@@ -6,7 +6,6 @@ device_type: panda
 {% set baud_rate = baud_rate | default(115200) %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {% block vland %}
@@ -33,8 +32,12 @@ actions:
     parameters:
       add_header: u-boot
       mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
+    connections:
+      lxc:
+      serial:
     methods:
       tftp:
+      lxc:
       ssh:
         options:
 {{ ssh_options }}
@@ -46,6 +49,7 @@ actions:
         identity_file: {{ ssh_identity_file }}
   boot:
     connections:
+      lxc:
       serial:
     methods:
       ssh:

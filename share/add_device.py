@@ -222,6 +222,7 @@ def main(dt, name, options):
         os.unlink(json)
     return 0
 
+
 if __name__ == '__main__':
     usage = "Usage: %prog devicetype hostname [-p pduport] [-t telnetport]"
     description = "LAVA device helper. Allows local admins to add devices to a " \

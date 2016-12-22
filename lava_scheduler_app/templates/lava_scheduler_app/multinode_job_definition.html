@@ -101,5 +101,12 @@
 {% endif %}
 
 
-<pre>{{ job.multinode_definition }}</pre>
+<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
+class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
+id="job_definition_text">{{ job.multinode_definition }}</span></pre>
+
 {% endblock content %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-definition.min.js"></script>
+{% endblock %}

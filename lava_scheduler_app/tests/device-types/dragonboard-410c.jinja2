@@ -1,0 +1,26 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: dragonboard-410c
+adb_serial_number: {{ adb_serial_number|default('0000000000') }}
+fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+{% block vland %}
+{#  #}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      fastboot-boot-image:
+
+{% endblock %} {# end body block #}

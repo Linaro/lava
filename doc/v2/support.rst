@@ -92,7 +92,7 @@ supporting test writers and admins who are adapting to the LAVA V2 support and
 discussions relating to announcements from the LAVA developers. Replies to the
 :ref:`lava_announce` list are directed here.
 
-.. index:: lava-announce list
+.. index:: lava-announce list, release notes
 
 .. _lava_announce:
 
@@ -110,6 +110,11 @@ in the refactoring and the removal of old methods.
 
 Replies to this list are sent to the :ref:`lava_devel` list - if you are not
 subscribed to ``lava-devel``, please ask other users to CC you on replies.
+
+The release notes for each production release are sent to the ``lava-announce``
+mailing list and the `archives
+<https://lists.linaro.org/pipermail/lava-announce/>`_ contain the release-notes
+for previous releases.
 
 .. index:: irc
 
