@@ -234,7 +234,11 @@
           {% elif line.lvl == "target" %}
         <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
           {% elif line.lvl == "results" %}
-        {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+              {% if line.msg.set %}
+                {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
+              {% else %}
+                {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+              {% endif %}
         <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
@@ -262,6 +266,23 @@
         {% endif %}
       </div>
     </div>
+     {% if job.status > job.RUNNING %}
+    <div class="row">
+     <div class="col-md-12">
+      <h4>Debugging test failures</h4>
+      <div class="row">
+       <div class="col-md-6">
+      <a target="_blank" href="/static/docs/v2/debugging.html">Please read the triage
+      guidelines</a> for help on debugging failures in the test job, test definitions or
+      in individual test cases.
+      </div>
+       <div class="col-md-6">
+        <ul class="nav nav-pills">
+        <li><a class="btn btn-sm btn-default" href="#top"><span
+                class="glyphicon glyphicon-fast-backward"> Top of page</span></a></li>
+        </ul></div></div>
+        </div></div>
+     {% endif %}
   </div>
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">

@@ -123,7 +123,7 @@ class TestTestSuite(TestCaseWithFactory):
             {"case": "smoke-tests-basic", "definition": "lava", "duration": "2.61", "uuid": "44148c2f-3c7d-4143-889e-dd4a77084e07", "result": "pass"}
         ]
         for sample in result_samples:
-            ret = map_scanned_results(results=sample, job=job)
+            ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
         self.assertEqual(4, TestCase.objects.count())
         val = URLValidator()
@@ -145,7 +145,7 @@ class TestTestSuite(TestCaseWithFactory):
         ret = map_scanned_results(
             results={"case": "test-overlay", "definition": "lava",
                      "duration": 0.01159811019897461, "level": "1.3.3.2",
-                     "result": "pass"}, job=job)
+                     "result": "pass"}, job=job, meta_filename=None)
         self.assertTrue(ret)
         self.assertEqual(1, TestCase.objects.filter(suite=suite).count())
         testcase = TestCase.objects.get(suite=suite)
@@ -164,7 +164,7 @@ class TestTestSuite(TestCaseWithFactory):
             {}
         ]
         for sample in result_samples:
-            ret = map_scanned_results(results=sample, job=job)
+            ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertFalse(ret)
         self.factory.cleanup()
 
@@ -183,7 +183,7 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertEqual('/results/%s/test-suite' % job.id, suite.get_absolute_url())
 
         for sample in result_samples:
-            ret = map_scanned_results(results=sample, job=job)
+            ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
 
         self.assertEqual(2, TestCase.objects.count())

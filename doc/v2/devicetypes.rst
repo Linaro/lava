@@ -234,6 +234,10 @@ completed by the admin to provide information for test writers:
 **Processor name**
   e.g. AM335X
 
+**Alias**
+  A list of :term:`aliases <alias>` for this device-type.
+  e.g. 'am335x-boneblack'
+
 **CPU model name**
   e.g. OMAP 4430 / OMAP4460
 
@@ -244,3 +248,11 @@ completed by the admin to provide information for test writers:
 
 **Bit count**
   e.g. 32 or 64
+
+.. note:: When modifying device type objects in the
+   :ref:`django_admin_interface`, take care with multiple selection boxes.
+   Fields like architecture name or :term:`alias` can show in the list as being
+   available for selection in a device type object but only the **selected**
+   line or lines will actually be saved as references within the device type
+   object. The references will show up on the device type detail page in the
+   *Information* tab.

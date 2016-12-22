@@ -25,10 +25,7 @@ from lava_results_app.models import (
 )
 
 from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.tables import (
-    JobTable,
-    RestrictedIDLinkColumn
-)
+from lava_scheduler_app.tables import JobTable
 from lava_results_app.tables import (
     ResultsTable,
     SuiteTable

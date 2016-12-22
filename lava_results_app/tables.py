@@ -73,10 +73,7 @@ class ResultsTable(LavaTable):
         Slightly different purpose to RestrictedIDLinkColumn.render
         """
         user = table.context.get('request').user
-        if record.job.can_view(user):
-            return True
-        else:
-            return False
+        return bool(record.job.can_view(user))
 
     def render_name(self, record, table=None):
         if not self._check_job(record, table):
@@ -203,11 +200,11 @@ class SuiteTable(LavaTable):
         self.length = 10
 
     name = tables.Column()
-    testset = tables.Column()
+    test_set = tables.Column(verbose_name="Test Set")
     result = tables.Column()
     measurement = tables.Column()
     units = tables.Column()
-    logged = tables.DateColumn()
+    logged = tables.DateTimeColumn()
     buglinks = tables.Column(accessor='suite', verbose_name='Bug Links')
     buglinks.orderable = False
 
@@ -237,7 +234,14 @@ class SuiteTable(LavaTable):
                 record.get_absolute_url(), icon, code)
         )
 
-    def render_buglinks(self, record, table=None):
+    def render_test_set(self, record):  # pylint: disable=no-self-use
+        return mark_safe(
+            '<a href="%s">%s</a>' % (
+                record.test_set.get_absolute_url(), record.test_set.name
+            )
+        )
+
+    def render_buglinks(self, record, table=None):  # pylint: disable=no-self-use
         case_links_count = BugLink.objects.filter(
             content_type=ContentType.objects.get_for_model(TestCase),
             object_id=record.id).count()

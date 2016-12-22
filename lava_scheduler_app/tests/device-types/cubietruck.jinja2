@@ -6,7 +6,6 @@ device_type: cubietruck
 {% set baud_rate = baud_rate | default(115200) %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 parameters:
@@ -51,8 +50,12 @@ actions:
       mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
 {% if not deploy_methods %}
     # list of deployment methods which this device supports
+    connections:
+      lxc:
+      serial:
     methods:
       usb:
+      lxc:
       sata:
       tftp:
       ssh:
@@ -67,6 +70,7 @@ actions:
 {% endif %}
   boot:
     connections:
+      lxc:
       serial:
       ssh:
     # list of boot methods which this device supports.

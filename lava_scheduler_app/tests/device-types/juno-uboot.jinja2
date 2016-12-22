@@ -26,9 +26,28 @@ parameters:
     ramdisk: '{{ booti_ramdisk_addr|default('0x84000000') }}'
     dtb: '{{ booti_dtb_addr|default('0x83000000') }}'
   interfaces:
+{% if device_ip or device_mac %}
     target:
       ip: {{ device_ip|default('') }}
       mac: {{ device_mac|default('') }}
+{% endif %}
+{% if interfaces %}
+{% for interface in interfaces %}
+    {{ interface }}:
+      sysfs: "{{ sysfs.get(interface) }}"
+      mac: "{{ mac_addr.get(interface) }}"
+{% for switch, port in map.get(interface).items() %}
+      switch: "{{ switch }}"
+      port: {{ port }}
+{% endfor %}
+      tags:
+{% if tags.get(interface) %}
+{% for tag in tags.get(interface) %}
+      - {{ tag }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
   media:  # four USB slots.
     usb:
       UUID-required: True
@@ -48,6 +67,15 @@ actions:
       nfs:
       tftp:
       usb:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
     connections:
       adb:
       lxc:
@@ -58,9 +86,11 @@ actions:
       adb:
       lxc:
       serial:
+      ssh:
     # list of boot methods which this device supports.
     methods:
       lxc:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: VExpress64
@@ -94,6 +124,14 @@ actions:
 {{ base_uboot_addr_commands }}
 {{ base_uboot_tftp_commands }}
           - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs {{ base_nfsroot_args}} {{ juno_kernel_args }}'
+{{ base_uboot_tftp_bootcmd }}
+        ramdisk-tftp-usb:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_commands_juno_extras }}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 {{ juno_kernel_args }}'
 {{ base_uboot_tftp_bootcmd }}
         tftp-local-ramdisk-nfsroot:
           commands:

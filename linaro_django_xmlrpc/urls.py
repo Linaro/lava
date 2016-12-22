@@ -39,6 +39,7 @@ default_mapper_urlpatterns = [
             'help_view': 'linaro_django_xmlrpc.views.default_help'
         })]
 
+
 token_urlpatterns = [
     url(r'^tokens/$', tokens, name='linaro_django_xmlrpc_tokens'),
     url(r'^tokens/create/$', create_token, name='linaro_django_xmlrpc.views.create_token'),

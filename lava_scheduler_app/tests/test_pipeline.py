@@ -397,7 +397,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertTrue(device.is_pipeline)
         job_ctx = {
             'tftp_mac': 'FF:01:00:69:AA:CC',
-            'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
+            'extra_nfsroot_args': ',nolock',
             'console_device': 'ttyAMX0',
             'base_ip_args': 'ip=dhcp'
         }
@@ -406,7 +406,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
         menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
         self.assertIn(
-            job_ctx['nfsroot_args'],
+            job_ctx['extra_nfsroot_args'],
             [
                 item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
                 'new Entry' in item['select']['wait']][0]
@@ -421,13 +421,13 @@ class TestPipelineSubmit(TestCaseWithFactory):
         # has not allowed the job_ctx to use a different name for the variable and the variable is
         # already defined in the device dictionary using the specified name. If the device dictionary lacked
         # the variable, the job could set it to override the device type template default, as shown by the
-        # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
+        # override of the extra_nfsroot_args by allowing nfsroot_args in the device type template..
         self.assertEqual(
             [
                 item['select']['enter'] for item in menu_data if 'select' in item and
                 'wait' in item['select'] and 'Description' in item['select']['wait']][0],
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
-            'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
+            'root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,nolock ip=dhcp'
         )
 
     def test_visibility(self):
@@ -533,7 +533,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = Device.objects.get(hostname="fakebbb")
         self.assertEqual('beaglebone-black', device.device_type.name)
         self.assertTrue(device.is_pipeline)
-        context_overrides = map_context_overrides('base.jinja2', 'beaglebone-black.jinja2', system=False)
+        context_overrides = map_context_overrides('base-uboot.jinja2', 'beaglebone-black.jinja2', system=False)
         job_ctx = {
             'base_uboot_commands': 'dummy commands',
             'usb_uuid': 'dummy usb uuid',
@@ -1028,11 +1028,11 @@ class TestYamlMultinode(TestCaseWithFactory):
         from lava_results_app.dbutils import _get_job_metadata
         self.assertEqual(
             {
-                'test.0.definition.name': 'multinode-basic',
-                'test.0.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
-                'test.0.definition.from': 'git',
-                'boot.0.method': 'qemu',
-                'test.0.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
+                'test.0.common.definition.name': 'multinode-basic',
+                'test.0.common.definition.path': 'lava-test-shell/multi-node/multinode01.yaml',
+                'test.0.common.definition.from': 'git',
+                'boot.0.common.method': 'qemu',
+                'test.0.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
             },
             _get_job_metadata(pipeline['job']['actions'])
         )

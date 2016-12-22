@@ -20,7 +20,10 @@
 Views for the Results application
 Keep to just the response rendering functions
 """
+
+import os
 import csv
+import logging
 import simplejson
 import yaml
 from collections import OrderedDict
@@ -331,13 +334,31 @@ def testcase(request, job, pk, case):
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
+    test_sets = TestSet.objects.filter(name=case, suite=test_suite)
+    extra_source = ''
+    logger = logging.getLogger('dispatcher-master')
+    for extra_case in test_cases:
+        try:
+            f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)
+        except TypeError:
+            logger.info("Unable to load extra case metadata for %s", extra_case)
+            f_metadata = {}
+        extra_data = f_metadata.get('extra', None)
+        if extra_data and isinstance(extra_data, unicode) and os.path.exists(extra_data):
+            with open(f_metadata['extra'], 'r') as extra_file:
+                items = yaml.load(extra_file, Loader=yaml.CLoader)
+            # hide the !!python OrderedDict prefix from the output.
+            for key, value in items.items():
+                extra_source += "%s: %s\n" % (key, value)
     template = loader.get_template("lava_results_app/case.html")
     return HttpResponse(template.render(
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(testcase, pk=pk, job=job.id, case=case),
             'job': job,
+            'sets': test_sets,
             'suite': test_suite,
             'job_link': pklink(job),
+            'extra_source': extra_source,
             'test_cases': test_cases,
             'bug_links': BugLink.objects.filter(
                 object_id__in=test_cases.values_list('id', flat=True),

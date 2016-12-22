@@ -223,6 +223,19 @@ class ProcessorFamily(models.Model):
         return self.pk
 
 
+class Alias(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Alias for this device-type',
+        help_text=u'e.g. the device tree name(s)',
+        max_length=200,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
         primary_key=True,
@@ -276,6 +289,12 @@ class DeviceType(models.Model):
         blank=True,
         null=True,
         editable=True,
+    )
+
+    aliases = models.ManyToManyField(
+        Alias,
+        related_name='device_types',
+        blank=True,
     )
 
     bits = models.ForeignKey(
@@ -1651,7 +1670,8 @@ class TestJob(RestrictedResource):
         return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 
     def output_file(self):
-        output_path = os.path.join(self.output_dir, 'output.txt')
+        filename = 'output.yaml' if self.is_pipeline else 'output.txt'
+        output_path = os.path.join(self.output_dir, filename)
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
         else:
@@ -2536,9 +2556,9 @@ class TestJob(RestrictedResource):
         Returns JOB object.
         """
         if '.' in str(job_id):
-            job = get_object_or_404(TestJob.objects, sub_id=job_id)
+            job = TestJob.objects.get(sub_id=job_id)
         else:
-            job = get_object_or_404(TestJob.objects, pk=job_id)
+            job = TestJob.objects.get(pk=job_id)
         return job
 
     @property

@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-from django.conf import settings
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
 from django.utils.html import escape

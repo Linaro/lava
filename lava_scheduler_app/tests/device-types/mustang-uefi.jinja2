@@ -10,7 +10,6 @@ device_type: mustang-uefi
 {% set placeholders = [ 'tftp_mac', 'console_device', 'baud_rate'] -%}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 {% set base_menu_interrupt_prompt = menu_interrupt_prompt | default(base_menu_interrupt_prompt) -%}
 {% set base_menu_interrupt_string = menu_interrupt_string | default(base_menu_interrupt_string) -%}
 {% set base_item_markup_list = item_markup | default(base_item_markup_list) -%}

@@ -151,7 +151,6 @@ This is important since an overlay created during a deploy action will be
 consumed by a test action somewhere down the job definition. A namespace comes
 into place to connect these actions together.
 
-
 Protocol elements
 =================
 
@@ -179,6 +178,26 @@ Protocol elements
     - systemd
     - systemd-sysv
     os: debian
+
+Differences between LXC releases
+================================
+
+The release specified in the ``lava-lxc`` protocol will determine some of the
+packages which will need to be installed in the container. In particular, any
+container based on a Debian later than ``jessie`` will need two packages to be
+added to the setup of the container before the container can be used:
+``systemd`` and ``systemd-sysv``. These two packages **must** be specified in
+the deployment list.
+
+In addition, some packages will have been renamed between releases. For example,
+``android-tools-adb`` exists in Debian unstable but it is an old build and will
+at some point be replaced by ``adb`` which is also available in unstable but not
+in ``jessie``.
+
+.. caution:: Always check the availability of the packages needed for particular
+   releases by using a local chroot or VM. Only packages which are included in
+   the specified release can be installed using the deployment list. Packages
+   from other repositories will have to be installed using the test definition.
 
 Sample Job Definition
 =====================

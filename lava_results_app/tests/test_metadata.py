@@ -1,6 +1,8 @@
+# pylint: disable=ungrouped-imports
 import os
 import re
 import yaml
+import shutil
 import decimal
 import django
 from django.core.exceptions import MultipleObjectsReturned
@@ -9,9 +11,11 @@ from lava_scheduler_app.models import (
     TestJob,
     Device,
 )
+from lava_scheduler_app.utils import mkdir
 from lava_results_app.dbutils import (
     map_metadata,
     map_scanned_results,
+    create_metadata_store,
     _get_job_metadata, _get_device_metadata,  # pylint: disable=protected-access
     testcase_export_fields,
     export_testcase,
@@ -111,6 +115,7 @@ class TestMetaTypes(TestCaseWithFactory):
         test_dict = {
             'definition': 'unit-test',
             'case': 'unit-test',
+            'level': '1.3.4.1',
             # list of numbers, generates a much longer YAML string than just the count
             'result': 'pass'
         }
@@ -120,28 +125,49 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertEqual(matches.group(0), test_dict['case'])
         suite, _ = TestSuite.objects.get_or_create(name=test_dict["definition"], job=job)
         self.assertIsNotNone(reverse('lava.results.testcase', args=[job.id, suite.name, test_dict['case']]))
-        self.assertTrue(map_scanned_results(test_dict, job))
+        self.assertTrue(map_scanned_results(test_dict, job, None))
         # now break the reverse pattern
         test_dict['case'] = 'unit-test\r\n'
         pattern = '-_a-zA-Z0-9.\\(\\)+'
         matches = re.search(pattern, test_dict['case'])
         self.assertIsNone(matches)  # fails
         self.assertRaises(NoReverseMatch, reverse, 'lava.results.testcase', args=[job.id, suite.name, test_dict['case']])
-        self.assertFalse(map_scanned_results(test_dict, job))
+        self.assertFalse(map_scanned_results(test_dict, job, None))
 
-    def test_length(self):
+    def test_metastore(self):
         field = TestCase._meta.get_field('metadata')
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), self.user)
-        # artificially inflate the dict to represent a failed parser
-        test_dict = {
-            'definition': 'unit-test',
+        level = '1.3.5.1'
+        # artificially inflate results to represent a set of kernel messages
+        results = {
+            'definition': 'lava',
             'case': 'unit-test',
             # list of numbers, generates a much longer YAML string than just the count
-            'result': range(int(field.max_length / 2))
+            'extra': range(int(field.max_length / 2)),
+            'result': 'pass'
         }
-        self.assertGreater(len(yaml.dump(test_dict)), field.max_length)
-        self.assertFalse(map_scanned_results(test_dict, job))
+        stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), self.user)
+        meta_filename = os.path.join(job.output_dir, 'metadata', stub)
+        filename = "%s/job-%s/pipeline/%s/%s-%s.yaml" % (job.output_dir,
+                                                         job.id, level.split('.')[0],
+                                                         level, results['definition'])
+
+        mkdir(os.path.dirname(filename))
+        if os.path.exists(meta_filename):
+            # isolate from other unit tests
+            os.unlink(meta_filename)
+        self.assertEqual(meta_filename, create_metadata_store(results, job, level))
+        self.assertTrue(map_scanned_results(results, job, meta_filename))
+        self.assertEqual(TestCase.objects.filter(name='unit-test').count(), 1)
+        test_data = yaml.load(TestCase.objects.filter(name='unit-test')[0].metadata, Loader=yaml.CLoader)
+        self.assertEqual(test_data['extra'], meta_filename)
+        self.assertTrue(os.path.exists(meta_filename))
+        with open(test_data['extra'], 'r') as extra_file:
+            data = yaml.load(extra_file, Loader=yaml.CLoader)
+        self.assertIsNotNone(data)
+        os.unlink(meta_filename)
+        shutil.rmtree(job.output_dir)
 
     def test_repositories(self):  # pylint: disable=too-many-locals
         job = TestJob.from_yaml_and_user(
@@ -159,7 +185,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_values = _get_device_metadata(pipeline['device'])
         self.assertEqual(
             device_values,
-            {'target.hostname': 'fakeqemu1', 'target.device_type': 'qemu'}
+            {'target.device_type': 'qemu'}
         )
         del pipeline['device']['device_type']
         self.assertNotIn('device_type', pipeline['device'])
@@ -176,18 +202,18 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertEqual(
             retval,
             {
-                'test.1.definition.from': 'git',
-                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
-                'test.0.definition.name': 'smoke-tests',
-                'test.1.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
-                'boot.0.method': 'qemu',
-                'test.1.definition.name': 'singlenode-advanced',
-                'test.0.definition.from': 'git',
-                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml',
-                'test.1.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
+                'test.1.common.definition.from': 'git',
+                'test.0.common.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.common.definition.name': 'smoke-tests',
+                'test.1.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
+                'boot.0.common.method': 'qemu',
+                'test.1.common.definition.name': 'singlenode-advanced',
+                'test.0.common.definition.from': 'git',
+                'test.0.common.definition.path': 'ubuntu/smoke-tests-basic.yaml',
+                'test.1.common.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
         )
 
-    def test_parameter_support(self):
+    def test_parameter_support(self):  # pylint: disable=too-many-locals
         data = self.factory.make_job_data()
         test_block = [block for block in data['actions'] if 'test' in block][0]
         smoke = test_block['test']['definitions'][0]
@@ -216,10 +242,10 @@ class TestMetaTypes(TestCaseWithFactory):
                 continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_job_metadata(pipeline['job']['actions'])
-        self.assertIn('test.0.definition.parameters.VARIABLE_NAME_2', retval)
-        self.assertIn('test.0.definition.parameters.VARIABLE_NAME_1', retval)
-        self.assertEqual(retval['test.0.definition.parameters.VARIABLE_NAME_1'], 'first variable value')
-        self.assertEqual(retval['test.0.definition.parameters.VARIABLE_NAME_2'], 'second value')
+        self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_2', retval)
+        self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_1', retval)
+        self.assertEqual(retval['test.0.common.definition.parameters.VARIABLE_NAME_1'], 'first variable value')
+        self.assertEqual(retval['test.0.common.definition.parameters.VARIABLE_NAME_2'], 'second value')
 
     def test_job_multi(self):
         MetaType.objects.all().delete()

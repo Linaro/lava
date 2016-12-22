@@ -6,7 +6,7 @@ from django.db.models import Q
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
-    Architecture, ProcessorFamily, BitWidth, Core
+    Architecture, ProcessorFamily, Alias, BitWidth, Core
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -34,6 +34,7 @@ def expire_user_action(modeladmin, request, queryset):  # pylint: disable=unused
         for permission in user.user_permissions.all():
             user.user_permissions.remove(permission)
         user.save()
+
 
 expire_user_action.short_description = 'Expire user account'
 
@@ -64,6 +65,8 @@ def online_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action")
+
+
 online_action.short_description = "take online"
 
 
@@ -71,6 +74,8 @@ def online_action_without_health_check(modeladmin, request, queryset):  # pylint
     for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action", True)
+
+
 online_action_without_health_check.short_description = \
     "take online without manual health check"
 
@@ -84,6 +89,8 @@ def retire_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
                 new_state=new_status, message="retiring", job=None).save()
             device.status = new_status
             device.save()
+
+
 retire_action.short_description = "retire"
 
 
@@ -91,6 +98,8 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     for testjob in queryset:
         if testjob.can_cancel(request.user):
             testjob.cancel(request.user)
+
+
 cancel_action.short_description = 'cancel selected jobs'
 
 
@@ -98,6 +107,8 @@ def health_unknown(modeladmin, request, queryset):  # pylint: disable=unused-arg
     for device in queryset.filter(health_status=Device.HEALTH_PASS):
         device.health_status = Device.HEALTH_UNKNOWN
         device.save()
+
+
 health_unknown.short_description = "set health_status to unknown"
 
 
@@ -301,6 +312,10 @@ class DeviceTypeAdmin(admin.ModelAdmin):
             return obj.cpu_model
         return ''
 
+    def list_of_aliases(self, obj):
+        if obj.aliases:
+            return ', '.join([alias.name for alias in obj.aliases])
+
     def bit_count(self, obj):
         if obj.bits:
             return obj.bits
@@ -336,6 +351,8 @@ def hide_worker_action(modeladmin, request, queryset):  # pylint: disable=unused
     for worker in queryset.filter(display=True):
         worker.display = False
         worker.save()
+
+
 hide_worker_action.short_description = "Hide selected worker(s)"
 
 
@@ -343,6 +360,8 @@ def show_worker_action(modeladmin, request, queryset):  # pylint: disable=unused
     for worker in queryset.filter(display=False):
         worker.display = True
         worker.save()
+
+
 show_worker_action.short_description = "Show selected worker(s)"
 
 
@@ -359,6 +378,7 @@ admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(Architecture)
 admin.site.register(ProcessorFamily)
+admin.site.register(Alias)
 admin.site.register(BitWidth)
 admin.site.register(Core)
 admin.site.register(JobFailureTag)

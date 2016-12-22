@@ -418,8 +418,8 @@ Parameters used in the test definition YAML can be controlled from the YAML job
 file. See the following YAML test definition to get an understanding of how it
 works.
 
-* YAML test definition - https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/params/params.yaml
-* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/kvm-params.yaml
+* YAML test definition - https://git.linaro.org/lava-team/lava-functional-tests.git/tree/lava-test-shell/params/params.yaml
+* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/tree/kvm-params.yaml
 
 Install Steps
 =============

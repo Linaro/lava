@@ -1,0 +1,21 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: arduino101
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: 8087
+usb_product_id: 0aba
+
+actions:
+  deploy:
+    methods:
+      image:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      dfu:
+        parameters:
+          command:
+            dfu-util
+{% endblock -%}

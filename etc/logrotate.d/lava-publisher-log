@@ -5,5 +5,5 @@
 	delaycompress
 	missingok
 	notifempty
-	create 644 root root
+	create 644 lavaserver lavaserver
 }

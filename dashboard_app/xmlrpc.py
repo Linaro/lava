@@ -955,6 +955,7 @@ class DashboardAPI(ExposedAPI):
         matches = matches[:100]
         return [match.serializable() for match in matches]
 
+
 # Mapper used by the legacy URL
 legacy_mapper = Mapper()
 legacy_mapper.register_introspection_methods()
