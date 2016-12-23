@@ -30,6 +30,7 @@ import traceback
 import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
+from nose.tools import nottest
 
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.utils.constants import (
@@ -843,6 +844,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 }
             )
 
+    @nottest
     def test_needs_deployment(self, parameters):
         needs_deployment = False
         if parameters['namespace'] in parameters['test_info']:
@@ -852,6 +854,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     needs_deployment = True
         return needs_deployment
 
+    @nottest
     def test_has_shell(self, parameters):
         has_shell = False
         if parameters['namespace'] in parameters['test_info']:
@@ -861,6 +864,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     has_shell = True
         return has_shell
 
+    @nottest
     def test_needs_overlay(self, parameters):
         needs_overlay = False
         if parameters['namespace'] in parameters['test_info']:

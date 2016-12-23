@@ -46,6 +46,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
+@nottest
 def identify_test_definitions(test_info, namespace):
     """
     Iterates through the job parameters to identify all the test definitions,
@@ -86,6 +87,7 @@ def get_deployment_testdefs(parameters=None):
     return test_dict
 
 
+@nottest
 def get_deployment_tests(parameters, yaml_line):
     """
     Get the test YAML blocks according to which deployment precedes that test
@@ -108,6 +110,7 @@ def get_deployment_tests(parameters, yaml_line):
     return deploy
 
 
+@nottest
 def get_test_action_namespaces(parameters=None):
     """Iterates through the job parameters to identify all the test action
     namespaces."""
