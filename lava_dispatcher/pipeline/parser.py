@@ -65,6 +65,8 @@ def parse_action(job_data, name, device, pipeline, test_info, count):
         if parameters['namespace'] in test_info:
             if any([testclass for testclass in test_info[parameters['namespace']] if testclass['class'].needs_deployment_data()]):
                 parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
+        if 'preseed' in parameters:
+            parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         Deployment.select(device, parameters)(pipeline, parameters)
 
 

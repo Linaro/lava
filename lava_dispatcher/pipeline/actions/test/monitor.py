@@ -165,6 +165,7 @@ class TestMonitorAction(TestAction):
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
+            self.logger.debug(str(match))
             if 'result' in match:
                 if self.fixupdict:
                     if match['result'] in self.fixupdict:
@@ -180,6 +181,18 @@ class TestMonitorAction(TestAction):
                         }
                         if 'measurement' in match:
                             results.update({'measurement': match['measurement']})
+                        if 'units' in match:
+                            results.update({'units': match['units']})
+                        self.logger.results(results)
+            else:
+                if all(x in match for x in ['test_case_id', 'measurement']):
+                    if match['measurement'] and match['test_case_id']:
+                        results = {
+                            'definition': self.test_suite_name.replace(' ', '-').lower(),
+                            'case': match['test_case_id'].lower().strip(),
+                            'result': 'pass',
+                            'measurement': float(match['measurement'])
+                        }
                         if 'units' in match:
                             results.update({'units': match['units']})
                         self.logger.results(results)

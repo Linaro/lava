@@ -27,9 +27,9 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.u_boot import (
     UBootAction,
-    UBootCommandOverlay,
     UBootSecondaryMedia
 )
+from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
@@ -163,7 +163,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.pipeline = pipeline
-        overlay = UBootCommandOverlay()
+        overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
         try:
             ip_addr = dispatcher_ip()
@@ -269,7 +269,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('reboot-device', names)
         self.assertIn('u-boot-interrupt', names)
         self.assertIn('expect-shell-connection', names)
-        self.assertIn('u-boot-commands', names)
+        self.assertIn('bootloader-commands', names)
         for action in uboot_retry.internal_pipeline.actions:
             if action.name == 'reboot-device':
                 reset_action = action

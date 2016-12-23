@@ -26,8 +26,8 @@ import tarfile
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.ipxe import (
-    BootloaderAction,
+from lava_dispatcher.pipeline.actions.boot.ipxe import BootloaderAction
+from lava_dispatcher.pipeline.actions.boot import (
     BootloaderCommandsAction,
     BootloaderCommandOverlay
 )

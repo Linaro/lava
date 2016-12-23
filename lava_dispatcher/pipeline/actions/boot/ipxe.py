@@ -30,7 +30,12 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import (
+    BootAction,
+    AutoLoginAction,
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction
+)
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
@@ -185,135 +190,4 @@ class BootloaderInterrupt(Action):
         connection.prompt_str = IPXE_BOOT_PROMPT
         self.wait(connection)
         connection.sendcontrol("b")
-        return connection
-
-
-class BootloaderCommandOverlay(Action):
-    """
-    Replace KERNEL_ADDR and DTB placeholders with the actual values for this
-    particular pipeline.
-    addresses are read from the device configuration parameters
-    bootloader_type is determined from the boot action method strategy
-    bootz or bootm is determined by boot action method type. (i.e. it is up to
-    the test writer to select the correct download file for the correct boot command.)
-    server_ip is calculated at runtime
-    filenames are determined from the download Action.
-    """
-    def __init__(self):
-        super(BootloaderCommandOverlay, self).__init__()
-        self.name = "bootloader-overlay"
-        self.summary = "replace placeholders with job data"
-        self.description = "substitute job data into bootloader command list"
-        self.commands = None
-        self.type = "ipxe"
-        self.use_bootscript = False
-        self.lava_mac = ""
-
-    def validate(self):
-        super(BootloaderCommandOverlay, self).validate()
-        device_methods = self.job.device['actions']['boot']['methods']
-        params = self.job.device['actions']['boot']['methods'][self.type]['parameters']
-        if 'method' not in self.parameters:
-            self.errors = "missing method"
-        # FIXME: allow u-boot commands in the job definition (which make this type a list)
-        elif 'commands' not in self.parameters:
-            self.errors = "missing commands"
-        elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
-            self.errors = "Command not found in supported methods"
-        elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
-            self.errors = "No commands found in parameters"
-        # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
-        if 'use_bootscript' in params:
-            self.use_bootscript = params['use_bootscript']
-        if 'lava_mac' in params:
-            if re.match("([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", params['lava_mac'], re.IGNORECASE):
-                self.lava_mac = params['lava_mac']
-            else:
-                self.errors = "lava_mac is not a valid mac address"
-        self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
-
-    def run(self, connection, args=None):
-        """
-        Read data from the download action and replace in context
-        Use common data for all values passed into the substitutions so that
-        multiple actions can use the same code.
-        """
-        # Multiple deployments would overwrite the value if parsed in the validate step.
-        # FIXME: implement isolation for repeated steps.
-        connection = super(BootloaderCommandOverlay, self).run(connection, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
-        substitutions = {
-            '{SERVER_IP}': ip_addr,
-            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
-            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
-            '{LAVA_MAC}': self.lava_mac,
-        }
-        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
-        if nfs_root:
-            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
-            substitutions['{NFS_SERVER_IP}'] = ip_addr
-        elif nfs_url:
-            substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
-                action='persistent-nfs-overlay',
-                label='nfs_url', key='serverip')
-
-        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
-        if self.use_bootscript:
-            script = "/script.ipxe"
-            bootscript = self.get_namespace_data(action='tftp-deploy', label='tftp', key='tftp_dir') + script
-            bootscripturi = "tftp://%s/%s" % (ip_addr, os.path.dirname(substitutions['{KERNEL}']) + script)
-            write_bootscript(substitute(self.commands, substitutions), bootscript)
-            bootscript_commands = ['dhcp net0', "chain %s" % bootscripturi]
-            self.set_namespace_data(action=self.name, label=self.type, key='commands', value=bootscript_commands)
-            self.logger.debug("Parsed boot commands: %s", '; '.join(bootscript_commands))
-        else:
-            subs = substitute(self.commands, substitutions)
-            self.set_namespace_data(action='bootloader-overlay', label=self.type, key='commands', value=subs)
-            self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
-        return connection
-
-
-class BootloaderCommandsAction(Action):
-    """
-    Send the boot commands to the bootloader
-    """
-    def __init__(self):
-        super(BootloaderCommandsAction, self).__init__()
-        self.name = "bootloader-commands"
-        self.description = "send commands to bootloader"
-        self.summary = "interactive bootloader"
-        self.params = None
-        self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
-        self.type = "ipxe"
-
-    def validate(self):
-        super(BootloaderCommandsAction, self).validate()
-        # get prompt_str from device parameters
-        self.params = self.job.device['actions']['boot']['methods'][self.type]['parameters']
-
-    def run(self, connection, args=None):
-        if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
-        connection = super(BootloaderCommandsAction, self).run(connection, args)
-        connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.wait(connection)
-        i = 1
-        self.logger.debug("Using character delay: %s milliseconds.", self.character_delay)
-        commands = self.get_namespace_data(action='bootloader-overlay', label=self.type, key='commands')
-        for line in commands:
-            connection.sendline(line, delay=self.character_delay, send_char=True)
-            if i != (len(commands)):
-                self.wait(connection)
-                i += 1
-        # allow for auto_login
-        connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.wait(connection)
         return connection

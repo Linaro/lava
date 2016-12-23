@@ -24,10 +24,8 @@ import yaml
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.grub import (
-    GrubMainAction,
-    BootloaderCommandOverlay
-)
+from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
+from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError

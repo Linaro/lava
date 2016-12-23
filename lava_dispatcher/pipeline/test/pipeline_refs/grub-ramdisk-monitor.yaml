@@ -26,7 +26,7 @@
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action
   pipeline:
-  - {class: actions.boot.grub.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: power.ResetDevice
     name: reboot-device
@@ -35,7 +35,7 @@
     - {class: power.PDUReboot, name: pdu_reboot}
     - {class: power.PowerOn, name: power_on}
   - {class: actions.boot.grub.BootloaderInterrupt, name: bootloader-interrupt}
-  - {class: actions.boot.grub.BootloaderCommandsAction, name: bootloader-commands}
+  - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
 - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
 - class: power.FinalizeAction
   name: finalize

@@ -203,7 +203,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
         u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[2]
         self.assertIsNotNone(u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
-        self.assertEqual(u_boot_action.name, "uboot-overlay")
+        self.assertEqual(u_boot_action.name, "bootloader-overlay")
 
         methods = cubie['actions']['boot']['methods']
         self.assertIn('u-boot', methods)
