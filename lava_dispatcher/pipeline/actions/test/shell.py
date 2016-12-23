@@ -427,6 +427,11 @@ class TestShellAction(TestAction):
             if res['result'] in fixupdict:
                 res['result'] = fixupdict[res['result']]
             if res:
+                # disallow whitespace in test_case_id
+                test_case_id = "%s" % res['test_case_id']
+                if ' ' in test_case_id.strip():
+                    self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
+                    return True
                 res_data = {
                     'definition': self.definition,
                     'case': res["test_case_id"],
