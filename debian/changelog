@@ -20,7 +20,7 @@ lava-server (2016.12-1) unstable; urgency=medium
     3b1d6654e LAVA-499 - Device type template for dragonboard-410c
     5c46ea4ab Provide a default fastboot flash commands order.
     a61ab2501 Download results XMLRPC support.
-    347fb3fd3 Allow to forward the messages to additional sockets
+    347fb3fd3 Allow forwardng messages to additional sockets
     4d0753c3a Allow validate_pipeline devices to filter by device type name.
     a859e5ede publisher: improve logging and fix logfile owner
     9f9bd71b9 Correctly expose TestSet data in results
@@ -50,7 +50,8 @@ lava-server (2016.12-1) unstable; urgency=medium
     dd58a1182 LAVA-798 - lookup device-types by alias
     104feb593 Enable LXC for existing device-types.
     376a80021 LAVA-797 - Document changing USB_SHOW_UP_TIMEOUT in job
-    3e8dbfeca all_devices() api call to do one big query instead of many small ones.
+    3e8dbfeca all_devices() api call to do one big query instead of
+     many small ones.
     d27f7a4d5 Fix for Debian reproducible builds.
     ac8bb8e2a Fix bug #2596 - No result collected for multinode jobs
     7b3adad0a All jobs will have a definition, so show it by default.
