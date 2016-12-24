@@ -21,12 +21,12 @@ Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 mipsel powerpc ppc64el s390x ppc64
 Depends: file, lsb-base (>= 4), python-serial (>= 2.6), python-setuptools,
  python-daemon, python-guestfs, parted, tar (>= 1.27),
- ser2net, sudo, telnet, ${python:Depends}, ${misc:Depends}
+ sudo, telnet, ${python:Depends}, ${misc:Depends}
 Conflicts: python-linaro-dashboard-bundle
 Provides: python-linaro-dashboard-bundle
 Replaces: python-linaro-dashboard-bundle
 Multi-Arch: foreign
-Recommends: ntp, git, kpartx, tftpd-hpa, openbsd-inetd,
+Recommends: ntp, git, kpartx, tftpd-hpa, openbsd-inetd, ser2net,
  qemu-system-x86 (>= 2.0.0) [amd64 i386],
  qemu-system-arm (>= 2.0.0) [armhf arm64], qemu-system-aarch64 (>= 2.0.0) [arm64],
  libguestfs-tools [amd64 i386], nfs-kernel-server, rpcbind,
