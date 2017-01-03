@@ -271,6 +271,10 @@ Example V2 job using this support:
 
 https://git.linaro.org/lava-team/refactoring.git/tree/functional/qemu-server-pipeline.yaml
 
+.. note:: Make sure that your custom scripts output some useful information,
+   including some indication of progress, in all test jobs but control the
+   total amount of output to make the logs easier to read.
+
 .. _interpreters_scripts:
 
 Script interpreters
@@ -493,8 +497,18 @@ name::
 
 Version strings need specific handling to compare for newer, older etc. so LAVA
 does not support comparing or ordering of such strings beyond simple
-alphanumeric sorting. A custom :term:`frontend` would be the best way to handle
-such results.
+alphanumeric sorting. A :ref:`custom script <custom_scripts>` would be the best
+way to handle such results.
+
+For example, if your test definition uses a third party code repository, then
+it is always useful to use whatever support exists within that repository to
+output details like the current version or most recent commit hash or log
+message. This information may be useful when debugging a failure in the tests
+later. If or when particular tags, branches, commits or versions fail to work,
+the custom script can check for the supported or unsupported versions or names
+and report a ``fail`` test case result.
+
+.. seealso:: :ref:`test_definition_portability`
 
 Files
 =====
@@ -510,8 +524,9 @@ Measurements
 ``lava-test-case`` supports recording integer or floating point measurements
 for a particular test case. When a measurement is supplied, a text string can
 also be supplied to be used as the units of that measurement, e.g. seconds or
-bytes. Results which cannot be compared as integers or floating point numbers
-cannot be used as measurements.
+bytes. Results are used to track changes across test jobs over time, so results
+which cannot be compared as integers or floating point numbers cannot be used
+as measurements.
 
 .. seealso:: :ref:`recording_test_measurements`
 
@@ -565,6 +580,8 @@ Best practices for writing a LAVA test job
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
 of the job and the ways to analyse the results.
+
+.. _test_definition_portability:
 
 Write portable test definitions
 ===============================
@@ -633,3 +650,64 @@ files, which can make it hard to identify why a particular job failed.
 
 Splitting a large job into smaller chunks also means that the device can run
 other jobs for other users in between the smaller jobs.
+
+Retain at least some debug output in the final test definitions
+===============================================================
+
+Information about which commit or version of any third-party code is and will
+remain useful when debugging failures. When cloning such code, call a script in
+the code or use the version control tools to output information about the
+cloned copy. You may want to include the most recent commit message or the
+current commit hash or version control tag or branch name.
+
+If an item of configuration is important to how the test operates, write a test
+case or a custom script which reports this information. Even if this only
+exists in the test job log output, it will still be useful when comparing the
+log files of other similar jobs.
+
+Check for specific support as a test case
+=========================================
+
+If a particular package, service, script or utility **must** exist and / or
+function for the rest of your test definition to operate, **test** for this
+functionality.
+
+Any command executed by ``lava-test-case <name> --shell`` will report a test
+case as ``pass`` if that command exits zero and ``fail`` if that command exited
+non-zero. If the command is complex or needs pipes or redirects, create a
+simple script which returns the exit code of the command.
+
+.. note:: remember that the test shell runs under ``set -e``, so if you need to
+   prevent the rest of a test definition from exiting, you can report a
+   non-zero exit code from your scripts and call the script directly instead of
+   as a test case.
+
+.. _controlling_tool_output:
+
+Control the amount of output from scripts and tools
+===================================================
+
+Many tools available in distributions have ways to control the amount of output
+during operation. A balance is needed and test writers are recommended to check
+for available support. Wherever possible, use the available options to opt for
+output intended for log file output rather than your typical terminal.
+
+When writing your own scripts, consider using ``set -x`` or wrapping certain
+blocks with ``set -x``, ``set +x`` when using shell scripts. With other
+languages, use ``print()`` and similar functions often, especially where the
+script uses a conditional that can be affected by parameters from within the
+test job.
+
+Specific tools
+--------------
+
+* **apt** - When calling ``apt update`` or ``apt-get update``, **always** use
+  the ``-q`` option to avoid filling the log file with repeated progress output
+  during downloads. This option still gives output but formats it in a way that
+  is much more useful when reading log files compared to an interactive
+  terminal.
+
+* **wget** - **always** use the ``-S --progress=dot:giga`` options for
+  downloads as this reduces the total amount of progress information during the
+  operation.
+
