@@ -1,5 +1,13 @@
 {% extends "layouts/content-bootstrap.html" %}
 
+{% block styles %}
+  <style>
+    .tickLabel {
+      transform: rotate(-30deg);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 {% if job.status != job.COMPLETE %}
 <div class="alert alert-warning alert-dismissible" role="alert">
@@ -39,6 +47,10 @@
         </dl>
       </div>
     </div>
+
+    <h3>Timings</h3>
+    <div id="timings" style="height: 300px;"></div>
+
     <h3>Complete timing</h3>
     <table class="table table-striped">
       <thead>
@@ -61,11 +73,7 @@
           <td>{{ action.0 }}</td>
           <td>{{ action.1 }}</td>
           <td>{{ action.2 }}</td>
-          {% if action.4 %}
-          <td><span class="label label-warning"><strong>{{ action.2 }} / {{ action.3|floatformat:"0" }}</strong></span></td>
-          {% else %}
           <td>{{ action.3|floatformat:"0" }}</td>
-          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -73,3 +81,34 @@
   </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
+<script>
+  $(function() {
+    var durations = [];
+    var timeouts = [];
+    var levels = [];
+    {% for action in pipeline %}
+      durations.push([{{ forloop.counter0 }}, {{ action.2 }}]);
+      timeouts.push([{{ forloop.counter0 }}, {{ action.3 }}]);
+      levels.push([{{ forloop.counter0 }}, "{{ action.0 }}"]);
+    {% endfor %}
+
+    var ddata = [
+      {'label': 'duration', 'data': durations, 'color': '#FF0000'},
+      {'label': 'timeout', 'data': timeouts, 'color': '#0000FF'},
+    ];
+
+    $.plot($("#timings"), ddata, {
+      series: {
+        lines: { show: true, fill: true, steps: false },
+      },
+      xaxis: {
+        ticks: levels,
+      },
+    });
+  }
+  );
+</script>
+{% endblock scripts %}

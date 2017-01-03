@@ -1694,73 +1694,72 @@ def job_pipeline_sections(request, pk):
 @BreadCrumb("Job timing", parent=job_detail, needs=['pk'])
 def job_pipeline_timing(request, pk):
     job = get_restricted_job(request.user, pk)
-    if job.status == TestJob.SUBMITTED:
-        raise Http404
-
-    def dump_levels(conf):
-        lvls = []
-        for action in conf['pipeline']:
-            # In-depth first as that's the order when parsing the log file
-            if 'pipeline' in action:
-                lvls.extend(dump_levels({'pipeline': action['pipeline']}))
-            lvls.append((action['name'], action['level'], action['timeout']['duration']))
-        return lvls
-
     try:
-        description = yaml.load(open(os.path.join(job.output_dir, 'description.yaml')))
-        logs = yaml.load(open(os.path.join(job.output_dir, 'output.yaml')))
+        logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")))
     except IOError:
         raise Http404
 
-    # Add the validation that is not part of the description file
-    levels = [('validate', '0', '0')]
-    levels.extend(dump_levels(description))
-    # Pattern for the logs
-    pattern = re.compile('^(?P<action>[\\w_-]+) duration: (?P<duration>\\d+\\.\\d+)$')
+    # start and end patterns
+    pattern_start = re.compile("^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)$")
+    pattern_end = re.compile('^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(duration (?P<duration>\\d+:\\d+:\\d+)\\)$')
 
-    index = 0
-    data = {}
-    for line in logs:
-        try:
-            match = pattern.match(line['msg'])
-        except TypeError:
-            continue
-        if match is not None:
-            d = match.groupdict()
-            timeout = float(levels[index][2])
-            try:
-                data[levels[index][1]] = (d['action'], float(d['duration']), timeout)
-            except ValueError:
-                # Set it to 0 if this is not a float
-                data[levels[index][1]] = (d['action'], 0.0, timeout)
-            index += 1
-
-    # Build the data objects for the template
-    # max, mean and summary and the completed (sorted) pipeline
-    actions = data.keys()
-    actions.sort()
-    pipeline = []
+    timings = {}
     total_duration = 0
     max_duration = 0
     summary = []
-    for lvl in actions:
-        action = data[lvl][0]
-        duration = data[lvl][1]
-        timeout = data[lvl][2]
-        max_duration = max(max_duration, duration)
-        duration_close = duration >= timeout * 0.9 if timeout else False
-        pipeline.append((lvl, action, duration, timeout, duration_close))
-        if '.' not in lvl:
-            total_duration += duration
-            summary.append([action, duration, 0])
+    for line in logs:
+        # Only parse debug and info levels
+        if line["lvl"] not in ["debug", "info"]:
+            continue
 
+        # Will raise if the log message is a python object
+        try:
+            match = pattern_start.match(line["msg"])
+        except TypeError:
+            continue
+
+        if match is not None:
+            d = match.groupdict()
+            parts = d["timeout"].split(":")
+            timeout = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
+            timings[d["level"]] = {"name": d["action"],
+                                   "timeout": float(timeout)}
+            continue
+
+        # No need to catch TypeError here as we know it's a string
+        match = pattern_end.match(line["msg"])
+        if match is not None:
+            d = match.groupdict()
+            # TODO: validate does not have a proper start line
+            if d["action"] == "validate":
+                continue
+            level = d["level"]
+            parts = d["duration"].split(":")
+            duration = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
+            timings[level]["duration"] = duration
+
+            max_duration = max(max_duration, duration)
+            if '.' not in level:
+                total_duration += duration
+                summary.append([d["action"], duration, 0])
+
+    levels = timings.keys()
+    levels.sort()
+
+    # Construct the report
+    pipeline = []
+    for lvl in levels:
+        pipeline.append((lvl, timings[lvl]["name"], timings[lvl].get("duration", 0.0),
+                         timings[lvl]["timeout"]))
+
+    # Compute the percentage
     for index, action in enumerate(summary):
         summary[index][2] = action[1] / total_duration * 100
 
     return render(request, 'lava_scheduler_app/job_pipeline_timing.html',
                   {'job': job, 'pipeline': pipeline, 'summary': summary,
                    'total_duration': total_duration,
-                   'mean_duration': total_duration / len(actions),
+                   'mean_duration': total_duration / len(pipeline),
                    'max_duration': max_duration,
                    'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk)})
 
