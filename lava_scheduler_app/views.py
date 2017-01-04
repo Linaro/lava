@@ -1691,7 +1691,6 @@ def job_pipeline_sections(request, pk):
     return response
 
 
-@BreadCrumb("Job timing", parent=job_detail, needs=['pk'])
 def job_pipeline_timing(request, pk):
     job = get_restricted_job(request.user, pk)
     try:
@@ -1749,19 +1748,29 @@ def job_pipeline_timing(request, pk):
     # Construct the report
     pipeline = []
     for lvl in levels:
-        pipeline.append((lvl, timings[lvl]["name"], timings[lvl].get("duration", 0.0),
-                         timings[lvl]["timeout"]))
+        duration = timings[lvl].get("duration", 0.0)
+        timeout = timings[lvl]["timeout"]
+        pipeline.append((lvl, timings[lvl]["name"], duration, timeout,
+                         bool(duration >= (timeout * 0.85))))
 
     # Compute the percentage
     for index, action in enumerate(summary):
         summary[index][2] = action[1] / total_duration * 100
 
-    return render(request, 'lava_scheduler_app/job_pipeline_timing.html',
-                  {'job': job, 'pipeline': pipeline, 'summary': summary,
-                   'total_duration': total_duration,
-                   'mean_duration': total_duration / len(pipeline),
-                   'max_duration': max_duration,
-                   'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk)})
+    if len(pipeline) == 0:
+        response_dict = {'timing': '',
+                         'graph': []}
+    else:
+        timing = render_to_string('lava_scheduler_app/job_pipeline_timing.html',
+                                  {'job': job, 'pipeline': pipeline, 'summary': summary,
+                                   'total_duration': total_duration,
+                                   'mean_duration': total_duration / len(pipeline),
+                                   'max_duration': max_duration})
+
+        response_dict = {'timing': timing,
+                         'graph': pipeline}
+
+    return HttpResponse(json.dumps(response_dict), content_type='text/json')
 
 
 def job_pipeline_incremental(request, pk):
