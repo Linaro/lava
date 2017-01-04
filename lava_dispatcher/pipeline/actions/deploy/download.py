@@ -22,6 +22,7 @@
 # This class is used for all downloads, including images and individual files for tftp.
 # python2 only
 
+import errno
 import math
 import os
 import sys
@@ -249,6 +250,16 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
+
+        # Create a fresh directory if the old one has been removed by a previous cleanup
+        # (when retrying inside a RetryAction)
+        try:
+            os.mkdir(self.path, 0o755)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+
+        # Download the file
         with self._decompressor_stream() as (writer, fname):
 
             if 'images' in self.parameters and self.key in self.parameters['images']:
