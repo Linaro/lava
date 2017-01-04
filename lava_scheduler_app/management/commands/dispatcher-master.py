@@ -88,16 +88,16 @@ class FileHandler(object):  # pylint: disable=too-few-public-methods
         self.fd.close()
 
 
-def load_optional_yaml_file(filename):
+def get_env_string(filename):
     """
     Returns the string after checking for YAML errors which would cause issues later.
-    Only raise an error if the file exists but is not readable or parsable
     """
+    logger = logging.getLogger('dispatcher-master')
     try:
         with open(filename, "r") as f_in:
-            data_str = f_in.read()
-        yaml.safe_load(data_str)
-        return data_str
+            env_str = f_in.read()
+        yaml.safe_load(env_str)
+        return env_str
     except IOError as exc:
         # This is ok if the file does not exist
         if exc.errno == errno.ENOENT:
@@ -159,9 +159,6 @@ class Command(BaseCommand):
                             default="/etc/lava-server/env.dut.yaml",
                             help="Environment variables for device under test. "
                                  "Default: /etc/lava-server/env.dut.yaml")
-        parser.add_argument('--dispatchers-config',
-                            default="/etc/lava-server/dispatcher.d",
-                            help="Directory that might contain dispatcher specific configuration")
         parser.add_argument('--output-dir',
                             default='/var/lib/lava-server/default/media/job-output',
                             help="Directory where to store job outputs. "
@@ -419,7 +416,7 @@ class Command(BaseCommand):
         job_def['compatibility'] = job.pipeline_compatibility
 
         # no need for the dispatcher to retain comments
-        return yaml.dump(job_def)
+        return str(yaml.dump(job_def))
 
     def process_jobs(self, options):
         for job in TestJob.objects.filter(
@@ -474,13 +471,8 @@ class Command(BaseCommand):
                 device_configuration = '' \
                     if job.dynamic_connection else device.load_device_configuration(job_ctx)
 
-                # Load env.yaml, env-dut.yaml and dispatcher configuration
-                # All three are optional
-                env_str = load_optional_yaml_file(options['env'])
-                env_dut_str = load_optional_yaml_file(options['env_dut'])
-                dispatcher_config_file = os.path.join(options['dispatchers_config'],
-                                                      "%s.yaml" % worker_host.hostname)
-                dispatcher_config = load_optional_yaml_file(dispatcher_config_file)
+                env_str = get_env_string(options['env'])
+                env_dut_str = get_env_string(options['env_dut'])
 
                 if job.is_multinode:
                     for group_job in job.sub_jobs_list:
@@ -493,7 +485,6 @@ class Command(BaseCommand):
                                  'START', str(group_job.id),
                                  self.export_definition(group_job),
                                  str(device_configuration),
-                                 dispatcher_config,
                                  env_str, env_dut_str])
 
                 self.controler.send_multipart(
@@ -501,7 +492,6 @@ class Command(BaseCommand):
                      'START', str(job.id),
                      self.export_definition(job),
                      str(device_configuration),
-                     dispatcher_config,
                      env_str, env_dut_str])
                 return
 
