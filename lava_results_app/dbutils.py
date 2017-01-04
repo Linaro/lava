@@ -34,6 +34,7 @@ from lava_results_app.models import (
     ActionData,
     MetaType,
 )
+from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.pipeline.action import Timeout
 
@@ -227,6 +228,11 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
     if not isinstance(data, list):
         return None
     retval = {}
+    packaged = debian_package_version()
+    if packaged:
+        retval.update({
+            'lava-server-version': packaged
+        })
     for action in data:
         deploy = [reduce(dict.get, ['deploy'], action)]
         count = 0

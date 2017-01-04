@@ -199,6 +199,8 @@ class TestMetaTypes(TestCaseWithFactory):
                 continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_job_metadata(pipeline['job']['actions'])
+        if 'lava-server-version' in retval:
+            del retval['lava-server-version']
         self.assertEqual(
             retval,
             {

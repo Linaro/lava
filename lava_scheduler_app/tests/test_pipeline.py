@@ -1026,6 +1026,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             4212, None, None, None, output_dir='/tmp/test')
         pipeline = pipeline_job.describe()
         from lava_results_app.dbutils import _get_job_metadata
+        meta_dict = _get_job_metadata(pipeline['job']['actions'])
+        if 'lava-server-version' in meta_dict:
+            del meta_dict['lava-server-version']
         self.assertEqual(
             {
                 'test.0.common.definition.name': 'multinode-basic',
@@ -1034,13 +1037,15 @@ class TestYamlMultinode(TestCaseWithFactory):
                 'boot.0.common.method': 'qemu',
                 'test.0.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
             },
-            _get_job_metadata(pipeline['job']['actions'])
-        )
+            meta_dict)
         # simulate dynamic connection
         dynamic = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
+        meta_dict = _get_job_metadata(dynamic['job']['actions'])
+        if 'lava-server-version' in meta_dict:
+            del meta_dict['lava-server-version']
         self.assertEqual(
-            _get_job_metadata(dynamic['job']['actions']),
+            meta_dict,
             {
                 'omitted.1.inline.name': 'ssh-client',
                 'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
