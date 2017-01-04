@@ -69,7 +69,7 @@ class RetryAction(Action):
                 self.cleanup(connection, msg)
 
                 # re-raise if this is the last loop
-                if self.retries == self.max_retries - 1:
+                if self.retries == self.max_retries:
                     self.errors = "%s retries failed for %s" % (self.retries, self.name)
                     res = 'failed' if self.errors else 'success'
                     self.set_namespace_data(action='boot', label='shared',
