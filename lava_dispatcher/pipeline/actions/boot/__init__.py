@@ -162,7 +162,7 @@ class AutoLoginAction(Action):
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if not params:
-            self.logger.debug("Skipping of auto login")
+            self.logger.debug("No login prompt set.")
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection)
             # clear kernel message prompt patterns

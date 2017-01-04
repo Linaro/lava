@@ -233,11 +233,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             # Run the pipeline and wait for exceptions
             with self.timeout() as max_end_time:
                 self.pipeline.run_actions(self.connection, max_end_time)
-        except InfrastructureError as exc:
+        except InfrastructureError:
             error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
                         "Please report it to the LAVA admin."
             return_code = 1
-        except JobError as exc:
+        except JobError:
             error_msg = "JobError: your job cannot terminate cleanly."
             return_code = 2
         except KeyboardInterrupt:
@@ -257,9 +257,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Cleanup now
         self.cleanup(self.connection, None)
 
-        # Print the final status
-        if error_msg is not None:
-            self.logger.error(error_msg)
+        if self.pipeline.errors and not error_msg:
+            self.logger.error("Errors detected: %s", self.pipeline.errors)
+            return_code = -1
         else:
             self.logger.info("Job finished correctly")
         return return_code

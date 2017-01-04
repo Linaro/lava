@@ -120,6 +120,7 @@ class LinuxKernelMessages(Action):
                 if action:
                     msg = "Failed to match - connection timed out handling messages."
                     action.logger.warning(msg)
+                    action.errors = msg
                 break
 
             if action and index:
