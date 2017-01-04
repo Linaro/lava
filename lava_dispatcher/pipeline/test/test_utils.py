@@ -25,7 +25,7 @@ import subprocess
 import tempfile
 import unittest
 
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, version_tag
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
@@ -237,6 +237,12 @@ class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-metho
             "reboot: Restarting system",  # modified in the job yaml
             reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
         )
+
+    def test_version_tag(self):
+        name = version_tag()
+        self.assertIsNotNone(name)
+        self.assertEqual(type(name), type(u''))
+        self.assertGreater(len(name), 1)
 
 
 class TestClasses(unittest.TestCase):

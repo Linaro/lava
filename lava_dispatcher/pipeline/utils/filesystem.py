@@ -253,3 +253,64 @@ def copy_overlay_to_sparse_fs(image, overlay):
     subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
                             stderr=subprocess.STDOUT)
     os.remove(ext4_img)
+
+
+def version_tag():  # pylint: disable=too-many-locals
+    """
+    Parses the git status to determine if this is a git tag
+    or a developer commit and builds a version string combining
+    the two. If there is no git directory, relies on this being
+    a directory created from the tarball created by setup.py when
+    it uses this script and retrieves the original version string
+    from that.
+    :return: a version string based on the tag and short hash
+    """
+    # up three dirs from utils
+    if os.path.exists(os.path.join(os.path.dirname(__file__), '..', '..', '..', ".git/")):
+        tag_list = [
+            'git', 'for-each-ref', '--sort=taggerdate', '--format',
+            "'%(refname)'", 'refs/tags',
+        ]
+        hash_list = ['git', 'log', '-n', '1']
+        tag_hash_list = ['git', 'rev-list']
+        clone_data = subprocess.check_output(hash_list).strip().decode('utf-8')
+        commits = clone_data.split('\n')
+        clone_hash = commits[0].replace('commit ', '')[:8]
+        tag_data = subprocess.check_output(tag_list).strip().decode('utf-8')
+        tags = tag_data.split('\n')
+        if len(tags) < 2:
+            return clone_hash
+        tag_line = str(tags[len(tags) - 1]).replace('\'', '').strip()
+        tag_name = tag_line.split("/")[2]
+        tag_hash_list.append(tag_name)
+        tag_hash = subprocess.check_output(tag_hash_list).strip().decode('utf-8')
+        tags = tag_hash.split('\n')
+        tag_hash = tags[0][:8]
+        if tag_hash == clone_hash:
+            return tag_name
+        else:
+            # tag, month end and release are now out of sync.
+            # use the rev-list count to always ensure that we are building
+            # a newer version to cope with date changes at month end.
+            # use short git hash for reference.
+            dev_stamp = ['git', 'rev-list', '--count', 'HEAD']
+            dev_count = subprocess.check_output(dev_stamp).strip().decode('utf-8')
+            dev_short = ['git', 'rev-parse', '--short', 'HEAD']
+            dev_hash = subprocess.check_output(dev_short).strip().decode('utf-8')
+            return "%s+%s.%s" % (tag_name, dev_count, dev_hash)
+
+
+def debian_package_version():
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    changelog = '/usr/share/doc/lava-dispatcher/changelog.Debian.gz'
+    if os.path.exists(changelog):
+        deb_version = subprocess.check_output((
+            'dpkg-parsechangelog', '-l%s' % changelog,
+            '--show-field', 'Version')).strip().decode('utf-8')
+        # example version returned would be '2016.11'
+        return deb_version.split('-')[0]
+    return ''

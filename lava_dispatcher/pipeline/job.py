@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -147,6 +148,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Then needs to validate the context
         Finally expose the context so that actions can see it.
         """
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version()
+        self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
         for protocol in self.protocols:
