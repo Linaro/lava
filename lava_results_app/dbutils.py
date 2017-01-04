@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=no-member,too-many-locals,too-many-nested-blocks,
+# pylint: disable=too-many-return-statements,ungrouped-imports
 import os
 import yaml
 import urllib
@@ -23,6 +25,7 @@ import logging
 import django
 import decimal
 from django.db import transaction
+from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
     TestSuite,
     TestSet,
@@ -33,7 +36,6 @@ from lava_results_app.models import (
 )
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.pipeline.action import Timeout
-# pylint: disable=no-member,too-many-locals,too-many-nested-blocks
 
 if django.VERSION > (1, 10):
     from django.urls.exceptions import NoReverseMatch
@@ -76,14 +78,24 @@ def append_failure_comment(job, msg):
 
 
 def create_metadata_store(results, job, level):
+    """
+    Uses the OrderedDict import to correctly handle
+    the yaml.load
+    """
     if 'extra' not in results:
         return None
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
     if not os.path.exists(os.path.dirname(meta_filename)):
         os.mkdir(os.path.dirname(meta_filename))
-    with open(meta_filename, 'a') as extra_store:
-        yaml.dump(results['extra'], extra_store)
+    if os.path.exists(meta_filename):
+        with open(meta_filename, 'r') as existing_store:
+            data = yaml.load(existing_store)
+        data.append(results['extra'])
+    else:
+        data = results['extra']
+    with open(meta_filename, 'w') as extra_store:
+        yaml.dump(data, extra_store)
     return meta_filename
 
 
