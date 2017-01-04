@@ -857,10 +857,15 @@ class Timeout(object):
 
         signal.signal(signal.SIGALRM, self._timed_out)
         signal.alarm(duration)
-        yield max_end_time
-        # clear the timeout alarm, the action has returned
-        signal.alarm(0)
-        self.elapsed_time = time.time() - self.start
+
+        try:
+            yield max_end_time
+        except:
+            raise
+        finally:
+            # clear the timeout alarm, the action has returned
+            signal.alarm(0)
+            self.elapsed_time = time.time() - self.start
 
     def modify(self, duration):
         """
