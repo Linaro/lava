@@ -218,7 +218,7 @@ worker will fail, so it is also recommended that the devices would be made
 offline at the same time. (The django admin interface has support for selecting
 devices by worker and taking all selected devices offline in a single action.)
 
-..seealso:: :ref:`create_device_database`
+.. seealso:: :ref:`create_device_database`
 
 .. index:: ZMQ authentication, master slave configuration
 
