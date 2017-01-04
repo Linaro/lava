@@ -10,8 +10,6 @@
 
 {% block content %}
 
-{% is_accessible_by chart request.user as is_accessible %}
-
 <h1>Chart {{ chart.name }} <small><a href="{% url 'lava.results.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
 
 <div class="row">
@@ -75,7 +73,7 @@
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
     <div class="btn-group btn-group-justified">
-      {% if is_accessible %}
+      {% if chart|check_chart_access:request.user %}
       <div class="btn-group">
         <a href="{{ chart.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>

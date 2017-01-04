@@ -10,3 +10,12 @@ def is_accessible_by(record, user):
         return record.is_accessible_by(user)
     except (TypeError, AttributeError, IndexError):
         return False
+
+
+@register.filter
+def check_chart_access(record, user):
+    access = True
+    for query in record.queries.all():
+        if not query.is_accessible_by(user):
+            access = False
+    return access
