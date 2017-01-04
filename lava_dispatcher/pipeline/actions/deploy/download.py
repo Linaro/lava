@@ -37,6 +37,7 @@ import lzma
 import zlib
 from lava_dispatcher.pipeline.action import (
     Action,
+    InfrastructureError,
     JobError,
     Pipeline,
 )
@@ -444,12 +445,13 @@ class HttpDownloadAction(DownloadHandler):
         try:
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
-                raise JobError("Unable to download '%s'" % (self.url.geturl()))
+                # This is an Infrastructure error because the validate function
+                # checked that the file does exist.
+                raise InfrastructureError("Unable to download '%s'" % (self.url.geturl()))
             for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
                 yield buff
         except requests.RequestException as exc:
-            # TODO: improve error reporting
-            raise JobError(exc)
+            raise InfrastructureError("Unable to download '%s': %s" % (self.url.geturl(), str(exc)))
         finally:
             if res is not None:
                 res.close()
