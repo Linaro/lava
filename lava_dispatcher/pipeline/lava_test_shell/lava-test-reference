@@ -1,0 +1,47 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+reference_usage () {
+    echo "Usage:"
+    echo "       lava-test-reference TEST_CASE_ID --result pass|fail|skip|unknown --reference URL"
+    echo ""
+    echo "Create a reference to a URL for a specified test case name."
+}
+
+TEST_CASE_ID="$1"
+shift
+if [ -z "$TEST_CASE_ID" ]; then
+    usage
+    exit 1
+fi
+while [ $# -gt 0 ]; do
+    case $1 in
+        --result)
+            shift
+            RESULT=$1
+            shift
+            ;;
+        --reference)
+            shift
+            REFERENCE=$1
+            shift
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [ -z "${RESULT+x}" ]; then
+    echo "--result must be specified"
+    exit 1
+fi
+
+if [ -z "${REFERENCE+x}" ]; then
+    echo "--reference must be specified"
+    exit 1
+fi
+
+echo "<LAVA_SIGNAL_TESTREFERENCE $TEST_CASE_ID $RESULT $REFERENCE>"
+exit 0

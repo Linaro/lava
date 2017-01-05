@@ -392,6 +392,19 @@ class TestShellAction(TestAction):
                 # Send the results back
                 self.logger.results(res_data)
 
+            elif name == "TESTREFERENCE":
+                if len(params) != 3:
+                    raise TestError("Invalid use of TESTREFERENCE")
+                res_dict = {
+                    'case': params[0],
+                    'definition': self.definition,
+                    'result': params[1],
+                    'reference': params[2],
+                }
+                if self.testset_name:
+                    res_dict.update({'set': self.testset_name})
+                self.logger.results(res_dict)
+
             elif name == "TESTSET":
                 action = params.pop(0)
                 if action == "START":
