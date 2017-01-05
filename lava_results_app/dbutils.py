@@ -208,6 +208,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                 suite=suite,
                 test_set=testset,
                 result=TestCase.RESULT_MAP[result],
+                metadata=yaml.dump(results),
                 measurement=measurement,
                 units=units
             ).save()

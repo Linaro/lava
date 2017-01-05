@@ -465,6 +465,45 @@ This syntax will result in the test results:
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
 
+Recording sets of test cases
+****************************
+
+Test Set is a way to allow test writers to subdivide individual results
+within a single Lava Test Shell Definition using an arbitrary label.
+
+Some test definitions run the same test with different parameters. To
+distinguish between these similar tests, it can be useful to use a test set.
+
+.. seealso: :ref:`test_set_results`
+
+.. _test_case_references:
+
+Recording test case references
+******************************
+
+Some test cases may relate to specific bug reports or have specific URLs
+associated with the result. :ref:`recording_simple_strings` can be recorded
+separately but if you need to relate a test case result to a URL, consider
+using ``lava-test-reference``:
+
+.. code-block:: shell
+
+    lava-test-reference TEST_CASE_ID --result pass|fail|skip|unknown --reference URL
+
+The TEST_CASE_ID can be the same as an existing test case or a new test case.
+
+.. code-block:: yaml
+
+  run:
+     steps:
+        - lava-test-case checked --result pass
+        - lava-test-reference checked --result pass --reference https://staging.validation.linaro.org/static/doc/v2/index.html
+
+.. note:: The URL should be a simple file reference, complex query strings could
+   fail to be parsed.
+
+.. seealso:: :ref:`publishing_artifacts`
+
 .. _test_action_parameters:
 
 Test shell parameters
@@ -486,6 +525,8 @@ command line options.
 
 Recording test case data
 ************************
+
+.. _recording_simple_strings:
 
 Simple strings
 ==============
