@@ -481,7 +481,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         pass
 
-    def run_command(self, command_list, allow_silent=False, allow_fail=False):
+    def run_command(self, command_list, allow_silent=False, allow_fail=False):  # pylint: disable=too-many-branches
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -533,7 +533,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
             if exc.returncode != 0 and allow_fail:
                 self.logger.info(msg)
-                self.errors == []
             else:
                 self.logger.error(msg)
 
@@ -659,7 +658,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
-    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
+    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):  # pylint: disable=too-many-arguments
         """
         Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
@@ -678,12 +677,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         params = parameters if parameters else self.parameters
         namespace = params.get('namespace', 'common')
-        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)  # pylint: disable=no-member
         if value is None:
             return None
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_namespace_data(self, action, label, key, value, parameters=None):
+    def set_namespace_data(self, action, label, key, value, parameters=None):  # pylint: disable=too-many-arguments
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
@@ -701,7 +700,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         namespace = params.get('namespace', 'common')
         if not label or not key:
             self.errors = "Invalid call to set_namespace_data: %s" % action
-        self.data.setdefault(namespace, {})
+        self.data.setdefault(namespace, {})  # pylint: disable=no-member
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
@@ -747,7 +746,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
     def log_action_results(self):
         if self.results and isinstance(self.logger, YAMLLogger):
-            self.logger.results({
+            self.logger.results({  # pylint: disable=no-member
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
@@ -764,7 +763,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             )
 
     @nottest
-    def test_needs_deployment(self, parameters):
+    def test_needs_deployment(self, parameters):  # pylint: disable=no-self-use
         needs_deployment = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]
@@ -774,7 +773,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         return needs_deployment
 
     @nottest
-    def test_has_shell(self, parameters):
+    def test_has_shell(self, parameters):  # pylint: disable=no-self-use
         has_shell = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]
@@ -784,7 +783,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         return has_shell
 
     @nottest
-    def test_needs_overlay(self, parameters):
+    def test_needs_overlay(self, parameters):  # pylint: disable=no-self-use
         needs_overlay = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]

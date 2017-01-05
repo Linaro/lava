@@ -137,13 +137,16 @@ class Connection(object):
         if self.connected:
             self.raw_connection.sendline(line, delay, send_char)
         elif not disconnecting:
-            raise RuntimeError()  # FIXME:
+            raise RuntimeError()
 
     def sendcontrol(self, char):
         if self.connected:
             self.raw_connection.sendcontrol(char)
         else:
-            raise RuntimeError()  # FIXME:
+            raise RuntimeError()
+
+    def wait(self):
+        raise NotImplementedError()
 
     def disconnect(self, reason):
         raise NotImplementedError()
