@@ -143,7 +143,6 @@ class FlashDFUAction(Action):
                 if self.job.device['actions']['boot']['methods']['dfu'].get('reset_works', True):
                     dfu_command.extend(['--reset'])
             dfu = ' '.join(dfu_command)
-            self.logger.info("DFU command: %s", dfu)
             output = self.run_command(dfu.split(' '))
             if output:
                 if not ("No error condition is present\nDone!\n" in output):

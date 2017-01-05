@@ -508,7 +508,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
-        self.logger.info("%s", ' '.join(command_list))
+        self.logger.debug("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
             log = log.decode('utf-8')  # pylint: disable=redefined-variable-type

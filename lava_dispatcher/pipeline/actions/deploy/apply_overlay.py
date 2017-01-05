@@ -497,8 +497,8 @@ class CompressRamdisk(Action):
                 self.set_namespace_data(action=self.name, label='file', key='preseed_local', value=filename)
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)
-        self.logger.debug("Building ramdisk %s containing %s",
-                          ramdisk_data, ramdisk_dir)
+        self.logger.info("Building ramdisk %s containing %s",
+                         ramdisk_data, ramdisk_dir)
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
