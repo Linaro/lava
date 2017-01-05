@@ -116,7 +116,7 @@ class LinuxKernelMessages(Action):
         while True:
             try:
                 index = connection.wait()
-            except (pexpect.EOF, pexpect.TIMEOUT, JobError, TestError):
+            except (pexpect.EOF, pexpect.TIMEOUT):
                 if action:
                     msg = "Failed to match - connection timed out handling messages."
                     action.logger.warning(msg)
