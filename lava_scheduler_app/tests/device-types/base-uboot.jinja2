@@ -1,19 +1,16 @@
 {% extends 'base.jinja2' %}
 
+{% set base_high_limits = base_high_limits|default(true) %}
 {% set base_uboot_commands = (
-"          - setenv autoload no
-          - setenv initrd_high " + uboot_initrd_high|default('0xffffffff') + "
-          - setenv fdt_high " + uboot_ftd_high|default('0xffffffff') ) -%}
-
-{% set base_uboot_addr_commands = (
-"          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'") -%}
+"          - setenv autoload no") -%}
+{% set base_uboot_high_limits =(
+"          - setenv initrd_high " + uboot_initrd_high|default('0xffffffff') + "
+          - setenv fdt_high " + uboot_fdt_high|default('0xffffffff') ) -%}
 
 {% set base_uboot_tftp_commands = (
-"          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") -%}
+"          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 
 {% set base_uboot_bootcmd = (
 "          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
@@ -27,12 +24,18 @@
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot") -%}
 
-{% set base_uboot_usb_commands = uboot_usb_commands|default("") %}
+{% set base_uboot_usb_commands = (
+"          - usb start") -%}
+
+{% set uboot_needs_usb = uboot_needs_usb|default(false) %}
+
+{% set usb_uuid = usb_uuid|default('') %}
+{% set usb_device_id = usb_device_id|default(0) %}
 
 {% block body %}
 device_type: {{ device_type|default('uboot') }}
 
-{% if boot_delay or test_delay%}
+{% if boot_delay or test_delay %}
 character_delays:
 {% if boot_delay %}
   boot: {{ boot_delay|default(100) }}
@@ -44,25 +47,63 @@ character_delays:
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-{% set action_timeout_u_boot_commands = action_timeout_u_boot_commands | default(3) %}
-{% set connection_timeout_u_boot_commands = connection_timeout_u_boot_commands | default(2) %}
+{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
 
 {# adds the parameters: top level block #}
 {% block vland %}
 {{ super() }}
 {% endblock %}
+{% if text_offset %}
+  text_offset: {{text_offset}}
+{% endif %}
+{% if booti_kernel_addr %}
   image:
-   kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
-   ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
-   dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+    kernel: '{{ booti_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ booti_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ booti_dtb_addr|default('0x81000000') }}'
+  booti:
+    kernel: '{{ booti_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ booti_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ booti_dtb_addr|default('0x81000000') }}'
+{% endif %}
+{% if bootm_kernel_addr %}
   uimage:
-   kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
-   ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
-   dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+    kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+  bootm:
+    kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+{% endif %}
+{% if bootz_kernel_addr %}
   zimage:
-   kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
-   ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
-   dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+    kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+  bootz:
+    kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
+    ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
+    dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+{% endif %}
+{%- if usb_uuid or sata_uuid %}
+  media:
+{% if usb_uuid %}
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
+{% endif %}
+{% if sata_uuid %}
+    sata:
+      UUID-required: False
+      {{ sata_label|default('ST160LM003') }}:
+        uuid: {{ sata_uuid }}
+        device_id: {{ sata_id|default(0) }}
+        uboot_interface: {{ sata_interface|default('scsi') }}
+{%- endif %}
+{%- endif %}
 
 actions:
   deploy:
@@ -75,40 +116,75 @@ actions:
     methods:
       lxc:
       tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: {{ ssh_host|default(localhost) }}
+        port: '{{ ssh_port|default(22) }}'
+        user: {{ ssh_user|default(root) }}
+        identity_file: {{ ssh_identity_file }}
 
   boot:
     connections:
       lxc:
       serial:
     methods:
+      ssh:
       u-boot:
         parameters:
-          mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }}
-          bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}
+          mkimage_arch: {{ uboot_mkimage_arch|default('arm') }}
+          bootloader_prompt: {{ bootloader_prompt|default('=>') }}
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           # character needed to interrupt u-boot, single whitespace by default
-          interrupt_char: {{ interrupt_char|default(' ') }}
+          interrupt_char: "{{ interrupt_char|default(' ') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
           send_char: False
           # method specific stanza
         nfs:
           commands:
+{% if uboot_needs_usb %}
 {{ base_uboot_usb_commands }}
+{% endif -%}
 {{ base_uboot_commands }}
-{{ base_uboot_addr_commands }}
-{{ base_uboot_nfs_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
             {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_nfs_bootcmd }}
         ramdisk:
           commands:
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{{ base_uboot_tftp_commands }}
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_tftp_bootcmd }}
+        usb:
+          commands:
 {{ base_uboot_usb_commands }}
 {{ base_uboot_commands }}
 {{ base_uboot_addr_commands }}
-{{ base_uboot_tftp_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'
-{{ base_uboot_tftp_bootcmd }}
+          - "setenv loadkernel 'load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
+        sata:
+          commands:
+          - scsi scan
+{{ base_uboot_commands }}
+          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
 {% endblock %}
 
 {% block timeouts %}

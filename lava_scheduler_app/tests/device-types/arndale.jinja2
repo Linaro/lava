@@ -1,69 +1,15 @@
-{% extends 'base.jinja2' %}
-{% block body %}
-device_type: arndale
+{% extends 'base-uboot.jinja2' %}
 
-{% set console_device = console_device | default('ttySAC2') %}
-{% set baud_rate = baud_rate | default(115200) %}
-
-{# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-
-{# adds the parameters: top level block #}
-{% block vland %}
-{{ super() }}
-{% endblock %}
-  bootm:
-   kernel: '{{ bootm_kernel_addr|default('0x40007000') }}'
-   ramdisk: '{{ bootm_ramdisk_addr|default('0x45000000') }}'
-   dtb: '{{ bootm_dtb_addr|default('0x41f00000') }}'
-  bootz:
-   kernel: '{{ bootz_kernel_addr|default('0x40007000') }}'
-   ramdisk: '{{ bootz_ramdisk_addr|default('0x45000000') }}'
-   dtb: '{{ bootz_dtb_addr|default('0x41f00000') }}'
-
-actions:
-  deploy:
-    parameters:
-      add_header: u-boot
-      mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
-    methods:
-      tftp:
-      ssh:
-        options:
-{{ ssh_options }}
-        host: {{ ssh_host|default(localhost) }}
-        port: '{{ ssh_port|default(22) }}'
-        user: {{ ssh_user|default(root) }}
-        identity_file: {{ ssh_identity_file }}
-  boot:
-    connections:
-      serial:
-      ssh:
-    methods:
-      kexec:
-      ssh:
-      u-boot:
-        parameters:
-          bootloader_prompt: {{ bootloader_prompt|default('ARNDALE5250') }}
-          boot_message: {{ boot_message|default('Booting Linux') }}
-          send_char: False
-          # interrupt: # character needed to interrupt u-boot, single whitespace by default
-          # method specific stanza
-        nfs:
-          commands:
-{{ base_uboot_commands }}
-{{ base_uboot_addr_commands }}
-{{ base_tftp_commands }}
-          # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 drm_kms_helper.edid_firmware=edid-1920x1080.fw
-             root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} earlyprintk ip=:::::eth0:dhcp'"
-          - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
-          - boot
-        ramdisk:
-          commands:
-{{ base_uboot_commands }}
-{{ base_uboot_addr_commands }}
-{{ base_tftp_commands }}
-          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_ip_args }}'
-{{ base_tftp_uboot_bootcmd }}
-{% endblock %}
+{% set console_device = console_device|default('ttySAC2') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "arndale" %}
+{% set extra_kernel_args = "drm_kms_helper.edid_firmware=edid-1920x1080.fw" %}
+{% set bootloader_prompt = bootloader_prompt|default('ARNDALE5250') %}
+{% set bootm_kernel_addr = '0x40007000' %}
+{% set bootm_ramdisk_addr = '0x45000000' %}
+{% set bootm_dtb_addr = '0x41f00000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set base_ip_args = 'ip=:::::eth0:dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}

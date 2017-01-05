@@ -185,11 +185,21 @@ class TestTemplates(unittest.TestCase):
         )
 
     def test_mustang_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'mustang.jinja2' %}
+        data = """{% extends 'mustang.jinja2' %}
 {% set connection_command = 'telnet serial4 7012' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
-{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""))
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        for line in commands:
+            if 'setenv initrd_high' in line:
+                self.fail('Mustang should not have initrd_high set')
+            if 'setenv fdt_high' in line:
+                self.fail('Mustang should not have fdt_high set')
 
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
@@ -212,8 +222,22 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertIn('u-boot-commands', template_dict['timeouts']['actions'])
-        self.assertEqual(120.0, Timeout.parse(template_dict['timeouts']['actions']['u-boot-commands']))
+        self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
+        self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        checked = False
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertIn('console=ttyO2', line)
+                checked = True
+        self.assertTrue(checked)
+        checked = False
+        for line in commands:
+            if 'setenv initrd_high' in line:
+                checked = True
+        self.assertTrue(checked)
 
     def test_juno_uboot_template(self):
         data = """{% extends 'juno-uboot.jinja2' %}
@@ -232,6 +256,32 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
+
+    def test_cubietruck_template(self):
+        data = """{% extends 'cubietruck.jinja2' %}
+{% set usb_label = 'SanDisk_Ultra' %}
+{% set sata_label = 'ST160LM003' %}
+{% set usb_uuid = "usb-SanDisk_Ultra_20060775320F43006019-0:0" %}
+{% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
+{% set connection_command = 'telnet localhost 6002' %}
+{% set console_device = 'ttyfake1' %}"""
+        self.assertTrue(self.validate_data('staging-cubietruck-01', data))
+        test_template = prepare_jinja_template('staging-cubietruck-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('SanDisk_Ultra', template_dict['parameters']['media']['usb'])
+        self.assertEqual(template_dict['parameters']['media']['usb']['SanDisk_Ultra']['device_id'], 0)
+        self.assertEqual(template_dict['parameters']['media']['usb']['SanDisk_Ultra']['uuid'],
+                         'usb-SanDisk_Ultra_20060775320F43006019-0:0')
+        self.assertIn('ST160LM003', template_dict['parameters']['media']['sata'])
+        self.assertIn('uboot_interface', template_dict['parameters']['media']['sata']['ST160LM003'])
+        self.assertEqual('scsi', template_dict['parameters']['media']['sata']['ST160LM003']['uboot_interface'])
+        self.assertIn('uuid', template_dict['parameters']['media']['sata']['ST160LM003'])
+        self.assertIn('ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184',
+                      template_dict['parameters']['media']['sata']['ST160LM003']['uuid'])
+        self.assertIn('ssh', template_dict['actions']['boot']['methods'])
 
     def test_qemu_cortex_a57(self):
         data = """{% extends 'qemu.jinja2' %}
@@ -391,6 +441,12 @@ class TestTemplates(unittest.TestCase):
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
                 self.assertIn(',tcp,hard,intr,nolock ', line)
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        checked = False
+        for line in commands:
+            if 'setenv initrd_high' in line:
+                checked = True
+        self.assertTrue(checked)
 
     def test_juno_uboot_vland_template(self):
         data = """{% extends 'juno-uboot.jinja2' %}
