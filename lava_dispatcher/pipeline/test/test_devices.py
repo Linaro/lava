@@ -109,7 +109,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIn(action.parameters['commands'], action.parameters[action.parameters['method']])
                 self.assertIn('commands', action.parameters[action.parameters['method']][action.parameters['commands']])
                 self.assertIsNotNone(action.parameters['u-boot']['ramdisk'])
-                self.assertTrue(type(action.parameters['u-boot']['ramdisk']['commands']) == list)
+                self.assertIsInstance(action.parameters['u-boot']['ramdisk']['commands'], list)
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
 
     def test_device_power(self):
@@ -150,7 +150,7 @@ class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-publ
         )
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
-    def test_device_environment_validity(self):
+    def test_device_environment_validity(self):  # pylint: disable=invalid-name
         """
         Use non-YAML syntax a bit like existing device config syntax.
         Ensure this syntax is picked up as invalid.

@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import glob
 import yaml
 import unittest
 
@@ -32,8 +31,6 @@ from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.pipeline.actions.boot.lxc import BootAction
-from lava_dispatcher.pipeline.actions.deploy.testdef import identify_test_definitions
-from lava_dispatcher.pipeline.actions.deploy.overlay import get_test_action_namespaces
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -129,7 +126,7 @@ class TestLxcWithDevices(unittest.TestCase):
         factory = Factory()
         self.job = factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
 
-    def test_lxc_with_device(self):
+    def test_lxc_with_device(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
         self.job.validate()

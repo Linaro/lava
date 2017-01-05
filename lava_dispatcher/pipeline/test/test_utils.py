@@ -252,14 +252,14 @@ class TestClasses(unittest.TestCase):
         ]
 
     def test_summary_exists(self):
-        for subclass in Action.__subclasses__():
+        for subclass in Action.__subclasses__():  # pylint: disable=no-member
             if not hasattr(subclass, 'name'):
                 continue
             if not hasattr(subclass, 'summary') and subclass.name not in self.allowed:
                 self.fail(subclass)
 
     def test_description_exists(self):
-        for subclass in Action.__subclasses__():
+        for subclass in Action.__subclasses__():  # pylint: disable=no-member
             if not hasattr(subclass, 'name'):
                 continue
             if not hasattr(subclass, 'description') and subclass.name not in self.allowed:

@@ -628,7 +628,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         def close(self):
             pass
 
-        def recv(self, msg):
+        def recv(self, msg):  # pylint: disable=unused-argument
             """
             Allow the fake to send a properly formatted response.
             """

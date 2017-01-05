@@ -31,6 +31,8 @@ from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 
+# pylint: disable=superfluous-parens
+
 
 class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
@@ -202,7 +204,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.assertIn('iface', vprotocol.params[vlan_name])
         params = job.parameters['protocols'][vprotocol.name]
         names = []
-        for key, value in params.items():
+        for key, _ in params.items():
             if key == 'yaml_line':
                 continue
             names.append(",".join([key, vprotocol.params[key]['iface']]))
@@ -212,7 +214,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def test_job_no_tags(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+        for vlan_key, _ in alpha_data['protocols'][VlandProtocol.name].items():
             alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': []}
         # removed tags from original job to simulate job where any interface tags will be acceptable
         self.assertEqual(
@@ -239,7 +241,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def test_job_bad_tags(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+        for vlan_key, _ in alpha_data['protocols'][VlandProtocol.name].items():
             alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': ['spurious']}
         # replaced tags from original job to simulate job where an unsupported tag is specified
         self.assertEqual(
@@ -270,7 +272,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def demo(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        vprotocol = VlandProtocol(alpha_data)
+        vprotocol = VlandProtocol(alpha_data, 422)
         vprotocol.settings = vprotocol.read_settings()
         self.assertIn('port', vprotocol.settings)
         self.assertIn('poll_delay', vprotocol.settings)

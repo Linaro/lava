@@ -23,7 +23,6 @@ import os
 import yaml
 import logging
 import unittest
-import subprocess
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
@@ -187,7 +186,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
                     if 'boot' in boot and 'schroot' in boot['boot']][0]
         self.assertEqual(boot_act['schroot'], schroot.parameters['schroot'])
 
-    def test_guest_ssh(self):
+    def test_guest_ssh(self):  # pylint: disable=too-many-locals,too-many-statements
         self.assertIsNotNone(self.guest_job)
         description_ref = pipeline_reference('bbb-ssh-guest.yaml')
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
@@ -259,7 +258,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn('timeout', overlay[0].parameters['protocols'][MultinodeProtocol.name][0])
         msg_dict = overlay[0].parameters['protocols'][MultinodeProtocol.name][0]['message']
         for key, value in msg_dict.items():
-            if 'yaml_line' == key:
+            if key == 'yaml_line':
                 continue
             self.assertTrue(value.startswith('$'))
             self.assertFalse(key.startswith('$'))
@@ -301,8 +300,8 @@ class TestTimeouts(unittest.TestCase):
         """
         Test connection timeout specified in the submission YAML
         """
-        with open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+        y_file = os.path.join(os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml')
+        with open(y_file, 'r') as uboot_ramdisk:
             data = yaml.load(uboot_ramdisk)
         data['timeouts']['connection'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))
@@ -314,6 +313,7 @@ class TestTimeouts(unittest.TestCase):
                         # lava-test-shell from the job, uboot-retry from the device
                         self.assertEqual(check_action.connection_timeout.duration, 20)
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        self.assertIsNotNone(deploy)
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
         self.assertEqual(test_shell.connection_timeout.duration, 20)
@@ -322,8 +322,8 @@ class TestTimeouts(unittest.TestCase):
         """
         Test connection timeout specified for a particular action
         """
-        with open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+        y_file = os.path.join(os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml')
+        with open(y_file, 'r') as uboot_ramdisk:
             data = yaml.load(uboot_ramdisk)
         connection_timeout = Timeout.parse(data['timeouts']['connection'])
         self.assertEqual(connection_timeout, 240)

@@ -20,7 +20,6 @@
 
 import os
 import sys
-import glob
 import time
 import unittest
 import simplejson
@@ -32,6 +31,8 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
+
+# pylint: disable=superfluous-parens,too-few-public-methods
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -45,7 +46,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
 class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    class FakeAction(Action):  # pylint: disable=abstract-class-not-used
+    class FakeAction(Action):
 
         def __init__(self):
             self.ran = False
@@ -81,12 +82,12 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
     def test_pipeline_gets_multiple_actions_in_it(self):  # pylint: disable=invalid-name
         if not self.job:
             return unittest.skip("not all deployments have been implemented")
-        self.assertTrue(self.job.actions > 1)
+        self.assertTrue(self.job.actions > 1)  # pylint: disable=no-member
 
 
 def pipeline_reference(filename):
-    with open(os.path.join(os.path.dirname(__file__),
-              'pipeline_refs', filename), 'r') as f_ref:
+    y_file = os.path.join(os.path.dirname(__file__), 'pipeline_refs', filename)
+    with open(y_file, 'r') as f_ref:
         return yaml.load(f_ref)
 
 
@@ -184,9 +185,16 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(pipe.actions, [action])
         self.assertEqual(action.level, "1")
         try:
-            simplejson.loads(pipe.describe())
-        except:  # pylint: disable=bare-except
-            self.assertFalse(0)
+            description = pipe.describe()
+        except Exception as exc:  # pylint: disable=bare-except
+            self.fail(exc)
+        self.assertIsNotNone(description)
+        self.assertIsInstance(description, list)
+        self.assertIn('description', description[0])
+        self.assertIn('level', description[0])
+        self.assertIn('summary', description[0])
+        self.assertIn('max_retries', description[0])
+        self.assertIn('timeout', description[0])
 
     def test_create_internal_pipeline(self):
         action = Action()
@@ -348,7 +356,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    class KeepConnection(Action):  # pylint: disable=abstract-class-not-used
+    class KeepConnection(Action):
         def __init__(self):
             super(TestFakeActions.KeepConnection, self).__init__()
             self.name = "keep-connection"

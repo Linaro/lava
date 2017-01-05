@@ -26,12 +26,9 @@ from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.power import FinalizeAction
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 
 # pylint: disable=too-many-public-methods,too-few-public-methods

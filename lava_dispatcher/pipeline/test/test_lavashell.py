@@ -26,7 +26,7 @@ from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
 
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,too-few-public-methods
 
 
 class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods

@@ -20,7 +20,6 @@
 
 
 import os
-import yaml
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -47,8 +46,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     """
     def create_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(yaml) as sample_job_data:
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, None, None,
                                output_dir=output_dir)

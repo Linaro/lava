@@ -21,7 +21,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
-from lava_dispatcher.pipeline.action import JobError, action_namespaces
+from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -132,7 +132,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
         self.assertIsNotNone(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
         self.assertEqual('0', '%s' % dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
-        self.assertTrue(type(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')) is str)
+        self.assertIsInstance(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'), str)
         self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
 
     def test_juno_deployment(self):

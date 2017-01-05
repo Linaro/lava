@@ -317,7 +317,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
         qemu = [action for action in boot_qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
         self.assertIsInstance(qemu.sub_command, list)
-        [self.assertIsInstance(item, str) for item in qemu.sub_command]
+        [self.assertIsInstance(item, str) for item in qemu.sub_command]  # pylint: disable=expression-not-assigned
         self.assertIn('virtio-blk-device.scsi=off', qemu.sub_command)
         self.assertIn('1', qemu.sub_command)
         self.assertNotIn(1, qemu.sub_command)
