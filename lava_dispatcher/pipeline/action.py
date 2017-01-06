@@ -513,20 +513,22 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
             log = log.decode('utf-8')  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:
+            # the errors property doesn't support removing errors
+            errors = []
             if sys.version > '3':
                 if exc.output:
-                    self.errors = exc.output.strip().decode('utf-8')
+                    errors.append(exc.output.strip().decode('utf-8'))
                 else:
-                    self.errors = str(exc)
+                    errors.append(str(exc))
                 msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
                     self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
             else:
                 if exc.output:
-                    self.errors = exc.output.strip()
+                    errors.append(exc.output.strip())
                 elif exc.message:
-                    self.errors = exc.message
+                    errors.append(exc.message)
                 else:
-                    self.errors = str(exc)
+                    errors.append(str(exc))
                 msg = "[%s] command %s\nmessage %s\noutput %s\nexit code %s" % (
                     self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
@@ -534,6 +536,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             if exc.returncode != 0 and allow_fail:
                 self.logger.info(msg)
             else:
+                for error in errors:
+                    self.errors = error
                 self.logger.error(msg)
 
         # allow for commands which return no output
