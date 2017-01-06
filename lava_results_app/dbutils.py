@@ -92,7 +92,7 @@ def create_metadata_store(results, job, level):
     if os.path.exists(meta_filename):
         with open(meta_filename, 'r') as existing_store:
             data = yaml.load(existing_store)
-        data.append(results['extra'])
+        data.update(results['extra'])
     else:
         data = results['extra']
     with open(meta_filename, 'w') as extra_store:
