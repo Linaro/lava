@@ -22,7 +22,6 @@ import os
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
-    InfrastructureError,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
@@ -35,7 +34,6 @@ from lava_dispatcher.pipeline.shell import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 

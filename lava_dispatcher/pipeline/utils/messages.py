@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
-from lava_dispatcher.pipeline.action import Action, JobError, TestError
+from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,

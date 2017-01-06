@@ -18,7 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import pyudev
+import re
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
@@ -26,14 +28,12 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
-    AUTOLOGIN_DEFAULT_TIMEOUT,
     DEFAULT_SHELL_PROMPT,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     BOOT_MESSAGE
 )
-from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip

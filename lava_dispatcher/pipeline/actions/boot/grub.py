@@ -24,8 +24,6 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Timeout,
-    InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
@@ -42,12 +40,8 @@ from lava_dispatcher.pipeline.power import (
     PowerOff
 )
 from lava_dispatcher.pipeline.utils.constants import (
-    BOOT_MESSAGE,
     GRUB_BOOT_PROMPT,
-    BOOTLOADER_DEFAULT_CMD_TIMEOUT
 )
-from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 def bootloader_accepts(device, parameters):

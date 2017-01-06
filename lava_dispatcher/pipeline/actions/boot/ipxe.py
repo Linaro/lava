@@ -21,13 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-import os
-import re
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Timeout,
-    InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
@@ -42,12 +38,7 @@ from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     IPXE_BOOT_PROMPT,
-    BOOT_MESSAGE,
-    BOOTLOADER_DEFAULT_CMD_TIMEOUT
 )
-from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 
 
 def bootloader_accepts(device, parameters):

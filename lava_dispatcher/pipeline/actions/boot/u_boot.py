@@ -25,7 +25,6 @@ import os.path
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Timeout,
     InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
@@ -42,11 +41,7 @@ from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_INTERRUPT_CHARACTER,
-    UBOOT_DEFAULT_CMD_TIMEOUT,
-    BOOT_MESSAGE,
 )
-from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 def uboot_accepts(device, parameters):
