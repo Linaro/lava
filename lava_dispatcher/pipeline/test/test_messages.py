@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import time
 import unittest
 import pexpect
 from lava_dispatcher.pipeline.utils.constants import (
@@ -69,11 +70,15 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         self.check_char = '#'
         self.timeout = 30
         self.connected = True
+        self.name = "fake-connection"
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
         pass
 
-    def wait(self):
+    def force_prompt_wait(self, remaining=None):
+        return self.wait()
+
+    def wait(self, max_end_time=None):
         ret = None
         try:
             ret = self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
@@ -83,6 +88,9 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
 
 
 class TestBootMessages(unittest.TestCase):
+
+    def setUp(self):
+        self.max_end_time = time.time() + 30
 
     def test_existing_prompt(self):
         kernel = Kernel()
@@ -109,7 +117,7 @@ class TestBootMessages(unittest.TestCase):
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
-        result = LinuxKernelMessages.parse_failures(connection)
+        result = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertEqual(len(result), 2)
         self.assertIn('success', result[0])
         self.assertIn('panic', result[1])
@@ -123,7 +131,7 @@ class TestBootMessages(unittest.TestCase):
         message_list = LinuxKernelMessages.get_init_prompts()
         child = pexpect.spawn('cat', [logfile])
         connection = FakeConnection(child, message_list)
-        results = LinuxKernelMessages.parse_failures(connection)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertEqual(len(results), 1)
         self.assertIn('panic', result[1])
         self.assertIn('message', result[1])
@@ -143,12 +151,12 @@ class TestBootMessages(unittest.TestCase):
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
-        results = LinuxKernelMessages.parse_failures(connection)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertEqual(len(list(results)), 14)
         message_list = LinuxKernelMessages.get_init_prompts()
         child = pexpect.spawn('cat', [logfile])
         connection = FakeConnection(child, message_list)
-        results = LinuxKernelMessages.parse_failures(connection)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertEqual(len(list(results)), 13)
 
     def test_kernel_ramdisk_alert(self):
@@ -158,7 +166,7 @@ class TestBootMessages(unittest.TestCase):
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         connection = FakeConnection(child, message_list)
-        results = LinuxKernelMessages.parse_failures(connection)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertEqual(len(list(results)), 1)
         self.assertIn('message', results[0])
         self.assertIn('alert', results[0])
@@ -172,6 +180,6 @@ class TestBootMessages(unittest.TestCase):
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         connection = FakeConnection(child, message_list)
-        results = LinuxKernelMessages.parse_failures(connection)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
         self.assertIn('Stack', results[0]['message'].decode('utf-8'))
         self.assertIn('Kernel panic', results[1]['message'].decode('utf-8'))

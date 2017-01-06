@@ -97,6 +97,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.name = "fastboot-deploy"
         self.description = "download files and deploy using fastboot"
         self.summary = "fastboot deployment"
+        self.force_prompt = False
 
     def validate(self):
         super(FastbootAction, self).validate()
@@ -115,6 +116,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.internal_pipeline.add_action(OverlayAction())
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
+                self.force_prompt = True
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(EnterFastbootAction())

@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
 )
-from lava_dispatcher.pipeline.shell import ShellCommand, SimpleSession
+from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
 
 # pylint: disable=too-many-public-methods
 
@@ -42,7 +42,7 @@ class ConnectDevice(Action):
         self.name = "connect-device"
         self.summary = "run connection command"
         self.description = "use the configured command to connect serial to the device"
-        self.session_class = SimpleSession  # wraps the pexpect and provides prompt_str access
+        self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
         self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
@@ -61,14 +61,9 @@ class ConnectDevice(Action):
     def run(self, connection, max_end_time, args=None):
         connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
         if connection:
+            self.logger.debug("Already connected")
             return connection
 
-        if isinstance(connection, SimpleSession):
-            self.logger.debug("Already connected")
-            if not connection.prompt_str:
-                # prompt_str can be a list or str
-                connection.prompt_str = [DEFAULT_SHELL_PROMPT]
-            return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
@@ -84,14 +79,3 @@ class ConnectDevice(Action):
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
-        # # if the board is running, wait for a prompt - if not, skip.
-        # if self.job.device.power_state is 'off':
-        #     return connection
-        # try:
-        #     self.logger.debug("power_state is on")
-        #     connection.sendline('echo echo')
-        #     self.wait(connection)
-        # except TestError:
-        #     self.errors = "%s wait expired" % self.name
-        # self.logger.debug("matched %s", connection.match)
-        # return connection

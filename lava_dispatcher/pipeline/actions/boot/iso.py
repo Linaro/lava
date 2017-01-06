@@ -23,7 +23,7 @@ import os
 from lava_dispatcher.pipeline.action import Action, JobError, Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.utils.shell import which, wait_for_prompt
+from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import INSTALLER_QUIET_MSG
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -138,6 +138,7 @@ class MonitorInstallerSession(Action):
         self.name = "monitor-installer-connection"
         self.summary = "Watch for error strings or end of install"
         self.description = "Monitor installer operation"
+        self.force_prompt = True
 
     def validate(self):
         super(MonitorInstallerSession, self).validate()
@@ -146,7 +147,7 @@ class MonitorInstallerSession(Action):
 
     def run(self, connection, max_end_time, args=None):
         self.logger.debug("%s: Waiting for prompt %s", self.name, ' '.join(connection.prompt_str))
-        wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
+        self.wait(connection, max_end_time)
         return connection
 
 

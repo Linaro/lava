@@ -223,7 +223,6 @@ class TestShellAction(TestAction):
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
 
-        self.logger.info("Executing test definitions using %s" % connection.name)
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.

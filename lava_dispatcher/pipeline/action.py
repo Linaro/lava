@@ -330,6 +330,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.section = None
         self.connection_timeout = Timeout(self.name)
         self.character_delay = 0
+        self.force_prompt = False
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -590,6 +591,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         In this classs this method does nothing. It must be implemented by
         subclasses
 
+        :param connection: The Connection object to use to run the steps
+        :param max_end_time: The maximum time before this action will timeout.
         :param args: Command and arguments to run
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
@@ -709,15 +712,24 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
 
-    def wait(self, connection):
+    def wait(self, connection, max_end_time=None):
         if not connection:
             return
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt %s. %s seconds",
-                          self.name, connection.prompt_str, int(self.connection_timeout.duration))
-        return connection.wait()
+        if not max_end_time:
+            max_end_time = self.timeout.duration + self.timeout.start
+        remaining = max_end_time - time.time()
+        # FIXME: connection.prompt_str needs to be always a list
+        # bootloader_prompt is one which does not get set that way
+        # also need functionality to clear the list at times.
+        self.logger.debug("%s: Wait for prompt %s (timeout %s)",
+                          self.name, connection.prompt_str, seconds_to_str(remaining))
+        if self.force_prompt:
+            return connection.force_prompt_wait(remaining)
+        else:
+            return connection.wait(max_end_time)
 
     def mkdtemp(self):
         return self.job.mkdtemp(self.name)

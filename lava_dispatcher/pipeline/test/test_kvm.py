@@ -21,6 +21,7 @@
 
 import os
 import glob
+import time
 import unittest
 import yaml
 import pexpect
@@ -377,6 +378,7 @@ class TestAutoLogin(unittest.TestCase):
         super(TestAutoLogin, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.max_end_time = time.time() + 30
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -396,7 +398,7 @@ class TestAutoLogin(unittest.TestCase):
             key='line_separator', value='testsep')
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection, None)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
         self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
         self.assertIn('lava-test: # ', conn.prompt_str)
@@ -464,7 +466,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection, None)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
@@ -493,7 +495,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection, None)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)

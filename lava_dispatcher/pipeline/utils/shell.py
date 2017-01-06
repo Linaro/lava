@@ -18,10 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import logging
 import os
 from stat import S_IXUSR
-from lava_dispatcher.pipeline.action import InfrastructureError, TestError
+from lava_dispatcher.pipeline.action import InfrastructureError
 
 
 def _which_check(path, match):
@@ -61,39 +60,3 @@ def infrastructure_error(path):
     if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
         return "%s is not executable" % exefile
     return None
-
-
-def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
-    """
-    :param connection: the Connection object passed to the Action.
-    :param prompt_pattern: connection.prompt_str list
-    :param timeout: connection.timeout.duration (seconds)
-    :param check_char: char to send to encourage a prompt to be displayed
-    :return: the index into the connection.prompt_str list
-    """
-    # One of the challenges we face is that kernel log messages can appear
-    # half way through a shell prompt.  So, if things are taking a while,
-    # we send a newline along to maybe provoke a new prompt.  We wait for
-    # half the timeout period and then wait for one tenth of the timeout
-    # 6 times (so we wait for 1.1 times the timeout period overall).
-    prompt_wait_count = 0
-    if timeout == -1:
-        timeout = connection.timeout
-    partial_timeout = timeout / 2.0
-    while True:
-        try:
-            return connection.expect(prompt_pattern, timeout=partial_timeout)
-        except TestError as exc:
-            if prompt_wait_count < 6:
-                logger = logging.getLogger('dispatcher')
-                logger.warning('%s: Sending %s in case of corruption. connection timeout %s, retry in %s',
-                               exc, check_char, timeout, partial_timeout)
-                logger.debug("pattern: %s", prompt_pattern)
-                prompt_wait_count += 1
-                partial_timeout = timeout / 10
-                connection.sendline(check_char)
-                continue
-            else:
-                raise
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt

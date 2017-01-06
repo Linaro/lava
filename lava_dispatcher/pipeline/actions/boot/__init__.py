@@ -39,6 +39,8 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 
+# pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
+
 
 class BootAction(RetryAction):
     """
@@ -58,10 +60,10 @@ class BootAction(RetryAction):
 
     name = 'boot'
 
-    def has_prompts(self, parameters):
+    def has_prompts(self, parameters):  # pylint: disable=no-self-use
         return ('prompts' in parameters)
 
-    def has_boot_finished(self, parameters):
+    def has_boot_finished(self, parameters):  # pylint: disable=no-self-use
         return ('boot_finished' in parameters)
 
 
@@ -83,6 +85,7 @@ class AutoLoginAction(Action):
             " job log files and use a prompt string which matches the"
             " actual prompt string more closely."
         )
+        self.force_prompt = False
 
     def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
@@ -119,7 +122,7 @@ class AutoLoginAction(Action):
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
 
-    def check_kernel_messages(self, connection):
+    def check_kernel_messages(self, connection, max_end_time):
         """
         Use the additional pexpect expressions to detect warnings
         and errors during the kernel boot. Ensure all test jobs using
@@ -128,7 +131,7 @@ class AutoLoginAction(Action):
         """
         self.logger.info("Parsing kernel messages")
         self.logger.debug(connection.prompt_str)
-        parsed = LinuxKernelMessages.parse_failures(connection, self)
+        parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
         if len(parsed) and 'success' in parsed[0]:
             self.results = {'success': parsed[0]}
         elif not parsed:
@@ -163,8 +166,9 @@ class AutoLoginAction(Action):
         params = self.parameters.get('auto_login', None)
         if not params:
             self.logger.debug("No login prompt set.")
+            self.force_prompt = True
             # wait for a prompt or kernel messages
-            self.check_kernel_messages(connection)
+            self.check_kernel_messages(connection, max_end_time)
             # clear kernel message prompt patterns
             connection.prompt_str = self.parameters.get('prompts', [])
             # already matched one of the prompts
@@ -173,7 +177,7 @@ class AutoLoginAction(Action):
             connection.prompt_str.append(params['login_prompt'])
 
             # wait for a prompt or kernel messages
-            self.check_kernel_messages(connection)
+            self.check_kernel_messages(connection, max_end_time)
             self.logger.debug("Sending username %s", params['username'])
             connection.sendline(params['username'], delay=self.character_delay)
             # clear the kernel_messages patterns
@@ -183,7 +187,7 @@ class AutoLoginAction(Action):
                 self.logger.info("Waiting for password prompt")
                 connection.prompt_str.append(params['password_prompt'])
                 # wait for the password prompt
-                index = self.wait(connection)
+                index = self.wait(connection, max_end_time)
                 if index:
                     self.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
                 self.logger.debug("Sending password %s", params['password'])
@@ -192,7 +196,7 @@ class AutoLoginAction(Action):
                 connection.prompt_str = self.parameters.get('prompts', [])
 
             # wait for the login process to provide the prompt
-            index = self.wait(connection)
+            index = self.wait(connection, max_end_time)
             if index:
                 self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
 
