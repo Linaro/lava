@@ -264,8 +264,8 @@ def debian_package_version():
     changelog = '/usr/share/doc/lava-dispatcher/changelog.Debian.gz'
     if os.path.exists(changelog):
         deb_version = subprocess.check_output((
-            'dpkg-parsechangelog', '-l%s' % changelog,
-            '--show-field', 'Version')).strip().decode('utf-8')
+            'dpkg-query', '-W', "-f=${Version}\n",
+            'lava-dispatcher')).strip().decode('utf-8')
         # example version returned would be '2016.11'
         return deb_version.split('-')[0]
     return ''
