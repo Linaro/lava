@@ -3,6 +3,7 @@
 /etc/lava-server/views/
 /etc/lava-server/templates
 /etc/lava-server/dispatcher-config
+/etc/lava-server/dispatcher.d
 /var/log/lava-server/
 /var/lib/lava-server/default/media/
 /var/lib/lava-server/default/archive/job-output/
