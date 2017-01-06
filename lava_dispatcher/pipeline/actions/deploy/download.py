@@ -270,7 +270,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             md5sum = remote.get('md5sum', None)
             sha256sum = remote.get('sha256sum', None)
 
-            self.logger.info("downloading %s as %s" % (remote['url'], fname))
+            self.logger.info("downloading %s", remote['url'])
+            self.logger.debug("saving as %s", fname)
 
             downloaded_size = 0
             beginning = time.time()

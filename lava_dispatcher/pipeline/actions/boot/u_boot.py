@@ -317,7 +317,7 @@ class UBootPrepareKernelAction(Action):
             if self.type not in self.job.device['parameters']:
                 self.errors = "Requested kernel boot type '%s' not supported by this device." % self.type
             if self.type == "bootm" or self.type == "bootz" or self.type == "booti":
-                self.logger.info("booti, bootm and bootz are being deprecated soon, please use 'image','uimage' or 'zimage'")
+                self.logger.warning("booti, bootm and bootz are being deprecated soon, please use 'image', 'uimage' or 'zimage'")
         if self.kernel_type:
             self.kernel_type = str(self.kernel_type).lower()
             if self.type != self.kernel_type:
