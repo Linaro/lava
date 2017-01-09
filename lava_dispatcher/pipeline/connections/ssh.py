@@ -131,7 +131,6 @@ class ConnectSsh(Action):
         if connection:
             self.logger.debug("Already connected")
             return connection
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
 
         params = self._check_params()

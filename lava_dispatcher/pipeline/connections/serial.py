@@ -66,7 +66,6 @@ class ConnectDevice(Action):
 
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
         shell = self.shell_class("%s\n" % command, self.timeout, logger=self.logger)
         if shell.exitstatus:

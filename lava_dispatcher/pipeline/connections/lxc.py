@@ -102,7 +102,6 @@ class ConnectLxc(Action):
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
         shell = self.shell_class("%s\n" % cmd, self.timeout,
                                  logger=self.logger)
