@@ -38,6 +38,7 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
+from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
 
@@ -129,6 +130,9 @@ class AutoLoginAction(Action):
         auto-login-action have a result set so that the duration is
         always available when the action completes successfully.
         """
+        if isinstance(connection, SShSession):
+            self.logger.debug("Skipping kernel messages")
+            return
         self.logger.info("Parsing kernel messages")
         self.logger.debug(connection.prompt_str)
         parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
@@ -147,6 +151,8 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
+        if not connection:
+            return connection
         prompts = self.parameters.get('prompts', None)
         for prompt in prompts:
             check_prompt_characters(prompt)
