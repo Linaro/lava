@@ -29,7 +29,7 @@ from zmq.utils.strtypes import b
 
 
 class ZMQPushHandler(logging.Handler):
-    def __init__(self, socket_addr, master_cert, slave_cert, job_id):
+    def __init__(self, logging_url, master_cert, slave_cert, job_id):
         super(ZMQPushHandler, self).__init__()
 
         # Create the PUSH socket
@@ -46,7 +46,7 @@ class ZMQPushHandler(logging.Handler):
             (server_public, _) = zmq.auth.load_certificate(master_cert)
             self.socket.curve_serverkey = server_public
 
-        self.socket.connect(socket_addr)
+        self.socket.connect(logging_url)
 
         self.job_id = str(job_id)
         self.action_level = '0'
@@ -74,8 +74,8 @@ class YAMLLogger(logging.Logger):
         super(YAMLLogger, self).__init__(name)
         self.handler = None
 
-    def addZMQHandler(self, socket_addr, master_cert, slave_cert, job_id):
-        self.handler = ZMQPushHandler(socket_addr, master_cert,
+    def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id):
+        self.handler = ZMQPushHandler(logging_url, master_cert,
                                       slave_cert, job_id)
         self.addHandler(self.handler)
         return self.handler

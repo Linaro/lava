@@ -47,12 +47,12 @@ class ExportDeviceEnvironment(Action):
             self.env.append("echo export %s=\\'%s\\' >> %s" % (
                 key, environment[key], shell_file))
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
 
         if not connection:
             return
 
-        connection = super(ExportDeviceEnvironment, self).run(connection, args)
+        connection = super(ExportDeviceEnvironment, self).run(connection, max_end_time, args)
 
         shell_file = self.get_namespace_data(
             action='deploy-device-env',

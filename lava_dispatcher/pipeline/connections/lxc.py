@@ -52,7 +52,7 @@ class ConnectLxc(Action):
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         lxc_name = self.get_namespace_data(
             action='lxc-create-action',
             label='lxc',
@@ -113,7 +113,7 @@ class ConnectLxc(Action):
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super(ConnectLxc, self).run(connection, args)
+        connection = super(ConnectLxc, self).run(connection, max_end_time, args)
         connection.prompt_str = self.parameters['prompts']
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)

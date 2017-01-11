@@ -146,8 +146,8 @@ class LxcCreateAction(DeployAction):
         # set lxc_data
         self._set_lxc_data()
 
-    def run(self, connection, args=None):
-        connection = super(LxcCreateAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcCreateAction, self).run(connection, max_end_time, args)
         if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
             lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
                        '-n', self.lxc_data['lxc_name'], '--', '--release',
@@ -186,8 +186,8 @@ class LxcAddDeviceAction(Action):
         self.retries = 10
         self.sleep = 10
 
-    def run(self, connection, args=None):
-        connection = super(LxcAddDeviceAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcAddDeviceAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

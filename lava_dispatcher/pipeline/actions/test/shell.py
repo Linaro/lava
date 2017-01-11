@@ -190,7 +190,7 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super(TestShellAction, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Common run function for subclasses which define custom patterns
         boot-result is a simple sanity test and only supports the most recent boot
@@ -201,7 +201,7 @@ class TestShellAction(TestAction):
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if not res:
             raise RuntimeError("No boot action result found")
-        connection = super(TestShellAction, self).run(connection, args)
+        connection = super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
         connection = self.get_namespace_data(
@@ -223,7 +223,6 @@ class TestShellAction(TestAction):
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
 
-        self.logger.info("Executing test definitions using %s" % connection.name)
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
@@ -392,6 +391,19 @@ class TestShellAction(TestAction):
                 # Send the results back
                 self.logger.results(res_data)
 
+            elif name == "TESTREFERENCE":
+                if len(params) != 3:
+                    raise TestError("Invalid use of TESTREFERENCE")
+                res_dict = {
+                    'case': params[0],
+                    'definition': self.definition,
+                    'result': params[1],
+                    'reference': params[2],
+                }
+                if self.testset_name:
+                    res_dict.update({'set': self.testset_name})
+                self.logger.results(res_dict)
+
             elif name == "TESTSET":
                 action = params.pop(0)
                 if action == "START":
@@ -427,6 +439,11 @@ class TestShellAction(TestAction):
             if res['result'] in fixupdict:
                 res['result'] = fixupdict[res['result']]
             if res:
+                # disallow whitespace in test_case_id
+                test_case_id = "%s" % res['test_case_id']
+                if ' ' in test_case_id.strip():
+                    self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
+                    return True
                 res_data = {
                     'definition': self.definition,
                     'case': res["test_case_id"],

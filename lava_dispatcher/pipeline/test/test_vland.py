@@ -31,6 +31,8 @@ from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 
+# pylint: disable=superfluous-parens
+
 
 class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
@@ -127,7 +129,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         vprotocol.set_up()
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
         ret = vprotocol.configure(self.device, job)
         if not ret:
@@ -175,7 +177,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(VlandProtocol.name, alpha_data['protocols'])
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
         description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -202,7 +204,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.assertIn('iface', vprotocol.params[vlan_name])
         params = job.parameters['protocols'][vprotocol.name]
         names = []
-        for key, value in params.items():
+        for key, _ in params.items():
             if key == 'yaml_line':
                 continue
             names.append(",".join([key, vprotocol.params[key]['iface']]))
@@ -212,7 +214,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def test_job_no_tags(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+        for vlan_key, _ in alpha_data['protocols'][VlandProtocol.name].items():
             alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': []}
         # removed tags from original job to simulate job where any interface tags will be acceptable
         self.assertEqual(
@@ -220,7 +222,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         job.validate()
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
         self.assertTrue(vprotocol.valid)
@@ -239,7 +241,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def test_job_bad_tags(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+        for vlan_key, _ in alpha_data['protocols'][VlandProtocol.name].items():
             alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': ['spurious']}
         # replaced tags from original job to simulate job where an unsupported tag is specified
         self.assertEqual(
@@ -247,7 +249,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': ['spurious']}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         self.assertRaises(JobError, job.validate)
 
     def test_primary_interface(self):
@@ -258,7 +260,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             if self.device['parameters']['interfaces'][interface]['tags'] == []:
                 self.device['parameters']['interfaces'][interface]['tags'] = None
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
@@ -270,7 +272,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def demo(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)
-        vprotocol = VlandProtocol(alpha_data)
+        vprotocol = VlandProtocol(alpha_data, 422)
         vprotocol.settings = vprotocol.read_settings()
         self.assertIn('port', vprotocol.settings)
         self.assertIn('poll_delay', vprotocol.settings)

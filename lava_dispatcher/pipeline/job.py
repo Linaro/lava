@@ -21,18 +21,31 @@
 import atexit
 import logging
 import errno
+import signal
 import shutil
 import tempfile
 import time
+import traceback
 import os
 import yaml
 
-from lava_dispatcher.pipeline.action import JobError, InfrastructureError
+from lava_dispatcher.pipeline.action import JobError, InfrastructureError, TestError
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
+
+
+class ZMQConfig(object):
+    """
+    Namespace for the ZMQ logging configuration
+    """
+    def __init__(self, logging_url, master_cert, slave_cert):
+        self.logging_url = logging_url
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -52,11 +65,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, socket_addr, master_cert, slave_cert, parameters):  # pylint: disable=too-many-arguments
+    def __init__(self, job_id, parameters, zmq_config):  # pylint: disable=too-many-arguments
         self.job_id = job_id
-        self.socket_addr = socket_addr
-        self.master_cert = master_cert
-        self.slave_cert = slave_cert
+        self.zmq_config = zmq_config
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -69,21 +80,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.timeout = None
         self.protocols = []
         self.compatibility = 2
+        # Was the job cleaned
+        self.cleaned = False
         # Root directory for the job tempfiles
         self.tmp_dir = None
-        # We are now able to create the logger when the job is started,
-        # allowing the functions that are called before run() to log.
-        # The validate() function is no longer called on the master so we can
-        # safelly add the ZMQ handler. This way validate can log errors that
-        # test writter will see.
-        self.logger = logging.getLogger('dispatcher')
-        if socket_addr is not None:
-            # pylint: disable=no-member
-            self.logger.addZMQHandler(socket_addr, master_cert, slave_cert,
-                                      job_id)
-            self.logger.setMetadata("0", "validate")
-        else:
-            self.logger.addHandler(logging.StreamHandler())
 
     @property
     def context(self):
@@ -110,6 +110,23 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
 
+    def setup_logging(self):
+        # We are now able to create the logger when the job is started,
+        # allowing the functions that are called before run() to log.
+        # The validate() function is no longer called on the master so we can
+        # safelly add the ZMQ handler. This way validate can log errors that
+        # test writter will see.
+        self.logger = logging.getLogger('dispatcher')
+        if self.zmq_config is not None:
+            # pylint: disable=no-member
+            self.logger.addZMQHandler(self.zmq_config.logging_url,
+                                      self.zmq_config.master_cert,
+                                      self.zmq_config.slave_cert,
+                                      self.job_id)
+            self.logger.setMetadata("0", "validate")
+        else:
+            self.logger.addHandler(logging.StreamHandler())
+
     def mkdtemp(self, action_name):
         """
         Create a tmp directory in DISPATCHER_DOWNLOAD_DIR/{job_id}/ because
@@ -124,17 +141,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             base_dir = os.path.join(DISPATCHER_DOWNLOAD_DIR, str(self.job_id))
             try:
                 os.makedirs(base_dir, mode=0o755)
-
-                def clean():
-                    self.logger.info("Cleanup: removing %s", base_dir)
-                    shutil.rmtree(base_dir)
-                self.logger.info("Root tmp directory created at %s", base_dir)
-                atexit.register(clean)
             except OSError as exc:
                 if exc.errno != errno.EEXIST:
                     # When running unit tests
                     base_dir = tempfile.mkdtemp(prefix='pipeline-')
-                    atexit.register(shutil.rmtree, base_dir)
+                    atexit.register(shutil.rmtree, base_dir, ignore_errors=True)
             # Save the path for the next calls
             self.tmp_dir = base_dir
 
@@ -149,6 +160,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Then needs to validate the context
         Finally expose the context so that actions can see it.
         """
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version()
+        self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
         for protocol in self.protocols:
@@ -157,7 +170,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             except KeyboardInterrupt:
                 self.cleanup(connection=None, message="Canceled")
                 self.logger.info("Canceled")
-                return 1  # equivalent to len(self.pipeline.errors)
+                raise JobError("Canceled")
             except (JobError, RuntimeError, KeyError, TypeError) as exc:
                 raise JobError(exc)
             if not protocol.valid:
@@ -172,12 +185,23 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         try:
             self.pipeline.validate_actions()
         except (JobError, InfrastructureError) as exc:
+            self.cleanup(connection=None, message="Invalid job definition")
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
             raise
         finally:
             self.logger.info("validate duration: %.02f", time.time() - start)
+
+    def cancelling_handler(*_):
+        """
+        Catches KeyboardInterrupt or SIGTERM and raise
+        KeyboardInterrupt that will go through all the stack frames. We then
+        cleanup the job and report the errors.
+        """
+        signal.signal(signal.SIGINT, signal.default_int_handler)
+        signal.signal(signal.SIGTERM, signal.default_int_handler)
+        raise KeyboardInterrupt
 
     def run(self):
         """
@@ -186,33 +210,78 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        for protocol in self.protocols:
-            try:
-                protocol.set_up()
-            except KeyboardInterrupt:
-                self.cleanup(connection=None, message="Canceled")
-                self.logger.info("Canceled")
-                return 1  # equivalent to len(self.pipeline.errors)
-            except (JobError, RuntimeError, KeyError, TypeError) as exc:
-                raise JobError(exc)
-            if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
-                self.logger.exception(msg)
-                raise JobError(msg)
+        return_code = 0
+        error_msg = None
+        try:
+            # Set the signal handler
+            signal.signal(signal.SIGINT, self.cancelling_handler)
+            signal.signal(signal.SIGTERM, self.cancelling_handler)
 
-        self.pipeline.run_actions(self.connection)
-        if self.pipeline.errors:
-            self.logger.exception(self.pipeline.errors)
-            return len(self.pipeline.errors)
-        return 0
+            # Setup the protocols
+            for protocol in self.protocols:
+                try:
+                    protocol.set_up()
+                except (KeyError, TypeError) as exc:
+                    self.logger.error("Unable to setup the protocols")
+                    self.logger.exception(exc)
+                    raise RuntimeError(exc)
+                if not protocol.valid:
+                    msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                    self.logger.exception(msg)
+                    raise JobError(msg)
+
+            # Run the pipeline and wait for exceptions
+            with self.timeout() as max_end_time:
+                self.pipeline.run_actions(self.connection, max_end_time)
+        except InfrastructureError:
+            error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
+                        "Please report it to the LAVA admin."
+            return_code = 1
+        except JobError:
+            error_msg = "JobError: your job cannot terminate cleanly."
+            return_code = 2
+        except KeyboardInterrupt:
+            error_msg = "KeyboardInterrupt: the job was canceled."
+            return_code = 3
+        except RuntimeError:
+            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
+            return_code = 4
+        except TestError:
+            error_msg = "TestError: a test failed to run, look at the error message."
+            return_code = 5
+        except Exception as exc:
+            self.logger.exception(traceback.format_exc())
+            error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
+            return_code = 6
+
+        # Cleanup now
+        self.cleanup(self.connection, None)
+
+        if self.pipeline.errors and not error_msg:
+            self.logger.error("Errors detected: %s", self.pipeline.errors)
+            return_code = -1
+        else:
+            self.logger.info("Job finished correctly")
+        return return_code
 
     def cleanup(self, connection, message):
-        self.pipeline.cleanup()
+        if self.cleaned:
+            self.logger.info("Cleanup already called, skipping")
+
         # exit out of the pipeline & run the Finalize action to close the
-        # connection and poweroff the device
-        for child in self.pipeline.actions:
-            # rely on the action name here - use isinstance if pipeline moves
-            # into a dedicated module.
-            if child.name == 'finalize':
-                child.errors = message
-                child.run(connection, None)
+        # connection and poweroff the device (the cleanup action will do that
+        # for us)
+        self.logger.info("Cleaning after the job")
+        self.pipeline.cleanup(connection, message)
+
+        if self.tmp_dir is not None:
+            self.logger.info("Root tmp directory removed at %s", self.tmp_dir)
+            try:
+                shutil.rmtree(self.tmp_dir)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    self.logger.error("Unable to remove the directory: %s",
+                                      exc.strerror)
+
+        # Mark cleanup as done to avoid calling it many times
+        self.cleaned = True

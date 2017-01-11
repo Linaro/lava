@@ -75,7 +75,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertIn('hostname', device)
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None, None, None)
+            job = job_parser.parse(sample_job_data, device, 4212, None, "")
         uboot_action = None
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -109,7 +109,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIn(action.parameters['commands'], action.parameters[action.parameters['method']])
                 self.assertIn('commands', action.parameters[action.parameters['method']][action.parameters['commands']])
                 self.assertIsNotNone(action.parameters['u-boot']['ramdisk'])
-                self.assertTrue(type(action.parameters['u-boot']['ramdisk']['commands']) == list)
+                self.assertIsInstance(action.parameters['u-boot']['ramdisk']['commands'], list)
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
 
     def test_device_power(self):
@@ -141,8 +141,7 @@ class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-publ
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None,
-                None, None,
+                sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],
@@ -150,7 +149,7 @@ class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-publ
         )
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
-    def test_device_environment_validity(self):
+    def test_device_environment_validity(self):  # pylint: disable=invalid-name
         """
         Use non-YAML syntax a bit like existing device config syntax.
         Ensure this syntax is picked up as invalid.
@@ -166,8 +165,7 @@ overrides:
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None,
-                None, None,
+                sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],
@@ -189,8 +187,7 @@ overrides:
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None,
-                None, None,
+                sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],

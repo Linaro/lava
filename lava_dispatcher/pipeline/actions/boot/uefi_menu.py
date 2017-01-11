@@ -90,11 +90,11 @@ class UEFIMenuInterrupt(MenuInterrupt):
         if 'interrupt_string' not in params:
             self.errors = "Missing interrupt string"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
-        connection = super(UEFIMenuInterrupt, self).run(connection, args)
+        connection = super(UEFIMenuInterrupt, self).run(connection, max_end_time, args)
         params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
         connection.prompt_str = params['interrupt_prompt']
         self.wait(connection)
@@ -139,7 +139,7 @@ class UefiMenuSelector(SelectorMenuAction):
         self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
         super(UefiMenuSelector, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if self.job.device.pre_os_command:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
@@ -151,7 +151,7 @@ class UefiMenuSelector(SelectorMenuAction):
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
-        connection = super(UefiMenuSelector, self).run(connection, args)
+        connection = super(UefiMenuSelector, self).run(connection, max_end_time, args)
         self.logger.debug("Looking for %s", self.boot_message)
         connection.prompt_str = self.boot_message
         self.wait(connection)
@@ -178,12 +178,9 @@ class UefiSubstituteCommands(Action):
             if 'select' not in item:
                 self.errors = "Invalid device configuration for %s: %s" % (self.name, item)
 
-    def run(self, connection, args=None):
-        connection = super(UefiSubstituteCommands, self).run(connection, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UefiSubstituteCommands, self).run(connection, max_end_time, args)
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
             '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),

@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
+import logging
 import pexpect
 import sys
 import time
@@ -29,8 +30,9 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Timeout,
 )
-from lava_dispatcher.pipeline.connection import Connection, CommandRunner
+from lava_dispatcher.pipeline.connection import Connection
 from lava_dispatcher.pipeline.utils.constants import LINE_SEPARATOR
+from lava_dispatcher.pipeline.utils.strings import seconds_to_str
 
 
 class ShellLogger(object):
@@ -161,23 +163,16 @@ class ShellSession(Connection):
 
     def __init__(self, job, shell_command):
         """
-        The connection takes over result handling for the TestAction, adding individual results to the
-        logs every time a test_case is matched, so that if a test definition falls over or times out,
-        the results so-far will be retained.
-        Each result generates an item in the data context with an ID. This ID can be used later to
-        look up each individial testcase result.
-        TODO: ensure the stdout for each testcase result is captured and tagged with this ID.
-
-        A ShellSession uses a CommandRunner. Other connections would need to add their own
-        support.
+        A ShellSession monitors a pexpect connection.
+        Optionally, a prompt can be forced after
+        a percentage of the timeout.
         """
         super(ShellSession, self).__init__(job, shell_command)
-        self.__runner__ = None
         self.name = "ShellSession"
-        self.data = job.context
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
         self.spawn = shell_command
+        self.__runner__ = None
         self.timeout = shell_command.lava_timeout
 
     def disconnect(self, reason):
@@ -193,60 +188,62 @@ class ShellSession(Connection):
     def prompt_str(self, string):
         # FIXME: Debug logging should show whenever this property is changed
         self.__prompt_str__ = string
-        if self.__runner__:
-            self.__runner__.change_prompt(self.__prompt_str__)
-
-    @property
-    def runner(self):
-        if self.__runner__ is None:
-            # device = self.device
-            spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
-            # prompt_str = parameters['prompts']
-            prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
-#            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
-            self.__runner__ = CommandRunner(spawned_shell, self.prompt_str, prompt_str_includes_rc)
-        return self.__runner__
-
-    def run_command(self, command):
-        self.runner.run(command)
 
     @contextlib.contextmanager
     def test_connection(self):
         """
         Yields the actual connection which can be used to interact inside this shell.
         """
-        if self.__runner__ is None:
-            spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # prompt_str = parameters['prompts']
-            prompt_str_includes_rc = True  # FIXME - do we need this?
-#            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
-            self.__runner__ = CommandRunner(spawned_shell, self.prompt_str,
-                                            prompt_str_includes_rc)
-        yield self.__runner__.get_connection()
+        yield self.raw_connection
 
-    def wait(self):
-        if not self.prompt_str:
-            self.prompt_str = self.check_char
-        try:
-            return self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
-        except pexpect.TIMEOUT:
-            raise JobError("wait for prompt timed out")
+    def force_prompt_wait(self, remaining=None):
+        """
+        One of the challenges we face is that kernel log messages can appear
+        half way through a shell prompt.  So, if things are taking a while,
+        we send a newline along to maybe provoke a new prompt.  We wait for
+        half the timeout period and then wait for one tenth of the timeout
+        6 times (so we wait for 1.1 times the timeout period overall).
+        :return: the index into the connection.prompt_str list
+        """
+        logger = logging.getLogger('dispatcher')
+        prompt_wait_count = 0
+        if not remaining:
+            return self.wait()
+        # connection_prompt_limit
+        partial_timeout = remaining / 2.0
+        while True:
+            try:
+                return self.raw_connection.expect(self.prompt_str, timeout=partial_timeout)
+            except (pexpect.TIMEOUT, TestError) as exc:
+                if prompt_wait_count < 6:
+                    logger.warning(
+                        '%s: Sending %s in case of corruption. Connection timeout %s, retry in %s',
+                        exc, self.check_char, seconds_to_str(remaining), seconds_to_str(partial_timeout))
+                    logger.debug("pattern: %s", self.prompt_str)
+                    prompt_wait_count += 1
+                    partial_timeout = remaining / 10
+                    self.sendline(self.check_char)
+                    continue
+                else:
+                    raise
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
 
-
-class SimpleSession(ShellSession):
-
-    def wait(self):
+    def wait(self, max_end_time=None):
         """
         Simple wait without sendling blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
         the menu to exit to an unrecognised prompt.
         """
+        if not max_end_time:
+            timeout = self.timeout.duration
+        else:
+            timeout = max_end_time - time.time()
+        if timeout < 0:
+            raise RuntimeError("Invalid max_end_time value passed to wait()")
         try:
-            return self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
-        except pexpect.TIMEOUT:
+            return self.raw_connection.expect(self.prompt_str, timeout=timeout)
+        except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
         except KeyboardInterrupt:
             raise KeyboardInterrupt
@@ -265,18 +262,18 @@ class ExpectShellSession(Action):
         self.name = "expect-shell-connection"
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
+        self.force_prompt = True
 
     def validate(self):
         super(ExpectShellSession, self).validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, args=None):
-        connection = super(ExpectShellSession, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(ExpectShellSession, self).run(connection, max_end_time, args)
         if not connection:
             raise JobError("No connection available.")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
-        self.logger.debug("%s: Waiting for prompt %s", self.name, ', '.join(self.parameters['prompts']))
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection

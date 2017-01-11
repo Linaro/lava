@@ -19,43 +19,23 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-import glob
 import unittest
-import yaml
-import pexpect
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import (
-    Pipeline,
-    Action,
-    JobError,
-    InfrastructureError,
-)
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
-from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
-from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
-from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.test.test_messages import FakeConnection
-from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
-from lava_dispatcher.pipeline.test.test_defs import allow_missing_path, check_missing_path
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 def find_autologin(job):
-    autologin = False
     for action in job.pipeline.actions:
         if action.internal_pipeline:
             for action in action.internal_pipeline.actions:
-                if type(action) == AutoLoginAction:
-                    autologin = True
-    return autologin
+                if isinstance(action, AutoLoginAction):
+                    return True
+    return False
 
 
-class TestMonitorPipeline(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestMonitorPipeline(unittest.TestCase):
 
     def test_autologin_normal_kvm(self):
         factory = Factory()

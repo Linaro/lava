@@ -24,11 +24,14 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Timeout,
-    InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import (
+    BootAction,
+    AutoLoginAction,
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction
+)
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
@@ -37,12 +40,8 @@ from lava_dispatcher.pipeline.power import (
     PowerOff
 )
 from lava_dispatcher.pipeline.utils.constants import (
-    BOOT_MESSAGE,
     GRUB_BOOT_PROMPT,
-    BOOTLOADER_DEFAULT_CMD_TIMEOUT
 )
-from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 def bootloader_accepts(device, parameters):
@@ -104,8 +103,8 @@ class GrubMainAction(BootAction):
                 self.internal_pipeline.add_action(InstallerWait())
                 self.internal_pipeline.add_action(PowerOff())
 
-    def run(self, connection, args=None):
-        connection = super(GrubMainAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(GrubMainAction, self).run(connection, max_end_time, args)
         if self.expect_shell:
             self.logger.debug("Setting default test shell prompt")
             if not connection.prompt_str:
@@ -145,10 +144,10 @@ class BootloaderInterrupt(Action):
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterrupt, self).run(connection, args)
+        connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
         self.logger.debug("Changing prompt to '%s'", GRUB_BOOT_PROMPT)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = GRUB_BOOT_PROMPT
@@ -173,8 +172,8 @@ class InstallerWait(Action):
         if "boot_finished" not in self.parameters:
             self.errors = "Missing boot_finished string"
 
-    def run(self, connection, args=None):
-        connection = super(InstallerWait, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(InstallerWait, self).run(connection, max_end_time, args)
         wait_string = self.parameters['boot_finished']
         msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)
@@ -182,119 +181,4 @@ class InstallerWait(Action):
         self.wait(connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
-        return connection
-
-
-class BootloaderCommandOverlay(Action):
-    """
-    Replace KERNEL_ADDR and DTB placeholders with the actual values for this
-    particular pipeline.
-    addresses are read from the device configuration parameters
-    bootloader_type is determined from the boot action method strategy
-    bootz or bootm is determined by boot action method type. (i.e. it is up to
-    the test writer to select the correct download file for the correct boot command.)
-    server_ip is calculated at runtime
-    filenames are determined from the download Action.
-    """
-    def __init__(self):
-        super(BootloaderCommandOverlay, self).__init__()
-        self.name = "bootloader-overlay"
-        self.summary = "replace placeholders with job data"
-        self.description = "substitute job data into bootloader command list"
-        self.commands = None
-        self.type = "grub"
-
-    def validate(self):
-        super(BootloaderCommandOverlay, self).validate()
-        device_methods = self.job.device['actions']['boot']['methods']
-        if self.type not in self.job.device['actions']['boot']['methods']:
-            self.errors = "grub boot method not found"
-        if 'method' not in self.parameters:
-            self.errors = "missing method"
-        elif 'commands' not in self.parameters:
-            self.errors = "missing commands"
-        elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
-            self.errors = "Command not found in supported methods"
-        elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
-            self.errors = "No commands found in parameters"
-        # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
-        self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
-
-    def run(self, connection, args=None):
-        """
-        Read data from the download action and replace in context
-        Use common data for all values passed into the substitutions so that
-        multiple actions can use the same code.
-        """
-        # Multiple deployments would overwrite the value if parsed in the validate step.
-        # FIXME: implement isolation for repeated steps.
-        connection = super(BootloaderCommandOverlay, self).run(connection, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
-        substitutions = {
-            '{SERVER_IP}': ip_addr,
-            '{PRESEED_CONFIG}': self.get_namespace_data(action='download_action', label='file', key='preseed'),
-            '{PRESEED_LOCAL}': self.get_namespace_data(action='compress-ramdisk', label='file', key='preseed_local'),
-            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
-            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
-            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel')
-        }
-
-        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
-        if nfs_root:
-            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
-            substitutions['{NFS_SERVER_IP}'] = ip_addr
-        elif nfs_url:
-            substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='serverip')
-
-        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
-
-        subs = substitute(self.commands, substitutions)
-        self.set_namespace_data(action='bootloader-overlay', label=self.type, key='commands', value=subs)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
-        return connection
-
-
-class BootloaderCommandsAction(Action):
-    """
-    Send the boot commands to the bootloader
-    """
-    def __init__(self):
-        super(BootloaderCommandsAction, self).__init__()
-        self.name = "bootloader-commands"
-        self.description = "send commands to bootloader"
-        self.summary = "interactive bootloader"
-        self.params = None
-        self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
-        self.type = "grub"
-
-    def validate(self):
-        super(BootloaderCommandsAction, self).validate()
-        # get prompt_str from device parameters
-        self.params = self.job.device['actions']['boot']['methods'][self.type]['parameters']
-
-    def run(self, connection, args=None):
-        if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
-        connection = super(BootloaderCommandsAction, self).run(connection, args)
-        connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.wait(connection)
-        i = 1
-        commands = self.get_namespace_data(action='bootloader-overlay', label=self.type, key='commands')
-
-        for line in commands:
-            connection.sendline(line, delay=self.character_delay, send_char=True)
-            if i != (len(commands)):
-                self.wait(connection)
-                i += 1
-        # allow for auto_login
-        connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.wait(connection)
         return connection

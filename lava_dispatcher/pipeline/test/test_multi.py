@@ -24,14 +24,11 @@ import yaml
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.power import FinalizeAction
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
@@ -100,7 +97,7 @@ class TestMultiDeploy(unittest.TestCase):
         def validate(self):
             super(TestMultiDeploy.TestDeployAction, self).validate()
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.data[self.name] = self.parameters
             return connection  # no actual connection during this fake job
 
@@ -110,12 +107,14 @@ class TestMultiDeploy(unittest.TestCase):
 
     def test_multi_deploy(self):
         self.assertIsNotNone(self.parsed_data)
-        job = Job(4212, None, None, None, self.parsed_data)
+        job = Job(4212, self.parsed_data, None)
+        job.timeout = Timeout("Job", Timeout.parse({'minutes': 2}))
         pipeline = Pipeline(job=job)
         device = TestMultiDeploy.FakeDevice()
         self.assertIsNotNone(device)
         job.device = device
         job.parameters['output_dir'] = mkdtemp()
+        job.setup_logging()
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data['actions']:
@@ -142,7 +141,7 @@ class TestMultiDeploy(unittest.TestCase):
         self.assertIsInstance(pipeline.actions[2], TestMultiDeploy.TestDeployAction)
         job.validate()
         self.assertEqual([], job.pipeline.errors)
-        job.run()
+        self.assertEqual(job.run(), 0)
         self.assertNotEqual(pipeline.actions[0].data, {'fake_deploy': pipeline.actions[0].parameters})
         self.assertEqual(pipeline.actions[1].data, {'fake_deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared
@@ -164,7 +163,7 @@ class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public
         self.assertEqual(len(block['definitions']), 2)
         self.assertEqual(block['definitions'][1], block['definitions'][0])
         parser = JobParser()
-        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, "",
                            output_dir='/tmp/')
         self.assertIsNotNone(job)
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]

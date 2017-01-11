@@ -104,12 +104,12 @@ class TestMonitorAction(TestAction):
     def validate(self):
         super(TestMonitorAction, self).validate()
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # Sanity test: could be a missing deployment for some actions
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if res != 'success':
             raise RuntimeError("No boot action result found")
-        connection = super(TestMonitorAction, self).run(connection, args)
+        connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
         if res != "success":
             self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")
             self.results.update({self.name: "skipped"})
@@ -165,6 +165,7 @@ class TestMonitorAction(TestAction):
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
+            self.logger.debug(str(match))
             if 'result' in match:
                 if self.fixupdict:
                     if match['result'] in self.fixupdict:
@@ -180,6 +181,18 @@ class TestMonitorAction(TestAction):
                         }
                         if 'measurement' in match:
                             results.update({'measurement': match['measurement']})
+                        if 'units' in match:
+                            results.update({'units': match['units']})
+                        self.logger.results(results)
+            else:
+                if all(x in match for x in ['test_case_id', 'measurement']):
+                    if match['measurement'] and match['test_case_id']:
+                        results = {
+                            'definition': self.test_suite_name.replace(' ', '-').lower(),
+                            'case': match['test_case_id'].lower().strip(),
+                            'result': 'pass',
+                            'measurement': float(match['measurement'])
+                        }
                         if 'units' in match:
                             results.update({'units': match['units']})
                         self.logger.results(results)

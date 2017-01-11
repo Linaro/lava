@@ -38,7 +38,7 @@ class InstallerFactory(object):  # pylint: disable=too-few-public-methods
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, None, None, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, "", output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None

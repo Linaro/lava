@@ -39,13 +39,23 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 # pylint: disable=too-few-public-methods
 
+class DummyLogger(object):
+    def info(self, *args, **kwargs):
+        pass
+
+    def exception(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAction.FakeJob, self).__init__(4212, None, None, None, parameters)
+            super(TestAction.FakeJob, self).__init__(4212, parameters, None)
 
     class FakeDeploy(object):
         """
@@ -86,7 +96,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "fake action for unit tests"
             self.description = "fake, do not use outside unit tests"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.count += 1
             raise JobError("fake error")
 
@@ -103,7 +113,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "fake trigger action for unit tests"
             self.description = "fake, do not use outside unit tests"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.count += 1
             self.job.triggers.append(TestAction.DiagnoseCheck.trigger())
             raise JobError("fake error")
@@ -142,7 +152,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
             self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
 
-        def cleanup(self):
+        def cleanup(self, connection, message):
             pass
 
     class DiagnoseCheck(DiagnosticAction):
@@ -246,7 +256,9 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAdjuvant.FakeJob, self).__init__(4212, None, None, None, parameters)
+            super(TestAdjuvant.FakeJob, self).__init__(4212, parameters, None)
+            self.logger = DummyLogger()
+            self.timeout = Timeout("FakeJob", Timeout.parse({'minutes': 2}))
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -299,8 +311,8 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         def key(cls):
             return "fake-key"
 
-        def run(self, connection, args=None):
-            connection = super(TestAdjuvant.FakeAdjuvant, self).run(connection, args)
+        def run(self, connection, max_end_time, args=None):
+            connection = super(TestAdjuvant.FakeAdjuvant, self).run(connection, max_end_time, args)
             if not self.valid:
                 raise RuntimeError("fakeadjuvant should be valid")
             if self.data[self.key()]:
@@ -325,7 +337,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             connection = TestAdjuvant.FakeConnection()
@@ -348,7 +360,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             connection = TestAdjuvant.FakeConnection()
@@ -404,7 +416,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.fakejob.run()
+        self.assertEqual(self.fakejob.run(), 0)
         self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
 
     def test_run_action(self):
@@ -413,7 +425,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         pipeline.add_action(TestAdjuvant.FakeAdjuvant())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.fakejob.run()
+        self.assertEqual(self.fakejob.run(), 0)
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
         self.assertEqual(self.fakejob.context, {'fake-key': False})
@@ -463,7 +475,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestTimeout.FakeJob, self).__init__(4212, None, None, None, parameters)
+            super(TestTimeout.FakeJob, self).__init__(4212, parameters, None)
+            self.logger = DummyLogger()
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -493,7 +506,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             time.sleep(3)
@@ -510,7 +523,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "fake action without adjuvant"
             self.description = "fake action runs without calling adjuvant"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             self.results = {'status': "passed"}
@@ -526,7 +539,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "fake action with overly long sleep"
             self.description = "fake action"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             time.sleep(5)
@@ -543,7 +556,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "fake action without adjuvant"
             self.description = "fake action runs without calling adjuvant"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             raise RuntimeError("Fake action not meant to actually run - should have timed out")
 
     class FakeSafeAction(Action):
@@ -562,7 +575,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             if connection:
                 raise RuntimeError("Fake action not meant to have a real connection")
             time.sleep(3)
@@ -612,8 +625,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+        # run() returns 2 for JobError
+        self.assertEqual(self.fakejob.run(), 2)
 
     def test_action_complete(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -624,10 +637,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        self.assertEqual(self.fakejob.run(), 0)
 
     def test_job_timeout(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -638,8 +648,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+        # run() returns 2 for JobError
+        self.assertEqual(self.fakejob.run(), 2)
 
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -650,10 +660,8 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        # run() returns 0 in case of success
+        self.assertEqual(self.fakejob.run(), 0)
 
     def test_long_job_safe(self):
         self.fakejob.timeout.duration = 8
@@ -669,7 +677,4 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(FinalizeAction())
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        try:
-            self.fakejob.run()
-        except JobError as exc:
-            self.fail(exc)
+        self.assertEqual(self.fakejob.run(), 0)

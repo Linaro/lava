@@ -44,8 +44,8 @@ class CustomisationAction(DeployAction):
         self.description = "customise image during deployment"
         self.summary = "customise image"
 
-    def run(self, connection, args=None):
-        connection = super(CustomisationAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(CustomisationAction, self).run(connection, max_end_time, args)
         self.logger.debug("Customising image...")
         # FIXME: implement
         return connection
@@ -132,7 +132,7 @@ class OverlayAction(DeployAction):
             self.internal_pipeline.add_action(CompressOverlay())
             self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Check if a lava-test-shell has been requested, implement the overlay
         * create test runner directories beneath the temporary location
@@ -186,7 +186,7 @@ class OverlayAction(DeployAction):
                         continue
                     fout.write("%s=%s\n" % (key, value))
 
-        connection = super(OverlayAction, self).run(connection, args)
+        connection = super(OverlayAction, self).run(connection, max_end_time, args)
         return connection
 
 
@@ -229,7 +229,7 @@ class MultinodeOverlayAction(OverlayAction):
         for script in glob.glob(os.path.join(self.lava_v2_multi_node_test_dir, 'lava-*')):
             self.v2_scripts_to_copy.append(script)
 
-    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
@@ -363,7 +363,7 @@ class VlandOverlayAction(OverlayAction):
                 self.tags.append(",".join([interface, tag]))
 
     # pylint: disable=anomalous-backslash-in-string
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Writes out file contents from lists, across multiple lines
         VAR="VAL1\n\
@@ -430,7 +430,7 @@ class CompressOverlay(Action):
         self.summary = "Compress the lava overlay files"
         self.description = "Create a lava overlay tarball and store alongside the job"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         output = os.path.join(self.job.parameters['output_dir'],
                               "overlay-%s.tar.gz" % self.level)
         location = self.get_namespace_data(action='test', label='shared', key='location')
@@ -443,7 +443,7 @@ class CompressOverlay(Action):
         if not self.valid:
             self.logger.error(self.errors)
             return connection
-        connection = super(CompressOverlay, self).run(connection, args)
+        connection = super(CompressOverlay, self).run(connection, max_end_time, args)
         cur_dir = os.getcwd()
         try:
             with tarfile.open(output, "w:gz") as tar:
@@ -504,8 +504,8 @@ class SshAuthorize(Action):
                 # only secondary connections set active.
                 self.active = True
 
-    def run(self, connection, args=None):
-        connection = super(SshAuthorize, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(SshAuthorize, self).run(connection, max_end_time, args)
         if not self.identity_file:
             self.logger.debug("No authorisation required.")  # idempotency
             return connection

@@ -22,23 +22,20 @@
 import os
 import sys
 import yaml
-import tarfile
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.ipxe import (
-    BootloaderAction,
-    BootloaderCommandsAction,
+from lava_dispatcher.pipeline.actions.boot.ipxe import BootloaderAction
+from lava_dispatcher.pipeline.actions.boot import (
     BootloaderCommandOverlay
 )
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
     SHUTDOWN_MESSAGE,
@@ -54,10 +51,10 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     """
     def create_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
-        yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(yaml) as sample_job_data:
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -154,16 +151,13 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
-        job = Job(4212, None, None, None, parameters)
+        job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(None)
         parsed = []
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
@@ -245,7 +239,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIn('power_on', names)
 
     @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
-    def test_prompt_from_job(self):
+    def test_prompt_from_job(self):  # pylint: disable=too-many-locals
         """
         Support setting the prompt after login via the job
 
@@ -268,8 +262,9 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         parser = JobParser()
         sample_job_data = yaml.load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
+        self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, None, None,
+        job = parser.parse(sample_job_string, device, 4212, None, "",
                            output_dir='/tmp')
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]

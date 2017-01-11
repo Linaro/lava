@@ -126,7 +126,7 @@ class IsoEmptyImage(Action):
         if self.size > INSTALLER_IMAGE_MAX_SIZE * 1024 * 1024:
             self.errors = "Base installation size cannot exceed %s Mb" % INSTALLER_IMAGE_MAX_SIZE
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # qemu-img create hd_img.img 2G
         base_dir = self.mkdtemp()
         output = os.path.join(base_dir, 'hd.img')
@@ -170,7 +170,7 @@ class IsoPullInstaller(Action):
         if len(unique_values) != len(self.files.values()):
             self.errors = "filenames to extract from installer image must be unique."
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         # cp ./iso/install.amd/vmlinuz vmlinuz
         # cp ./iso/install.amd/initrd.gz initrd.gz
@@ -222,7 +222,8 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         # create the preseed.cfg url
         # needs to be an IP address for DI, DNS is not available.
         # PRESEED_URL='http://10.15.0.32/tmp/d-i/jessie/preseed.cfg'
-        self.preseed_url = 'tftp://%s/' % dispatcher_ip()
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
+        self.preseed_url = 'tftp://%s/' % ip_addr
 
         self.sub_command.append(' -drive format=raw,file={emptyimage} ')
         self.sub_command.append(self.boot_order)
@@ -237,7 +238,7 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         self.set_namespace_data(action=self.name, label=self.name, key='prompts', value=self.parameters['deployment_data']['prompts'])
         self.set_namespace_data(action=self.name, label=self.name, key='append', value=self.command_line)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # include kernel and initrd from IsoPullInstaller
         kernel = self.get_namespace_data(action='pull-installer-files', label='pull-installer-files', key='kernel')
         initrd = self.get_namespace_data(action='pull-installer-files', label='pull-installer-files', key='initrd')

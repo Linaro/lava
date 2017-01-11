@@ -20,7 +20,6 @@
 
 import os
 import sys
-import glob
 import time
 import unittest
 import simplejson
@@ -32,6 +31,8 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
+
+# pylint: disable=superfluous-parens,too-few-public-methods
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -45,13 +46,13 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
 class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    class FakeAction(Action):  # pylint: disable=abstract-class-not-used
+    class FakeAction(Action):
 
         def __init__(self):
             self.ran = False
             super(TestPipelineInit.FakeAction, self).__init__()
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             self.ran = True
 
         def post_process(self):
@@ -81,12 +82,12 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
     def test_pipeline_gets_multiple_actions_in_it(self):  # pylint: disable=invalid-name
         if not self.job:
             return unittest.skip("not all deployments have been implemented")
-        self.assertTrue(self.job.actions > 1)
+        self.assertTrue(self.job.actions > 1)  # pylint: disable=no-member
 
 
 def pipeline_reference(filename):
-    with open(os.path.join(os.path.dirname(__file__),
-              'pipeline_refs', filename), 'r') as f_ref:
+    y_file = os.path.join(os.path.dirname(__file__), 'pipeline_refs', filename)
+    with open(y_file, 'r') as f_ref:
         return yaml.load(f_ref)
 
 
@@ -126,7 +127,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -139,7 +140,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
         except NotImplementedError as exc:
             print(exc)
@@ -157,7 +158,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             super(TestPipeline.FakeAction, self).__init__()
             self.name = "fake-action"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             time.sleep(1)
             self.ran = True
 
@@ -184,9 +185,16 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(pipe.actions, [action])
         self.assertEqual(action.level, "1")
         try:
-            simplejson.loads(pipe.describe())
-        except:  # pylint: disable=bare-except
-            self.assertFalse(0)
+            description = pipe.describe()
+        except Exception as exc:  # pylint: disable=bare-except
+            self.fail(exc)
+        self.assertIsNotNone(description)
+        self.assertIsInstance(description, list)
+        self.assertIn('description', description[0])
+        self.assertIn('level', description[0])
+        self.assertIn('summary', description[0])
+        self.assertIn('max_retries', description[0])
+        self.assertIn('timeout', description[0])
 
     def test_create_internal_pipeline(self):
         action = Action()
@@ -309,7 +317,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
                                output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -317,12 +325,12 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(job)
         job_def['compatibility'] = job.compatibility + 1
         self.assertRaises(
-            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, None, None,
+            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, "",
             mkdtemp()
         )
         job_def['compatibility'] = 0
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, None, None,
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
                                output_dir=mkdtemp())
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -348,12 +356,12 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    class KeepConnection(Action):  # pylint: disable=abstract-class-not-used
+    class KeepConnection(Action):
         def __init__(self):
             super(TestFakeActions.KeepConnection, self).__init__()
             self.name = "keep-connection"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             pass
 
         def post_process(self):
@@ -364,7 +372,7 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
             super(TestFakeActions.MakeNewConnection, self).__init__()
             self.name = "make-new-connection"
 
-        def run(self, connection, args=None):
+        def run(self, connection, max_end_time, args=None):
             new_connection = object()
             return new_connection
 
@@ -383,25 +391,25 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         pipe = Pipeline()
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
-        pipe.run_actions(None)
+        pipe.run_actions(None, None)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
-        self.assertNotEqual(self.sub0.elapsed_time, 0)
-        self.assertNotEqual(self.sub1.elapsed_time, 0)
+        self.assertNotEqual(self.sub0.timeout.elapsed_time, 0)
+        self.assertNotEqual(self.sub1.timeout.elapsed_time, 0)
 
     def test_keep_connection(self):
 
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.KeepConnection())
         conn = object()
-        self.assertIs(conn, pipe.run_actions(conn))
+        self.assertIs(conn, pipe.run_actions(conn, None))
 
     def test_change_connection(self):
 
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
-        self.assertIsNot(conn, pipe.run_actions(conn))
+        self.assertIsNot(conn, pipe.run_actions(conn, None))
 
 
 class TestStrategySelector(unittest.TestCase):

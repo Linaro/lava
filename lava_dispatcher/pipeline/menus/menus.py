@@ -126,8 +126,8 @@ class MenuConnect(ConnectDevice):
         else:
             self.logger.warning("%s may need manual intervention to reboot", hostname)
 
-    def run(self, connection, args=None):
-        connection = super(MenuConnect, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(MenuConnect, self).run(connection, max_end_time, args)
         if not connection:
             raise RuntimeError("%s needs a Connection")
         connection.check_char = '\n'
@@ -147,8 +147,8 @@ class MenuReset(ConnectDevice):
         self.summary = "reset to shell connection"
         self.description = "change out of menu session to a shell session"
 
-    def run(self, connection, args=None):
-        connection = super(MenuReset, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(MenuReset, self).run(connection, max_end_time, args)
         if not connection:
             raise RuntimeError("%s needs a Connection")
 
@@ -186,7 +186,7 @@ class SelectorMenuAction(Action):
             self.logger.debug("Changing menu prompt to '%s'", connection.prompt_str)
             connection.wait()  # call MenuSession::wait directly for a tighter loop
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         iterate through the menu sequence:
         items: select

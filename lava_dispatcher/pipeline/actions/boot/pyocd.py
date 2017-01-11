@@ -115,7 +115,7 @@ class MonitorPyOCDAction(Action):
         if not self.sub_command:
             self.errors = "No PyOCD command to execute"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         pyocd = ' '.join(self.sub_command)
         self.logger.info("PyOCD command: %s", pyocd)
         if self.run_command(pyocd.split(' ')):
