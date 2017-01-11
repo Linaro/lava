@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import re
 import logging
 import sys
 import copy
@@ -30,12 +29,14 @@ import traceback
 import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
+from nose.tools import nottest
 
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.utils.constants import (
     ACTION_TIMEOUT,
     OVERRIDE_CLAMP_DURATION
 )
+from lava_dispatcher.pipeline.utils.strings import seconds_to_str
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -97,7 +98,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         self.parent = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
-        self.branch_level = 1  # the level of the last added child
         if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
@@ -105,7 +105,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if not parent.level:
                 raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
-            self.branch_level = parent.level
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
@@ -119,11 +118,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         self._check_action(action)
         self.actions.append(action)
         # FIXME: if this is only happening in unit test, this has to be fixed later on
-        if self.job:  # should only be None inside the unit tests
-            action.job = self.job
+        # should only be None inside the unit tests
+        action.job = self.job
         if self.parent:  # action
             self.parent.pipeline = self
-            action.level = "%s.%s" % (self.branch_level, len(self.actions))
+            action.level = "%s.%s" % (self.parent.level, len(self.actions))
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
@@ -204,15 +203,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
         for child in self.actions:
-            child.cleanup()
-            if child.internal_pipeline:
-                child.internal_pipeline.cleanup()
+            child.cleanup(connection, message)
 
     def _diagnose(self, connection):
         """
@@ -237,105 +234,58 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-
-        def cancelling_handler(*args):  # pylint: disable=unused-argument
-            """
-            Catches KeyboardInterrupt or SIGTERM from anywhere below the top level
-            pipeline and allow cleanup actions to happen on all actions,
-            not just the ones directly related to the currently running action.
-            """
-            self.job.cleanup(None, "Cancelled")
-            signal.signal(signal.SIGINT, signal.default_int_handler)
-            raise KeyboardInterrupt
-
-        timeout_start = time.time()
+    def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
-            if self.job and self.job.timeout and time.time() > timeout_start + self.job.timeout.duration:
-                # affects all pipelines, including internal
-                # the action which overran the timeout has been allowed to complete.
-                name = self.job.parameters.get('job_name', '?')
-                msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
-                action.logger.error(msg)
-                action.errors = msg
-                final = self.job.pipeline.actions[-1]
-                if final.name == "finalize":
-                    final.run(connection, None)
-                else:
-                    msg = "Invalid job pipeline - no finalize action to run after job timeout."
-                    action.logger.error(msg)
-                    raise RuntimeError(msg)
-                raise JobError(msg)
-
             # Begin the action
             # TODO: this shouldn't be needed
             # The ci-test does not set the default logging class
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
-            # Add action start timestamp to the log message
-            msg = 'start: %s %s (max %ds)' % (action.level,
-                                              action.name,
-                                              action.timeout.duration)
-            if self.parent is None:
-                action.logger.info(msg)
-            else:
-                action.logger.debug(msg)
-            start = time.time()
             try:
-                if not self.parent:
-                    signal.signal(signal.SIGINT, cancelling_handler)
-                    signal.signal(signal.SIGTERM, cancelling_handler)
-                try:
-                    with action.timeout.action_timeout():
-                        new_connection = action.run(connection, args)
-                # overly broad exceptions will cause issues with RetryActions
-                # always ensure the unit tests continue to pass with changes here.
-                except (ValueError, KeyError, NameError, SyntaxError, OSError,
-                        TypeError, RuntimeError, AttributeError):
-                    action.elapsed_time = time.time() - start
-                    msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
-                    action.logger.exception(traceback.format_exc())
-                    action.errors = msg
-                    action.cleanup()
-                    self.job.cleanup(connection, None)
-                    # report action errors so that the last part of the message is the most relevant.
-                    raise RuntimeError(action.errors)
-                except KeyboardInterrupt:
-                    raise KeyboardInterrupt
-                action.elapsed_time = time.time() - start
+                with action.timeout(max_end_time) as action_max_end_time:
+                    # Add action start timestamp to the log message
+                    # Log in INFO for root actions and in DEBUG for the other actions
+                    timeout = seconds_to_str(action_max_end_time - action.timeout.start)
+                    msg = 'start: %s %s (timeout %s)' % (action.level, action.name, timeout)
+                    if self.parent is None:
+                        action.logger.info(msg)
+                    else:
+                        action.logger.debug(msg)
+
+                    new_connection = action.run(connection,
+                                                action_max_end_time, args)
+            # overly broad exceptions will cause issues with RetryActions
+            # always ensure the unit tests continue to pass with changes here.
+            except (AttributeError, KeyError, NameError, OSError, SyntaxError,
+                    TypeError, ValueError) as exc:
+                exc_message = str(exc)
+                action.logger.error(exc_message)
+                action.logger.exception(traceback.format_exc())
+                action.errors = exc_message
+                # Raise a RuntimeError that will be correctly classified later
+                raise RuntimeError(exc_message)
+            except (InfrastructureError, JobError, RuntimeError, TestError) as exc:
+                exc_message = str(exc)
+                action.errors = exc_message
+                # set results including retries
+                if "boot-result" not in action.data:
+                    action.data['boot-result'] = 'failed'
+                action.log_action_results()
+                action.logger.error(exc_message)
+                self._diagnose(connection)
+                raise
+            finally:
                 # Add action end timestamp to the log message
-                msg = "%s duration: %.02f" % (action.name,
-                                              action.elapsed_time)
+                duration = round(action.timeout.elapsed_time)
+                msg = "end: %s %s (duration %s)" % (action.level, action.name,
+                                                    seconds_to_str(duration))
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
                 action.log_action_results()
-                if new_connection:
-                    connection = new_connection
-            except KeyboardInterrupt:
-                action.elapsed_time = time.time() - start
-                self.job.cleanup(connection, "Cancelled")
-                sys.exit(1)
-            except (JobError, InfrastructureError) as exc:
-                if sys.version > '3':
-                    exc_message = str(exc)
-                else:
-                    exc_message = exc.message
-                action.errors = exc_message
-                action.elapsed_time = time.time() - start
-                # set results including retries
-                if "boot-result" not in action.data:
-                    action.data['boot-result'] = 'failed'
-                action.log_action_results()
-                action.logger.exception(str(exc))
-                self._diagnose(connection)
-                action.cleanup()
-                # a RetryAction should not cleanup the pipeline until the last retry has failed
-                # but the failing action may be inside an internal pipeline of the retry
-                if not self.parent:  # top level pipeline, no retries left
-                    self.job.cleanup(connection, exc_message)
-                raise
+            if new_connection:
+                connection = new_connection
         return connection
 
     def prepare_actions(self):
@@ -358,14 +308,18 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         within those pipelines. Parameters are to be
         treated as inmutable.
         """
-        self.__summary__ = None
-        self.__description__ = None
-        self.__level__ = None
+        # The level of this action within the pipeline. Levels start at one and
+        # each pipeline within an command uses a level within the level of the
+        # parent pipeline.
+        # First command in Outer pipeline: 1
+        # First command in pipeline within outer pipeline: 1.1
+        # Level is set during pipeline creation and must not be changed
+        # subsequently except by RetryCommand.
+        self.level = None
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
         self.__errors__ = []
-        self.elapsed_time = None
         self.job = None
         self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
@@ -376,41 +330,17 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.section = None
         self.connection_timeout = Timeout(self.name)
         self.character_delay = 0
+        self.force_prompt = False
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
     name = None
-
-    @property
-    def description(self):
-        """
-        The description of the command, set by each instance of
-        each class inheriting from Action.
-        Used in the pipeline to explain what the commands will
-        attempt to do.
-        :return: a string created by the instance.
-        """
-        return self.__description__
-
-    @description.setter
-    def description(self, description):
-        self.__description__ = description
-
-    @property
-    def summary(self):
-        """
-        A short summary of this instance of a class inheriting
-        from Action. May be None.
-        Can be used in the pipeline to summarise what the commands
-        will attempt to do.
-        :return: a string or None.
-        """
-        return self.__summary__
-
-    @summary.setter
-    def summary(self, summary):
-        self.__summary__ = summary
+    # A short summary of this instance of a class inheriting from Action.  May
+    # be None.
+    summary = None
+    # Used in the pipeline to explain what the commands will attempt to do.
+    description = None
 
     @property
     def data(self):
@@ -450,24 +380,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     @property
     def valid(self):
         return len([x for x in self.errors if x]) == 0
-
-    @property
-    def level(self):
-        """
-        The level of this action within the pipeline. Levels
-        start at one and each pipeline within an command uses
-        a level within the level of the parent pipeline.
-        First command in Outer pipeline: 1
-        First command in pipeline within outer pipeline: 1.1
-        level is set during pipeline creation and must not
-        be changed subsequently except by RetryCommand..
-        :return: a string
-        """
-        return self.__level__
-
-    @level.setter
-    def level(self, value):
-        self.__level__ = value
 
     @property
     def parameters(self):
@@ -561,7 +473,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
-            self.errors.extend(self.internal_pipeline.errors)  # pylint: disable=maybe-no-member
 
     def populate(self, parameters):
         """
@@ -571,7 +482,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         pass
 
-    def run_command(self, command_list, allow_silent=False, allow_fail=False):
+    def run_command(self, command_list, allow_silent=False, allow_fail=False):  # pylint: disable=too-many-branches
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -598,34 +509,37 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
-        self.logger.info("%s", ' '.join(command_list))
+        self.logger.debug("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
             log = log.decode('utf-8')  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:
+            # the errors property doesn't support removing errors
+            errors = []
             if sys.version > '3':
                 if exc.output:
-                    self.errors = exc.output.strip().decode('utf-8')
+                    errors.append(exc.output.strip().decode('utf-8'))
                 else:
-                    self.errors = str(exc)
+                    errors.append(str(exc))
                 msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
                     self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
             else:
                 if exc.output:
-                    self.errors = exc.output.strip()
+                    errors.append(exc.output.strip())
                 elif exc.message:
-                    self.errors = exc.message
+                    errors.append(exc.message)
                 else:
-                    self.errors = str(exc)
+                    errors.append(str(exc))
                 msg = "[%s] command %s\nmessage %s\noutput %s\nexit code %s" % (
                     self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
 
             if exc.returncode != 0 and allow_fail:
                 self.logger.info(msg)
-                self.errors == []
             else:
-                self.logger.exception(msg)
+                for error in errors:
+                    self.errors = error
+                self.logger.error(msg)
 
         # allow for commands which return no output
         if not log and allow_silent:
@@ -665,7 +579,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.set_namespace_data(
                         action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -677,18 +591,20 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         In this classs this method does nothing. It must be implemented by
         subclasses
 
+        :param connection: The Connection object to use to run the steps
+        :param max_end_time: The maximum time before this action will timeout.
         :param args: Command and arguments to run
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
         """
         self.call_protocols()
         if self.internal_pipeline:
-            return self.internal_pipeline.run_actions(connection, args)
+            return self.internal_pipeline.run_actions(connection, max_end_time, args)
         if connection:
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -701,7 +617,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         Use contextmanagers or signal handlers to clean up any resources when there are no errors,
         instead of using cleanup().
         """
-        pass
+        if self.internal_pipeline:
+            self.internal_pipeline.cleanup(connection, message)
 
     def explode(self):
         """
@@ -748,7 +665,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
-    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
+    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):  # pylint: disable=too-many-arguments
         """
         Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
@@ -767,12 +684,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         params = parameters if parameters else self.parameters
         namespace = params.get('namespace', 'common')
-        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)  # pylint: disable=no-member
         if value is None:
             return None
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_namespace_data(self, action, label, key, value, parameters=None):
+    def set_namespace_data(self, action, label, key, value, parameters=None):  # pylint: disable=too-many-arguments
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
@@ -790,20 +707,29 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         namespace = params.get('namespace', 'common')
         if not label or not key:
             self.errors = "Invalid call to set_namespace_data: %s" % action
-        self.data.setdefault(namespace, {})
+        self.data.setdefault(namespace, {})  # pylint: disable=no-member
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
 
-    def wait(self, connection):
+    def wait(self, connection, max_end_time=None):
         if not connection:
             return
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt %s. %s seconds",
-                          self.name, connection.prompt_str, int(self.connection_timeout.duration))
-        return connection.wait()
+        if not max_end_time:
+            max_end_time = self.timeout.duration + self.timeout.start
+        remaining = max_end_time - time.time()
+        # FIXME: connection.prompt_str needs to be always a list
+        # bootloader_prompt is one which does not get set that way
+        # also need functionality to clear the list at times.
+        self.logger.debug("%s: Wait for prompt %s (timeout %s)",
+                          self.name, connection.prompt_str, seconds_to_str(remaining))
+        if self.force_prompt:
+            return connection.force_prompt_wait(remaining)
+        else:
+            return connection.wait(max_end_time)
 
     def mkdtemp(self):
         return self.job.mkdtemp(self.name)
@@ -836,23 +762,24 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
     def log_action_results(self):
         if self.results and isinstance(self.logger, YAMLLogger):
-            self.logger.results({
+            self.logger.results({  # pylint: disable=no-member
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
-                "duration": self.elapsed_time,
+                "duration": self.timeout.elapsed_time,
                 "result": "fail" if self.errors else "pass",
                 "extra": self.results})
             self.results.update(
                 {
                     'level': self.level,
-                    'duration': self.elapsed_time,
+                    'duration': self.timeout.elapsed_time,
                     'timeout': self.timeout.duration,
                     'connection-timeout': self.connection_timeout.duration
                 }
             )
 
-    def test_needs_deployment(self, parameters):
+    @nottest
+    def test_needs_deployment(self, parameters):  # pylint: disable=no-self-use
         needs_deployment = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]
@@ -861,7 +788,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     needs_deployment = True
         return needs_deployment
 
-    def test_has_shell(self, parameters):
+    @nottest
+    def test_has_shell(self, parameters):  # pylint: disable=no-self-use
         has_shell = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]
@@ -870,7 +798,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     has_shell = True
         return has_shell
 
-    def test_needs_overlay(self, parameters):
+    @nottest
+    def test_needs_overlay(self, parameters):  # pylint: disable=no-self-use
         needs_overlay = False
         if parameters['namespace'] in parameters['test_info']:
             testclasses = parameters['test_info'][parameters['namespace']]
@@ -894,6 +823,8 @@ class Timeout(object):
     """
     def __init__(self, name, duration=ACTION_TIMEOUT, protected=False):
         self.name = name
+        self.start = 0
+        self.elapsed_time = -1
         self.duration = duration  # Actions can set timeouts higher than the clamp.
         self.protected = protected
 
@@ -909,33 +840,47 @@ class Timeout(object):
         """
         if not isinstance(data, dict):
             raise RuntimeError("Invalid timeout data")
-        days = 0
-        hours = 0
-        minutes = 0
-        seconds = 0
-        if 'days' in data:
-            days = data['days']
-        if 'hours' in data:
-            hours = data['hours']
-        if 'minutes' in data:
-            minutes = data['minutes']
-        if 'seconds' in data:
-            seconds = data['seconds']
-        duration = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        duration = datetime.timedelta(days=data.get('days', 0),
+                                      hours=data.get('hours', 0),
+                                      minutes=data.get('minutes', 0),
+                                      seconds=data.get('seconds', 0))
         if not duration:
             return Timeout.default_duration()
         return duration.total_seconds()
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
-        raise JobError("%s timed out after %s seconds" % (self.name, int(self.duration)))
+        duration = int(time.time() - self.start)
+        raise JobError("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
-    def action_timeout(self):
+    def __call__(self, action_max_end_time=None):
+        self.start = time.time()
+        if action_max_end_time is None:
+            # action_max_end_time is None when cleaning the pipeline after a
+            # timeout.
+            # In this case, the job timeout is not taken into account.
+            max_end_time = self.start + self.duration
+        else:
+            max_end_time = min(action_max_end_time, self.start + self.duration)
+
+        duration = int(max_end_time - self.start)
+        if duration <= 0:
+            # If duration is lower than 0, then the timeout should be raised now.
+            # Calling signal.alarm in this case will only deactivate the alarm
+            # (by passing 0 or the unsigned value).
+            self._timed_out(None, None)
+
         signal.signal(signal.SIGALRM, self._timed_out)
-        signal.alarm(int(self.duration))
-        yield
-        # clear the timeout alarm, the action has returned
-        signal.alarm(0)
+        signal.alarm(duration)
+
+        try:
+            yield max_end_time
+        except:
+            raise
+        finally:
+            # clear the timeout alarm, the action has returned
+            signal.alarm(0)
+            self.elapsed_time = time.time() - self.start
 
     def modify(self, duration):
         """

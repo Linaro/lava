@@ -53,11 +53,11 @@ class OffsetAction(DeployAction):
         if not self.get_namespace_data(action='download_action', label=self.key, key='file'):
             self.errors = "no file specified to calculate offset"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if self.get_namespace_data(action='download_action', label=self.key, key='offset'):
             # idempotency
             return connection
-        connection = super(OffsetAction, self).run(connection, args)
+        connection = super(OffsetAction, self).run(connection, max_end_time, args)
         image = self.get_namespace_data(action='download_action', label=self.key, key='file')
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
@@ -104,8 +104,8 @@ class LoopCheckAction(DeployAction):
         available_loops = len(glob.glob('/sys/block/loop*'))
         self.set_namespace_data(action=self.name, label=self.key, key='available_loops', value=available_loops)
 
-    def run(self, connection, args=None):
-        connection = super(LoopCheckAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LoopCheckAction, self).run(connection, max_end_time, args)
         if not self.get_namespace_data(action=self.name, label=self.key, key='available_loops'):
             raise RuntimeError("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
@@ -147,12 +147,12 @@ class LoopMountAction(RetryAction):
         if not self.get_namespace_data(action='download_action', label=self.key, key='file'):
             self.errors = "no file specified to mount"
 
-    def run(self, connection, args=None):
-        connection = super(LoopMountAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LoopMountAction, self).run(connection, max_end_time, args)
         self.mntdir = mkdtemp(autoremove=False)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
-        test_mntdir = os.path.abspath("%s/%s" % (mntdir, lava_test_results_dir))
-        self.set_namespace_data(action=self.name, label='mntdir', key=mntdir)
+        test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
+        self.set_namespace_data(action=self.name, label='mntdir', key=self.mntdir)
         self.set_namespace_data(action='mount_action', label='mntdir', key=test_mntdir)
         offset = self.get_namespace_data(action='download_action', label=self.key, key='offset')
         mount_cmd = [
@@ -160,14 +160,15 @@ class LoopMountAction(RetryAction):
             '-o',
             'loop,offset=%s' % offset,
             self.get_namespace_data(action='download_action', label=self.key, key='file'),
-            mntdir
+            self.mntdir
         ]
         command_output = self.run_command(mount_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
         return connection
 
-    def cleanup(self):
+    def cleanup(self, connection, message):
+        super(LoopMountAction, self).cleanup(connection, message)
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
@@ -227,10 +228,10 @@ class Unmount(Action):
         self.description = "unmount the test image at end of deployment"
         self.summary = "unmount image"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         rmtree is not a cleanup action - it needs to be umounted first.
         """
-        connection = super(Unmount, self).run(connection, args)
+        connection = super(Unmount, self).run(connection, max_end_time, args)
         # mntdir was never being set correctly
         return connection

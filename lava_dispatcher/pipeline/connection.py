@@ -19,13 +19,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import time
-import pexpect
 import signal
 import decimal
 import logging
 from lava_dispatcher.pipeline.action import TestError, Timeout, InternalObject
-from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
 
@@ -137,13 +134,19 @@ class Connection(object):
         if self.connected:
             self.raw_connection.sendline(line, delay, send_char)
         elif not disconnecting:
-            raise RuntimeError()  # FIXME:
+            raise RuntimeError()
 
     def sendcontrol(self, char):
         if self.connected:
             self.raw_connection.sendcontrol(char)
         else:
-            raise RuntimeError()  # FIXME:
+            raise RuntimeError()
+
+    def force_prompt_wait(self, remaining):
+        raise NotImplementedError()
+
+    def wait(self, max_end_time=None):
+        raise NotImplementedError()
 
     def disconnect(self, reason):
         raise NotImplementedError()
@@ -157,84 +160,6 @@ class Connection(object):
                 self.raw_connection.kill(9)
                 # self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
             self.raw_connection.close()
-
-
-class CommandRunner(object):
-    """
-    A convenient way to run a shell command and wait for a shell prompt.
-
-    Higher level functions must be done elsewhere, e.g. using Diagnostics
-    """
-
-    def __init__(self, connection, prompt_str, prompt_str_includes_rc):
-        """
-
-        :param connection: A pexpect.spawn-like object.
-        :param prompt_str: The shell prompt to wait for.
-        :param prompt_str_includes_rc: Whether prompt_str includes a pattern
-            matching the return code of the command.
-        """
-        self._connection = connection
-        self._prompt_str = prompt_str
-        self._prompt_str_includes_rc = prompt_str_includes_rc
-        self.match_id = None
-        self.match = None
-
-    def change_prompt(self, string):
-        # self.logger.debug("Changing prompt to %s" % string)
-        self._prompt_str = string
-
-    def wait_for_prompt(self, timeout=-1, check_char='#'):
-        return wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
-
-    def get_connection(self):
-        return self._connection
-
-    def run(self, cmd, response=None, timeout=-1, wait_prompt=True):
-        """Run `cmd` and wait for a shell response.
-
-        :param cmd: The command to execute.
-        :param response: A pattern or sequences of patterns to pass to
-            .expect().
-        :param timeout: How long to wait for 'response' (if specified) and the
-            shell prompt, defaulting to forever.
-        :return: The exit value of the command, if wait_for_rc not explicitly
-            set to False during construction.
-        """
-        self._connection.empty_buffer()
-        self._connection.sendline(cmd)
-        start = time.time()
-        if response is not None:
-            self.match_id = self._connection.expect(response, timeout=timeout)
-            self.match = self._connection.match
-            if self.match == pexpect.TIMEOUT:
-                return None
-            # If a non-trivial timeout was specified, it is held to apply to
-            # the whole invocation, so now reduce the time we'll wait for the
-            # shell prompt.
-            if timeout > 0:
-                timeout -= time.time() - start
-                # But not too much; give at least a little time for the shell
-                # prompt to appear.
-                if timeout < 1:
-                    timeout = 1
-        else:
-            self.match_id = None
-            self.match = None
-
-        if wait_prompt:
-            self.wait_for_prompt(timeout)
-
-            if self._prompt_str_includes_rc:
-                return_code = int(self._connection.match.group(1))
-                if return_code != 0:
-                    raise TestError("executing %r failed with code %s" % (cmd, return_code))
-            else:
-                return_code = None
-        else:
-            return_code = None
-
-        return return_code
 
 
 class Protocol(object):

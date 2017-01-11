@@ -92,8 +92,8 @@ class LxcStartAction(Action):
         super(LxcStartAction, self).validate()
         self.errors = infrastructure_error('lxc-start')
 
-    def run(self, connection, args=None):
-        connection = super(LxcStartAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcStartAction, self).run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         lxc_cmd = ['lxc-start', '-n', lxc_name, '-d']
         command_output = self.run_command(lxc_cmd)

@@ -21,6 +21,7 @@
 
 import os
 import glob
+import time
 import unittest
 import yaml
 import pexpect
@@ -310,14 +311,14 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                   """)
         self.assertIsInstance(device['actions']['boot']['methods']['qemu']['parameters']['extra'][1], int)
         parser = JobParser()
-        job = parser.parse(yaml.dump(job_data), device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(job_data), device, 4212, None, "",
                            output_dir='/tmp/')
         job.validate()
         boot_image = [action for action in job.pipeline.actions if action.name == 'boot_image_retry'][0]
         boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
         qemu = [action for action in boot_qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
         self.assertIsInstance(qemu.sub_command, list)
-        [self.assertIsInstance(item, str) for item in qemu.sub_command]
+        [self.assertIsInstance(item, str) for item in qemu.sub_command]  # pylint: disable=expression-not-assigned
         self.assertIn('virtio-blk-device.scsi=off', qemu.sub_command)
         self.assertIn('1', qemu.sub_command)
         self.assertNotIn(1, qemu.sub_command)
@@ -346,7 +347,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         inline_repo.set_namespace_data(action='test', label='shared', key='location', value=location)
         inline_repo.set_namespace_data(action='test', label='test-definiton', key='overlay_dir', value=location)
 
-        inline_repo.run(None)
+        inline_repo.run(None, None)
         yaml_file = os.path.join(location, '0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, 'r') as f_in:
@@ -377,6 +378,7 @@ class TestAutoLogin(unittest.TestCase):
         super(TestAutoLogin, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.max_end_time = time.time() + 30
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -396,7 +398,7 @@ class TestAutoLogin(unittest.TestCase):
             key='line_separator', value='testsep')
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
         self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
         self.assertIn('lava-test: # ', conn.prompt_str)
@@ -464,7 +466,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
@@ -493,7 +495,7 @@ class TestAutoLogin(unittest.TestCase):
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection)
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
@@ -520,7 +522,7 @@ class TestChecksum(unittest.TestCase):
             'md5sum': '6ea432ac3c23210c816551782346ed1c',
             'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_checksum_match_fail(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -537,7 +539,7 @@ class TestChecksum(unittest.TestCase):
             'sha256sum': '92d6ff900d0c3656ab3f214ce6efd708f898fc5e259111111111111111111111'}}})
         httpdownloadaction.validate()
 
-        self.assertRaises(JobError, httpdownloadaction.run, None)
+        self.assertRaises(JobError, httpdownloadaction.run, None, None)
 
     def test_download_no_images_no_checksum(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -551,7 +553,7 @@ class TestChecksum(unittest.TestCase):
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({'rootfs': {'url': httpdownloadaction.url}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_no_images_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -568,7 +570,7 @@ class TestChecksum(unittest.TestCase):
                        'md5sum': '6ea432ac3c23210c816551782346ed1c',
                        'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
-        httpdownloadaction.run(None)
+        httpdownloadaction.run(None, None)
 
     def test_download_no_images_match_fail(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -585,7 +587,7 @@ class TestChecksum(unittest.TestCase):
                        'md5sum': '6ea432ac3c232122222221782346ed1c',
                        'sha256sum': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
-        self.assertRaises(JobError, httpdownloadaction.run, None)
+        self.assertRaises(JobError, httpdownloadaction.run, None, None)
 
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -606,7 +608,7 @@ class TestChecksum(unittest.TestCase):
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None, output_dir='/tmp/')
+            job = parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         download = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry'][0]
         helper = [action for action in download.internal_pipeline.actions if action.name == 'file_download'][0]

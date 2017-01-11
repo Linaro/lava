@@ -97,6 +97,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.name = "fastboot-deploy"
         self.description = "download files and deploy using fastboot"
         self.summary = "fastboot deployment"
+        self.force_prompt = False
 
     def validate(self):
         super(FastbootAction, self).validate()
@@ -115,6 +116,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.internal_pipeline.add_action(OverlayAction())
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
+                self.force_prompt = True
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(EnterFastbootAction())
@@ -160,8 +162,8 @@ class EnterFastbootAction(DeployAction):
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
 
-    def run(self, connection, args=None):
-        connection = super(EnterFastbootAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -226,8 +228,8 @@ class FastbootFlashAction(DeployAction):
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
 
-    def run(self, connection, args=None):
-        connection = super(FastbootFlashAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

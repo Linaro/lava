@@ -25,11 +25,15 @@ import os.path
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Timeout,
     InfrastructureError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import (
+    BootAction,
+    AutoLoginAction,
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction
+)
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
@@ -37,11 +41,7 @@ from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_INTERRUPT_CHARACTER,
-    UBOOT_DEFAULT_CMD_TIMEOUT,
-    BOOT_MESSAGE,
 )
-from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 def uboot_accepts(device, parameters):
@@ -100,7 +100,7 @@ class UBootAction(BootAction):
         # customize the device configuration for this job
         self.internal_pipeline.add_action(UBootPrepareKernelAction())
         self.internal_pipeline.add_action(UBootSecondaryMedia())
-        self.internal_pipeline.add_action(UBootCommandOverlay())
+        self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(UBootRetry())
 
@@ -116,8 +116,8 @@ class ExpectBootloaderSession(Action):
         self.summary = "Expect a bootloader prompt"
         self.description = "Wait for a u-boot shell"
 
-    def run(self, connection, args=None):
-        connection = super(ExpectBootloaderSession, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(ExpectBootloaderSession, self).run(connection, max_end_time, args)
         device_methods = self.job.device['actions']['boot']['methods']
         connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.logger.debug("%s: Waiting for prompt", self.name)
@@ -141,7 +141,7 @@ class UBootRetry(BootAction):
         # need to look for Hit any key to stop autoboot
         self.internal_pipeline.add_action(ExpectBootloaderSession())  # wait
         # and set prompt to the uboot prompt
-        self.internal_pipeline.add_action(UBootCommandsAction())
+        self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
@@ -157,8 +157,8 @@ class UBootRetry(BootAction):
             value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, args=None):
-        connection = super(UBootRetry, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootRetry, self).run(connection, max_end_time, args)
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
@@ -199,10 +199,10 @@ class UBootInterrupt(Action):
         if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(UBootInterrupt, self).run(connection, args)
+        connection = super(UBootInterrupt, self).run(connection, max_end_time, args)
         device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
@@ -273,142 +273,6 @@ class UBootSecondaryMedia(Action):
         )
 
 
-class UBootCommandOverlay(Action):
-    """
-    Replace KERNEL_ADDR and DTB placeholders with the actual values for this
-    particular pipeline.
-    addresses are read from the device configuration parameters
-    bootloader_type is determined from the boot action method strategy
-    bootz or bootm is determined by boot action method type. (i.e. it is up to
-    the test writer to select the correct download file for the correct boot command.)
-    server_ip is calculated at runtime
-    filenames are determined from the download Action.
-    """
-    def __init__(self):
-        super(UBootCommandOverlay, self).__init__()
-        self.name = "uboot-overlay"
-        self.summary = "replace placeholders with job data"
-        self.description = "substitute job data into uboot command list"
-        self.commands = None
-
-    def validate(self):
-        super(UBootCommandOverlay, self).validate()
-        device_methods = self.job.device['actions']['boot']['methods']
-        if 'method' not in self.parameters:
-            self.errors = "missing method"
-        # FIXME: allow u-boot commands in the job definition (which make this type a list)
-        elif 'commands' not in self.parameters:
-            self.errors = "missing commands"
-        elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
-            self.errors = "Command not found in supported methods"
-        elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
-            self.errors = "No commands found in parameters"
-        # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
-        if 'type' not in self.parameters:
-            self.errors = "No boot type specified in device parameters."
-        else:
-            if self.parameters['type'] not in self.job.device['parameters']:
-                self.errors = "Unable to match specified boot type '%s' with device parameters" % self.parameters['type']
-        self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
-
-    def run(self, connection, args=None):
-        """
-        Read data from the download action and replace in context
-        Use common data for all values passed into the substitutions so that
-        multiple actions can use the same code.
-        """
-        # Multiple deployments would overwrite the value if parsed in the validate step.
-        # FIXME: implement isolation for repeated steps.
-        connection = super(UBootCommandOverlay, self).run(connection, args)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
-        substitutions = {
-            '{SERVER_IP}': ip_addr
-        }
-
-        kernel_addr = self.job.device['parameters'][self.parameters['type']]['kernel']
-        dtb_addr = self.job.device['parameters'][self.parameters['type']]['dtb']
-        ramdisk_addr = self.job.device['parameters'][self.parameters['type']]['ramdisk']
-
-        substitutions['{KERNEL_ADDR}'] = kernel_addr
-        substitutions['{DTB_ADDR}'] = dtb_addr
-        substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
-        if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
-                and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
-            ramdisk_addr = '-'
-        bootcommand = self.parameters['type']
-        if self.parameters['type'] == 'uimage':
-            bootcommand = 'bootm'
-        elif self.parameters['type'] == 'zimage':
-            bootcommand = 'bootz'
-        elif self.parameters['type'] == 'image':
-            bootcommand = 'booti'
-        substitutions['{BOOTX}'] = "%s %s %s %s" % (
-            bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
-
-        substitutions['{RAMDISK}'] = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
-        substitutions['{KERNEL}'] = self.get_namespace_data(action='download_action', label='file', key='kernel')
-        substitutions['{DTB}'] = self.get_namespace_data(action='download_action', label='file', key='dtb')
-
-        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
-        if nfs_root:
-            substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
-            substitutions['{NFS_SERVER_IP}'] = ip_addr
-        elif nfs_url:
-            substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
-                action='persistent-nfs-overlay',
-                label='nfs_url', key='serverip')
-
-        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media',
-                                                          label='uuid', key='root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media',
-                                                               label='uuid', key='boot_part')
-
-        subs = substitute(self.commands, substitutions)
-        self.set_namespace_data(action='uboot-overlay', label='u-boot', key='commands', value=subs)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
-        return connection
-
-
-class UBootCommandsAction(Action):
-    """
-    Send the ramdisk commands to u-boot
-    """
-    def __init__(self):
-        super(UBootCommandsAction, self).__init__()
-        self.name = "u-boot-commands"
-        self.description = "send commands to u-boot"
-        self.summary = "interactive u-boot"
-        self.params = None
-        self.timeout = Timeout(self.name, UBOOT_DEFAULT_CMD_TIMEOUT)
-
-    def validate(self):
-        super(UBootCommandsAction, self).validate()
-        # get prompt_str from device parameters
-        self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-
-    def run(self, connection, args=None):
-        if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
-        connection = super(UBootCommandsAction, self).run(connection, args)
-        connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        commands = self.get_namespace_data(action='uboot-overlay', label='u-boot', key='commands')
-        for line in commands:
-            self.wait(connection)
-            connection.sendline(line, delay=self.character_delay)
-        # allow for auto_login
-        params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.wait(connection)
-        return connection
-
-
 class UBootPrepareKernelAction(Action):
     """
     Convert kernels to uImage or append DTB, if needed
@@ -453,7 +317,7 @@ class UBootPrepareKernelAction(Action):
             if self.type not in self.job.device['parameters']:
                 self.errors = "Requested kernel boot type '%s' not supported by this device." % self.type
             if self.type == "bootm" or self.type == "bootz" or self.type == "booti":
-                self.logger.info("booti, bootm and bootz are being deprecated soon, please use 'image','uimage' or 'zimage'")
+                self.logger.warning("booti, bootm and bootz are being deprecated soon, please use 'image', 'uimage' or 'zimage'")
         if self.kernel_type:
             self.kernel_type = str(self.kernel_type).lower()
             if self.type != self.kernel_type:
@@ -466,8 +330,8 @@ class UBootPrepareKernelAction(Action):
                 elif self.type == 'image' and self.kernel_type == 'zimage':
                     self.errors = "Can't convert a zimage to image"
 
-    def run(self, connection, args=None):
-        connection = super(UBootPrepareKernelAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootPrepareKernelAction, self).run(connection, max_end_time, args)
         if not self.kernel_type:
             return connection  # idempotency
         old_kernel = self.get_namespace_data(

@@ -128,7 +128,7 @@ class Scp(ConnectSsh):
             if 'options' in params:
                 self.scp.extend(params['options'])
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
         if not path:
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
@@ -160,7 +160,7 @@ class Scp(ConnectSsh):
         command.extend(["%s@%s:/%s" % (self.ssh_user, self.host, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
-        connection = super(Scp, self).run(connection, args)
+        connection = super(Scp, self).run(connection, max_end_time, args)
         self.results = {'success': 'ssh deployment'}
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         res = 'failed' if self.errors else 'success'
@@ -186,8 +186,8 @@ class PrepareSsh(Action):
             self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=False)
             self.primary = True
 
-    def run(self, connection, args=None):
-        connection = super(PrepareSsh, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(PrepareSsh, self).run(connection, max_end_time, args)
         if not self.primary:
             host_data = self.get_namespace_data(
                 action=MultinodeProtocol.name,
@@ -210,8 +210,8 @@ class ScpOverlayUnpack(Action):
         self.summary = "unpack the overlay on the remote device"
         self.description = "unpack the overlay over an existing ssh connection"
 
-    def run(self, connection, args=None):
-        connection = super(ScpOverlayUnpack, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
         if not connection:
             raise RuntimeError("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
@@ -288,7 +288,7 @@ class SchrootAction(Action):
         self.schroot = params['schroot']['name']
         self.command = params['schroot']['command']
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             return connection
         self.logger.info("Entering %s schroot", self.schroot)

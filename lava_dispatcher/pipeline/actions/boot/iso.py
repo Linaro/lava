@@ -23,7 +23,7 @@ import os
 from lava_dispatcher.pipeline.action import Action, JobError, Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.utils.shell import which, wait_for_prompt
+from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import INSTALLER_QUIET_MSG
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -89,7 +89,7 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         self.summary = 'include downloaded locations and call qemu'
         self.description = 'add dynamic data values to command line and execute'
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         # substitutions
         substitutions = {'{emptyimage}': self.get_namespace_data(action='prepare-empty-image', label='prepare-empty-image', key='output')}
         sub_command = self.get_namespace_data(action='prepare-qemu-commands', label='prepare-qemu-commands', key='sub_command')
@@ -121,7 +121,7 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.get_namespace_data(
             action='prepare-qemu-commands', label='prepare-qemu-commands', key='prompts')
-        shell_connection = super(IsoCommandLine, self).run(shell_connection, args)
+        shell_connection = super(IsoCommandLine, self).run(shell_connection, max_end_time, args)
         return shell_connection
 
 
@@ -138,15 +138,16 @@ class MonitorInstallerSession(Action):
         self.name = "monitor-installer-connection"
         self.summary = "Watch for error strings or end of install"
         self.description = "Monitor installer operation"
+        self.force_prompt = True
 
     def validate(self):
         super(MonitorInstallerSession, self).validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         self.logger.debug("%s: Waiting for prompt %s", self.name, ' '.join(connection.prompt_str))
-        wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
+        self.wait(connection, max_end_time)
         return connection
 
 
@@ -173,7 +174,7 @@ class IsoRebootAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         qemu needs help to reboot after running the debian installer
         and typically the boot is quiet, so there is almost nothing to log.
@@ -199,7 +200,7 @@ class IsoRebootAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super(IsoRebootAction, self).run(shell_connection, args)
+        shell_connection = super(IsoRebootAction, self).run(shell_connection, max_end_time, args)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
         res = 'failed' if self.errors else 'success'

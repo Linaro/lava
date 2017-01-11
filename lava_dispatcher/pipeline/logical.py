@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import time
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -51,31 +50,44 @@ class RetryAction(Action):
         if not self.internal_pipeline:
             raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         while self.retries < self.max_retries:
             try:
-                new_connection = self.internal_pipeline.run_actions(connection)
+                new_connection = self.internal_pipeline.run_actions(connection, max_end_time)
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return new_connection
-            except (JobError, InfrastructureError, TestError) as exc:
+            # Do not retry for RuntimeError (as it's a bug in LAVA)
+            except (InfrastructureError, JobError, TestError) as exc:
+                # Print the error message
                 self.retries += 1
-                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries,
+                                                              self.max_retries, exc)
                 self.logger.error(msg)
                 self.errors = msg
+                # Cleanup the action to allow for a safe restart
+                self.cleanup(connection, msg)
+
+                # re-raise if this is the last loop
+                if self.retries == self.max_retries:
+                    self.errors = "%s retries failed for %s" % (self.retries, self.name)
+                    res = 'failed' if self.errors else 'success'
+                    self.set_namespace_data(action='boot', label='shared',
+                                            key='boot-result', value=res)
+                    raise
+
+                # Wait some time before retrying
                 time.sleep(self.sleep)
+
+        # If we are repeating, check that all repeat were a success.
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
             res = 'failed' if self.errors else 'success'
             self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
             # tried and failed
-            self.job.cleanup(connection, self.errors)
-            raise JobError(self.errors)
+            # TODO: raise the right exception
+            JobError(self.errors)
         return connection
-
-    # FIXME: needed?
-    def __call__(self, connection):
-        self.run(connection)
 
 
 class DiagnosticAction(Action):
@@ -95,7 +107,7 @@ class DiagnosticAction(Action):
     def trigger(cls):
         raise NotImplementedError("Define in the subclass: %s" % cls)
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Log the requested diagnostic.
         Raises NotImplementedError if subclass has omitted a trigger classmethod.
@@ -130,7 +142,7 @@ class AdjuvantAction(Action):
         except NotImplementedError:
             self.errors = "Adjuvant action without a key: %s" % self.name
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if not self.valid or self.key() not in self.data:

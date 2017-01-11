@@ -143,13 +143,13 @@ class DDAction(Action):
                 value=self.boot_params[self.parameters['device']]['device_id']
             )
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         """
         Retrieve the decompressed image from the dispatcher by calling the tool specified
         by the test writer, from within the test image of the first deployment, using the
         device to write directly to the secondary media, without needing to cache on the device.
         """
-        connection = super(DDAction, self).run(connection, args)
+        connection = super(DDAction, self).run(connection, max_end_time, args)
         file = self.get_namespace_data(action='download_action', label='image', key='file')
         if not file:
             self.logger.debug("Skipping %s - nothing downloaded")
@@ -170,8 +170,9 @@ class DDAction(Action):
         # As the test writer can use any tool we cannot predict where the
         # download URL will be positioned in the download command.
         # Providing the download URL as a substitution option gets round this
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         download_url = "http://%s/%s/%s" % (
-            dispatcher_ip(), suffix, decompressed_image
+            ip_addr, suffix, decompressed_image
         )
         substitutions = {
             '{DOWNLOAD_URL}': download_url
@@ -229,6 +230,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if 'device' in self.parameters:
             self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
+        suffix = os.path.join(suffix, "image")
         self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)
 
     def populate(self, parameters):

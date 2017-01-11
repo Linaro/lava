@@ -20,14 +20,11 @@
 
 
 import os
-import yaml
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.grub import (
-    GrubMainAction,
-    BootloaderCommandOverlay
-)
+from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
+from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
@@ -49,10 +46,10 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     """
     def create_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(yaml) as sample_job_data:
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -147,16 +144,13 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        job = Job(4212, None, None, None, parameters)
+        job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        ip_addr = dispatcher_ip(None)
         parsed = []
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']

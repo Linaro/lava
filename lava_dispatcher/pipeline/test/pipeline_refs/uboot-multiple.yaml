@@ -28,7 +28,7 @@
   pipeline:
   - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
-  - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.u_boot.UBootRetry
     name: uboot-retry
@@ -41,7 +41,7 @@
       - {class: power.PowerOn, name: power_on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
     - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
-    - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.deploy.tftp.TftpAction
   name: tftp-deploy
@@ -73,7 +73,7 @@
   pipeline:
   - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
-  - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.u_boot.UBootRetry
     name: uboot-retry
@@ -86,7 +86,7 @@
       - {class: power.PowerOn, name: power_on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
     - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
-    - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: power.FinalizeAction
   name: finalize

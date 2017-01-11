@@ -21,7 +21,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
-from lava_dispatcher.pipeline.action import JobError, action_namespaces
+from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -41,7 +41,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         yaml = os.path.join(os.path.dirname(__file__), sample_job)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+            job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
         return job
 
@@ -78,7 +78,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         try:
             job.validate()
         except JobError:
@@ -108,7 +108,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
@@ -132,7 +132,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
         self.assertIsNotNone(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
         self.assertEqual('0', '%s' % dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
-        self.assertTrue(type(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')) is str)
+        self.assertIsInstance(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'), str)
         self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
 
     def test_juno_deployment(self):
@@ -172,7 +172,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, bbb, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, bbb, 4212, None, "", output_dir='/tmp/')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('usb', bbb['parameters']['media'].keys())
@@ -189,7 +189,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
         job.validate()
         boot_params = [
             methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][1]['boot']
@@ -203,7 +203,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
         u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[2]
         self.assertIsNotNone(u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
-        self.assertEqual(u_boot_action.name, "uboot-overlay")
+        self.assertEqual(u_boot_action.name, "bootloader-overlay")
 
         methods = cubie['actions']['boot']['methods']
         self.assertIn('u-boot', methods)

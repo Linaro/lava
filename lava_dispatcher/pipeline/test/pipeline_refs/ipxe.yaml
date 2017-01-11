@@ -44,7 +44,7 @@
 - class: actions.boot.ipxe.BootloaderAction
   name: bootloader-action
   pipeline:
-  - {class: actions.boot.ipxe.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.ipxe.BootloaderRetry
     name: bootloader-retry
@@ -56,7 +56,7 @@
       - {class: power.PDUReboot, name: pdu_reboot}
       - {class: power.PowerOn, name: power_on}
     - {class: actions.boot.ipxe.BootloaderInterrupt, name: bootloader-interrupt}
-    - {class: actions.boot.ipxe.BootloaderCommandsAction, name: bootloader-commands}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

@@ -22,6 +22,7 @@
 # This class is used for all downloads, including images and individual files for tftp.
 # python2 only
 
+import errno
 import math
 import os
 import sys
@@ -36,7 +37,9 @@ import lzma
 import zlib
 from lava_dispatcher.pipeline.action import (
     Action,
+    InfrastructureError,
     JobError,
+    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import RetryAction
@@ -111,34 +114,31 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.proxy = None
         self.url = url
         self.key = key
-        self.path = path
+        # Store the files in a sub-directory to keep the path unique
+        self.path = os.path.join(path, key)
         self.size = -1
 
     def reader(self):
         raise NotImplementedError
 
-    def cleanup(self):
-        nested_tmp_dir = os.path.join(self.path, self.key)
-        self.logger.debug("%s cleanup", self.name)
-        if os.path.exists(nested_tmp_dir):
-            self.logger.debug("Cleaning up temporary tree.")
-            shutil.rmtree(nested_tmp_dir)
+    def cleanup(self, connection, message):
+        if os.path.exists(self.path):
+            self.logger.debug("Cleaning up download directory: %s", self.path)
+            shutil.rmtree(self.path)
         self.set_namespace_data(action='download_action', label=self.key, key='file', value='')
-        super(DownloadHandler, self).cleanup()
+        super(DownloadHandler, self).cleanup(connection, message)
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
-        suffix = parts[-1]
-        if not modify:
-            filename = os.path.join(path, filename)
-            suffix = None
-        elif len(parts) == 1:  # handle files without suffixes, e.g. kernel images
-            filename = os.path.join(path, ''.join(parts[-1]))
-            suffix = None
+        # Handle unmodified filename
+        # Also files without suffixes, e.g. kernel images
+        if not modify or len(parts) == 1:
+            return (os.path.join(path, filename),
+                    None)
         else:
-            filename = os.path.join(path, '.'.join(parts[:-1]))
-        return filename, suffix
+            return (os.path.join(path, '.'.join(parts[:-1])),
+                    parts[-1])
 
     @contextlib.contextmanager
     def _decompressor_stream(self):  # pylint: disable=too-many-branches
@@ -191,11 +191,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             dwnld_file.write(buff)
 
         try:
-            dwnld_file = open(fname, 'wb')
-            yield (write, fname)
-        finally:
-            if dwnld_file:
-                dwnld_file.close()
+            with open(fname, 'wb') as dwnld_file:
+                yield (write, fname)
+        except (IOError, OSError) as exc:
+            msg = "Unable to open %s: %s" % (fname, exc.strerror)
+            self.logger.error(msg)
+            raise InfrastructureError(msg)
 
     def validate(self):
         super(DownloadHandler, self).validate()
@@ -233,7 +234,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 action='download_action', label='type', key=self.key,
                 value=self.parameters[self.key].get('type', None))
 
-    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_size, last_value):
             """ Compute progress when the size is unknown """
             condition = downloaded_size >= last_value + 25 * 1024 * 1024
@@ -247,10 +248,20 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024 * 1024))) if condition else "")
 
-        connection = super(DownloadHandler, self).run(connection, args)
+        connection = super(DownloadHandler, self).run(connection, max_end_time, args)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
+
+        # Create a fresh directory if the old one has been removed by a previous cleanup
+        # (when retrying inside a RetryAction)
+        try:
+            os.makedirs(self.path, 0o755)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+
+        # Download the file
         with self._decompressor_stream() as (writer, fname):
 
             if 'images' in self.parameters and self.key in self.parameters['images']:
@@ -260,7 +271,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             md5sum = remote.get('md5sum', None)
             sha256sum = remote.get('sha256sum', None)
 
-            self.logger.info("downloading %s as %s" % (remote['url'], fname))
+            self.logger.info("downloading %s", remote['url'])
+            self.logger.debug("saving as %s", fname)
 
             downloaded_size = 0
             beginning = time.time()
@@ -341,22 +353,17 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
-            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
-            if not suffix:
-                suffix = ''
-            self.set_namespace_data(
-                action='download_action', label='file', key=self.key,
-                value=os.path.join(suffix, os.path.basename(fname)))
+            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp',
+                                             key='suffix')
+            self.set_namespace_data(action='download_action', label='file', key=self.key,
+                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
         elif self.parameters['to'] == 'iso-installer':
-            suffix = self.get_namespace_data(action='deploy-iso-installer', label='iso', key='suffix')
-            if not suffix:
-                suffix = ''
-            self.set_namespace_data(
-                action='download_action', label='file', key=self.key,
-                value=os.path.join(suffix, os.path.basename(fname)))
+            suffix = self.get_namespace_data(action='deploy-iso-installer',
+                                             label='iso', key='suffix')
+            self.set_namespace_data(action='download_action', label='file', key=self.key,
+                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
         else:
-            self.set_namespace_data(
-                action='download_action', label='file', key=self.key, value=fname)
+            self.set_namespace_data(action='download_action', label='file', key=self.key, value=fname)
         self.logger.info("md5sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
                                                                                        label=self.key, key='md5')))
         self.logger.info("sha256sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
@@ -435,12 +442,13 @@ class HttpDownloadAction(DownloadHandler):
         try:
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
-                raise JobError("Unable to download '%s'" % (self.url.geturl()))
+                # This is an Infrastructure error because the validate function
+                # checked that the file does exist.
+                raise InfrastructureError("Unable to download '%s'" % (self.url.geturl()))
             for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
                 yield buff
         except requests.RequestException as exc:
-            # TODO: improve error reporting
-            raise JobError(exc)
+            raise InfrastructureError("Unable to download '%s': %s" % (self.url.geturl(), str(exc)))
         finally:
             if res is not None:
                 res.close()
@@ -504,8 +512,8 @@ class QCowConversionAction(Action):
         self.summary = "qcow conversion"
         self.key = key
 
-    def run(self, connection, args=None):
-        connection = super(QCowConversionAction, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(QCowConversionAction, self).run(connection, max_end_time, args)
         fname = self.get_namespace_data(
             action='download_action',
             label=self.key,

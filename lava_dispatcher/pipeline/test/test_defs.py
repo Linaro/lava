@@ -42,7 +42,6 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestInstallAction,
     TestRunnerAction,
 )
-from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
@@ -133,7 +132,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         data = [block['test'] for block in content['actions'] if 'test' in block][0]
         definitions = [block for block in data['definitions'] if 'path' in block][0]
         definitions['name'] = 'smoke tests'
-        job = parser.parse(yaml.dump(content), device, 4212, None, None, None,
+        job = parser.parse(yaml.dump(content), device, 4212, None, "",
                            output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
@@ -197,7 +196,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         if sys.version_info[0] == 2:
             self.assertItemsEqual(check_list, script_list)
         elif sys.version_info[0] == 3:
-            self.assertCountEqual(check_list, script_list)
+            self.assertCountEqual(check_list, script_list)  # pylint: disable=no-member
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
@@ -369,7 +368,7 @@ class TestDefinitions(unittest.TestCase):
         self.assertIn('parse', params.keys())
         line = 'test1a: pass'
         self.assertEqual(
-            '(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
+            r'(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
             params['parse']['pattern'])
         match = re.search(params['parse']['pattern'], line)
         self.assertIsNotNone(match)
@@ -420,7 +419,7 @@ class TestDefinitions(unittest.TestCase):
         with open(self.testdef, 'r') as par:
             params = yaml.load(par)
         self.assertEqual(
-            '(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
+            r'(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
             params['parse']['pattern'])
         self.job.context.setdefault('test', {})
         for git_repo in git_repos:

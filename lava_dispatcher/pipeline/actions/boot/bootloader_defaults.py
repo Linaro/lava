@@ -100,10 +100,10 @@ class MonitorBootloaderAutoBoot(Action):
         self.summary = "Monitor that bootloder autoboot is taking place"
         self.description = "Wait for autoboot to happen"
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super(MonitorBootloaderAutoBoot, self).run(connection, args)
+        connection = super(MonitorBootloaderAutoBoot, self).run(connection, max_end_time, args)
         params = self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']
         connection.prompt_str = params.get('autoboot_prompt', UBOOT_AUTOBOOT_PROMPT)
         self.logger.debug("Waiting for prompt: %s", connection.prompt_str)
@@ -144,8 +144,8 @@ class BootloaderDefaultsRetry(BootAction):
             value=self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, args=None):
-        connection = super(BootloaderDefaultsRetry, self).run(connection, args)
+    def run(self, connection, max_end_time, args=None):
+        connection = super(BootloaderDefaultsRetry, self).run(connection, max_end_time, args)
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']

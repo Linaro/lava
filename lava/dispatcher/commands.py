@@ -13,6 +13,7 @@ import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.job import ZMQConfig
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -89,6 +90,7 @@ def get_pipeline_runner(job):
             if not validate_only:
                 exitcode = job.run()
         except (JobError, RuntimeError, TypeError, ValueError) as exc:
+            # TODO: not needed anymore
             import traceback
             traceback.print_exc()
             sys.exit(2)
@@ -130,29 +132,38 @@ class dispatch(DispatcherCommand):
             "--job-id", action='store', default=None,
             help=("Set the scheduler job identifier. "
                   "This alters process name for easier debugging"))
+
+        # ZMQ configuration is mandatory for v2 jobs
         parser.add_argument(
             "--socket-addr", default=None,
             help="Address of the ZMQ socket used to send the logs to the master")
-        # Don't put any default value as it has to be defined by the calling process
         parser.add_argument(
             "--master-cert", default=None,
             help="Master certificate file")
         parser.add_argument(
             "--slave-cert", default=None,
             help="Slave certificate file")
-        parser.add_argument(
-            "job_file",
-            metavar="JOB",
-            help="Test scenario file")
+
+        # Don't put any default value as it has to be defined by the calling process
         parser.add_argument(
             "--target",
             default=None,
             help="Run the job on a specific target device"
         )
         parser.add_argument(
+            "--dispatcher",
+            default=None,
+            help="The dispatcher configuration"
+        )
+        parser.add_argument(
             "--env-dut-path",
             default=None,
             help="File with environment variables to be exported to the device"
+        )
+        parser.add_argument(
+            "job_file",
+            metavar="JOB",
+            help="Test scenario file"
         )
 
     def invoke(self):
@@ -249,18 +260,27 @@ class dispatch(DispatcherCommand):
                 device = NewDevice(self.args.target)  # DeviceParser
             parser = JobParser()
             job = None
-            try:
-                env_dut = str(open(self.args.env_dut_path, 'r').read())
-            except (TypeError, AttributeError):
-                env_dut = None
+
+            # Load the configuration files (this should *not* fail)
+            env_dut = None
+            if self.args.env_dut_path is not None:
+                with open(self.args.env_dut_path, 'r') as f_in:
+                    env_dut = f_in.read()
+            dispatcher_config = None
+            if self.args.dispatcher is not None:
+                with open(self.args.dispatcher, "r") as f_in:
+                    dispatcher_config = f_in.read()
 
             try:
+                # Create the ZMQ config
+                zmq_config = ZMQConfig(self.args.socket_addr,
+                                       self.args.master_cert,
+                                       self.args.slave_cert)
                 # Generate the pipeline
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
-                                       socket_addr=self.args.socket_addr,
-                                       master_cert=self.args.master_cert,
-                                       slave_cert=self.args.slave_cert,
+                                       zmq_config=zmq_config,
+                                       dispatcher_config=dispatcher_config,
                                        output_dir=self.args.output_dir,
                                        env_dut=env_dut)
                 # Generate the description
@@ -268,8 +288,7 @@ class dispatch(DispatcherCommand):
                 description_file = os.path.join(self.args.output_dir,
                                                 'description.yaml')
                 if not os.path.exists(self.args.output_dir):
-                    os.makedirs(self.args.output_dir)
-                    os.chmod(self.args.output_dir, 0o755)
+                    os.makedirs(self.args.output_dir, 0o755)
                 with open(description_file, 'w') as f_describe:
                     f_describe.write(yaml.dump(description))
 

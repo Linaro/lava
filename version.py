@@ -23,8 +23,8 @@
 #
 
 
-import subprocess
 import os
+import subprocess
 
 # pylint: disable=superfluous-parens,too-many-locals
 
@@ -72,13 +72,19 @@ def version_tag():
             dev_short = ['git', 'rev-parse', '--short', 'HEAD']
             dev_hash = subprocess.check_output(dev_short).strip().decode('utf-8')
             return "%s+%s.%s" % (tag_name, dev_count, dev_hash)
-    if not tag_name and os.path.exists('debian/changelog'):
-        deb_version = subprocess.check_output(('dpkg-parsechangelog',
-                                               '--show-field',
-                                               'Version')).strip().decode(
-                                                   'utf-8')
+
+
+def local_debian_package_version():
+    changelog = 'debian/changelog'
+    if os.path.exists(changelog):
+        deb_version = subprocess.check_output((
+            'dpkg-parsechangelog', '-l', changelog,
+            '--show-field', 'Version')).strip().decode('utf-8')
         # example version returned would be '2016.11'
         return deb_version.split('-')[0]
+
+
+def backup_version():
     if not os.path.exists("./.git/"):
         base = os.path.basename(os.getcwd())
         name_list = ['grep', 'name=', 'setup.py']
@@ -89,7 +95,12 @@ def version_tag():
 
 
 def main():
-    print(version_tag())
+    ret = version_tag()
+    if not ret:
+        ret = local_debian_package_version()
+    if not ret:
+        ret = backup_version()
+    print(ret)
     return 0
 
 

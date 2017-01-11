@@ -253,3 +253,19 @@ def copy_overlay_to_sparse_fs(image, overlay):
     subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
                             stderr=subprocess.STDOUT)
     os.remove(ext4_img)
+
+
+def debian_package_version():
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    changelog = '/usr/share/doc/lava-dispatcher/changelog.Debian.gz'
+    if os.path.exists(changelog):
+        deb_version = subprocess.check_output((
+            'dpkg-query', '-W', "-f=${Version}\n",
+            'lava-dispatcher')).strip().decode('utf-8')
+        # example version returned would be '2016.11'
+        return deb_version.split('-')[0]
+    return ''

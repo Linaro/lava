@@ -18,8 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import time
 import pexpect
-from lava_dispatcher.pipeline.action import Action, JobError, TestError
+from lava_dispatcher.pipeline.action import Action, TestError
 from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,
@@ -30,6 +31,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_INIT_ALERT,
     METADATA_MESSAGE_LIMIT,
 )
+from lava_dispatcher.pipeline.utils.strings import seconds_to_str
 
 
 class LinuxKernelMessages(Action):
@@ -85,7 +87,7 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[:cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection, action=None):  # pylint: disable=too-many-branches
+    def parse_failures(cls, connection, action=None, max_end_time=None):  # pylint: disable=too-many-branches
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -112,14 +114,20 @@ class LinuxKernelMessages(Action):
         if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
             if cls.MESSAGE_CHOICES[cls.FREE_INIT][1] in connection.prompt_str:
                 init = True
+        remaining = max_end_time - time.time()
 
         while True:
+            if action:
+                action.logger.debug(
+                    "[%s] Waiting for messages, (timeout %s)",
+                    action.name, seconds_to_str(remaining))
             try:
-                index = connection.wait()
-            except (pexpect.EOF, pexpect.TIMEOUT, JobError, TestError):
+                index = connection.force_prompt_wait(remaining)
+            except (pexpect.EOF, pexpect.TIMEOUT, TestError):
                 if action:
                     msg = "Failed to match - connection timed out handling messages."
                     action.logger.warning(msg)
+                    action.errors = msg
                 break
 
             if action and index:
@@ -164,7 +172,7 @@ class LinuxKernelMessages(Action):
         if not self.messages:
             self.errors = "Unable to build a list of kernel messages to monitor."
 
-    def run(self, connection, args=None):
+    def run(self, connection, max_end_time, args=None):
         if not connection:
             return connection
         if not self.existing_prompt:
