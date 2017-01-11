@@ -326,7 +326,14 @@ Event notifications **must** be configured before being enabled.
 
 * Enable event notifications by setting ``EVENT_NOTIFICATION`` to ``true``
 
-* Restart ``lava-server-gunicorn`` to pick up the settings.
+When changing the configuration, you should restart the corresponding services:
+
+.. code-block:: shell
+
+  service lava-publisher restart
+  service lava-master restart
+  service lava-server restart
+  service lava-server-gunicorn restart
 
 The default values for the event notification settings are:
 
