@@ -1,3 +1,41 @@
+lava-dispatcher (2017.1-1) unstable; urgency=medium
+
+  * New production release
+    64ae9131 Report the bootloader load addresses used
+    2085ffb8 Skip parsing of kernel messages for ssh connections
+    00fa2d24 Improve allow_fail fault handling
+    dce680f3 Simplify the connection session handling
+    ea18594a Use dpkg-query which is available on all systems
+    2cc64b70 Reinstate git version_tag in version.py
+    5c05bdae Improve logging
+    50236943 LAVA-821 - lava-test-reference support
+    a118e943 Add missing wait definition in base class
+    2dc955f6 Allow timeout during Linux Kernel message parsing
+    0404a419 LAVA-819 - record lava-dispatcher version in logs
+    542effdf Raise an Infra error when download fail in run()
+    29a232c1 Fix Download retries crashes
+    12e5789f monitor: make test a bit faster
+    a90a5184 Fix computation of action duration
+    ffd1d176 Fix retry logic (partial revert of 7bbd706d)
+    36ca3c21 LAVA-818 - errors should set the job as Incomplete
+    f5ac0328 Skip generation of invalid test_case_id
+    9e5e56c6 Re-enable support for nose tests
+    bb89772f Merge and re-use BootloaderCommandOverlay and
+     BootloaderCommandAction
+    f3864c2f job: fix cleanup when validation failed
+    8dd450c5 run_actions: clean error messages and exceptions
+    ec44db64 Properly compute the timeout
+    f3058a12 atexit is not needed anymore for cleanup
+    7bbd706d Improve error handling and reporting
+    a5e0e678 Fix issue when downloading two files with the same name
+    0d3773ea Call finalize directly in job.cleanup
+    af608eb2 Remove unused setter, properties and __call__
+    f946a21d validate: do not extend action.errors
+    4504aeb9 slave: use the dispatcher configuration
+    925019c8 Use the dispatcher config to get the dispatcher ip
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Jan 2017 13:58:56 +0000
+
 lava-dispatcher (2016.12-1) unstable; urgency=medium
 
   * New production release
