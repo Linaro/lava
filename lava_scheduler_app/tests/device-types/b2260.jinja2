@@ -1,12 +1,12 @@
 {% extends 'base-uboot.jinja2' %}
 
-{% set console_device = console_device|default('ttyUSB0') %}
+{% set console_device = console_device|default('ttyAS1') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "b2120h410" %}
-{% set extra_kernel_args = "consoleblank=0 mem=1071644672@0x40000000 vmalloc=256m video=HDMI-A-1:1920x1080 snd-usb-audio.index=-2 earlyprintk consoleblank=0" %}
-{% set bootloader_prompt = 'B2120' %}
+{% set device_type = "b2260" %}
+{% set extra_kernel_args = "consoleblank=0 ip=::::stiH410::dhcp kmac=dev:eth0,addr:{{ macaddr }} mem=992M@0x40000000 vmalloc=256m clk_ignore_unused earlyprintk" %}
+{% set bootloader_prompt = 'B2260' %}
 {% set boot_message = 'Starting kernel' %}
-{% set bootm_kernel_addr = '0x41000000' %}
+{% set bootm_kernel_addr = '0x60000000' %}
 {% set bootm_ramdisk_addr = '0x45000000' %}
 {% set bootm_dtb_addr = '0x47000000' %}
 {% set base_ip_args = 'ip=::::stiH410::dhcp kmac=dev:eth0,addr:${ethaddr}' %}

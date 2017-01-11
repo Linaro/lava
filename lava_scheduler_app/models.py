@@ -99,7 +99,7 @@ class Tag(models.Model):
     description = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        return self.name
+        return self.name.lower()
 
 
 def is_deprecated_json(data):

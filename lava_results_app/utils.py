@@ -1,6 +1,7 @@
 import os
 import yaml
 import logging
+import subprocess
 from django.utils.translation import ungettext_lazy
 from django.conf import settings
 from django.http import Http404
@@ -8,14 +9,14 @@ from linaro_django_xmlrpc.models import AuthToken
 
 
 def help_max_length(max_length):
-    return ungettext_lazy(
+    return ungettext_lazy(  # pylint: disable=no-member
         u"Maximum length: {0} character",
         u"Maximum length: {0} characters",
         max_length).format(max_length)
 
 
-class StreamEcho(object):
-    def write(self, value):
+class StreamEcho(object):  # pylint: disable=too-few-public-methods
+    def write(self, value):  # pylint: disable=no-self-use,
         return value
 
 
@@ -41,6 +42,8 @@ def description_data(job_id):
     return data
 
 
+# FIXME: relocate these two functions into dbutils to avoid needing django settings here.
+# other functions in utils can be run outside django. Remove import of AuthToken.
 def anonymous_token(request, job):
     querydict = request.GET
     user = querydict.get('user', default=None)
@@ -64,3 +67,17 @@ def check_request_auth(request, job):
             raise Http404("User '%s' is not able to view job %d" % (request.user, job.id))
     elif not job.can_view(request.user):
         raise Http404("User '%s' is not able to view job %d" % (request.user.username, job.id))
+
+
+def debian_package_version():
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
+    if os.path.exists(changelog):
+        deb_version = subprocess.check_output((
+            'dpkg-query', '-W', "-f=${Version}\n", 'lava-server')).strip().decode('utf-8')
+        # example version returned would be '2016.11'
+        return deb_version.split('-')[0]

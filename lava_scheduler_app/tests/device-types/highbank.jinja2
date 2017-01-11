@@ -1,7 +1,7 @@
 {% extends 'base-uboot.jinja2' %}
 
-{% set console_device = 'ttyAMA0' %}
-{% set baud_rate = 115200 %}
+{% set console_device = console_device|default('ttyAMA0') %}
+{% set baud_rate = baud_rate|default(115200) %}
 {% set device_type = "highbank" %}
 {% set extra_kernel_args = "nosplash break" %}
 {% set interrupt_prompt = 'Press <s>' %}
@@ -9,14 +9,14 @@
 {% set boot_delay = 100 %}
 {% set action_timeout_u_boot_commands = 3 %}
 {% set connection_timeout_u_boot_commands = 3 %}
-{% set bootloader_prompt = 'Highbank #' %}
+{% set bootloader_prompt = bootloader_prompt|default('Highbank #') %}
 {% set action_timeout_u_boot_commands = 90 %}
 {% set bootm_kernel_addr = '0x00800000' %}
 {% set bootm_ramdisk_addr = '0x02000000' %}
 {% set bootm_dtb_addr = '0x00001000' %}
-{% set bootz_kernel_addr = '0x00800000' %}
-{% set bootz_ramdisk_addr = '0x02000000' %}
-{% set bootz_dtb_addr = '0x00001000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_initrd_high = '0xffffffffffffffff' %}
-{% set uboot_ftd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '0xffffffffffffffff' %}

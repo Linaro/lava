@@ -79,3 +79,6 @@ https://archive.validation.linaro.org/artifacts/
 
 Other third party sites can also be used. Access to such sites and obtaining the
 tokens or secrets required for such sites is beyond the scope of this guide.
+
+.. seealso:: :ref:`test_case_references` for recording the returned path to
+   the published file alongside your test case results.

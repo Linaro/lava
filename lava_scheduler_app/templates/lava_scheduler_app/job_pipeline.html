@@ -50,6 +50,18 @@
     #affix-full {
       display: none;
     }
+
+    .tr-danger {
+      color: #c9302c;
+      font-weight: bold;
+    }
+    .tr-warning {
+      color: #ec971f;
+      font-weight: bold;
+    }
+    .tickLabel {
+      transform: rotate(-30deg);
+    }
   </style>
 {% endblock %}
 
@@ -186,7 +198,7 @@
 <ul class="nav nav-tabs">
   <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
   <li><a href="#Description" data-toggle="tab">Job description</a></li>
-  <li><a href="{% url "lava.scheduler.job_pipeline_timing" job.pk %}">Timing</a></li>
+  <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
 </ul>
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
@@ -487,6 +499,16 @@
       </div>
     </div>
   </div>
+  <div class="tab-pane" id="Timing">
+    <h2>Job Timings</h2>
+    <p>This section helps test writers to check for actions with a duration which
+       is much shorter than the requested timeout.  Reducing these timeouts
+       will allow failures to be identified more quickly.</p>
+    <p>The graph only shows actions that are longer than 1 second. The full list
+       is anyway available in the table.</p>
+
+    <div id="timing_block">Loading the data...</div>
+  </div>
 </div>
 
 {% include "_similar_jobs.html" %}
@@ -501,6 +523,7 @@
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/anchor-v3.2.0.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/similar-jobs.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
 <script type="text/javascript">
   $(document).ready(
     function() {
@@ -574,6 +597,47 @@
           affix.removeClass("fix-affix");
         }
       });
+
+      // Load the timing on demand
+      var timing_already_loaded = false;
+      $("#TimingButton").click(function(e) {
+        if (timing_already_loaded) { return; }
+        $.ajax({
+          url: '{% url 'lava.scheduler.job_pipeline_timing' pk=job.pk %}',
+          success: function(data, success, xhr) {
+            if (data['graph'].length == 0) {
+              $('#timing_block').html("<p>Unable to parse the log file.</p>");
+              return;
+            }
+            $('#timing_block').html(data['timing']);
+            // Generate the graph
+            var durations = [];
+            var timeouts = [];
+            var levels = [];
+            for(var i = 0; i < data['graph'].length; i++) {
+              if (data['graph'][i][2] <= 1) { continue; }
+              durations.push([i, data['graph'][i][2]]);
+              timeouts.push([i, data['graph'][i][3]]);
+              levels.push([i, data['graph'][i][0]]);
+            }
+
+            var ddata = [
+              {'label': 'duration', 'data': durations, 'color': '#FF0000'},
+              {'label': 'timeout', 'data': timeouts, 'color': '#0000FF'},
+            ];
+
+            $.plot($("#timings"), ddata, {
+              series: {
+                lines: { show: true, fill: true, steps: false },
+              },
+              xaxis: {
+                ticks: levels,
+              },
+            });
+          }
+        });
+        timing_already_loaded = true;
+      })
     });
 
     // Add the links only for non-running jobs

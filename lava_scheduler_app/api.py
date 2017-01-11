@@ -2,6 +2,7 @@ import xmlrpclib
 import yaml
 import jinja2
 from simplejson import JSONDecodeError
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from linaro_django_xmlrpc.models import ExposedAPI
@@ -1060,3 +1061,20 @@ class SchedulerAPI(ExposedAPI):
                 continue
             results[key] = {'Valid': None}
         return xmlrpclib.Binary(yaml.dump(results))
+
+    def get_publisher_event_socket(self):
+        """
+        Name
+        ----
+        `get_publisher_event_socket`
+
+        Return value
+        ------------
+        This function exposes the EVENT_SOCKET from the settings file which is
+        used for the lava-publisher daemon.
+        """
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+        return settings.EVENT_SOCKET

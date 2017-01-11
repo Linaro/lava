@@ -86,6 +86,8 @@ other information.
 .. note:: Test definitions will be rejected if the test suite name is set to
    ``lava`` to prevent conflicts with the internal results.
 
+.. _test_set_results:
+
 Test Set
 --------
 

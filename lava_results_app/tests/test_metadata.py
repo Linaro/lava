@@ -50,7 +50,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -178,7 +178,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -199,6 +199,8 @@ class TestMetaTypes(TestCaseWithFactory):
                 continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_job_metadata(pipeline['job']['actions'])
+        if 'lava-server-version' in retval:
+            del retval['lava-server-version']
         self.assertEqual(
             retval,
             {
@@ -228,7 +230,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -260,7 +262,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -299,7 +301,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
