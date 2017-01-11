@@ -1,3 +1,27 @@
+lava-server (2017.1-1) unstable; urgency=medium
+
+  * New production release
+    266b2e633 LAVA-795 - Expose lava-publisher event socket settings.
+    f4b76e48e Fix ordereddict failure
+    9d3ae86cc Use dpkg-query which is available on all systems
+    080c3184f Update the device-type context help page
+    46a055a3b Fixup some jinja2 templates
+    cecefbfef Timing: improve the description
+    5bef1d877 LAVA-821 - add support for lava-test-reference
+    3b26fb234 LAVA-820 record lava-server version in job metadata
+    ff71a42a6 Append to existing metadata store results
+    0c9abf643 Fix RST whitespace typo.
+    05b96af3c Merge timing page into the job page
+    edc4431f1 Restore access to chart Action buttons
+    69709881e Improve the timing page and port to the new log format
+    a00c02aa8 LAVA-535 Make devicetags case-insensitive
+    36617b955 LAVA-743 - handling complex test operations
+    50084f1b5 Omit summary button for V2 definitions.
+    5c8bf4643 Upgrade the dispatcher v2 parser interface.
+    22409d543 master: send the dispatcher config to the slave
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Jan 2017 13:56:58 +0000
+
 lava-server (2016.12-1) unstable; urgency=medium
 
   * New production release
