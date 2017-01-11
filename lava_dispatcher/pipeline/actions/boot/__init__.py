@@ -341,6 +341,11 @@ class BootloaderCommandOverlay(Action):
             substitutions['{KERNEL_ADDR}'] = kernel_addr
             substitutions['{DTB_ADDR}'] = dtb_addr
             substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
+            self.results = {
+                'kernel_addr': kernel_addr,
+                'dtb_addr': dtb_addr,
+                'ramdisk_addr': ramdisk_addr
+            }
 
         nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
         nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
