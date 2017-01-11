@@ -27,6 +27,17 @@
 
 
 {% block content %}
+<h2>Event notifications</h2>
+<p>Event notifications are handled by the lava-publisher service on the master. You can subscribe to these events through lava-publisher service and receive events such as:</p>
+<ul class="simple">
+  <li>metadata on the instance which was the source of the event</li>
+  <li>description of a status change on that instance.</li>
+</ul>
+
+<p>To subscribe to these events, you can get the lava-publisher protocol and port via XML-RPC call from the server [<a href="#scheduler.get_publisher_event_socket"> scheduler.get_publisher_event_socket </a>].</p>
+
+<p>For more information, visit <a href="{{ STATIC_URL }}docs/v2/data-export.html#event-notifications">lava-publisher docs</a>.</p>
+
 <h2>About XML-RPC API</h2>
 <p>LAVA Server offers API services as an XML-RPC server. You can interact with it using any XML-RPC
 client. For example, in python you can do this:</p>

@@ -510,7 +510,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, None, None, output_dir=job.output_dir)
+                job.id, None, "", output_dir=job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -891,7 +891,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, None, None,
+                        check_job.id, None, "",
                         output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
@@ -1023,9 +1023,12 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser = JobParser()
         pipeline_job = parser.parse(
             yaml.dump(client_submission), parser_device,
-            4212, None, None, None, output_dir='/tmp/test')
+            4212, None, "", output_dir='/tmp/test')
         pipeline = pipeline_job.describe()
         from lava_results_app.dbutils import _get_job_metadata
+        meta_dict = _get_job_metadata(pipeline['job']['actions'])
+        if 'lava-server-version' in meta_dict:
+            del meta_dict['lava-server-version']
         self.assertEqual(
             {
                 'test.0.common.definition.name': 'multinode-basic',
@@ -1034,13 +1037,15 @@ class TestYamlMultinode(TestCaseWithFactory):
                 'boot.0.common.method': 'qemu',
                 'test.0.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'
             },
-            _get_job_metadata(pipeline['job']['actions'])
-        )
+            meta_dict)
         # simulate dynamic connection
         dynamic = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
+        meta_dict = _get_job_metadata(dynamic['job']['actions'])
+        if 'lava-server-version' in meta_dict:
+            del meta_dict['lava-server-version']
         self.assertEqual(
-            _get_job_metadata(dynamic['job']['actions']),
+            meta_dict,
             {
                 'omitted.1.inline.name': 'ssh-client',
                 'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
@@ -1118,7 +1123,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 # pass (unused) output_dir just for validation as there is no zmq socket either.
                 pipeline_job = parser.parse(
                     job.definition, parser_device,
-                    job.id, None, None, None,
+                    job.id, None, "",
                     output_dir=job.output_dir)
             except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                 self.fail('[%s] parser error: %s' % (job.sub_id, exc))

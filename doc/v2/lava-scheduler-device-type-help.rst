@@ -3,14 +3,29 @@
 Device type information in LAVA Scheduler
 #########################################
 
+There are tabs which provide more information on each :term:`device type`. Test
+writers can see three tabs (**Status**, **Information** and **Support**),
+superusers and administrators can see a fourth (**Admin**) which is a shortcut
+into the :ref:`django_admin_interface` for this device type.
+
+Status tab
+**********
+
+* Number of jobs running and the number of jobs queued
+
+* Links to the graphical reports for test jobs using this device type.
+
+* Frequency of health checks for all devices of this device type
+
+* Number of Active, Idle, Offline and Retired devices of this device type.
+
 .. _device_type_metadata:
 
-Device type metadata
-********************
+Information tab
+***************
 
-The administrator is able to add metadata to a :term:`device type` which can
-later be used in queries for :term:`pipeline` results as well as providing
-basic information on the type of device.
+Static information about the device type, usually populated by the admins when
+the device type is integrated into LAVA.
 
 #. **Architecture version** (e.g. ARMv7 or ARMv8)
 
@@ -32,39 +47,28 @@ basic information on the type of device.
    is not enabled when it would otherwise be expected or to clarify the actual
    arrangement of cores.
 
-Device type status
-******************
-
-* Number of jobs running and the number of jobs queued
-
-* Details of the :term:`device type`.
+The information is available as metadata which can later be used in
+:term:`queries <query>` for :term:`pipeline` results as well as providing basic
+information on the type of device.
 
 .. index:: device type information
 
 .. _device_type_information:
 
-Device capabilities and information
-***********************************
+Support tab
+***********
 
-Device capabilities are shown if:
+The device type template provides the core configuration for all devices of
+this device type and provides methods for certain values to be overridden. The
+template can be downloaded, rendered as YAML, for comparison or debugging.
 
-#. A :term:`health check` for this device type is defined
+.. seealso:: :ref:`override_support`
 
-#. The health check uses ``lava_test_shell``- see :ref:`health_check_tests`.
+The available methods and timeouts for this device type are also shown. Not all
+devices of this type will support all methods. For example, some methods may
+require additional hardware to be fitted like a USB stick or SATA drive.
 
-Information displayed includes data retrieved from ``/proc/cpuinfo`` - all
-fields are case sensitive and omitted if not present:
-
-#. **Processor** : ``Processor`` or ``vendor_id``
-
-#. **Model** : ``model name``. For ARM Cortex A series processors, the CPU part
-   is expanded and appended to the model name.
-
-#. **Flags** : ``flags`` or ``Features``
-
-#. **Emulated** : Set to True if the Model is ``QEMU``
-
-#. **Cores** : count of the number of ``processor`` fields.
+.. seealso:: :ref:`boot_action`, :ref:`deploy_action`, :ref:`timeouts`
 
 Health Job Summary
 ******************

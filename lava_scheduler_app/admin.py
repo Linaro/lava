@@ -371,11 +371,27 @@ class WorkerAdmin(admin.ModelAdmin):
     ordering = ['hostname']
 
 
+class TagLowerForm(forms.ModelForm):
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if name != name.lower():
+            raise ValidationError("Tag names are case-insensitive.")
+        if Tag.objects.filter(name__exact=name.lower()):
+            raise ValidationError("Tag name matches existing tag name in lowercase.")
+
+
+class TagAdmin(admin.ModelAdmin):
+    form = TagLowerForm
+    list_display = ('name', 'description')
+    ordering = ['name']
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
-admin.site.register(Tag)
+admin.site.register(Tag, TagAdmin)
 admin.site.register(Architecture)
 admin.site.register(ProcessorFamily)
 admin.site.register(Alias)
