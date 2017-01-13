@@ -2,6 +2,9 @@ import os
 import yaml
 import jinja2
 import unittest
+import tempfile
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
 
@@ -484,9 +487,6 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        from lava_dispatcher.pipeline.parser import JobParser
-        from lava_dispatcher.pipeline.device import NewDevice
-        import tempfile
         fd, device_yaml = tempfile.mkstemp()
         os.write(fd, yaml.dump(template_dict))
         panda = NewDevice(device_yaml)
@@ -497,3 +497,13 @@ class TestTemplates(unittest.TestCase):
                                output_dir='/tmp')
         os.close(fd)
         job.validate()
+
+    def test_arduino(self):
+        data = """{% extends 'arduino101.jinja2' %}
+{% set board_id = 'AE6642EK61804EZ' %}"""
+        self.assertTrue(self.validate_data('staging-arduino101-01', data))
+        test_template = prepare_jinja_template('staging-ardiono101-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual(template_dict['board_id'], 'AE6642EK61804EZ')
