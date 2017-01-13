@@ -257,7 +257,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Cleanup now
         self.cleanup(self.connection, None)
 
-        if self.pipeline.errors and not error_msg:
+        if error_msg:
+            self.logger.error(error_msg)
+        elif self.pipeline.errors:
             self.logger.error("Errors detected: %s", self.pipeline.errors)
             return_code = -1
         else:
