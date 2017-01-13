@@ -2753,7 +2753,7 @@ def queue(request):
 class RunningView(LavaView):
 
     def get_queryset(self):
-        return DeviceType.objects.all().order_by('name')
+        return DeviceType.objects.filter(display=True).order_by('name')
 
 
 @BreadCrumb("Running", parent=index)
@@ -2763,11 +2763,18 @@ def running(request):
     config = RequestConfig(request, paginate={"per_page": running_ptable.length})
     config.configure(running_ptable)
 
+    retirements = []
+    for dt in running_data.get_queryset():
+        if not Device.objects.filter(~Q(status=Device.RETIRED) & Q(device_type=dt)):
+            retirements.append(dt.name)
+
     template = loader.get_template("lava_scheduler_app/running.html")
     return HttpResponse(template.render(
         {
             'running_table': running_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(running),
+            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
+            'retirements': retirements,
         },
         request=request))
 

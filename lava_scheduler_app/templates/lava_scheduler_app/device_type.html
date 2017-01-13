@@ -20,7 +20,7 @@
     {% else %}
       <a href="{{ STATIC_URL }}docs/v1/glossary.html#term-health-check">health check job</a> in the
     {% endif %}
-      <a href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
+      <a href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.name }}">admin interface</a>.</strong>
     {% if not 'HIDE_V2_DOCS'|get_settings %}
     Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
     {% else %}

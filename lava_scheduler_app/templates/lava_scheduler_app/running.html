@@ -10,6 +10,20 @@ title="Longest Running Jobs"><span class="glyphicon glyphicon-time"></span> long
     in particular, may spend an appreciable amount of time as submitted jobs with reserved
     devices. Those devices still count as active as these are not available to be assigned
     to other submitted jobs.</p>
+
+{% if is_admin and retirements %}
+  <div class="alert alert-info">
+    <p>Some device-types show up in this table but there are <strong>no devices of this device
+    type which are not retired</strong>. Administrators can choose to not display these device-types
+    by unsetting the "Display" option in the admin interface.</p>
+  <ul>
+  {% for dt in retirements %}
+      <li><a href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ dt }}"><strong>{{ dt }}</strong></a></li>
+  {% endfor %}
+  </ul>
+  </div>
+{% endif %}
+
     <p>This table gives more detail on how each type of device makes up the total number of
     active devices and running jobs. Click on the device type to see details of which devices
     and which jobs are active.</p>
