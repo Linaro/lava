@@ -153,6 +153,7 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--dispatcher",
             default=None,
+            dest="dispatcher_config",
             help="The dispatcher configuration"
         )
         parser.add_argument(
@@ -267,8 +268,8 @@ class dispatch(DispatcherCommand):
                 with open(self.args.env_dut_path, 'r') as f_in:
                     env_dut = f_in.read()
             dispatcher_config = None
-            if self.args.dispatcher is not None:
-                with open(self.args.dispatcher, "r") as f_in:
+            if self.args.dispatcher_config is not None:
+                with open(self.args.dispatcher_config, "r") as f_in:
                     dispatcher_config = f_in.read()
 
             try:
