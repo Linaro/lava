@@ -121,6 +121,7 @@ from lava_scheduler_app.tables import (
 
 # pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
+# pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
 
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
@@ -295,10 +296,13 @@ def index(request):
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     (num_online, num_not_retired) = _online_total()
-    health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
+    health_check_completed = health_jobs_in_hr().filter(
+        status=TestJob.COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
-    running_jobs_count = TestJob.objects.filter(status=TestJob.RUNNING).count()
-    active_devices_count = Device.objects.filter(status__in=[Device.RESERVED, Device.RUNNING]).count()
+    running_jobs_count = TestJob.objects.filter(
+        status=TestJob.RUNNING, actual_device__isnull=False).count()
+    active_devices_count = Device.objects.filter(
+        status__in=[Device.RESERVED, Device.RUNNING]).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
