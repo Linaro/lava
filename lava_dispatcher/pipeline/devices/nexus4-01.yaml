@@ -1,9 +1,11 @@
+
+device_path: ['/dev/lxc-nexus4-01']
+
+flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system']
 device_type: nexus4
-adb_serial_number: 04f228d1d9c76f39
-fastboot_serial_number: 04f228d1d9c76f39
-device_path: ['/dev/bus/usb/001']
-flash_cmds_order: ['update', 'ptable', 'partition', 'boot', 'vendor',
-                  'system', 'cache', 'userdata']
+adb_serial_number: '04f228d1d9c76f39'
+fastboot_serial_number: '04f228d1d9c76f39'
+device_info: [{'board_id': '04f228d1d9c76f39'}]
 
 actions:
   deploy:
@@ -23,13 +25,43 @@ actions:
 timeouts:
   actions:
     apply-overlay-image:
-      seconds: 120
-    umount-retry:
-      seconds: 45
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download_retry:
+      minutes: 5
+    http_download:
+      minutes: 5
     lava-test-shell:
-      seconds: 30
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
     power_off:
       seconds: 5
-  connections:
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
     uboot-retry:
-      seconds: 60
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30

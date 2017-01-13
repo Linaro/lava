@@ -81,7 +81,8 @@ class BootDFURetry(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(PowerOn())
-        self.internal_pipeline.add_action(WaitUSBDeviceAction())
+        self.internal_pipeline.add_action(WaitUSBDeviceAction(
+            device_actions=['add']))
         self.internal_pipeline.add_action(FlashDFUAction())
 
 

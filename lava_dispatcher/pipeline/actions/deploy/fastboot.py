@@ -38,6 +38,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 
 # pylint: disable=too-many-return-statements
 
@@ -120,7 +121,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(EnterFastbootAction())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        self.internal_pipeline.add_action(WaitUSBDeviceAction(
+            device_actions=['add', 'change', 'online']))
 
         fastboot_dir = self.mkdtemp()
         for image in parameters['images'].keys():
@@ -135,6 +137,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                     if self.test_needs_deployment(parameters):
                         self.internal_pipeline.add_action(
                             DeployDeviceEnvironment())
+
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
 

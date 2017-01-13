@@ -26,7 +26,11 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import (
+    BootAction,
+    AutoLoginAction,
+    WaitUSBDeviceAction,
+)
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
@@ -68,15 +72,21 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootBootAction())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
         # Check if the device has a power state such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc. Currently, this is
         # the way to distinguish between both these kinds of devices.
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add', 'change', 'online', 'remove']))
+                self.internal_pipeline.add_action(LxcAddDeviceAction())
                 self.internal_pipeline.add_action(AutoLoginAction())
                 self.internal_pipeline.add_action(ExpectShellSession())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            else:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add', 'change', 'online']))
+                self.internal_pipeline.add_action(LxcAddDeviceAction())
 
 
 class FastbootBootAction(Action):

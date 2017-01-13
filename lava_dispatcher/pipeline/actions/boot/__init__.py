@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import pyudev
 import re
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -38,6 +37,7 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
+from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
@@ -215,43 +215,40 @@ class AutoLoginAction(Action):
 
 class WaitUSBDeviceAction(Action):
 
-    def __init__(self):
+    def __init__(self, device_actions):
         super(WaitUSBDeviceAction, self).__init__()
         self.name = "wait-usb-device"
         self.description = "wait for udev to see USB device"
         self.summary = self.description
-        self.board_id = '0000000000'
-        self.usb_vendor_id = '0000'
-        self.usb_product_id = '0000'
+        self.device_actions = device_actions
 
     def validate(self):
         super(WaitUSBDeviceAction, self).validate()
+        if not isinstance(self.device_actions, list):
+            self.errors = "device_actions is not a list"
+        if 'device_info' in self.job.device \
+           and not isinstance(self.job.device['device_info'], list):
+            self.errors = "device_info unset"
         try:
-            self.usb_vendor_id = self.job.device['usb_vendor_id']
-            self.usb_product_id = self.job.device['usb_product_id']
-            self.board_id = self.job.device['board_id']
-        except AttributeError as exc:
+            if 'device_info' in self.job.device:
+                for usb_device in self.job.device['device_info']:
+                    board_id = usb_device.get('board_id', '')
+                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
+                    usb_product_id = usb_device.get('usb_product_id', '')
+                    if board_id == '0000000000':
+                        self.errors = "board_id unset"
+                    if usb_vendor_id == '0000':
+                        self.errors = 'usb_vendor_id unset'
+                    if usb_product_id == '0000':
+                        self.errors = 'usb_product_id unset'
+        except KeyError as exc:
             raise InfrastructureError(exc)
-        except (KeyError, TypeError):
+        except (TypeError):
             self.errors = "Invalid parameters for %s" % self.name
-        if self.job.device['board_id'] == '0000000000':
-            self.errors = "board_id unset"
-        if self.job.device['usb_vendor_id'] == '0000':
-            self.errors = 'usb_vendor_id unset'
-        if self.job.device['usb_product_id'] == '0000':
-            self.errors = 'usb_product_id unset'
 
     def run(self, connection, max_end_time, args=None):
-        self.logger.info("Waiting for USB device... %s:%s %s", self.usb_vendor_id, self.usb_product_id, self.board_id)
-        context = pyudev.Context()
-        monitor = pyudev.Monitor.from_netlink(context)
-        monitor.filter_by('usb', 'usb_device')
-        for device in iter(monitor.poll, None):
-            if (device.get('ID_SERIAL_SHORT', '') == str(self.board_id)) \
-               and (device.get('ID_VENDOR_ID', '') == str(self.usb_vendor_id)) \
-               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)) \
-               and device.action == 'add':
-                break
+        self.logger.info("Waiting for USB device(s) ...")
+        usb_device_wait(self.job, device_actions=self.device_actions)
         return connection
 
 
