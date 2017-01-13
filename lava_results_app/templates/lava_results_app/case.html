@@ -14,7 +14,7 @@
         <dd>{{ testcase.result_code }}</dd>
         {% if testcase.measurement %}
         <dt>Measurement:</dt>
-        <dd>{{ testcase.measurement }} {{ testcase.units }}</dd>
+        <dd>{{ testcase.measurement|floatformat:2 }} {{ testcase.units }}</dd>
         {% endif %}
         </dl>
     {% endfor %}
@@ -35,6 +35,11 @@
   {% for key, value in testcase.action_metadata.items %}
   {% if key == 'extra' and extra_source %}
       <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ extra_source }}</pre></li>
+  {% elif key == 'level' %}
+    <li><strong>{{ key }}</strong>: <a href="{% url
+    'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
+  {% elif key == 'duration' %}
+    <li><strong>{{ key }}</strong>: {{ value|floatformat:2 }} secs</li>
   {% elif value.items %}
     <li><strong>{{ key }}</strong><ul>
     {% for k, v in value.items %}

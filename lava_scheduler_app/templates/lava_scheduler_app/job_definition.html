@@ -202,6 +202,10 @@ timeouts:
             <dd>{{ data.name }}</dd>
             <dt>description</dt>
             <dd>{{ data.description }}</dd>
+            <dt>output</dt>
+            <dd><a href="{% url 'lava.scheduler.job.detail' job.id %}#action_{{ level|level_replace }}">{{ job.id }}#action_{{ level }}</a></dd>
+            <dt>results</dt>
+            <dd><a href="{% url 'lava.results.testjob' job.id %}/lava/{{ data.name }}">{{ data.name }}</a></dd>
         {% if data.timeout %}
             <dt>timeout</dt>{% comment %}
             add a link to help content of this topic

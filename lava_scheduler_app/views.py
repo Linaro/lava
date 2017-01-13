@@ -76,6 +76,9 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
+    TestSet,
+    TestSuite,
+    TestCase
 )
 
 from lava_scheduler_app.template_helper import expand_template
