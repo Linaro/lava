@@ -274,9 +274,11 @@ class dispatch(DispatcherCommand):
 
             try:
                 # Create the ZMQ config
-                zmq_config = ZMQConfig(self.args.socket_addr,
-                                       self.args.master_cert,
-                                       self.args.slave_cert)
+                zmq_config = None
+                if self.args.socket_addr is not None:
+                    zmq_config = ZMQConfig(self.args.socket_addr,
+                                           self.args.master_cert,
+                                           self.args.slave_cert)
                 # Generate the pipeline
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
