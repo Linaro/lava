@@ -249,3 +249,8 @@ def can_view(record, user):
         return record.can_view(user)
     except:
         return False
+
+
+@register.filter()
+def split_definition(data):
+    return data.split('\n')

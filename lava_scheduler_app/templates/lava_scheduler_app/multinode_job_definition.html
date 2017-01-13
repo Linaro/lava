@@ -1,4 +1,18 @@
 {% extends "layouts/content-bootstrap.html" %}
+{% load utils %}
+{% block styles %}
+<style>
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+     -khtml-user-select: none; /* Konqueror */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <h2>Multinode Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
@@ -103,9 +117,21 @@
 {% endif %}
 
 
-<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
+<div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
 class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
-id="job_definition_text">{{ job.multinode_definition }}</span></pre>
+style="display: none" id="job_definition_text">{{ job.multinode_definition }}</span><br/>
+{% with job.display_definition|split_definition as definition_data %}
+{% for line in definition_data %}
+    <div class="row">
+  <div class="col-md-1 noselect" id="defline{{ forloop.counter }}">
+    <a href="#defline{{ forloop.counter }}">{{ forloop.counter }}</a>
+   </div>
+   <div class="col-md-11">
+    <span style="font-family: monospace; white-space: pre;">{{ line.rstrip }}</span>
+   </div>
+    </div>
+{% endfor %}
+{% endwith %}
 
 {% endblock content %}
 
