@@ -249,7 +249,8 @@ class WaitUSBDeviceAction(Action):
         for device in iter(monitor.poll, None):
             if (device.get('ID_SERIAL_SHORT', '') == str(self.board_id)) \
                and (device.get('ID_VENDOR_ID', '') == str(self.usb_vendor_id)) \
-               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)):
+               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)) \
+               and device.action == 'add':
                 break
         return connection
 
