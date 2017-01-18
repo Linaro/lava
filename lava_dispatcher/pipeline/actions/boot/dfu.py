@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
+from lava_dispatcher.pipeline.utils.udev import WaitDFUDeviceAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import PowerOn
 from lava_dispatcher.pipeline.utils.shell import which
@@ -61,8 +61,8 @@ class BootDFU(BootAction):
     def __init__(self):
         super(BootDFU, self).__init__()
         self.name = 'boot-dfu-image'
-        self.description = "boot monitored dfu image with retry"
-        self.summary = "boot monitor with retry"
+        self.description = "boot dfu image with retry"
+        self.summary = "boot dfu image with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -81,8 +81,7 @@ class BootDFURetry(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(PowerOn())
-        self.internal_pipeline.add_action(WaitUSBDeviceAction(
-            device_actions=['add']))
+        self.internal_pipeline.add_action(WaitDFUDeviceAction())
         self.internal_pipeline.add_action(FlashDFUAction())
 
 
@@ -129,6 +128,9 @@ class FlashDFUAction(Action):
             action_arg = self.data[namespace]['download_action'][action].get('file', None)
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
+                continue
+            if not isinstance(image_arg, str):
+                self.errors = "image_arg is not a string (try quoting it)"
                 continue
             substitutions["{%s}" % action] = action_arg
             dfu_full_command.extend(self.base_command)

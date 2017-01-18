@@ -1,0 +1,39 @@
+device_type: frdm-k64f
+
+commands:
+  connect: telnet lava-dev 7004
+
+board_id: '024002015F511E4CA2AFE3F4'
+usb_vendor_id: '0d28'
+usb_product_id: '0204'
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      pyocd:
+        parameters:
+          command:
+            pyocd-flashtool
+          options:
+          - -d debug
+          - -t k64f
+      cmsis-dap:
+        parameters:
+          usb_mass_device: "/dev/disk/by-id/usb-MBED_microcontroller_024002015F511E4CA2AFE3F4-0:0"
+
+
+timeouts:
+  actions:
+    wait-usb-device:
+      seconds: 10
+  connections:
+    wait-usb-device:
+      seconds: 10

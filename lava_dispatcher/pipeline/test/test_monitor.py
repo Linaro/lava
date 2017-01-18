@@ -67,7 +67,7 @@ class TestMonitorPipeline(StdoutTestCase):
 
     def test_qemu_monitor_zephyr_job(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/qemu-zephyr-monitor.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/zephyr-qemu-test-task.yaml', mkdtemp())
         job.validate()
         self.assertIsNotNone(job)
         self.assertIsNotNone(job.pipeline)

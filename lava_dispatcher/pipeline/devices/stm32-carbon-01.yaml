@@ -2,13 +2,11 @@ device_type: arduino101
 
 commands:
   connect: telnet ratchet 7001
-  hard_reset: curl -s -o /dev/null http://192.168.25.38/30000/09 && sleep 1 && curl -s -o /dev/null http://192.168.25.38/30000/08
-  power_off: curl -s -o /dev/null http://192.168.25.38/30000/08
-  power_on: curl -s -o /dev/null http://192.168.25.38/30000/09
+  power_on: 'make this how to get into dfu'
 
-board_id: 'AE6642EK61803JN'
-usb_vendor_id: '8087'
-usb_product_id: '0aba'
+board_id: '3896387A3234'
+usb_vendor_id: '0483'
+usb_product_id: 'df11'
 
 actions:
   deploy:
