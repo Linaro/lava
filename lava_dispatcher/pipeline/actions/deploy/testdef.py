@@ -1010,12 +1010,15 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('cd %s\n' % self.get_namespace_data(
                 action='uuid', label='runner_path', key=self.parameters['test_name']))
             runsh.write('UUID=`cat uuid`\n')
+            runsh.write('set +x\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
+            runsh.write('set -x\n')
             steps = testdef.get('run', {}).get('steps', [])
             for cmd in steps:
                 if '--cmd' in cmd or '--shell' in cmd:
                     cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                 runsh.write('%s\n' % cmd)
+            runsh.write('set +x\n')
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
 
         self.results = {
