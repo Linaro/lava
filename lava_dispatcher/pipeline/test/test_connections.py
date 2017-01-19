@@ -295,6 +295,10 @@ class TestTimeouts(unittest.TestCase):
         self.assertNotEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertNotEqual(deploy.connection_timeout.duration, test_shell.connection_timeout)
         self.assertEqual(test_action.timeout.duration, 300)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        auto = [action for action in retry.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertEqual(auto.timeout.duration / 60, 9)  # 9 minutes in the job def
 
     def test_job_connection_timeout(self):
         """
@@ -317,6 +321,11 @@ class TestTimeouts(unittest.TestCase):
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
         self.assertEqual(test_shell.connection_timeout.duration, 20)
+        self.assertEqual(test_shell.timeout.duration, 420)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        auto = [action for action in retry.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertEqual(auto.connection_timeout.duration / 60, 12)
 
     def test_action_connection_timeout(self):
         """
