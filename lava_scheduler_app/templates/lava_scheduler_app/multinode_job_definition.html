@@ -120,7 +120,7 @@
 <div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
 class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
 style="display: none" id="job_definition_text">{{ job.multinode_definition }}</span><br/>
-{% with job.display_definition|split_definition as definition_data %}
+{% with job.multinode_definition|split_definition as definition_data %}
 {% for line in definition_data %}
     <div class="row">
   <div class="col-md-1 noselect" id="defline{{ forloop.counter }}">
