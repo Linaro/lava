@@ -220,6 +220,13 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
+    def test_boot_commands(self):
+        job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk-inline-commands.yaml')
+        job.validate()
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
+        self.assertEqual(overlay.commands, ['a list', 'of commands', 'with a {KERNEL_ADDR} substitution'])
+
     def test_download_action(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         for action in job.pipeline.actions:
