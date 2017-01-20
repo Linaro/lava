@@ -1,6 +1,3 @@
-# Legacy compatibility value for lava-deployment-tool
-LAVA_CONFIG_VERSION='6'
-
 # Installation prefix
 LAVA_PREFIX='/var/lib/lava-server/'
 
