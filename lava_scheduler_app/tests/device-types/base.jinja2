@@ -3,7 +3,7 @@
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
-{% set base_ip_args = "ip=dhcp" %}
+{% set base_ip_args = base_ip_args|default("ip=dhcp") %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
 {# Do not specify port or login (-p/-P or -l) here as this is now handled in the codebase. #}

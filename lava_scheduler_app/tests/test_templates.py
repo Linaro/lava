@@ -498,6 +498,23 @@ class TestTemplates(unittest.TestCase):
         os.close(fd)
         job.validate()
 
+    def test_ip_args(self):
+        data = """{% extends 'arndale.jinja2' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
+{% set connection_command = 'telnet serial4 7010' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
+        self.assertTrue(self.validate_data('staging-arndale-01', data))
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for line in template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']:
+            if line.startswith("setenv nfsargs"):
+                self.assertIn('ip=:::::eth0:dhcp', line)
+                self.assertNotIn('ip=dhcp', line)
+            elif line.startswith("setenv bootargs"):
+                self.assertIn("drm_kms_helper.edid_firmware=edid-1920x1080.fw", line)
+
     def test_arduino(self):
         data = """{% extends 'arduino101.jinja2' %}
 {% set board_id = 'AE6642EK61804EZ' %}"""
