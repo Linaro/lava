@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import csv
+
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
@@ -49,6 +51,8 @@ class Command(BaseCommand):
         list_parser = sub.add_parser("list", help="List the tokens")
         list_parser.add_argument("--user", "-u", type=str, required=True,
                                  help="The tokens owner")
+        list_parser.add_argument("--csv", dest="csv", default=False,
+                                 action="store_true", help="Print as csv")
 
         del_parser = sub.add_parser("rm", help="Remove a token")
         del_parser.add_argument("token", type=str, help="The token to remove")
@@ -58,7 +62,7 @@ class Command(BaseCommand):
         if options["sub_command"] == "add":
             self.handle_add(options["user"], options["description"])
         elif options["sub_command"] == "list":
-            self.handle_list(options["user"])
+            self.handle_list(options["user"], options["csv"])
         else:
             self.handle_rm(options["token"])
 
@@ -72,7 +76,7 @@ class Command(BaseCommand):
         token.save()
         self.stdout.write(token.secret)
 
-    def handle_list(self, username):
+    def handle_list(self, username, format_as_csv):
         """ List the tokens for the given user """
         try:
             user = User.objects.get(username=username)
@@ -80,9 +84,19 @@ class Command(BaseCommand):
             raise CommandError("Unable to find user '%s'" % username)
 
         tokens = AuthToken.objects.filter(user=user).order_by('id')
-        self.stdout.write("Tokens for user '%s':" % username)
-        for token in tokens:
-            self.stdout.write("* %s (%s)" % (token.secret, token.description))
+        if format_as_csv:
+            fields = ["id", "secret", "description"]
+            writer = csv.DictWriter(self.stdout, fieldnames=fields)
+            writer.writeheader()
+            for token in tokens:
+                writer.writerow({
+                    "id": token.id,
+                    "secret": token.secret,
+                    "description": token.description})
+        else:
+            self.stdout.write("Tokens for user '%s':" % username)
+            for token in tokens:
+                self.stdout.write("* %s (%s)" % (token.secret, token.description))
 
     def handle_rm(self, token):
         """ Remove the token, knowing the secret """
