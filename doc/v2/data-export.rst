@@ -9,7 +9,7 @@ LAVA supports two methods of extracting data and results are available whilst
 the job is running, XML-RPC and the REST API.
 
 In addition, LAVA has two methods of pushing notifications about activity
-within LAVA, notifications and publishing events.
+within LAVA, notifications and :ref:`publishing events <publishing_events>`.
 
 .. index:: rest api
 

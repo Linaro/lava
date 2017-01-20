@@ -69,6 +69,8 @@ LAVA expects to be the primary host on the master. This has improved with V2
 but unless your instance is V2-only, you may experience problems or require
 additional configuration to use LAVA as a virtual host.
 
+.. _infrastructure_requirements:
+
 Other infrastructure
 ====================
 

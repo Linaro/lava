@@ -510,3 +510,5 @@ Glossary of terms
     remote workers to no longer need ``lava-server`` to be installed on the
     worker. Developers can find more information in the
     :ref:`dispatcher_design` documentation.
+
+    .. seealso:: :ref:`zmq_curve`
