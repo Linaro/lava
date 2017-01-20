@@ -274,12 +274,20 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Cleanup now
         self.cleanup(self.connection, None)
 
+        result_dict = {"definition": "lava",
+                       "case": "job"}
         if error_msg:
+            result_dict["result"] = "fail"
+            self.logger.results(result_dict)
             self.logger.error(error_msg)
         elif self.pipeline.errors:
+            result_dict["result"] = "fail"
+            self.logger.results(result_dict)
             self.logger.error("Errors detected: %s", self.pipeline.errors)
             return_code = -1
         else:
+            result_dict["result"] = "pass"
+            self.logger.results(result_dict)
             self.logger.info("Job finished correctly")
         return return_code
 

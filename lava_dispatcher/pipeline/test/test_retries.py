@@ -48,6 +48,9 @@ class DummyLogger(object):
     def error(self, *args, **kwargs):
         pass
 
+    def results(self, *args, **kwargs):
+        pass
+
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 

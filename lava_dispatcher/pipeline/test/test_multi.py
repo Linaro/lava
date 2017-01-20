@@ -33,6 +33,20 @@ from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 # pylint: disable=too-many-public-methods,too-few-public-methods
 
 
+class DummyLogger(object):
+    def info(self, *args, **kwargs):
+        pass
+
+    def exception(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def results(self, *args, **kwargs):
+        pass
+
+
 class TestMultiDeploy(StdoutTestCase):
 
     def setUp(self):
@@ -114,7 +128,7 @@ class TestMultiDeploy(StdoutTestCase):
         self.assertIsNotNone(device)
         job.device = device
         job.parameters['output_dir'] = mkdtemp()
-        job.setup_logging()
+        job.logger = DummyLogger()
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data['actions']:
