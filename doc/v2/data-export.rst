@@ -157,11 +157,51 @@ an example.
 
 zmq_client.py script:
 
-.. include:: examples/source/zmq_client.py
-   :code: python
+.. literalinclude:: examples/source/zmq_client.py
+   :language: python
    :start-after: # START_CLIENT
    :end-before: # END_CLIENT
+
+`Download or view zmq_client.py <examples/source/zmq_client.py>`_
 
 If you are interested in using event notifications for a custom :term:`frontend`,
 you might want also to look at the code for the ReactOWeb example website:
 https://github.com/ivoire/ReactOWeb
+
+Extending the client to submit and wait
+---------------------------------------
+
+You may want to expand this example to use the :ref:`XML-RPC <xml_rpc>` API to
+submit a testjob and retrieve the publisher port at the same time. It is up to
+you to decide how to protect the token used for the submission:
+
+.. code-block:: python
+
+  import xmlrpclib
+
+  username = "USERNAME"
+  token = "TOKEN_STRING"
+  hostname = "HOSTNAME"
+  scheme = "https"  # or http if https is not available for this instance.
+  server = xmlrpclib.ServerProxy("%s://%s:%s@%s/RPC2" % (scheme, username, token, hostname))
+  port = server.scheduler.get_publisher_event_socket()
+
+At this point, ``port`` will be ``5500`` or whatever the instance has
+configured as the port for event notifications. The publisher details can then
+be constructed as:
+
+.. code-block:: python
+
+  publisher = "tcp://%s:%s" % (hostname, port)
+
+If the YAML test job submission is in a file called ``job.yaml``, the example
+can be continued to load and submit this test job:
+
+.. code-block:: python
+
+    with open('job.yaml', 'r') as filedata:
+        data = filedata.read()
+    job_id = server.scheduler.submit_job(data)
+
+If the job uses :ref:`multinode` then ``job_id`` will be a list and you will
+need to decide which job to monitor.
