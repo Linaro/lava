@@ -73,7 +73,6 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError("Unable to find user '%s'" % username)
         token = AuthToken.objects.create(user=user, description=description)
-        token.save()
         self.stdout.write(token.secret)
 
     def handle_list(self, username, format_as_csv):
