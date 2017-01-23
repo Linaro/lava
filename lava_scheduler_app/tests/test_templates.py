@@ -79,7 +79,9 @@ class TestTemplates(unittest.TestCase):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
-{% set connection_command = 'adb -s R32D300FRYP shell' %}"""))
+{% set connection_command = 'adb -s R32D300FRYP shell' %}
+{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
+"""))
 
     def test_x86_template(self):
         data = """{% extends 'x86.jinja2' %}
@@ -213,7 +215,9 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
-        self.assertEqual(template_dict['device_path'], ['/dev/bus/usb/000'])
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertEqual(template_dict['device_info'][0]['board_id'],
+                         '0123456789')
 
     def test_panda_template(self):
         data = """{% extends 'panda.jinja2' %}
@@ -542,10 +546,17 @@ class TestTemplates(unittest.TestCase):
 
     def test_arduino(self):
         data = """{% extends 'arduino101.jinja2' %}
-{% set board_id = 'AE6642EK61804EZ' %}"""
+{% set device_info = [{'board_id': 'AE6642EK61804EZ', 'usb_vendor_id': '8087', 'usb_product_id': '0aba'}] %}"""
         self.assertTrue(self.validate_data('staging-arduino101-01', data))
-        test_template = prepare_jinja_template('staging-ardiono101-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-arduino101-01',
+                                               data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
-        self.assertEqual(template_dict['board_id'], 'AE6642EK61804EZ')
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertEqual(template_dict['device_info'][0]['board_id'],
+                         'AE6642EK61804EZ')
+        self.assertEqual(template_dict['device_info'][0]['usb_vendor_id'],
+                         '8087')
+        self.assertEqual(template_dict['device_info'][0]['usb_product_id'],
+                         '0aba')

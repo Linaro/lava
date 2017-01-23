@@ -280,13 +280,10 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'device_info': [dict],
         'flash_cmds_order': list,
-        'board_id': str,
-        'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
-        'usb_vendor_id': Any(str, int),  # monitor type like arduino
-        'usb_product_id': Any(str, int),  # monitor type like arduino
         'actions': _device_actions_schema(),
         'timeouts': _device_timeouts_schema()
     })

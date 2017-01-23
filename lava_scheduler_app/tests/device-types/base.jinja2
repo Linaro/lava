@@ -87,10 +87,11 @@ commands:
 {% endif %}
 {% endblock -%}
 
-{% if device_path %}
-{# LXC support for adding energy probes etc. #}
-device_path: {{ device_path }}
-{% endif %}
+{% if device_info %}
+{# LXC support for adding energy probes, usb devices etc. #}
+{# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
+device_info: {{ device_info }}
+{% endif -%}
 
 {% block fastboot %}
 {% if fastboot_serial_number %}
