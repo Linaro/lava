@@ -1293,9 +1293,12 @@ def job_detail(request, pk):
 
     is_favorite = False
     if request.user.is_authenticated():
-        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
-                                                            test_job=job)
-        is_favorite = testjob_user.is_favorite
+        try:
+            testjob_user, _ = TestJobUser.objects.get(user=request.user,
+                                                      test_job=job)
+            is_favorite = testjob_user.is_favorite
+        except TestJobUser.DoesNotExist:
+            is_favorite = False
 
     template = "lava_scheduler_app/job.html"
     data = {
