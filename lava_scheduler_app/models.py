@@ -273,6 +273,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     processor = models.ForeignKey(
@@ -280,6 +281,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     cpu_model = models.CharField(
@@ -302,6 +304,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     cores = models.ManyToManyField(
@@ -656,7 +659,8 @@ class Device(RestrictedResource):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_(u"User with physical access")
+        verbose_name=_(u"User with physical access"),
+        on_delete=models.SET_NULL,
     )
 
     physical_group = models.ForeignKey(
@@ -702,7 +706,8 @@ class Device(RestrictedResource):
         verbose_name=_(u"Worker Host"),
         null=True,
         blank=True,
-        default=None
+        default=None,
+        on_delete=models.SET_NULL,
     )
 
     is_pipeline = models.BooleanField(
