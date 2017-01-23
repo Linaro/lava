@@ -60,4 +60,5 @@ Parameter List
 .. include:: actions-deploy-to-sata.rsti
 .. include:: actions-deploy-to-ssh.rsti
 .. include:: actions-deploy-to-tftp.rsti
+.. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti

@@ -1,0 +1,178 @@
+.. index:: deploy to nbd
+
+.. _deploy_to_nbd:
+
+to: nbd
+********
+
+Used to support NBDroot deployments, e.g. using a initrd with nbd-client
+and pivot_root. Files are downloaded to a temporary directory on the worker,
+the rootfs is shared through xnbd-server and the filenames are substituted into the
+bootloader commands specified in the device configuration or overridden in the
+job. The files to download typically include a kernel but can also include any
+file which the substitution commands need for this deployment. URL support is
+handled by the python ``requests`` module.
+
+.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
+     :code: yaml
+     :start-after: actions:
+     :end-before: kernel:
+
+.. _deploy_to_nbd_kernel:
+
+kernel
+======
+
+To deploy images using NBDroot, arguments will be downloaded to a configured directory.
+
+.. _deploy_to_nbd_kernel_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
+     :code: yaml
+     :start-after: to: nbd
+     :end-before: initrd:
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_nbd_dtb:
+
+dtb
+===
+
+(Device Tree Blob).
+
+.. _deploy_to_nbd_dtb_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
+     :code: yaml
+     :start-after: os: debian
+     :end-before: - boot
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_nbd_modules:
+
+modules
+=======
+This is not supported in the deployment strategy. Modules must be part of the filesystem already.
+
+initrd
+=======
+
+The initrd contains all necessary files, deamons and scripts to
+bring-up the nbd-client and pivot_root to the final rootfs.
+There are a few important aspects:
+
+* The nbdroot filesystem will not be modified prior to the boot.
+  The filesystems are using security labels and this would alternate the fs.
+  The lava test shell needs to be extracted at runtime with transfer_overlay.
+
+.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
+     :code: yaml
+     :start-after: vmlinuz
+     :end-before: nbdroot
+
+.. _deploy_to_nbd_initrd_url:
+
+url
+---
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+nbdroot
+=======
+
+.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
+     :code: yaml
+     :start-after: allow_modify: false
+     :end-before: os: debian
+
+.. _deploy_to_nbd_nbdroot_url:
+
+url
+---
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. _deploy_to_nbd_nfsroot_compression:
+
+compression
+-----------
+
+The NBD filesystem image is unpacked into a temporary directory onto the dispatcher in a
+location supported by NBD server. The compression method **must** be specified
+so that the filesystem can be unpacked.
+
+.. topic:: Allowed values
+
+ * ``none``
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+md5sum (optional)
+^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.
+
+.. _deploy_to_tmpfs_images_sha256sum:
+
+sha256sum (optional)
+^^^^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+

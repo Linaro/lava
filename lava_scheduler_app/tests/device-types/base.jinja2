@@ -3,6 +3,7 @@
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
+{% set base_nbdroot_args = (" ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7 ") -%}
 {% set base_ip_args = base_ip_args|default("ip=dhcp") %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}

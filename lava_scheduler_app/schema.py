@@ -39,6 +39,7 @@ def _deploy_tftp_schema():
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
         Optional('nbdroot'): {Required('url'): str},
+        Optional('initrd'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
         Optional('modules'): {Required('url'): str},
@@ -242,7 +243,8 @@ def _job_protocols_schema():
                 }
             }
         },
-        'lava-lxc': dict
+        'lava-lxc': dict,
+        'lava-xnbd': dict
     })
 
 

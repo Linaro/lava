@@ -31,6 +31,12 @@
 {% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
           - run bootcmd") -%}
+{% set base_uboot_nbd_bootcmd = (
+"          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
+          - setenv verify no
+          - setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'
+          - run bootcmd
+") -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default(
 "          - usb start") -%}
@@ -106,6 +112,7 @@ actions:
     methods:
       lxc:
       tftp:
+      nbd:
       ssh:
         options:
 {{ ssh_options }}
@@ -147,6 +154,20 @@ actions:
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
             {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_nfs_bootcmd }}
+        nbd:
+          commands:
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{{ base_uboot_addr_commands }}
+{{ base_uboot_tftp_commands }}
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nbdbasekargs verbose console={{ console_device }},{{ baud_rate }}n8"
+          - setenv nbdkbootargs '{{ base_nbdroot_args }} rw {{ base_kernel_args }} {{ base_ip_args }}'
+          - setenv nbdextraargs "earlyprintk systemd.log_color=false ${extraargs}"
+          - setenv bootargs "${nbdbasekargs} ${nbdkbootargs} ${nbdextraargs}"
+{{ base_uboot_nbd_bootcmd }}
         ramdisk:
           commands:
 {% if uboot_needs_usb %}
