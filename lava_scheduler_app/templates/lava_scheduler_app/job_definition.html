@@ -245,4 +245,16 @@ timeouts:
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-definition.min.js"></script>
+<script type="text/javascript">
+  $(document).ready(
+    function() {
+      hash = location.hash;
+      if(hash.startsWith("#pipeline")) {
+        $("[href='#pipeline']").tab("show");
+        level = hash.slice(10);
+        window.location = '#' + level;
+      }
+    }
+  );
+</script>
 {% endblock %}
