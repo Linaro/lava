@@ -55,7 +55,7 @@ from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 # The slave does send the protocol version along with the HELLO and HELLO_RETRY
 # messages. If both version are not identical, the connection is refused by the
 # master.
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 1
 # TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
@@ -589,12 +589,6 @@ class Command(BaseCommand):
             self.pull_socket.curve_server = True
 
         self.pull_socket.bind(options['log_socket'])
-        self.controler.setsockopt(zmq.IDENTITY, b"master")
-        # From http://api.zeromq.org/4-1:zmq-setsockopt#toc35
-        # "If two clients use the same identity when connecting to a ROUTER
-        # [...] the ROUTER socket shall hand-over the connection to the new
-        # client and disconnect the existing one."
-        self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
         self.controler.bind(options['master_socket'])
 
         # Last access to the database for new jobs and cancelations
