@@ -65,13 +65,13 @@ from lava_dispatcher.pipeline.job import ZMQConfig
 # pylint: disable=too-many-statements
 
 # Default values for:
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 1
 # timeouts (in seconds)
 TIMEOUT = 5
 JOBS_CHECK_INTERVAL = 5
 FINISH_MAX_DURATION = 60
 # zmq socket send high water mark
-SEND_QUEUE = 4
+SEND_QUEUE = 10
 
 # FIXME: This is a temporary fix until the overlay is sent to the master
 # The job.yaml and device.yaml are retained so that lava-dispatch can be re-run manually
@@ -250,7 +250,7 @@ def send_multipart_u(sock, data):
     :param sock: The socket to use
     :param data: Data to convert to byte strings
     """
-    return sock.send_multipart([b"master"] + [b(d) for d in data])
+    return sock.send_multipart([b(d) for d in data])
 
 
 def send_end(sock, job_id, job, print_exception=False):
@@ -289,9 +289,9 @@ def create_zmq_context(master_uri, hostname, encrypt,
     LOG.info("Using protocol version %d", PROTOCOL_VERSION)
     # Connect to the master dispatcher.
     context = zmq.Context()
-    sock = context.socket(zmq.ROUTER)
+    # TODO: use a ROUTER socket
+    sock = context.socket(zmq.DEALER)
     sock.setsockopt(zmq.IDENTITY, b(hostname))
-    sock.setsockopt(zmq.CONNECT_RID, b"master")
     sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
 
     # If needed, load certificates
@@ -385,7 +385,7 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
     """ Connect to master and wait for the answer
 
     :param master: the master structure to fill when done
-    :param  poller: the structure to poll for messages
+    :param poller: the structure to poll for messages
     :param pipe_r: the read pipe for signals
     :param sock: the zmq socket
     :param timeout: the poll timeout
@@ -407,12 +407,7 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
         msg = sock.recv_multipart()
 
         try:
-            master_id = u(msg[0])
-            if master_id != "master":
-                LOG.error("Invalid master id '%s', should be 'master'",
-                          master_id)
-                return False
-            message = u(msg[1])
+            message = u(msg[0])
             LOG.debug("The master replied: %s", msg)
         except (IndexError, TypeError):
             LOG.error("Invalid message from the master: %s", msg)
@@ -606,11 +601,6 @@ def listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout):
 
         # 1: the action
         try:
-            master_id = u(msg.pop(0))
-            if master_id != "master":
-                LOG.error("Invalid master id '%s', should be 'master'",
-                          master_id)
-                return
             action = u(msg[0])
         except (IndexError, TypeError):
             LOG.error("Invalid message from the master: %s", msg)
