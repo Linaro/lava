@@ -377,8 +377,7 @@ class TagLowerForm(forms.ModelForm):
         name = self.cleaned_data['name']
         if name != name.lower():
             raise ValidationError("Tag names are case-insensitive.")
-        if Tag.objects.filter(name__exact=name.lower()):
-            raise ValidationError("Tag name matches existing tag name in lowercase.")
+        return name
 
 
 class TagAdmin(admin.ModelAdmin):
