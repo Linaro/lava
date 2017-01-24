@@ -113,6 +113,10 @@ the use of the following terms:
   also be SSH_ or another way of obtaining a shell-type interactive interface.
   Connections will typically require a POSIX_ type shell.
 
+**compatibility**
+  An integer calculated by the master and separately by the worker to determine
+  whether the worker is running older code than the master.
+
 **device**
   In ``lava-server``, a device is a database object in LAVA which stores
   configuration, information and status relating to a single board. The device
@@ -248,6 +252,38 @@ will be tidied up.
 
 There are also locations which provide device configurations to support the
 unit tests. Only the Jinja2 support is used by the installed packages,
+
+.. index:: setting compatibility
+
+.. _compatibility_developer:
+
+Compatibility
+*************
+
+.. seealso:: :ref:`compatibility_failures`
+
+The compatibility mechanism allows the dispatcher-master daemon to prevent
+issues that would arise if the worker is running older software. A job with a
+lower compatibility may fail much, much later but this allows the job to fail
+early. In future, support is to be added for re-queuing such jobs.
+
+Developers need to take note that in the code, compatibility should reflect the
+removal of support for particular elements, similar to handling a SONAME when
+developing in C. When parts of the submission YAML are changed to no longer
+support fields previously used, then the compatibility of the associated
+strategy class must be raised to one more than the current highest
+compatibility in the ``lava-dispatcher`` codebase. Compatibility does not need
+to be changed when adding new classes or functionality. It remains a task for
+the admins to ensure that the code is updated when new functionality is to be
+used on a worker as this typically involves adding devices and other hardware.
+
+Compatibility is calculated for each pipeline during parsing. Only if the
+pipeline uses classes with the higher compatibility will the master prevent the
+test job from executing. Therefore, test jobs using code which has not had a
+compatibility change will continue to execute even if the worker is running
+older software. Compatibility is not a guarantee that all workers are running
+latest code, it exists to let jobs fail early when those specific jobs would
+attempt to execute a code path which has been removed in the updated code.
 
 .. _developer_jinja2_support:
 

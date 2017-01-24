@@ -304,6 +304,50 @@ When you come across problems with your LAVA instance, there are some basic
 information sources, methods and tools which will help you identify the
 problem(s).
 
+Problems affecting test jobs
+============================
+
+Administrators may be asked to help with debugging test jobs or may need to
+use test jobs to investigate some administration problems, especially health
+checks.
+
+* Start with the :ref:`triage guidelines <debugging_test_failures>` if the
+  problem shows up in test jobs.
+* Check the :ref:`failure_comments` for information on exactly what happened.
+* Specific :ref:`lava_failure_messages` may relate directly to an admin issue.
+* Try to reproduce the failure with smaller and less complex test jobs, where
+  possible.
+
+Some failure comments in test jobs are directly related to administrative
+problems.
+
+.. index:: compatibility
+
+.. _compatibility_failures:
+
+Compatibility failures
+----------------------
+
+.. code-block:: none
+
+ Dispatcher unable to meet job compatibility requirement.
+
+The master uses the ``lava-dispatcher`` code on the server to calculate a
+compatibility number - the highest integer in the strategy classes used for
+that job. The worker also calculates the number and unless these match, the job
+is failed.
+
+The compatilibilty check allows the master to detect if the worker is running
+older software, allowing the job to fail early. Compatibility is changed when
+existing support is removed, rather than when new code is added. Admins remain
+responsible for ensuring that if a new device needs new functionality, the
+worker will need to be running updated code.
+
+.. seealso:: :ref:`missing_method_failures` and
+   :ref:`python_traceback_failures`. Also the :ref:`developer documentation
+   <compatibility_developer>` for more information on how developers set the
+   compatibility for test jobs.
+
 .. _admin_debug_information:
 
 Where to find debug information

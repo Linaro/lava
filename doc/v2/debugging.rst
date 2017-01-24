@@ -39,6 +39,14 @@ will tell the whole story:
 When writing tests, :ref:`make things verbose<make_tests_verbose>` to give
 yourself more useful logs in case they fail.
 
+Read the failure comment
+************************
+
+Certain operations will cause a failure comment to be automatically added to
+the testjob.
+
+.. seealso:: :ref:`lava_failure_messages`
+
 .. _boot_failure:
 
 .. index:: boot failure

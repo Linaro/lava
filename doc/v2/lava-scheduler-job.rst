@@ -67,6 +67,56 @@ Failure comments can be used whether the job was marked as ``Incomplete`` in
 LAVA or not. The comments will show on the job output but only ``Incomplete``
 jobs will show failure comments in the reports.
 
+.. _lava_failure_messages:
+
+LAVA Failure messages
+*********************
+
+This list will be expanded over time.
+
+.. _missing_method_failures:
+
+Missing methods
+===============
+
+Errors in test job submissions and errors in admin setup can show up as a
+failure comment of no deployment or boot method being available. First, attempt
+to reproduce the failure with one of the :ref:`standard test jobs
+<using_gold_standard_files>`. If the error is reproduced, the admin can use the
+:ref:`admin_triage` guidelines to identify the problem.
+
+.. _python_traceback_failures:
+
+Python traceback messages
+=========================
+
+These messages relate to code errors which should either have been caught as
+invalid input or handled gracefully within the test job. Failure messages
+containing a traceback should be reported as bugs.
+
+.. seealso:: :ref:`getting_support`
+
+.. _compatibility_failure:
+
+Compatibility failures
+======================
+
+Some updates of the LAVA packages can introduce new code support or changes to
+the code support. The master and the worker need to be running the same code
+version of ``lava-dispatcher`` for the test job to run correctly. For example,
+a deprecated option in a test job submission could be removed in an update. If
+the master is running an older version of code than the worker, the test job
+could fail as the worker would be unable to handle the removed option.
+
+To prevent this, the master and the worker calculate a compatibility number for
+each test job. If this number does not match, the test job will fail. So a
+compatibility failure indicates that the ``lava-dispatcher`` code on the worker
+is out of date with respect to the master. This is a problem which needs to be
+reported to the admins.
+
+.. seealso:: :ref:`compatibility_failures` for more information on how
+   developers set the compatibility for test jobs.
+
 .. _commenting on failures:
 
 Commenting on or tagging a job failure
