@@ -731,8 +731,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         else:
             return connection.wait(max_end_time)
 
-    def mkdtemp(self):
-        return self.job.mkdtemp(self.name)
+    def mkdtemp(self, override=None):
+        return self.job.mkdtemp(self.name, override=override)
 
     def _override_action_timeout(self, override):
         """

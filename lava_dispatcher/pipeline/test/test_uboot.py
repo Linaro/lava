@@ -94,6 +94,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertNotIn('=', tftpd_dir())
+        job.validate()
+        tftp.validate()
+        self.assertEqual([], tftp.errors)
 
     def test_device_bbb(self):
         factory = Factory()

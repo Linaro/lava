@@ -117,7 +117,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
 
     def populate(self, parameters):
-        self.tftp_dir = self.mkdtemp()
+        self.tftp_dir = self.mkdtemp(override=tftpd_dir())
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(action=self.name, label='tftp', key='tftp_dir', value=self.tftp_dir, parameters=parameters)
 
