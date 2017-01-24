@@ -2025,7 +2025,7 @@ def job_resubmit(request, pk):
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
-            except SubmissionError as e:
+            except Exception as e:
                 response_data["error"] = str(e)
                 response_data["definition_input"] = request.POST.get(
                     "definition-input")
