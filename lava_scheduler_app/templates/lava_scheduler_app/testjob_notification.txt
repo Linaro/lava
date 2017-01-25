@@ -4,10 +4,12 @@ Dear {{ user.first_name }} {{ user.last_name }},
 Hello,
 {%- endif %}
 
-The job with ID # {{ job.id }} has finished with status {{ job.get_status_display() }}{% if job.end_time %} on {{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}{% endif %}. Job was submitted by {{ job.submitter.username }}.
+The job with ID # {{ job.id }} is now in status {{ job.get_status_display() }}. Job was submitted by {{ job.submitter.username }}.
 
 Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 
+{# Send verbose emails only if the job is finished. #}
+{%- if job.status > 1 %}
 {%- if job.notification.verbosity < 2 %}
 
 Device details:
@@ -110,6 +112,7 @@ No jobs with COMPLETE status to compare results with.
 No query is set for results comparing.
 {%- endif %}{# query #}
 {%- endif %}{# verbosity #}
+{%- endif %}{# job status #}
 
 LAVA
 Linaro Automated Validation Architecture

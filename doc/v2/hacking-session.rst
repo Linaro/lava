@@ -119,6 +119,10 @@ Starting a Hacking Session
 It is possible to include multiple hacking sessions in the same job, even
 interleaved with other test actions.
 
+As an alternative to an IRC message like this example, it is also possible to
+configure notification such that email will be sent when the job starts
+running. For more information, see :ref:`notification_summary`.
+
 .. seealso:: :ref:`inactivity_termination` and :ref:`timeouts` for clarification of the timeout
    support.
 

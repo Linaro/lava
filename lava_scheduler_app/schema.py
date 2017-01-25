@@ -153,7 +153,8 @@ def _recipient_schema():
 
 def _notify_criteria_schema():
     return Schema({
-        Required('status'): Any('complete', 'incomplete', 'canceled'),
+        Required('status'): Any('running', 'complete', 'incomplete',
+                                'canceled'),
         'type': Any('progression', 'regression')
     }, extra=True)
 

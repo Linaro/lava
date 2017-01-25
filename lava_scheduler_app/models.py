@@ -3224,14 +3224,14 @@ class NotificationRecipient(models.Model):
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
 def process_notifications(sender, **kwargs):
     new_job = kwargs["instance"]
-    notification_status = [TestJob.COMPLETE, TestJob.INCOMPLETE,
-                           TestJob.CANCELED]
+    notification_status = [TestJob.RUNNING, TestJob.COMPLETE,
+                           TestJob.INCOMPLETE, TestJob.CANCELED]
     # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
     if new_job.is_pipeline and new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)
-        if old_job.status not in notification_status and \
-           new_job.status in notification_status:
+        if new_job.status in notification_status and \
+           old_job.status != new_job.status:
             job_def = yaml.load(new_job.definition)
             if "notify" in job_def:
                 if new_job.notification_criteria(job_def["notify"]["criteria"],

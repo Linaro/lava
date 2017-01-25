@@ -18,8 +18,8 @@ The basic setup of the ``notify`` block in job definitions will have
 * **verbosity** will tell the system how detailed the email notification should
   be.
 
-* **Criteria** can be set by job status (complete, incomplete, canceled) and
-  the type (regression, progression).
+* **Criteria** can be set by job status (running, complete, incomplete,
+  canceled) and the type (regression, progression).
 
 The basic **email** template includes job details, device details and results,
 based on the level of **verbosity** (``verbose``, ``quiet``, ``status-only``).
