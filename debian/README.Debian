@@ -11,25 +11,16 @@ supportable with django1.6 or older.
 For Trusty support, see the frozen release at
 http://images.validation.linaro.org/trusty-repo/
 
-See the documentation in the lava-server-doc package
-which is also available online at:
-https://validation.linaro.org/static/docs/installing_on_debian.html#debian-installation
-
-2015.12 includes support for django releases from 1.7 (Jessie)
-to 1.9 (Stretch) and LAVA will continue to track for support of
-django 1.10.
-
 Debian Jessie
 -------------
 
-setuptools behaviour has changed in Debian unstable (and soon, testing).
-The 'requires.txt' file is not being created - this does not affect installs
-on Debian unstable or testing - however, setuptools in Jessie uses this file
-and if lava-server is built in unstable, it will fail to install on Jessie.
+setuptools behaviour has changed in Debian Stretch. The 'requires.txt' file
+is not being created - this does not affect installs on Debian Stretch -
+however, setuptools in Jessie uses this file and if lava-server is built
+in Stretch, it will fail to install on Jessie.
 
 Ensure that all builds for Jessie are built using Jessie (chroot or VM) in
 the same way that packages are built for jessie-backports. Builds available
 from http://images.validation.linaro.org/staging-repo/ and
 http://images.validation.linaro.org/production-repo/ are built in a Jessie
 environment, so are suitable for Jessie.
-
