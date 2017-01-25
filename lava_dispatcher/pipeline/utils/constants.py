@@ -141,6 +141,15 @@ SYS_CLASS_KVM = '/sys/class/misc/kvm'
 # default reboot commands
 REBOOT_COMMAND_LIST = ['reboot', 'reboot -n', 'reboot -nf']
 
+# XNBD server timeout (nbd deploy / xnbd protocol)
+XNBD_SYSTEM_TIMEOUT = 10000
+
+# XNBD port range min, default 55000
+XNBD_PORT_RANGE_MIN = 55000
+
+# XNBD port range max, default 56000
+XNBD_PORT_RANGE_MAX = 56000
+
 # Default size limit for tftp in bytes (4Gb)
 TFTP_SIZE_LIMIT = 4 * 1024 * 1024 * 1024
 

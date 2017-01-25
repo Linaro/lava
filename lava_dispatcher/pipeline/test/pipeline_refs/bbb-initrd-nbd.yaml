@@ -1,0 +1,41 @@
+- class: actions.deploy.nbd.NbdAction
+  name: nbd-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
+  - {class: actions.deploy.nbd.XnbdAction, name: xnbd-server-deploy}
+- class: actions.boot.u_boot.UBootAction
+  name: uboot-action
+  pipeline:
+  - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: actions.boot.u_boot.UBootRetry
+    name: uboot-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+    - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}

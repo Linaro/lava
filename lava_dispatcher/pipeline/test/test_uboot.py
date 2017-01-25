@@ -227,6 +227,29 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
         self.assertEqual(overlay.commands, ['a list', 'of commands', 'with a {KERNEL_ADDR} substitution'])
 
+    @unittest.skipIf(infrastructure_error('xnbd-server'), "xnbd-server not installed")
+    def test_nbd_boot(self):
+        job = self.factory.create_bbb_job('sample_jobs/bbb-initrd-nbd.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('bbb-initrd-nbd.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # Fixme: more asserts
+        self.assertIn('u-boot', job.device['actions']['boot']['methods'])
+        params = job.device['actions']['deploy']['parameters']
+        for action in job.pipeline.actions:
+            action.validate()
+            if isinstance(action, UBootAction):
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
+            if isinstance(action, TftpAction):
+                self.assertIn('initrd', action.parameters)
+                self.assertIn('kernel', action.parameters)
+                self.assertIn('nbdroot', action.parameters)
+                self.assertIn('to', action.parameters)
+                self.assertEqual('nbd', action.parameters['to'])
+            self.assertTrue(action.valid)
+
     def test_transfer_media(self):
         """
         Test adding the overlay to existing rootfs

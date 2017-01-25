@@ -36,6 +36,10 @@ commands:
   power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
   power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
 
+protocols:
+  lava-xnbd:
+    port: auto
+
 constants:
   shutdown-message: "The system is going down for reboot NOW"
   boot-message: "Booting Linux"
@@ -53,6 +57,7 @@ actions:
       mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
     methods:
       tftp:
+      nbd:
       usb:
       lxc:
       ssh:
@@ -121,6 +126,22 @@ actions:
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
           - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
+        nbd:
+          commands:
+          - setenv autoload no
+          - setenv verify no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp {kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp {initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {fdt_addr_r} {DTB}'
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nbdargs 'setenv bootargs console=ttyO0,115200n8 ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nbdargs; {BOOTX}'
           - boot
         ramdisk:
           commands:
