@@ -28,11 +28,17 @@ Duration: {{ job.duration }}
 {%- if job.notification.verbosity == 0 %}
 
 Results:
-Blacklisted: {% for name in job.notification.blacklist %}{{ name }} {% endfor %}
-{%- for testsuite in job.testsuite_set.all().exclude(name__in=job.notification.blacklist) %}
+{%- if job.notification.blacklist %}
+{% set blacklisted = job.notification.blacklist %}
+Blacklisted: {% for name in blacklisted %}{{ name }} {% endfor %}
+{%- else %}
+{% set blacklisted = [] %}
+{%- endif %}
+
+{%- for testsuite in job.testsuite_set.all().exclude(name__in=blacklisted) %}
 
 Test Suite {{ testsuite.name }}: {{ url_prefix }}{{ testsuite.get_absolute_url() }}
-{%- for testcase in testsuite.testcase_set.all().exclude(name__in=job.notification.blacklist).exclude(suite__name__in=job.notification.blacklist) %}
+{%- for testcase in testsuite.testcase_set.all().exclude(name__in=blacklisted).exclude(suite__name__in=blacklisted) %}
 Test Case {{ testcase.name }}: {{ testcase.get_result_display() }}
 {%- if testcase.measurement %}
 Measurement: {{ testcase.measurement }} {{ testcase.units }}
