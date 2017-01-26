@@ -321,6 +321,44 @@ checks.
 Some failure comments in test jobs are directly related to administrative
 problems.
 
+.. _admin_test_power_fail:
+
+Power up failures
+-----------------
+
+* If the device dictionary contains errors, it is possible that the test job
+  is trying to turn on power to or read serial input from the wrong ports. This
+  will show up as a timeout when trying to connect to the device.
+
+  .. note:: Either the PDU command or the connection command could be wrong. If
+     the device previously operated normally, check the details of the power on
+     and connection commands in previous jobs. Also, try running the ``power
+     on`` command followed by the ``connection command`` manually (as root) on
+     the relevant worker.
+
+  * If the ports are correct, check that the specified PDU port is actually
+    delivering power when the state of the port is reported as ``ON`` and
+    switching off power when reporting ``OFF``. It is possible for individual
+    relays in a PDU to fail, reporting a certain state but failing to switch
+    the relay when the state is reported as changing. Once a PDU starts to fail
+    in this way, the PDU should be replaced as other ports may soon fail in the
+    same manner. (Checking the light or LED on the PDU port may be
+    insufficient. Try connecting a fail safe device to the port, like a desk
+    light etc. This may indicate whether the board itself has a hardware
+    problem.)
+
+  * If the command itself is wrong or returns non-zero, the test job will
+    report an Infrastructure Error
+
+* If the connection is refused, it is possible that the device node does not
+  (yet) exist on the worker. e.g. check the ``ser2net`` configuration and the
+  specified device node for the port being used.
+
+* Check whether the device needs specialised support to avoid issues with
+  power reset buttons or other hardware modes where the device does not start
+  to boot as soon as power is applied. Check that any such support is actually
+  working.
+
 .. index:: compatibility
 
 .. _compatibility_failures:

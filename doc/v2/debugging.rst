@@ -71,6 +71,8 @@ checking:
   Symptoms here could include apparent boot failure, as the kernel will either
   not boot or boot but not provide any useful boot messages.
 
+.. seealso:: :ref:`Admin Triage Guidelines <admin_triage>`
+
 .. _rootfs_failure:
 
 .. index:: rootfs failure, fails to mount root
