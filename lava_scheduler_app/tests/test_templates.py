@@ -498,6 +498,31 @@ class TestTemplates(unittest.TestCase):
         os.close(fd)
         job.validate()
 
+    def test_ethaddr(self):
+        data = """{% extends 'b2260.jinja2' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command reboot' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command off' %}
+{% set connection_command = 'telnet localhost 7114' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command on' %}
+{% set uboot_mac_addr = '00:80:e1:12:81:30' %}
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-b2260-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        ethaddr = False
+        for command in template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']:
+            if command.startswith('setenv ethaddr'):
+                self.assertEqual(command, 'setenv ethaddr 00:80:e1:12:81:30')
+                ethaddr = True
+        self.assertTrue(ethaddr)
+        ethaddr = False
+        for command in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if command.startswith('setenv ethaddr'):
+                self.assertEqual(command, 'setenv ethaddr 00:80:e1:12:81:30')
+                ethaddr = True
+        self.assertTrue(ethaddr)
+
     def test_ip_args(self):
         data = """{% extends 'arndale.jinja2' %}
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
