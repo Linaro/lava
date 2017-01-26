@@ -17,6 +17,7 @@ You need to be familiar with these sections:
 #. :ref:`logging_in` (as superuser)
 #. :ref:`device_types` and :ref:`device_type_elements`
 #. :ref:`first_devices`
+#. :ref:`admin_backups`
 
 .. seealso:: `Django documentation on the Django Admin
    Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
@@ -260,12 +261,21 @@ The ongoing roles of administrators include:
   need to sometimes prevent users from making mistakes which are likely to take
   devices offline.
 
+* prepare and routinely test backups and disaster recovery support. Many lab
+  admin teams use ``salt`` or ``ansible`` or other configuration management
+  software. Always ensure you have a fast way of deploying a replacement worker
+  or master in case of hardware failure.
+
+  .. seealso:: :ref:`admin_backups` for details of what to backup and test.
+
 .. index:: best admin practices, best practices
 
 .. _best_admin_practices:
 
 Best practice
 *************
+
+.. seealso:: :ref:`admin_backups`
 
 * Before you upgrade the server or dispatcher, run the standard test jobs and a
   few carefully chosen stable jobs of your own as a set of *functional tests* -
