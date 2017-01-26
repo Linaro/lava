@@ -32,6 +32,12 @@
 {% set usb_uuid = usb_uuid|default('') %}
 {% set usb_device_id = usb_device_id|default(0) %}
 
+{% set uboot_mac_addr = uboot_mac_addr|default('') %}
+{% set base_uboot_set_mac = (
+"          - setenv ethaddr " + uboot_mac_addr) -%}
+
+{% set uboot_set_mac = uboot_set_mac|default(false) %}
+
 {% block body %}
 device_type: {{ device_type|default('uboot') }}
 
@@ -149,6 +155,9 @@ actions:
 {% if base_high_limits %}
 {{ base_uboot_high_limits }}
 {% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
 {{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
@@ -163,6 +172,9 @@ actions:
 {% if base_high_limits %}
 {{ base_uboot_high_limits }}
 {% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
 {{ base_uboot_tftp_commands }}
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_tftp_bootcmd }}
