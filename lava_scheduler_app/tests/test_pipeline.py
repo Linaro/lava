@@ -1,6 +1,8 @@
 import os
+import sys
 import yaml
 import jinja2
+import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -47,6 +49,17 @@ class YamlFactory(ModelFactory):
     The YAML **must** be valid for the current pipeline to be able to
     save a TestJob into the database. Hence qemu.yaml.
     """
+
+    def __init__(self):
+        super(YamlFactory, self).__init__()
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
 
     def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
         qemu = DeviceDictionary(hostname=hostname)

@@ -1,7 +1,9 @@
 import os
+import sys
 import yaml
 import jinja2
 import unittest
+import logging
 import tempfile
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import NewDevice
@@ -220,6 +222,10 @@ class TestTemplates(unittest.TestCase):
                          '0123456789')
 
     def test_panda_template(self):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set connection_command = 'telnet serial4 7012' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
@@ -482,6 +488,14 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
 
     def test_panda_lxc_template(self):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
