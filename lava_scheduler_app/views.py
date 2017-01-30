@@ -1294,8 +1294,8 @@ def job_detail(request, pk):
     is_favorite = False
     if request.user.is_authenticated():
         try:
-            testjob_user, _ = TestJobUser.objects.get(user=request.user,
-                                                      test_job=job)
+            testjob_user = TestJobUser.objects.get(user=request.user,
+                                                   test_job=job)
             is_favorite = testjob_user.is_favorite
         except TestJobUser.DoesNotExist:
             is_favorite = False
