@@ -24,7 +24,9 @@ import sys
 import glob
 import stat
 import yaml
+import shutil
 import pexpect
+import tempfile
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.device import NewDevice
@@ -228,8 +230,8 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
 
     def setUp(self):
         super(TestDefinitionParams, self).setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
     def test_job_without_tests(self):
         boot = finalize = None
@@ -281,6 +283,30 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
                 '######\n'
             }
         )
+
+    @unittest.skipIf(infrastructure_error('git'), 'git not installed')
+    def test_install_repos(self):
+        job = self.factory.create_kvm_job('sample_jobs/kvm-install.yaml')
+        allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
+        deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        test_install = [
+            action for action in testdef.internal_pipeline.actions
+            if action.name == 'test-install-overlay'][0]
+        self.assertIsNotNone(test_install)
+        yaml_file = os.path.join(os.path.dirname(__file__), './testdefs/install.yaml')
+        self.assertTrue(os.path.exists(yaml_file))
+        with open(yaml_file, 'r') as test_file:
+            testdef = yaml.safe_load(test_file)
+        repos = testdef['install'].get('git-repos', [])
+        self.assertIsNotNone(repos)
+        self.assertIsInstance(repos, list)
+        for repo in repos:
+            self.assertIsNotNone(repo)
+        runner_path = tempfile.mkdtemp()
+        test_install.install_git_repos(testdef, runner_path)
+        shutil.rmtree(runner_path)
 
 
 class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods

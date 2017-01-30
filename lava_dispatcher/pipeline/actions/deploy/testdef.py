@@ -833,6 +833,39 @@ class TestInstallAction(TestOverlayAction):
                 self.skip_options = self.parameters['skip_install']
         super(TestInstallAction, self).validate()
 
+    def install_git_repos(self, testdef, runner_path):
+        repos = testdef['install'].get('git-repos', [])
+        for repo in repos:
+            commit_id = None
+            if isinstance(repo, str):
+                # tests should expect git clone https://path/dir/repo.git to create ./repo/
+                subdir = repo.replace('.git', '', len(repo) - 1)  # drop .git from the end, if present
+                dest_path = os.path.join(runner_path, os.path.basename(subdir))
+                commit_id = GitHelper(repo).clone(dest_path)
+            elif isinstance(repo, dict):
+                # TODO: We use 'skip_by_default' to check if this
+                # specific repository should be skipped. The value
+                # for 'skip_by_default' comes from job parameters.
+                url = repo.get('url', '')
+                branch = repo.get('branch', None)
+                if not url:
+                    raise TestError('Invalid git-repos dictionary in install definition.')
+                subdir = url.replace('.git', '', len(url) - 1)  # drop .git from the end, if present
+                destination = repo.get('destination', os.path.basename(subdir))
+                if destination:
+                    dest_path = os.path.join(runner_path, destination)
+                    if os.path.abspath(runner_path) != os.path.dirname(dest_path):
+                        raise RuntimeError(
+                            "Destination path is unacceptable %s" % destination)
+                    if os.path.exists(dest_path):
+                        raise TestError("Cannot mix string and url forms for the same repository.")
+                    commit_id = GitHelper(url).clone(dest_path, branch=branch)
+            else:
+                raise TestError("Unrecognised git-repos block.")
+            if commit_id is None:
+                raise RuntimeError(
+                    "Unable to clone %s" % str((repo)))
+
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-statements
         connection = super(TestInstallAction, self).run(connection, max_end_time, args)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
@@ -896,33 +929,7 @@ class TestInstallAction(TestOverlayAction):
                         install_file.write('%s\n' % cmd)
 
             if 'git-repos' not in self.skip_options:
-                repos = testdef['install'].get('git-repos', [])
-                for repo in repos:
-                    # tests should expect git clone https://path/dir/repo.git to create ./repo/
-                    subdir = repo.replace('.git', '', len(repo) - 1)  # drop .git from the end, if present
-                    dest_path = os.path.join(runner_path, os.path.basename(subdir))
-                    commit_id = None
-                    if isinstance(repo, str):
-                        commit_id = GitHelper(repo).clone(dest_path)
-                    if isinstance(repo, dict):
-                        # TODO: We use 'skip_by_default' to check if this
-                        # specific repository should be skipped. The value
-                        # for 'skip_by_default' comes from job parameters.
-                        url = repo.get('url', None)
-                        branch = repo.get('branch', None)
-                        destination = repo.get('destination', None)
-                        if destination:
-                            dest_path = os.path.join(runner_path, destination)
-                            if os.path.abspath(runner_path) != os.path.dirname(
-                                    dest_path):
-                                raise RuntimeError(
-                                    "Destination path is unacceptable %s" %
-                                    destination)
-                        commit_id = GitHelper(url).clone(dest_path,
-                                                         branch=branch)
-                    if commit_id is None:
-                        raise RuntimeError(
-                            "Unable to clone %s" % str((repo)))
+                self.install_git_repos(testdef, runner_path)
 
         self.results = {'success': self.test_uuid}
         return connection

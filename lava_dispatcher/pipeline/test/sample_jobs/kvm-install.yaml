@@ -1,0 +1,42 @@
+device_type: qemu
+
+job_name: kvm-pipeline
+job_timeout:
+  minutes: 15
+action_timeout:
+  minutes: 5
+priority: medium
+visibility: public
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 20
+        to: tmpfs
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
+        os: debian
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
+
+    - test:
+        failure_retry: 3
+        timeout:
+          minutes: 5
+        definitions:
+            # the unit test ignores this anyway and uses install.yaml
+            - repository: https://git.linaro.org/lava-team/refactoring.git
+              from: git
+              path: install.yaml
+              name: smoke-tests
+context:
+  arch: amd64
