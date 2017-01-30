@@ -77,6 +77,7 @@ setup(
             'pipeline/lava_test_shell/lava-test-runner',
             'pipeline/lava_test_shell/lava-target-ip',
             'pipeline/lava_test_shell/lava-target-mac',
+            'pipeline/lava_test_shell/lava-test-reference',
             'pipeline/lava_test_shell/multi_node/*',
         ],
         'linaro_dashboard_bundle': [
