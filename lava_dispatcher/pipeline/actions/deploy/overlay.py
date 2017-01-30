@@ -552,13 +552,17 @@ class PersistentNFSOverlay(Action):
 
     def validate(self):
         super(PersistentNFSOverlay, self).validate()
-        if 'nfs_url' not in self.parameters:
-            return None
-        if ':' not in self.parameters['nfs_url']:
-            self.errors = "Unrecognised NFS URL: '%s'" % self.parameters['nfs_url']
+        persist = self.parameters.get('persistent_nfs', None)
+        if not persist:
             return
-        nfs_server, dirname = self.parameters['nfs_url'].split(':')
+        if 'address' not in persist:
+            self.errors = "Missing address for persistent NFS"
+            return
+        if ':' not in persist['address']:
+            self.errors = "Unrecognised NFS URL: '%s'" % self.parameters['persistent_nfs']['address']
+            return
+        nfs_server, dirname = persist['address'].split(':')
         self.errors = infrastructure_error('rpcinfo')
         self.errors = rpcinfo_nfs(nfs_server)
-        self.set_namespace_data(action=self.name, label='nfs_url', key='nfsroot', value=dirname)
-        self.set_namespace_data(action=self.name, label='nfs_url', key='serverip', value=nfs_server)
+        self.set_namespace_data(action=self.name, label='nfs_address', key='nfsroot', value=dirname)
+        self.set_namespace_data(action=self.name, label='nfs_address', key='serverip', value=nfs_server)

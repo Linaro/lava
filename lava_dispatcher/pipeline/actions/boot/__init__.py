@@ -349,14 +349,15 @@ class BootloaderCommandOverlay(Action):
                 'ramdisk_addr': ramdisk_addr
             }
 
-        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
+        nfs_address = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
         nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
         if nfs_root:
             substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
-        elif nfs_url:
-            substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='serverip')
+        elif nfs_address:
+            substitutions['{NFSROOTFS}'] = nfs_address
+            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
+                action='persistent-nfs-overlay', label='nfs_address', key='serverip')
 
         substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
         substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')

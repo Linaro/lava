@@ -28,6 +28,8 @@ import shutil
 import pexpect
 import tempfile
 import unittest
+import subprocess
+from nose.tools import nottest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -371,6 +373,20 @@ class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(single_testdef.skip_options, ['deps'])
 
 
+@nottest
+def check_rpcinfo():
+    """
+    Supports the unittest.SkipIf
+    needs to return True if skip, so
+    returns True on failure.
+    """
+    try:
+        subprocess.check_call(['/usr/sbin/rpcinfo'])
+    except (OSError, subprocess.CalledProcessError):
+        return True
+    return False
+
+
 class TestDefinitions(StdoutTestCase):
     """
     For compatibility until the V1 code is removed and we can start
@@ -411,12 +427,16 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    def test_definition_lists(self):
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero")
+    def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        apply_o = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
+        self.assertIsNone(apply_o.parameters.get('nfs_url', None))
+        self.assertIsInstance(apply_o.parameters.get('persistent_nfs', None), dict)
+        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address', None), str)
         definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)

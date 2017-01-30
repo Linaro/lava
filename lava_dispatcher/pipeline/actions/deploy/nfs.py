@@ -90,8 +90,8 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         super(NfsAction, self).validate()
         if not self.valid:
             return
-        if 'nfsrootfs' in self.parameters and 'nfs_url' in self.parameters:
-            self.errors = "Only one of nfsrootfs or nfs_url can be specified"
+        if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:
+            self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
