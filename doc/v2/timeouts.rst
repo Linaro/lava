@@ -147,6 +147,46 @@ for their jobs to start on the busy devices.
    :start-after: job_name: QEMU pipeline, first job
    :end-before: # ACTION_BLOCK
 
+The ``timeouts`` block specifies the job timeout, as well as the
+:ref:`default_action_timeouts` (5 minutes in this example) and
+:ref:`default_connection_timeouts` (2 minutes in this example).
+
+.. seealso:: :ref:`action_block_timeout_overrides`,
+   :ref:`individual_action_timeout_overides` and
+   :ref:`individual_connection_timeout_overrides`.
+
+Summary of the example job timeouts
+===================================
+
+* The test job will not take longer than **15 minutes** or it will timeout.
+  This will happen irrespective of which action is currently running or how
+  much time that action has before it would timeout.
+
+* No one action (deploy, boot or test) will take longer than **5 minutes** or
+  that action will timeout. Each operation within the action (the action class)
+  will pass on the remaining time to the next operation. This is shown in the
+  logs as a decreasing ``timeout`` value with each ``start`` operation:
+
+  .. code-block:: none
+
+   start: 1.3.4 compress-overlay (timeout 00:04:06)
+   end: 1.3.4 compress-overlay (duration 00:00:03)
+   start: 1.3.5 persistent-nfs-overlay (timeout 00:04:03)
+
+* No one connection will take longer than **2 minutes** or the action will
+  timeout. Connection timeouts are between prompts, so this is the maximum
+  amount of time that any operation within the action can take before the
+  action determines that there is not going to be any more output and to fail
+  as a timeout. **Actions typically include multiple connections**, each with
+  the same timeout. Connection timeouts are not affected by previous
+  connections, each time a command is sent, the action expects to find the
+  prompt again within the same connection timeout.
+
+* All timeouts in this top level section can be overridden later in the test
+  job definition.
+
+.. seealso:: :ref:`test_shell_timeouts`
+
 .. _default_action_timeouts:
 
 Default action timeouts
