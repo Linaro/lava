@@ -1380,7 +1380,11 @@ def job_detail(request, pk):
                 'size_warning': job.size_limit,
                 'job_file_size': job_file_size,
             })
-            template = loader.get_template("lava_scheduler_app/job.html")
+            # Is it the old log format?
+            if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+                template = loader.get_template("lava_scheduler_app/job.html")
+            else:
+                template = loader.get_template("lava_scheduler_app/job_pipeline.html")
             return HttpResponse(template.render(data, request=request))
 
         if not job.failure_comment:

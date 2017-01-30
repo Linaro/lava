@@ -216,7 +216,12 @@
       <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
     </div>
     {% endif %}
-
+    {% if size_warning %}
+    <div class="alert alert-danger" id="size-warning">
+    <p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
+        It can only be downloaded.</p>
+    </div>
+    {% else %}
     <div class="affix">
       <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
       <div id="affix-full">
@@ -298,6 +303,7 @@
         </ul></div></div>
         </div></div>
      {% endif %}
+    {% endif %}  {# filesizelimit #}
   </div>
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
