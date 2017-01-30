@@ -274,6 +274,8 @@ class ExpectShellSession(Action):
         if not connection:
             raise JobError("No connection available.")
         if not connection.prompt_str:
+            self.logger.debug("Setting default test shell prompt")
             connection.prompt_str = self.parameters['prompts']
-        self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
+        connection.timeout = self.connection_timeout
+        self.wait(connection)
         return connection

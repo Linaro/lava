@@ -108,6 +108,7 @@ class BootloaderRetry(BootAction):
         self.description = "interactive uboot retry action"
         self.summary = "uboot commands with retry"
         self.type = "ipxe"
+        self.force_prompt = False
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -135,11 +136,6 @@ class BootloaderRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
-        self.logger.debug("Setting default test shell prompt")
-        if not connection.prompt_str:
-            connection.prompt_str = self.parameters['prompts']
-        connection.timeout = self.connection_timeout
-        self.wait(connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

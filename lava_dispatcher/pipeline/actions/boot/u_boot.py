@@ -159,12 +159,6 @@ class UBootRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
-        self.logger.debug("Setting default test shell prompt")
-        if not connection.prompt_str:
-            connection.prompt_str = self.parameters['prompts']
-        self.logger.debug(connection.prompt_str)
-        connection.timeout = self.connection_timeout
-        self.wait(connection)
         # Log an error only when needed
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)

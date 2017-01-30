@@ -188,8 +188,6 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        if not shell_connection.prompt_str and self.parameters['method'] == 'qemu':
-            shell_connection.prompt_str = self.parameters['prompts']
         shell_connection = super(CallQemuAction, self).run(shell_connection, max_end_time, args)
 
         # FIXME: tests with multiple boots need to be handled too.
