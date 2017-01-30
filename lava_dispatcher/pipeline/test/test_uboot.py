@@ -33,8 +33,8 @@ from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.action import Pipeline, JobError
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
@@ -45,7 +45,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -61,12 +61,15 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestUbootAction, self).setUp()
+        self.factory = UBootFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_simulated_action(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
@@ -77,8 +80,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(job.device['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'finalize']
@@ -99,8 +101,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual([], tftp.errors)
 
     def test_device_bbb(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         self.assertEqual(
             job.device['commands']['connect'],
             'telnet localhost 6000'
@@ -112,8 +113,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_uboot_action(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
@@ -221,8 +221,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
     def test_download_action(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -249,8 +248,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
     def test_reset_actions(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         uboot_action = None
         uboot_retry = None
         reset_action = None
@@ -320,8 +318,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         Loads a known YAML, adds a prompt to the dict and re-parses the job.
         Checks that the prompt is available in the expect_shell_connection action.
         """
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         job.validate()
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions
@@ -351,8 +348,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             self.assertNotEqual(check, expect.parameters)
 
     def test_xz_nfs(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
         # this job won't validate as the .xz nfsrootfs URL is a fiction
         self.assertRaises(JobError, job.validate)
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -362,8 +358,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
 
     def test_prefix(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/bbb-skip-install.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/bbb-skip-install.yaml')
         job.validate()
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
@@ -373,11 +368,10 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(nfs.param_key, 'nfsrootfs')
 
 
-class TestOverlayCommands(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestOverlayCommands(TestUbootAction):  # pylint: disable=too-many-public-methods
 
     def test_combined_ramdisk_nfs(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/bbb-ramdisk-nfs.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/bbb-ramdisk-nfs.yaml')
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
@@ -396,8 +390,7 @@ class TestOverlayCommands(unittest.TestCase):  # pylint: disable=too-many-public
         self.assertIsNotNone(overlay.parameters.get('ramdisk', None))
 
     def test_ramdisk_nfs_nomodules(self):
-        factory = Factory()
-        job = factory.create_bbb_job('sample_jobs/bbb-uinitrd-nfs.yaml')
+        job = self.factory.create_bbb_job('sample_jobs/bbb-uinitrd-nfs.yaml')
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]

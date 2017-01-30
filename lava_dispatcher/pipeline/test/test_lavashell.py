@@ -18,18 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import unittest
 import datetime
 from lava_dispatcher.pipeline.action import Action, Pipeline, JobError, Timeout
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
 
 
 # pylint: disable=duplicate-code,too-few-public-methods
 
 
-class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
@@ -73,7 +72,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertFalse(testshell.check_patterns('timeout', None, ''))
 
 
-class TestShellResults(unittest.TestCase):   # pylint: disable=too-many-public-methods
+class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
 

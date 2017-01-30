@@ -19,10 +19,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import unittest
-
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
@@ -35,7 +33,7 @@ def find_autologin(job):
     return False
 
 
-class TestMonitorPipeline(unittest.TestCase):
+class TestMonitorPipeline(StdoutTestCase):
 
     def test_autologin_normal_kvm(self):
         factory = Factory()

@@ -31,8 +31,8 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, PatternFixup
-from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
@@ -65,7 +65,7 @@ def check_missing_path(testcase, exception, path):
             testcase.fail(exception)
 
 
-class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
@@ -200,7 +200,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
-class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionSimple, self).setUp()
@@ -224,7 +224,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(deploy.pipeline.actions), 1)  # deploy without test only needs DownloaderAction
 
 
-class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionParams, self).setUp()
@@ -283,7 +283,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         )
 
 
-class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionRepeat, self).setUp()
@@ -312,11 +312,11 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(finalize), 1)
 
 
-class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestSkipInstall, self).setUp()
-        factory = BBBFactory()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
 
     def test_skip_install_params(self):
@@ -345,7 +345,7 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(single_testdef.skip_options, ['deps'])
 
 
-class TestDefinitions(unittest.TestCase):
+class TestDefinitions(StdoutTestCase):
     """
     For compatibility until the V1 code is removed and we can start
     cleaning up Lava Test Shell.
@@ -358,7 +358,7 @@ class TestDefinitions(unittest.TestCase):
         super(TestDefinitions, self).setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
-        factory = BBBFactory()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
 
     def test_pattern(self):

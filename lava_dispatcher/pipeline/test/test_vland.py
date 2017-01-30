@@ -22,19 +22,18 @@
 import os
 import yaml
 import socket
-import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
 
 # pylint: disable=superfluous-parens
 
 
-class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestVland, self).setUp()

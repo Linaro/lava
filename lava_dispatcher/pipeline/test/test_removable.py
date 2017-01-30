@@ -20,7 +20,7 @@
 
 import os
 import unittest
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -30,12 +30,13 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_job(self, sample_job, device_file, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), device_file))
         yaml = os.path.join(os.path.dirname(__file__), sample_job)
@@ -46,7 +47,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_device_parameters(self):
         """
@@ -136,7 +137,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
 
     def test_juno_deployment(self):
-        factory = Factory()
+        factory = RemovableFactory()
         job = factory.create_job('sample_jobs/juno-uboot-removable.yaml', '../devices/juno-uboot.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])

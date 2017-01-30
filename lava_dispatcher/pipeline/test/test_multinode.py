@@ -23,10 +23,8 @@ import os
 import yaml
 import uuid
 import json
-import logging
-import unittest
 from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
-from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction, CustomisationAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQemuRetry, CallQemuAction
@@ -46,7 +44,7 @@ from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 # pylint: disable=protected-access,superfluous-parens
 
 
-class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         """
@@ -550,7 +548,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         )
 
 
-class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     coord = None
 
@@ -558,6 +556,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
+        super(TestProtocol, self).setUp()
         self.job_id = "100"
         parameters = {
             'target': 'kvm01',
@@ -577,7 +576,6 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.coord = TestCoordinator()
         self.protocol = TestProtocol.FakeProtocol(self.coord, parameters,
                                                   self.job_id)
-        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     def _wrap_message(self, message, role):
         base_msg = {
@@ -717,7 +715,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             self.protocol(msg)
 
 
-class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDelayedStart(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     coord = None
 
@@ -725,6 +723,7 @@ class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-me
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
+        super(TestDelayedStart, self).setUp()
         job_id = "100"
         client_parameters = {
             'target': 'kvm01',

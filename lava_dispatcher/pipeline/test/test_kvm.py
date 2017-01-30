@@ -33,7 +33,7 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     InfrastructureError,
 )
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference, StdoutTestCase
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
@@ -47,7 +47,7 @@ from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 # pylint: disable=invalid-name
 
 
-class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestBasicJob(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_basic_actions(self):
         factory = Factory()
@@ -58,7 +58,7 @@ class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertIsInstance(job.pipeline, Pipeline)
 
 
-class TestKVMSimulation(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_kvm_simulation(self):  # pylint: disable=too-many-statements
         """
@@ -152,7 +152,7 @@ class TestKVMSimulation(unittest.TestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(len(pipe.describe()), 4)
 
 
-class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
@@ -220,7 +220,7 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertEqual(len(action.parameters['definitions']), 2)
 
 
-class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
@@ -246,7 +246,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
             self.assertEqual([], action.errors)
 
 
-class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKVMDownloadLocalDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
@@ -273,7 +273,7 @@ def prepare_test_connection():
     return FakeConnection(child, message_list)
 
 
-class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMInlineTestDeploy, self).setUp()
@@ -372,7 +372,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertEqual(set(testdef), set(expected_testdef))
 
 
-class TestAutoLogin(unittest.TestCase):
+class TestAutoLogin(StdoutTestCase):
 
     def setUp(self):
         super(TestAutoLogin, self).setUp()
@@ -501,7 +501,7 @@ class TestAutoLogin(unittest.TestCase):
         self.assertIn('root@debian:~#', conn.prompt_str)
 
 
-class TestChecksum(unittest.TestCase):
+class TestChecksum(StdoutTestCase):
 
     def setUp(self):
         super(TestChecksum, self).setUp()
@@ -619,7 +619,7 @@ class TestChecksum(unittest.TestCase):
         self.assertIsNotNone(sha256sum)
 
 
-class TestKvmGuest(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKvmGuest, self).setUp()
@@ -631,7 +631,7 @@ class TestKvmGuest(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(512, self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
 
 
-class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKvmUefi, self).setUp()
@@ -659,7 +659,7 @@ class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(uefi_dir, execute.sub_command)
 
 
-# class TestMonitor(unittest.TestCase):  # pylint: disable=too-many-public-methods
+# class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
 #
 #     def setUp(self):
 #         super(TestMonitor, self).setUp()

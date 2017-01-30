@@ -20,8 +20,8 @@
 
 
 import unittest
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
-from lava_dispatcher.pipeline.test.test_uboot import Factory
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 from lava_dispatcher.pipeline.actions.boot.kexec import BootKexecAction, KexecAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -29,10 +29,10 @@ from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnviro
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 
 
-class TestKExec(unittest.TestCase):
+class TestKExec(StdoutTestCase):
 
     def test_deploy_parameters(self):
-        factory = Factory()
+        factory = UBootFactory()
         job = factory.create_bbb_job('sample_jobs/kexec.yaml')
         self.assertIsNotNone(job)
 

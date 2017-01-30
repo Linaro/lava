@@ -20,13 +20,13 @@
 
 import os
 import time
-import unittest
 import pexpect
 from lava_dispatcher.pipeline.utils.constants import (
     KERNEL_FREE_UNUSED_MSG, KERNEL_PANIC_MSG,
     KERNEL_FREE_INIT_MSG
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
+from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
 
 
 class Kernel(object):  # pylint: disable=too-few-public-methods
@@ -75,10 +75,10 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
         pass
 
-    def force_prompt_wait(self, remaining=None):
+    def force_prompt_wait(self, remaining=None):  # pylint: disable=unused-argument
         return self.wait()
 
-    def wait(self, max_end_time=None):
+    def wait(self, max_end_time=None):  # pylint: disable=unused-argument
         ret = None
         try:
             ret = self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
@@ -87,9 +87,10 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         return ret
 
 
-class TestBootMessages(unittest.TestCase):
+class TestBootMessages(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        super(TestBootMessages, self).setUp()
         self.max_end_time = time.time() + 30
 
     def test_existing_prompt(self):

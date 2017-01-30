@@ -27,11 +27,12 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAction
+from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
 
 # Test the loading of test definitions within the deploy stage
 
 
-class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_new_device(self):
         kvm01 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
@@ -60,7 +61,7 @@ class FakeAction(Action):
         self.summary = "fake action"
 
 
-class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-public-methods
     """
     Test parsing of device configuration into job parameters
     """
@@ -129,7 +130,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertEqual(device.power_command, '')
 
 
-class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-methods
     """
     Test parsing of device environment support
     """
@@ -207,7 +208,7 @@ overrides:
         self.assertTrue(found)
 
 
-class TestCommand(unittest.TestCase):
+class TestCommand(StdoutTestCase):
 
     def test_silent(self):
         fake = FakeAction()

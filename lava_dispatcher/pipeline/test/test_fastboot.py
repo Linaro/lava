@@ -21,23 +21,23 @@
 import os
 import glob
 import unittest
-
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootAction
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_fastboot_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus4-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -57,11 +57,11 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestFastbootDeploy, self).setUp()
-        self.factory = Factory()
+        self.factory = FastBootFactory()
         self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml',
                                                     mkdtemp())
 
