@@ -1,15 +1,15 @@
 {% extends 'base.jinja2' %}
 {% block body %}
 device_type: arduino101
-
-{# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
-device_info: {{ device_info|default([{'board_id': '0000000000',
-             'usb_vendor_id': '8087', 'usb_product_id': '0aba'}]) }}
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '8087'
+usb_product_id: '0aba'
 
 actions:
   deploy:
     methods:
       image:
+        parameters:
 
   boot:
     connections:

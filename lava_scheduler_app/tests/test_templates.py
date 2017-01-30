@@ -560,17 +560,16 @@ class TestTemplates(unittest.TestCase):
 
     def test_arduino(self):
         data = """{% extends 'arduino101.jinja2' %}
-{% set device_info = [{'board_id': 'AE6642EK61804EZ', 'usb_vendor_id': '8087', 'usb_product_id': '0aba'}] %}"""
+{% set board_id = 'AE6642EK61804EZ' %}"""
         self.assertTrue(self.validate_data('staging-arduino101-01', data))
         test_template = prepare_jinja_template('staging-arduino101-01',
                                                data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
-        self.assertIsInstance(template_dict['device_info'], list)
-        self.assertEqual(template_dict['device_info'][0]['board_id'],
+        self.assertEqual(template_dict['board_id'],
                          'AE6642EK61804EZ')
-        self.assertEqual(template_dict['device_info'][0]['usb_vendor_id'],
+        self.assertEqual(template_dict['usb_vendor_id'],
                          '8087')
-        self.assertEqual(template_dict['device_info'][0]['usb_product_id'],
+        self.assertEqual(template_dict['usb_product_id'],
                          '0aba')
