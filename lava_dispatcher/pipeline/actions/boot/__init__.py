@@ -23,6 +23,7 @@ import re
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
+    JobError,
     Timeout
 )
 from lava_dispatcher.pipeline.logical import RetryAction
@@ -32,7 +33,9 @@ from lava_dispatcher.pipeline.utils.constants import (
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     BOOT_MESSAGE,
-    CPU_RESET_MESSAGE
+    CPU_RESET_MESSAGE,
+    LOGIN_INCORRECT_MSG,
+    LOGIN_TIMED_OUT_MSG
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
@@ -160,6 +163,7 @@ class AutoLoginAction(Action):
 
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
+
         # linesep should come from deployment_data as from now on it is OS dependent
         linesep = self.get_namespace_data(
             action='deploy-device-env',
@@ -174,38 +178,63 @@ class AutoLoginAction(Action):
         if not params:
             self.logger.debug("No login prompt set.")
             self.force_prompt = True
+            # If auto_login is not enabled, login will time out if login
+            # details are requested.
+            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
+            if 'success' in self.results:
+                check = self.results['success'].values()
+                if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
+                    raise JobError("auto_login not enabled but image requested login details.")
             # clear kernel message prompt patterns
-            connection.prompt_str = self.parameters.get('prompts', [])
+            connection.prompt_str = list(self.parameters.get('prompts', []))
             # already matched one of the prompts
         else:
             self.logger.info("Waiting for the login prompt")
             connection.prompt_str.append(params['login_prompt'])
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
 
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
+            if 'success' in self.results:
+                if LOGIN_INCORRECT_MSG in self.results['success'].values():
+                    self.logger.warning("Login incorrect message matched before the login prompt. Please check that the login prompt is correct. Retrying login...")
             self.logger.debug("Sending username %s", params['username'])
             connection.sendline(params['username'], delay=self.character_delay)
             # clear the kernel_messages patterns
-            connection.prompt_str = self.parameters.get('prompts', [])
+            connection.prompt_str = list(self.parameters.get('prompts', []))
 
             if 'password_prompt' in params:
                 self.logger.info("Waiting for password prompt")
                 connection.prompt_str.append(params['password_prompt'])
+                # This can happen if password_prompt is misspelled.
+                connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+
                 # wait for the password prompt
                 index = self.wait(connection, max_end_time)
                 if index:
                     self.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
+                    if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                        raise JobError("Password prompt not matched, please update the job definition with the correct one.")
                 self.logger.debug("Sending password %s", params['password'])
                 connection.sendline(params['password'], delay=self.character_delay)
                 # clear the Password pattern
-                connection.prompt_str = self.parameters.get('prompts', [])
+                connection.prompt_str = list(self.parameters.get('prompts', []))
 
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
+            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
             # wait for the login process to provide the prompt
             index = self.wait(connection, max_end_time)
             if index:
                 self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
+                if connection.prompt_str[index] == LOGIN_INCORRECT_MSG:
+                    self.errors = LOGIN_INCORRECT_MSG
+                    raise JobError(LOGIN_INCORRECT_MSG)
+                if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                    self.errors = LOGIN_TIMED_OUT_MSG
+                    raise JobError(LOGIN_TIMED_OUT_MSG)
 
         connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy

@@ -500,6 +500,29 @@ class TestAutoLogin(StdoutTestCase):
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
 
+    def test_autologin_login_incorrect(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['root@debian:~#']})
+        autologinaction.parameters.update({'auto_login': {
+            'login_prompt': 'debian login:',
+            'username': 'root'
+        }})
+
+        # initialise the first Connection object, a command line shell
+        shell_connection = prepare_test_connection()
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
+
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
+        self.assertIn('Login incorrect', conn.prompt_str)
+        self.assertIn('Login timed out', conn.prompt_str)
+
 
 class TestChecksum(StdoutTestCase):
 

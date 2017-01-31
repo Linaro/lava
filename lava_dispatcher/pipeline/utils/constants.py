@@ -127,6 +127,11 @@ KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
 # init dropping to a shell - often needs a sendline
 KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
 
+# Login incorrect message
+LOGIN_INCORRECT_MSG = 'Login incorrect'
+# Login incorrect message
+LOGIN_TIMED_OUT_MSG = 'Login timed out'
+
 # qemu installer size limit in Mb
 # (i.e. size * 1024 * 1024)
 INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
