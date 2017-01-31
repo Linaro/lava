@@ -107,7 +107,8 @@ setup(
     ],
     data_files=[
         ('/usr/share/lava-dispatcher/',
-            ['etc/tftpd-hpa']),
+            ['etc/tftpd-hpa',
+             'etc/dispatcher.yaml']),
         ('/etc/exports.d',
             ['etc/lava-dispatcher-nfs.exports']),
         ('/etc/modprobe.d',
