@@ -139,10 +139,10 @@ Finding your way around the files
   device type template.
 
 Information sources
-===================
+*******************
 
 The pipeline tests repository
------------------------------
+=============================
 
 This git repository holds working examples of a range of different jobs for a
 range of different devices. These jobs are routinely submitted as functional
@@ -158,7 +158,7 @@ Check the ``standard`` directory for tests which use
 :ref:`gold standard images <providing_gold_standard_files>`.
 
 The lava-dispatcher pipeline source code
-----------------------------------------
+========================================
 
 As well as the source code, the ``devices`` and ``device_types`` directories in
 this git repository contain YAML examples of device and device type
@@ -169,7 +169,7 @@ your own devices.
 https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
 
 The lava-server unit test support
----------------------------------
+=================================
 
 The `Jinja2`_ device-type templates here are used for the unit tests and also
 become the default :term:`device type` templates when the packages are built.
@@ -177,6 +177,28 @@ The ``devices`` directory contains working device dictionary examples for these
 device types.
 
 https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
+
+.. _dispatcher_configuration:
+
+Extra dispatcher configuration
+******************************
+
+It is possible to supply dispatcher-specific configuration along with each test
+job, using the support in ``/etc/lava-server/dispatcher.d/``. The master will
+read files in this directory which match the ``hostname`` of a known worker and
+send the configuration to that worker.
+
+An example file exists in ``/usr/share/lava-dispatcher/dispatcher.yaml`` on
+each worker.
+
+Current support includes:
+
+.. code-block:: yaml
+
+ # Only set this key, if this dispatcher has many IPs
+ #dispatcher_ip: <this-dispatcher-ip>
+
+.. seealso:: :ref:`keep_dispatcher_dumb`
 
 .. index:: pipeline device requirements
 
