@@ -201,6 +201,7 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
+        self.assertIsInstance(template_dict['parameters']['text_offset'], str)
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         for line in commands:
             if 'setenv initrd_high' in line:
