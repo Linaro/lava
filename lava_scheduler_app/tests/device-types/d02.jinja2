@@ -6,9 +6,6 @@ device_type: d02
 {% set baud_rate = baud_rate | default(115200) %}
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 
-{% block character_delays %}
-{% endblock %}
-
 {% block vland %}
 {% endblock %}
 
@@ -28,7 +25,6 @@ actions:
         parameters:
           bootloader_prompt: grub>
           boot_message: Linux version
-          send_char: True
         ramdisk:
           commands:
           - net_bootp

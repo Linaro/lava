@@ -41,15 +41,6 @@
 {% block body %}
 device_type: {{ device_type|default('uboot') }}
 
-{% if boot_delay or test_delay %}
-character_delays:
-{% if boot_delay %}
-  boot: {{ boot_delay|default(100) }}
-{% endif %}
-{% if test_delay %}
-  test: {{ test_delay|default(100) }}
-{% endif %}
-{% endif %}
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
@@ -144,7 +135,6 @@ actions:
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: "{{ interrupt_char|default(' ') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
-          send_char: False
           # method specific stanza
         nfs:
           commands:
