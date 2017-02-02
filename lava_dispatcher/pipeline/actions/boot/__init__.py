@@ -404,7 +404,7 @@ class BootloaderCommandsAction(Action):
         commands = self.get_namespace_data(action='bootloader-overlay', label=self.method, key='commands')
 
         for line in commands:
-            connection.sendline(line, delay=self.character_delay, send_char=True)
+            connection.sendline(line, delay=self.character_delay)
             if i != (len(commands)):
                 self.wait(connection)
                 i += 1

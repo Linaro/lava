@@ -72,7 +72,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         self.connected = True
         self.name = "fake-connection"
 
-    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
+    def sendline(self, s='', delay=0):  # pylint: disable=invalid-name
         pass
 
     def force_prompt_wait(self, remaining=None):  # pylint: disable=unused-argument

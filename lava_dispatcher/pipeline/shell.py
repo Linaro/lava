@@ -98,7 +98,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 
-    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
+    def sendline(self, s='', delay=0):  # pylint: disable=arguments-differ
         """
         Extends pexpect.sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
@@ -106,9 +106,10 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
 
         :param s: string to send
         :param delay: delay in milliseconds between sending each character
-        :param send_char: send one character or entire string
         """
+        send_char = False
         if delay:
+            send_char = True
             self.logger.debug({"sending": s + self.linesep, "delay": "%s millisecond" % delay})
         else:
             self.logger.debug({"sending": s + self.linesep})
@@ -119,7 +120,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.logger.debug("sendcontrol: %s", char)
         return super(ShellCommand, self).sendcontrol(char)
 
-    # FIXME: no sense in sending delay and send_char - if delay is non-zero, send_char needs to be True
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
