@@ -54,6 +54,12 @@ included in the ``login_prompt``:
     login_prompt: 'login:'
     username: root
 
+.. note:: If login_prompt is not matched during boot LAVA will send control
+   characters to the shell "thinking" that the kernel alert happened
+   which may result in incorrect login but after it recognizes the
+   ``Login incorrect`` message it will automatically try to log in
+   using provided credentials.
+
 .. index:: auto login username, boot auto login username
 
 .. _boot_auto_login_username:
@@ -82,6 +88,10 @@ must be specified:
     username: root
     password_prompt: 'Password:'
     password: rootme
+
+.. note:: If password_prompt is not matched during login or password is
+   required but not provided LAVA will recognize the ``Login timed out``
+   message, stop the execution of the job and log the error.
 
 .. index:: auto login password, boot auto login password
 
