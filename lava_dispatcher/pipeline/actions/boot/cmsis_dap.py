@@ -83,8 +83,10 @@ class BootCMSISRetry(RetryAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
         self.internal_pipeline.add_action(FlashCMSISAction())
-        self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
+        if method_params.get('resets_after_flash', True):
+            self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
         self.internal_pipeline.add_action(ConnectDevice())
 
 
