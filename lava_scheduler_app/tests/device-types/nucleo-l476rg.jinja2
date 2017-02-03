@@ -1,0 +1,23 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: nucleo-l476rg
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '0483'
+usb_product_id: '374b'
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      cmsis-dap:
+        parameters:
+          usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
+          resets_after_flash: false
+{% endblock -%}
