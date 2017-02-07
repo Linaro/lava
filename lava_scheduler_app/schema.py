@@ -216,7 +216,7 @@ def _job_timeout_schema():
 
 def visibility_schema():
     # possible values - 1 of 2 strings or a specified dict
-    return Schema(Any('public', 'personal', {'group': str}))
+    return Schema(Any('public', 'personal', {'group': [str]}))
 
 
 def _job_schema():

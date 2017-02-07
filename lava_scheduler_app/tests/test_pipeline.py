@@ -480,6 +480,23 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertFalse(job2.can_view(user))
         self.assertTrue(job2.can_view(user3))
 
+        job_data = yaml.load(self.factory.make_job_yaml())
+        job_data['visibility'] = {'group': [group1.name]}
+        param = job_data['visibility']
+        if isinstance(param, dict):
+            self.assertIn('group', param)
+            self.assertIsInstance(param['group'], list)
+            self.assertIn(group1.name, param['group'])
+            self.assertIn(group1, Group.objects.filter(name__in=param['group']))
+
+        job3 = TestJob.from_yaml_and_user(
+            yaml.dump(job_data), user2)
+        self.assertEqual(TestJob.VISIBLE_CHOICES[job3.visibility], TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP])
+        self.assertEqual(list(job3.viewing_groups.all()), [group1])
+        job3.refresh_from_db()
+        self.assertEqual(TestJob.VISIBLE_CHOICES[job3.visibility], TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP])
+        self.assertEqual(list(job3.viewing_groups.all()), [group1])
+
     # FIXME: extend once the master validation code is exposed for unit tests
     def test_compatibility(self):  # pylint: disable=too-many-locals
         user = self.factory.make_user()
