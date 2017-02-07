@@ -280,6 +280,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'fastboot_via_uboot': bool,
         'device_info': [dict],
         'flash_cmds_order': list,
         'device_type': All(str, Length(min=1)),
