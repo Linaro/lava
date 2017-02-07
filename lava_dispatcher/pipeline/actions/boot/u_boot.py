@@ -106,26 +106,6 @@ class UBootAction(BootAction):
         self.internal_pipeline.add_action(UBootRetry())
 
 
-class ExpectBootloaderSession(Action):
-    """
-    Waits for a shell connection to the device for the current job.
-    """
-
-    def __init__(self):
-        super(ExpectBootloaderSession, self).__init__()
-        self.name = "expect-bootloader-connection"
-        self.summary = "Expect a bootloader prompt"
-        self.description = "Wait for a u-boot shell"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(ExpectBootloaderSession, self).run(connection, max_end_time, args)
-        device_methods = self.job.device['actions']['boot']['methods']
-        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
-        self.logger.debug("%s: Waiting for prompt", self.name)
-        self.wait(connection)
-        return connection
-
-
 class UBootRetry(BootAction):
 
     def __init__(self):
@@ -139,9 +119,6 @@ class UBootRetry(BootAction):
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(UBootInterrupt())
-        # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(ExpectBootloaderSession())  # wait
-        # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
@@ -212,9 +189,7 @@ class UBootInterrupt(Action):
             for char in interrupt_control_chars:
                 connection.sendcontrol(char)
         else:
-            connection.sendline('%s\n' % interrupt_char)
-        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
-        self.wait(connection)
+            connection.sendline(interrupt_char)
         return connection
 
 

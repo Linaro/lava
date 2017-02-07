@@ -108,7 +108,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         :param delay: delay in milliseconds between sending each character
         """
         send_char = False
-        if delay:
+        if delay > 0:
             send_char = True
             self.logger.debug({"sending": s + self.linesep, "delay": "%s millisecond" % delay})
         else:

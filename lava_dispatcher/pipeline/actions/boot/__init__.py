@@ -398,7 +398,7 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
         connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
         self.wait(connection)
         i = 1
         commands = self.get_namespace_data(action='bootloader-overlay', label=self.method, key='commands')
@@ -414,6 +414,6 @@ class BootloaderCommandsAction(Action):
         # allow for auto_login
         if self.parameters.get('prompts', None):
             connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-            self.logger.debug("Changing prompt to %s", connection.prompt_str)
+            self.logger.debug("Changing prompt to boot_message %s", connection.prompt_str)
             self.wait(connection)
         return connection

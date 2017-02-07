@@ -132,7 +132,7 @@ class Connection(object):
 
     def sendline(self, line, delay=0, disconnecting=False):
         if self.connected:
-            self.raw_connection.sendline(line, delay)
+            self.raw_connection.sendline(line, delay=delay)
         elif not disconnecting:
             raise RuntimeError()
 
