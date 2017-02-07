@@ -71,6 +71,9 @@ SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
 # Kernel starting message
 BOOT_MESSAGE = 'Booting Linux'
 
+# CPU reset message
+CPU_RESET_MESSAGE = 'Resetting CPU'
+
 # Default shell prompt for AutoLogin
 DEFAULT_SHELL_PROMPT = 'lava-test: # '
 

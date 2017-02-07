@@ -31,7 +31,8 @@ from lava_dispatcher.pipeline.utils.constants import (
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
-    BOOT_MESSAGE
+    BOOT_MESSAGE,
+    CPU_RESET_MESSAGE
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
@@ -414,7 +415,18 @@ class BootloaderCommandsAction(Action):
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         # allow for auto_login
         if self.parameters.get('prompts', None):
-            connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-            self.logger.debug("Changing prompt to boot_message %s", connection.prompt_str)
-            self.wait(connection)
+            connection.prompt_str = [
+                self.params.get('boot_message', BOOT_MESSAGE),
+                CPU_RESET_MESSAGE
+            ]
+            self.logger.debug("Changing prompt to boot_message %s",
+                              connection.prompt_str)
+            index = self.wait(connection)
+            if connection.prompt_str[index] == CPU_RESET_MESSAGE:
+                self.logger.error("Bootloader reset detected: Bootloader "
+                                  "failed to load the required file into "
+                                  "memory correctly so the bootloader reset "
+                                  "the CPU.")
+                self.errors = "Bootloader reset detected"
+                raise InfrastructureError("Bootloader reset detected")
         return connection
