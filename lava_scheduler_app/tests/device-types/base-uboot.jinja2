@@ -133,7 +133,7 @@ actions:
           bootloader_prompt: {{ bootloader_prompt|default('=>') }}
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           # character needed to interrupt u-boot, single whitespace by default
-          interrupt_char: "{{ interrupt_char|default(' ') }}"
+          interrupt_char: "{{ interrupt_char|default('') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
           # method specific stanza
         nfs:
