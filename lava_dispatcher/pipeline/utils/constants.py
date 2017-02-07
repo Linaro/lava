@@ -161,3 +161,6 @@ DEFAULT_TESTDEF_NAME_CLASS = r'^[\w\d\_\-]+$'
 
 # Limit repetitive messages
 METADATA_MESSAGE_LIMIT = 8192
+
+# Versatile Express autorun interrupt character
+VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '

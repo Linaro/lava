@@ -25,6 +25,8 @@ import tarfile
 import tempfile
 import guestfs
 import subprocess
+import glob
+import logging
 from configobj import ConfigObj
 
 from lava_dispatcher.pipeline.action import JobError
@@ -269,3 +271,32 @@ def debian_package_version():
         # example version returned would be '2016.11'
         return deb_version.split('-')[0]
     return ''
+
+
+def copy_directory_contents(root_dir, dst_dir):
+    """
+    Copies the contents of the root directory to the destination directory
+    but excludes the root directory's top level folder
+    """
+    files_to_copy = glob.glob(os.path.join(root_dir, '*'))
+    logger = logging.getLogger('dispatcher')
+    for fname in files_to_copy:
+        logger.debug("copying %s to %s" % (fname, os.path.join(dst_dir, os.path.basename(fname))))
+        if os.path.isdir(fname):
+            shutil.copytree(fname, os.path.join(dst_dir, os.path.basename(fname)))
+        else:
+            shutil.copy(fname, dst_dir)
+
+
+def remove_directory_contents(root_dir):
+    """
+    Removes the contents of the root directory but not the root itself
+    """
+    files_to_remove = glob.glob(os.path.join(root_dir, '*'))
+    logger = logging.getLogger('dispatcher')
+    for fname in files_to_remove:
+        logger.debug("removing %s" % fname)
+        if os.path.isdir(fname):
+            shutil.rmtree(fname)
+        else:
+            os.remove(fname)

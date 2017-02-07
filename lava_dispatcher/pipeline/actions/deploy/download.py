@@ -222,7 +222,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if overlay:
             self.set_namespace_data(action='download_action', label=self.key, key='overlay', value=overlay)
         if compression:
-            if compression not in ['gz', 'bz2', 'xz']:
+            if compression not in ['gz', 'bz2', 'xz', 'zip']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
         if archive:
             if archive not in ['tar']:

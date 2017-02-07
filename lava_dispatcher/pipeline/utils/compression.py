@@ -22,6 +22,7 @@
 # ramdisk, always cpio, comp: gz,xz
 # rootfs, always tar, comp: gz,xz,bzip2
 # android images: tar + xz,bz2,gz, or just gz,xz,bzip2
+# vexpress recovery images: any compression though usually zip
 
 import os
 import subprocess
@@ -33,7 +34,7 @@ from lava_dispatcher.pipeline.action import (
 
 # https://www.kernel.org/doc/Documentation/xz.txt
 compress_command_map = {'xz': 'xz --check=crc32', 'gz': 'gzip', 'bz2': 'bzip2'}
-decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
+decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zip': 'unzip'}
 
 
 def compress_file(infile, compression):
