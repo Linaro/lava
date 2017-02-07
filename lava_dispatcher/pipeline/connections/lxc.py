@@ -48,8 +48,6 @@ class ConnectLxc(Action):
             return
         super(ConnectLxc, self).validate()
         self.errors = infrastructure_error('lxc-attach')
-        if 'prompts' not in self.parameters:
-            self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, max_end_time, args=None):
         lxc_name = self.get_namespace_data(

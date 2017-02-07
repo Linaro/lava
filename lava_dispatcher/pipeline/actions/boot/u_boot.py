@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.actions.boot import (
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
@@ -354,4 +355,53 @@ class UBootPrepareKernelAction(Action):
             self.set_namespace_data(
                 action='download_action',
                 label='file', key='kernel', value=new_kernel)
+        return connection
+
+
+class UBootEnterFastbootAction(BootAction):
+
+    def __init__(self):
+        super(UBootEnterFastbootAction, self).__init__()
+        self.name = "uboot-enter-fastboot"
+        self.description = "interactive uboot enter fastboot action"
+        self.summary = "uboot commands to enter fastboot mode"
+        self.params = {}
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        # establish a new connection before trying the reset
+        self.internal_pipeline.add_action(ResetDevice())
+        self.internal_pipeline.add_action(UBootInterrupt())
+        # need to look for Hit any key to stop autoboot
+        self.internal_pipeline.add_action(ExpectBootloaderSession())
+        self.internal_pipeline.add_action(ConnectLxc())
+
+    def validate(self):
+        super(UBootEnterFastbootAction, self).validate()
+        if 'u-boot' not in self.job.device['actions']['deploy']['methods']:
+            self.errors = "uboot method missing"
+
+        self.params = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']
+        if 'commands' not in self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']:
+            self.errors = "uboot command missing"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootEnterFastbootAction, self).run(connection,
+                                                               max_end_time,
+                                                               args)
+        connection.prompt_str = self.params['bootloader_prompt']
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.wait(connection)
+        i = 1
+        commands = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']['commands']
+
+        for line in commands:
+            connection.sendline(line, delay=self.character_delay)
+            if i != (len(commands)):
+                self.wait(connection)
+                i += 1
+
+        if self.errors:
+            self.logger.error(self.errors)
         return connection
