@@ -316,6 +316,8 @@ values will differ for every local LAVA instance.
     power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 04
     power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 04
 
+.. seealso:: :ref:`power_commands`
+
 These values are similar to the existing dispatcher configuration and those
 values can be transferred directly into the new structure.
 

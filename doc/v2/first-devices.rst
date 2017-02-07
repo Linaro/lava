@@ -400,6 +400,8 @@ devices of any type can be used in any one lab.
   ``latch`` into a particular bootloader mode or other state which prevents the
   automation from proceeding.
 
+  .. seealso:: :ref:`power_commands`
+
 * **Networking**
 
   #. **Ethernet** - all devices using ethernet interfaces in LAVA **must**
