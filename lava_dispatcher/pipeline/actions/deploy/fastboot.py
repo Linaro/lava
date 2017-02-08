@@ -134,7 +134,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             device_actions=['add', 'change', 'online']))
 
         fastboot_dir = self.mkdtemp()
-        for image in parameters['images'].keys():
+        image_keys = list(parameters['images'].keys())
+        image_keys.sort()
+        for image in image_keys:
             if image != 'yaml_line':
                 download = DownloaderAction(image, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
