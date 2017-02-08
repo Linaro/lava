@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import signal
 from time import sleep
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import (
@@ -27,7 +26,7 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
-from lava_dispatcher.pipeline.utils.constants import USB_SHOW_UP_TIMEOUT
+from lava_dispatcher.pipeline.utils.udev import get_usb_devices
 
 # pylint: disable=too-many-public-methods
 
@@ -49,8 +48,6 @@ class ConnectLxc(Action):
             return
         super(ConnectLxc, self).validate()
         self.errors = infrastructure_error('lxc-attach')
-        if 'prompts' not in self.parameters:
-            self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, max_end_time, args=None):
         lxc_name = self.get_namespace_data(
@@ -62,39 +59,14 @@ class ConnectLxc(Action):
             self.logger.debug("No LXC device requested")
             return connection
 
-        if 'device_path' in list(self.job.device.keys()):
-            device_path = self.job.device['device_path']
-            if not isinstance(device_path, list):
-                raise JobError("device_path should be a list")
-
-            if device_path:
-                # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
-                self.logger.info("[%s] Wait %d seconds for usb device to show up",
-                                 self.name, USB_SHOW_UP_TIMEOUT)
-                sleep(USB_SHOW_UP_TIMEOUT)
-
-                for path in device_path:
-                    path = os.path.realpath(path)
-                    if os.path.isdir(path):
-                        devices = os.listdir(path)
-                    else:
-                        devices = [path]
-
-                    for device in devices:
-                        device = os.path.join(path, device)
-                        if os.path.exists(device):
-                            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                            log = self.run_command(lxc_cmd)
-                            self.logger.debug(log)
-                            self.logger.debug("%s: devices added from %s",
-                                              lxc_name, path)
-                        else:
-                            self.logger.info("%s: skipped adding %s device",
-                                             lxc_name, device)
-            else:
-                self.logger.warning("device_path is None")
-        else:
-            self.logger.debug("No device path defined for this device.")
+        self.logger.info("Get USB device(s) ...")
+        device_paths = get_usb_devices(self.job)
+        for device in device_paths:
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
+                       os.path.realpath(device)]
+            log = self.run_command(lxc_cmd)
+            self.logger.debug(log)
+            self.logger.debug("%s: device %s added", lxc_name, device)
 
         connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
         if connection:
@@ -102,7 +74,6 @@ class ConnectLxc(Action):
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
         shell = self.shell_class("%s\n" % cmd, self.timeout,
                                  logger=self.logger)

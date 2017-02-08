@@ -20,7 +20,8 @@ actions:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
      dtb:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
-     nfs_url: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
+     persistent_nfs:
+         address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
      os: debian
 
   - boot:

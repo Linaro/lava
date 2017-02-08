@@ -1,0 +1,21 @@
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+- class: actions.boot.cmsis_dap.BootCMSIS
+  name: boot-cmsis
+  pipeline:
+  - class: actions.boot.cmsis_dap.BootCMSISRetry
+    name: boot-cmsis-retry
+    pipeline:
+    - {class: actions.boot.cmsis_dap.FlashCMSISAction, name: flash-cmsis}
+    - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
+- {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power_off}

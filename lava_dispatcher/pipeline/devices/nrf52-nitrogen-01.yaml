@@ -1,0 +1,26 @@
+device_type: nrf52-nitrogen
+
+commands:
+  connect: telnet lava-dev 7002
+
+board_id: '900902210FBCA560F262CA91'
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      pyocd:
+        parameters:
+          command:
+            pyocd-flashtool
+          options:
+          - -d debug
+          - -t nrf52
+          - -f 3000000

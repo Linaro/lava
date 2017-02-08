@@ -1,0 +1,85 @@
+device_type: x15
+job_name: lab-health-x15
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: x15.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-x15-test
+    template: debian
+    distribution: debian
+    release: jessie
+    arch: amd64
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'shell@am57xevm:/'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 15
+    to: fastboot
+    namespace: droid
+    images:
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/boot.img
+      userdata:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/userdata.img
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/system.img
+      cache:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/cache.img
+    os: debian
+
+- boot:
+    namespace: droid
+    prompts:
+    - 'root@(.*):/#'
+    - 'shell@am57xevm:/'
+    timeout:
+      minutes: 15
+    method: fastboot
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 10
+    definitions:
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/android/get-adb-serial.yaml
+      name: get-x15-serial
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests-lxc
+

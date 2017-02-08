@@ -20,25 +20,20 @@ context:
 
 actions:
 - deploy:
-    namespace: matt
     timeout:
       minutes: 3
     to: tmpfs
-    #type: monitor
     images:
         zephyr:
           image_arg: '-kernel {zephyr}'
           url: http://images.validation.linaro.org/functional-test-images/zephyr/qemu_cortex_m3/test_task-zephyr.bin
 
 - boot:
-    namespace: matt
-    #method: monitor
     method: qemu
     timeout:
       minutes: 2
 
 - test:
-    namespace: matt
     monitors:
     - name: Test Microkernel Task API
       start: tc_start()
@@ -47,11 +42,3 @@ actions:
       fixupdict:
         PASS: pass
         FAIL: fail
-
-metadata:
-  build-url: https://ci.linaro.org/jenkins/job/zephyr-upstream/PLATFORM=qemu_cortex_m3,ZEPHYR_GCC_VARIANT=gccarmemb,label=docker-xenial-amd64/470/
-  build-log: https://ci.linaro.org/jenkins/job/zephyr-upstream/PLATFORM=qemu_cortex_m3,ZEPHYR_GCC_VARIANT=gccarmemb,label=docker-xenial-amd64/470/consoleText
-  zephyr-gcc-variant: gccarmemb
-  platform: qemu_cortex_m3
-  git-url: https://git.linaro.org/zephyrproject-org/zephyr.git
-  git-commit: b0c0548a

@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
     JobError,
+    InfrastructureError,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
@@ -34,8 +35,8 @@ from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
     LXC_TEMPLATE_WITH_MIRROR,
-    USB_SHOW_UP_TIMEOUT,
 )
+from lava_dispatcher.pipeline.utils.udev import get_usb_devices
 
 
 def lxc_accept(device, parameters):
@@ -186,6 +187,28 @@ class LxcAddDeviceAction(Action):
         self.retries = 10
         self.sleep = 10
 
+    def validate(self):
+        super(LxcAddDeviceAction, self).validate()
+        if 'device_info' in self.job.device \
+           and type(self.job.device.get('device_info')) is not list:
+            self.errors = "device_info unset"
+        try:
+            if 'device_info' in self.job.device:
+                for usb_device in self.job.device['device_info']:
+                    board_id = usb_device.get('board_id', '')
+                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
+                    usb_product_id = usb_device.get('usb_product_id', '')
+                    if board_id == '0000000000':
+                        self.errors = "board_id unset"
+                    if usb_vendor_id == '0000':
+                        self.errors = 'usb_vendor_id unset'
+                    if usb_product_id == '0000':
+                        self.errors = 'usb_product_id unset'
+        except KeyError as exc:
+            raise InfrastructureError(exc)
+        except (TypeError):
+            self.errors = "Invalid parameters for %s" % self.name
+
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcAddDeviceAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
@@ -197,38 +220,13 @@ class LxcAddDeviceAction(Action):
             self.logger.debug("No LXC device requested")
             self.errors = "Unable to use fastboot"
             return connection
-        if 'device_path' in list(self.job.device.keys()):
-            device_path = self.job.device['device_path']
-            if not isinstance(device_path, list):
-                raise JobError("device_path should be a list")
 
-            if device_path:
-                # Wait USB_SHOW_UP_TIMEOUT seconds for usb device to show up
-                self.logger.info("[%s] Wait %d seconds for usb device to show up",
-                                 self.name, USB_SHOW_UP_TIMEOUT)
-                sleep(USB_SHOW_UP_TIMEOUT)
-
-                for path in device_path:
-                    path = os.path.realpath(path)
-                    if os.path.isdir(path):
-                        devices = os.listdir(path)
-                    else:
-                        devices = [path]
-
-                    for device in devices:
-                        device = os.path.join(path, device)
-                        if os.path.exists(device):
-                            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
-                                       device]
-                            log = self.run_command(lxc_cmd)
-                            self.logger.debug(log)
-                            self.logger.debug("%s: devices added from %s",
-                                              lxc_name, path)
-                        else:
-                            self.logger.info("%s: skipped adding %s device",
-                                             lxc_name, device)
-            else:
-                self.logger.warning("device_path is None")
-        else:
-            self.logger.error("No device path defined for this device.")
+        self.logger.info("Get USB device(s) ...")
+        device_paths = get_usb_devices(self.job)
+        for device in device_paths:
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
+                       os.path.realpath(device)]
+            log = self.run_command(lxc_cmd)
+            self.logger.debug(log)
+            self.logger.debug("%s: device %s added", lxc_name, device)
         return connection

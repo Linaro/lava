@@ -105,13 +105,6 @@ class GrubMainAction(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(GrubMainAction, self).run(connection, max_end_time, args)
-        if self.expect_shell:
-            self.logger.debug("Setting default test shell prompt")
-            if not connection.prompt_str:
-                connection.prompt_str = self.parameters['prompts']
-            connection.timeout = self.connection_timeout
-            connection.sendline("#")  # poke the shell so test-shell has something to match
-            self.wait(connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         return connection

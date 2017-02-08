@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import signal
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -131,7 +130,6 @@ class ConnectSsh(Action):
         if connection:
             self.logger.debug("Already connected")
             return connection
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
 
         params = self._check_params()

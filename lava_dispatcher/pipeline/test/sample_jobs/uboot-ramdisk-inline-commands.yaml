@@ -1,0 +1,65 @@
+# Sample JOB definition for a u-boot job
+
+device_type: beaglebone-black
+
+job_name: uboot-pipeline
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  connection:
+    minutes: 4
+  actions:
+    lava-test-shell:
+      minutes: 7
+
+priority: medium
+visibility: public
+
+# example old-style job: https://staging.validation.linaro.org/scheduler/job/113682/definition
+
+actions:
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     ramdisk:
+         url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+         header: u-boot
+         compression: gz
+     os: oe
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+  - boot:
+     method: u-boot
+     commands:
+     - a list
+     - of commands
+     - with a {KERNEL_ADDR} substitution
+     type: bootz
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

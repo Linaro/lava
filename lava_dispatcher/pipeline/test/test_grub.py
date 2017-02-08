@@ -27,8 +27,8 @@ from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
 from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
@@ -38,7 +38,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -54,12 +54,15 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestGrubAction, self).setUp()
+        self.factory = GrubFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_simulated_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
@@ -70,8 +73,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(job.device['device_type'], 'd02')
 
     def test_tftp_pipeline(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'grub-main-action', 'lava-test-retry', 'finalize']
@@ -89,8 +91,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('=', tftpd_dir())
 
     def test_device_d02(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
         self.assertEqual(
             job.device['commands']['connect'],
             'telnet ratchet 7003'
@@ -102,8 +103,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_grub_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('grub', job.device['actions']['boot']['methods'])
@@ -180,8 +180,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('devicetree (tftp,{SERVER_IP})/{DTB}', parsed)
 
     def test_download_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-nfs.yaml')
+        job = self.factory.create_job('sample_jobs/grub-nfs.yaml')
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
@@ -210,8 +209,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
     def test_reset_actions(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
         grub_action = None
         for action in job.pipeline.actions:
             action.validate()
@@ -226,8 +224,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn('bootloader-commands', names)
 
     def test_grub_with_monitor(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
+        job = self.factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
         job.validate()
         description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))

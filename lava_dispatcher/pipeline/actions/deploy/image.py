@@ -67,61 +67,6 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
 
-class DeployMonitoredAction(DeployAction):
-
-    def __init__(self):
-        super(DeployMonitoredAction, self).__init__()
-        self.name = 'deploy-monitor'
-        self.description = "deploy images without POSIX"
-        self.summary = "deploy without requiring POSIX"
-
-    def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        path = self.mkdtemp()
-        for image in parameters['images'].keys():
-            if image != 'yaml_line':
-                download = DownloaderAction(image, path)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
-
-
-class DeployMonitoredPyOCD(Deployment):
-    """
-    Strategy class for a PyOCD deployment not using
-    the POSIX Lava Test Shell overlays.
-    """
-    compatibility = 4
-
-    def __init__(self, parent, parameters):
-        super(DeployMonitoredPyOCD, self).__init__(parent)
-        self.action = DeployMonitoredAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        """
-        As a classmethod, this cannot set data
-        in the instance of the class.
-        This is *not* the same as validation of the action
-        which can use instance data.
-        """
-        if 'pyocd' not in device['actions']['deploy']['methods']:
-            return False
-        if parameters['to'] != 'tmpfs':
-            return False
-        # lookup if the job parameters match the available device methods
-        if 'images' not in parameters:
-            # python3 compatible
-            # FIXME: too broad
-            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
-            return False
-        if 'type' not in parameters.keys():
-            return False
-        return True
-
-
 # FIXME: needs to be renamed to DeployPosixImages
 class DeployImages(Deployment):
     """

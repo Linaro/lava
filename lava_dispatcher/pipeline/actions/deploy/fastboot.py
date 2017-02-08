@@ -20,7 +20,9 @@
 
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.power import PowerOn
+from lava_dispatcher.pipeline.power import (
+    PowerOn,
+)
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
@@ -38,6 +40,9 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
+
 
 # pylint: disable=too-many-return-statements
 
@@ -114,16 +119,24 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(CustomisationAction())
             self.internal_pipeline.add_action(OverlayAction())
-        if hasattr(self.job.device, 'power_state'):
-            if self.job.device.power_state in ['on', 'off']:
-                self.force_prompt = True
-                self.internal_pipeline.add_action(ConnectDevice())
-                self.internal_pipeline.add_action(PowerOn())
-        self.internal_pipeline.add_action(EnterFastbootAction())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        # Check if the device has a power command such as HiKey, Dragonboard,
+        # etc. against device that doesn't like Nexus, etc.
+        if self.job.device.get('fastboot_via_uboot', False):
+            self.internal_pipeline.add_action(ConnectDevice())
+            self.internal_pipeline.add_action(UBootEnterFastbootAction())
+        elif self.job.device.power_command:
+            self.force_prompt = True
+            self.internal_pipeline.add_action(ConnectDevice())
+            self.internal_pipeline.add_action(PowerOn())
+        else:
+            self.internal_pipeline.add_action(EnterFastbootAction())
+        self.internal_pipeline.add_action(WaitUSBDeviceAction(
+            device_actions=['add', 'change', 'online']))
 
         fastboot_dir = self.mkdtemp()
-        for image in parameters['images'].keys():
+        image_keys = list(parameters['images'].keys())
+        image_keys.sort()
+        for image in image_keys:
             if image != 'yaml_line':
                 download = DownloaderAction(image, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
@@ -135,6 +148,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                     if self.test_needs_deployment(parameters):
                         self.internal_pipeline.add_action(
                             DeployDeviceEnvironment())
+
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
 

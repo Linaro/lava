@@ -4,7 +4,7 @@
 # MASTER_URL="tcp://<lava-master-dns>:5556"
 # LOGGER_URL="tcp://<lava-master-dns>:5555"
 
-# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)
 # LOGLEVEL="DEBUG"
 
 # Encryption

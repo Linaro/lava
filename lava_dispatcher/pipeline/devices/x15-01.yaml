@@ -1,0 +1,68 @@
+commands:
+    connect: telnet localhost 7020
+    # Power commands can either be a list of strings or a string. A list gets
+    # executed sequentially.
+    hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+    power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+    power_off: '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 5 --delay 20'
+device_type: x15
+adb_serial_number: 100040061d1e00e2
+fastboot_serial_number: 100040061d1e00e2
+device_info : [{'board_id': '100040061d1e00e2'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
+                  'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
+                  'vendor', 'system', 'cache', 'userdata', ]
+fastboot_via_uboot: True
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+      u-boot:
+        parameters:
+          bootloader_prompt: '=>'
+          interrupt_prompt: 'Hit any key to stop autoboot: '
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: " "
+          send_char: False
+          # method specific stanza
+          fastboot:
+            commands:
+              - fastboot 1
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      fastboot-boot-image:
+      u-boot:
+        parameters:
+          bootloader_prompt: '=>'
+          interrupt_prompt: 'Hit any key to stop autoboot: '
+          boot_message: Starting kernel
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: " "
+          send_char: False
+          # method specific stanza
+          boot:
+            commands:
+              - boot
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60

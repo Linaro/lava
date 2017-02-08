@@ -148,7 +148,6 @@ class RepoAction(Action):
 
     @classmethod
     def select(cls, repo_type):
-
         candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(repo_type)]
 
@@ -239,12 +238,11 @@ class RepoAction(Action):
         The Connection stores raw results in the same test dict.
         The main TestAction can then process the results.
         """
-        val = \
-            {'os': testdef['metadata'].get('os', ''),
-             'devices': testdef['metadata'].get('devices', ''),
-             'environment': testdef['metadata'].get('environment', ''),
-             'branch_vcs': vcs_name,
-             'project_name': testdef['metadata']['name']}
+        val = {'os': testdef['metadata'].get('os', ''),
+               'devices': testdef['metadata'].get('devices', ''),
+               'environment': testdef['metadata'].get('environment', ''),
+               'branch_vcs': vcs_name,
+               'project_name': testdef['metadata']['name']}
 
         if commit_id is not None:
             val['commit_id'] = commit_id
@@ -256,9 +254,8 @@ class RepoAction(Action):
         else:
             pattern = self.default_pattern
             fixup = self.default_fixupdict
-        ret = {'testdef_pattern': {}}
-        ret['testdef_pattern'].update({'pattern': pattern})
-        ret['testdef_pattern'].update({'fixupdict': fixup})
+        ret = {'testdef_pattern': {'pattern': pattern,
+                                   'fixupdict': fixup}}
         self.set_namespace_data(action='test', label=self.uuid, key='testdef_pattern', value=ret)
         self.logger.debug("uuid=%s testdef=%s", self.uuid, ret)
 
@@ -290,9 +287,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def accepts(cls, repo_type):
-        if repo_type == 'git':
-            return True
-        return False
+        return repo_type == 'git'
 
     def run(self, connection, max_end_time, args=None):
         """
@@ -301,7 +296,6 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         /tmp/tmp.234Ga213/lava-kvm01/tests/3_smoke-tests-basic
         Also updates some basic metadata about the test definition.
         """
-
         # use the base class to populate the runner_path and overlay_path data into the context
         connection = super(GitRepoAction, self).run(connection, max_end_time, self.parameters)
 
@@ -321,7 +315,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
             'success': commit_id,
-            'repository': self.parameters['repository'], 'path': self.parameters['path']}
+            'repository': self.parameters['repository'],
+            'path': self.parameters['path']}
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -337,6 +332,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         return connection
 
 
+# TODO: merge with GitRepoAction
 class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
     Each repo action is for a single repository,
@@ -365,15 +361,12 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def accepts(cls, repo_type):
-        if repo_type == 'bzr':
-            return True
-        return False
+        return repo_type == 'bzr'
 
     def run(self, connection, max_end_time, args=None):
         """
         Clone the bazar repository into a directory
         """
-
         connection = super(BzrRepoAction, self).run(connection, max_end_time, self.parameters)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
@@ -422,15 +415,12 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def accepts(cls, repo_type):
-        if repo_type == 'inline':
-            return True
-        return False
+        return repo_type == 'inline'
 
     def run(self, connection, max_end_time, args=None):
         """
         Extract the inlined test definition and dump it onto the target image
         """
-
         # use the base class to populate the runner_path and overlay_path data into the context
         connection = super(InlineRepoAction, self).run(connection, max_end_time, self.parameters)
 
@@ -474,9 +464,7 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def accepts(cls, repo_type):
-        if repo_type == 'tar':
-            return True
-        return False
+        return repo_type == 'tar'
 
     def run(self, connection, max_end_time, args=None):
         """
@@ -526,9 +514,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def accepts(cls, repo_type):
-        if repo_type == 'url':
-            return True
-        return False
+        return repo_type == 'url'
 
     def run(self, connection, max_end_time, args=None):
         """Download the provided test definition file into tmpdir."""
@@ -711,7 +697,7 @@ class TestDefinitionAction(TestAction):
             with open('%s/%s/lava-test-runner.conf' % (overlay_base, stage), 'a') as runner_conf:
                 for handler in self.internal_pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
-                        self.logger.debug("Writing to runner_conf %s %s" % (self.name, stage))
+                        self.logger.debug("Writing to runner_conf %s %s", self.name, stage)
                         runner_conf.write(handler.runner)
 
         return connection
@@ -742,7 +728,6 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             self.errors = "Missing path in parameters"
 
     def handle_parameters(self, testdef):
-
         ret_val = ['###default parameters from test definition###\n']
         if 'params' in testdef:
             for def_param_name, def_param_value in list(testdef['params'].items()):
@@ -848,6 +833,39 @@ class TestInstallAction(TestOverlayAction):
                 self.skip_options = self.parameters['skip_install']
         super(TestInstallAction, self).validate()
 
+    def install_git_repos(self, testdef, runner_path):
+        repos = testdef['install'].get('git-repos', [])
+        for repo in repos:
+            commit_id = None
+            if isinstance(repo, str):
+                # tests should expect git clone https://path/dir/repo.git to create ./repo/
+                subdir = repo.replace('.git', '', len(repo) - 1)  # drop .git from the end, if present
+                dest_path = os.path.join(runner_path, os.path.basename(subdir))
+                commit_id = GitHelper(repo).clone(dest_path)
+            elif isinstance(repo, dict):
+                # TODO: We use 'skip_by_default' to check if this
+                # specific repository should be skipped. The value
+                # for 'skip_by_default' comes from job parameters.
+                url = repo.get('url', '')
+                branch = repo.get('branch', None)
+                if not url:
+                    raise TestError('Invalid git-repos dictionary in install definition.')
+                subdir = url.replace('.git', '', len(url) - 1)  # drop .git from the end, if present
+                destination = repo.get('destination', os.path.basename(subdir))
+                if destination:
+                    dest_path = os.path.join(runner_path, destination)
+                    if os.path.abspath(runner_path) != os.path.dirname(dest_path):
+                        raise RuntimeError(
+                            "Destination path is unacceptable %s" % destination)
+                    if os.path.exists(dest_path):
+                        raise TestError("Cannot mix string and url forms for the same repository.")
+                    commit_id = GitHelper(url).clone(dest_path, branch=branch)
+            else:
+                raise TestError("Unrecognised git-repos block.")
+            if commit_id is None:
+                raise RuntimeError(
+                    "Unable to clone %s" % str((repo)))
+
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-statements
         connection = super(TestInstallAction, self).run(connection, max_end_time, args)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
@@ -911,33 +929,7 @@ class TestInstallAction(TestOverlayAction):
                         install_file.write('%s\n' % cmd)
 
             if 'git-repos' not in self.skip_options:
-                repos = testdef['install'].get('git-repos', [])
-                for repo in repos:
-                    # tests should expect git clone https://path/dir/repo.git to create ./repo/
-                    subdir = repo.replace('.git', '', len(repo) - 1)  # drop .git from the end, if present
-                    dest_path = os.path.join(runner_path, os.path.basename(subdir))
-                    commit_id = None
-                    if isinstance(repo, str):
-                        commit_id = GitHelper(repo).clone(dest_path)
-                    if isinstance(repo, dict):
-                        # TODO: We use 'skip_by_default' to check if this
-                        # specific repository should be skipped. The value
-                        # for 'skip_by_default' comes from job parameters.
-                        url = repo.get('url', None)
-                        branch = repo.get('branch', None)
-                        destination = repo.get('destination', None)
-                        if destination:
-                            dest_path = os.path.join(runner_path, destination)
-                            if os.path.abspath(runner_path) != os.path.dirname(
-                                    dest_path):
-                                raise RuntimeError(
-                                    "Destination path is unacceptable %s" %
-                                    destination)
-                        commit_id = GitHelper(url).clone(dest_path,
-                                                         branch=branch)
-                    if commit_id is None:
-                        raise RuntimeError(
-                            "Unable to clone %s" % str((repo)))
+                self.install_git_repos(testdef, runner_path)
 
         self.results = {'success': self.test_uuid}
         return connection
@@ -1010,12 +1002,15 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('cd %s\n' % self.get_namespace_data(
                 action='uuid', label='runner_path', key=self.parameters['test_name']))
             runsh.write('UUID=`cat uuid`\n')
+            runsh.write('set +x\n')
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
+            runsh.write('set -x\n')
             steps = testdef.get('run', {}).get('steps', [])
             for cmd in steps:
                 if '--cmd' in cmd or '--shell' in cmd:
                     cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                 runsh.write('%s\n' % cmd)
+            runsh.write('set +x\n')
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
 
         self.results = {

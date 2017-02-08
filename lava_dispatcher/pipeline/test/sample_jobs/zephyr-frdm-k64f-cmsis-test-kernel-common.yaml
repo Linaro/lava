@@ -1,0 +1,39 @@
+# Zephyr JOB definition for QEMU
+device_type: frdm-k64f
+job_name: zephyr-test-kernel-common
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 3
+  actions:
+    wait-usb-serial:
+      seconds: 40
+
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+        zephyr:
+          url: http://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_k64f/latest/tests/kernel/common/test/zephyr.bin
+
+- boot:
+    method: cmsis-dap
+    timeout:
+      minutes: 10
+
+- test:
+    monitors:
+    - name: tests
+      start: Running test suite common_test
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: '(?P<result>(PASS|FAIL)) - (?P<test_case_id>.*)\.'
+      fixupdict:
+        PASS: pass
+        FAIL: fail

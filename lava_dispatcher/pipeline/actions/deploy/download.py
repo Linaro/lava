@@ -39,7 +39,6 @@ from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
     JobError,
-    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import RetryAction

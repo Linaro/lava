@@ -151,6 +151,10 @@ timeouts:
       seconds: 45
     uboot-retry:
       seconds: 90
+    auto-login-action:
+      seconds: 56
   connections:
     uboot-retry:
       seconds: 45
+    auto-login-action:
+      seconds: 88

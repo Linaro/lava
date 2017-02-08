@@ -21,22 +21,22 @@
 
 import os
 import yaml
-import unittest
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_uboot import Factory
+from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
 
 
-class TestMultiDeploy(unittest.TestCase):
+class TestMultiDeploy(StdoutTestCase):
 
     def setUp(self):
+        super(TestMultiDeploy, self).setUp()
         self.parameters = {}
         self.parsed_data = {  # fake parsed YAML
             'device_type': 'fake',
@@ -148,9 +148,10 @@ class TestMultiDeploy(unittest.TestCase):
         self.assertEqual(pipeline.actions[2].data, {'fake_deploy': pipeline.actions[2].parameters})
 
 
-class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        super(TestMultiDefinition, self).setUp()
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
@@ -178,10 +179,11 @@ class TestMultiDefinition(unittest.TestCase):  # pylint: disable=too-many-public
         self.assertIn('Test definition names need to be unique.', runscript.errors)
 
 
-class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        factory = Factory()
+        super(TestMultiUBoot, self).setUp()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job('sample_jobs/uboot-multiple.yaml')
         self.assertIsNotNone(self.job)
         self.assertIsNone(self.job.validate())

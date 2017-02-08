@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import re
 import pexpect
 
 from collections import OrderedDict
@@ -52,9 +53,8 @@ class TestMonitor(LavaTest):
                           'end', 'pattern']
         if 'monitors' in parameters:
             for monitor in parameters['monitors']:
-                if all([x for x in required_parms
-                        if x in monitor]):
-                            return True
+                if all([x for x in required_parms if x in monitor]):
+                    return True
         else:
             return False
 
@@ -84,7 +84,7 @@ class TestMonitorRetry(RetryAction):
         self.internal_pipeline.add_action(TestMonitorAction())
 
 
-class TestMonitorAction(TestAction):
+class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attributes
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
     Supports a pre-command-list of operations necessary on the
@@ -143,18 +143,17 @@ class TestMonitorAction(TestAction):
         return connection
 
     def _keep_running(self, test_connection, timeout=120):
-        self.logger.debug("test monitoring timeout: %d seconds" % timeout)
+        self.logger.debug("test monitoring timeout: %d seconds", timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event, test_connection):  # pylint: disable=too-many-branches
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
         Call from subclasses before checking subclass-specific events.
         """
         ret_val = False
-        results = {}
         if event == "end":
             self.logger.info("ok: end string found, lava test monitoring stopped")
             self.results.update({'status': 'passed'})
@@ -165,36 +164,45 @@ class TestMonitorAction(TestAction):
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
-            self.logger.debug(str(match))
             if 'result' in match:
                 if self.fixupdict:
                     if match['result'] in self.fixupdict:
                         match['result'] = self.fixupdict[match['result']]
                 if match['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    self.logger.error("error: bad test results: %s" % match['result'])
+                    self.logger.error("error: bad test results: %s", match['result'])
                 else:
                     if 'test_case_id' in match:
+                        case_id = match['test_case_id'].strip().lower()
+                        # remove special characters to form a valid test case id
+                        case_id = re.sub(r'\W+', '_', case_id)
+                        self.logger.debug('test_case_id: %s', case_id)
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
-                            'case': match['test_case_id'].lower(),
-                            'result': match['result']
+                            'case': case_id,
+                            'result': match['result'],
+                            'extra': {'test_case_id': match['test_case_id'].strip()}
                         }
                         if 'measurement' in match:
                             results.update({'measurement': match['measurement']})
                         if 'units' in match:
                             results.update({'units': match['units']})
-                        self.logger.results(results)
+                        self.logger.results(results)  # pylint: disable=no-member
             else:
                 if all(x in match for x in ['test_case_id', 'measurement']):
                     if match['measurement'] and match['test_case_id']:
+                        case_id = match['test_case_id'].strip().lower()
+                        # remove special characters to form a valid test case id
+                        case_id = re.sub(r'\W+', '_', case_id)
+                        self.logger.debug('test_case_id: %s', case_id)
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
-                            'case': match['test_case_id'].lower().strip(),
+                            'case': case_id,
                             'result': 'pass',
-                            'measurement': float(match['measurement'])
+                            'measurement': float(match['measurement']),
+                            'extra': {'test_case_id': match['test_case_id'].strip()}
                         }
                         if 'units' in match:
                             results.update({'units': match['units']})
-                        self.logger.results(results)
+                        self.logger.results(results)  # pylint: disable=no-member
             ret_val = True
         return ret_val

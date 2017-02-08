@@ -1,5 +1,8 @@
 # Configuration example
 # Each dispatcher might have a configuration file like this one.
+# Use the fully qualified hostname of the worker as the filename,
+# as shown in the lava-master logs, and create the file in
+# /etc/lava-server/dispatcher.d on the *master*.
 
 # Only set this key, if this dispatcher has many IPs
 #dispatcher_ip: <this-dispatcher-ip>

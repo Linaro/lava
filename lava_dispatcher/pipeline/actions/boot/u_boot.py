@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.actions.boot import (
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
@@ -105,26 +106,6 @@ class UBootAction(BootAction):
         self.internal_pipeline.add_action(UBootRetry())
 
 
-class ExpectBootloaderSession(Action):
-    """
-    Waits for a shell connection to the device for the current job.
-    """
-
-    def __init__(self):
-        super(ExpectBootloaderSession, self).__init__()
-        self.name = "expect-bootloader-connection"
-        self.summary = "Expect a bootloader prompt"
-        self.description = "Wait for a u-boot shell"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(ExpectBootloaderSession, self).run(connection, max_end_time, args)
-        device_methods = self.job.device['actions']['boot']['methods']
-        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
-        self.logger.debug("%s: Waiting for prompt", self.name)
-        self.wait(connection)
-        return connection
-
-
 class UBootRetry(BootAction):
 
     def __init__(self):
@@ -138,9 +119,6 @@ class UBootRetry(BootAction):
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(UBootInterrupt())
-        # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(ExpectBootloaderSession())  # wait
-        # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
@@ -159,12 +137,6 @@ class UBootRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
-        self.logger.debug("Setting default test shell prompt")
-        if not connection.prompt_str:
-            connection.prompt_str = self.parameters['prompts']
-        self.logger.debug(connection.prompt_str)
-        connection.timeout = self.connection_timeout
-        self.wait(connection)
         # Log an error only when needed
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
@@ -217,9 +189,7 @@ class UBootInterrupt(Action):
             for char in interrupt_control_chars:
                 connection.sendcontrol(char)
         else:
-            connection.sendline('%s\n' % interrupt_char)
-        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
-        self.wait(connection)
+            connection.sendline(interrupt_char)
         return connection
 
 
@@ -239,7 +209,7 @@ class UBootSecondaryMedia(Action):
         if 'media' not in self.job.device['parameters']:
             return
         media_keys = self.job.device['parameters']['media'].keys()
-        if self.parameters['commands'] not in media_keys:
+        if self.parameters['commands'] not in list(media_keys):
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"
@@ -360,4 +330,52 @@ class UBootPrepareKernelAction(Action):
             self.set_namespace_data(
                 action='download_action',
                 label='file', key='kernel', value=new_kernel)
+        return connection
+
+
+class UBootEnterFastbootAction(BootAction):
+
+    def __init__(self):
+        super(UBootEnterFastbootAction, self).__init__()
+        self.name = "uboot-enter-fastboot"
+        self.description = "interactive uboot enter fastboot action"
+        self.summary = "uboot commands to enter fastboot mode"
+        self.params = {}
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        # establish a new connection before trying the reset
+        self.internal_pipeline.add_action(ResetDevice())
+        # need to look for Hit any key to stop autoboot
+        self.internal_pipeline.add_action(UBootInterrupt())
+        self.internal_pipeline.add_action(ConnectLxc())
+
+    def validate(self):
+        super(UBootEnterFastbootAction, self).validate()
+        if 'u-boot' not in self.job.device['actions']['deploy']['methods']:
+            self.errors = "uboot method missing"
+
+        self.params = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']
+        if 'commands' not in self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']:
+            self.errors = "uboot command missing"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(UBootEnterFastbootAction, self).run(connection,
+                                                               max_end_time,
+                                                               args)
+        connection.prompt_str = self.params['bootloader_prompt']
+        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.wait(connection)
+        i = 1
+        commands = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']['commands']
+
+        for line in commands:
+            connection.sendline(line, delay=self.character_delay)
+            if i != (len(commands)):
+                self.wait(connection)
+                i += 1
+
+        if self.errors:
+            self.logger.error(self.errors)
         return connection

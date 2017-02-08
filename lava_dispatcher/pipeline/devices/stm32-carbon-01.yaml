@@ -1,0 +1,37 @@
+device_type: arduino101
+
+commands:
+  connect: telnet ratchet 7001
+  power_on: 'make this how to get into dfu'
+
+board_id: '3896387A3234'
+usb_vendor_id: '0483'
+usb_product_id: 'df11'
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      dfu:
+        parameters:
+          command:
+            dfu-util
+
+
+timeouts:
+  actions:
+    wait-dfu-device:
+      seconds: 20
+    flash-dfu:
+      seconds: 30
+  connections:
+    wait-dfu-device:
+      seconds: 20
+    flash-dfu:
+      seconds: 30
