@@ -6,9 +6,7 @@ Files: *
 Copyright: 2010-2016, Linaro Limited
 License: AGPL-3.0
 
-Files: lava_scheduler_app/management/commands/crowd.py
- lava_scheduler_app/management/commands/migrate-users-to-crowd.py
- share/add_device.py lava_server/settings/secret_key.py
+Files: share/add_device.py lava_server/settings/secret_key.py
  lava_server/settings/getsettings.py lava_server/settings/config_file.py
  version.py share/lava-mount-masterfs
 Copyright: 2010-2016, Linaro Limited
@@ -64,11 +62,7 @@ Copyright: 2016 Linaro Limited
 License: GPL-3.0+
 
 Files: dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js
- lava_scheduler_app/static/lava_scheduler_app/js/shCore.js
  lava_server/lava-server/js/jquery.cookie.js
- lava_scheduler_app/static/lava_scheduler_app/js/shBrushJScript.js
- lava_scheduler_app/static/lava_scheduler_app/css/shCore.css
- lava_scheduler_app/static/lava_scheduler_app/css/shThemeDefault.css
 Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
            2006 - 2008 Jörn Zaefferer
            2004-2010 Alex Gorbatchev
