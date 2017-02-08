@@ -347,9 +347,8 @@ class UBootEnterFastbootAction(BootAction):
                                           parameters=parameters)
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(UBootInterrupt())
         # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(ExpectBootloaderSession())
+        self.internal_pipeline.add_action(UBootInterrupt())
         self.internal_pipeline.add_action(ConnectLxc())
 
     def validate(self):

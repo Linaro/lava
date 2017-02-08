@@ -56,6 +56,15 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
                                output_dir=output_dir)
         return job
 
+    def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pg-x15-01_config.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        return job
+
     def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -170,3 +179,9 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
         self.assertEqual(wait.device_actions, ['add', 'change', 'online', 'remove'])
+
+    def test_x15_job(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
+        description_ref = pipeline_reference('x15.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
