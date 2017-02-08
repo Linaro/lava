@@ -28,16 +28,17 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import Timeout, JobError
 from lava_dispatcher.pipeline.shell import ShellSession, ShellCommand
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.menus.menus import SelectorMenu
 
 # pylint: disable=too-many-public-methods
 
 
-class TestSelectorMenu(unittest.TestCase):
+class TestSelectorMenu(StdoutTestCase):
 
     def setUp(self):
+        super(TestSelectorMenu, self).setUp()
         self.menu = SelectorMenu()
         self.menu.item_markup = (r'\[', r'\]')
         self.menu.item_class = '0-9'
@@ -74,7 +75,7 @@ class TestSelectorMenu(unittest.TestCase):
                     self.assertEqual(match.group(1), selection)
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -90,11 +91,11 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestUefi, self).setUp()
-        factory = Factory()
+        factory = MenuFactory()
         self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml', mkdtemp())
 
     def test_check_char(self):

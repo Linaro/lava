@@ -84,6 +84,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.cleaned = False
         # Root directory for the job tempfiles
         self.tmp_dir = None
+        # override in use
+        self.base_overrides = {}
 
     @property
     def context(self):
@@ -127,18 +129,30 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         else:
             self.logger.addHandler(logging.StreamHandler())
 
-    def mkdtemp(self, action_name):
+    def mkdtemp(self, action_name, override=None):
         """
         Create a tmp directory in DISPATCHER_DOWNLOAD_DIR/{job_id}/ because
         this directory will be removed when the job finished, making cleanup
         easier.
         """
-        if self.tmp_dir is not None:
-            # Use the cached version
-            base_dir = self.tmp_dir
+        if override is None:
+            if self.tmp_dir is None:
+                create_base_dir = True
+                base_dir = DISPATCHER_DOWNLOAD_DIR
+            else:
+                create_base_dir = False
+                base_dir = self.tmp_dir
         else:
+            if override in self.base_overrides:
+                create_base_dir = False
+                base_dir = self.base_overrides[override]
+            else:
+                create_base_dir = True
+                base_dir = override
+
+        if create_base_dir:
             # Try to create the directory.
-            base_dir = os.path.join(DISPATCHER_DOWNLOAD_DIR, str(self.job_id))
+            base_dir = os.path.join(base_dir, str(self.job_id))
             try:
                 os.makedirs(base_dir, mode=0o755)
             except OSError as exc:
@@ -146,8 +160,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                     # When running unit tests
                     base_dir = tempfile.mkdtemp(prefix='pipeline-')
                     atexit.register(shutil.rmtree, base_dir, ignore_errors=True)
-            # Save the path for the next calls
-            self.tmp_dir = base_dir
+            # Save the path for the next calls (only if that's not an override)
+            if override is None:
+                self.tmp_dir = base_dir
+            else:
+                self.base_overrides[override] = base_dir
 
         # Create the sub-directory
         tmp_dir = tempfile.mkdtemp(prefix=action_name + '-', dir=base_dir)
@@ -257,7 +274,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Cleanup now
         self.cleanup(self.connection, None)
 
-        if self.pipeline.errors and not error_msg:
+        if error_msg:
+            self.logger.error(error_msg)
+        elif self.pipeline.errors:
             self.logger.error("Errors detected: %s", self.pipeline.errors)
             return_code = -1
         else:
@@ -274,12 +293,21 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.logger.info("Cleaning after the job")
         self.pipeline.cleanup(connection, message)
 
+        for tmp_dir in self.base_overrides.values():
+            self.logger.info("Override tmp directory removed at %s", tmp_dir)
+            try:
+                shutil.rmtree(tmp_dir)
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:
+                    self.logger.error("Unable to remove the directory: %s",
+                                      exc.strerror)
+
         if self.tmp_dir is not None:
             self.logger.info("Root tmp directory removed at %s", self.tmp_dir)
             try:
                 shutil.rmtree(self.tmp_dir)
             except OSError as exc:
-                if exc.errno != errno.EEXIST:
+                if exc.errno != errno.ENOENT:
                     self.logger.error("Unable to remove the directory: %s",
                                       exc.strerror)
 

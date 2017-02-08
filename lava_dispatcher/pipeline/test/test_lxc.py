@@ -21,24 +21,24 @@
 import os
 import yaml
 import unittest
-
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.pipeline.actions.boot.lxc import BootAction
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/lxc-01.yaml'))
@@ -60,11 +60,11 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestLxcDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestLxcDeploy, self).setUp()
-        factory = Factory()
+        factory = LxcFactory()
         self.job = factory.create_lxc_job('sample_jobs/lxc.yaml', mkdtemp())
 
     def test_deploy_job(self):
@@ -119,11 +119,11 @@ class TestLxcDeploy(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 self.assertEqual(len(action.parameters['definitions']), 2)
 
 
-class TestLxcWithDevices(unittest.TestCase):
+class TestLxcWithDevices(StdoutTestCase):
 
     def setUp(self):
         super(TestLxcWithDevices, self).setUp()
-        factory = Factory()
+        factory = LxcFactory()
         self.job = factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
 
     def test_lxc_with_device(self):  # pylint: disable=too-many-locals

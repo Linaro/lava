@@ -62,7 +62,6 @@
       - {class: power.PDUReboot, name: pdu_reboot}
       - {class: power.PowerOn, name: power_on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
-    - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
@@ -97,7 +96,6 @@
       - {class: power.PDUReboot, name: pdu_reboot}
       - {class: power.PowerOn, name: power_on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
-    - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: power.FinalizeAction

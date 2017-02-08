@@ -33,24 +33,26 @@
   name: fastboot-deploy
   pipeline:
   - {class: actions.deploy.fastboot.EnterFastbootAction, name: enter_fastboot_action}
+  - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot_flash_action}
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot_boot
   pipeline:
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
+  - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry

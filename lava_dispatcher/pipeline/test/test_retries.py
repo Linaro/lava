@@ -18,9 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import time
-import unittest
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -35,6 +33,7 @@ from lava_dispatcher.pipeline.logical import (
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
 
 
 # pylint: disable=too-few-public-methods
@@ -50,7 +49,7 @@ class DummyLogger(object):
         pass
 
 
-class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
 
@@ -165,6 +164,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             return 'fake-check'
 
     def setUp(self):
+        super(TestAction, self).setUp()
         self.parameters = {
             "job_name": "fakejob",
             'output_dir': mkdtemp(),
@@ -251,7 +251,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             fakepipeline.run_actions(None, None)
 
 
-class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
 
@@ -369,6 +369,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
             return connection
 
     def setUp(self):
+        super(TestAdjuvant, self).setUp()
         self.parameters = {
             "job_name": "fakejob",
             'output_dir': mkdtemp(),
@@ -470,7 +471,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
 
 
-class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
 
@@ -583,6 +584,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
             return connection
 
     def setUp(self):
+        super(TestTimeout, self).setUp()
         self.parameters = {
             "job_name": "fakejob",
             'output_dir': mkdtemp(),

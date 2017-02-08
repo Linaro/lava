@@ -1,0 +1,73 @@
+
+commands:
+    connect: telnet localhost 7112
+    hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 19 --delay 20
+    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 19 --delay 20
+    power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 19 --delay 20
+    pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 7110 -m sync -u 12
+    pre_os_command: /usr/local/lab-scripts/usb_hub_control -p 7110 -m off -u 12
+device_info: [{'board_id': 'c2e02318'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor', 'system', 'cache', 'userdata']
+device_type: dragonboard-410c
+adb_serial_number: c2e02318
+fastboot_serial_number: c2e02318
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      fastboot-boot-image:
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download_retry:
+      minutes: 5
+    http_download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power_off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30

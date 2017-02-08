@@ -30,13 +30,13 @@ from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.strings import substitute
 
 
-class BootMonitorPyOCD(Boot):
+class PyOCD(Boot):
 
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     def __init__(self, parent, parameters):
-        super(BootMonitorPyOCD, self).__init__(parent)
-        self.action = BootMonitoredPyOCD()
+        super(PyOCD, self).__init__(parent)
+        self.action = BootPyOCD()
         self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -47,75 +47,77 @@ class BootMonitorPyOCD(Boot):
             return False
         if 'method' not in parameters:
             return False
-        if parameters['method'] != 'monitor':
+        if parameters['method'] != 'pyocd':
             return False
         if 'board_id' not in device:
             return False
         return True
 
 
-class BootMonitoredPyOCD(BootAction):
+class BootPyOCD(BootAction):
 
     def __init__(self):
-        super(BootMonitoredPyOCD, self).__init__()
-        self.name = 'boot_pyocd_image'
-        self.description = "boot monitored pyocd image with retry"
-        self.summary = "boot monitor with retry"
+        super(BootPyOCD, self).__init__()
+        self.name = 'boot-pyocd-image'
+        self.description = "boot pyocd image with retry"
+        self.summary = "boot pyocd image with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(BootMonitoredPyOCDRetry())
+        self.internal_pipeline.add_action(BootPyOCDRetry())
 
 
-class BootMonitoredPyOCDRetry(RetryAction):
+class BootPyOCDRetry(RetryAction):
 
     def __init__(self):
-        super(BootMonitoredPyOCDRetry, self).__init__()
-        self.name = 'boot_pyocd_image'
+        super(BootPyOCDRetry, self).__init__()
+        self.name = 'boot-pyocd-image'
         self.description = "boot pyocd image using the command line interface"
         self.summary = "boot pyocd image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(MonitorPyOCDAction())
+        self.internal_pipeline.add_action(FlashPyOCDAction())
         self.internal_pipeline.add_action(ConnectDevice())
 
 
-class MonitorPyOCDAction(Action):
+class FlashPyOCDAction(Action):
 
     def __init__(self):
-        super(MonitorPyOCDAction, self).__init__()
-        self.name = "monitor-pyocd"
-        self.description = "monitor pyocd to boot the image"
-        self.summary = "monitor pyocd to boot the image"
+        super(FlashPyOCDAction, self).__init__()
+        self.name = "flash-pyocd"
+        self.description = "flash pyocd to boot the image"
+        self.summary = "flash pyocd to boot the image"
         self.sub_command = []
 
     def validate(self):
-        super(MonitorPyOCDAction, self).validate()
+        super(FlashPyOCDAction, self).validate()
         boot = self.job.device['actions']['boot']['methods']['pyocd']
         pyocd_binary = boot['parameters']['command']
         self.errors = infrastructure_error(pyocd_binary)
-        self.sub_command = ['flock -o /var/lock/lava-pyocd.lck', pyocd_binary]
+        self.sub_command = [pyocd_binary]
         self.sub_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':
             self.errors = "board_id unset"
         substitutions = {}
-        commands = ['-b ' + self.job.device['board_id']]
-        namespace = self.parameters.get('namespace', 'common')
-        download_keys = self.data[namespace]['download_action']
-        for action in download_keys():
+        self.sub_command.extend(['--board', self.job.device['board_id']])
+        namespace = self.parameters['namespace']
+        for action in self.data[namespace]['download_action'].keys():
             image_arg = self.get_namespace_data(action='download_action', label=action, key='image_arg')
             action_arg = self.get_namespace_data(action='download_action', label=action, key='file')
-            if not image_arg or not action_arg:
-                self.errors = "Missing image_arg for %s. " % action
-                continue
-            substitutions["{%s}" % action] = action_arg
-            commands.append(image_arg)
-        self.sub_command.extend(substitute(commands, substitutions))
+            if image_arg:
+                if not isinstance(image_arg, str):
+                    self.errors = "image_arg is not a string (try quoting it)"
+                    continue
+                substitutions["{%s}" % action] = action_arg
+                self.sub_command.extend(substitute([image_arg], substitutions))
+            else:
+                self.sub_command.extend([action_arg])
         if not self.sub_command:
             self.errors = "No PyOCD command to execute"
 
     def run(self, connection, max_end_time, args=None):
+        connection = super(FlashPyOCDAction, self).run(connection, max_end_time, args)
         pyocd = ' '.join(self.sub_command)
         self.logger.info("PyOCD command: %s", pyocd)
         if self.run_command(pyocd.split(' ')):

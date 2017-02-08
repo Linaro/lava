@@ -20,17 +20,16 @@
 
 import os
 import yaml
-import unittest
 from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.strings import substitute
 
 
-class InstallerFactory(object):  # pylint: disable=too-few-public-methods
+class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_qemu_installer_job(self, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
@@ -45,7 +44,7 @@ class InstallerFactory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestIsoJob(unittest.TestCase):
+class TestIsoJob(StdoutTestCase):
 
     def setUp(self):
         factory = InstallerFactory()

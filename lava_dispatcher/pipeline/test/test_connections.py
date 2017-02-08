@@ -30,17 +30,18 @@ from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_ssh_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/ssh-host-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -60,11 +61,11 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestConnection, self).setUp()
-        factory = Factory()
+        factory = ConnectionFactory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
@@ -270,7 +271,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
 
 
-class TestTimeouts(unittest.TestCase):
+class TestTimeouts(StdoutTestCase):
     """
     Test action and connection timeout parsing.
     """
@@ -283,7 +284,7 @@ class TestTimeouts(unittest.TestCase):
         return job
 
     def test_action_timeout(self):
-        factory = Factory()
+        factory = ConnectionFactory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -295,6 +296,10 @@ class TestTimeouts(unittest.TestCase):
         self.assertNotEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertNotEqual(deploy.connection_timeout.duration, test_shell.connection_timeout)
         self.assertEqual(test_action.timeout.duration, 300)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        auto = [action for action in retry.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertEqual(auto.timeout.duration / 60, 9)  # 9 minutes in the job def
 
     def test_job_connection_timeout(self):
         """
@@ -317,6 +322,11 @@ class TestTimeouts(unittest.TestCase):
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
         self.assertEqual(test_shell.connection_timeout.duration, 20)
+        self.assertEqual(test_shell.timeout.duration, 420)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        auto = [action for action in retry.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertEqual(auto.connection_timeout.duration / 60, 12)
 
     def test_action_connection_timeout(self):
         """

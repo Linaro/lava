@@ -7,8 +7,8 @@ commands:
   power_on: curl -s -o /dev/null http://192.168.25.38/30000/09
 
 board_id: 'AE6642EK61803JN'
-usb_vendor_id: 8087
-usb_product_id: 0aba
+usb_vendor_id: '8087'
+usb_product_id: '0aba'
 
 actions:
   deploy:
@@ -24,17 +24,16 @@ actions:
         parameters:
           command:
             dfu-util
-      qemu:
-        
+
 
 timeouts:
   actions:
-    wait-usb-device:
-      seconds: 10
+    wait-dfu-device:
+      seconds: 20
     flash-dfu:
       seconds: 30
   connections:
-    wait-usb-device:
-      seconds: 10
+    wait-dfu-device:
+      seconds: 20
     flash-dfu:
       seconds: 30

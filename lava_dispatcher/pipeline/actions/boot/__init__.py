@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import pyudev
 import re
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -38,6 +37,7 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
+from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
@@ -215,42 +215,40 @@ class AutoLoginAction(Action):
 
 class WaitUSBDeviceAction(Action):
 
-    def __init__(self):
+    def __init__(self, device_actions):
         super(WaitUSBDeviceAction, self).__init__()
         self.name = "wait-usb-device"
         self.description = "wait for udev to see USB device"
         self.summary = self.description
-        self.board_id = '0000000000'
-        self.usb_vendor_id = '0000'
-        self.usb_product_id = '0000'
+        self.device_actions = device_actions
 
     def validate(self):
         super(WaitUSBDeviceAction, self).validate()
+        if not isinstance(self.device_actions, list):
+            self.errors = "device_actions is not a list"
+        if 'device_info' in self.job.device \
+           and not isinstance(self.job.device['device_info'], list):
+            self.errors = "device_info unset"
         try:
-            self.usb_vendor_id = self.job.device['usb_vendor_id']
-            self.usb_product_id = self.job.device['usb_product_id']
-            self.board_id = self.job.device['board_id']
-        except AttributeError as exc:
+            if 'device_info' in self.job.device:
+                for usb_device in self.job.device['device_info']:
+                    board_id = usb_device.get('board_id', '')
+                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
+                    usb_product_id = usb_device.get('usb_product_id', '')
+                    if board_id == '0000000000':
+                        self.errors = "board_id unset"
+                    if usb_vendor_id == '0000':
+                        self.errors = 'usb_vendor_id unset'
+                    if usb_product_id == '0000':
+                        self.errors = 'usb_product_id unset'
+        except KeyError as exc:
             raise InfrastructureError(exc)
-        except (KeyError, TypeError):
+        except (TypeError):
             self.errors = "Invalid parameters for %s" % self.name
-        if self.job.device['board_id'] == '0000000000':
-            self.errors = "board_id unset"
-        if self.job.device['usb_vendor_id'] == '0000':
-            self.errors = 'usb_vendor_id unset'
-        if self.job.device['usb_product_id'] == '0000':
-            self.errors = 'usb_product_id unset'
 
     def run(self, connection, max_end_time, args=None):
-        self.logger.info("Waiting for USB device... %s:%s %s", self.usb_vendor_id, self.usb_product_id, self.board_id)
-        context = pyudev.Context()
-        monitor = pyudev.Monitor.from_netlink(context)
-        monitor.filter_by('usb', 'usb_device')
-        for device in iter(monitor.poll, None):
-            if (device.get('ID_SERIAL_SHORT', '') == str(self.board_id)) \
-               and (device.get('ID_VENDOR_ID', '') == str(self.usb_vendor_id)) \
-               and (device.get('ID_MODEL_ID', '') == str(self.usb_product_id)):
-                break
+        self.logger.info("Waiting for USB device(s) ...")
+        usb_device_wait(self.job, device_actions=self.device_actions)
         return connection
 
 
@@ -279,16 +277,21 @@ class BootloaderCommandOverlay(Action):
         super(BootloaderCommandOverlay, self).validate()
         self.method = self.parameters['method']
         device_methods = self.job.device['actions']['boot']['methods']
-        if self.method not in self.job.device['actions']['boot']['methods']:
-            self.errors = "%s boot method not found" % self.method
-        if 'method' not in self.parameters:
-            self.errors = "missing method"
-        elif 'commands' not in self.parameters:
-            self.errors = "missing commands"
-        elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
-            self.errors = "Command not found in supported methods"
-        elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
-            self.errors = "No commands found in parameters"
+        if isinstance(self.parameters['commands'], list):
+            self.commands = self.parameters['commands']
+            self.logger.warning("WARNING: Using boot commands supplied in the job definition, NOT the LAVA device configuration")
+        else:
+            if self.method not in self.job.device['actions']['boot']['methods']:
+                self.errors = "%s boot method not found" % self.method
+            if 'method' not in self.parameters:
+                self.errors = "missing method"
+            elif 'commands' not in self.parameters:
+                self.errors = "missing commands"
+            elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
+                self.errors = "Command not found in supported methods"
+            elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
+                self.errors = "No commands found in parameters"
+            self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if 'use_bootscript' in self.parameters:
             self.use_bootscript = self.parameters['use_bootscript']
@@ -297,7 +300,6 @@ class BootloaderCommandOverlay(Action):
                 self.lava_mac = self.parameters['lava_mac']
             else:
                 self.errors = "lava_mac is not a valid mac address"
-        self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, max_end_time, args=None):
         """
@@ -347,14 +349,15 @@ class BootloaderCommandOverlay(Action):
                 'ramdisk_addr': ramdisk_addr
             }
 
-        nfs_url = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='nfsroot')
+        nfs_address = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
         nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
         if nfs_root:
             substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
-        elif nfs_url:
-            substitutions['{NFSROOTFS}'] = nfs_url
-            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_url', key='serverip')
+        elif nfs_address:
+            substitutions['{NFSROOTFS}'] = nfs_address
+            substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
+                action='persistent-nfs-overlay', label='nfs_address', key='serverip')
 
         substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
         substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
@@ -396,13 +399,13 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
         connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
         self.wait(connection)
         i = 1
         commands = self.get_namespace_data(action='bootloader-overlay', label=self.method, key='commands')
 
         for line in commands:
-            connection.sendline(line, delay=self.character_delay, send_char=True)
+            connection.sendline(line, delay=self.character_delay)
             if i != (len(commands)):
                 self.wait(connection)
                 i += 1
@@ -412,6 +415,6 @@ class BootloaderCommandsAction(Action):
         # allow for auto_login
         if self.parameters.get('prompts', None):
             connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-            self.logger.debug("Changing prompt to %s", connection.prompt_str)
+            self.logger.debug("Changing prompt to boot_message %s", connection.prompt_str)
             self.wait(connection)
         return connection

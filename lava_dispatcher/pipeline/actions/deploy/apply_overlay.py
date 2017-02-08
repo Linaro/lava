@@ -183,10 +183,19 @@ class ApplyOverlayTftp(Action):
         self.summary = "apply lava overlay test files"
         self.description = "unpack the overlay into the nfsrootfs or ramdisk"
 
+    def validate(self):
+        super(ApplyOverlayTftp, self).validate()
+        persist = self.parameters.get('persistent_nfs', None)
+        if persist:
+            if not isinstance(persist, dict):
+                self.errors = "Invalid persistent_nfs parameter."
+            if 'address' not in persist:
+                self.errors = "Missing address for persistent NFS"
+
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches
         connection = super(ApplyOverlayTftp, self).run(connection, max_end_time, args)
         directory = None
-        nfs_url = None
+        nfs_address = None
         overlay_file = None
         if self.parameters.get('nfsrootfs', None) is not None:
             if not self.parameters['nfsrootfs'].get('install_overlay', True):
@@ -195,18 +204,19 @@ class ApplyOverlayTftp(Action):
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             self.logger.info("Applying overlay to NFS")
-        elif self.parameters.get('nfs_url', None) is not None:
-            if not self.parameters['nfs_url'].get('install_overlay', True):
+        elif self.parameters.get('persistent_nfs', None) is not None:
+            if not self.parameters['persistent_nfs'].get('install_overlay', True):
                 self.logger.info("Skipping applying overlay to persistent NFS")
                 return connection
-            nfs_url = self.parameters.get('nfs_url')
-            self.logger.info("Applying overlay to persistent NFS")
+            overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+            nfs_address = self.parameters['persistent_nfs'].get('address')
+            self.logger.info("Applying overlay to persistent NFS address %s" % nfs_address)
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
             try:
-                subprocess.check_output(['mount', '-t', 'nfs', nfs_url, directory])
+                subprocess.check_output(['mount', '-t', 'nfs', nfs_address, directory])
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
         elif self.parameters.get('ramdisk', None) is not None:
@@ -233,12 +243,9 @@ class ApplyOverlayTftp(Action):
                 suffix = ''
             self.set_namespace_data(action=self.name, label='file', key='overlay',
                                     value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)))
-        if nfs_url:
-            subprocess.check_output(['umount', directory])
-            os.rmdir(directory)  # fails if the umount fails
         if overlay_file:
             untar_file(overlay_file, directory)
-            if nfs_url:
+            if nfs_address:
                 subprocess.check_output(['umount', directory])
                 os.rmdir(directory)  # fails if the umount fails
         return connection

@@ -26,7 +26,11 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import (
+    BootAction,
+    AutoLoginAction,
+    WaitUSBDeviceAction,
+)
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
@@ -67,16 +71,25 @@ class BootFastbootAction(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(FastbootBootAction())
+        if self.job.device.get('fastboot_via_uboot', False):
+            self.internal_pipeline.add_action(FastbootRebootAction())
+            self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                device_actions=['add', 'change', 'online']))
+        else:
+            self.internal_pipeline.add_action(FastbootBootAction())
+            # Check if the device has a power command such as HiKey,
+            # Dragonboard, etc. against device that doesn't like Nexus, etc.
+            if self.job.device.power_command:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add', 'change', 'online', 'remove']))
+            else:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add', 'change', 'online']))
         self.internal_pipeline.add_action(LxcAddDeviceAction())
-        # Check if the device has a power state such as HiKey, Dragonboard,
-        # etc. against device that doesn't like Nexus, etc. Currently, this is
-        # the way to distinguish between both these kinds of devices.
-        if hasattr(self.job.device, 'power_state'):
-            if self.job.device.power_state in ['on', 'off']:
-                self.internal_pipeline.add_action(AutoLoginAction())
-                self.internal_pipeline.add_action(ExpectShellSession())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        if self.job.device.power_command:
+            self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(ExpectShellSession())
+            self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class FastbootBootAction(Action):
@@ -121,6 +134,51 @@ class FastbootBootAction(Action):
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
+        else:
+            status = [status.strip() for status in command_output.split(
+                '\n') if 'finished' in status][0]
+            self.results = {'status': status}
+        res = 'failed' if self.errors else 'success'
+        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        return connection
+
+
+class FastbootRebootAction(Action):
+    """
+    This action calls fastboot to reboot into the system.
+    """
+
+    def __init__(self):
+        super(FastbootRebootAction, self).__init__()
+        self.name = "fastboot-reboot"
+        self.summary = "attempt to fastboot reboot"
+        self.description = "fastboot reboot into system"
+
+    def validate(self):
+        super(FastbootRebootAction, self).validate()
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(FastbootRebootAction, self).run(connection, max_end_time, args)
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.errors = "Unable to use fastboot"
+            return connection
+        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
+                          lxc_name)
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'reboot']
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'rebooting' not in command_output:
+            raise JobError("Unable to fastboot reboot: %s" % command_output)
         else:
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]

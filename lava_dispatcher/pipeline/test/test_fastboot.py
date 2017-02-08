@@ -21,25 +21,43 @@
 import os
 import glob
 import unittest
-
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootAction
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_fastboot_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus4-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        return job
+
+    def create_db410c_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        return job
+
+    def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pg-x15-01_config.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
@@ -57,17 +75,17 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestFastbootDeploy, self).setUp()
-        self.factory = Factory()
+        self.factory = FastBootFactory()
         self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml',
                                                     mkdtemp())
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
-        self.assertIsInstance(self.job.device['device_path'], list)
+        self.assertIsInstance(self.job.device['device_info'], list)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
@@ -76,6 +94,7 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
@@ -146,3 +165,23 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
             if action.name == 'test':
                 # get the action & populate it
                 self.assertEqual(len(action.parameters['definitions']), 2)
+
+    def test_udev_actions(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml', mkdtemp())
+        self.assertTrue(job.device.get('fastboot_via_uboot', True))
+        self.assertEqual('', self.job.device.power_command)
+        import yaml
+        with open('/tmp/test.yaml', 'w') as describe:
+            yaml.dump(job.pipeline.describe(False), describe)
+        description_ref = pipeline_reference('db410c.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
+        wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
+        self.assertEqual(wait.device_actions, ['add', 'change', 'online', 'remove'])
+
+    def test_x15_job(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
+        description_ref = pipeline_reference('x15.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))

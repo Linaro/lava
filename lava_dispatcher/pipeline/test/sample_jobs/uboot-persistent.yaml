@@ -18,7 +18,8 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfs_url: "127.0.0.1:/nfs/debian-jessie.armhf"
+     persistent_nfs:
+       address: "127.0.0.1:/nfs/debian-jessie.armhf"
      os: debian
      dtb:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb

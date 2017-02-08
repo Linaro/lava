@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import signal
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 from lava_dispatcher.pipeline.action import (
@@ -66,7 +65,6 @@ class ConnectDevice(Action):
 
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
-        signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
         shell = self.shell_class("%s\n" % command, self.timeout, logger=self.logger)
         if shell.exitstatus:

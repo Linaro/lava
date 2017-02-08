@@ -22,6 +22,7 @@ import os
 import sys
 import time
 import unittest
+import logging
 import simplejson
 import yaml
 
@@ -35,7 +36,16 @@ from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
 # pylint: disable=superfluous-parens,too-few-public-methods
 
 
-class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(StdoutTestCase, self).setUp()
+        logger = logging.getLogger('dispatcher')
+        logger.disabled = True
+        logger.propagate = False
+
+
+class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_references_a_device(self):
         device = object()
@@ -44,7 +54,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIs(cmd.device, device)
 
 
-class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeAction(Action):
 
@@ -59,6 +69,7 @@ class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-me
             raise NotImplementedError("invalid")
 
     def setUp(self):
+        super(StdoutTestCase, self).setUp()
         self.sub0 = TestPipelineInit.FakeAction()
         self.sub1 = TestPipelineInit.FakeAction()
 
@@ -67,9 +78,10 @@ class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-me
         self.assertIsNotNone(self.sub1)
 
 
-class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        super(TestJobParser, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
 
@@ -91,7 +103,7 @@ def pipeline_reference(filename):
         return yaml.load(f_ref)
 
 
-class TestValidation(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestValidation(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_action_is_valid_if_there_are_not_errors(self):  # pylint: disable=invalid-name
         action = Action()
@@ -121,6 +133,16 @@ class Factory(object):
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
+    def __init__(self):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logger.disabled = True
+        logger.propagate = False
+
     def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
@@ -149,7 +171,7 @@ class Factory(object):
         return job
 
 
-class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeAction(Action):
 
@@ -354,7 +376,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertNotEqual(test_action.get_namespace_data('common', 'unknown', 'simple'), 1)
 
 
-class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class KeepConnection(Action):
         def __init__(self):
@@ -377,6 +399,7 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
             return new_connection
 
     def setUp(self):
+        super(TestFakeActions, self).setUp()
         self.sub0 = TestPipeline.FakeAction()
         self.sub1 = TestPipeline.FakeAction()
 
@@ -412,7 +435,7 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIsNot(conn, pipe.run_actions(conn, None))
 
 
-class TestStrategySelector(unittest.TestCase):
+class TestStrategySelector(StdoutTestCase):
     """
     Check the lambda operation
     """

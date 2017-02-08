@@ -20,13 +20,12 @@
 
 import os
 import shutil
-import logging
 import subprocess
 import tempfile
 import unittest
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_uboot import Factory
+from lava_dispatcher.pipeline.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -35,11 +34,10 @@ from lava_dispatcher.pipeline.action import InfrastructureError, Action
 from lava_dispatcher.pipeline.utils import vcs
 
 
-class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
-        logging.disable(logging.CRITICAL)
+        super(TestGit, self).setUp()
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -70,7 +68,7 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
-        subprocess.check_output(['git', 'checkout', '-b', 'testing'])
+        subprocess.check_output(['git', 'checkout', '-q', '-b', 'testing'])
         with open('third.txt', 'w') as datafile:
             datafile.write("333")
         subprocess.check_output(['git', 'add', 'third.txt'])
@@ -82,7 +80,7 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
-        subprocess.check_output(['git', 'checkout', 'master'])
+        subprocess.check_output(['git', 'checkout', '-q', 'master'])
 
         # Go into the tempdir
         os.chdir('..')
@@ -127,11 +125,10 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
 
 @unittest.skipIf(infrastructure_error('bzr'), "bzr not installed")
-class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
-        logging.disable(logging.CRITICAL)
+        super(TestBzr, self).setUp()
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -192,7 +189,7 @@ class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', 'badrev')
 
 
-class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
     """
     Tests that constants set in the Job YAML as parameters in an Action stanza
     override the value of that constant set in the python code for each action
@@ -200,7 +197,7 @@ class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-metho
     """
     def setUp(self):
         super(TestConstants, self).setUp()
-        factory = Factory()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml', mkdtemp())
         self.assertIsNotNone(self.job)
 
@@ -239,12 +236,13 @@ class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-metho
         )
 
 
-class TestClasses(unittest.TestCase):
+class TestClasses(StdoutTestCase):
 
     def setUp(self):
-        from lava_dispatcher.pipeline.actions.deploy import strategies
-        from lava_dispatcher.pipeline.actions.boot import strategies
-        from lava_dispatcher.pipeline.actions.test import strategies
+        super(TestClasses, self).setUp()
+        from lava_dispatcher.pipeline.actions.deploy import strategies  # pylint: disable=unused-variable
+        from lava_dispatcher.pipeline.actions.boot import strategies  # pylint: disable=reimported
+        from lava_dispatcher.pipeline.actions.test import strategies  # pylint: disable=reimported
         self.allowed = [
             'commands',  # pipeline.actions.commands.py
             'deploy',

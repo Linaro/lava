@@ -1,0 +1,30 @@
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: parameters-test
+    description: "test commands for Linux Linaro ubuntu Images with parameters"
+    maintainer:
+        - neil.williams@linaro.org
+    os:
+        - ubuntu
+    scope:
+        - functional
+
+install:
+    git-repos:
+        - https://git.linaro.org/lava-team/refactoring.git
+        - url: https://git.linaro.org/qa/test-definitions.git
+          skip_by_default: False
+        - url: https://git.linaro.org/qa/test-definitions.git
+          destination:  lava-d-r
+          branch:       master
+run:
+    steps:
+        - echo "test1a:" "pass"
+        - lava-test-case echo1 --shell echo "test1b:" "pass"
+        - lava-test-case test3 --result pass
+
+parse:
+    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+    fixupdict:
+      pass: PASS
+      fail: UNKNOWN

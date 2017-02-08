@@ -31,8 +31,8 @@ from lava_dispatcher.pipeline.actions.boot import (
 )
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.action import Pipeline, JobError
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
@@ -43,12 +43,13 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
-class Factory(object):  # pylint: disable=too-few-public-methods
+class X86Factory(Factory):  # pylint: disable=too-few-public-methods
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
@@ -59,11 +60,14 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestBootloaderAction, self).setUp()
+        self.factory = X86Factory()
 
     def test_simulated_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         self.assertIsNotNone(job)
 
         description_ref = pipeline_reference('ipxe.yaml')
@@ -73,8 +77,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(job.device['device_type'], 'x86')
 
     def test_tftp_pipeline(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'bootloader-action', 'lava-test-retry', 'finalize']
@@ -90,8 +93,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
 
     def test_device_x86(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         self.assertEqual(
             job.device['commands']['connect'],
             'telnet bumblebee 8003'
@@ -102,8 +104,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(methods['ipxe']['parameters'].get('bootloader_prompt', None), 'iPXE>')
 
     def test_bootloader_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('ipxe', job.device['actions']['boot']['methods'])
@@ -181,8 +182,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIn("boot", commands)
 
     def test_download_action(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe.yaml')
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -209,8 +209,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
     def test_reset_actions(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe.yaml')
         bootloader_action = None
         bootloader_retry = None
         reset_action = None
@@ -246,8 +245,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         Loads a known YAML, adds a prompt to the dict and re-parses the job.
         Checks that the prompt is available in the expect_shell_connection action.
         """
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         retry = [action for action in bootloader.internal_pipeline.actions
@@ -277,8 +275,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             self.assertNotEqual(check, expect.parameters)
 
     def test_xz_nfs(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-nfs.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-nfs.yaml')
         # this job won't validate as the .xz nfsrootfs URL is a fiction
         self.assertRaises(JobError, job.validate)
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -288,8 +285,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
 
     def test_ipxe_with_monitor(self):
-        factory = Factory()
-        job = factory.create_job('sample_jobs/ipxe-monitor.yaml')
+        job = self.factory.create_job('sample_jobs/ipxe-monitor.yaml')
         job.validate()
         description_ref = pipeline_reference('ipxe-monitor.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))

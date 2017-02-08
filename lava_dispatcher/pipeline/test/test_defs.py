@@ -24,15 +24,19 @@ import sys
 import glob
 import stat
 import yaml
+import shutil
 import pexpect
+import tempfile
 import unittest
+import subprocess
+from nose.tools import nottest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, PatternFixup
-from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
@@ -65,7 +69,7 @@ def check_missing_path(testcase, exception, path):
             testcase.fail(exception)
 
 
-class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
@@ -200,7 +204,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
-class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionSimple, self).setUp()
@@ -224,12 +228,12 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(deploy.pipeline.actions), 1)  # deploy without test only needs DownloaderAction
 
 
-class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionParams, self).setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
     def test_job_without_tests(self):
         boot = finalize = None
@@ -282,8 +286,32 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
             }
         )
 
+    @unittest.skipIf(infrastructure_error('git'), 'git not installed')
+    def test_install_repos(self):
+        job = self.factory.create_kvm_job('sample_jobs/kvm-install.yaml')
+        allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
+        deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        test_install = [
+            action for action in testdef.internal_pipeline.actions
+            if action.name == 'test-install-overlay'][0]
+        self.assertIsNotNone(test_install)
+        yaml_file = os.path.join(os.path.dirname(__file__), './testdefs/install.yaml')
+        self.assertTrue(os.path.exists(yaml_file))
+        with open(yaml_file, 'r') as test_file:
+            testdef = yaml.safe_load(test_file)
+        repos = testdef['install'].get('git-repos', [])
+        self.assertIsNotNone(repos)
+        self.assertIsInstance(repos, list)
+        for repo in repos:
+            self.assertIsNotNone(repo)
+        runner_path = tempfile.mkdtemp()
+        test_install.install_git_repos(testdef, runner_path)
+        shutil.rmtree(runner_path)
 
-class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionRepeat, self).setUp()
@@ -312,11 +340,11 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(finalize), 1)
 
 
-class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestSkipInstall, self).setUp()
-        factory = BBBFactory()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
 
     def test_skip_install_params(self):
@@ -345,7 +373,21 @@ class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(single_testdef.skip_options, ['deps'])
 
 
-class TestDefinitions(unittest.TestCase):
+@nottest
+def check_rpcinfo():
+    """
+    Supports the unittest.SkipIf
+    needs to return True if skip, so
+    returns True on failure.
+    """
+    try:
+        subprocess.check_call(['/usr/sbin/rpcinfo'])
+    except (OSError, subprocess.CalledProcessError):
+        return True
+    return False
+
+
+class TestDefinitions(StdoutTestCase):
     """
     For compatibility until the V1 code is removed and we can start
     cleaning up Lava Test Shell.
@@ -358,7 +400,7 @@ class TestDefinitions(unittest.TestCase):
         super(TestDefinitions, self).setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
-        factory = BBBFactory()
+        factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
 
     def test_pattern(self):
@@ -385,12 +427,16 @@ class TestDefinitions(unittest.TestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    def test_definition_lists(self):
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero")
+    def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
-        definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        apply_o = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
+        self.assertIsNone(apply_o.parameters.get('nfs_url', None))
+        self.assertIsInstance(apply_o.parameters.get('persistent_nfs', None), dict)
+        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address', None), str)
         definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)

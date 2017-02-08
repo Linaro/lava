@@ -1,0 +1,105 @@
+device_type: dragonboard410c
+job_name: lxc-dragonboard-410c
+timeouts:
+  job:
+    minutes: 90
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: dragonboard-410c.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-db410c-test
+    template: debian
+    distribution: debian
+    release: jessie
+    arch: amd64
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'root@linaro-developer:~#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 35
+    to: fastboot
+    namespace: droid
+    images:
+      partition:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin
+      hyp:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/hyp.mbn
+      modem:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/NON-HLOS.bin
+      rpm:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/rpm.mbn
+      sbl1:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/sbl1.mbn
+      sec:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/sec.dat
+      tz:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/tz.mbn
+      aboot:
+        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn
+      boot:
+        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
+        compression: gz
+      rootfs:
+        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    namespace: droid
+    prompts:
+    - 'root@(.*):/#'
+    - 'root@linaro-developer:~#'
+    timeout:
+      minutes: 15
+    method: fastboot
+
+- test:
+    namespace: droid
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests-db-410c
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests-lxc
+

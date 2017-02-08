@@ -19,16 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import unittest
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
+from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy.testdef import get_deployment_testdefs
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 
 
-class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-methods
     """
     Test repeat counts with nested test stanzas
     """
