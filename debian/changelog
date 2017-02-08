@@ -1,6 +1,38 @@
 lava-dispatcher (2017.2-1) unstable; urgency=medium
 
   * New production release
+    ba779908 testdef: set "set +x" to avoid duplicating SIGNALS
+    ae2ab424 Enforce a download order to produce predictable pipelines
+    55a39b92 Remove unnecessary boot action in fastboot x15
+    81b178fc Add a unit test for db410c pipeline generation.
+    aa96dd75 LAVA-839 - Integrate X15 into LAVA V2
+    14acd2e2 Fixup u-boot prompts sanity
+    829fa380 Support CMSIS-DAP devices that do not reset after being flashed
+    d09a7a74 Simplify send_char support
+    031ba8e8 Ensure dispatcher.yaml is available for admins
+    aa6142dd Detect pdu controlled device using availability of power command.
+    c54891b9 Properly isolate stdout and stderr in unit tests
+    2d8b3110 Ensure lava-test-reference is available for release
+    555b6be0 Skip one test if lxc-info is not installed
+    fc42bd89 Fix support for persistent NFS
+    57c96b4b Remove duplicate prompt handling.
+    b0d39204 LAVA-844 allow string and dict for install: git-repos
+    76998b75 LAVA-830 Use the configured TFTP directory
+    1f01283f Partially revert a1658c by using a DEALER socket
+    9045292b Allow boot commands in the job definition
+    af34dfcb Extend the timeout unit tests to boot actions
+    9135c5aa Add support for CMSIS-DAP IoT devices and cleanup PyOCD
+    96dcc7d7 Only match udev events when device is added
+    a1658c7e slave: use a ROUTER socket to connect to master
+    35937826 Fix prospector warnings
+    e4e2fb97 etc/lava-slave: fix documentation of WARN log level
+    b45cb005 Remove unsed imports
+    93a282bf Job: log known error status when leaving
+    ee404039 lava-dispatch: allow to run without zmq logging
+    26daca49 lava-dispatch: work around a variable clash
+    c62e1ee9 LAVA-814 - Explore pyudev for usb device wait
+    989cd97b LAVA-827 ensure the case name is a valid URL
+    570c1b1e Do not reset the timeout before each connection
 
  -- Neil Williams <codehelp@debian.org>  Wed, 08 Feb 2017 16:00:24 +0000
 
