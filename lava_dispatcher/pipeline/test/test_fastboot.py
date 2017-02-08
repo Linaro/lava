@@ -47,6 +47,15 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
                                output_dir=output_dir)
         return job
 
+    def create_db410c_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        return job
+
     def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -147,3 +156,14 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             if action.name == 'test':
                 # get the action & populate it
                 self.assertEqual(len(action.parameters['definitions']), 2)
+
+    def test_udev_actions(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml', mkdtemp())
+        self.assertTrue(job.device.get('fastboot_via_uboot', True))
+        self.assertEqual('', self.job.device.power_command)
+        description_ref = pipeline_reference('db410c.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
+        wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
+        self.assertEqual(wait.device_actions, ['add', 'change', 'online', 'remove'])
