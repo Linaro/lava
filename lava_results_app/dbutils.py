@@ -140,7 +140,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         suite.save()
     testset = _check_for_testset(results, suite)
 
-    name = results["case"]
+    name = results["case"].strip()
     try:
         reverse('lava.results.testcase', args=[job.id, suite.name, name])
     except NoReverseMatch:
