@@ -1,0 +1,55 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: x15
+adb_serial_number: {{ adb_serial_number|default('0000000000') }}
+fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+
+# This attribute identifies whether a device should get into fastboot mode by
+# interrupting uboot and issuing commands at the bootloader prompt.
+fastboot_via_uboot: True
+
+{% block vland %}
+{#  #}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+      u-boot:
+      u-boot:
+        parameters:
+          bootloader_prompt: '=>'
+          interrupt_prompt: 'Hit any key to stop autoboot: '
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: " "
+          send_char: False
+          # method specific stanza
+          fastboot:
+            commands:
+              - fastboot 1
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      fastboot-boot-image:
+      u-boot:
+        parameters:
+          bootloader_prompt: '=>'
+          interrupt_prompt: 'Hit any key to stop autoboot: '
+          boot_message: Starting kernel
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: " "
+          send_char: False
+          # method specific stanza
+          boot:
+            commands:
+              - boot
+
+{% endblock %} {# end body block #}

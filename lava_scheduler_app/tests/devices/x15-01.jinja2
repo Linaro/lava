@@ -1,0 +1,13 @@
+{% extends 'x15.jinja2' %}
+{% set connection_command = 'telnet localhost 7020' %}
+{% set adb_serial_number = '100040061d1e00e2' %}
+{% set fastboot_serial_number = '100040061d1e00e2' %}
+{% set device_info = [{'board_id': '100040061d1e00e2'}] %}
+{% set hard_reset_command = ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff'] %}
+{% set power_on_command = ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff'] %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 5 --delay 20' %}
+{% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
+                           'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot',
+                           'boot', 'rootfs', 'vendor', 'system', 'cache',
+                           'userdata', ] %}
+{% set exclusive = 'True' %}

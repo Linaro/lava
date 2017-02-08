@@ -76,6 +76,9 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
+    TestSet,
+    TestSuite,
+    TestCase
 )
 
 from lava_scheduler_app.template_helper import expand_template
@@ -121,6 +124,7 @@ from lava_scheduler_app.tables import (
 
 # pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
+# pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
 
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
@@ -295,10 +299,13 @@ def index(request):
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     (num_online, num_not_retired) = _online_total()
-    health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
+    health_check_completed = health_jobs_in_hr().filter(
+        status=TestJob.COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
-    running_jobs_count = TestJob.objects.filter(status=TestJob.RUNNING).count()
-    active_devices_count = Device.objects.filter(status__in=[Device.RESERVED, Device.RUNNING]).count()
+    running_jobs_count = TestJob.objects.filter(
+        status=TestJob.RUNNING, actual_device__isnull=False).count()
+    active_devices_count = Device.objects.filter(
+        status__in=[Device.RESERVED, Device.RUNNING]).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -1286,9 +1293,12 @@ def job_detail(request, pk):
 
     is_favorite = False
     if request.user.is_authenticated():
-        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
-                                                            test_job=job)
-        is_favorite = testjob_user.is_favorite
+        try:
+            testjob_user = TestJobUser.objects.get(user=request.user,
+                                                   test_job=job)
+            is_favorite = testjob_user.is_favorite
+        except TestJobUser.DoesNotExist:
+            is_favorite = False
 
     template = "lava_scheduler_app/job.html"
     data = {
@@ -1370,7 +1380,11 @@ def job_detail(request, pk):
                 'size_warning': job.size_limit,
                 'job_file_size': job_file_size,
             })
-            template = loader.get_template("lava_scheduler_app/job.html")
+            # Is it the old log format?
+            if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+                template = loader.get_template("lava_scheduler_app/job.html")
+            else:
+                template = loader.get_template("lava_scheduler_app/job_pipeline.html")
             return HttpResponse(template.render(data, request=request))
 
         if not job.failure_comment:
@@ -2018,7 +2032,7 @@ def job_resubmit(request, pk):
                 template = loader.get_template("lava_scheduler_app/job_submit.html")
                 return HttpResponse(template.render(response_data, request=request))
 
-            except SubmissionError as e:
+            except Exception as e:
                 response_data["error"] = str(e)
                 response_data["definition_input"] = request.POST.get(
                     "definition-input")
@@ -2753,7 +2767,7 @@ def queue(request):
 class RunningView(LavaView):
 
     def get_queryset(self):
-        return DeviceType.objects.all().order_by('name')
+        return DeviceType.objects.filter(display=True).order_by('name')
 
 
 @BreadCrumb("Running", parent=index)
@@ -2763,11 +2777,18 @@ def running(request):
     config = RequestConfig(request, paginate={"per_page": running_ptable.length})
     config.configure(running_ptable)
 
+    retirements = []
+    for dt in running_data.get_queryset():
+        if not Device.objects.filter(~Q(status=Device.RETIRED) & Q(device_type=dt)):
+            retirements.append(dt.name)
+
     template = loader.get_template("lava_scheduler_app/running.html")
     return HttpResponse(template.render(
         {
             'running_table': running_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(running),
+            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
+            'retirements': retirements,
         },
         request=request))
 

@@ -1,0 +1,11 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttySC6') %}
+{% set baud_rate = baud_rate|default(38400) %}
+{% set device_type = "r8a7791-porter" %}
+{% set extra_kernel_args = "vmalloc=384M video=HDMI-A-1:1024x768-32@60" %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set bootm_kernel_addr = '0x40000000' %}
+{% set bootm_ramdisk_addr = '0x42000000' %}
+{% set bootm_dtb_addr = '0x41e00000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}

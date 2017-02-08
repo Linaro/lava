@@ -85,6 +85,7 @@ def create_metadata_store(results, job, level):
     """
     if 'extra' not in results:
         return None
+    logger = logging.getLogger('dispatcher-master')
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
     if not os.path.exists(os.path.dirname(meta_filename)):
@@ -95,8 +96,14 @@ def create_metadata_store(results, job, level):
         data.update(results['extra'])
     else:
         data = results['extra']
-    with open(meta_filename, 'w') as extra_store:
-        yaml.dump(data, extra_store)
+    try:
+        with open(meta_filename, 'w') as extra_store:
+            yaml.dump(data, extra_store)
+    except IOError as exc:  # LAVA-847
+        msg = "[%d] Unable to create metadata store: %s" % (job.id, exc)
+        logger.error(msg)
+        append_failure_comment(job, msg)
+        return None
     return meta_filename
 
 
@@ -133,7 +140,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         suite.save()
     testset = _check_for_testset(results, suite)
 
-    name = results["case"]
+    name = results["case"].strip()
     try:
         reverse('lava.results.testcase', args=[job.id, suite.name, name])
     except NoReverseMatch:

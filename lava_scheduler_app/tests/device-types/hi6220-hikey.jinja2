@@ -1,12 +1,9 @@
 {% extends 'base.jinja2' %}
+{% set boot_character_delay = 10 %}
 {% block body %}
 device_type: hi6220-hikey
 adb_serial_number: {{ adb_serial_number|default('0000000000') }}
 fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
-{% if device_path %}
-{# admins need to ensure that the device dictionary sets this as a list #}
-device_path: {{ device_path }}
-{% endif -%}
 {% block vland %}
 {#  #}
 {% endblock %}
@@ -35,8 +32,6 @@ actions:
           separator: ' '
           bootloader_prompt: "{{ bootloader_prompt|default('Start:') }}"
           boot_message: {{ boot_message|default("Booting Linux Kernel...") }}
-          send_char: True
-          character_delay: 10
         fastboot:
         - select:
             items:

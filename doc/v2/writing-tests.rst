@@ -178,6 +178,14 @@ Writing commands to run on the device
    baseline for the test is that all tests should be expected to pass on all
    supported platforms.
 
+#. Check for the existence of one of the LAVA test helper scripts, like
+   ``lava-test-case``, in the directories specified by the ``PATH`` environment
+   variable to determine how the script should report results. For example,
+   the script may want to use ``echo`` or ``print()`` when not running inside
+   LAVA and ``lava-test-case`` only when that script exists.
+
+   .. seealso:: :ref:`test_definition_portability`
+
 #. Avoid use of redirects and pipes inside the run steps. If the command needs
    to use redirection and/or pipes, use a custom script in your repository and
    execute that script instead. See :ref:`custom_scripts`
@@ -664,6 +672,27 @@ results - that's about all it should be doing outside of the
    definitions, just how to prepare test jobs.
 
 .. seealso:: :ref:`custom_scripts`
+
+Rely less on install: steps
+===========================
+
+To make your test portable, the goal of the ``install`` block of any test
+definition should be to get the raw LAVA environment up to the point where a
+developer would be ready to start test-specific operations. For example,
+installing package dependencies. Putting the operations into the ``run:`` steps
+also means that the test writer can report results from these operations.
+
+Whilst compatibility with V1 has been retained in most areas of the test shell,
+there can be differences in how the install steps behave between V1 and V2.
+Once V1 is removed, other changes are planned for the test shell to make it
+easier for test writers to create portable tests. It is possible that the
+``install:`` behaviour of the test shell could be restricted at this time.
+
+Consider moving ``install: git-repos:`` into a run step or directly into a
+:ref:`custom_script <custom_scripts>` along with the other setup (for example,
+switching branches or compiling the source tree). Then, when debugging the test
+job, a test writer can setup a similar environment and simply call exactly the
+same script.
 
 Use different test definitions for different test areas
 =======================================================

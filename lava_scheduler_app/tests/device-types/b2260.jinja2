@@ -3,12 +3,12 @@
 {% set console_device = console_device|default('ttyAS1') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set device_type = "b2260" %}
-{% set extra_kernel_args = "consoleblank=0 ip=::::stiH410::dhcp kmac=dev:eth0,addr:{{ macaddr }} mem=992M@0x40000000 vmalloc=256m clk_ignore_unused earlyprintk" %}
-{% set bootloader_prompt = 'B2260' %}
+{% set extra_kernel_args = "consoleblank=0 mem=992M@0x40000000 vmalloc=256m clk_ignore_unused earlyprintk" %}
+{% set bootloader_prompt = '=>' %}
 {% set boot_message = 'Starting kernel' %}
 {% set bootm_kernel_addr = '0x60000000' %}
 {% set bootm_ramdisk_addr = '0x45000000' %}
 {% set bootm_dtb_addr = '0x47000000' %}
 {% set base_ip_args = 'ip=::::stiH410::dhcp kmac=dev:eth0,addr:${ethaddr}' %}
-{% set uboot_needs_usb = true %}
 {% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_set_mac = true %}

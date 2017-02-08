@@ -1,7 +1,12 @@
 import os
+import sys
 import yaml
 import jinja2
 import unittest
+import logging
+import tempfile
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
 
@@ -76,7 +81,9 @@ class TestTemplates(unittest.TestCase):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
-{% set connection_command = 'adb -s R32D300FRYP shell' %}"""))
+{% set connection_command = 'adb -s R32D300FRYP shell' %}
+{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
+"""))
 
     def test_x86_template(self):
         data = """{% extends 'x86.jinja2' %}
@@ -194,6 +201,7 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
+        self.assertIsInstance(template_dict['parameters']['text_offset'], str)
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         for line in commands:
             if 'setenv initrd_high' in line:
@@ -210,9 +218,15 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
-        self.assertEqual(template_dict['device_path'], ['/dev/bus/usb/000'])
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertEqual(template_dict['device_info'][0]['board_id'],
+                         '0123456789')
 
     def test_panda_template(self):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set connection_command = 'telnet serial4 7012' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
@@ -475,6 +489,14 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
 
     def test_panda_lxc_template(self):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
@@ -484,9 +506,6 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        from lava_dispatcher.pipeline.parser import JobParser
-        from lava_dispatcher.pipeline.device import NewDevice
-        import tempfile
         fd, device_yaml = tempfile.mkstemp()
         os.write(fd, yaml.dump(template_dict))
         panda = NewDevice(device_yaml)
@@ -497,3 +516,79 @@ class TestTemplates(unittest.TestCase):
                                output_dir='/tmp')
         os.close(fd)
         job.validate()
+
+    def test_ethaddr(self):
+        data = """{% extends 'b2260.jinja2' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command reboot' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command off' %}
+{% set connection_command = 'telnet localhost 7114' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command on' %}
+{% set uboot_mac_addr = '00:80:e1:12:81:30' %}
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-b2260-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        ethaddr = False
+        for command in template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']:
+            if command.startswith('setenv ethaddr'):
+                self.assertEqual(command, 'setenv ethaddr 00:80:e1:12:81:30')
+                ethaddr = True
+        self.assertTrue(ethaddr)
+        ethaddr = False
+        for command in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if command.startswith('setenv ethaddr'):
+                self.assertEqual(command, 'setenv ethaddr 00:80:e1:12:81:30')
+                ethaddr = True
+        self.assertTrue(ethaddr)
+
+    def test_ip_args(self):
+        data = """{% extends 'arndale.jinja2' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
+{% set connection_command = 'telnet serial4 7010' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
+        self.assertTrue(self.validate_data('staging-arndale-01', data))
+        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for line in template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']:
+            if line.startswith("setenv nfsargs"):
+                self.assertIn('ip=:::::eth0:dhcp', line)
+                self.assertNotIn('ip=dhcp', line)
+            elif line.startswith("setenv bootargs"):
+                self.assertIn("drm_kms_helper.edid_firmware=edid-1920x1080.fw", line)
+
+    def test_arduino(self):
+        data = """{% extends 'arduino101.jinja2' %}
+{% set board_id = 'AE6642EK61804EZ' %}"""
+        self.assertTrue(self.validate_data('staging-arduino101-01', data))
+        test_template = prepare_jinja_template('staging-arduino101-01',
+                                               data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual(template_dict['board_id'],
+                         'AE6642EK61804EZ')
+        self.assertEqual(template_dict['usb_vendor_id'],
+                         '8087')
+        self.assertEqual(template_dict['usb_product_id'],
+                         '0aba')
+
+    def test_d02(self):
+        data = """{% extends 'd02.jinja2' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 07' %}
+{% set grub_installed_device = '(hd2,gpt1)' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 07' %}
+{% set connection_command = 'telnet localhost 7001' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 07' %}
+{% set boot_character_delay = 30 %}"""
+        self.assertTrue(self.validate_data('staging-d02-01', data))
+        test_template = prepare_jinja_template('staging-d02-01',
+                                               data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('character_delays', template_dict)
+        self.assertIn('boot', template_dict['character_delays'])
+        self.assertNotIn('test', template_dict['character_delays'])
+        self.assertEqual(30, template_dict['character_delays']['boot'])

@@ -41,7 +41,6 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
           boot_message: {{ boot_message|default('Linux version') }}
-          send_char: True
         ramdisk:
           commands:
           - insmod net

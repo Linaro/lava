@@ -39,6 +39,8 @@ Glossary of terms
 **M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`metadata` ]
 [ :term:`MultiNode` ]
 
+**N** [ :term:`namespace` ]
+
 **O** [ :term:`offline` ]
 
 **P** [ :term:`parameters` ] [ :term:`PDU` ] [ :term:`physical access` ]
@@ -330,9 +332,13 @@ Glossary of terms
 
   namespace
     A simple text label which is used to tie related actions together within a
-    test job submission where multiple deploy, boot or test actions are defined.
-    A common use case for namespaces is the use of :term:`lxc` in a test job where
-    some actions are to be executed inside the LXC and some on the :term:`DUT`.
+    test job submission where multiple deploy, boot or test actions are
+    defined. A common use case for namespaces is the use of :term:`lxc` in a
+    test job where some actions are to be executed inside the LXC and some on
+    the :term:`DUT`. The namespace is used to store the temporary locations of
+    files and other dynamic data during the running of the test job so that,
+    for example, the test runner is able to execute the correct test definition
+    YAML. Namespaces are set in the test job submission.
 
     .. seealso:: :term:`protocol`, :ref:`deploy_using_lxc` and
        :ref:`lava_lxc_protocol_android`
@@ -505,5 +511,4 @@ Glossary of terms
     worker. Developers can find more information in the
     :ref:`dispatcher_design` documentation.
 
-.. [#replacement] These items will be replaced in meaning or detail
-   after the migration to the new :ref:`dispatcher_design`.
+    .. seealso:: :ref:`zmq_curve`

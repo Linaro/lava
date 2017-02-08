@@ -231,9 +231,8 @@ def markup_metadata(key, value):
         return mark_safe("<a href='/scheduler/device_type/%s'>%s</a>" % (value, value))
     elif 'target.hostname' in key:
         return mark_safe("<a href='/scheduler/device/%s'>%s</a>" % (value, value))
-    elif 'definition.repository' in key:
-        repo = value.replace('git:', 'http:')
-        return mark_safe("<a href='%s'>%s</a>" % (repo, value))
+    elif 'definition.repository' in key and value.startswith('http'):
+        return mark_safe("<a href='%s'>%s</a>" % (value, value))
     else:
         return value
 
@@ -249,3 +248,13 @@ def can_view(record, user):
         return record.can_view(user)
     except:
         return False
+
+
+@register.filter()
+def split_definition(data):
+    return data.split('\n')
+
+
+@register.filter()
+def level_replace(level):
+    return level.replace('.', '-')

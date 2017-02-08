@@ -170,18 +170,23 @@ Therefore the recommentations are:
 Adding reviewers
 ================
 
-There is a convention within the LAVA software team that reviews which have no
-reviewers other than the automatic ``lavabot`` are ignored for review. This
-allows developers to share changes at an early stage when more than one
-developer is working on a single change or when another developer needs to base
-their changes on work being done by someone else.
+Reviews submitted for ``lava-server``, ``lava-dispatcher`` and ``lava-tool``
+will **automatically** have the LAVA software team added as reviewers when the
+review is first submitted.
 
-Therefore, until you add reviewers to your new review, it will not receive
-attention and is not going to be merged.
+Other reviewers can also be added to individual reviews. The Owner of the
+review is always added. Reviewers will get email for all changes relating to
+that review. All reviewers need to :ref:`register`, email will go to the
+``@linaro.org`` account of that reviewer.
 
-There is a shortcut available in gerrit to add the complete team as reviewers,
-simply click **Add** in the *Reviewers* section and enter ``lava-team`` in the
-drop-down box and confirm by pressing **Add** in the drop-down box.
+If you know that there are still problems to fix in the review, please use the
+Gerrit interface to reply to the review and give the review a score of ``-1``
+and sumamrise your concerns in the comment. This indicates to the software team
+that this review should not be considered for merging into master at this time.
+You may still get comments.
+
+Optionally, you can put ``[RFC]`` or similar at the start of your git commit
+message and then amend the message when the review is ready to merge.
 
 .. _developer_submitting_new_version:
 

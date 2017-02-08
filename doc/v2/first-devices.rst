@@ -260,6 +260,8 @@ values.
 .. seealso:: :ref:`health_checks` - each time a new device type is added to an
    instance, a health check test job needs to be defined.
 
+.. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`.
+
 Check existing instances
 ========================
 
@@ -328,6 +330,8 @@ Sometimes, the supplied bootloader **must** be modified to allow automation.
 Some devices need electrical modifications or specialised hardware to be
 automated.
 
+.. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`.
+
 Hints
 =====
 
@@ -395,6 +399,8 @@ devices of any type can be used in any one lab.
   ``power_off_command``). Sometimes this power leak can cause the device to
   ``latch`` into a particular bootloader mode or other state which prevents the
   automation from proceeding.
+
+  .. seealso:: :ref:`power_commands`
 
 * **Networking**
 

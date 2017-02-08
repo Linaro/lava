@@ -1,4 +1,5 @@
 {% extends 'base.jinja2' %}
+{% set boot_character_delay = 10 %}
 {% block body %}
 
 device_type: mustang-uefi
@@ -97,8 +98,6 @@ actions:
           label_class: '{{ base_label_class }}'
           bootloader_prompt: '{{ base_menu_bootloader_prompt }}'
           boot_message: '{{ base_menu_boot_message }}'
-          send_char: True  # redefine to take an integer? or drop and set True if the delay is defined?
-          character_delay: 10
         nfs:
 {% for test_dict in mustang_menu_list %}
 {% for select, action in test_dict.iteritems() %}

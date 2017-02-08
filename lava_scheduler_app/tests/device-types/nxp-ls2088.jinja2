@@ -1,0 +1,12 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS1') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "nxp-ls2088" %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600 nousb default_hugepagesz=2m hugepagesz=2m hugepages=256" %}
+{% set bootloader_prompt = '=>' %}
+{% set bootm_kernel_addr = '0x80080000' %}
+{% set bootm_ramdisk_addr = '0x91000000' %}
+{% set bootm_dtb_addr = '0x90000000' %}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '0xffffffffffffffff' %}
+{% set uboot_mkimage_arch = 'arm64' %}

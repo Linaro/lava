@@ -305,8 +305,9 @@ Other packages to consider:
 * ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring that
   devices within your lab keep time correctly can be important.
 
-* linaro-image-tools which provides ``linaro-media-create`` for tests which use
-  hardware packs from Linaro
+.. note:: There is no support in V2 for ``linaro-media-create`` to manipulate
+   hardware packs from Linaro, so this package can be removed once there are no
+   V1 devices on the worker.
 
 Installing the full lava set
 ----------------------------
@@ -321,9 +322,6 @@ The ``lava`` package installs support for:
 * ``lava-dev`` - scripts to build developer packages based on your current git
   tree of ``lava-server`` or ``lava-dispatcher``, including any local changes.
 
-* linaro-image-tools which provides ``linaro-media-create`` for tests which use
-  hardware packs from Linaro
-
 * ``vmdebootstrap`` for building your own Debian based KVM images.
 
 * ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to automatically
@@ -334,6 +332,10 @@ The ``lava`` package installs support for:
 
 * ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring that
   devices within your lab keep time correctly can be important.
+
+.. note:: There is no support in V2 for ``linaro-media-create`` to manipulate
+   hardware packs from Linaro, so this package can be removed once there are no
+   V1 devices on the worker.
 
 All of these packages can be installed separately alongside the main
 ``lava-server`` package, the ``lava`` package merely collects them into one

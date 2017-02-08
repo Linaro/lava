@@ -563,6 +563,8 @@ is taken on by the internal SignalDirector within each Connection. Unlike the
 old model, Connections have their own directors which takes the multinode and
 LMP workload out of the singlenode operations.
 
+.. _detecting_power_state:
+
 Detecting power state
 =====================
 
@@ -599,6 +601,43 @@ actions which initiate connections, check the power state of the device first.
     else:
         self.logger.warning("%s may need manual intervention to reboot" % hostname)
 
+.. index:: power commands
+
+.. _power_commands:
+
+Power Commands
+==============
+
+Some devices need a sequence of commands to change power state, some may
+require a ``sleep`` or similar delay. The power commands available in the
+:term:`device dictionary` support two uses:
+
+Simple string
+-------------
+
+This is the simplest form and is recommended for the majority of devices.
+
+.. code-block:: jinja
+
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
+
+Simple list
+-----------
+
+It can be useful to have a short list of simple commands, e.g. during device
+integration. In the final file used in the device dictionary, the entire list
+must be on a single line.
+
+.. code-block:: jinja
+
+ {% set hard_reset_command = ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff'] %}
+
+.. note:: Extending the list support to more than a simple list of sequential
+   commands is **not supported** and there is also **no support** for shell
+   operators like ``&&`` or ``||``. Any device which needs something more
+   complex **must** have custom scripts made available on the worker which
+   can do all the conditionals and logic. A script will also make the device
+   dictionary more readable.
 
 Using connections
 =================

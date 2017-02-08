@@ -127,10 +127,9 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(reverse('lava.results.testcase', args=[job.id, suite.name, test_dict['case']]))
         self.assertTrue(map_scanned_results(test_dict, job, None))
         # now break the reverse pattern
-        test_dict['case'] = 'unit-test\r\n'
-        pattern = '-_a-zA-Z0-9.\\(\\)+'
+        test_dict['case'] = 'unit test'  # whitespace in the case name
         matches = re.search(pattern, test_dict['case'])
-        self.assertIsNone(matches)  # fails
+        self.assertIsNotNone(matches)
         self.assertRaises(NoReverseMatch, reverse, 'lava.results.testcase', args=[job.id, suite.name, test_dict['case']])
         self.assertFalse(map_scanned_results(test_dict, job, None))
 

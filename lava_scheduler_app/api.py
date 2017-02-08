@@ -597,7 +597,7 @@ class SchedulerAPI(ExposedAPI):
         target_group, visibility, requested_device_id, pipeline_compatibility,
         submit_time, is_public, _old_status, actual_device_id, definition,
         sub_id, requested_device_type_id, _results_bundle_id, end_time,
-        group_id, absolute_url
+        group_id, absolute_url, submitter_username
         """
         self._authenticate()
         if not job_id:
@@ -606,6 +606,7 @@ class SchedulerAPI(ExposedAPI):
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
+            job.submitter_username = job.submitter.username
             job.absolute_url = job.get_absolute_url()
         except PermissionDenied:
             raise xmlrpclib.Fault(

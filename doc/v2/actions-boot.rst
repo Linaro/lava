@@ -26,13 +26,15 @@ responsible for providing a list of all possible prompts.
 
 .. _boot_auto_login:
 
-auto-login
+auto_login
 **********
 
 Some systems require the test job to specify a username and optionally a
 password to login. These values must be specified in the test job submission.
 If the system boots directly to a prompt without needing a login, the
-``auto-login`` details can be omitted from the test job submission.
+``auto_login`` details can be omitted from the test job submission.
+
+.. note:: The test job submission uses ``auto_login`` with underscore.
 
 .. index:: auto login prompt, boot auto login prompt
 
@@ -48,7 +50,7 @@ included in the ``login_prompt``:
 
 .. code-block:: yaml
 
-  auto-login:
+  auto_login:
     login_prompt: 'login:'
     username: root
 
@@ -75,7 +77,7 @@ must be specified:
 
 .. code-block:: yaml
 
-  auto-login:
+  auto_login:
     login_prompt: 'login:'
     username: root
     password_prompt: 'Password:'
@@ -112,7 +114,7 @@ included in the prompt, this can be included in the ``prompt``:
          prompts:
            - 'root@debian:~#'
 
-When using the :term:`lxc` :term:`protocol`, the hostname element of the 
+When using the :term:`lxc` :term:`protocol`, the hostname element of the
 prompt will vary::
 
 .. code-block:: yaml

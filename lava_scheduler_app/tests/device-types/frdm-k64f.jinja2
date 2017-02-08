@@ -1,12 +1,15 @@
 {% extends 'base.jinja2' %}
 {% block body %}
-device_type: nrf52-nitrogen
+device_type: frdm-k64f
 board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '0d28'
+usb_product_id: '0204'
 
 actions:
   deploy:
     methods:
       image:
+        parameters:
 
   boot:
     connections:
@@ -19,6 +22,9 @@ actions:
             pyocd-flashtool
           options:
           - -d {{ debug|default('debug') }}
-          - -t nrf52
+          - -t k64f
           - -f 3000000
+      cmsis-dap:
+        parameters:
+          usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
 {% endblock -%}

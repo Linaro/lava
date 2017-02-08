@@ -833,12 +833,11 @@ def device_dictionary_sequence():
         'hard_reset_command',
         'pre_power_command',
         'pre_os_command',
-        'device_path',
         'adb_command',
         'adb_serial_number',
         'fastboot_command',
         'fastboot_serial_number',
-        'board_id',
+        'device_info',
     ]
 
 

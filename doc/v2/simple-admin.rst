@@ -17,6 +17,7 @@ You need to be familiar with these sections:
 #. :ref:`logging_in` (as superuser)
 #. :ref:`device_types` and :ref:`device_type_elements`
 #. :ref:`first_devices`
+#. :ref:`admin_backups`
 
 .. seealso:: `Django documentation on the Django Admin
    Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
@@ -98,6 +99,8 @@ all of these rules.
    administrators should have access to **any** machine which itself has access
    to the serial console server and/or remote power control services.
    Typically, this will be controlled using SSH keys.
+
+   .. seealso:: :ref:`power_commands`
 
 #. **Subscribe** to the :ref:`mailing_lists` where you will find others who
    have setup their own LAVA instances. IRC is fine for quick queries but it is
@@ -260,12 +263,21 @@ The ongoing roles of administrators include:
   need to sometimes prevent users from making mistakes which are likely to take
   devices offline.
 
+* prepare and routinely test backups and disaster recovery support. Many lab
+  admin teams use ``salt`` or ``ansible`` or other configuration management
+  software. Always ensure you have a fast way of deploying a replacement worker
+  or master in case of hardware failure.
+
+  .. seealso:: :ref:`admin_backups` for details of what to backup and test.
+
 .. index:: best admin practices, best practices
 
 .. _best_admin_practices:
 
 Best practice
 *************
+
+.. seealso:: :ref:`admin_backups`
 
 * Before you upgrade the server or dispatcher, run the standard test jobs and a
   few carefully chosen stable jobs of your own as a set of *functional tests* -
@@ -303,6 +315,88 @@ Triage
 When you come across problems with your LAVA instance, there are some basic
 information sources, methods and tools which will help you identify the
 problem(s).
+
+Problems affecting test jobs
+============================
+
+Administrators may be asked to help with debugging test jobs or may need to
+use test jobs to investigate some administration problems, especially health
+checks.
+
+* Start with the :ref:`triage guidelines <debugging_test_failures>` if the
+  problem shows up in test jobs.
+* Check the :ref:`failure_comments` for information on exactly what happened.
+* Specific :ref:`lava_failure_messages` may relate directly to an admin issue.
+* Try to reproduce the failure with smaller and less complex test jobs, where
+  possible.
+
+Some failure comments in test jobs are directly related to administrative
+problems.
+
+.. _admin_test_power_fail:
+
+Power up failures
+-----------------
+
+* If the device dictionary contains errors, it is possible that the test job
+  is trying to turn on power to or read serial input from the wrong ports. This
+  will show up as a timeout when trying to connect to the device.
+
+  .. note:: Either the PDU command or the connection command could be wrong. If
+     the device previously operated normally, check the details of the power on
+     and connection commands in previous jobs. Also, try running the ``power
+     on`` command followed by the ``connection command`` manually (as root) on
+     the relevant worker.
+
+  * If the ports are correct, check that the specified PDU port is actually
+    delivering power when the state of the port is reported as ``ON`` and
+    switching off power when reporting ``OFF``. It is possible for individual
+    relays in a PDU to fail, reporting a certain state but failing to switch
+    the relay when the state is reported as changing. Once a PDU starts to fail
+    in this way, the PDU should be replaced as other ports may soon fail in the
+    same manner. (Checking the light or LED on the PDU port may be
+    insufficient. Try connecting a fail safe device to the port, like a desk
+    light etc. This may indicate whether the board itself has a hardware
+    problem.)
+
+  * If the command itself is wrong or returns non-zero, the test job will
+    report an Infrastructure Error
+
+* If the connection is refused, it is possible that the device node does not
+  (yet) exist on the worker. e.g. check the ``ser2net`` configuration and the
+  specified device node for the port being used.
+
+* Check whether the device needs specialised support to avoid issues with
+  power reset buttons or other hardware modes where the device does not start
+  to boot as soon as power is applied. Check that any such support is actually
+  working.
+
+.. index:: compatibility
+
+.. _compatibility_failures:
+
+Compatibility failures
+----------------------
+
+.. code-block:: none
+
+ Dispatcher unable to meet job compatibility requirement.
+
+The master uses the ``lava-dispatcher`` code on the server to calculate a
+compatibility number - the highest integer in the strategy classes used for
+that job. The worker also calculates the number and unless these match, the job
+is failed.
+
+The compatilibilty check allows the master to detect if the worker is running
+older software, allowing the job to fail early. Compatibility is changed when
+existing support is removed, rather than when new code is added. Admins remain
+responsible for ensuring that if a new device needs new functionality, the
+worker will need to be running updated code.
+
+.. seealso:: :ref:`missing_method_failures` and
+   :ref:`python_traceback_failures`. Also the :ref:`developer documentation
+   <compatibility_developer>` for more information on how developers set the
+   compatibility for test jobs.
 
 .. _admin_debug_information:
 
