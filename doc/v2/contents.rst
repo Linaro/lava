@@ -147,6 +147,7 @@ LAVA administration guide
    :maxdepth: 1
 
    simple-admin
+   admin-backups
    advanced-installation
    growing_your_lab
    pipeline-server

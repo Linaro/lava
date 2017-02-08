@@ -211,6 +211,8 @@ device dictionary        next testjob submission
 \*_daemon/\*.py          ``$ sudo service lava-server restart``
 ====================== ==============================================
 
+.. _migrating_postgresql_versions:
+
 Migrating postgresql versions
 *****************************
 

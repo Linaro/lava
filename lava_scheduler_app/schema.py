@@ -153,7 +153,8 @@ def _recipient_schema():
 
 def _notify_criteria_schema():
     return Schema({
-        Required('status'): Any('complete', 'incomplete', 'canceled'),
+        Required('status'): Any('running', 'complete', 'incomplete',
+                                'canceled'),
         'type': Any('progression', 'regression')
     }, extra=True)
 
@@ -215,7 +216,7 @@ def _job_timeout_schema():
 
 def visibility_schema():
     # possible values - 1 of 2 strings or a specified dict
-    return Schema(Any('public', 'personal', {'group': str}))
+    return Schema(Any('public', 'personal', {'group': [str]}))
 
 
 def _job_schema():
@@ -279,11 +280,15 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'fastboot_via_uboot': bool,
+        'device_info': [dict],
         'flash_cmds_order': list,
-        'board_id': str,
-        'device_path': [str],
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
+        'board_id': str,
+        'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
+        'usb_product_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
+        'usb_serial_driver': str,
         'actions': _device_actions_schema(),
         'timeouts': _device_timeouts_schema()
     })

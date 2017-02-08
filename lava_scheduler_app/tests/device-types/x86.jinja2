@@ -33,7 +33,6 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('iPXE>') }}
           boot_message: {{ boot_message|default('Linux version') }}
-          send_char: True
           use_bootscript: {{ use_bootscript|default(False)}}
           lava_mac: {{ lava_mac_address|default('00:90:05:af:00:7d') }}
         nfs:

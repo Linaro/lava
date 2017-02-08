@@ -52,7 +52,7 @@
         {% else %}
         <tr>
         {% endif %}
-          <td>{{ action.0 }}</td>
+          <td><a href="{% url 'lava.scheduler.job.definition' job.id %}#pipeline:{{ action.0 }}">{{ action.0 }}</a></td>
           <td>{{ action.1 }}</td>
           <td>{{ action.2 }}</td>
           <td>{{ action.3|floatformat:"0" }}</td>

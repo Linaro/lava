@@ -245,3 +245,127 @@ Resources
 The Linaro lab in Cambridge has provided most of the real-world experience used
 to construct this guide. If you are looking for guidance about how to grow your
 lab, please talk to us on the :ref:`lava_devel` mailing list.
+
+.. index:: scaling
+
+.. _lab_scaling:
+
+How many devices is too many for one worker?
+============================================
+
+* Consider the possible rate at which the devices may fail as well as the
+  simple number of units. Most devices used in LAVA are prototypes or developer
+  kits. The failure rate will vary enormously between labs according to the
+  number and types of devices as well as the kind of test jobs being run but is
+  likely to be much higher than any other machines in the same location not
+  used in LAVA.
+
+* The number of remote workers is typically determined by physical connectivity
+  and I/O. Adding extra USB connectivity can be a particular problem. Most
+  powered commodity USB hubs will fail in subtle ways under load. If the worker
+  has limited USB connectivity, this could impact on how many devices can be
+  supported on that worker.
+
+* The number of remote workers per master (and therefore the number of masters
+  per frontend) is typically determined by latency on the master when serving
+  HTTP and API requests alongside the work of scheduling the testjobs and
+  processing the logs. A frontend can dramatically improve performance by
+  offloading the result analysis workload from the master.
+
+* Be conservative and allow your lab to continue growing, slowly. Compare your
+  plans with existing instances and :ref:`talk to us <getting_support>` about
+  your plans before making commitments.
+
+.. index:: geographic locations
+
+.. _geography_and_workers:
+
+Workers in different locations
+******************************
+
+Many labs have a separate master and multiple workers with the physical
+machines co-located in the same or adjacent racks. This makes it easier to
+administer the lab. Sometimes, admins may choose to have the master and one or
+more workers in different geographical locations. There are some additional
+considerations with such a layout.
+
+.. note:: One or more LAVA V2 :term:`workers <worker>` will be required in the
+   remote location. Each worker will need to be permanently connected to all
+   devices to be supported by that worker. Devices cannot be used in LAVA
+   without a worker managing the test jobs.
+
+Before considering installing LAVA workers in remote locations, it is
+**strongly** recommended that read and apply the following sections:
+
+* :ref:`advanced_installation`, with particular emphasis on
+  :ref:`infrastructure_requirements` and :ref:`more_installation_types`
+* :ref:`growing_your_lab`
+* :ref:`lab_scaling`
+
+.. _remote_lab_infrastructure:
+
+Remote Infrastructure
+=====================
+
+Remember that devices need additional, often highly specialised, infrastructure
+support alongside the devices. Some of this hardware is used outside the
+expected design limits. For example, a typical :term:`PDU` may be designed to
+switch mains AC once or twice a month on each port. In LAVA, that unit will be
+expected to switch the same load dozens, maybe hundreds of times per day for
+each port. Monitoring and replacing this infrastructure before it fails can
+have a significant impact on the ongoing cost of your proposed layout as well
+as your expected scheduled downtime.
+
+.. caution:: A typical datacentre will not have the infrastructure to handle
+   LAVA devices and is unlikely to provide the kind of prompt physical access
+   which will be needed by the admins.
+
+.. _maintenance_windows_remote:
+
+Maintenance windows across remote locations
+===========================================
+
+All labs will need scheduled downtime. The layout of your lab will have a
+direct impact on how those windows are managed across remote locations.
+Maintenance will need to be announced in advance with enough time to allow test
+jobs to finish running on the affected worker(s). Individual workers can have
+all devices on that worker taken offline without affecting jobs on other
+workers or the master. Adding a :term:`frontend` adds further granularity,
+allowing maintenance to occur with less visible interruption.
+
+Networking to remote locations
+==============================
+
+Encryption and authentication
+-----------------------------
+
+The :term:`ZMQ` connections between the master and the worker should always use
+**authentication and encryption** if the connection goes across the internet
+rather than a local subnet.
+
+.. seealso:: :ref:`zmq_curve`
+
+Firewalls
+---------
+
+The worker initiates the ZMQ connection to the master, so a worker will work
+when behind a NAT connection. Only the address of the master needs to be
+resolvable using public DNS. There is no need for the master or any other
+service to be able to initiate a connection to the worker from outside the
+firewall. This means that a public master can work with :term:`DUTs <DUT>` in a
+remote location by connecting the boards to one or more worker(s) in the same
+location.
+
+If the master is behind a firewall, the ZMQ ports will need to be open.
+
+.. seealso:: :ref:`publishing_events`
+
+Using a frontend with remote labs
+=================================
+
+It is also worth considering if it will be easier to administer the various
+devices by having a master alongside the worker(s) and then collating the
+results from a number of different masters using a :term:`frontend`.
+
+.. seealso:: :ref:`multiple_masters_multiple_workers`, :ref:`what_is_lava_not`
+   and :ref:`custom_result_handling`.

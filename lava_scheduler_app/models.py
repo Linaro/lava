@@ -273,6 +273,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     processor = models.ForeignKey(
@@ -280,6 +281,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     cpu_model = models.CharField(
@@ -302,6 +304,7 @@ class DeviceType(models.Model):
         related_name='device_types',
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     cores = models.ManyToManyField(
@@ -656,7 +659,8 @@ class Device(RestrictedResource):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_(u"User with physical access")
+        verbose_name=_(u"User with physical access"),
+        on_delete=models.SET_NULL,
     )
 
     physical_group = models.ForeignKey(
@@ -702,7 +706,8 @@ class Device(RestrictedResource):
         verbose_name=_(u"Worker Host"),
         null=True,
         blank=True,
-        default=None
+        default=None,
+        on_delete=models.SET_NULL,
     )
 
     is_pipeline = models.BooleanField(
@@ -802,6 +807,7 @@ class Device(RestrictedResource):
             return True
         if user.has_perm('lava_scheduler_app.change_device'):
             return True
+        return False
 
     def can_submit(self, user):
         if self.status == Device.RETIRED:
@@ -2310,7 +2316,7 @@ class TestJob(RestrictedResource):
         :param user:  the user making the request
         :return: True or False
         """
-        if self._can_admin(user):
+        if self._can_admin(user, resubmit=False):
             return True
         device_type = self.job_device_type()
         if device_type and device_type.owners_only:
@@ -2336,20 +2342,25 @@ class TestJob(RestrictedResource):
 
         return False
 
-    def _can_admin(self, user):
+    def _can_admin(self, user, resubmit=True):
         """
         used to check for things like if the user can cancel or annotate
         a job failure.
         Failure to allow admin access returns HIDE_ACCESS or DENY_ACCESS
         For speed, the lookups on the user/group tables are only by id
         :param user:  the user making the request
+        :param resubmit: if this check should also consider resumbit/cancel permission
         :return: access level, up to a maximum of FULL_ACCESS
         """
+        # FIXME: move resubmit permission check to a separate function & rationalise.
         owner = False
         if self.actual_device is not None:
             owner = self.actual_device.can_admin(user)
-        return (user.is_superuser or user == self.submitter or owner or
-                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+        perm = user.is_superuser or user == self.submitter or owner
+        if resubmit:
+            perm = user.is_superuser or user == self.submitter or owner or\
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob')
+        return perm
 
     def can_change_priority(self, user):
         """
@@ -3219,14 +3230,14 @@ class NotificationRecipient(models.Model):
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
 def process_notifications(sender, **kwargs):
     new_job = kwargs["instance"]
-    notification_status = [TestJob.COMPLETE, TestJob.INCOMPLETE,
-                           TestJob.CANCELED]
+    notification_status = [TestJob.RUNNING, TestJob.COMPLETE,
+                           TestJob.INCOMPLETE, TestJob.CANCELED]
     # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
     if new_job.is_pipeline and new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)
-        if old_job.status not in notification_status and \
-           new_job.status in notification_status:
+        if new_job.status in notification_status and \
+           old_job.status != new_job.status:
             job_def = yaml.load(new_job.definition)
             if "notify" in job_def:
                 if new_job.notification_criteria(job_def["notify"]["criteria"],

@@ -3,7 +3,7 @@
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
-{% set base_ip_args = "ip=dhcp" %}
+{% set base_ip_args = base_ip_args|default("ip=dhcp") %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
 {# Do not specify port or login (-p/-P or -l) here as this is now handled in the codebase. #}
@@ -87,10 +87,11 @@ commands:
 {% endif %}
 {% endblock -%}
 
-{% if device_path %}
-{# LXC support for adding energy probes etc. #}
-device_path: {{ device_path }}
-{% endif %}
+{% if device_info %}
+{# LXC support for adding energy probes, usb devices etc. #}
+{# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
+device_info: {{ device_info }}
+{% endif -%}
 
 {% block fastboot %}
 {% if fastboot_serial_number %}

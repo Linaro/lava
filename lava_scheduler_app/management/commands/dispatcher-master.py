@@ -625,6 +625,7 @@ class Command(BaseCommand):
             sys.exit(2)
 
         self.logger.info("[INIT] LAVA dispatcher-master has started.")
+        self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
 
         while True:
             try:

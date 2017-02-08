@@ -64,6 +64,8 @@ actions:
 
 # START-BOOT-BLOCK
 - boot:
+    timeout:
+      minutes: 1
     role:
     - foo
     - bar

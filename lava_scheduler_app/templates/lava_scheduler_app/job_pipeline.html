@@ -17,6 +17,9 @@
       border: 1px solid black;
       white-space: normal;
     }
+    .results_failed {
+      border: 2px solid red;
+    }
     .exception {
       border: 1px solid red;
     }
@@ -213,7 +216,12 @@
       <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
     </div>
     {% endif %}
-
+    {% if size_warning %}
+    <div class="alert alert-danger" id="size-warning">
+    <p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
+        It can only be downloaded.</p>
+    </div>
+    {% else %}
     <div class="affix">
       <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
       <div id="affix-full">
@@ -251,7 +259,7 @@
               {% else %}
                 {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
               {% endif %}
-        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" and line.msg.definition != "lava" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% if key == "extra" %}
@@ -295,6 +303,7 @@
         </ul></div></div>
         </div></div>
      {% endif %}
+    {% endif %}  {# filesizelimit #}
   </div>
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
@@ -719,7 +728,12 @@
               } else if(level == 'results') {
                 id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
                 var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
-                var node = $('<code class="results bg-primary" id="' + id + '"></code>');
+                var node;
+                if(d['msg']['result'] == 'fail' && d['msg']['definition'] != 'lava') {
+                  node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
+                } else {
+                  node = $('<code class="results bg-primary" id="' + id + '"></code>');
+                }
                 for(key in d['msg']) {
                   if(typeof(d['msg'][key]) == 'string') {
                     node.append($('<span></span>').text(key + ': ' + d['msg'][key]));

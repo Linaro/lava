@@ -1,6 +1,8 @@
 import os
+import sys
 import yaml
 import jinja2
+import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -47,6 +49,17 @@ class YamlFactory(ModelFactory):
     The YAML **must** be valid for the current pipeline to be able to
     save a TestJob into the database. Hence qemu.yaml.
     """
+
+    def __init__(self):
+        super(YamlFactory, self).__init__()
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
 
     def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
         qemu = DeviceDictionary(hostname=hostname)
@@ -466,6 +479,23 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertTrue(job.can_view(user2))
         self.assertFalse(job2.can_view(user))
         self.assertTrue(job2.can_view(user3))
+
+        job_data = yaml.load(self.factory.make_job_yaml())
+        job_data['visibility'] = {'group': [group1.name]}
+        param = job_data['visibility']
+        if isinstance(param, dict):
+            self.assertIn('group', param)
+            self.assertIsInstance(param['group'], list)
+            self.assertIn(group1.name, param['group'])
+            self.assertIn(group1, Group.objects.filter(name__in=param['group']))
+
+        job3 = TestJob.from_yaml_and_user(
+            yaml.dump(job_data), user2)
+        self.assertEqual(TestJob.VISIBLE_CHOICES[job3.visibility], TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP])
+        self.assertEqual(list(job3.viewing_groups.all()), [group1])
+        job3.refresh_from_db()
+        self.assertEqual(TestJob.VISIBLE_CHOICES[job3.visibility], TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP])
+        self.assertEqual(list(job3.viewing_groups.all()), [group1])
 
     # FIXME: extend once the master validation code is exposed for unit tests
     def test_compatibility(self):  # pylint: disable=too-many-locals

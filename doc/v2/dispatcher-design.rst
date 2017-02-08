@@ -1745,6 +1745,8 @@ This dictionary declares that the device inherits the rest of the device
 configuration from the ``panda`` device type. Settings specific to this one
 device are then specified.
 
+.. seealso:: :ref:`power_commands`
+
 .. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
 Reviewing an existing device dictionary
