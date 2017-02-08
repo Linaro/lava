@@ -1,3 +1,68 @@
+lava-server (2017.2-1) unstable; urgency=medium
+
+  * New production release
+    9df8b354b Remove whitespace from case names
+    9354cd585 Uboot parameters fixes
+    297f27900 Fix documentation for auto_login
+    64b549e9a Fix group visibility and hidden device types
+    b211434de Document the use of a list for bug 2870
+    eb8a7bec3 LAVA-854 - Device type template for x15
+    ad81f33fb Add device template for renesas r8a7791-porter board
+    8c4d44ae4 Add device template for nucleo-l476rg
+    112ec6487 Remove send_char, and fix some broken character_delay settings
+    8f615cd6b Update reviewers handling
+    0fe482ffb b2260: remove duplicate ip_args from extra_kernel_args
+    a72c86732 LAVA-847 protect metadata store IOError
+    53a3c778e If a text_offset is used, quote it to ensure it is a string.
+    51351e18c Add documentation of the dispatcher-config support
+    7a1bfb649 Tidy up the Device-type templates for IoT devices
+    0b5de4dcb Allow lava_scheduler_app to unittest logs to stdout
+    bc807def4 Fix sizelimit warning handling for V2
+    13b691615 Summarise job timeouts with example and notes
+    b5c2ea1a7 Improve notes on portability.
+    65ae7d644 Fix internal server error due to unpacking TestJobUser.
+    83e8fa075 Migration doc improvements
+    9eb145050 Add a unit test for the ethaddr support in b2260
+    91eb07a36 Creating and restoring backups for V2
+    479a6295f Add support for setting ethaddr
+    52b5cf06d Add triage documentation for power failures
+    526a6e298 LAVA-840 - Remove documentation for USB_DEVICE_WAIT
+    3415d5319 Allow .py files in examples/sources to be packaged
+    be33389bf Allow notifications for jobs in Running status.
+    4d6afd607 Fix blacklisted bug in notifications.
+    58b48a8f0 Catch all errors during resubmission.
+    40b010238 Tag admin clean support must return name
+    14b15f40b LAVA-734 compatibility docs
+    dd18c26e1 scheduler: do not cascade deletion for some objects
+    5415eafa7 Do not create unused TestJobUser
+    2f3cd8389 Bug 2796. Add submitter username to job_details API.
+    08cd6c01f Revert "master: set the master identity"
+    be28c8c7b LAVA-814 - Explore pyudev for usb device wait
+    9150c9973 LAVA-832: Rework device-types management command
+    70e81493e LAVA-762 link level in timing to pipeline definition
+    c276df83f LAVA-728 extend ZMQ example to submit and wait
+    f6a0456a1 LAVA-731 document remote worker issues
+    41c67ae3b Add device template for NXP-ls2088
+    ee8964c7b Remove spurious call to save()
+    2a79a622d Ensure base_ip_args can be overridden
+    affa68b23 Add a command to add and list workers
+    10e6ea970 tokens: allow format as CSV
+    b0b5a1d30 Remove unused config value LAVA_CONFIG_VERSION
+    69138ac89 Add a command to manage tokens
+    e09beb1a4 Remove unused custom commands
+    905a0f9be Fix multinode job definition page
+    bb0fdc7a8 job logs: Highlight failing results
+    e1a125aa8 master: set the master identity
+    b7cb28e49 Fix device schema and test for arduino template
+    d411416bf LAVA-707 update result case and metadata views
+    15fc5c62f LAVA-140 - update running job calculation
+    9fcf92cfd LAVA-515 restore line numbers to YAML definitions
+    b7266712b LAVA-824 skip unused device types in running table
+    de6a141aa Expand docs on namespace
+    c54a5e262 events: fix documentation
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 08 Feb 2017 13:34:41 +0000
+
 lava-server (2017.1-1) unstable; urgency=medium
 
   * New production release
