@@ -87,6 +87,41 @@ class WaitDFUDeviceAction(Action):
         return connection
 
 
+class WaitUSBMassStorageDeviceAction(Action):
+
+    def __init__(self):
+        super(WaitUSBMassStorageDeviceAction, self).__init__()
+        self.name = "wait-usb-mass-storage-device"
+        self.description = "wait for USB mass storage device"
+        self.summary = self.description
+        self.ms_device = {}
+
+    def validate(self):
+        super(WaitUSBMassStorageDeviceAction, self).validate()
+        board_id = self.job.device.get('board_id', '')
+        usb_vendor_id = self.job.device.get('usb_vendor_id', '')
+        usb_product_id = self.job.device.get('usb_product_id', '')
+        usb_fs_label = self.job.device.get('usb_filesystem_label', None)
+        if board_id == '0000000000':
+            self.errors = "board_id unset"
+        if usb_vendor_id == '0000':
+            self.errors = 'usb_vendor_id unset'
+        if usb_product_id == '0000':
+            self.errors = 'usb_product_id unset'
+        if not isinstance(usb_fs_label, str):
+            self.errors = 'usb_fs_label unset'
+        self.ms_device = {'ID_SERIAL_SHORT': str(board_id),
+                          'ID_VENDOR_ID': str(usb_vendor_id),
+                          'ID_MODEL_ID': str(usb_product_id),
+                          'ID_FS_LABEL': str(usb_fs_label)}
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(WaitUSBMassStorageDeviceAction, self).run(connection, max_end_time, args)
+        self.logger.debug("Waiting for USB mass storage device: %s" % self.ms_device)
+        wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
+        return connection
+
+
 def _dict_compare(d1, d2):
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
