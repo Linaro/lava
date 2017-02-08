@@ -41,6 +41,8 @@ actions:
     root_partition: 1
 
 - boot:
+    timeout:
+      minutes: 2
     method: qemu
     media: tmpfs
     prompts:
