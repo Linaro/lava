@@ -74,6 +74,15 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
                                output_dir=output_dir)
         return job
 
+    def create_nexus5x_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus5x-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        return job
+
 
 class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -184,4 +193,11 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.factory = FastBootFactory()
         job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
         description_ref = pipeline_reference('x15.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_nexus5x_job(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml',
+                                              mkdtemp())
+        description_ref = pipeline_reference('nexus5x.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
