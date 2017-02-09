@@ -187,7 +187,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, job.pipeline.describe(False))
         boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
-        self.assertEqual(wait.device_actions, ['add', 'change', 'online', 'remove'])
+        self.assertEqual(wait.device_actions, ['add'])
 
     def test_x15_job(self):
         self.factory = FastBootFactory()

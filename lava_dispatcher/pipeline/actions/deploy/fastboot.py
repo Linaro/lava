@@ -131,7 +131,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(WaitUSBDeviceAction(
-            device_actions=['add', 'change', 'online']))
+            device_actions=['add']))
 
         fastboot_dir = self.mkdtemp()
         image_keys = list(parameters['images'].keys())
