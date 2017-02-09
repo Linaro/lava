@@ -592,3 +592,10 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('boot', template_dict['character_delays'])
         self.assertNotIn('test', template_dict['character_delays'])
         self.assertEqual(30, template_dict['character_delays']['boot'])
+
+    def test_nexus5x_template(self):
+        self.assertTrue(self.validate_data('staging-nexus5x-01', """{% extends 'nexus5x.jinja2' %}
+{% set adb_serial_number = '10de1214adae123' %}
+{% set fastboot_serial_number = '10de1214adae123' %}
+{% set device_info = [{'board_id': '10de1214adae123'}] %}
+"""))
