@@ -43,8 +43,9 @@ Commands
 * **pre_os_command**  - ancillary command used for special cases, dependent
   on deployment method and device type template support.
 
-* **device_path** - a list of paths which can be added to the LXC for device
-  specific tasks.
+* **device_info** - a list of dictionaries, where each dictionary value can
+  contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which can
+  be added to the LXC for device specific tasks.
 
 * **adb_command** - command to access the device using ADB.
 

@@ -9,8 +9,7 @@ commands:
 device_type: hi6220-hikey
 adb_serial_number: 12312BA123B123B1
 fastboot_serial_number: 12312BA123B123B1
-device_path: ['/dev/hikey01']  # This is a symlink created for HiKey using a
-                               # udev rule.
+device_info: [{'board_id': '12312BA123B123B1'}]  # It is a list of dictionaries
 
 actions:
   deploy:

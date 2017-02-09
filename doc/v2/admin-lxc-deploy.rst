@@ -36,9 +36,28 @@ Android testing with LXC support
 use-cases which removes the need for writing complex job definitions using
 :ref:`Multinode <multinode>`. This is made possible by adding the usb path of
 the :term:`DUT` that is attached to the dispatcher. The device configuration
-takes a special parameter called `device_path` with which the usb path of the
-:term:`DUT` is exposed to LXC for Android testing. The `device_path` takes a
-list of paths (the path can be a symlink) which will get exposed to LXC.
+takes a special parameter called `device_info` which will be used to expose the
+:term:`DUT` to LXC for Android testing. The `device_info` takes a list of
+dictionaries, where each dictionary value can contain keys such as `board_id`,
+`usb_vendor_id`, `usb_product_id`.
+
+Examples of `device_info` configuration are as follows.
+
+Example 1 - Single device with just `board_id` ::
+
+ {% set device_info = [{'board_id': '0123456789'}] %}
+
+Example 2 - Single device with `board_id` and `usb_vendor_id` ::
+
+ {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451'}] %}
+
+Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` ::
+
+ {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_vendor_id': 'd109'}] %}
+
+Example 4 - A device and optional addition hardware ::
+
+ {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775'}, {'board_id': '45645629342'}] %}
 
 .. note:: Do not run `adb daemon` on the dispatcher host, which will grab the
           :term:`DUT` and will hinder exposing it to LXC. Similarly, remove
