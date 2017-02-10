@@ -677,6 +677,14 @@ class TestYamlMultinode(TestCaseWithFactory):
     def setUp(self):
         super(TestYamlMultinode, self).setUp()
         self.factory = YamlFactory()
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
 
     def test_multinode_split(self):
         """
