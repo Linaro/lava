@@ -5,13 +5,14 @@ import jinja2
 import unittest
 import logging
 import tempfile
+# pylint: disable=superfluous-parens,ungrouped-imports
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
-# pylint: disable=superfluous-parens
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-public-methods
 # pylint: disable=too-many-nested-blocks
 
 
@@ -488,6 +489,7 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
         self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
 
+    @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_panda_lxc_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -506,15 +508,15 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        fd, device_yaml = tempfile.mkstemp()
-        os.write(fd, yaml.dump(template_dict))
+        fdesc, device_yaml = tempfile.mkstemp()
+        os.write(fdesc, yaml.dump(template_dict))
         panda = NewDevice(device_yaml)
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
             job = parser.parse(sample_job_data, panda, 4577, None, "",
                                output_dir='/tmp')
-        os.close(fd)
+        os.close(fdesc)
         job.validate()
 
     def test_ethaddr(self):
