@@ -73,11 +73,18 @@ class BootFastbootAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.get('fastboot_via_uboot', False):
             self.internal_pipeline.add_action(FastbootRebootAction())
-        else:
-            self.internal_pipeline.add_action(FastbootBootAction())
-        if self.job.device.get('flash_and_wait', True):
             self.internal_pipeline.add_action(WaitUSBDeviceAction(
                 device_actions=['add']))
+        else:
+            self.internal_pipeline.add_action(FastbootBootAction())
+            # Check if the device has a power command such as HiKey,
+            # Dragonboard, etc. against device that doesn't like Nexus, etc.
+            if self.job.device.power_command:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add', 'remove']))
+            else:
+                self.internal_pipeline.add_action(WaitUSBDeviceAction(
+                    device_actions=['add']))
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         if self.job.device.power_command:
             self.internal_pipeline.add_action(AutoLoginAction())
