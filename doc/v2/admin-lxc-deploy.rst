@@ -55,7 +55,7 @@ Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` 
 
  {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_vendor_id': 'd109'}] %}
 
-Example 4 - A device and optional addition hardware ::
+Example 4 - A device and optional additional hardware ::
 
  {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775'}, {'board_id': '45645629342'}] %}
 
