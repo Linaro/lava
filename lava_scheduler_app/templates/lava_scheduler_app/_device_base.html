@@ -180,7 +180,7 @@
           </div>
         </div>
 {% endif %}
-{% if cancel_looping %}
+{% if cancel_looping and can_admin %}
         <div class="btn-group btn-group-justified">
           <div class="btn-group">
             <button class="btn btn-warning" data-toggle="modal" data-target="#stoploopingDialog">Cancel Looping mode</button>
