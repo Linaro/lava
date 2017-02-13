@@ -187,9 +187,12 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def lookup_deploy(self, params):  # pylint: disable=no-self-use
         actions = iter(params)
         while actions:
-            action = next(actions)
-            if 'deploy' in action:
-                yield action['deploy']
+            try:
+                action = next(actions)
+                if 'deploy' in action:
+                    yield action['deploy']
+            except StopIteration:
+                break
 
     def test_fakeaction_fails_joberror(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
