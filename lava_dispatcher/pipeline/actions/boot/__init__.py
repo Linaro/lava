@@ -38,7 +38,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LOGIN_TIMED_OUT_MSG
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
-from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.strings import substitute, map_kernel_uboot
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 from lava_dispatcher.pipeline.utils.udev import usb_device_wait
@@ -302,6 +302,7 @@ class BootloaderCommandOverlay(Action):
         self.method = ""
         self.use_bootscript = False
         self.lava_mac = None
+        self.bootcommand = ''
 
     def validate(self):
         super(BootloaderCommandOverlay, self).validate()
@@ -351,25 +352,22 @@ class BootloaderCommandOverlay(Action):
             '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
             '{LAVA_MAC}': self.lava_mac
         }
-
-        if 'type' in self.parameters:
-            kernel_addr = self.job.device['parameters'][self.parameters['type']]['kernel']
-            dtb_addr = self.job.device['parameters'][self.parameters['type']]['dtb']
-            ramdisk_addr = self.job.device['parameters'][self.parameters['type']]['ramdisk']
+        self.bootcommand = self.get_namespace_data(action='uboot-prepare-kernel', label='bootcommand', key='bootcommand')
+        prepared_kernel = self.get_namespace_data(action='prepare-kernel', label='file', key='kernel')
+        if prepared_kernel:
+            self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
+            substitutions['{KERNEL}'] = prepared_kernel
+        if self.bootcommand:
+            kernel_addr = self.job.device['parameters'][self.bootcommand]['kernel']
+            dtb_addr = self.job.device['parameters'][self.bootcommand]['dtb']
+            ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
                     and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
                 ramdisk_addr = '-'
 
-            bootcommand = self.parameters['type']
-            if self.parameters['type'] == 'uimage':
-                bootcommand = 'bootm'
-            elif self.parameters['type'] == 'zimage':
-                bootcommand = 'bootz'
-            elif self.parameters['type'] == 'image':
-                bootcommand = 'booti'
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
-                bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
+                self.bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
             substitutions['{KERNEL_ADDR}'] = kernel_addr
             substitutions['{DTB_ADDR}'] = dtb_addr
             substitutions['{RAMDISK_ADDR}'] = ramdisk_addr

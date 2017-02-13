@@ -25,7 +25,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

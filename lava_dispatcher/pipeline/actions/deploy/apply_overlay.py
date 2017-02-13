@@ -50,6 +50,7 @@ from lava_dispatcher.pipeline.utils.compression import (
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.actions.deploy.prepare import PrepareKernelAction
 
 
 class ApplyOverlayGuest(Action):
@@ -154,6 +155,8 @@ class PrepareOverlayTftp(Action):
         self.internal_pipeline.add_action(ExtractRamdisk())  # idempotent, checks for a ramdisk parameter
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
         self.internal_pipeline.add_action(ApplyOverlayTftp())
+        if 'kernel' in parameters and 'type' in parameters['kernel']:
+            self.internal_pipeline.add_action(PrepareKernelAction())
         self.internal_pipeline.add_action(ConfigurePreseedFile())  # idempotent, checks for a preseed parameter
         self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
 
@@ -210,7 +213,7 @@ class ApplyOverlayTftp(Action):
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             nfs_address = self.parameters['persistent_nfs'].get('address')
-            self.logger.info("Applying overlay to persistent NFS address %s" % nfs_address)
+            self.logger.info("Applying overlay to persistent NFS address %s", nfs_address)
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
@@ -225,7 +228,8 @@ class ApplyOverlayTftp(Action):
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
-            self.logger.info("Applying overlay %s to ramdisk", overlay_file)
+            if overlay_file:
+                self.logger.info("Applying overlay %s to ramdisk", overlay_file)
         elif self.parameters.get('rootfs', None) is not None:
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='apply-overlay', label='file', key='root')
@@ -477,7 +481,7 @@ class CompressRamdisk(Action):
                 else:
                     self.errors = "ramdisk: add_header: unknown header type"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
         if self.skip:
@@ -500,8 +504,8 @@ class CompressRamdisk(Action):
                 filename = self.parameters["deployment_data"]["preseed_to_ramdisk"]
                 self.logger.info("Copying preseed file into ramdisk: %s", filename)
                 shutil.copy(self.get_namespace_data(
-                    action='download_action', label='preseed', key='file'),
-                    os.path.join(ramdisk_dir, filename))
+                    action='download_action', label='preseed',
+                    key='file'), os.path.join(ramdisk_dir, filename))
                 self.set_namespace_data(action=self.name, label='file', key='preseed_local', value=filename)
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)

@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
+import logging
 
 
 def indices(string, char):
@@ -51,3 +52,30 @@ def seconds_to_str(time):
     hours, remainder = divmod(int(round(time)), 3600)
     minutes, seconds = divmod(remainder, 60)
     return "%02d:%02d:%02d" % (hours, minutes, seconds)
+
+
+def map_kernel_uboot(kernel_type, device_params=None):
+    """
+    Support conversion of kernels only if the device cannot
+    handle what has been given by the test job writer.
+
+    Decide based on the presence of suitable load addresses.
+    If deploy gets a kernel type for which there is no matching boot kernel address
+    then if a bootm address exists do the conversion.
+    bootm is the last resort.
+    """
+    bootcommand = 'bootm'
+    logger = logging.getLogger('lava-dispatcher')
+    if kernel_type == 'uimage':
+        return bootcommand
+    elif kernel_type == 'zimage':
+        if device_params and 'bootz' in device_params:
+            bootcommand = 'bootz'
+        else:
+            logger.warning("No bootz parameters available, falling back to bootm and converting zImage")
+    elif kernel_type == 'image':
+        if device_params and 'booti' in device_params:
+            bootcommand = 'booti'
+        else:
+            logger.warning("No booti parameters available, falling back to bootm and converting zImage")
+    return bootcommand

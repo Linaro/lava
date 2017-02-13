@@ -24,6 +24,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      nfsrootfs:
          url: http://images.validation.linaro.org/no-such-file-rootfs.tar.xz
          compression: xz
@@ -34,7 +35,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

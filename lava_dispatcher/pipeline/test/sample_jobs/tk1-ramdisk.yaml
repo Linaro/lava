@@ -20,6 +20,7 @@ actions:
      to: tftp
      kernel:
          url: https://googledrive.com/host/0B9DbsE2BbZ7ufjdLMVVONThlbE1mR3N4TjdFTVJod2c4TXpRUDZjMmF0Ylp4Ukk5VG14Ync/jetson-tk1/zImage
+         type: zimage
      ramdisk:
          url: https://googledrive.com/host/0B9DbsE2BbZ7ufjdLMVVONThlbE1mR3N4TjdFTVJod2c4TXpRUDZjMmF0Ylp4Ukk5VG14Ync/images/rootfs/armel/rootfs.cpio.gz
          compression: gz
@@ -30,7 +31,6 @@ actions:
   - boot:
      method: u-boot
      commands: ramdisk
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

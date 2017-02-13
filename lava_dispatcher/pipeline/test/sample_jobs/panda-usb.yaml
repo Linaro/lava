@@ -22,6 +22,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/panda/uImage
+         type: uimage
      nfsrootfs:
          url: file:///home/linaro/chroots/jessie.tar.gz
          compression: gz
@@ -31,7 +32,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootm
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

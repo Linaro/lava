@@ -34,6 +34,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      ramdisk:
          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
          header: u-boot
@@ -45,7 +46,6 @@ actions:
   - boot:
      method: u-boot
      commands: ramdisk
-     type: bootz
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

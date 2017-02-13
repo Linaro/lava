@@ -13,11 +13,14 @@ visibility: public
 
 actions:
   - deploy:
+     parameters:
+       mkimage_arch: arm
      timeout:
        minutes: 2
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      dtb:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
      persistent_nfs:
@@ -27,7 +30,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
      - 'linaro-test'
      - 'root@debian:~#'

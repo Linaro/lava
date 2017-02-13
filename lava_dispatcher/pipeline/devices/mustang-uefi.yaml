@@ -11,6 +11,8 @@ character_delays:
 
 actions:
   deploy:
+    parameters:
+      mkimage_arch: arm # uses 32bit UBoot
     methods:
       tftp:
       usb:

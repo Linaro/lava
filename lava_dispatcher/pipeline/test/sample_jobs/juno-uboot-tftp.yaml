@@ -19,6 +19,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/juno/kernel/Image
+         type: image
      os: oe
      dtb:
          url: http://images.validation.linaro.org/juno/kernel/juno.dtb
@@ -29,7 +30,6 @@ actions:
   - boot:
      method: u-boot
      commands: tftp
-     type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

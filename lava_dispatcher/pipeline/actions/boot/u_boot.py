@@ -99,7 +99,8 @@ class UBootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        self.internal_pipeline.add_action(UBootPrepareKernelAction())
+        if 'type' in parameters:
+            self.logger.warning("Specifying a type in the boot action is no longer needed for u-boot, ignored.")
         self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
@@ -213,12 +214,17 @@ class UBootSecondaryMedia(Action):
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"
+        if 'kernel_type' not in self.parameters:
+            self.errors = "Missing kernel_type for secondary media boot"
         # ramdisk does not have to be specified, nor dtb
         if 'root_uuid' not in self.parameters:
             # FIXME: root_node also needs to be supported
             self.errors = "Missing UUID of the roofs inside the deployed image"
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+        self.set_namespace_data(
+            action='uboot-prepare-kernel', label='kernel-type',
+            key='kernel-type', value=self.parameters.get('kernel_type', ''))
 
         self.set_namespace_data(action=self.name, label='file', key='kernel', value=self.parameters.get('kernel', ''))
         self.set_namespace_data(action=self.name, label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
@@ -241,96 +247,6 @@ class UBootSecondaryMedia(Action):
                 self.parameters['boot_part']
             )
         )
-
-
-class UBootPrepareKernelAction(Action):
-    """
-    Convert kernels to uImage or append DTB, if needed
-    """
-    def __init__(self):
-        super(UBootPrepareKernelAction, self).__init__()
-        self.name = "uboot-prepare-kernel"
-        self.description = "convert kernel to uimage or append dtb"
-        self.summary = "prepare/convert kernel"
-        self.type = None
-        self.params = None
-        self.kernel_type = None
-
-    def create_uimage(self, kernel, load_addr, xip, arch, output):  # pylint: disable=too-many-arguments
-        load_addr = int(load_addr, 16)
-        uimage_path = '%s/%s' % (os.path.dirname(kernel), output)
-        if xip:
-            entry_addr = load_addr + 64
-        else:
-            entry_addr = load_addr
-        cmd = "mkimage -A %s -O linux -T kernel" \
-              " -C none -a 0x%x -e 0x%x" \
-              " -d %s %s" % (arch, load_addr,
-                             entry_addr, kernel,
-                             uimage_path)
-        if self.run_command(cmd.split(' ')):
-            return uimage_path
-        else:
-            raise InfrastructureError("uImage creation failed")
-
-    def validate(self):
-        super(UBootPrepareKernelAction, self).validate()
-        self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        self.kernel_type = self.get_namespace_data(
-            action='download_action',
-            label='type',
-            key='kernel'
-        )
-        if 'type' in self.parameters:
-            self.type = str(self.parameters['type']).lower()
-        if self.type:
-            if self.type not in self.job.device['parameters']:
-                self.errors = "Requested kernel boot type '%s' not supported by this device." % self.type
-            if self.type == "bootm" or self.type == "bootz" or self.type == "booti":
-                self.logger.warning("booti, bootm and bootz are being deprecated soon, please use 'image', 'uimage' or 'zimage'")
-        if self.kernel_type:
-            self.kernel_type = str(self.kernel_type).lower()
-            if self.type != self.kernel_type:
-                if 'mkimage_arch' not in self.params:
-                    self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
-                if self.type == 'zimage' and self.kernel_type == 'uimage':
-                    self.errors = "Can't convert a uimage to zimage"
-                elif self.type == 'zimage' and self.kernel_type == 'image':
-                    self.errors = "Can't convert an image to zimage"
-                elif self.type == 'image' and self.kernel_type == 'zimage':
-                    self.errors = "Can't convert a zimage to image"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(UBootPrepareKernelAction, self).run(connection, max_end_time, args)
-        if not self.kernel_type:
-            return connection  # idempotency
-        old_kernel = self.get_namespace_data(
-            action='download_action',
-            label='file',
-            key='kernel'
-        )
-        filename = self.get_namespace_data(action='download_action', label='kernel', key='file')
-        load_addr = self.job.device['parameters'][self.type]['kernel']
-        if 'text_offset' in self.job.device['parameters']:
-            load_addr = self.job.device['parameters']['text_offset']
-        arch = self.params['mkimage_arch']
-        if (self.type == "uimage" or self.type == "bootm") and self.kernel_type == "image":
-            self.logger.debug("Converting image to uimage")
-            self.create_uimage(filename, load_addr, False, arch, 'uImage')
-            new_kernel = os.path.dirname(old_kernel) + '/uImage'
-            # overwriting namespace data
-            self.set_namespace_data(
-                action='download_action',
-                label='file', key='kernel', value=new_kernel)
-        elif (self.type == "uimage" or self.type == "bootm") and self.kernel_type == "zimage":
-            self.logger.debug("Converting zimage to uimage")
-            self.create_uimage(filename, load_addr, False, arch, 'uImage')
-            new_kernel = os.path.dirname(old_kernel) + '/uImage'
-            # overwriting namespace data
-            self.set_namespace_data(
-                action='download_action',
-                label='file', key='kernel', value=new_kernel)
-        return connection
 
 
 class UBootEnterFastbootAction(BootAction):

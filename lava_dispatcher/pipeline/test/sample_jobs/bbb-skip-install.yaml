@@ -13,6 +13,8 @@ visibility: public
 
 actions:
 - deploy:
+    parameters:
+      mkimage_arch: arm
     timeout:
       minutes: 4
     to: tftp
@@ -36,7 +38,6 @@ actions:
 - boot:
     method: u-boot
     commands: nfs
-    type: bootz
     auto_login:
       login_prompt: 'login:'
       username: root

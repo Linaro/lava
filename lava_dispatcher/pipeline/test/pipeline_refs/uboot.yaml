@@ -20,7 +20,7 @@
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
-      - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
+      - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
       - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - class: actions.deploy.testdef.TestDefinitionAction
@@ -39,13 +39,16 @@
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+    - class: actions.deploy.prepare.PrepareKernelAction
+      name: prepare-kernel
+      pipeline:
+      - {class: actions.deploy.prepare.UBootPrepareKernelAction, name: uboot-prepare-kernel}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
-  - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
   - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}

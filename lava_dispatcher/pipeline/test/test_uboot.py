@@ -22,6 +22,7 @@
 import os
 import sys
 import yaml
+import logging
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -117,7 +118,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
-        params = job.device['actions']['boot']['methods']['u-boot']['parameters']
+        params = job.device['actions']['deploy']['parameters']
         self.assertIn('mkimage_arch', params)
         boot_message = params.get('boot_message', BOOT_MESSAGE)
         self.assertIsNotNone(boot_message)
@@ -295,7 +296,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                                output_dir='/tmp/')
         job.validate()
         sample_job_data.close()
-        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[1]
+        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
@@ -373,6 +374,85 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn('prefix', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['prefix'], 'jessie/')
         self.assertEqual(nfs.param_key, 'nfsrootfs')
+
+
+class TestKernelConversion(StdoutTestCase):
+
+    def setUp(self):
+        logger = logging.getLogger('dispatcher')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('lava-dispatcher')
+        logger.disabled = True
+        logger.propagate = False
+        self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        with open(bbb_yaml) as sample_job_data:
+            self.base_data = yaml.load(sample_job_data)
+        self.deploy_block = [block for block in self.base_data['actions'] if 'deploy' in block][0]['deploy']
+        self.boot_block = [block for block in self.base_data['actions'] if 'boot' in block][0]['boot']
+        self.parser = JobParser()
+
+    def test_zimage_bootz(self):
+        self.deploy_block['kernel']['type'] = 'zimage'
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.validate()
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-kernel'][0]
+        uboot_prepare = [action for action in prepare.internal_pipeline.actions if action.name == 'uboot-prepare-kernel'][0]
+        self.assertEqual('zimage', uboot_prepare.kernel_type)
+        self.assertEqual('bootz', uboot_prepare.bootcommand)
+        self.assertFalse(uboot_prepare.mkimage_conversion)
+
+    def test_image(self):
+        self.deploy_block['kernel']['type'] = 'image'
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.validate()
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-kernel'][0]
+        uboot_prepare = [action for action in prepare.internal_pipeline.actions if action.name == 'uboot-prepare-kernel'][0]
+        self.assertEqual('image', uboot_prepare.kernel_type)
+        # bbb-01.yaml does not contain booti parameters, try to convert to a uImage
+        self.assertEqual('bootm', uboot_prepare.bootcommand)
+        self.assertTrue(uboot_prepare.mkimage_conversion)
+
+    def test_uimage(self):
+        self.deploy_block['kernel']['type'] = 'uimage'
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.validate()
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-kernel'][0]
+        uboot_prepare = [action for action in prepare.internal_pipeline.actions if action.name == 'uboot-prepare-kernel'][0]
+        self.assertEqual('uimage', uboot_prepare.kernel_type)
+        self.assertEqual('bootm', uboot_prepare.bootcommand)
+        self.assertFalse(uboot_prepare.mkimage_conversion)
+
+    def test_zimage_nobootz(self):
+        # drop bootz from the device for this part of the test
+        del self.device['parameters']['bootz']
+        self.deploy_block['kernel']['type'] = 'zimage'
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.validate()
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-kernel'][0]
+        uboot_prepare = [action for action in prepare.internal_pipeline.actions if action.name == 'uboot-prepare-kernel'][0]
+        self.assertEqual('zimage', uboot_prepare.kernel_type)
+        self.assertEqual('bootm', uboot_prepare.bootcommand)
+        self.assertTrue(uboot_prepare.mkimage_conversion)
+
+    def test_uimage_boot_type(self):
+        # uimage in boot type
+        del self.deploy_block['kernel']['type']
+        self.boot_block['type'] = 'bootm'
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.validate()
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        self.assertNotIn('uboot-prepare-kernel', [action.name for action in overlay.internal_pipeline.actions])
 
 
 class TestOverlayCommands(TestUbootAction):  # pylint: disable=too-many-public-methods

@@ -26,7 +26,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
-from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.strings import substitute, map_kernel_uboot
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
@@ -199,12 +199,12 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('dtb', boot_params)
         self.assertIn('root_uuid', boot_params)
         self.assertIn('boot_part', boot_params)
-        self.assertIn('type', boot_params)
+        self.assertNotIn('type', boot_params)
         self.assertGreater(len(job.pipeline.actions), 1)
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
-        u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[2]
-        self.assertIsNotNone(u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
-        self.assertEqual(u_boot_action.name, "bootloader-overlay")
+        u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1]
+        overlay = [action for action in u_boot_action.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
+        self.assertIsNotNone(overlay.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
 
         methods = cubie['actions']['boot']['methods']
         self.assertIn('u-boot', methods)
@@ -213,12 +213,14 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         commands_list = methods['u-boot']['usb']['commands']
         device_id = u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device')
         self.assertIsNotNone(device_id)
+        kernel_type = u_boot_action.parameters['kernel_type']
+        bootcommand = map_kernel_uboot(kernel_type, device_params=cubie.get('parameters', None))
         substitutions = {
             '{BOOTX}': "%s %s %s %s" % (
-                u_boot_action.parameters['type'],
-                cubie['parameters'][u_boot_action.parameters['type']]['kernel'],
-                cubie['parameters'][u_boot_action.parameters['type']]['ramdisk'],
-                cubie['parameters'][u_boot_action.parameters['type']]['dtb'],),
+                bootcommand,
+                cubie['parameters'][bootcommand]['kernel'],
+                cubie['parameters'][bootcommand]['ramdisk'],
+                cubie['parameters'][bootcommand]['dtb'],),
             '{RAMDISK}': boot_params['ramdisk'],
             '{KERNEL}': boot_params['kernel'],
             '{DTB}': boot_params['dtb'],

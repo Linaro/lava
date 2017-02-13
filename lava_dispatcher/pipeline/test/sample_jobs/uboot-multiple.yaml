@@ -19,12 +19,15 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     parameters:
+       mkimage_arch: arm # uses 32bit UBoot
      namespace: boot1
      timeout:
        minutes: 2
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      nfsrootfs:
          url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
          compression: gz
@@ -36,7 +39,6 @@ actions:
      namespace: boot1
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
@@ -60,7 +62,6 @@ actions:
      namespace: boot2
      method: u-boot
      commands: ramdisk
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

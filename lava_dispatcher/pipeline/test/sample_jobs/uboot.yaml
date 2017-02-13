@@ -19,6 +19,8 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     parameters:
+       mkimage_arch: arm
      timeout:
        minutes: 2
      to: tftp
@@ -34,7 +36,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
