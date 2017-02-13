@@ -116,10 +116,10 @@ tests. When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
 * ``lava-test-case``
-* ``lava-test-case-attach``
-* ``lava-test-run-attach``
 * ``lava-background-process-start``
 * ``lava-background-process-stop``
+
+.. seealso:: :ref:`multinode_api`
 
 lava-test-case
 --------------
@@ -232,47 +232,18 @@ executed correctly but that the result of that execution was a failure::
 lava-test-case-attach
 ---------------------
 
-.. caution:: ``lava-test-case-attach`` is retained in the pipeline dispatcher
-  (V2) but the effect of the script needs consideration by the test writer. See
-  :ref:`test_attach`.
+.. caution:: ``lava-test-case-attach`` is **disabled** in the V2 dispatcher as
+   there is no submit stage and no bundle creation stage on the device.
 
-This attaches a file to a test result with a particular ID, for example:
-
-.. code-block:: yaml
-
-  steps:
-    - "echo content > file.txt"
-    - "lava-test-case test-attach --result pass"
-    - "lava-test-case-attach test-attach file.txt text/plain"
-
-The arguments are:
-
-#. The test case id
-#. The file to attach
-#. (optional) The MIME type of the file (if no MIME type is passed, a
-   guess is made based on the filename)
+.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
 
 lava-test-run-attach
 --------------------
 
-.. caution:: ``lava-test-run-attach`` is retained in the pipeline dispatcher
-   (V2) but the effect of the script needs consideration by the test writer.
-   See :ref:`test_attach`.
+.. caution:: ``lava-test-run-attach`` is **disabled** in the V2 dispatcher as
+   there is no submit stage and no bundle creation stage on the device.
 
-This attaches a file to the overall test run that lava-test-shell is currently
-executing, for example:
-
-.. code-block:: yaml
-
-  steps:
-    - "echo content > file.txt"
-    - "lava-test-run-attach file.txt text/plain"
-
-The arguments are:
-
-#. The file to attach
-#. (optional) The MIME type of the file (if no MIME type is passed, a
-   guess is made based on the filename)
+.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
 
 .. _lava-background-process-start:
 
@@ -341,6 +312,8 @@ the test device into an environment where the network connection is known to
 work, however the eventual location of the file needs to be managed by the test
 writer. An alternative method for text based data is simply to output the
 contents into the log file.
+
+.. seealso:: :ref:`publishing_artifacts`
 
 .. _handling_dependencies:
 
