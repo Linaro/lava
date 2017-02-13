@@ -601,3 +601,10 @@ class TestTemplates(unittest.TestCase):
 {% set fastboot_serial_number = '10de1214adae123' %}
 {% set device_info = [{'board_id': '10de1214adae123'}] %}
 """))
+
+    def test_nexus5x_template(self):
+        self.assertTrue(self.validate_data('staging-pixel-01', """{% extends 'pixel.jinja2' %}
+{% set adb_serial_number = 'FDAC1231DAD' %}
+{% set fastboot_serial_number = 'FDAC1231DAD' %}
+{% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
+"""))
