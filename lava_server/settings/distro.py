@@ -154,6 +154,7 @@ USE_DEBUG_TOOLBAR = distro_settings.get_setting('USE_DEBUG_TOOLBAR', False)
 
 if USE_DEBUG_TOOLBAR:
     INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE_CLASSES = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE_CLASSES
     default_ips = ['127.0.0.1', '::1']
     default_ips.extend(distro_settings.get_setting('INTERNAL_IPS', []))
     INTERNAL_IPS = default_ips

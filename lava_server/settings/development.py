@@ -135,6 +135,7 @@ try:
 except ImportError:
     pass
 
+USE_DEBUG_TOOLBAR = False
 
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
