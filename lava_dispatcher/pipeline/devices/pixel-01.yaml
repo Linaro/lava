@@ -1,0 +1,64 @@
+device_type: pixel
+adb_serial_number: 'FA69J0308312'
+fastboot_serial_number: 'FA69J0308312'
+device_info: [{'board_id': 'FA69J0308312'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system_a', 'system_b', 'vendor']
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      fastboot:
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download_retry:
+      minutes: 5
+    http_download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power_off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
