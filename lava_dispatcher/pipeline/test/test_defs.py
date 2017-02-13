@@ -381,7 +381,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_call(['/usr/sbin/rpcinfo', '-u', server, 'nfs'])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs'])
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
