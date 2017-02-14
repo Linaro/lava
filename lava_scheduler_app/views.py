@@ -649,7 +649,7 @@ def filter_device_types(user):
     """
     visible = []
     for device_type in DeviceType.objects.filter(display=True).only('name', 'owners_only'):
-        if device_type.num_devices_visible_to(user) > 0:
+        if device_type.some_devices_visible_to(user):
             visible.append(device_type.name)
     return visible
 
@@ -697,7 +697,7 @@ def device_type_detail(request, pk):
         raise Http404()
     # Check that at least one device is visible to the current user
     if dt.owners_only:
-        if dt.num_devices_visible_to(request.user) == 0:
+        if not dt.some_devices_visible_to(request.user):
             raise Http404('No device type matches the given query.')
 
     # Get some test job statistics
@@ -2199,8 +2199,8 @@ def edit_transition(request):
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
     device_type = transition.device.device_type
-    if device_type.num_devices_visible_to(request.user) == 0:
-        raise Http404()
+    if not device_type.some_devices_visible_to(request.user):
+        raise Http404('No device type matches the given query.')
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
@@ -2326,12 +2326,12 @@ def device_detail(request, pk):
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
     except Device.DoesNotExist:
-        raise Http404()
+        raise Http404('No device matches the given query.')
 
     # Any user that can access to a device_type can
     # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        if device.device_type.num_devices_visible_to(request.user) == 0:
+        if not device.device_type.some_devices_visible_to(request.user):
             raise Http404('No device matches the given query.')
 
     # Find previous and next device
@@ -2446,12 +2446,12 @@ def device_dictionary(request, pk):
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
     except Device.DoesNotExist:
-        raise Http404()
+        raise Http404('No device matches the given query.')
 
     # Any user that can access to a device_type can
     # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        if device.device_type.num_devices_visible_to(request.user) == 0:
+        if not device.device_type.some_devices_visible_to(request.user):
             raise Http404('No device matches the given query.')
 
     if not device.is_pipeline:

@@ -175,7 +175,7 @@ class JobTable(LavaTable):
             return 'connection'
         else:
             return '-'
-        if device_type.num_devices_visible_to(self.context.get('request').user) == 0:
+        if not device_type.some_devices_visible_to(self.context.get('request').user):
             return "Unavailable"
         return retval
 

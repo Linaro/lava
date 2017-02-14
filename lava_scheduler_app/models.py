@@ -385,6 +385,22 @@ class DeviceType(models.Model):
         else:
             return devices.count()
 
+    def some_devices_visible_to(self, user):
+        """
+        :param user: User to check
+        :return: True if some devices of this DeviceType are visible
+        """
+        devices = Device.objects.filter(device_type=self) \
+                                .only('user', 'group') \
+                                .select_related('user', 'group')
+        if self.owners_only:
+            for d in devices:
+                if d.is_owned_by(user):
+                    return True
+            return False
+        else:
+            return devices.exists()
+
 
 class DefaultDeviceOwner(models.Model):
     """
@@ -793,7 +809,7 @@ class Device(RestrictedResource):
         if self.device_type.owners_only:
             if not user:
                 return False
-            if self.device_type.num_devices_visible_to(user) == 0:
+            if not self.device_type.some_devices_visible_to(user):
                 return False
         if not self.is_public:
             if not user:
@@ -1170,7 +1186,7 @@ def _get_device_type(user, name):
         msg = "Device type '%s' is unavailable. %s" % (name, e)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
-    if device_type.num_devices_visible_to(user) == 0:
+    if not device_type.some_devices_visible_to(user):
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -2320,7 +2336,7 @@ class TestJob(RestrictedResource):
             return True
         device_type = self.job_device_type()
         if device_type and device_type.owners_only:
-            if device_type.num_devices_visible_to(user) == 0:
+            if not device_type.some_devices_visible_to(user):
                 return False
         if self.is_public:
             return True
