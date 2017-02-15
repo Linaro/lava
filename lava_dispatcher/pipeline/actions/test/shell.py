@@ -170,6 +170,7 @@ class TestShellAction(TestAction):
         self.testdef_dict = {}
         # noinspection PyTypeChecker
         self.pattern = PatternFixup(testdef=None, count=0)
+        self.current_run = None
 
     def _reset_patterns(self):
         # Extend the list of patterns when creating subclasses.
@@ -247,27 +248,36 @@ class TestShellAction(TestAction):
             self.logger.debug("Using %s" % lava_test_results_dir)
             connection.sendline('ls -l %s/' % lava_test_results_dir)
 
-            with connection.test_connection() as test_connection:
-                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                test_connection.sendline(
-                    "%s/bin/lava-test-runner %s/%s" % (
-                        lava_test_results_dir,
-                        lava_test_results_dir,
-                        running),
-                    delay=self.character_delay)
+            try:
+                with connection.test_connection() as test_connection:
+                    # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                    test_connection.sendline(
+                        "%s/bin/lava-test-runner %s/%s" % (
+                            lava_test_results_dir,
+                            lava_test_results_dir,
+                            running),
+                        delay=self.character_delay)
 
-                self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
-                if self.timeout.duration > self.connection_timeout.duration:
-                    self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
-                    test_connection.timeout = self.timeout.duration
-                else:
-                    self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
-                    test_connection.timeout = self.connection_timeout.duration
+                    self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+                    if self.timeout.duration > self.connection_timeout.duration:
+                        self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                        test_connection.timeout = self.timeout.duration
+                    else:
+                        self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
+                        test_connection.timeout = self.connection_timeout.duration
 
-                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                    pass
+                    while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                        pass
+            finally:
+                if self.current_run is not None:
+                    self.logger.error("Marking unfinished test run as failed")
+                    self.current_run["duration"] = "%.02f" % (time.time() - self.start)
+                    self.logger.results(self.current_run)
+                    self.current_run = None
 
-        self.logger.debug(yaml.dump(self.report, default_flow_style=False))
+        # Only print if the report is not empty
+        if self.report:
+            self.logger.debug(yaml.dump(self.report, default_flow_style=False))
         return connection
 
     def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
@@ -314,14 +324,12 @@ class TestShellAction(TestAction):
                         self.pattern.update(pattern, fixup)
                         self.logger.info("Enabling test definition pattern %r" % pattern)
                         self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
-                self.logger.results({
+                self.current_run = {
                     "definition": "lava",
                     "case": self.definition,
                     "uuid": uuid,
-                    # The test is marked as failed and updated to "pass" when finished.
-                    # If something goes wrong then it will stay to "fail".
                     "result": "fail"
-                })
+                }
             elif name == "ENDRUN":
                 self.definition = params[0]
                 uuid = params[1]
@@ -334,6 +342,7 @@ class TestShellAction(TestAction):
                 self.logger.info("Ending test lava.%s (%s), duration %.02f",
                                  self.definition, uuid,
                                  time.time() - self.start)
+                self.current_run = None
                 self.logger.results({
                     "definition": "lava",
                     "case": self.definition,
