@@ -766,7 +766,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
-                "duration": self.timeout.elapsed_time,
+                "duration": "%.02f" % self.timeout.elapsed_time,
                 "result": "fail" if self.errors else "pass",
                 "extra": self.results})
             self.results.update(
