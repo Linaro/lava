@@ -437,7 +437,7 @@ class Command(BaseCommand):
             else:
                 device = select_device(job, self.dispatchers)
                 if not device:
-                    return
+                    continue
                 # selecting device can change the job
                 job = TestJob.objects.get(id=job.id)
                 self.logger.info("[%d] Assigning %s device", job.id, device)
@@ -447,7 +447,7 @@ class Command(BaseCommand):
                         msg = "Infrastructure error: Invalid worker information"
                         self.logger.error("[%d] %s", job.id, msg)
                         fail_job(job, msg, TestJob.INCOMPLETE)
-                        return
+                        continue
 
                     # Launch the job
                     create_job(job, device)
@@ -460,7 +460,7 @@ class Command(BaseCommand):
                         msg = "Infrastructure error: Invalid worker information"
                         self.logger.error("[%d] %s", job.id, msg)
                         fail_job(job, msg, TestJob.INCOMPLETE)
-                        return
+                        continue
                     self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
                                      device.worker_host.hostname, device.hostname)
                     worker_host = device.worker_host
@@ -503,7 +503,7 @@ class Command(BaseCommand):
                      str(device_configuration),
                      dispatcher_config,
                      env_str, env_dut_str])
-                return
+                continue
 
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
@@ -525,9 +525,6 @@ class Command(BaseCommand):
                                   job.id, exc)
                 msg = "Infrastructure error: cannot parse job definition: %s" % \
                       exc
-            else:
-                self.logger.exception(exc)
-                msg = "Infrastructure error: %s" % exc.message
 
             self.logger.error("[%d] INCOMPLETE job", job.id)
             fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
