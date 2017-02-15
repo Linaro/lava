@@ -259,7 +259,7 @@
               {% else %}
                 {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
               {% endif %}
-        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" and line.msg.definition != "lava" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
           {% for key, value in line.msg.items %}
             {% if value.items %}
               {% if key == "extra" %}
@@ -729,7 +729,7 @@
                 id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
                 var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
                 var node;
-                if(d['msg']['result'] == 'fail' && d['msg']['definition'] != 'lava') {
+                if(d['msg']['result'] == 'fail') {
                   node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
                 } else {
                   node = $('<code class="results bg-primary" id="' + id + '"></code>');
