@@ -157,11 +157,6 @@ LOGGING = {
             'handlers': ['logfile'],
             'level': 'INFO',
             'propagate': True,
-        },
-        'publisher': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
         }
     }
 }
