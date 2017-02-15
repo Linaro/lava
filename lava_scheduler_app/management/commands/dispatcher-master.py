@@ -103,7 +103,7 @@ def load_optional_yaml_file(filename):
         if exc.errno == errno.ENOENT:
             return ''
         raise
-    except yaml.YAMLError as exc:
+    except yaml.YAMLError:
         # Raise an IOError because the caller uses yaml.YAMLError for a
         # specific usage. Allows here to specify the faulty filename.
         raise IOError("", "Not a valid YAML file", filename)
@@ -192,7 +192,7 @@ class Command(BaseCommand):
     def logging_socket(self, options):
         msg = self.pull_socket.recv_multipart()
         try:
-            (job_id, level, name, message) = msg
+            (job_id, level, name, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("Failed to parse log message, skipping: %s", msg)
@@ -560,6 +560,7 @@ class Command(BaseCommand):
         else:
             self.logger.setLevel(logging.DEBUG)
 
+        auth = None
         # Create the sockets
         context = zmq.Context()
         self.pull_socket = context.socket(zmq.PULL)
@@ -604,9 +605,9 @@ class Command(BaseCommand):
         flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
         fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-        def signal_to_pipe(signum, frame):
+        def signal_to_pipe(signumber, _):
             # Send the signal number on the pipe
-            os.write(pipe_w, chr(signum))
+            os.write(pipe_w, chr(signumber))
 
         signal.signal(signal.SIGHUP, signal_to_pipe)
         signal.signal(signal.SIGINT, signal_to_pipe)
@@ -648,7 +649,7 @@ class Command(BaseCommand):
 
                 # Garbage collect file handlers
                 now = time.time()
-                for job_id in self.logs.keys():
+                for job_id in self.logs.keys():  # pylint: disable=consider-iterating-dictionary
                     if now - self.logs[job_id].last_usage > FD_TIMEOUT:
                         self.logger.info("[%s] Closing log file", job_id)
                         self.logs[job_id].close()
@@ -661,8 +662,7 @@ class Command(BaseCommand):
 
                 # Check dispatchers status
                 now = time.time()
-                for hostname in self.dispatchers.keys():
-                    dispatcher = self.dispatchers[hostname]
+                for hostname, dispatcher in self.dispatchers.iteritems():
                     if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
                         self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
                         self.dispatchers[hostname].online = False

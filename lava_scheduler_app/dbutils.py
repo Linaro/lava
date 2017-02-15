@@ -750,7 +750,6 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
     device = None
-    device_object = None
     if not job.dynamic_connection:
         device = job.actual_device
 
