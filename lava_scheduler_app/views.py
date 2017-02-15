@@ -287,9 +287,9 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type").order_by(
-            "hostname").filter(temporarydevice=None,
-                               device_type__in=visible)
+        return Device.objects.select_related("device_type", "current_job__submitter", "worker_host") \
+                             .order_by("hostname") \
+                             .filter(temporarydevice=None, device_type__in=visible)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -658,8 +658,10 @@ class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible)\
-            .exclude(status=Device.RETIRED).order_by("hostname")
+        return Device.objects.filter(device_type__in=visible) \
+                             .exclude(status=Device.RETIRED) \
+                             .select_related("device_type", "current_job__submitter", "worker_host") \
+                             .order_by("hostname")
 
 
 class PipelineDeviceView(DeviceTableView):
