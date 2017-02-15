@@ -460,6 +460,41 @@ worker will need to be running updated code.
    <compatibility_developer>` for more information on how developers set the
    compatibility for test jobs.
 
+.. index:: multinode admin debug
+
+.. _multinode_admin_debug:
+
+Checking for MultiNode issues
+-----------------------------
+
+* Check the contents of ``/etc/lava-coordinator/lava-coordinator.conf`` on the
+  worker. If you have multiple workers, all workers must have coordinator
+  configuration pointing at a single lava-coordinator which serves all workers
+  on that instance (you can also have one coordinator for multiple instances).
+
+* Check the output of the ``lava-coordinator`` logs in
+  ``/var/log/lava-coordinator.log``.
+
+* Run the status check script provided by ``lava-coordinator``:
+
+  .. code-block:: shell
+
+   $ /usr/share/lava-coordinator/status.py
+   status check complete. No errors
+
+* Use the :ref:`example test jobs <running_multinode_tests>` to distinguish
+  between adminstration errors and test job errors. Simplify and make your test
+  conditions portable. MultiNode is necessarily complex and can be hard to
+  debug.
+
+  * Use QEMU to allow the test job to be submitted to other instances.
+  * Use anonymous git repositories for test definitions that just show the
+    problem, without needing to access internal resources
+  * Use :ref:`inline test definitions <inline_test_definitions>` so that the
+    steps can be seen directly in the test job submission. This makes it easier
+    to tweak and test as well as making it easier for others to help in the
+    work.
+
 .. _admin_debug_information:
 
 Where to find debug information
