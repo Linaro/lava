@@ -671,9 +671,11 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
     device = handle_health(job)
-    # Transition device only if it's not in OFFLINE/ING mode
+    # Transition device only if it's not in OFFLINE mode
     # (by failed health check job which already transitions it)
-    if device.status not in [Device.OFFLINE, Device.OFFLINING]:
+    if device.status == Device.OFFLINING:
+        device.state_transition_to(Device.OFFLINE, message=msg, job=job, master=True)
+    elif device.status != Device.OFFLINE:
         device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     device.current_job = None
     # Save the result
@@ -689,7 +691,12 @@ def cancel_job(job):
         return
     msg = "Job %d cancelled" % job.id
     device = handle_health(job)
-    device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
+    # Transition device only if it's not in OFFLINE mode
+    # (by failed health check job which already transitions it)
+    if device.status == Device.OFFLINING:
+        device.state_transition_to(Device.OFFLINE, message=msg, job=job, master=True)
+    elif device.status != Device.OFFLINE:
+        device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
