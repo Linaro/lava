@@ -109,6 +109,26 @@ class DeviceTest(TestCaseWithFactory):
 
         self.assertEqual(device.status, Device.OFFLINING, "should be offlining")
 
+        device.status = Device.RETIRED
+        device.put_into_maintenance_mode(None, None)
+        self.assertEqual(device.status, Device.RETIRED, "should be retired")
+
+    def test_online_mode(self):
+        foo = DeviceType(name='foo')
+        device = Device(device_type=foo, hostname='foo02', status=Device.OFFLINE)
+        device.save()
+        device.put_into_online_mode(None, None)
+        self.assertEqual(device.status, Device.IDLE, "should be idle")
+
+        device.status = Device.OFFLINING
+        device.put_into_online_mode(None, None)
+        self.assertIsNone(device.current_job)
+        self.assertEqual(device.status, Device.IDLE, "should be idle")
+
+        device.status = Device.RETIRED
+        device.put_into_online_mode(None, None)
+        self.assertEqual(device.status, Device.RETIRED, "should be retired")
+
 
 class DeviceDictionaryTest(TestCaseWithFactory):
     """

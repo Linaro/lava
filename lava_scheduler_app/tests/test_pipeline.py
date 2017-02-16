@@ -25,7 +25,12 @@ from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
+from lava_scheduler_app.dbutils import (
+    testjob_submission,
+    find_device_for_job,
+    end_job,
+    cancel_job
+)
 from lava_scheduler_app.schema import validate_submission, validate_device
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -590,6 +595,130 @@ class TestPipelineSubmit(TestCaseWithFactory):
         full_list = allowed_overrides(mustang_dict, system=False)
         for key in allowed:
             self.assertIn(key, full_list)
+
+    def test_device_maintenance_with_jobs(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), user)
+        self.assertEqual(user, job.submitter)
+        self.assertFalse(job.health_check)
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        device1.current_job = None
+        device1.status = Device.IDLE
+        device1.save()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.IDLE)
+        device1.put_into_maintenance_mode(user, 'unit test')
+        self.assertEqual(device1.status, Device.OFFLINE)
+        device1.put_into_online_mode(user, 'unit-test')
+        self.assertEqual(device1.status, Device.IDLE)
+        device1.current_job = job
+        device1.status = Device.RUNNING
+        device1.save()
+        device1.refresh_from_db()
+        device1.put_into_maintenance_mode(user, 'unit test')
+        self.assertIsNotNone(device1.current_job)
+        self.assertEqual(device1.status, Device.OFFLINING)
+        device1.put_into_online_mode(user, 'unit-test')
+        self.assertEqual(device1.status, Device.RUNNING)
+        device1.current_job = None
+        device1.status = Device.RETIRED
+        device1.save()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        device1.put_into_maintenance_mode(user, 'unit test')
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(device1.status, Device.RETIRED)
+        device1.put_into_online_mode(user, 'unit-test')
+        self.assertEqual(device1.status, Device.RETIRED)
+
+    def reset_job_device(self, job, device, job_status=TestJob.RUNNING, device_status=Device.RUNNING):
+        device.current_job = job
+        job.status = job_status
+        device.status = device_status
+        job.save()
+        device.save()
+
+    def test_job_ending(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), user)
+        self.assertEqual(user, job.submitter)
+        self.assertFalse(job.health_check)
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        device1.current_job = None
+        device1.status = Device.IDLE
+        device1.save()
+        self.assertEqual(device1.status, Device.IDLE)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+        job.actual_device = device1
+
+        self.reset_job_device(job, device1)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.RUNNING)
+        self.assertEqual(job.status, TestJob.RUNNING)
+
+        # standard complete test job
+        end_job(job, 'unit test')
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(job.status, TestJob.COMPLETE)
+
+        self.reset_job_device(job, device1)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.RUNNING)
+        self.assertEqual(job.status, TestJob.RUNNING)
+
+        # standard failed test job
+        end_job(job, 'unit test', TestJob.INCOMPLETE)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(job.status, TestJob.INCOMPLETE)
+
+        self.reset_job_device(job, device1, job_status=TestJob.CANCELING)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.RUNNING)
+        self.assertEqual(job.status, TestJob.CANCELING)
+
+        # cancelled test job
+        end_job(job, 'unit test', TestJob.CANCELING)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(job.status, TestJob.CANCELED)
+
+        self.reset_job_device(job, device1, device_status=Device.OFFLINING)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.OFFLINING)
+        self.assertEqual(job.status, TestJob.RUNNING)
+
+        # job ends when device is offlining
+        end_job(job, 'unit test')
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(device1.status, Device.OFFLINE)
+        self.assertEqual(job.status, TestJob.COMPLETE)
+
+        self.reset_job_device(job, device1, job_status=TestJob.CANCELING, device_status=Device.OFFLINING)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertEqual(device1.status, Device.OFFLINING)
+        self.assertEqual(job.status, TestJob.CANCELING)
+
+        # job cancelled when device is offlining
+        end_job(job, 'unit test', job_status=TestJob.CANCELING)
+        job.refresh_from_db()
+        device1.refresh_from_db()
+        self.assertIsNone(device1.current_job)
+        self.assertEqual(device1.status, Device.OFFLINE)
+        self.assertEqual(job.status, TestJob.CANCELED)
 
 
 class TestPipelineStore(TestCaseWithFactory):

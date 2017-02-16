@@ -895,6 +895,8 @@ class Device(RestrictedResource):
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
+        if self.status == self.RETIRED:
+            return False
         if self.status == Device.OFFLINING and self.current_job is not None:
             new_status = self.RUNNING
         else:
@@ -908,6 +910,7 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
+        return True
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
