@@ -866,7 +866,14 @@ class Device(RestrictedResource):
         return True
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
+        """
+        Put a device OFFLINE whenever possible. If the device is running a job,
+        the status will be OFFLINING.
+        Returns False if the device status is unchanged (retired devices)
+        """
         logger = logging.getLogger('dispatcher-master')
+        if self.status == self.RETIRED:
+            return False
         if self.status in [self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
         elif self.status == self.RUNNING:
@@ -884,6 +891,7 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
+        return True
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
