@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import csv
+import sys
 
 from django.core.management.base import BaseCommand, CommandParser
 
@@ -46,6 +47,8 @@ class Command(BaseCommand):
                                 help="Hostname of the worker")
         add_parser.add_argument("--description", type=str, default="",
                                 help="Worker description")
+        add_parser.add_argument("--disabled", action="store_true", default=False,
+                                help="Create a disabled worker")
 
         list_parser = sub.add_parser("list", help="List the workers")
         list_parser.add_argument("--all", default=False, action="store_true",
@@ -53,16 +56,41 @@ class Command(BaseCommand):
         list_parser.add_argument("--csv", dest="csv", default=False,
                                  action="store_true", help="Print as csv")
 
+        set_parser = sub.add_parser("set", help="Set worker properties")
+        set_parser.add_argument("--hostname", type=str, required=True,
+                                help="Hostname of the worker")
+        set_parser.add_argument("--description", type=str, default=None,
+                                help="Worker description")
+        display = set_parser.add_mutually_exclusive_group()
+        display.add_argument("--disable", action="store_false",
+                             default=None, dest="display",
+                             help="Disable the worker")
+        display.add_argument("--enable", action="store_true",
+                             default=None, dest="display",
+                             help="Enable the worker")
+
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["hostname"], options["description"])
+            self.handle_add(options["hostname"], options["description"],
+                            options["disabled"])
         elif options["sub_command"] == "list":
             self.handle_list(options["all"], options["csv"])
+        elif options["sub_command"] == "set":
+            self.handle_set(options["hostname"], options["description"],
+                            options["display"])
 
-    def handle_add(self, hostname, description):
+    def handle_add(self, hostname, description, disabled):
+        """ Create a worker """
+        try:
+            Worker.objects.get(hostname=hostname)
+            self.stderr.write("Worker already exists with hostname %s" % hostname)
+            sys.exit(1)
+        except Worker.DoesNotExist:
+            pass
         Worker.objects.create(hostname=hostname,
-                              description=description)
+                              description=description,
+                              display=not disabled)
 
     def handle_list(self, show_all, format_as_csv):
         """ List the workers """
@@ -89,3 +117,17 @@ class Command(BaseCommand):
                 if worker.is_master:
                     string += " (master)"
                 self.stdout.write(string % (worker.hostname, worker.device_set.count()))
+
+    def handle_set(self, hostname, description, display):
+        """ Set worker properties """
+        try:
+            worker = Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            self.stderr.write("No worker exists with hostname %s" % hostname)
+            sys.exit(1)
+
+        if description is not None:
+            worker.description = description
+        if display is not None:
+            worker.display = display
+        worker.save()
