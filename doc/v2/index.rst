@@ -58,6 +58,39 @@ Architecture
 
 .. include:: architecture-v2.rsti
 
+Preparation
+***********
+
+LAVA has a steep learning curve and this does not tend to level off as your lab
+grows. Even small labs involve additional hardware, infrastructure and
+administrative tasks.
+
+#. Do **not** rush into LAVA setup.
+
+#. :ref:`simple_admin_small`.
+
+#. Think carefully about what you are trying to test. Avoid common pitfalls of
+   :ref:`simplistic testing <simplistic_testing_problems>`.
+
+#. Learn :ref:`how to debug LAVA <admin_debug_information>` with a small lab
+   and :ref:`use standard test jobs <using_gold_standard_files>`.
+
+#. Invest in :ref:`additional hardware <infrastructure_requirements>` - a
+   device on your desk is not a good candidate for automation.
+
+#. :ref:`Test with emulated devices <submit_first_job>` before thinking about
+   the device on your priority list.
+
+   * Integrating a completely new :term:`device type` is the probably **the most
+     complex thing to do in LAVA**. It can take a few months of work for
+     devices which do not use currently supported methods or bootloaders.
+
+#. Start by adding :ref:`known devices <first_devices>`, including purchasing
+   some of the low-cost devices already supported by LAVA.
+
+#. :ref:`Talk to us <getting_support>` before looking at device types not
+   currently supported on LAVA instances.
+
 Methods
 *******
 

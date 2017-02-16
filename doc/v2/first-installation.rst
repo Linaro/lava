@@ -305,6 +305,16 @@ number of seconds each node will wait before polling the coordinator again.
 Setting Up Serial Connections to LAVA Devices
 =============================================
 
+LAVA controls the DUT using a serial connection, except for emulated devices
+like QEMU.
+
+.. seealso:: :ref:`serial_console_support` for information about hardware.
+
+.. caution:: Make sure your serial connection configuration is :ref:`backed up
+   <admin_backups>` as it can be an awkward process to manually establish which
+   path in ``/dev/serial/by-id`` is which cable and therefore connected to
+   which device.
+
 .. _ser2net:
 
 Ser2net daemon
@@ -331,8 +341,6 @@ Example config (in /etc/ser2net.conf)::
 
 StarTech rackmount usb
 ----------------------
-
-W.I.P
 
 * udev rules::
 

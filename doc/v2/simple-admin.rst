@@ -119,117 +119,179 @@ Problems with simplistic testing
 There are a number of common fallacies relating to automation. Check your test
 ideas against these before starting to make your plans:
 
-#. **connect & test** seems simple enough - it doesn't seem as if you need to
-   deploy a new kernel or rootfs every time, no need to power off or reboot
-   between tests. *Just* connect and run stuff.  After all, you already have a
-   way to manually deploy stuff to the board.
+.. _connect_and_test:
 
-   * The biggest problem with this method is :ref:`persistence` - LAVA keeps
-     the LAVA components separated from each other but tests frequently need to
-     install support which will persist after the test, write files which can
-     interfere with other tests or break the manual deployment in unexpected
-     ways when things go wrong.
+Connect and test
+================
 
-   * The second problem within this fallacy is simply the power drain of
-     leaving the devices constantly powered on. In manual testing, you would
-     apply power at the start of your day and power off at the end. In
-     automated testing, these devices would be on all day, every day, because
-     test jobs could be submitted at any time.
+Seems simple enough - it doesn't seem as if you need to deploy a new kernel or
+rootfs every time, no need to power off or reboot between tests. *Just* connect
+and run stuff.  After all, you already have a way to manually deploy stuff to
+the board.
 
-#. **test everything at the same time** - you've built an entire system and now
-   you put the entire thing onto the device and do all the tests at the same
-   time. There are numerous problems with this approach:
+* The biggest problem with this method is :ref:`persistence` - LAVA keeps the
+  LAVA components separated from each other but tests frequently need to
+  install support which will persist after the test, write files which can
+  interfere with other tests or break the manual deployment in unexpected ways
+  when things go wrong.
 
-   #. **Breaking the basic scientific method** of test one thing at a time. The
-      single system contains multiple components, like the kernel and the
-      rootfs and the bootloader. Each one of those components can fail in ways
-      which can only be picked up when some later component produces a
-      completely misleading and unexpected error message.
+* The second problem within this fallacy is simply the power drain of leaving
+  the devices constantly powered on. In manual testing, you would apply power
+  at the start of your day and power off at the end. In automated testing,
+  these devices would be on all day, every day, because test jobs could be
+  submitted at any time.
 
-   #. **Timing** - simply deploying the entire system for every single test job
-      wastes inordinate amounts of time when you do finally identify that the
-      problem is a configuration setting in the bootloader or a missing module
-      for the kernel.
+.. _ssh_vs_serial:
 
-   #. **Reproducibility** - the larger the deployment, the more complex the
-      boot and the tests become. Many LAVA devices are prototypes and
-      development boards, not production servers. These devices **will** fail
-      in unpredictable places from time to time. Testing a kernel build
-      multiple times is much more likely to give you consistent averages for
-      duration, performance and other measurements than if the kernel is only
-      tested as part of a complete system.
+ssh instead of serial
+=====================
 
-   #. **Automated recovery** - deploying an entire system can go wrong, whether
-      an interrupted copy or a broken build, the consequences can mean that the
-      device simply does not boot any longer.
+This is an over-simplification which will lead to new and unusual bugs and is
+only a short step on from *connect & test* with many of the same problems. A
+core strength of LAVA is demonstrating differences between types of devices by
+controlling the boot process. By the time the system has booted to the point
+where ``sshd`` is running, many of those differences have been swallowed up in
+the boot process.
 
-      * **Every component** involved in your test **must** allow for automated
-        recovery. This means that the boot process must support being
-        interrupted **before** that component starts to load. With a suitably
-        configured bootloader, it is straightforward to test kernel builds with
-        fully automated recovery on most devices. Deploying a new build of the
-        bootloader **itself** is much more problematic. Few devices have the
-        necessary management interfaces with support for secondary console
-        access or additional network interfaces which respond very early in
-        boot. It is possible to chainload some bootloaders, allowing the known
-        working bootloader to be preserved.
+``ssh`` can be useful within LAVA tests but using ``ssh`` to the exclusion of
+serial means that the boot process is hidden from the logs, including any
+errors and warnings. If the boot process results in a system which cannot start
+``sshd`` or cannot expose ``ssh`` over the network, the admin has no way to
+determine the cause of the failure. If the userspace tests fail, the test
+writer cannot be sure that the boot process was not a partial cause of the
+failure as the boot process messages are not visible. This leads to test
+writers repeatedly submitting the same jobs and wasting a lot of time in triage
+because critical information is hidden by the choice of using ``ssh`` instead
+of serial.
 
-#. **I already have builds** - this may be true, however, automation puts extra
-   demands on what those builds are capable of supporting. When testing
-   manually, there are any number of times when a human will decide that
-   something needs to be entered, tweaked, modified, removed or ignored which
-   the automated system needs to be able to understand. Examples include:
+Using ``ssh`` without a boot process at all has all the same problems as
+:ref:`connect_and_test`.
 
-   * ``/etc/resolv.conf`` - it is common for many build tools to generate or
-     copy a working ``/etc/resolv.conf`` based on the system within which the
-     build tool is executed. This is a frequent cause of test jobs failing due
-     to being unable to lookup web addresses using :abbr:`DNS (Domain Name
-     System)`. It is also common for an automated system to be in a different
-     network subnet to the build tool, again causing the test job to be unable
-     to use DNS due to the wrong data in ``/etc/resolv.conf``.
+Limiting all your tests to userspace without changing the running kernel is not
+making the best use of LAVA. LAVA has a steep learning curve, but trying to cut
+corners won't help you in the long run. If you see `ssh` as a shortcut, it is
+probable that your use case may be better served by a different tool which does
+not control the boot process, for example tools based on containers and virtual
+machines.
 
-   * **Customised tools** - using non-standard build tools or putting custom
-     scripts, binaries and programs into a root filesystem is a common reason
-     for test jobs to fail when users migrate to updated builds.
+.. note:: Using serial also requires some level of automated power control. The
+   connection is made first, then power is applied and there is no allowance
+   for manual intervention in applying power. LAVA is designed as a fully
+   automated system where test jobs can run reliably without any manual
+   operations.
 
-   * **Comparability** - LAVA has various ways to :ref:`support
-     <getting_support>` local admins but to make sense of logs or bug reports,
-     the test job needs to be comparable to one already known to work
-     elsewhere.
+.. seealso:: :ref:`what_is_lava_not`, :ref:`serial_connections` and
+   :ref:`power_control_infrastructure`
 
-   Make use of the :ref:`standard files <providing_gold_standard_files>` for
-   known working device types. These files come with details of how to rebuild
-   the files, logs of the each build and checksums to be sure the download is
-   correct.
+.. _test_all_the_things:
 
-#. **Automation can do everything** - it is **not** possible to automate every
-   test method. Some kinds of tests and some kinds of devices lack critical
-   elements that block automation. These are not problems in LAVA, these are
-   design limitations of the kind of test and the device itself. Your preferred
-   test plan may be infeasible to automate and some level of compromise will be
-   required.
+test everything at the same time
+================================
 
-#. **Users are all admins too** - this will come back to bite! However, there
-   are other ways in which this can occur even after administrators have
-   restricted users to limited access. Test jobs (including hacking sessions)
-   have full access to the device as root. Users, therefore, can modify the
-   device during a test job and it depends on the device hardware support and
-   device configuration as to what may happen next. Some devices store
-   bootloader configuration in files which are accessible from userspace after
-   boot. Some devices lack a management interface that can intervene when a
-   device fails to boot. Put these two together and admins can face a situation
-   where a test job has corrupted, overridden or modified the bootloader
-   configuration such that the device no longer boots without intervention.
-   Some operating systems require a debug setting to be enabled before the
-   device will be visible to the automation (e.g. the Android Debug Bridge). It
-   is trivial for a user to mistakenly deploy a default or production system
-   which does not have this modification.
+You've built an entire system and now you put the entire thing onto the device
+and do all the tests at the same time. There are numerous problems with this
+approach:
 
-   Administrators need to be mindful of the situations from which users can
-   (mistakenly or otherwise) modify the device configuration such that the
-   device is unable to booting without intervention when the next job starts.
-   This is one of the key reasons for :term:`health checks <health check>` to
-   run sufficiently often that the impact on other users is minimised.
+#. **Breaking the basic scientific method** of test one thing at a time. The
+   single system contains multiple components, like the kernel and the rootfs
+   and the bootloader. Each one of those components can fail in ways which can
+   only be picked up when some later component produces a completely misleading
+   and unexpected error message.
+
+#. **Timing** - simply deploying the entire system for every single test job
+   wastes inordinate amounts of time when you do finally identify that the
+   problem is a configuration setting in the bootloader or a missing module for
+   the kernel.
+
+#. **Reproducibility** - the larger the deployment, the more complex the boot
+   and the tests become. Many LAVA devices are prototypes and development
+   boards, not production servers. These devices **will** fail in unpredictable
+   places from time to time. Testing a kernel build multiple times is much more
+   likely to give you consistent averages for duration, performance and other
+   measurements than if the kernel is only tested as part of a complete system.
+
+#. **Automated recovery** - deploying an entire system can go wrong, whether an
+   interrupted copy or a broken build, the consequences can mean that the
+   device simply does not boot any longer.
+
+   * **Every component** involved in your test **must** allow for automated
+     recovery. This means that the boot process must support being interrupted
+     **before** that component starts to load. With a suitably configured
+     bootloader, it is straightforward to test kernel builds with fully
+     automated recovery on most devices. Deploying a new build of the
+     bootloader **itself** is much more problematic. Few devices have the
+     necessary management interfaces with support for secondary console access
+     or additional network interfaces which respond very early in boot. It is
+     possible to chainload some bootloaders, allowing the known working
+     bootloader to be preserved.
+
+.. _existing_builds:
+
+I already have builds
+=====================
+
+This may be true, however, automation puts extra demands on what those builds
+are capable of supporting. When testing manually, there are any number of times
+when a human will decide that something needs to be entered, tweaked, modified,
+removed or ignored which the automated system needs to be able to understand.
+Examples include:
+
+* ``/etc/resolv.conf`` - it is common for many build tools to generate or copy
+  a working ``/etc/resolv.conf`` based on the system within which the build
+  tool is executed. This is a frequent cause of test jobs failing due to being
+  unable to lookup web addresses using :abbr:`DNS (Domain Name System)`. It is
+  also common for an automated system to be in a different network subnet to
+  the build tool, again causing the test job to be unable to use DNS due to the
+  wrong data in ``/etc/resolv.conf``.
+
+* **Customised tools** - using non-standard build tools or putting custom
+  scripts, binaries and programs into a root filesystem is a common reason for
+  test jobs to fail when users migrate to updated builds.
+
+* **Comparability** - LAVA has various ways to :ref:`support <getting_support>`
+  local admins but to make sense of logs or bug reports, the test job needs to
+  be comparable to one already known to work elsewhere.
+
+Make use of the :ref:`standard files <providing_gold_standard_files>` for known
+working device types. These files come with details of how to rebuild the
+files, logs of the each build and checksums to be sure the download is correct.
+
+.. _automate_everything:
+
+Automation can do everything
+============================
+
+It is **not** possible to automate every test method. Some kinds of tests and
+some kinds of devices lack critical elements that do not work well with
+automation. These are not problems in LAVA, these are design limitations of the
+kind of test and the device itself. Your preferred test plan may be infeasible
+to automate and some level of compromise will be required.
+
+.. _all_users_are_admins:
+
+Users are all admins too
+========================
+
+This will come back to bite! However, there are other ways in which this can
+occur even after administrators have restricted users to limited access. Test
+jobs (including hacking sessions) have full access to the device as root.
+Users, therefore, can modify the device during a test job and it depends on the
+device hardware support and device configuration as to what may happen next.
+Some devices store bootloader configuration in files which are accessible from
+userspace after boot. Some devices lack a management interface that can
+intervene when a device fails to boot. Put these two together and admins can
+face a situation where a test job has corrupted, overridden or modified the
+bootloader configuration such that the device no longer boots without
+intervention. Some operating systems require a debug setting to be enabled
+before the device will be visible to the automation (e.g. the Android Debug
+Bridge). It is trivial for a user to mistakenly deploy a default or production
+system which does not have this modification.
+
+Administrators need to be mindful of the situations from which users can
+(mistakenly or otherwise) modify the device configuration such that the device
+is unable to boot without intervention when the next job starts. This is one of
+the key reasons for :term:`health checks <health check>` to run sufficiently
+often that the impact on other users is minimised.
 
 .. index:: administrator
 

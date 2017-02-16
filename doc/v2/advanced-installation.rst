@@ -69,48 +69,80 @@ LAVA expects to be the primary host on the master. This has improved with V2
 but unless your instance is V2-only, you may experience problems or require
 additional configuration to use LAVA as a virtual host.
 
+.. index:: infrastructure requirements
+
 .. _infrastructure_requirements:
 
 Other infrastructure
 ====================
 
-LAVA will need other services to be available, either using separate
-tools on the same machines or as separate hardware. This list is not
-exhaustive.
+LAVA will need other services to be available, either using separate tools on
+the same machines or as separate hardware. This list is not exhaustive.
 
-* **Remote power control** (:abbr:`PDU (Power Distribution Unit)`) -
-  the most common issue with new LAVA labs is obtaining and then configuring
-  the remote power control. There is no single device for all use cases and a
-  wide variety of possible solutions, depending on your needs. Take the time to
-  research the issues and ask on the :ref:`lava_users` mailing list.
+.. index:: power control infrastructure, automated power control
 
-* **Serial console support** - once more than a handful of devices are
-  attached to a worker it becomes necessary to have a separate unit to handle
-  the serial connectivity, turning serial ports into TCP ports. Bespoke serial
-  console servers can be expensive, alternatives include ARMv7 boards with
-  ``ser2net`` installed but the USB and ethernet support needs to be reliable.
+.. _power_control_infrastructure:
 
-* **Network switches** - simple unmanaged switches will work for small
-  LAVA labs but managed switches are essential to use :ref:`vland_in_lava` and
-  will also be important for medium to large LAVA labs.
+Remote power control
+--------------------
 
-* **Power supply** (:abbr:`UPS (Uninterruptible Power Supply)`) - the entire
-  lab needs to be able to cope with power interruptions. Depending on the
-  budget, this could be a small UPS capable of supporting the master and the
-  worker for 10 minutes or it could be a combination of larger UPS units and a
-  generator.
+Automated power control using a (:abbr:`PDU (Power Distribution Unit)`) is the
+most common issue with new LAVA labs. Hardware can be difficult to obtain and
+configuring the remote power control can require custom scripting. There is no
+single device for all use cases and a wide variety of possible solutions,
+depending on your needs. Take the time to research the issues and ask on the
+:ref:`lava_users` mailing list.
 
-* **Fileserver** - the master is **not** the place to be putting build
-  artefacts, the worker will download those later to a temporary location when
-  the job starts. The development builds and the files built to support the
-  LAVA test need to happen on a suitably powerful machine to match the
-  expectations of the CI loop and the developers.
+.. index:: serial console support, serial console server
 
-* **Shelving and racks** - quite quickly, the tangle of power cables,
-  network cables, serial cables, devices, switches and other infrastructure
-  will swamp a desk etc. For even a small lab of a handful of devices, a
-  set of shelves or a wall-mounted rack is going to make things a lot
-  easier to manage.
+.. _serial_console_support:
+
+Serial console support
+----------------------
+
+Once more than a handful of devices are attached to a worker it becomes
+necessary to have a separate unit to handle the serial connectivity, turning
+serial ports into TCP ports. Bespoke serial console servers can be expensive,
+alternatives include ARMv7 boards with ``ser2net`` installed but the USB and
+ethernet support needs to be reliable.
+
+.. _network_switch_infrastructure:
+
+Network switches
+----------------
+
+Simple unmanaged switches will work for small LAVA labs but managed switches
+are essential to use :ref:`vland_in_lava` and will also be important for medium
+to large LAVA labs.
+
+.. _power_supply_ups:
+
+Power supply
+------------
+
+:abbr:`UPS (Uninterruptible Power Supply)` allows the entire lab to cope with
+power interruptions. Depending on the budget, this could be a small UPS capable
+of supporting the master and the worker for 10 minutes or it could be a
+combination of larger UPS units and a generator.
+
+.. _fileserver_infrastructure:
+
+Fileserver
+----------
+
+The master is **not** the place to be putting build artefacts, the worker will
+download those later to a temporary location when the job starts. The
+development builds and the files built to support the LAVA test need to happen
+on a suitably powerful machine to match the expectations of the CI loop and the
+developers.
+
+Shelving and racks
+------------------
+
+Quite quickly, the tangle of power cables, network cables, serial cables,
+devices, switches and other infrastructure will swamp a desk etc. For even a
+small lab of a handful of devices, a set of shelves or a wall-mounted rack is
+going to make things a lot easier to manage.
 
 .. _more_installation_types:
 
