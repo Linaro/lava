@@ -887,7 +887,7 @@ class Device(RestrictedResource):
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
-        if self.status == Device.OFFLINING:
+        if self.status == Device.OFFLINING and self.current_job is not None:
             new_status = self.RUNNING
         else:
             new_status = self.IDLE
