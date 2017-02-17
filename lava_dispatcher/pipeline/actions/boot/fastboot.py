@@ -37,6 +37,19 @@ from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 
 
+def _fastboot_sequence_map(sequence):
+    """Maps fastboot sequence with corresponding class."""
+    sequence_map = {'boot': (FastbootBootAction, None),
+                    'reboot': (FastbootRebootAction, None),
+                    'wait-usb-add': (WaitUSBDeviceAction, ['add']),
+                    'wait-usb-remove': (WaitUSBDeviceAction, ['remove']),
+                    'lxc-add-device': (LxcAddDeviceAction, None),
+                    'auto-login': (AutoLoginAction, None),
+                    'shell-session': (ExpectShellSession, None),
+                    'export-env': (ExportDeviceEnvironment, None), }
+    return sequence_map.get(sequence, (None, None))
+
+
 class BootFastboot(Boot):
     """
     Expects fastboot bootloader, and boots.
@@ -55,6 +68,8 @@ class BootFastboot(Boot):
         if 'method' in parameters:
             if parameters['method'] == 'fastboot':
                 return True
+        if 'methods' not in device['actions']['boot']:
+            raise RuntimeError("Device misconfiguration")
         return False
 
 
@@ -69,27 +84,26 @@ class BootFastbootAction(BootAction):
         self.summary = "fastboot boot"
         self.description = "fastboot boot into the system"
 
+    def validate(self):
+        super(BootFastbootAction, self).validate()
+        sequences = self.job.device['actions']['boot']['methods'].get(
+            'fastboot', [])
+        for sequence in sequences:
+            if not _fastboot_sequence_map(sequence):
+                self.errors = "Unknown boot sequence '%s'" % sequence
+
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if self.job.device.get('fastboot_via_uboot', False):
-            self.internal_pipeline.add_action(FastbootRebootAction())
-            self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                device_actions=['add']))
-        else:
-            self.internal_pipeline.add_action(FastbootBootAction())
-            # Check if the device has a power command such as HiKey,
-            # Dragonboard, etc. against device that doesn't like Nexus, etc.
-            if self.job.device.power_command:
-                self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                    device_actions=['add', 'remove']))
-            else:
-                self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                    device_actions=['add']))
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
-        if self.job.device.power_command:
-            self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExpectShellSession())
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        sequences = self.job.device['actions']['boot']['methods'].get(
+            'fastboot', [])
+        for sequence in sequences:
+            mapped = _fastboot_sequence_map(sequence)
+            if mapped[1]:
+                self.internal_pipeline.add_action(
+                    mapped[0](device_actions=mapped[1]))
+            elif mapped[0]:
+                self.internal_pipeline.add_action(mapped[0]())
 
 
 class FastbootBootAction(Action):

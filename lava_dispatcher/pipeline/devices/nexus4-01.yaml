@@ -19,6 +19,9 @@ actions:
     methods:
       lxc:
       fastboot:
+        - reboot
+        - wait-usb-add
+        - lxc-add-device
 
 timeouts:
   actions:

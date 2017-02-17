@@ -57,7 +57,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
     def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pg-x15-01_config.yaml'))
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
@@ -196,7 +196,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, job.pipeline.describe(False))
         boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
-        self.assertEqual(wait.device_actions, ['add', 'remove'])
+        self.assertEqual(wait.device_actions, ['remove'])
 
     def test_x15_job(self):
         self.factory = FastBootFactory()

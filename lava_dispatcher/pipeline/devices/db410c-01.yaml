@@ -26,7 +26,13 @@ actions:
       serial:
     methods:
       lxc:
-      fastboot-boot-image:
+      fastboot:
+        - boot
+        - wait-usb-remove
+        - lxc-add-device
+        - auto-login
+        - shell-session
+        - export-env
 
 timeouts:
   actions:

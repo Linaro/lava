@@ -55,7 +55,7 @@
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot_boot
   pipeline:
-  - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
+  - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
   - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry
