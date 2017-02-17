@@ -21,6 +21,7 @@
 import csv
 import glob
 import os
+import sys
 
 from django.core.management.base import BaseCommand, CommandParser
 
@@ -64,16 +65,25 @@ class Command(BaseCommand):
                             choices=["hours", "jobs"],
                             help="Initiate health checks by hours or by jobs.")
 
+        # "details" sub-command
+        details_parser = sub.add_parser("details", help="Details about a device-type")
+        details_parser.add_argument("name",
+                                    help="Name of the device-type")
+        details_parser.add_argument("--devices", action="store_true",
+                                    default=False,
+                                    help="Print the corresponding devices")
+
         # "list" sub-command
         list_parser = sub.add_parser("list", help="List the installed device types")
         list_parser.add_argument("--all", "-a", dest="show_all",
                                  default=False, action="store_true",
-                                 help="Show all device types in the database, including non-installed ones")
+                                 help="Show all device types in the database, "
+                                      "including non-installed ones")
         list_parser.add_argument("--csv", dest="csv", default=False,
                                  action="store_true", help="Print as csv")
 
     def available_device_types(self):
-        # List the available device types
+        """ List avaiable device types by looking at the configuration files """
         available_types = []
         for fname in glob.iglob("/etc/lava-server/dispatcher-config/device-types/*.jinja2"):
             device_type = os.path.basename(fname[:-7])
@@ -88,6 +98,8 @@ class Command(BaseCommand):
             self.handle_add(options["device-type"], options["health_check"],
                             options["health_denominator"],
                             options["health_frequency"])
+        elif options["sub_command"] == "details":
+            self.handle_details(options["name"], options["devices"])
         else:
             self.handle_list(options["show_all"], options["csv"])
 
@@ -120,6 +132,26 @@ class Command(BaseCommand):
                 health_check_job=health_job,
                 health_frequency=health_frequency,
                 health_denominator=health_denominator)
+
+    def handle_details(self, name, devices):
+        """ Print some details about the device-type """
+        try:
+            device_type = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            self.stderr.write("Unable to find device-type '%s'" % name)
+            sys.exit(1)
+
+        self.stdout.write("device_type : %s" % name)
+        self.stdout.write("description : %s" % device_type.description)
+        self.stdout.write("display     : %s" % device_type.display)
+        self.stdout.write("owners_only : %s" % device_type.owners_only)
+        self.stdout.write("health_check: %s" % bool(device_type.health_check_job))
+        if not devices:
+            self.stdout.write("devices     : %d" % device_type.device_set.count())
+        else:
+            self.stdout.write("devices     :")
+            for device in device_type.device_set.all():
+                self.stdout.write("- %s" % device.hostname)
 
     def handle_list(self, show_all, format_as_csv):
         """ List the device types """

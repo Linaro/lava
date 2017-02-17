@@ -43,12 +43,19 @@ class Command(BaseCommand):
         sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
 
         add_parser = sub.add_parser("add", help="Create a worker")
-        add_parser.add_argument("--hostname", type=str, required=True,
+        add_parser.add_argument("hostname", type=str,
                                 help="Hostname of the worker")
         add_parser.add_argument("--description", type=str, default="",
                                 help="Worker description")
         add_parser.add_argument("--disabled", action="store_true", default=False,
                                 help="Create a disabled worker")
+
+        details_parser = sub.add_parser("details", help="Details of a worker")
+        details_parser.add_argument("hostname", type=str,
+                                    help="Hostname of the worker")
+        details_parser.add_argument("--devices", action="store_true",
+                                    default=False,
+                                    help="Print the list of attached devices")
 
         list_parser = sub.add_parser("list", help="List the workers")
         list_parser.add_argument("--all", default=False, action="store_true",
@@ -74,6 +81,8 @@ class Command(BaseCommand):
         if options["sub_command"] == "add":
             self.handle_add(options["hostname"], options["description"],
                             options["disabled"])
+        elif options["sub_command"] == "details":
+            self.handle_details(options["hostname"], options["devices"])
         elif options["sub_command"] == "list":
             self.handle_list(options["all"], options["csv"])
         elif options["sub_command"] == "set":
@@ -91,6 +100,24 @@ class Command(BaseCommand):
         Worker.objects.create(hostname=hostname,
                               description=description,
                               display=not disabled)
+
+    def handle_details(self, hostname, print_devices):
+        try:
+            worker = Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            self.stderr.write("Unable to find worker '%s'" % hostname)
+            sys.exit(1)
+
+        self.stdout.write("hostname   : %s" % hostname)
+        self.stdout.write("master     : %s" % worker.is_master)
+        self.stdout.write("display    : %s" % worker.display)
+        self.stdout.write("description: %s" % worker.description)
+        if not print_devices:
+            self.stdout.write("devices    : %d" % worker.device_set.count())
+        else:
+            self.stdout.write("devices    :")
+            for device in worker.device_set.order_by("hostname"):
+                self.stdout.write("- %s" % device.hostname)
 
     def handle_list(self, show_all, format_as_csv):
         """ List the workers """
