@@ -66,6 +66,8 @@ class Command(BaseCommand):
         return available_types
 
     def handle(self, *args, **options):
+        self.stderr.write("This command is deprecated, use \"devices\" instead")
+
         # List the available device types if requested
         if options["list"]:
             v2_types = self.available_device_types()

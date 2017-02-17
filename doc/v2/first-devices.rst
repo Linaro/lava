@@ -142,13 +142,13 @@ The only value needed for the QEMU device type is the **Name**, just check that
 On the command line, you can add device types (for instance QEMU and panda)
 using::
 
-  lava-server manage add-device-type qemu panda
+  lava-server manage device-types add qemu panda
 
 It's also possible to add all known device types at the same time with:
 
 .. code-block:: none
 
-  lava-server manage add-device-type '*'
+  lava-server manage device-types add '*'
 
 Descriptive fields like ``Architecture name``, ``Processor name``, ``CPU model
 name``, ``List of cores`` and ``Bit count`` cannot be set on the command line.
@@ -158,7 +158,7 @@ types:
 
 .. code-block:: none
 
-  lava-server manage add-device-type --list
+  lava-server manage device-types list --all
 
 .. index:: add-device, adding a device, create a device in the database
 
