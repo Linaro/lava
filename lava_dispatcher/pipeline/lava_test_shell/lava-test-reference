@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         *)
-            usage
+            reference_usage
             exit 1
             ;;
     esac
