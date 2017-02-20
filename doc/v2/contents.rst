@@ -158,7 +158,6 @@ LAVA administration guide
    bootimages
    pdudaemon
    admin-lxc-deploy
-   nexus-deploy
    ipmi-pxe-deploy
    ipxe
    proxy
