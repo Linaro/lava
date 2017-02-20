@@ -19,6 +19,11 @@
 {% block body %}
 device_type: juno
 
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '{{ usb_vendor_id|default('0000') }}'
+usb_product_id: '{{ usb_product_id|default('0000') }}'
+usb_filesystem_label: '{{ usb_filesystem_label|default('JUNO') }}'
+
 {% block parameters -%}
 parameters:
   booti:
@@ -76,6 +81,16 @@ actions:
         user: {{ ssh_user|default(root) }}
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
+      vemsd:
+        parameters:
+          mcc_prompt: '{{ mcc_prompt|default('Cmd>') }}'
+          msd_mount_cmd: '{{ msd_mount_cmd|default('usb_on') }}'
+          flash_prompt: '{{ flash_prompt|default('Flash>') }}'
+          flash_enter_cmd: '{{ flash_enter_cmd|default('flash') }}'
+          flash_erase_cmd: '{{ flash_erase_cmd|default('eraseall') }}'
+          flash_erase_msg: '{{ flash_erase_msg|default('Erasing Flash') }}'
+          flash_exit_cmd: '{{ flash_exit_cmd|default('exit') }}'
+          autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
     connections:
       adb:
       lxc:

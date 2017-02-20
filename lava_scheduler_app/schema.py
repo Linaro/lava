@@ -290,6 +290,7 @@ def _device_schema():
         'board_id': str,
         'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
         'usb_product_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
+        'usb_filesystem_label': str,
         'usb_serial_driver': str,
         'actions': _device_actions_schema(),
         'timeouts': _device_timeouts_schema()
