@@ -912,6 +912,18 @@ def device_type_reports(request, pk):
         request=request))
 
 
+def device_dictionary_plain(request, pk):
+    element = DeviceDictionary.get(pk)
+    data = utils.devicedictionary_to_jinja2(element.parameters,
+                                            element.parameters['extends'])
+    template = utils.prepare_jinja_template(pk, data,
+                                            system_path=True)
+    device_configuration = template.render()
+    response = HttpResponse(device_configuration, content_type='text/yaml')
+    response['Content-Disposition'] = "attachment; filename=%s.yaml" % pk
+    return response
+
+
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)

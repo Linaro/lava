@@ -16,7 +16,7 @@ Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
 device type template.
 
-Dictionary elements are shown in three blocks; commands, vland and others.
+Dictionary elements are shown in three blocks: commands, vland and others.
 
 Commands
 ********
@@ -76,3 +76,9 @@ VLANd support
 
 * **sysfs** - a dictionary of interface labels containing the ``sysfs`` path of
   the interface associated with the interface label on that device.
+
+The "download" button present in the :term:`device dictionary` page is used to
+download a YAML file of the :term:`device dictionary`, which is the equivalent
+of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
+is not intended for admin support and cannot be used to modify the
+:term:`device dictionary` itself.
