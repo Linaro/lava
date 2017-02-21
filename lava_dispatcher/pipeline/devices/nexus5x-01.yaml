@@ -1,6 +1,7 @@
 device_type: nexus5x
 adb_serial_number: '00d2b15121a13158'
 fastboot_serial_number: '00d2b15121a13158'
+fastboot_options: []
 device_info: [{'board_id': '00d2b15121a13158'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system', 'vendor']
 

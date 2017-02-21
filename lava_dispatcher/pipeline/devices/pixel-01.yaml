@@ -1,6 +1,7 @@
 device_type: pixel
 adb_serial_number: 'FA69J0308312'
 fastboot_serial_number: 'FA69J0308312'
+fastboot_options: []
 device_info: [{'board_id': 'FA69J0308312'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system_a', 'system_b', 'vendor']
 

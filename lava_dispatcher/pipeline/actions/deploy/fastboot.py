@@ -67,6 +67,8 @@ def fastboot_accept(device, parameters):
         return False
     if 'fastboot_serial_number' not in device:
         return False
+    if 'fastboot_options' not in device:
+        return False
     if 'methods' not in device['actions']['deploy']:
         raise RuntimeError("Device misconfiguration")
     return True
@@ -176,6 +178,10 @@ class EnterFastbootAction(DeployAction):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
@@ -203,13 +209,15 @@ class EnterFastbootAction(DeployAction):
             return connection
 
         # Enter fastboot mode with fastboot.
+        fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
-                        fastboot_serial_number, 'devices']
+                        fastboot_serial_number, 'devices'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', fastboot_serial_number, 'reboot-bootloader']
+                            '-s', fastboot_serial_number,
+                            'reboot-bootloader'] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
                 raise JobError("Unable to enter fastboot: %s" %
@@ -242,6 +250,10 @@ class FastbootFlashAction(DeployAction):
                 self.errors = "device fastboot serial number unset"
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
@@ -268,8 +280,10 @@ class FastbootFlashAction(DeployAction):
             if flash_cmd in ['boot']:
                 continue
             serial_number = self.job.device['fastboot_serial_number']
+            fastboot_opts = self.job.device['fastboot_options']
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', serial_number, 'flash', flash_cmd, dst]
+                            '-s', serial_number, 'flash', flash_cmd,
+                            dst] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'error' in command_output:
                 raise JobError("Unable to flash %s using fastboot: %s",

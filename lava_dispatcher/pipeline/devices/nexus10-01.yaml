@@ -1,6 +1,7 @@
 device_type: nexus10
 adb_serial_number: R32D300FRYP
 fastboot_serial_number: R32D300FRYP
+fastboot_options: []
 device_info: [{'board_id': 'R32D300FRYP'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system']
 

@@ -8,6 +8,7 @@ commands:
 device_type: x15
 adb_serial_number: 100040061d1e00e2
 fastboot_serial_number: 100040061d1e00e2
+fastboot_options: []
 device_info : [{'board_id': '100040061d1e00e2'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
                   'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',

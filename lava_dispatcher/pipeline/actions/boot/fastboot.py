@@ -109,6 +109,10 @@ class FastbootBootAction(Action):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootBootAction, self).run(connection, max_end_time, args)
@@ -130,7 +134,8 @@ class FastbootBootAction(Action):
         else:
             boot_img = os.path.join('/', os.path.basename(boot_img))
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'boot', boot_img]
+                        '-s', serial_number, 'boot',
+                        boot_img] + self.job.device['fastboot_options']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
@@ -160,6 +165,10 @@ class FastbootRebootAction(Action):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootRebootAction, self).run(connection, max_end_time, args)
@@ -174,8 +183,9 @@ class FastbootRebootAction(Action):
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'reboot']
+        fastboot_opts = self.job.device['fastboot_options']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
+                        serial_number, 'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to fastboot reboot: %s" % command_output)
