@@ -48,9 +48,12 @@ actions:
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: " "
           send_char: False
-          # method specific stanza
-          boot:
-            commands:
-              - boot
+      fastboot:
+        - reboot
+        - wait-usb-add
+        - lxc-add-device
+        - auto-login
+        - shell-session
+        - export-env
 
 {% endblock %} {# end body block #}
