@@ -3,6 +3,7 @@
 device_type: x15
 adb_serial_number: {{ adb_serial_number|default('0000000000') }}
 fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+fastboot_options: {{ fastboot_options|default([]) }}
 
 # This attribute identifies whether a device should get into fastboot mode by
 # interrupting uboot and issuing commands at the bootloader prompt.

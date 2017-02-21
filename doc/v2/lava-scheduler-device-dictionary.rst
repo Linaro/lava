@@ -47,14 +47,13 @@ Commands
   contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which can
   be added to the LXC for device specific tasks.
 
-* **adb_command** - command to access the device using ADB.
-
 * **adb_serial_number** - value to pass to ADB to connect to this device.
 
-* **fastboot_command** - command to access the device using fastboot.
-
-* **fastboot_serial_number** - value to pass to fastboot to connect to this
+* **fastboot_serial_number** - value to pass to ``fastboot`` to connect to this
   device.
+
+* **fastboot_options** - a list of strings, used for specifying additional
+  options to the ``fastboot`` command.
 
 VLANd support
 *************
@@ -82,3 +81,11 @@ download a YAML file of the :term:`device dictionary`, which is the equivalent
 of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
+
+Other parameters
+****************
+
+* **flash_cmds_order** - a list of strings, used for specifying the order in
+  which the images should be flashed to the :term:`DUT` using the ``fastboot``
+  command.
+

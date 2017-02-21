@@ -3,6 +3,8 @@
 device_type: dragonboard-410c
 adb_serial_number: {{ adb_serial_number|default('0000000000') }}
 fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+fastboot_options: {{ fastboot_options|default([]) }}
+
 {% block vland %}
 {#  #}
 {% endblock %}

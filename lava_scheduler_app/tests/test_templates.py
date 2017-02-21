@@ -81,6 +81,7 @@ class TestTemplates(unittest.TestCase):
     def test_nexus10_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 {% set connection_command = 'adb -s R32D300FRYP shell' %}
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
@@ -222,6 +223,8 @@ class TestTemplates(unittest.TestCase):
         self.assertIsInstance(template_dict['device_info'], list)
         self.assertEqual(template_dict['device_info'][0]['board_id'],
                          '0123456789')
+        self.assertIsInstance(template_dict['fastboot_options'], list)
+        self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -602,7 +605,7 @@ class TestTemplates(unittest.TestCase):
 {% set device_info = [{'board_id': '10de1214adae123'}] %}
 """))
 
-    def test_nexus5x_template(self):
+    def test_pixel_template(self):
         self.assertTrue(self.validate_data('staging-pixel-01', """{% extends 'pixel.jinja2' %}
 {% set adb_serial_number = 'FDAC1231DAD' %}
 {% set fastboot_serial_number = 'FDAC1231DAD' %}
