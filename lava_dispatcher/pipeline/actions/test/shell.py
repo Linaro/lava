@@ -176,6 +176,7 @@ class TestShellAction(TestAction):
         # Extend the list of patterns when creating subclasses.
         self.patterns = {
             "exit": "<LAVA_TEST_RUNNER>: exiting",
+            "error": "<LAVA_TEST_RUNNER>: ([^ ]+) installer failed, skipping",
             "eof": pexpect.EOF,
             "timeout": pexpect.TIMEOUT,
             "signal": r"<LAVA_SIGNAL_(\S+) ([^>]+)>",
@@ -278,6 +279,8 @@ class TestShellAction(TestAction):
         # Only print if the report is not empty
         if self.report:
             self.logger.debug(yaml.dump(self.report, default_flow_style=False))
+        if self.errors:
+            raise TestError(self.errors)
         return connection
 
     def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
@@ -290,6 +293,21 @@ class TestShellAction(TestAction):
         if event == "exit":
             self.logger.info("ok: lava_test_shell seems to have completed")
             self.testset_name = None
+
+        elif event == "error":
+            (testrun, ) = test_connection.match.groups()
+            self.logger.error("Unable to start testrun %s. "
+                              "Read the log for more details.", testrun)
+            self.errors = "Unable to start testrun %s" % testrun
+            # This is not accurate but required when exiting.
+            self.start = time.time()
+            self.current_run = {
+                "definition": "lava",
+                "case": testrun,
+                "result": "fail"
+            }
+            # Parsing is not finished
+            ret_val = True
 
         elif event == "eof":
             self.logger.warning("err: lava_test_shell connection dropped")
