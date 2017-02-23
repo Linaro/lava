@@ -90,26 +90,7 @@ for line in $(cat ${WORKFILE}); do
 	hwcontext ${odir}
 	swcontext ${odir}
 
-	# run.sh includes a "read -t <timeout>" which isn't supported by dash
-	# so be sure to use bash (ash also works).
-
-	shell="none"
-	if [ -f /bin/bash ]; then
-		shell="/bin/bash"
-	else
-		if [ -f /bin/ash ]; then
-			shell="/bin/ash"
-		fi
-	fi
-
-	if [ $shell = "none" ]; then
-		echo "-----------------------------------------------"
-		echo "ERROR: Unable to find a usable shell. Aborting."
-		echo "-----------------------------------------------"
-		exit 1
-	fi
-
-	lava-test-shell --output_dir ${odir} ${shell} -e "${line}/run.sh"
+	lava-test-shell --output_dir ${odir} ${SHELL} -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done
 
