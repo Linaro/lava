@@ -29,7 +29,11 @@ import traceback
 import os
 import yaml
 
-from lava_dispatcher.pipeline.action import JobError, InfrastructureError, TestError
+from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
+    JobError,
+    LAVAError,
+)
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
@@ -250,26 +254,20 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             # Run the pipeline and wait for exceptions
             with self.timeout() as max_end_time:
                 self.pipeline.run_actions(self.connection, max_end_time)
-        except InfrastructureError:
-            error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
-                        "Please report it to the LAVA admin."
-            return_code = 1
-        except JobError:
-            error_msg = "JobError: your job cannot terminate cleanly."
-            return_code = 2
+        except LAVAError as exc:
+            error_msg = exc.error_msg
+            return_code = exc.error_code
+        except RuntimeError:
+            # TODO: should be replaced by LAVABug
+            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
+            return_code = 3
         except KeyboardInterrupt:
             error_msg = "KeyboardInterrupt: the job was canceled."
-            return_code = 3
-        except RuntimeError:
-            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
-            return_code = 4
-        except TestError:
-            error_msg = "TestError: a test failed to run, look at the error message."
-            return_code = 5
+            return_code = 6
         except Exception as exc:
             self.logger.exception(traceback.format_exc())
             error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
-            return_code = 6
+            return_code = 7
 
         # Cleanup now
         self.cleanup(self.connection, None)

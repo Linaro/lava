@@ -42,7 +42,13 @@ if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
 
 
-class InfrastructureError(Exception):
+class LAVAError(Exception):
+    """ Base class for all exceptions in LAVA """
+    error_code = 0
+    error_msg = ""
+
+
+class InfrastructureError(LAVAError):
     """
     Exceptions based on an error raised by a component of the
     test which is neither the LAVA dispatcher code nor the
@@ -52,29 +58,47 @@ class InfrastructureError(Exception):
     is connected (serial console connection, ethernet switches or
     internet connection beyond the control of the device under test).
 
-    Use the existing RuntimeError exception for errors arising
-    from bugs in LAVA code.
+    Use LAVABug for errors arising from bugs in LAVA code.
     """
-    pass
+    error_code = 1
+    error_msg = "InfrastructureError: The Infrastructure is not working " \
+                "correctly. Please report this error to LAVA admins."
 
 
-class JobError(Exception):
+class JobError(LAVAError):
     """
     An Error arising from the information supplied as part of the TestJob
     e.g. HTTP404 on a file to be downloaded as part of the preparation of
     the TestJob or a download which results in a file which tar or gzip
     does not recognise.
     """
-    pass
+    error_code = 2
+    error_msg = "JobError: Your job cannot terminate cleanly."
 
 
-class TestError(Exception):
+class LAVABug(LAVAError):
+    """
+    An error that is raised when an un-expected error is catched. Only happen
+    when a bug is encountered.
+    """
+    error_code = 3
+    error_msg = "LAVABug: This is probably a bug in LAVA, please report it."
+
+
+class TestError(LAVAError):
     """
     An error in the operation of the test definition, e.g.
     in parsing measurements or commands which fail.
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    pass
+    error_code = 4
+    error_msg = "TestError: A test failed to run, look at the error message."
+
+
+class ConfigurationError(LAVAError):
+    error_code = 5
+    error_msg = "ConfigurationError: The LAVA instance is not configured " \
+                "correctly. Please report this error to LAVA admins."
 
 
 class InternalObject(object):  # pylint: disable=too-few-public-methods
