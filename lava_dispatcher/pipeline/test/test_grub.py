@@ -55,6 +55,16 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_mustang_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mustang-grub-efi.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -230,3 +240,15 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.validate()
         description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_grub_via_efi(self):
+        job = self.factory.create_mustang_job('sample_jobs/mustang-grub-efi-nfs.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = pipeline_reference('mustang-grub-efi-nfs.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
+        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
+        self.assertIn('item_class', menu.params)
+        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
+        self.assertEqual('pxe-grub', grub_efi.commands)

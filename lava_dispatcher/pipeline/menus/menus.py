@@ -85,7 +85,7 @@ class SelectorMenu(object):
 
 class MenuSession(ShellSession):
 
-    def wait(self):
+    def wait(self, max_end_time=None):
         """
         Simple wait without sendling blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
@@ -217,6 +217,8 @@ class SelectorMenuAction(Action):
                             self.logger.debug("Selecting option %s", action)
                         elif 'fallback' in block['select']:
                             action = self.selector.select(menu_text, block['select']['fallback'])
+                        if not action:
+                            raise JobError("No selection was made")
                         connection.sendline(action, delay=self.character_delay)
                         self._change_prompt(connection, change_prompt)
                 if 'escape' in block['select']:

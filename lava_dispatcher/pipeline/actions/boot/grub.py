@@ -34,6 +34,10 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderCommandsAction
 )
+from lava_dispatcher.pipeline.actions.boot.uefi_menu import (
+    UEFIMenuInterrupt,
+    UefiMenuSelector
+)
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
@@ -49,7 +53,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 def bootloader_accepts(device, parameters):
     if 'method' not in parameters:
         raise ConfigurationError("method not specified in boot parameters")
-    if parameters['method'] != 'grub':
+    if parameters["method"] not in ["grub", "grub-efi"]:
         return False
     if 'actions' not in device:
         raise ConfigurationError("Invalid device configuration")
@@ -75,7 +79,8 @@ class Grub(Boot):
     def accepts(cls, device, parameters):
         if not bootloader_accepts(device, parameters):
             return False
-        return 'grub' in device['actions']['boot']['methods']
+        params = device['actions']['boot']['methods']
+        return 'grub' in params or 'grub-efi' in params
 
 
 class GrubMainAction(BootAction):
@@ -92,6 +97,9 @@ class GrubMainAction(BootAction):
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
+        if parameters['method'] == 'grub-efi':
+            self.internal_pipeline.add_action(UEFIMenuInterrupt())
+            self.internal_pipeline.add_action(GrubMenuSelector())
         self.internal_pipeline.add_action(BootloaderInterrupt())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
@@ -136,6 +144,8 @@ class BootloaderInterrupt(Action):
         else:
             self.logger.debug("%s may need manual intervention to reboot", hostname)
         device_methods = self.job.device['actions']['boot']['methods']
+        if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
+            self.type = 'grub-efi'
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
@@ -149,6 +159,31 @@ class BootloaderInterrupt(Action):
         self.wait(connection)
         connection.sendline("c")
         return connection
+
+
+class GrubMenuSelector(UefiMenuSelector):
+
+    def __init__(self):
+        super(UefiMenuSelector, self).__init__()
+        self.name = 'grub-efi-menu-selector'
+        self.summary = 'select grub options in the efi menu'
+        self.description = 'select specified grub-efi menu items'
+        self.selector.prompt = "Start:"
+        self.method_name = 'grub-efi'
+        self.commands = None
+        self.boot_message = None
+        self.params = None
+
+    def validate(self):
+        if self.method_name not in self.job.device['actions']['boot']['methods']:
+            self.errors = "No %s in device boot methods" % self.method_name
+            return
+        self.params = self.job.device['actions']['boot']['methods'][self.method_name]
+        if 'menu_options' not in self.params:
+            self.errors = "Missing entry for menu item to use for %s" % self.method_name
+            return
+        self.commands = self.params['menu_options']
+        super(GrubMenuSelector, self).validate()
 
 
 class InstallerWait(Action):
