@@ -233,7 +233,8 @@ def _job_schema():
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
-            'notify': _job_notify_schema()
+            'notify': _job_notify_schema(),
+            'reboot_to_fastboot': bool
         }
     )
 
