@@ -22,9 +22,9 @@ import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
-    JobError,
+    ConfigurationError,
     InfrastructureError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
@@ -54,11 +54,11 @@ def lxc_accept(device, parameters):
     if not device:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
     if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -171,7 +171,7 @@ class LxcCreateAction(DeployAction):
                        self.lxc_data['lxc_release'], '--arch',
                        self.lxc_data['lxc_arch']]
         if not self.run_command(lxc_cmd, allow_silent=True):
-            raise JobError("Unable to create lxc container")
+            raise InfrastructureError("Unable to create lxc container")
         else:
             self.results = {'status': self.lxc_data['lxc_name']}
         return connection
@@ -205,9 +205,7 @@ class LxcAddDeviceAction(Action):
                         self.errors = 'usb_vendor_id unset'
                     if usb_product_id == '0000':
                         self.errors = 'usb_product_id unset'
-        except KeyError as exc:
-            raise InfrastructureError(exc)
-        except (TypeError):
+        except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):

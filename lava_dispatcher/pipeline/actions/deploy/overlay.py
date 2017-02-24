@@ -24,7 +24,12 @@ import glob
 import shutil
 import tarfile
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.action import Action, Pipeline
+from lava_dispatcher.pipeline.action import (
+    Action,
+    InfrastructureError,
+    LAVABug,
+    Pipeline
+)
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,
@@ -237,14 +242,14 @@ class MultinodeOverlayAction(OverlayAction):
         shell = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
         location = self.get_namespace_data(action='test', label='shared', key='location')
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Unable to find overlay location")
+            raise LAVABug("Unable to find overlay location")
 
         # the roles list can only be populated after the devices have been assigned
         # therefore, cannot be checked in validate which is executed at submission.
         if 'roles' not in self.job.parameters['protocols'][self.protocol]:
-            raise RuntimeError("multinode definition without complete list of roles after assignment")
+            raise LAVABug("multinode definition without complete list of roles after assignment")
 
         # Generic scripts
         lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
@@ -380,9 +385,9 @@ class VlandOverlayAction(OverlayAction):
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         shell = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Unable to find overlay location")
+            raise LAVABug("Unable to find overlay location")
 
         lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         scripts_to_copy = glob.glob(os.path.join(self.lava_vland_test_dir, 'lava-*'))
@@ -436,9 +441,9 @@ class CompressOverlay(Action):
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         self.set_namespace_data(action='test', label='shared', key='output', value=output)
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Unable to find overlay location")
+            raise LAVABug("Unable to find overlay location")
         if not self.valid:
             self.logger.error(self.errors)
             return connection
@@ -453,7 +458,7 @@ class CompressOverlay(Action):
                     tar.add(".%s" % '/root/')
         except tarfile.TarError as exc:
             self.errors = "Unable to create lava overlay tarball: %s" % exc
-            raise RuntimeError("Unable to create lava overlay tarball: %s" % exc)
+            raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
         os.chdir(cur_dir)
         self.set_namespace_data(action=self.name, label='output', key='file', value=output)
         return connection
@@ -512,9 +517,9 @@ class SshAuthorize(Action):
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Unable to find overlay location")
+            raise LAVABug("Unable to find overlay location")
         lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         output_file = '%s/%s' % (lava_path, os.path.basename(self.identity_file))
         shutil.copyfile(self.identity_file, output_file)

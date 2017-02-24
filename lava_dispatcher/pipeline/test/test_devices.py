@@ -20,7 +20,7 @@
 
 import os
 import unittest
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, ConfigurationError, JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -126,7 +126,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
         self.assertEqual(device.power_state, '')
         self.assertEqual(device.hard_reset_command, '')
         self.assertEqual(device.power_command, '')
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ConfigurationError):
             device.power_state = ''
         self.assertEqual(device.power_command, '')
 

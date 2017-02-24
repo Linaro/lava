@@ -21,8 +21,9 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
+    ConfigurationError,
     InfrastructureError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.menus.menus import (
     SelectorMenuAction,
@@ -60,13 +61,13 @@ class UefiMenu(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'method' not in parameters:
-            raise RuntimeError("method not specified in boot parameters")
+            raise ConfigurationError("method not specified in boot parameters")
         if parameters['method'] != 'uefi-menu':
             return False
         if 'boot' not in device['actions']:
             return False
         if 'methods' not in device['actions']['boot']:
-            raise RuntimeError("Device misconfiguration")
+            raise ConfigurationError("Device misconfiguration")
         if 'uefi-menu' in device['actions']['boot']['methods']:
             params = device['actions']['boot']['methods']['uefi-menu']['parameters']
             if 'interrupt_prompt' in params and 'interrupt_string' in params:

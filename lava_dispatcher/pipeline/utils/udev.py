@@ -20,7 +20,7 @@
 
 
 import pyudev
-from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.action import Action, LAVABug
 
 
 class WaitUSBSerialDeviceAction(Action):
@@ -131,17 +131,17 @@ def _dict_compare(d1, d2):
 
 def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None):
     if action not in ['add', 'remove']:
-        raise RuntimeError("Invalid action for udev to wait for: %s, expected 'add' or 'remove'" % action)
+        raise LAVABug("Invalid action for udev to wait for: %s, expected 'add' or 'remove'" % action)
     if match_dict:
         if isinstance(match_dict, dict):
             if match_dict == {}:
-                raise RuntimeError("Trying to match udev event with empty match_dict")
+                raise LAVABug("Trying to match udev event with empty match_dict")
         else:
-            raise RuntimeError("match_dict was not a dict")
+            raise LAVABug("match_dict was not a dict")
     else:
-        raise RuntimeError("match_dict was None")
+        raise LAVABug("match_dict was None")
     if devtype and not subsystem:
-        raise RuntimeError("Cant filter udev by devtype without a subsystem")
+        raise LAVABug("Cant filter udev by devtype without a subsystem")
     match_dict['ACTION'] = action
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)

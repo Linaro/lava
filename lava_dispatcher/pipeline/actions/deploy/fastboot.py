@@ -24,8 +24,9 @@ from lava_dispatcher.pipeline.power import (
     PowerOn,
 )
 from lava_dispatcher.pipeline.action import (
+    ConfigurationError,
+    InfrastructureError,
     Pipeline,
-    JobError,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
@@ -60,7 +61,7 @@ def fastboot_accept(device, parameters):
     if not device:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
     if 'adb_serial_number' not in device:
@@ -70,7 +71,7 @@ def fastboot_accept(device, parameters):
     if 'fastboot_options' not in device:
         return False
     if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -220,8 +221,8 @@ class EnterFastbootAction(DeployAction):
                             'reboot-bootloader'] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
-                raise JobError("Unable to enter fastboot: %s" %
-                               command_output)
+                raise InfrastructureError("Unable to enter fastboot: %s" %
+                                          command_output)
             else:
                 status = [status.strip() for status in command_output.split(
                     '\n') if 'finished' in status][0]
@@ -288,6 +289,6 @@ class FastbootFlashAction(DeployAction):
                             dst] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'error' in command_output:
-                raise JobError("Unable to flash %s using fastboot: %s",
-                               flash_cmd, command_output)
+                raise InfrastructureError("Unable to flash %s using fastboot: %s" %
+                                          (flash_cmd, command_output))
         return connection

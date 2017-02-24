@@ -30,8 +30,10 @@ from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
     Action,
+    ConfigurationError,
     InfrastructureError,
     JobError,
+    LAVABug,
     Pipeline,
     TestError,
 )
@@ -152,7 +154,7 @@ class RepoAction(Action):
         willing = [c for c in candidates if c.accepts(repo_type)]
 
         if len(willing) == 0:
-            raise NotImplementedError(
+            raise LAVABug(
                 "No testdef_repo hander is available for the given repository type"
                 " '%s'." % repo_type)
 
@@ -162,13 +164,13 @@ class RepoAction(Action):
 
     def validate(self):
         if 'hostname' not in self.job.device:
-            raise InfrastructureError("Invalid device configuration")
+            raise ConfigurationError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             self.errors = "Unable to determine test_name"
             return
         if not isinstance(self, InlineRepoAction):
             if self.vcs is None:
-                raise RuntimeError("RepoAction validate called super without setting the vcs")
+                raise LAVABug("RepoAction validate called super without setting the vcs")
             if not os.path.exists(self.vcs.binary):
                 self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
         super(RepoAction, self).validate()
@@ -197,14 +199,14 @@ class RepoAction(Action):
         connection = super(RepoAction, self).run(connection, max_end_time, args)
 
         if args is None or 'test_name' not in args:
-            raise RuntimeError("RepoAction run called via super without parameters as arguments")
+            raise LAVABug("RepoAction run called via super without parameters as arguments")
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         self.logger.debug("Using %s at stage %s", lava_test_results_dir, self.stage)
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Overlay location does not exist")
+            raise LAVABug("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
         runner_path = os.path.join(
@@ -303,7 +305,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
-            raise RuntimeError("Directory already exists and is not empty - duplicate Action?")
+            raise LAVABug("Directory already exists and is not empty - duplicate Action?")
 
         # Clear the data
         if os.path.exists(runner_path):
@@ -312,7 +314,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
-            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
+            raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
             'success': commit_id,
             'repository': self.parameters['repository'],
@@ -374,7 +376,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
-            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
+            raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
             'success': commit_id,
             'repository': self.parameters['repository'],
@@ -491,8 +493,10 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
             with tarfile.open(temp_tar) as tar:
                 tar.extractall(path=runner_path)
-        except (OSError, tarfile.TarError) as ex:
-            raise JobError("Error extracting the tar archive.\n" + str(ex))
+        except OSError as exc:
+            raise InfrastructureError("Unable to extract the tar archive: %s" % str(exc))
+        except tarfile.TarError as ex:
+            raise JobError("Error extracting the tar archive: %s" % str(ex))
         finally:
             # Remove the temporary created tar file after it has been extracted.
             if os.path.isfile(temp_tar):
@@ -530,7 +534,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             # FIXME: this handler uses DownloaderAction.run()
 
         except OSError as exc:
-            raise JobError('Unable to get test definition from url\n' + str(exc))
+            raise JobError('Unable to get test definition from url: %s' % str(exc))
         finally:
             self.logger.info("Downloaded test definition file to %s.", runner_path)
 
@@ -676,9 +680,9 @@ class TestDefinitionAction(TestAction):
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         if not location:
-            raise RuntimeError("Missing lava overlay location")
+            raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
-            raise RuntimeError("Unable to find overlay location")
+            raise LAVABug("Unable to find overlay location")
         self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
@@ -809,7 +813,6 @@ class TestInstallAction(TestOverlayAction):
         and then it will create it.
         The parameter action will need a run check that the file does
         exist and then it will append to it.
-        RuntimeError if either fail.
         TestOverlayAction will then add TestInstallAction to an
         internal pipeline followed by TestParameterAction then
         run the internal_pipeline at the start of the TestOverlayAction
@@ -856,7 +859,7 @@ class TestInstallAction(TestOverlayAction):
                 if destination:
                     dest_path = os.path.join(runner_path, destination)
                     if os.path.abspath(runner_path) != os.path.dirname(dest_path):
-                        raise RuntimeError(
+                        raise JobError(
                             "Destination path is unacceptable %s" % destination)
                     if os.path.exists(dest_path):
                         raise TestError("Cannot mix string and url forms for the same repository.")
@@ -864,8 +867,7 @@ class TestInstallAction(TestOverlayAction):
             else:
                 raise TestError("Unrecognised git-repos block.")
             if commit_id is None:
-                raise RuntimeError(
-                    "Unable to clone %s" % str((repo)))
+                raise JobError("Unable to clone %s" % str((repo)))
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-statements
         connection = super(TestInstallAction, self).run(connection, max_end_time, args)

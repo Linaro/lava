@@ -23,8 +23,8 @@ import pexpect
 import logging
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
     Timeout,
-    JobError,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand
 from lava_dispatcher.pipeline.utils.constants import LAVA_LXC_TIMEOUT
@@ -120,7 +120,7 @@ class LxcProtocol(Protocol):
             # execute the command.
             shell.expect(pexpect.EOF)
             if shell.exitstatus:
-                raise JobError("%s command exited %d: %s" % (cmd,
-                                                             shell.exitstatus,
-                                                             shell.readlines()))
+                raise InfrastructureError("%s command exited %d: %s" % (cmd,
+                                                                        shell.exitstatus,
+                                                                        shell.readlines()))
         self.logger.debug("%s protocol finalised.", self.name)

@@ -21,9 +21,10 @@
 
 import os
 from lava_dispatcher.pipeline.action import (
-    Pipeline,
     Action,
+    ConfigurationError,
     JobError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
@@ -69,7 +70,7 @@ class BootFastboot(Boot):
             if parameters['method'] == 'fastboot':
                 return True
         if 'methods' not in device['actions']['boot']:
-            raise RuntimeError("Device misconfiguration")
+            raise ConfigurationError("Device misconfiguration")
         return False
 
 

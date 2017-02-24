@@ -23,6 +23,8 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
+    ConfigurationError,
+    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot
@@ -39,15 +41,15 @@ from lava_dispatcher.pipeline.utils.constants import (
 
 def default_accepts(device, parameters):
     if 'method' not in parameters:
-        raise RuntimeError("method not specified in boot parameters")
+        raise ConfigurationError("method not specified in boot parameters")
     if parameters['method'] != 'bootloader-defaults':
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'boot' not in device['actions']:
         return False
     if 'methods' not in device['actions']['boot']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -102,7 +104,7 @@ class MonitorBootloaderAutoBoot(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(MonitorBootloaderAutoBoot, self).run(connection, max_end_time, args)
         params = self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']
         connection.prompt_str = params.get('autoboot_prompt', UBOOT_AUTOBOOT_PROMPT)

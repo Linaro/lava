@@ -29,7 +29,7 @@ import glob
 import logging
 from configobj import ConfigObj
 
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.action import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.pipeline.utils.constants import LXC_PATH
 from lava_dispatcher.pipeline.utils.compression import (
     decompress_file,
@@ -41,15 +41,15 @@ def rmtree(directory):
     """
     Wrapper around shutil.rmtree to remove a directory tree while ignoring most
     errors.
-    If called on a symbolic link, this function will raise a RuntimeError.
+    If called on a symbolic link, this function will raise a LAVABug.
     """
     # TODO: consider how to handle problems if the directory has already been removed -
     # coding bugs may trigger this Runtime exception - implement before moving to production.
     try:
         shutil.rmtree(directory)
     except OSError as exc:
-        raise RuntimeError("Error when trying to remove '%s': %s"
-                           % (directory, exc))
+        raise LAVABug("Error when trying to remove '%s': %s"
+                      % (directory, exc))
 
 
 def mkdtemp(autoremove=True, basedir='/tmp'):
@@ -94,14 +94,14 @@ def tftpd_dir():
     read in 'TFTP_DIRECTORY' from /etc/default/tftpd-hpa
     Any file to be offered using tftp must use this directory or a
     subdirectory of it. Default installation value: /srv/tftp/
-    :return: real path to the TFTP directory or raises RuntimeError
+    :return: real path to the TFTP directory or raises InfrastructureError
     """
     var_name = 'TFTP_DIRECTORY'
     if os.path.exists('/etc/default/tftpd-hpa'):
         config = ConfigObj('/etc/default/tftpd-hpa')
         value = config.get(var_name)
         return os.path.realpath(value)
-    raise RuntimeError("Unable to identify tftpd directory")
+    raise InfrastructureError("Unable to identify tftpd directory")
 
 
 def write_bootscript(commands, filename):
@@ -130,7 +130,7 @@ def prepare_guestfs(output, overlay, size):
     guest.launch()
     devices = guest.list_devices()
     if len(devices) != 1:
-        raise RuntimeError("Unable to prepare guestfs")
+        raise InfrastructureError("Unable to prepare guestfs")
     guest_device = devices[0]
     guest.mke2fs(guest_device, label='LAVA')
     # extract to a temp location
@@ -164,7 +164,7 @@ def prepare_install_base(output, size):
     guest.launch()
     devices = guest.list_devices()
     if len(devices) != 1:
-        raise RuntimeError("Unable to prepare guestfs")
+        raise InfrastructureError("Unable to prepare guestfs")
     guest.shutdown()
 
 
@@ -177,13 +177,13 @@ def copy_out_files(image, filenames, destination):
     source files exist in separate directories.
     """
     if not isinstance(filenames, list):
-        raise RuntimeError('filenames must be a list')
+        raise LAVABug('filenames must be a list')
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
     guest.launch()
     devices = guest.list_devices()
     if len(devices) != 1:
-        raise RuntimeError("Unable to prepare guestfs")
+        raise InfrastructureError("Unable to prepare guestfs")
     guest.mount_ro(devices[0], '/')
     for filename in filenames:
         file_buf = guest.read_file(filename)
@@ -202,7 +202,7 @@ def copy_in_overlay(image, root_partition, overlay):
     guest.launch()
     partitions = guest.list_partitions()
     if not partitions:
-        raise RuntimeError("Unable to prepare guestfs")
+        raise InfrastructureError("Unable to prepare guestfs")
     guest_partition = partitions[root_partition]
     guest.mount(guest_partition, '/')
     # FIXME: max message length issues when using tar_in

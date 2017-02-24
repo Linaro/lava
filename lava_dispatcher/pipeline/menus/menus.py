@@ -21,7 +21,7 @@
 import re
 import pexpect
 from lava_dispatcher.pipeline.shell import ShellSession
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, JobError, LAVABug
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 
 # pylint: disable=too-few-public-methods,too-many-branches
@@ -129,7 +129,7 @@ class MenuConnect(ConnectDevice):
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuConnect, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("%s needs a Connection")
+            raise LAVABug("%s needs a Connection")
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
         connection.prompt_str = self.parameters['prompts']
@@ -150,7 +150,7 @@ class MenuReset(ConnectDevice):
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuReset, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("%s needs a Connection")
+            raise LAVABug("%s needs a Connection")
 
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)

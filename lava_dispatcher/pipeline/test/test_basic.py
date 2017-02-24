@@ -27,7 +27,7 @@ import simplejson
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, LAVABug
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
@@ -196,12 +196,12 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(action.description, "test action only")
         self.assertEqual(action.summary, "starter")
         # action needs to be added to a top level pipe first
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             Pipeline(action)
         pipe = Pipeline()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             pipe.add_action(None)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             pipe.add_action(pipe)
         pipe.add_action(action)
         self.assertEqual(pipe.actions, [action])
@@ -231,7 +231,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action.name = "child_action"
         action.summary = "child"
         action.description = "action implementing an internal pipe"
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             Pipeline(action)
         pipe.add_action(action)
         self.assertEqual(action.level, "2")

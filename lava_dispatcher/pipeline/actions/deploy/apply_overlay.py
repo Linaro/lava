@@ -23,9 +23,10 @@ import shutil
 import subprocess
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
     InfrastructureError,
-    JobError
+    JobError,
+    LAVABug,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
@@ -75,7 +76,7 @@ class ApplyOverlayGuest(Action):
     def run(self, connection, max_end_time, args=None):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if not overlay_file:
-            raise RuntimeError("Unable to find the overlay")
+            raise LAVABug("Unable to find the overlay")
         self.logger.debug("Overlay: %s", overlay_file)
         guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
@@ -378,7 +379,7 @@ class ExtractModules(Action):
         try:
             os.unlink(modules)
         except OSError as exc:
-            raise RuntimeError("Unable to remove tarball: '%s' - %s" % (modules, exc))
+            raise InfrastructureError("Unable to remove tarball: '%s' - %s" % (modules, exc))
         return connection
 
 
@@ -432,7 +433,7 @@ class ExtractRamdisk(Action):
             try:
                 self.run_command(cmd)
             except:
-                raise RuntimeError('Unable to remove uboot header: %s' % ramdisk)
+                raise LAVABug('Unable to remove uboot header: %s' % ramdisk)
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
@@ -441,7 +442,7 @@ class ExtractRamdisk(Action):
         os.chdir(extracted_ramdisk)
         cmd = ('cpio -iud -F %s' % ramdisk_data).split(' ')
         if not self.run_command(cmd):
-            raise JobError('Unable to extract cpio arcive: %s - missing header definition (i.e. u-boot)?' % ramdisk_data)
+            raise JobError('Unable to extract cpio archive: %s - missing header definition (i.e. u-boot)?' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(action=self.name, label='extracted_ramdisk', key='directory', value=extracted_ramdisk)
@@ -493,9 +494,9 @@ class CompressRamdisk(Action):
         ramdisk_data = self.get_namespace_data(
             action='extract-overlay-ramdisk', label='ramdisk_file', key='file')
         if not ramdisk_dir:
-            raise RuntimeError("Unable to find unpacked ramdisk")
+            raise LAVABug("Unable to find unpacked ramdisk")
         if not ramdisk_data:
-            raise RuntimeError("Unable to find ramdisk directory")
+            raise LAVABug("Unable to find ramdisk directory")
         if self.parameters.get('preseed', None):
             if self.parameters["deployment_data"].get("preseed_to_ramdisk", None):
                 # download action must have completed to get this far
@@ -517,7 +518,7 @@ class CompressRamdisk(Action):
             # safe to use shell=True here, no external arguments
             log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
         except OSError as exc:
-            raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
+            raise InfrastructureError('Unable to create cpio filesystem: %s' % exc)
         # lazy-logging would mean that the quoting of cmd causes invalid YAML
         self.logger.debug("%s\n%s" % (cmd, log))  # pylint: disable=logging-not-lazy
 
@@ -533,7 +534,7 @@ class CompressRamdisk(Action):
             self.logger.debug("Adding RAMdisk u-boot header.")
             cmd = ("mkimage -A %s -T ramdisk -C none -d %s %s" % (self.mkimage_arch, final_file, ramdisk_uboot)).split(' ')
             if not self.run_command(cmd):
-                raise RuntimeError("Unable to add uboot header to ramdisk")
+                raise InfrastructureError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
         shutil.move(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
@@ -579,13 +580,13 @@ class ApplyLxcOverlay(Action):
             label='lxc', key='name')
         lxc_path = os.path.join(LXC_PATH, lxc_name, 'rootfs')
         if not os.path.exists(lxc_path):
-            raise JobError("Lxc container rootfs not found")
+            raise LAVABug("Lxc container rootfs not found")
         tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_path, '-xaf',
                    overlay_file]
         command_output = self.run_command(tar_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to untar overlay: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
+                           command_output)
 
         # FIXME: Avoid copying this special 'lava-test-runner' which does not
         #        have 'sync' in cleanup. This should be handled during the
@@ -597,7 +598,7 @@ class ApplyLxcOverlay(Action):
         try:
             shutil.copy(fname, output_file)
         except IOError:
-            raise JobError("Unable to copy: %s" % output_file)
+            raise InfrastructureError("Unable to copy: %s" % output_file)
 
         return connection
 

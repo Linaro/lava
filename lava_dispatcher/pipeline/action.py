@@ -125,18 +125,18 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
-                raise RuntimeError("Internal pipelines need an Action as a parent")
+                raise LAVABug("Internal pipelines need an Action as a parent")
             if not parent.level:
-                raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
+                raise LAVABug("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
-            raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
+            raise LAVABug("Only actions can be added to a pipeline: %s" % action)
         # if isinstance(action, DiagnosticAction):
-        #     raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
+        #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
-            raise RuntimeError("Unable to add empty action to pipeline")
+            raise LAVABug("Unable to add empty action to pipeline")
 
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
@@ -253,7 +253,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if diagnose:
                 connection = diagnose.run(connection, None)
             else:
-                raise RuntimeError("No diagnosis for trigger %s" % complaint)
+                raise LAVABug("No diagnosis for trigger %s" % complaint)
         self.job.triggers = []
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
@@ -426,7 +426,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         try:
             self.__parameters__.update(data)
         except ValueError:
-            raise RuntimeError("Action parameters need to be a dictionary")
+            raise LAVABug("Action parameters need to be a dictionary")
 
         # Set the timeout name now
         self.timeout.name = self.name
@@ -469,7 +469,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         try:
             self.__results__.update(data)
         except ValueError:
-            raise RuntimeError("Action results need to be a dictionary")
+            raise LAVABug("Action results need to be a dictionary")
 
     def validate(self):
         """
@@ -529,7 +529,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         # FIXME: add option to only check stdout or stderr for failure output
         if not isinstance(command_list, list):
-            raise RuntimeError("commands to run_command need to be a list")
+            raise LAVABug("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
@@ -863,7 +863,7 @@ class Timeout(object):
         and can therefore exceed the clamp.
         """
         if not isinstance(data, dict):
-            raise RuntimeError("Invalid timeout data")
+            raise ConfigurationError("Invalid timeout data")
         duration = datetime.timedelta(days=data.get('days', 0),
                                       hours=data.get('hours', 0),
                                       minutes=data.get('minutes', 0),

@@ -24,11 +24,10 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
     InfrastructureError,
+    LAVABug,
+    Pipeline,
     TestError,
-    JobError,
-    action_namespaces,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -68,7 +67,7 @@ class RebootDevice(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("Called %s without an active Connection" % self.name)
+            raise LAVABug("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
         if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
@@ -217,8 +216,8 @@ class LxcStop(Action):
         lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output is not '':
-            raise JobError("Unable to stop lxc container: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
+            raise InfrastructureError("Unable to stop lxc container: %s" %
+                                      command_output)
         return connection
 
 

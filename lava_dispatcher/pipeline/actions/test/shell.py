@@ -206,7 +206,7 @@ class TestShellAction(TestAction):
         # Sanity test: could be a missing deployment for some actions
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if not res:
-            raise RuntimeError("No boot action result found")
+            raise LAVABug("No boot action result found")
         super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
@@ -546,7 +546,7 @@ class TestShellAction(TestAction):
             try:
                 self.signal_director.signal(name, params)
             except KeyboardInterrupt:
-                raise KeyboardInterrupt
+                raise
             ret_val = True
 
         elif event == "test_case":
@@ -598,7 +598,7 @@ class TestShellAction(TestAction):
                     # noinspection PyCallingNonCallable
                     handler(*params)
                 except KeyboardInterrupt:
-                    raise KeyboardInterrupt
+                    raise
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
                     self.logger.exception(str(exc))

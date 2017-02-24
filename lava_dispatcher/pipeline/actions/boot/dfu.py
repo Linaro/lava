@@ -19,9 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.action import (
-    Pipeline,
     Action,
-    InfrastructureError,
+    ConfigurationError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -117,7 +117,7 @@ class FlashDFUAction(Action):
             self.base_command.extend(['--serial', self.board_id])
             self.base_command.extend(['--device', '%s:%s' % (self.usb_vendor_id, self.usb_product_id)])
         except AttributeError as exc:
-            raise InfrastructureError(exc)
+            raise ConfigurationError(exc)
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}

@@ -28,7 +28,7 @@ from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
 from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import JobError, Pipeline
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -186,7 +186,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
-                raise RuntimeError(action.errors)
+                raise JobError(action.errors)
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])

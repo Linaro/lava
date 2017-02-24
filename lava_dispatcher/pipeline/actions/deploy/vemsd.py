@@ -25,8 +25,10 @@ import os
 import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
+    ConfigurationError,
     JobError,
     InfrastructureError,
+    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Deployment
@@ -58,11 +60,11 @@ def vexpress_fw_accept(device, parameters):
     if not device:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
     if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -169,7 +171,7 @@ class ExtractVExpressRecoveryImage(Action):
             self.set_namespace_data(action='extract-vexpress-recovery-image', label='file', key=self.file_key, value=recovery_image_dir)
             self.logger.debug("Extracted %s to %s", self.file_key, recovery_image_dir)
         else:
-            raise RuntimeError("Unable to decompress recovery image")
+            raise InfrastructureError("Unable to decompress recovery image")
         return connection
 
 
@@ -203,7 +205,7 @@ class EnterVExpressMCC(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(EnterVExpressMCC, self).run(connection, max_end_time, args)
 
         # Get possible prompts from device config
@@ -245,7 +247,7 @@ class EnableVExpressMassStorage(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(EnableVExpressMassStorage, self).run(connection, max_end_time, args)
 
         # Issue command and check that you are returned to the prompt again

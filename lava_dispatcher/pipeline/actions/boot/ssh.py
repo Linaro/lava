@@ -22,7 +22,7 @@
 
 import os
 import yaml
-from lava_dispatcher.pipeline.action import Pipeline, Action
+from lava_dispatcher.pipeline.action import Action, LAVABug, Pipeline
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -213,7 +213,7 @@ class ScpOverlayUnpack(Action):
     def run(self, connection, max_end_time, args=None):
         connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("Cannot unpack, no connection available.")
+            raise LAVABug("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
         tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)

@@ -25,9 +25,10 @@ import sys
 import time
 from lava_dispatcher.pipeline.action import (
     Action,
-    JobError,
-    TestError,
     InfrastructureError,
+    JobError,
+    LAVABug,
+    TestError,
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection
@@ -83,9 +84,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
 
     def __init__(self, command, lava_timeout, logger=None, cwd=None):
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
-            raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
+            raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
-            raise RuntimeError("ShellCommand needs a logger")
+            raise LAVABug("ShellCommand needs a logger")
         pexpect.spawn.__init__(
             self, command,
             timeout=lava_timeout.duration,
@@ -225,9 +226,10 @@ class ShellSession(Connection):
                     self.sendline(self.check_char)
                     continue
                 else:
+                    # TODO: is someone expecting pexpect.TIMEOUT?
                     raise
             except KeyboardInterrupt:
-                raise KeyboardInterrupt
+                raise
 
     def wait(self, max_end_time=None):
         """
@@ -240,13 +242,13 @@ class ShellSession(Connection):
         else:
             timeout = max_end_time - time.time()
         if timeout < 0:
-            raise RuntimeError("Invalid max_end_time value passed to wait()")
+            raise LAVABug("Invalid max_end_time value passed to wait()")
         try:
             return self.raw_connection.expect(self.prompt_str, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
         except KeyboardInterrupt:
-            raise KeyboardInterrupt
+            raise
 
 
 class ExpectShellSession(Action):
