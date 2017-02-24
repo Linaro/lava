@@ -152,8 +152,8 @@ class LoopMountAction(RetryAction):
         self.mntdir = mkdtemp(autoremove=False)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
-        self.set_namespace_data(action=self.name, label='mntdir', key=self.mntdir)
-        self.set_namespace_data(action='mount_action', label='mntdir', key=test_mntdir)
+        self.set_namespace_data(action=self.name, label='mntdir', key='mntdir', value=self.mntdir)
+        self.set_namespace_data(action='mount_action', label='mntdir', key='mntdir', value=test_mntdir)
         offset = self.get_namespace_data(action='download_action', label=self.key, key='offset')
         mount_cmd = [
             'mount',

@@ -205,7 +205,7 @@ class EnterFastbootAction(DeployAction):
             self.logger.debug("Device is in adb: %s", command_output)
             adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                        '-s', adb_serial_number, 'reboot-bootloader']
-            command_output = self.run_command(adb_cmd)
+            self.run_command(adb_cmd)
             return connection
 
         # Enter fastboot mode with fastboot.
@@ -221,7 +221,7 @@ class EnterFastbootAction(DeployAction):
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
                 raise JobError("Unable to enter fastboot: %s" %
-                               command_output)  # FIXME: JobError needs a unit test
+                               command_output)
             else:
                 status = [status.strip() for status in command_output.split(
                     '\n') if 'finished' in status][0]
@@ -255,7 +255,7 @@ class FastbootFlashAction(DeployAction):
             if not isinstance(self.job.device['fastboot_options'], list):
                 self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
@@ -289,5 +289,5 @@ class FastbootFlashAction(DeployAction):
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'error' in command_output:
                 raise JobError("Unable to flash %s using fastboot: %s",
-                               flash_cmd, command_output)  # FIXME: JobError needs a unit test
+                               flash_cmd, command_output)
         return connection

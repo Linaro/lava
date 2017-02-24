@@ -132,7 +132,7 @@ class OverlayAction(DeployAction):
             self.internal_pipeline.add_action(CompressOverlay())
             self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         """
         Check if a lava-test-shell has been requested, implement the overlay
         * create test runner directories beneath the temporary location
@@ -353,8 +353,7 @@ class VlandOverlayAction(OverlayAction):
                     interface,
                     device_params[interface]['mac'],
                     device_params[interface]['sysfs'],
-                ])
-            )
+                ]))
         for interface in device_params:
             if not device_params[interface]['tags']:
                 # skip primary interface

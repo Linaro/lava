@@ -669,6 +669,7 @@ class TestDefinitionAction(TestAction):
         Creates the list of test definitions for this Test
 
         :param connection: Connection object, if any.
+        :param max_end_time: remaining time before block timeout.
         :param args: Not used.
         :return: the received Connection.
         """

@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from time import sleep
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -37,6 +36,8 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_TEMPLATE_WITH_MIRROR,
 )
 from lava_dispatcher.pipeline.utils.udev import get_usb_devices
+
+# pylint: disable=superfluous-parens
 
 
 def lxc_accept(device, parameters):
@@ -162,7 +163,7 @@ class LxcCreateAction(DeployAction):
             if 'packages' in self.parameters:
                 lxc_cmd += ['--packages',
                             ','.join(self.parameters['packages'])]
-            cmd_out_str = 'Generation complete.'
+            self.logger.debug('Generation complete.')
         else:
             lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
                        '-n', self.lxc_data['lxc_name'], '--', '--dist',
@@ -190,7 +191,7 @@ class LxcAddDeviceAction(Action):
     def validate(self):
         super(LxcAddDeviceAction, self).validate()
         if 'device_info' in self.job.device \
-           and type(self.job.device.get('device_info')) is not list:
+           and not isinstance(self.job.device.get('device_info'), list):
             self.errors = "device_info unset"
         try:
             if 'device_info' in self.job.device:
