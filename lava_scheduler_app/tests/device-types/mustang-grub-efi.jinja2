@@ -1,0 +1,107 @@
+{% extends 'base.jinja2' %}
+{% set boot_character_delay = 10 %}
+{% set base_ip_args = 'ip=:::::eth0:dhcp' %}
+{% set console_device = console_device | default('ttyS0') -%}
+{% set baud_rate = baud_rate | default(115200) -%}
+
+{# method is 'pxe-grub' or 'grub' currently - see menu uefi-menu block #}
+{% set grub_efi_method = grub_efi_method|default('pxe-grub') %}
+
+{% set tftp_mac = tftp_mac | default('00:01:73:69:5A:EF') -%}
+
+{# declare placeholders for use in the UI #}
+{% set placeholders = [ 'tftp_mac', 'console_device', 'baud_rate'] -%}
+
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_menu_interrupt_prompt = menu_interrupt_prompt | default(base_menu_interrupt_prompt) -%}
+{% set base_menu_interrupt_string = menu_interrupt_string | default(base_menu_interrupt_string) -%}
+{% set base_item_markup_list = item_markup | default(base_item_markup_list) -%}
+{% set base_item_class = item_class | default(base_item_class) -%}
+{% set base_item_separator = item_separator | default(base_item_separator) -%}
+{% set base_label_class = label_class | default(base_label_class) -%}
+{% set base_menu_bootloader_prompt = bootloader_prompt | default(base_menu_bootloader_prompt) -%}
+{% set base_menu_boot_message = boot_message | default(base_menu_boot_message) -%}
+{% set base_menu_dictionary =  menu_dictionary | default(base_menu_dictionary) -%}
+{% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
+
+{% block body %}
+
+device_type: mustang
+
+{% block vland %}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+     connections:
+       serial:
+       ssh:
+     methods:
+      ssh:
+      grub-efi:
+        menu_options: {{ grub_efi_method }}
+        parameters:
+          bootloader_prompt: {{ grub_efi_bootloader_prompt|default('grub>') }}
+        ramdisk:
+          commands:
+          - insmod gzio
+{% if grub_efi_method == 'grub' %}
+          - insmod efinet
+          - net_bootp
+{% endif %}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/ram0 rw {{ base_ip_args }}
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        installed:
+          commands:
+          - insmod gzio
+{% if grub_efi_method == 'grub' %}
+          - insmod efinet
+          - net_bootp
+{% endif %}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/sda2 rw {{ base_ip_args }}
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        nfs:
+          commands:
+          - insmod gzio
+{% if grub_efi_method == 'grub' %}
+          - insmod efinet
+          - net_bootp
+{% endif %}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+      uefi-menu:
+        parameters:
+          interrupt_prompt: {{ base_menu_interrupt_prompt }}
+          interrupt_string: '{{ base_menu_interrupt_string }}'
+          item_markup:
+{{ base_item_markup_list }}
+          item_class: '{{ base_item_class }}'
+          separator: '{{ base_item_separator }}'
+          bootloader_prompt: '{{ base_menu_bootloader_prompt }}'
+{% if grub_efi_method == 'pxe-grub' %}
+        pxe-grub:
+        - select:
+            items:
+            - '{{ grub_efi_pxe_menu_item|default('LAVA PXE Grub') }}'
+{% elif grub_efi_method == 'grub' %}
+        grub:
+        - select:
+            items:
+            - '{{ grub_efi_grub_menu_item|default('Local ERP Grub') }}'
+{% endif %}
+{% endblock %}

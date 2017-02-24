@@ -12,6 +12,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=too-many-branches,too-many-public-methods
 # pylint: disable=too-many-nested-blocks
@@ -242,6 +243,57 @@ class TestTemplates(unittest.TestCase):
                 self.fail('Mustang should not have initrd_high set')
             if 'setenv fdt_high' in line:
                 self.fail('Mustang should not have fdt_high set')
+
+    def test_mustang_pxe_grub_efi_template(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
+        self.assertIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertNotIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        # label class regex is mangled by jinja/yaml processing
+        self.assertNotIn('label_class', template_dict['actions']['boot']['methods']['uefi-menu']['parameters'])
+        self.assertIn('grub-efi', template_dict['actions']['boot']['methods'])
+        self.assertIn('menu_options', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertEqual(template_dict['actions']['boot']['methods']['grub-efi']['menu_options'], 'pxe-grub')
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['ramdisk'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['nfs'])
+        nfs_commands = template_dict['actions']['boot']['methods']['grub-efi']['nfs']['commands']
+        self.assertNotIn('insmod efinet', nfs_commands)
+        self.assertNotIn('net_bootp', nfs_commands)
+
+    def test_mustang_grub_efi_template(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set grub_efi_method = 'grub' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
+        self.assertNotIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertEqual(template_dict['actions']['boot']['methods']['grub-efi']['menu_options'], 'grub')
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['ramdisk'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['nfs'])
+        nfs_commands = template_dict['actions']['boot']['methods']['grub-efi']['nfs']['commands']
+        self.assertIn('insmod efinet', nfs_commands)
+        self.assertIn('net_bootp', nfs_commands)
 
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
@@ -556,6 +608,9 @@ class TestTemplates(unittest.TestCase):
             job = parser.parse(sample_job_data, panda, 4577, None, "",
                                output_dir='/tmp')
         os.close(fdesc)
+        job.logger = DummyLogger()
+        job.logger.disabled = True
+        job.logger.propagate = False
         job.validate()
 
     def test_ethaddr(self):
