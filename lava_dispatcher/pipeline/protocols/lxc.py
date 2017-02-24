@@ -50,6 +50,7 @@ class LxcProtocol(Protocol):
                                                                  None)
         self.lxc_security_mirror = parameters['protocols'][self.name].get(
             'security_mirror', None)
+        self.fastboot_reboot = parameters.get('reboot_to_fastboot', True)
         self.logger = logging.getLogger('dispatcher')
 
     @classmethod
@@ -80,18 +81,26 @@ class LxcProtocol(Protocol):
         """
         # Reboot devices to bootloader if required, based on the availability
         # of power cycle option and adb_serial_number.
-        if 'adb_serial_number' in device and hasattr(device, 'power_state'):
-            if device.power_state not in ['on', 'off']:
-                reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
-                self.logger.debug("%s protocol: executing '%s'", self.name,
-                                  reboot_cmd)
-                shell = ShellCommand("%s\n" % reboot_cmd, self.system_timeout,
-                                     logger=self.logger)
-                # execute the command.
-                shell.expect(pexpect.EOF)
-                if shell.exitstatus:
-                    self.logger.debug("%s command exited %d: %s", reboot_cmd,
-                                      shell.exitstatus, shell.readlines())
+        # Do not reboot to bootloader if 'reboot_to_fastboot' is set to
+        # 'false' in job definition.
+        if self.fastboot_reboot:
+            if 'adb_serial_number' in device and hasattr(device, 'power_state'):
+                if device.power_state not in ['on', 'off']:
+                    reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
+                    self.logger.debug("%s protocol: executing '%s'", self.name,
+                                      reboot_cmd)
+                    shell = ShellCommand("%s\n" % reboot_cmd,
+                                         self.system_timeout,
+                                         logger=self.logger)
+                    # execute the command.
+                    shell.expect(pexpect.EOF)
+                    if shell.exitstatus:
+                        self.logger.debug("%s command exited %d: %s",
+                                          reboot_cmd,
+                                          shell.exitstatus, shell.readlines())
+        else:
+            self.logger.info("%s protocol: device not rebooting to fastboot",
+                             self.name)
 
         # ShellCommand executes the destroy command after checking for the
         # existance of the container
