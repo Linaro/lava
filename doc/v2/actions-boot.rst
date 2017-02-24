@@ -125,7 +125,7 @@ included in the prompt, this can be included in the ``prompt``:
            - 'root@debian:~#'
 
 When using the :term:`lxc` :term:`protocol`, the hostname element of the
-prompt will vary::
+prompt will vary:
 
 .. code-block:: yaml
 
@@ -234,8 +234,6 @@ modification using the :term:`job context`. The available values can vary
 depending on local admin configuration. For example, many admins restrict the
 available memory of each QEMU device, so the ``memory`` option in the job
 context may be ignored.
-
-.. code-block:: yaml
 
 .. code-block:: yaml
 
