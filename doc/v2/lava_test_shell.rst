@@ -120,6 +120,8 @@ utilities are available:
 * :ref:`lava-test-run-attach`
 * :ref:`lava-background-process-start`
 * :ref:`lava-background-process-stop`
+* :ref:`lava-lxc-device-add`
+* :ref:`lava-lxc-device-wait-add`
 
 .. seealso:: :ref:`multinode_api`
 
@@ -302,6 +304,57 @@ The arguments are:
 #. The name that was specified in lava-background-process-start
 #. (optional) An indication that you want to attach file(s) to the
    test run with specified mime type. See :ref:`test_attach`.
+
+.. _lava-lxc-device-add:
+
+lava-lxc-device-add
+-------------------
+
+Within lava-test-shell there is a possibility that the device attached to the
+:term:`lxc` container, gets re-enumerated i.e., disconnects and reconnects,
+in which case the :term:`lxc` container loses its visibility to the device,
+hence making it unusable within the :term:`lxc` container. This command adds or
+re-adds the device to the :term:`lxc` container. In most cases this command is
+used along with :ref:`lava-lxc-device-wait-add`, which waits for an `add` event
+in `udev`_, for the device to reappear after a disconnection and reconnection.
+
+For example:
+
+.. code-block:: yaml
+
+  steps:
+    - adb devices
+    - adb reboot bootloader
+    - lava-lxc-device-add
+    - fastboot devices
+
+.. seealso:: :ref:`lava-lxc-device-wait-add`
+
+.. _lava-lxc-device-wait-add:
+
+lava-lxc-device-wait-add
+------------------------
+
+This command waits for an `add` event of an USB device to reappear in `udev`_
+after a disconnection and reconnection of the device. In most cases this
+command is used along with :ref:`lava-lxc-device-add`
+
+For example:
+
+.. code-block:: yaml
+
+  steps:
+    - adb start-server
+    - adb wait-for-device
+    - adb devices
+    - adb root
+    - lava-lxc-device-wait-add
+    - lava-lxc-device-add
+    - adb wait-for-device
+    - adb devices
+
+.. seealso:: :ref:`lava-lxc-device-add`
+.. _udev: https://en.wikipedia.org/wiki/Udev
 
 .. _test_attach:
 
