@@ -120,12 +120,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     def reader(self):
         raise NotImplementedError
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         if os.path.exists(self.path):
             self.logger.debug("Cleaning up download directory: %s", self.path)
             shutil.rmtree(self.path)
         self.set_namespace_data(action='download_action', label=self.key, key='file', value='')
-        super(DownloadHandler, self).cleanup(connection, message)
+        super(DownloadHandler, self).cleanup(connection)
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)

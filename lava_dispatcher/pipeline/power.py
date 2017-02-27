@@ -287,18 +287,7 @@ class FinalizeAction(Action):
 
         for protocol in self.job.protocols:
             protocol.finalise_protocol(self.job.device)
-        if self.errors:
-            self.results = {'status': self.errors}
-            self.logger.error('status: %s', self.errors)
-        elif self.job.pipeline.errors:
-            self.results = {'status': "Incomplete"}
-            self.errors = "Incomplete"
-            self.logger.error('Status: Incomplete\nErrors %s', self.job.pipeline.errors)
-        else:
-            self.results = {'success': "Complete"}
-            self.logger.info("Status: Complete")
 
-    def cleanup(self, connection, message):
-        self.errors = message
+    def cleanup(self, connection):
         if not self.ran:
             self.run(connection, None, None)

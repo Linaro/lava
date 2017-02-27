@@ -189,7 +189,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             try:
                 protocol.configure(self.device, self)
             except KeyboardInterrupt:
-                self.cleanup(connection=None, message="Canceled")
+                self.cleanup(connection=None)
                 self.logger.info("Canceled")
                 raise JobError("Canceled")
             except (JobError, RuntimeError, KeyError, TypeError) as exc:
@@ -206,7 +206,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         try:
             self.pipeline.validate_actions()
         except (JobError, InfrastructureError) as exc:
-            self.cleanup(connection=None, message="Invalid job definition")
+            self.cleanup(connection=None)
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
@@ -270,7 +270,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             return_code = 7
 
         # Cleanup now
-        self.cleanup(self.connection, None)
+        self.cleanup(self.connection)
 
         result_dict = {"definition": "lava",
                        "case": "job"}
@@ -289,7 +289,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.logger.info("Job finished correctly")
         return return_code
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
 
@@ -297,7 +297,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # connection and poweroff the device (the cleanup action will do that
         # for us)
         self.logger.info("Cleaning after the job")
-        self.pipeline.cleanup(connection, message)
+        self.pipeline.cleanup(connection)
 
         for tmp_dir in self.base_overrides.values():
             self.logger.info("Override tmp directory removed at %s", tmp_dir)

@@ -154,7 +154,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
             self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
 
-        def cleanup(self, connection, message):
+        def cleanup(self, connection):
             pass
 
     class DiagnoseCheck(DiagnosticAction):

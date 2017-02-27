@@ -227,13 +227,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
         for child in self.actions:
-            child.cleanup(connection, message)
+            child.cleanup(connection)
 
     def _diagnose(self, connection):
         """
@@ -628,7 +628,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -642,7 +642,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         instead of using cleanup().
         """
         if self.internal_pipeline:
-            self.internal_pipeline.cleanup(connection, message)
+            self.internal_pipeline.cleanup(connection)
 
     def explode(self):
         """

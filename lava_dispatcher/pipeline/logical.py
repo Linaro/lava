@@ -66,7 +66,7 @@ class RetryAction(Action):
                 self.logger.error(msg)
                 self.errors = msg
                 # Cleanup the action to allow for a safe restart
-                self.cleanup(connection, msg)
+                self.cleanup(connection)
 
                 # re-raise if this is the last loop
                 if self.retries == self.max_retries:
