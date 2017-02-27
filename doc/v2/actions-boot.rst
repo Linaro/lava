@@ -140,6 +140,39 @@ prompt will vary:
 connection
 **********
 
+
+.. index:: boot connection namespace
+
+.. _boot_connection_namespace:
+
+connection-namespace
+********************
+
+When using :term:`namespaces <namespace>` in job definition, you can reuse the
+existing serial connection from another namespace via ``connection-namespace``
+parameter. Example:
+
+.. code-block:: yaml
+
+   actions:
+   - deploy:
+       namespace: boot1
+   # ...
+   - boot:
+       namespace: boot1
+   # ...
+   - test:
+       namespace: boot1
+   # ...
+   - boot:
+       namespace: boot2
+       connection-namespace: boot1
+   # ...
+   - test:
+       namespace: boot2
+   # ...
+
+
 .. index:: boot method
 
 .. _boot_method:
