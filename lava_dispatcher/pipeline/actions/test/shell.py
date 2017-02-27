@@ -26,6 +26,7 @@ import yaml
 import decimal
 import logging
 import pexpect
+from nose.tools import nottest
 from collections import OrderedDict
 
 from lava_dispatcher.pipeline.actions.test import (
@@ -75,10 +76,7 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        if ('definition' in parameters) or ('definitions' in parameters):
-            return True
-        else:
-            return False
+        return ('definition' in parameters) or ('definitions' in parameters)
 
     @classmethod
     def needs_deployment_data(cls):
@@ -170,7 +168,7 @@ class TestShellAction(TestAction):
         self.patterns = {}
         self.signal_match = SignalMatch()
         self.definition = None
-        self.testset_name = None  # FIXME
+        self.testset_name = None
         self.report = {}
         self.start = None
         self.testdef_dict = {}
@@ -209,7 +207,7 @@ class TestShellAction(TestAction):
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if not res:
             raise RuntimeError("No boot action result found")
-        connection = super(TestShellAction, self).run(connection, max_end_time, args)
+        super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
         connection = self.get_namespace_data(
@@ -279,7 +277,7 @@ class TestShellAction(TestAction):
                 if self.current_run is not None:
                     self.logger.error("Marking unfinished test run as failed")
                     self.current_run["duration"] = "%.02f" % (time.time() - self.start)
-                    self.logger.results(self.current_run)
+                    self.logger.results(self.current_run)  # pylint: disable=no-member
                     self.current_run = None
 
         # Only print if the report is not empty
@@ -289,7 +287,213 @@ class TestShellAction(TestAction):
             raise TestError(self.errors)
         return connection
 
-    def check_patterns(self, event, test_connection, check_char):  # pylint: disable=too-many-locals
+    def pattern_error(self, test_connection):
+        (testrun, ) = test_connection.match.groups()
+        self.logger.error("Unable to start testrun %s. "
+                          "Read the log for more details.", testrun)
+        self.errors = "Unable to start testrun %s" % testrun
+        # This is not accurate but required when exiting.
+        self.start = time.time()
+        self.current_run = {
+            "definition": "lava",
+            "case": testrun,
+            "result": "fail"
+        }
+        return True
+
+    def signal_start_run(self, params):
+        self.signal_director.test_uuid = params[1]
+        self.definition = params[0]
+        uuid = params[1]
+        self.start = time.time()
+        self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
+        # set the pattern for this run from pattern_dict
+        testdef_index = self.get_namespace_data(action='test-definition', label='test-definition',
+                                                key='testdef_index')
+        uuid_list = self.get_namespace_data(action='repo-action', label='repo-action', key='uuid-list')
+        for (key, value) in enumerate(testdef_index):
+            if self.definition == "%s_%s" % (key, value):
+                pattern_dict = self.get_namespace_data(action='test', label=uuid_list[key], key='testdef_pattern')
+                pattern = pattern_dict['testdef_pattern']['pattern']
+                fixup = pattern_dict['testdef_pattern']['fixupdict']
+                self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
+                self.pattern.update(pattern, fixup)
+                self.logger.info("Enabling test definition pattern %r" % pattern)
+                self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
+        self.current_run = {
+            "definition": "lava",
+            "case": self.definition,
+            "uuid": uuid,
+            "result": "fail"
+        }
+
+    def signal_end_run(self, params):
+        self.definition = params[0]
+        uuid = params[1]
+        # remove the pattern for this run from pattern_dict
+        self._reset_patterns()
+        # catch error in ENDRUN being handled without STARTRUN
+        if not self.start:
+            self.start = time.time()
+        self.logger.info("Ending use of test pattern.")
+        self.logger.info("Ending test lava.%s (%s), duration %.02f",
+                         self.definition, uuid,
+                         time.time() - self.start)
+        self.current_run = None
+        self.logger.results({  # pylint: disable=no-member
+            "definition": "lava",
+            "case": self.definition,
+            "uuid": uuid,
+            "duration": "%.02f" % (time.time() - self.start),
+            "result": "pass"
+        })
+        self.start = None
+
+    @nottest
+    def signal_test_case(self, params):
+        try:
+            data = handle_testcase(params)
+            # get the fixup from the pattern_dict
+            res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
+        except (JobError, TestError) as exc:
+            self.logger.error(str(exc))
+            return True
+
+        p_res = self.get_namespace_data(action='test', label=self.signal_director.test_uuid, key='results')
+        if not p_res:
+            p_res = OrderedDict()
+            self.set_namespace_data(
+                action='test', label=self.signal_director.test_uuid, key='results', value=p_res)
+
+        # prevent losing data in the update
+        # FIXME: support parameters and retries
+        if res["test_case_id"] in p_res:
+            raise JobError(
+                "Duplicate test_case_id in results: %s",
+                res["test_case_id"])
+        # turn the result dict inside out to get the unique
+        # test_case_id/testset_name as key and result as value
+        res_data = {
+            'definition': self.definition,
+            'case': res["test_case_id"],
+            'result': res["result"]
+        }
+        # check for measurements
+        if 'measurement' in res:
+            try:
+                measurement = decimal.Decimal(res['measurement'])
+            except decimal.InvalidOperation:
+                raise TestError("Invalid measurement %s", res['measurement'])
+            res_data['measurement'] = measurement
+            if 'units' in res:
+                res_data['units'] = res['units']
+
+        if self.testset_name:
+            res_data['set'] = self.testset_name
+            self.report[res['test_case_id']] = {
+                'set': self.testset_name,
+                'result': res['result']
+            }
+        else:
+            self.report[res['test_case_id']] = res['result']
+        # Send the results back
+        self.logger.results(res_data)  # pylint: disable=no-member
+
+    @nottest
+    def signal_test_reference(self, params):
+        if len(params) != 3:
+            raise TestError("Invalid use of TESTREFERENCE")
+        res_dict = {
+            'case': params[0],
+            'definition': self.definition,
+            'result': params[1],
+            'reference': params[2],
+        }
+        if self.testset_name:
+            res_dict.update({'set': self.testset_name})
+        self.logger.results(res_dict)  # pylint: disable=no-member
+
+    @nottest
+    def signal_test_set(self, params):
+        name = None
+        action = params.pop(0)
+        if action == "START":
+            name = "testset_" + action.lower()
+            try:
+                self.testset_name = params[0]
+            except IndexError:
+                raise JobError("Test set declared without a name")
+            self.logger.info("Starting test_set %s", self.testset_name)
+        elif action == "STOP":
+            self.logger.info("Closing test_set %s", self.testset_name)
+            self.testset_name = None
+            name = "testset_" + action.lower()
+        return name
+
+    def signal_lxc_add(self):
+        # the lxc namespace may not be accessible here depending on the
+        # lava-test-shell action namespace.
+        lxc_name = None
+        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        protocol = protocols[0] if protocols else None
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            self.logger.debug("No LXC device requested")
+            return False
+        self.logger.info("Get USB device(s) ...")
+        device_paths = get_usb_devices(self.job)
+        for device in device_paths:
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
+                       os.path.realpath(device)]
+            log = self.run_command(lxc_cmd)
+            self.logger.debug(log)
+            self.logger.debug("%s: device %s added", lxc_name,
+                              device)
+        return True
+
+    @nottest
+    def pattern_test_case(self, test_connection):
+        match = test_connection.match
+        if match is pexpect.TIMEOUT:
+            self.logger.warning("err: lava_test_shell has timed out (test_case)")
+            return False
+        res = self.signal_match.match(match.groupdict(), fixupdict=self.pattern.fixupdict())
+        self.logger.debug("outer_loop_result: %s" % res)
+        return True
+
+    @nottest
+    def pattern_test_case_result(self, test_connection):
+        res = test_connection.match.groupdict()
+        fixupdict = self.pattern.fixupdict()
+        if res['result'] in fixupdict:
+            res['result'] = fixupdict[res['result']]
+        if res:
+            # disallow whitespace in test_case_id
+            test_case_id = "%s" % res['test_case_id']
+            if ' ' in test_case_id.strip():
+                self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
+                return True
+            res_data = {
+                'definition': self.definition,
+                'case': res["test_case_id"],
+                'result': res["result"]
+            }
+            # check for measurements
+            if 'measurement' in res:
+                try:
+                    measurement = decimal.Decimal(res['measurement'])
+                except decimal.InvalidOperation:
+                    raise TestError("Invalid measurement %s", res['measurement'])
+                res_data['measurement'] = measurement
+                if 'units' in res:
+                    res_data['units'] = res['units']
+
+            self.logger.results(res_data)  # pylint: disable=no-member
+            self.report[res["test_case_id"]] = res["result"]
+        return True
+
+    def check_patterns(self, event, test_connection, check_char):  # pylint: disable=unused-argument
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -301,19 +505,8 @@ class TestShellAction(TestAction):
             self.testset_name = None
 
         elif event == "error":
-            (testrun, ) = test_connection.match.groups()
-            self.logger.error("Unable to start testrun %s. "
-                              "Read the log for more details.", testrun)
-            self.errors = "Unable to start testrun %s" % testrun
-            # This is not accurate but required when exiting.
-            self.start = time.time()
-            self.current_run = {
-                "definition": "lava",
-                "case": testrun,
-                "result": "fail"
-            }
             # Parsing is not finished
-            ret_val = True
+            ret_val = self.pattern_error(test_connection)
 
         elif event == "eof":
             self.logger.warning("err: lava_test_shell connection dropped")
@@ -330,149 +523,19 @@ class TestShellAction(TestAction):
             self.logger.debug("Received signal: <%s> %s" % (name, params))
             params = params.split()
             if name == "STARTRUN":
-                self.signal_director.test_uuid = params[1]
-                self.definition = params[0]
-                uuid = params[1]
-                self.start = time.time()
-                self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
-                # set the pattern for this run from pattern_dict
-                testdef_index = self.get_namespace_data(action='test-definition', label='test-definition',
-                                                        key='testdef_index')
-                uuid_list = self.get_namespace_data(action='repo-action', label='repo-action', key='uuid-list')
-                for (key, value) in enumerate(testdef_index):
-                    if self.definition == "%s_%s" % (key, value):
-                        pattern_dict = self.get_namespace_data(action='test', label=uuid_list[key], key='testdef_pattern')
-                        pattern = pattern_dict['testdef_pattern']['pattern']
-                        fixup = pattern_dict['testdef_pattern']['fixupdict']
-                        self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
-                        self.pattern.update(pattern, fixup)
-                        self.logger.info("Enabling test definition pattern %r" % pattern)
-                        self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
-                self.current_run = {
-                    "definition": "lava",
-                    "case": self.definition,
-                    "uuid": uuid,
-                    "result": "fail"
-                }
+                self.signal_start_run(params)
             elif name == "ENDRUN":
-                self.definition = params[0]
-                uuid = params[1]
-                # remove the pattern for this run from pattern_dict
-                self._reset_patterns()
-                # catch error in ENDRUN being handled without STARTRUN
-                if not self.start:
-                    self.start = time.time()
-                self.logger.info("Ending use of test pattern.")
-                self.logger.info("Ending test lava.%s (%s), duration %.02f",
-                                 self.definition, uuid,
-                                 time.time() - self.start)
-                self.current_run = None
-                self.logger.results({
-                    "definition": "lava",
-                    "case": self.definition,
-                    "uuid": uuid,
-                    "duration": "%.02f" % (time.time() - self.start),
-                    "result": "pass"
-                })
-                self.start = None
+                self.signal_end_run(params)
             elif name == "TESTCASE":
-                try:
-                    data = handle_testcase(params)
-                    # get the fixup from the pattern_dict
-                    res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
-                except (JobError, TestError) as exc:
-                    self.logger.error(str(exc))
-                    return True
-
-                p_res = self.get_namespace_data(action='test', label=self.signal_director.test_uuid, key='results')
-                if not p_res:
-                    p_res = OrderedDict()
-                    self.set_namespace_data(
-                        action='test', label=self.signal_director.test_uuid, key='results', value=p_res)
-
-                # prevent losing data in the update
-                # FIXME: support parameters and retries
-                if res["test_case_id"] in p_res:
-                    raise JobError(
-                        "Duplicate test_case_id in results: %s",
-                        res["test_case_id"])
-                # turn the result dict inside out to get the unique
-                # test_case_id/testset_name as key and result as value
-                res_data = {
-                    'definition': self.definition,
-                    'case': res["test_case_id"],
-                    'result': res["result"]
-                }
-                # check for measurements
-                if 'measurement' in res:
-                    try:
-                        measurement = decimal.Decimal(res['measurement'])
-                    except decimal.InvalidOperation:
-                        raise TestError("Invalid measurement %s", res['measurement'])
-                    res_data['measurement'] = measurement
-                    if 'units' in res:
-                        res_data['units'] = res['units']
-
-                if self.testset_name:
-                    res_data['set'] = self.testset_name
-                    self.report[res['test_case_id']] = {
-                        'set': self.testset_name,
-                        'result': res['result']
-                    }
-                else:
-                    self.report[res['test_case_id']] = res['result']
-                # Send the results back
-                self.logger.results(res_data)
-
+                self.signal_test_case(params)
             elif name == "TESTREFERENCE":
-                if len(params) != 3:
-                    raise TestError("Invalid use of TESTREFERENCE")
-                res_dict = {
-                    'case': params[0],
-                    'definition': self.definition,
-                    'result': params[1],
-                    'reference': params[2],
-                }
-                if self.testset_name:
-                    res_dict.update({'set': self.testset_name})
-                self.logger.results(res_dict)
-
+                self.signal_test_reference(params)
             elif name == "TESTSET":
-                action = params.pop(0)
-                if action == "START":
-                    name = "testset_" + action.lower()
-                    try:
-                        self.testset_name = params[0]
-                    except IndexError:
-                        raise JobError("Test set declared without a name")
-                    self.logger.info("Starting test_set %s", self.testset_name)
-                elif action == "STOP":
-                    self.logger.info("Closing test_set %s", self.testset_name)
-                    self.testset_name = None
-                    name = "testset_" + action.lower()
-
+                ret = self.signal_test_set(params)
+                if ret:
+                    name = ret
             elif name == "LXCDEVICEADD":
-                # the lxc namespace may not be accessible here depending on the
-                # lava-test-shell action namespace.
-                lxc_name = None
-                protocol = [protocol
-                            for protocol in self.job.protocols
-                            if protocol.name == LxcProtocol.name][0]
-                if protocol:
-                    lxc_name = protocol.lxc_name
-                if not lxc_name:
-                    self.logger.debug("No LXC device requested")
-                else:
-                    self.logger.info("Get USB device(s) ...")
-                    device_paths = get_usb_devices(self.job)
-                    for device in device_paths:
-                        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
-                                   os.path.realpath(device)]
-                        log = self.run_command(lxc_cmd)
-                        self.logger.debug(log)
-                        self.logger.debug("%s: device %s added", lxc_name,
-                                          device)
-
+                self.signal_lxc_add()
             elif name == "LXCDEVICEWAITADD":
                 self.logger.info("Waiting for USB device(s) ...")
                 usb_device_wait(self.job, device_actions=['add'])
@@ -484,44 +547,9 @@ class TestShellAction(TestAction):
             ret_val = True
 
         elif event == "test_case":
-            match = test_connection.match
-            if match is pexpect.TIMEOUT:
-                self.logger.warning("err: lava_test_shell has timed out (test_case)")
-            else:
-                res = self.signal_match.match(match.groupdict(), fixupdict=self.pattern.fixupdict())
-                self.logger.debug("outer_loop_result: %s" % res)
-                ret_val = True
-
+            ret_val = self.pattern_test_case(test_connection)
         elif event == 'test_case_result':
-            res = test_connection.match.groupdict()
-            fixupdict = self.pattern.fixupdict()
-            if res['result'] in fixupdict:
-                res['result'] = fixupdict[res['result']]
-            if res:
-                # disallow whitespace in test_case_id
-                test_case_id = "%s" % res['test_case_id']
-                if ' ' in test_case_id.strip():
-                    self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
-                    return True
-                res_data = {
-                    'definition': self.definition,
-                    'case': res["test_case_id"],
-                    'result': res["result"]
-                }
-                # check for measurements
-                if 'measurement' in res:
-                    try:
-                        measurement = decimal.Decimal(res['measurement'])
-                    except decimal.InvalidOperation:
-                        raise TestError("Invalid measurement %s", res['measurement'])
-                    res_data['measurement'] = measurement
-                    if 'units' in res:
-                        res_data['units'] = res['units']
-
-                self.logger.results(res_data)
-                self.report[res["test_case_id"]] = res["result"]
-            ret_val = True
-
+            ret_val = self.pattern_test_case_result(test_connection)
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
@@ -585,6 +613,7 @@ class TestShellAction(TestAction):
         def _on_testset_stop(self):
             pass
 
+        # noinspection PyUnusedLocal
         def _on_startrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
             """
             runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
@@ -593,6 +622,7 @@ class TestShellAction(TestAction):
             if self._cur_handler:
                 self._cur_handler.start()
 
+        # noinspection PyUnusedLocal
         def _on_endrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
             if self._cur_handler:
                 self._cur_handler.end()
