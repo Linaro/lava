@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import re
 import sys
 import time
@@ -45,10 +46,15 @@ from lava_dispatcher.pipeline.connection import (
     BaseSignalHandler,
     SignalMatch
 )
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_SHELL_PROMPT,
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
+)
+from lava_dispatcher.pipeline.utils.udev import (
+    get_usb_devices,
+    usb_device_wait,
 )
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -444,6 +450,32 @@ class TestShellAction(TestAction):
                     self.logger.info("Closing test_set %s", self.testset_name)
                     self.testset_name = None
                     name = "testset_" + action.lower()
+
+            elif name == "LXCDEVICEADD":
+                # the lxc namespace may not be accessible here depending on the
+                # lava-test-shell action namespace.
+                lxc_name = None
+                protocol = [protocol
+                            for protocol in self.job.protocols
+                            if protocol.name == LxcProtocol.name][0]
+                if protocol:
+                    lxc_name = protocol.lxc_name
+                if not lxc_name:
+                    self.logger.debug("No LXC device requested")
+                else:
+                    self.logger.info("Get USB device(s) ...")
+                    device_paths = get_usb_devices(self.job)
+                    for device in device_paths:
+                        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
+                                   os.path.realpath(device)]
+                        log = self.run_command(lxc_cmd)
+                        self.logger.debug(log)
+                        self.logger.debug("%s: device %s added", lxc_name,
+                                          device)
+
+            elif name == "LXCDEVICEWAITADD":
+                self.logger.info("Waiting for USB device(s) ...")
+                usb_device_wait(self.job, device_actions=['add'])
 
             try:
                 self.signal_director.signal(name, params)

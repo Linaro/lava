@@ -1,0 +1,8 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+# Echo a signal to add a device to lxc
+#
+# Usage: ``lava-lxc-device-add``
+
+echo "<LAVA_SIGNAL_LXCDEVICEADD lxc-device-add>"
