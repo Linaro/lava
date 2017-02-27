@@ -101,8 +101,8 @@ For the majority of cases, the above approach is the easiest thing to do: write
 shell code that outputs "test-case-id: result" for each test case you are
 interested in. See the Test Developer Guide:
 
-* :ref:`test_developer`,
-* :ref:`writing_tests`
+* :ref:`test_developer`.
+* :ref:`writing_tests`.
 * :ref:`parsing_output`.
 
 A possible advantage of the parsing approach is that it means your test is easy
@@ -115,11 +115,15 @@ When you need it, there is also a more powerful, LAVA-specific, way of writing
 tests. When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
-* ``lava-test-case``
-* ``lava-background-process-start``
-* ``lava-background-process-stop``
+* :ref:`lava-test-case`
+* :ref:`lava-test-case-attach`
+* :ref:`lava-test-run-attach`
+* :ref:`lava-background-process-start`
+* :ref:`lava-background-process-stop`
 
 .. seealso:: :ref:`multinode_api`
+
+.. _lava-test-case:
 
 lava-test-case
 --------------
@@ -229,6 +233,8 @@ executed correctly but that the result of that execution was a failure::
 #. **echo2** - pass
 #. **test2b** - fail
 
+.. _lava-test-case-attach:
+
 lava-test-case-attach
 ---------------------
 
@@ -236,6 +242,8 @@ lava-test-case-attach
    there is no submit stage and no bundle creation stage on the device.
 
 .. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
+
+.. _lava-test-run-attach:
 
 lava-test-run-attach
 --------------------
@@ -268,6 +276,8 @@ The arguments are:
 #. The command line for the process to be run in the background
 
 See :ref:`test_attach`.
+
+.. _lava-background-process-stop:
 
 lava-background-process-stop
 ----------------------------
