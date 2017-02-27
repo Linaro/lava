@@ -19,3 +19,12 @@ def check_chart_access(record, user):
         if not query.is_accessible_by(user):
             access = False
     return access
+
+
+@register.assignment_tag()
+def get_extra_source(record, data):
+    if not data:
+        return ''
+    if record.id in data:
+        return data[record.id]
+    return ''

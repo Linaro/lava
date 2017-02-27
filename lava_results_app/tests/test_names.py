@@ -125,7 +125,8 @@ class TestTestSuite(TestCaseWithFactory):
         for sample in result_samples:
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
-        self.assertEqual(4, TestCase.objects.count())
+        # the duplicate smoke-tests-basic is allowed here as the lava test suite supports multiples
+        self.assertEqual(5, TestCase.objects.count())
         val = URLValidator()
         for testcase in TestCase.objects.all():
             self.assertIsNotNone(testcase.name)

@@ -171,24 +171,14 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         if 'duration' in results:
             measurement = results['duration']
             units = 'seconds'
-        try:
-            # For lava test suite, the test (actions) can be seen two times.
-            case = TestCase.objects.get(name=name, suite=suite)
-            case.test_set = testset
-            case.metadata = yaml.dump(results)
-            case.result = result_val
-            case.measurement = measurement
-            case.units = units
-        except TestCase.DoesNotExist:
-            case = TestCase.objects.create(name=name,
-                                           suite=suite,
-                                           test_set=testset,
-                                           metadata=yaml.dump(results),
-                                           measurement=measurement,
-                                           units=units,
-                                           result=result_val)
+        case = TestCase.objects.create(name=name,
+                                       suite=suite,
+                                       test_set=testset,
+                                       metadata=yaml.dump(results),
+                                       measurement=measurement,
+                                       units=units,
+                                       result=result_val)
         with transaction.atomic():
-            case.save()
             if match_action:
                 match_action.testcase = case
                 match_action.save(update_fields=['testcase', 'duration', 'timeout'])

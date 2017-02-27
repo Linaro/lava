@@ -1,5 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
+{% load results_accessibility_tags %}
 
 {% block content %}
 <h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
@@ -33,8 +34,9 @@
   {% if testcase.action_metadata %}
   <ul class="list-unstyled">
   {% for key, value in testcase.action_metadata.items %}
+  {% get_extra_source testcase extra_source as testcase_extra %}
   {% if key == 'extra' and extra_source %}
-      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ extra_source }}</pre></li>
+      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ testcase_extra }}</pre></li>
   {% elif key == 'level' %}
     <li><strong>{{ key }}</strong>: <a
             href="{% url 'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
