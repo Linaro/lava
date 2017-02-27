@@ -30,6 +30,8 @@ Add support files for unit tests
    parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ using
    examples of existing files.
 
+   .. seealso:: :ref:`YAML syntax errors <writing_new_job_yaml>`
+
 #. Create a job submission YAML file, again with the parser and existing
    examples.
 

@@ -168,6 +168,8 @@ Remember to check the YAML syntax of your test job files using the `Online YAML
 parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ before
 submission.
 
+.. seealso:: :ref:`writing_new_job_yaml`
+
 The Scheduler menu contains a Submit Job action which can be used to submit
 jobs to any instance using your browser. You need to be logged in and have
 permission to submit jobs to that instance. The web submission form for a

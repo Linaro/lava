@@ -28,6 +28,8 @@ Things will go more easily if you also have:
    the support may be available. However, as YAML supports comments, this data
    is not lost.
 
+.. seealso:: :ref:`YAML syntax errors <writing_new_job_yaml>`
+
 The objective is to migrate the configuration of the existing device such that
 exactly the same commands are sent to the device as in the current dispatcher
 jobs, with the benefit of pipeline validation, results and metadata.

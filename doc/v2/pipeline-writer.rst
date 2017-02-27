@@ -104,11 +104,89 @@ Job submission data
     action class within a test job is logged and excessive timeouts can be
     identified.
 
+.. index:: writing new testjob
+
 Writing a new TestJob
 =====================
 
 See :ref:`dispatcher_actions` for details of the available actions and use the
 `sample jobs <https://git.linaro.org/lava-team/refactoring.git>`_ as examples.
+
+.. index:: YAML syntax for testjobs
+
+.. _writing_new_job_yaml:
+
+YAML syntax
+===========
+
+.. caution:: **Indenting is critically important to YAML**. A valid YAML
+   document can still render an object which lacks the structure required for a
+   valid submission. The parser errors do tend to be cryptic but will at
+   generally indicate the last tag encountered.
+
+**Always** use an editor which shows the actual whitespace. Many text editors
+have syntax highlighting for YAML. However, syntax highlighting may not be
+sufficient to identify common YAML syntax errors.
+
+Common YAML errors
+------------------
+
+.. code-block:: yaml
+
+ - boot:
+   method: u-boot
+
+Using the `Online YAML parser <http://yaml-online-parser.appspot.com/?yaml=>`_,
+this results in:
+
+.. code-block:: python
+
+ [
+   {
+     "boot": null,
+     "method": "u-boot"
+   }
+ ]
+
+Note how the entire boot block is loaded as a ``null``. ``method`` is now out
+of place. It has been made into a new entry in the list of actions. The
+submission is trying to create a test job which does:
+
+#. deploy
+#. boot
+#. method
+#. test
+
+The correct syntax is:
+
+.. code-block:: yaml
+
+ - boot:
+     method: u-boot
+
+Note how ``method`` is indented **beneath** ``boot`` instead of at the same
+level.
+
+Using the parser, this results in:
+
+.. code-block:: python
+
+ [
+   {
+     "boot": {
+       "method": "u-boot"
+     }
+   }
+ ]
+
+This now creates a submission which is trying to do:
+
+#. deploy
+#. boot
+
+   * method
+
+#. test
 
 Understanding available support
 ===============================
