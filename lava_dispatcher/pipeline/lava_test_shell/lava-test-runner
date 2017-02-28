@@ -43,7 +43,6 @@ for line in $(cat ${WORKFILE}); do
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
-	touch ${odir}/stdout.log
 	cp ${line}/testdef.yaml ${odir}/
 	cp ${line}/testdef_metadata ${odir}/
 
