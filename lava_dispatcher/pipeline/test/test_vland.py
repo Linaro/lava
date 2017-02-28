@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=superfluous-parens
 
@@ -249,6 +250,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         parser = JobParser()
         job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         self.assertRaises(JobError, job.validate)
 
     def test_primary_interface(self):

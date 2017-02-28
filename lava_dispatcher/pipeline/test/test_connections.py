@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
@@ -67,6 +68,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         super(TestConnection, self).setUp()
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
+        self.job.logger = DummyLogger()
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 

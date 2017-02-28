@@ -29,25 +29,9 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
-
-
-class DummyLogger(object):
-    def info(self, *args, **kwargs):
-        pass
-
-    def debug(self, *args, **kwargs):
-        pass
-
-    def exception(self, *args, **kwargs):
-        pass
-
-    def error(self, *args, **kwargs):
-        pass
-
-    def results(self, *args, **kwargs):
-        pass
 
 
 class TestMultiDeploy(StdoutTestCase):

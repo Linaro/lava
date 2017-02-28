@@ -34,23 +34,10 @@ from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 
 # pylint: disable=too-few-public-methods
-
-class DummyLogger(object):
-    def info(self, *args, **kwargs):
-        pass
-
-    def exception(self, *args, **kwargs):
-        pass
-
-    def error(self, *args, **kwargs):
-        pass
-
-    def results(self, *args, **kwargs):
-        pass
-
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 

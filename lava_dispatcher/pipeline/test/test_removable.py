@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.strings import substitute, map_kernel_uboot
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
@@ -139,6 +140,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_juno_deployment(self):
         factory = RemovableFactory()
         job = factory.create_job('sample_jobs/juno-uboot-removable.yaml', '../devices/juno-uboot.yaml')
+        job.logger = DummyLogger()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('usb', job.device['parameters']['media'].keys())

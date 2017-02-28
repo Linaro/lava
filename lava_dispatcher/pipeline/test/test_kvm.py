@@ -42,6 +42,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_messages import FakeConnection
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path, check_missing_path
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 # pylint: disable=invalid-name
@@ -378,6 +379,7 @@ class TestAutoLogin(StdoutTestCase):
         super(TestAutoLogin, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.job.logger = DummyLogger()
         self.max_end_time = time.time() + 30
 
     def test_autologin_prompt_patterns(self):

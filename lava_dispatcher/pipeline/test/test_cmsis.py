@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 
 class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
@@ -41,6 +42,7 @@ class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4999, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 

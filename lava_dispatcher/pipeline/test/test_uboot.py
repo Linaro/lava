@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
@@ -357,6 +358,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
 
     def test_xz_nfs(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
+        job.logger = DummyLogger()
         # this job won't validate as the .xz nfsrootfs URL is a fiction
         self.assertRaises(JobError, job.validate)
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]

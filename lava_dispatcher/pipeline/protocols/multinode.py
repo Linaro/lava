@@ -291,11 +291,13 @@ class MultinodeProtocol(Protocol):
         self._send(init_msg, True)
 
     def finalise_protocol(self, device=None):
-        fin_msg = {
-            "request": "clear_group",
-            "group_size": self.parameters['protocols'][self.name]['group_size']
-        }
-        self._send(fin_msg, True)
+        # If the protocol hasn't been setup correctly
+        if self.base_message is not None:
+            fin_msg = {
+                "request": "clear_group",
+                "group_size": self.parameters['protocols'][self.name]['group_size']
+            }
+            self._send(fin_msg, True)
         self.logger.debug("%s protocol finalised.", self.name)
 
     def _check_data(self, data):

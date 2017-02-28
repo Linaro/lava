@@ -30,9 +30,9 @@ import os
 import yaml
 
 from lava_dispatcher.pipeline.action import (
-    InfrastructureError,
-    JobError,
+    LAVABug,
     LAVAError,
+    JobError,
 )
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
@@ -175,44 +175,70 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         os.chmod(tmp_dir, 0o755)
         return tmp_dir
 
-    def validate(self, simulate=False):
+    def _validate(self, simulate):
         """
-        Needs to validate the parameters
-        Then needs to validate the context
-        Finally expose the context so that actions can see it.
+        Validate the pipeline and raise an exception (that inherit from
+        LAVAError) if it fails.
+        If simulate is True, then print the pipeline description.
         """
         label = "lava-dispatcher, installed at version: %s" % debian_package_version()
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
+
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
             except KeyboardInterrupt:
-                self.cleanup(connection=None)
                 self.logger.info("Canceled")
                 raise JobError("Canceled")
-            except (JobError, RuntimeError, KeyError, TypeError) as exc:
-                raise JobError(exc)
+            except LAVAError:
+                raise
+            except Exception as exc:
+                self.logger.error("Protocol configuration failed")
+                self.logger.exception(traceback.format_exc())
+                raise LAVABug(exc)
+
             if not protocol.valid:
                 msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
                 self.logger.exception(msg)
                 raise JobError(msg)
+
         if simulate:
             # output the content and then any validation errors (python3 compatible)
             print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
-        # FIXME: validate the device config
-        # FIXME: pretty output of exception messages needed.
+
         try:
             self.pipeline.validate_actions()
-        except (JobError, InfrastructureError) as exc:
-            self.cleanup(connection=None)
+        except KeyboardInterrupt:
+            self.logger.info("Canceled")
+            raise JobError("Canceled")
+        except LAVAError as exc:
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
             raise
+        except Exception as exc:
+            self.logger.error("Validation failed")
+            self.logger.exception(traceback.format_exc())
+            raise LAVABug(exc)
         finally:
             self.logger.info("validate duration: %.02f", time.time() - start)
+
+    def validate(self, simulate=False):
+        """
+        Public wrapper for the pipeline validation.
+        Send a "fail" results if needed.
+        """
+        try:
+            self._validate(simulate)
+        except LAVAError as exc:
+            self.cleanup(connection=None)
+            self.logger.results({"definition": "lava",
+                                 "case": "job",
+                                 "result": "fail"})
+            self.logger.error(exc.error_msg)
+            raise
 
     def cancelling_handler(*_):
         """
