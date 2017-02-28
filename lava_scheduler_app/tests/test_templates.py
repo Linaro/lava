@@ -341,7 +341,8 @@ class TestTemplates(unittest.TestCase):
 {% set sysfs = {'iface0': '/sys/devices/platform/AMDI8001:00/net/',
 'iface1': '/sys/devices/platform/AMDI8001:01/net/',
 'iface2': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.0/net/',
-'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}"""
+'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
+{% set boot_character_delay = 100 %}"""
         self.assertTrue(self.validate_data('staging-overdrive-01', data))
         test_template = prepare_jinja_template('staging-overdrive-01', data, system_path=self.system)
         rendered = test_template.render()
@@ -350,6 +351,9 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('parameters', template_dict)
         self.assertIn('interfaces', template_dict['parameters'])
         self.assertIn('actions', template_dict)
+        self.assertIn('character_delays', template_dict)
+        self.assertIn('boot', template_dict['character_delays'])
+        self.assertEqual(100, template_dict['character_delays']['boot'])
         self.assertIn('iface2', template_dict['parameters']['interfaces'])
         self.assertIn('iface1', template_dict['parameters']['interfaces'])
         self.assertIn('iface0', template_dict['parameters']['interfaces'])
