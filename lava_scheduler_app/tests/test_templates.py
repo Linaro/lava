@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import yaml
 import jinja2
 import unittest
@@ -77,6 +78,25 @@ class TestTemplates(unittest.TestCase):
             print('#######')
             self.fail(exc)
         return ret
+
+    def test_all_templates(self):
+        templates = glob.glob(os.path.join(jinja_template_path(system=self.system), 'device-types', '*.jinja2'))
+        self.assertNotEqual([], templates)
+        for template in templates:
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            try:
+                self.validate_data('device', data)
+            except AssertionError as exc:
+                self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
+
+    def test_x15_template(self):
+        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
+{% set connection_command = 'adb -s R32D300FRYP shell' %}
+{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
+"""))
 
     def test_nexus10_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}

@@ -160,14 +160,28 @@ Matching the template
 
 .. # comment: prevent this in the submission API once V1 jobs are rejected.
 
-The name of a device type **must** match an available template. On the master,
-device-type templates are configured using :term:`jinja2` files in the
-directory::
+The name of a device type **must** match an available template. Templates are a
+lot more than configuration. The format supports conditional logic, inheritance
+and other features of code. On the master, device-type templates are configured
+using :term:`jinja2` files in the directory::
 
  /etc/lava-server/dispatcher-config/device-types/
 
 When creating a new device type, it is recommended to add the new template
-file first.
+file first and **use version control** to track changes then copy the template
+file to the system location.
+
+.. warning:: Adding a new device-type template is the most complex part of
+  administering a LAVA instance and it can be a lot of work (sometimes several
+  months) to integrate a completely new device into LAVA. V2 offers a different
+  and wider range of support to V1 but some devices will need new support to be
+  written within ``lava-dispatcher``. **It is not always possible to automate a
+  new device**, depending on how the device connects to LAVA, how the device is
+  powered and whether the software on the device allows the device to be
+  controlled remotely.
+
+.. seealso:: :ref:`adding_new_device_types` and :ref:`creating new device type
+   templates <developing_device_type_templates>`.
 
 .. index:: device type examples
 

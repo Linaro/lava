@@ -54,6 +54,87 @@ access devices and debug test jobs.
 .. _SSH: http://www.openssh.com/
 .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
 
+.. index:: templates as code; device-type template files
+
+.. _developing_device_type_templates:
+
+Developing using device-type templates
+======================================
+
+If you are an administrator, you may think the previous link sent you to the
+wrong section. However, administrators need to understand how device-type
+templates operate and how the template engine will use the template to be able
+to make changes.
+
+.. important:: Device type templates are more than configuration files - the
+   templates are processed as source code at runtime. Anyone making changes to
+   a device-type ``.jinja2`` template file **must** understand the basics of
+   how to test templates using the same tools as developers.
+
+Device type templates as code
+-----------------------------
+
+Jinja2_ provides a powerful templating engine. Templates in LAVA use several
+standard programming concepts:
+
+* Conditional Logic
+
+* Inheritance
+
+* Default values
+
+In addition, LAVA templates need to **always** render to valid YAML. It is this
+YAML which is sent to the worker as ``device.yaml``. The worker does not handle
+the templates. All operations are done on the master.
+
+Testing new device-type templates
+---------------------------------
+
+The simplest check is to render the new template to YAML and check that it
+contains the expected commands. As with test job files, there are common YAML
+errors which can block the use of new templates.
+
+.. seealso:: :ref:`YAML syntax errors <writing_new_job_yaml>`
+
+.. code-block:: shell
+
+ lava-server manage device-dictionary --hostname <HOSTNAME> --review
+
+A more rigorous test is to use the dedicated unit test which does **not**
+require ``lava-server`` to be installed, i.e. it does not require a database to
+be configured. This test can be run directly from a git checkout of
+``lava-server`` with a few basic python packages installed (including
+``python-jinja2``).
+
+.. code-block:: shell
+
+ $ python -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_all_templates
+
+Individual templates have their own unit tests to test for specific elements of
+the rendered device configuration.
+
+Most changes to device-type templates take effect **immediately** - as soon as
+the file is changed in ``/etc/lava-server/dispatcher-config/device-types/`` the
+next testjob for that device-type will use the output of that template. Always
+test your templates locally **before** deploying the template to the master.
+(Test jobs which have already started are not affected by template changes.)
+
+Use version-control for device-type templates
+---------------------------------------------
+
+This cannot be stressed enough. **ALL admins** need to keep device-type
+templates in some form of version control. The template files are code and
+admins will need to be able to upgrade templates when packages are upgraded
+**and** when devices need to implement new support.
+
+Contribute device-type templates back upstream
+----------------------------------------------
+
+As code, device-type templates need to develop alongside the rest of the
+codebase. The best way to maintain support is to :ref:`contribute_upstream` so
+that new features can be tested against your templates and new releases can
+automatically include updates to your templates.
+
 .. _developer_workflow:
 
 Developer workflows
