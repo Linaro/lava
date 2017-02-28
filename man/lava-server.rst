@@ -4,8 +4,8 @@ Description
 Summary
 #######
 
-``lava-server`` is a command-line management interface to a LAVA instance,
-and the Django database management tools for that instance.
+``lava-server`` is a command-line management interface to a LAVA instance, and
+the Django database management tools for that instance.
 
 Usage
 #####
@@ -15,8 +15,8 @@ lava-server manage subcommand [options] [args]
 Common Options
 ##############
 
-Most of these options are imported from ``django`` and more
-information can be found in the django documentation.
+Most of these options are imported from ``django`` and more information can be
+found in the django documentation.
 
 These options are supported for all subcommands.
 
@@ -62,11 +62,11 @@ auth
       Options:
         --username=USERNAME   Specifies the username for the superuser.
         --email=EMAIL         Specifies the email address for the superuser.
-        --noinput             Tells Django to NOT prompt the user for input of any
-                              kind. You must use ``--username`` and ``--email`` with
-                              ``--noinput`` and superusers created with ``--noinput`` will
-                              not be able to log in until they are given a valid
-                              password.
+        --noinput             Tells Django to NOT prompt the user for input of
+                              any kind. You must use ``--username`` and
+                              ``--email`` with ``--noinput`` and superusers
+                              created with ``--noinput`` will not be able to
+                              log in until they are given a valid password.
         --database=DATABASE   Specifies the database to use. Default is **default**.
 
 django
@@ -80,8 +80,9 @@ lava_scheduler_app
       Manage devices
 
       positional arguments:
-        {add,details,list,set}
-                              Sub commands
+        {add, details, list, set}
+
+      Sub commands
           add                 Add a device
 
             positional arguments:
@@ -109,7 +110,8 @@ lava_scheduler_app
 
             optional arguments:
               --all, -a             Show all devices, including retired ones
-              --status {OFFLINE,IDLE,RUNNING,OFFLINING,RETIRED,RESERVED}
+              --status              {OFFLINE, IDLE, RUNNING, OFFLINING,
+                                    RETIRED, RESERVED}
                                     Show only devices with this status
               --csv                 Print as csv
 
@@ -125,9 +127,10 @@ lava_scheduler_app
                                     Device dictionary
               --public              make the device public
               --private             Make the device private
-              --status {OFFLINE,IDLE,RUNNING,OFFLINING,RETIRED,RESERVED}
+              --status              {OFFLINE, IDLE, RUNNING, OFFLINING,
+                                    RETIRED, RESERVED}
                                     Set the device status
-              --health {UNKNOWN,PASS,FAIL,LOOPING}
+              --health              {UNKNOWN, PASS, FAIL, LOOPING}
                                     Set the device health status
               --worker WORKER       Set the worker
 
@@ -137,12 +140,12 @@ lava_scheduler_app
       Retired devices are included.
 
         positional arguments:
-          {add,list}            Sub commands
+          {add, list}            Sub commands
             add                 Add V2 device type(s) to the database.
 
                 positional arguments:
-                  device-type           The device type name. Passing '*' will add all known
-                                        V2 device types.
+                  device-type           The device type name. Passing '*' will
+                                        add all known V2 device types.
 
                 optional arguments:
                   -h, --help            show this help message and exit
@@ -151,23 +154,26 @@ lava_scheduler_app
                   Only supported when creating a single device-type
 
                   --health-check HEALTH_CHECK
-                                        The health check (filename) for the given device type.
-                  --health-frequency HEALTH_FREQUENCY
+                                        The health check (filename) for the
+                                        given device type.
+
+                  --health - frequency  HEALTH_FREQUENCY
                                         How often to run health checks.
-                  --health-denominator {hours,jobs}
+
+                  --health-denominator  {hours, jobs}
                                         Initiate health checks by hours or by jobs.
 
             list                List the installed device types
                 optional arguments:
                   -h, --help  show this help message and exit
-                  --all, -a   Show all device types in the database, including non-installed
-                              ones
+                  --all, -a   Show all device types in the database, including
+                              types not currently installed.
                   --csv       Print as csv
 
     pipeline-worker
 
     LAVA Pipeline worker helper
-            optional arguments:
+       optional arguments:
           --hostname HOSTNAME   Hostname of the new worker
           --description DESCRIPTION
                                 optional description of the new worker
@@ -180,7 +186,7 @@ lava_scheduler_app
         lava-server manage scheduler [options]
       Options:
          --use-fake            Use fake dispatcher (for testing)
-         --dispatcher=DISPATCHER
+         --dispatcher DISPATCHER
                              Dispatcher command to invoke
 
     schedulermonitor
@@ -196,64 +202,24 @@ lava_scheduler_app
                         Path to log file, default is taken from settings.
 
     test
-      Runs the test suite for the specified applications, or the entire site if no apps are specified.
+      Runs the test suite for the specified applications, or the entire site
+      if no apps are specified.
 
       Usage:
         lava-server manage test [options] [appname ...]
       Options:
-          --noinput             Tells Django to NOT prompt the user for input of any
-                                kind.
+          --noinput             Tells Django to NOT prompt the user for input
+                                of any kind.
           --failfast            Tells Django to stop running the test suite after
                                 first failed test.
-          --testrunner=TESTRUNNER
+          --testrunner TESTRUNNER
                                 Tells Django to use specified test runner class
                                 instead of the one specified by the TEST_RUNNER
                                 setting.
-          --liveserver=LIVESERVER
+          --liveserver LIVESERVER
                                 Overrides the default address where the live server
                                 (used with LiveServerTestCase) is expected to run
                                 from. The default value is localhost:8081.
-
-staticfiles
-    collectstatic
-      Collect static files in a single location.
-
-      Usage:
-        lava-server manage collectstatic [options]
-      Options:
-        --noinput             Do NOT prompt the user for input of any kind.
-        --no-post-process     Do NOT post process collected files.
-        -i PATTERN, --ignore=PATTERN
-                        Ignore files or directories matching this glob-style
-                        pattern. Use multiple times to ignore more.
-        -n, --dry-run         Do everything except modify the filesystem.
-        -c, --clear           Clear the existing files using the storage before
-                        trying to copy or link the original file.
-        -l, --link            Create a symbolic link to each file instead of
-                        copying.
-        --no-default-ignore   Don't ignore the common private glob-style patterns
-                        ``'CVS'``, ``'.*'`` and ``'*~'``.
-
-    findstatic
-      Finds the absolute paths for the given static file(s).
-
-      Usage:  lava-server manage findstatic [options] [file ...]
-
-      Options:
-      --first               Only return the first match for each static file.
-
-    runserver
-      Starts a lightweight Web server for development and also serves static files.
-
-      Usage:
-        lava-server manage runserver [options] [optional port number, or ipaddr:port]
-      Options:
-        -6, --ipv6            Tells Django to use a IPv6 address.
-        --nothreading         Tells Django to NOT use threading.
-        --noreload            Tells Django to NOT use the auto-reloader.
-        --nostatic            Tells Django to NOT automatically serve static files
-                        at STATIC_URL.
-        --insecure            Allows serving static files even if DEBUG is False.
 
 Bugs
 ####
