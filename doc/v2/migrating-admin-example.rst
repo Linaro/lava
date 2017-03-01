@@ -483,19 +483,10 @@ Now identify the actions - a single deploy, a single boot and a single test.
 Deploy
 ^^^^^^
 
-.. code-block:: yaml
-
- actions:
-   - deploy:
-       to: tftp
-       kernel:
-         url: http://images-internal/mustang/uImage_1.11
-       nfsrootfs:
-         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-         compression: gz
-       dtb:
-         url: http://images-internal/mustang/mustang.dtb_1.11
-       os: debian
+.. include:: examples/test-jobs/mustang-admin-example-job.yaml
+   :code: yaml
+   :start-after: actions:
+   :end-before: - boot
 
 Boot
 ^^^^
@@ -503,18 +494,10 @@ Boot
 Note that ``boot`` has the details of the autologin which will occur at the end
 of the boot action.
 
-.. code-block:: yaml
-
-   - boot:
-     prompts:
-       - 'linaro-test'
-       - 'root@debian:~#'
-     method: u-boot
-     commands: nfs
-     type: bootm
-     auto_login:
-       login_prompt: "login:"
-       username: root
+.. include:: examples/test-jobs/mustang-admin-example-job.yaml
+   :code: yaml
+   :start-after: os: debian
+   :end-before: - test
 
 Test
 ^^^^
@@ -522,17 +505,10 @@ Test
 Note how the test action can have a name and the test definition can also have
 a name, separate from the content of the YAML file.
 
-.. code-block:: yaml
 
-   - test:
-     timeout:
-       minutes: 5
-     name: singlenode-mustang-demo
-     definitions:
-       - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
-         from: git
-         path: singlenode/singlenode03.yaml
-         name: singlenode-advanced
+.. include:: examples/test-jobs/mustang-admin-example-job.yaml
+   :code: yaml
+   :start-after: username: root
 
 Complete YAML submission
 ========================
