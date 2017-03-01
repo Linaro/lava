@@ -244,6 +244,7 @@ class TestShellAction(TestAction):
         pre_command_list = self.get_namespace_data(action='test', label="lava-test-shell", key='pre-command-list')
         lava_test_results_dir = self.get_namespace_data(
             action='test', label='results', key='lava_test_results_dir')
+        lava_test_sh_cmd = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
 
         for running in xrange(stage + 1):
             if pre_command_list and running == 0:
@@ -252,6 +253,8 @@ class TestShellAction(TestAction):
 
             self.logger.debug("Using %s" % lava_test_results_dir)
             connection.sendline('ls -l %s/' % lava_test_results_dir)
+            if lava_test_sh_cmd:
+                connection.sendline('export SHELL=%s' % lava_test_sh_cmd)
 
             try:
                 with connection.test_connection() as test_connection:

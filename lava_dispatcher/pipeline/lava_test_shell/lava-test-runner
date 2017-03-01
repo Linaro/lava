@@ -32,6 +32,12 @@ mv ${WORKFILE} ${WORKFILE}-${TS}
 WORKFILE=${WORKFILE}-${TS}
 
 echo "${PREFIX} looking for work in ${WORKFILE}"
+
+if [ -z "${SHELL}" ]; then
+    SHELL=/bin/sh
+fi
+echo "${PREFIX} Using ${SHELL}"
+
 for line in $(cat ${WORKFILE}); do
 	test=`basename $line`
 	echo "${PREFIX} running ${test} under lava-test-shell..."
