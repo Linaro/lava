@@ -260,7 +260,7 @@
                 {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
               {% endif %}
         <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
-          {% for key, value in line.msg.items %}
+          {% for key, value in line.msg.items|sort_items %}
             {% if value.items %}
               {% if key == "extra" %}
                 extra: ...<br />
