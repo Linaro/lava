@@ -197,7 +197,7 @@ class SuiteTable(LavaTable):
     """
     def __init__(self, *args, **kwargs):
         super(SuiteTable, self).__init__(*args, **kwargs)
-        self.length = 10
+        self.length = 25
 
     name = tables.Column()
     test_set = tables.Column(verbose_name="Test Set")
