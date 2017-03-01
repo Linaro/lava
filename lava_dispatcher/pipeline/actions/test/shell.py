@@ -37,7 +37,8 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Pipeline,
     JobError,
-    TestError
+    TestError,
+    LAVABug,
 )
 from lava_dispatcher.pipeline.logical import (
     LavaTest,
@@ -329,6 +330,12 @@ class TestShellAction(TestAction):
             "uuid": uuid,
             "result": "fail"
         }
+        testdef_commit = self.get_namespace_data(
+            action='test', label=uuid, key='commit-id')
+        if testdef_commit:
+            self.current_run.update({
+                'commit_id': testdef_commit
+            })
 
     def signal_end_run(self, params):
         self.definition = params[0]
@@ -343,13 +350,24 @@ class TestShellAction(TestAction):
                          self.definition, uuid,
                          time.time() - self.start)
         self.current_run = None
-        self.logger.results({  # pylint: disable=no-member
+        res = {
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
+            'revision': self.get_namespace_data(
+                action='test', label=uuid, key='revision'),
+            'repository': self.get_namespace_data(
+                action='test', label=uuid, key='repository'),
+            'path': self.get_namespace_data(
+                action='test', label=uuid, key='path'),
             "duration": "%.02f" % (time.time() - self.start),
             "result": "pass"
-        })
+        }
+        commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
+        if commit_id:
+            res['commit_id'] = commit_id
+
+        self.logger.results(res)  # pylint: disable=no-member
         self.start = None
 
     @nottest

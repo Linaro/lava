@@ -361,10 +361,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                                     value=os.path.join(suffix, self.key, os.path.basename(fname)))
         else:
             self.set_namespace_data(action='download_action', label='file', key=self.key, value=fname)
-        self.logger.info("md5sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
-                                                                                       label=self.key, key='md5')))
-        self.logger.info("sha256sum of downloaded content: %s" % (self.get_namespace_data(action='download_action',
-                                                                                          label=self.key, key='sha256')))
+        self.results = {
+            'label': self.key,
+            'md5sum': str(self.get_namespace_data(
+                action='download_action', label=self.key, key='md5')),
+            'sha256sum': str(self.get_namespace_data(
+                action='download_action', label=self.key, key='sha256'))
+        }
         return connection
 
 

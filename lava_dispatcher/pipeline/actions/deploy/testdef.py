@@ -222,6 +222,14 @@ class RepoAction(Action):
         overlay_base = self.get_namespace_data(action='test', label='test-definition', key='overlay_dir')
         overlay_path = os.path.join(overlay_base, str(self.stage), 'tests', args['test_name'])
         self.set_namespace_data(action='uuid', label='overlay_path', key=args['test_name'], value=overlay_path)
+        self.set_namespace_data(
+            action='test', label=self.uuid, key='repository', value=self.parameters['repository'])
+        self.set_namespace_data(
+            action='test', label=self.uuid, key='path', value=self.parameters['path'])
+        revision = self.parameters.get('revision', None)
+        if revision:
+            self.set_namespace_data(
+                action='test', label=self.uuid, key='branch', value=revision)
 
         # FIXME - is this needed? - the issue here is that the new model does not use fs.tgz
         # therefore, there may not be the same need to collate the dependent testdefs, all of the
@@ -248,6 +256,8 @@ class RepoAction(Action):
 
         if commit_id is not None:
             val['commit_id'] = commit_id
+            self.set_namespace_data(
+                action='test', label=self.uuid, key='commit-id', value=str(commit_id))
 
         self.set_namespace_data(action='test', label=self.uuid, key='testdef_metadata', value=val)
         if 'parse' in testdef:
@@ -444,9 +454,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             test_file.write(data)
 
         # set testdef metadata in base class
-        self.store_testdef(self.parameters['repository'], 'inline',
-                           self.parameters.get('revision',
-                                               sha1.hexdigest()))
+        self.store_testdef(self.parameters['repository'], 'inline')
         return connection
 
 
