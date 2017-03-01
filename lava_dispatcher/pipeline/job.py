@@ -250,6 +250,34 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         raise KeyboardInterrupt
 
+    def _run(self):
+        """
+        Run the pipeline under the run() wrapper that will catch the exceptions
+        """
+        # Set the signal handler
+        signal.signal(signal.SIGINT, self.cancelling_handler)
+        signal.signal(signal.SIGTERM, self.cancelling_handler)
+
+        # Setup the protocols
+        for protocol in self.protocols:
+            try:
+                protocol.set_up()
+            except LAVAError:
+                raise
+            except Exception as exc:
+                self.logger.error("Unable to setup the protocols")
+                self.logger.exception(traceback.format_exc())
+                raise LAVABug(exc)
+
+            if not protocol.valid:
+                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                self.logger.exception(msg)
+                raise JobError(msg)
+
+        # Run the pipeline and wait for exceptions
+        with self.timeout() as max_end_time:
+            self.pipeline.run_actions(self.connection, max_end_time)
+
     def run(self):
         """
         Top level routine for the entire life of the Job, using the job level timeout.
@@ -257,29 +285,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
+        error_msg = ""
         return_code = 0
-        error_msg = None
         try:
-            # Set the signal handler
-            signal.signal(signal.SIGINT, self.cancelling_handler)
-            signal.signal(signal.SIGTERM, self.cancelling_handler)
-
-            # Setup the protocols
-            for protocol in self.protocols:
-                try:
-                    protocol.set_up()
-                except (KeyError, TypeError) as exc:
-                    self.logger.error("Unable to setup the protocols")
-                    self.logger.exception(exc)
-                    raise RuntimeError(exc)
-                if not protocol.valid:
-                    msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
-                    self.logger.exception(msg)
-                    raise JobError(msg)
-
-            # Run the pipeline and wait for exceptions
-            with self.timeout() as max_end_time:
-                self.pipeline.run_actions(self.connection, max_end_time)
+            self._run()
         except LAVAError as exc:
             error_msg = exc.error_msg
             return_code = exc.error_code
