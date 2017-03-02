@@ -2713,19 +2713,20 @@ class TestJob(RestrictedResource):
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
 
+        from lava_results_app.models import NamedTestAttribute, TestData
         attribute = None
         if xaxis_attribute:
             try:
-                from lava_results_app.models import TestData
-                content_type_id = ContentType.objects.get_for_model(
-                    TestData).id
-                attribute = NamedAttribute.objects.filter(
-                    content_type_id=content_type_id,
-                    object_id__in=self.testdata_set.all().values_list(
-                        'id', flat=True),
-                    name=xaxis_attribute).values_list('value', flat=True)[0]
+                testdata = TestData.objects.filter(testjob=self).first()
+                if testdata:
+                    attribute = NamedTestAttribute.objects.filter(
+                        content_type=ContentType.objects.get_for_model(
+                            TestData),
+                        object_id=testdata.id,
+                        name=xaxis_attribute).values_list('value', flat=True)[0]
+
             # FIXME: bare except
-            except:  # There's no attribute, use date.
+            except:  # There's no attribute, skip this result.
                 pass
 
         return attribute

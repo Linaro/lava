@@ -98,25 +98,25 @@
       </p>
       <p>Metadata submitted as part of the job submission is also included, if present.</p>
        <div class="row">
-       <div class="col-xs-6">
+       <div class="col-xs-12">
         <ul>
           {% for key, value in metadata.items %}
               {% if 'target' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ key|markup_metadata:value }}</li>
               {% elif 'deploy' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ value }}</li>
               {% elif 'omit.' in key %}
                   <!-- inline without test cases -->
               {% elif 'boot' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ value }}</li>
               {% elif 'test' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ key|markup_metadata:value }}</li>
               {% elif 'parameters' in key %}
-                  <li><b>{{ key|metadata_key }}</b>:
+                  <li><b>{{ key }}</b>:
                   <ul>{% for paramkey, paramvalue in value.items %}
                       <li>{{ paramkey }}: {{ paramvalue }}</li>
                       {% endfor %}

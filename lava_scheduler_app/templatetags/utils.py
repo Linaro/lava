@@ -221,11 +221,6 @@ def result_name(result_dict):
 
 
 @register.filter()
-def metadata_key(key, index=0):
-    return '.'.join(key.split('.')[index:]).replace('definition.', '')
-
-
-@register.filter()
 def markup_metadata(key, value):
     if 'target.device_type' in key:
         return mark_safe("<a href='/scheduler/device_type/%s'>%s</a>" % (value, value))
