@@ -1,0 +1,60 @@
+device_type: qemu
+
+job_name: QEMU NFS example
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+priority: medium
+visibility: public
+
+context:
+  arch: arm64
+  netdevice: 'tap'
+  extra_options:
+  - '-smp'
+  - 1
+
+actions:
+- deploy:
+    timeout:
+      minutes: 2
+    to: nfs
+    os: debian
+    images:
+      nfsrootfs:
+        image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard,intr'
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
+        compression: gz
+      kernel:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+        image_arg: -kernel {kernel}
+      initrd:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+        image_arg: -initrd {initrd}
+
+- boot:
+    method: qemu-nfs
+    connection: serial
+    auto_login: {login_prompt: 'login:', username: root}
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
+
+- test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    definitions:
+        - repository: git://git.linaro.org/qa/test-definitions.git
+          from: git
+          path: ubuntu/smoke-tests-basic.yaml
+          name: smoke-tests
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          revision: 441b61

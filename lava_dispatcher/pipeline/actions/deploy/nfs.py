@@ -73,6 +73,8 @@ class Nfs(Deployment):
     def accepts(cls, device, parameters):
         if not nfs_accept(device, parameters):
             return False
+        if 'image' in device['actions']['deploy']['methods']:
+            return False
         if 'nfs' in device['actions']['deploy']['methods']:
             return True
         return False

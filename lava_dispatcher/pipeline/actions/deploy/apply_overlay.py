@@ -54,6 +54,8 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.deploy.prepare import PrepareKernelAction
 
+# pylint: disable=superfluous-parens,too-many-statements
+
 
 class ApplyOverlayGuest(Action):
 
@@ -204,6 +206,13 @@ class ApplyOverlayTftp(Action):
         overlay_file = None
         if self.parameters.get('nfsrootfs', None) is not None:
             if not self.parameters['nfsrootfs'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to NFS")
+                return connection
+            overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+            directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
+            self.logger.info("Applying overlay to NFS")
+        elif self.parameters.get('images', {}).get('nfsrootfs', None) is not None:
+            if not self.parameters['images']['nfsrootfs'].get('install_overlay', True):
                 self.logger.info("Skipping applying overlay to NFS")
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')

@@ -44,6 +44,7 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path, check_missing_path
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.strings import substitute
 
 # pylint: disable=invalid-name
 
@@ -684,15 +685,79 @@ class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(uefi_dir, execute.sub_command)
 
 
-# class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
-#
-#     def setUp(self):
-#         super(TestMonitor, self).setUp()
-#         factory = Factory()
-#         self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml', mkdtemp())
-#
-#     def test_qemu_monitor(self):
-#         self.assertIsNotNone(self.job)
-#         self.assertIsNotNone(self.job.pipeline)
-#         self.assertIsNotNone(self.job.pipeline.actions)
-#         self.job.validate()
+class TestQemuNFS(StdoutTestCase):
+
+    def setUp(self):
+        super(TestQemuNFS, self).setUp()
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm03.yaml'))
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-nfs.yaml')
+        parser = JobParser()
+        try:
+            with open(kvm_yaml) as sample_job_data:
+                job = parser.parse(sample_job_data, device, 4212, None, "",
+                                   output_dir=mkdtemp())
+        except NotImplementedError as exc:
+            print(exc)
+            # some deployments listed in basics.yaml are not implemented yet
+            return None
+        self.job = job
+        self.job.logger = DummyLogger()
+
+    @unittest.skipIf(infrastructure_error('qemu-system-aarch64'),
+                     'qemu-system-arm not installed')
+    def test_qemu_nfs(self):
+        self.assertIsNotNone(self.job)
+        description_ref = pipeline_reference('qemu-nfs.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+        boot = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        execute = [action for action in qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.job.validate()
+        self.assertNotEqual([], [line for line in execute.sub_command if line.startswith('-kernel')])
+        self.assertEqual(1, len([line for line in execute.sub_command if line.startswith('-kernel')]))
+        self.assertIn('vmlinuz', [line for line in execute.sub_command if line.startswith('-kernel')][0])
+
+        self.assertNotEqual([], [line for line in execute.sub_command if line.startswith('-initrd')])
+        self.assertEqual(1, len([line for line in execute.sub_command if line.startswith('-initrd')]))
+        self.assertIn('initrd.img', [line for line in execute.sub_command if line.startswith('-initrd')][0])
+
+        self.assertEqual([], [line for line in execute.sub_command if '/dev/nfs' in line])
+        self.assertEqual([], [line for line in execute.sub_command if 'nfsroot' in line])
+
+        args = execute.methods['qemu-nfs']['parameters']['append']['nfsrootargs']
+        self.assertIn('{NFS_SERVER_IP}', args)
+        self.assertIn('{NFSROOTFS}', args)
+
+        substitutions = execute.substitutions
+        substitutions["{NFSROOTFS}"] = 'root_dir'
+        params = execute.methods['qemu-nfs']['parameters']['append']
+        # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
+        append = [
+            'console=%s' % params['console'],
+            'root=/dev/nfs',
+            '%s' % substitute([params['nfsrootargs']], substitutions)[0],
+            "%s" % params['ipargs']
+        ]
+        execute.sub_command.append('--append')
+        execute.sub_command.append('"%s"' % ' '.join(append))
+        kernel_cmdline = ' '.join(execute.sub_command)
+        self.assertIn('console=ttyAMA0', kernel_cmdline)
+        self.assertIn('/dev/nfs', kernel_cmdline)
+        self.assertIn('root_dir,tcp,hard,intr', kernel_cmdline)
+        self.assertIn('smp', kernel_cmdline)
+        self.assertIn('cortex-a57', kernel_cmdline)
+
+
+class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestMonitor, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml', mkdtemp())
+
+    def test_qemu_monitor(self):
+        self.assertIsNotNone(self.job)
+        self.assertIsNotNone(self.job.pipeline)
+        self.assertIsNotNone(self.job.pipeline.actions)
+        self.job.validate()
