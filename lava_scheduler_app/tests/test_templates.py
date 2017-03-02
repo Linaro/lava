@@ -412,6 +412,37 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('-global', options)
         self.assertIn('-cpu cortex-a57', options)
 
+    def test_qemu_cortex_a57_nfs(self):
+        data = """{% extends 'qemu.jinja2' %}
+{% set memory = 2048 %}
+{% set mac_addr = '52:54:00:12:34:59' %}
+{% set arch = 'arm64' %}
+{% set base_guest_fs_size = 2048 %}
+        """
+        job_ctx = {
+            'arch': 'amd64',
+            'qemu_method': 'qemu-nfs',
+            'netdevice': 'tap',
+            'extra_options': ['-smp', 1]
+        }
+        self.assertTrue(self.validate_data('staging-qemu-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        self.assertIsNotNone(rendered)
+        template_dict = yaml.load(rendered)
+        self.assertIn('qemu-nfs', template_dict['actions']['boot']['methods'])
+        params = template_dict['actions']['boot']['methods']['qemu-nfs']['parameters']
+        self.assertIn('command', params)
+        self.assertEqual(params['command'], 'qemu-system-aarch64')
+        self.assertIn('options', params)
+        self.assertIn('-cpu cortex-a57', params['options'])
+        self.assertEqual('qemu-system-aarch64', params['command'])
+        self.assertIn('-smp', params['extra'])
+        self.assertIn('append', params)
+        self.assertIn('nfsrootargs', params['append'])
+        self.assertEqual(params['append']['root'], '/dev/nfs')
+        self.assertEqual(params['append']['console'], 'ttyAMA0')
+
     def test_overdrive_template(self):
         data = """{% extends 'overdrive.jinja2' %}
 {% set connection_command = 'telnet serial4 7001' %}

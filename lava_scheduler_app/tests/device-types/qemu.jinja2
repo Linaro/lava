@@ -20,6 +20,7 @@ available_architectures:
 actions:
   deploy:
     methods:
+      nfs:
       image:
         parameters:
           guest:
@@ -31,6 +32,7 @@ actions:
       ssh:
     methods:
       qemu:
+{% block qemu_method %}
         parameters:
           command:
 {% if arch == 'arm64' or arch == 'aarch64' %}
@@ -79,4 +81,12 @@ actions:
           extra: {{ extra_options }}
 {% endif %}
 {% endblock -%}
+{% endblock %}
+      qemu-nfs:
+{{ self.qemu_method() }}
+          append:
+            console: {{ console_device|default('ttyAMA0') }}
+            root: /dev/nfs
+            nfsrootargs: {{ base_nfsroot_args }}
+            ipargs: {{ base_ip_args }}
 {% endblock %}
