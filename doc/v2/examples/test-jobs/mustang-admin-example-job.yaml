@@ -20,6 +20,7 @@ actions:
       to: tftp
       kernel:
         url: http://images-internal/mustang/uImage_1.11
+        type: uimage
       nfsrootfs:
         url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
         compression: gz
@@ -31,7 +32,6 @@ actions:
       - 'root@linaro-nano:'
     method: u-boot
     commands: nfs
-    type: bootm
     auto_login:
       login_prompt: "login:"
       username: root

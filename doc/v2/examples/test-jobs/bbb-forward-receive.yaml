@@ -40,6 +40,7 @@ actions:
     to: tftp
     kernel:
       url: http://people.linaro.org/~neil.williams/opentac/zImage
+      type: zimage
     ramdisk:
       url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
       compression: gz
@@ -57,7 +58,6 @@ actions:
       seconds: 60
     method: u-boot
     commands: ramdisk
-    type: bootz
     prompts:
     - 'linaro-test'
 

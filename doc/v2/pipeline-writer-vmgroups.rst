@@ -160,6 +160,7 @@ https://git.linaro.org/lava-team/refactoring.git/tree/mustang-ssh-guest.yaml
           url: http://images-internal/mustang/mustang.dtb_1.11
         kernel:
           url: http://images-internal/mustang/uImage_1.11
+          type: uimage
         nfsrootfs:
           url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
           compression: gz
@@ -191,7 +192,6 @@ https://git.linaro.org/lava-team/refactoring.git/tree/mustang-ssh-guest.yaml
         prompts: ['root@linaro-nano:']
         method: u-boot
         timeout: {minutes: 5}
-        type: bootm
     - boot:
         role: [guest]
         method: ssh

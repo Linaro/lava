@@ -42,6 +42,7 @@ actions:
       url: http://images-internal/mustang/mustang.dtb_1.11
     kernel:
       url: http://images-internal/mustang/uImage_1.11
+      type: uimage
     nfsrootfs:
       url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
       compression: gz
@@ -85,7 +86,6 @@ actions:
     method: u-boot
     timeout:
       minutes: 5
-    type: bootm
 
 - boot:
     role:

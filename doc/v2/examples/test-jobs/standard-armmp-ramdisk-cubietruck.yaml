@@ -27,6 +27,7 @@ actions:
     to: tftp
     kernel:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      type: zimage
     ramdisk:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
       compression: gz
@@ -43,7 +44,6 @@ actions:
 - boot:
     method: u-boot
     commands: ramdisk
-    type: bootz
     prompts:
     # escape the brackets to ensure that the prompt does not match
     # kernel debug lines which may mention initramfs

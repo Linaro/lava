@@ -392,6 +392,9 @@ Certain elements of the command line are available for modification using the
 type
 ----
 
+.. caution:: This support is deprecated and has been replaced by :ref:`kernel
+   type in the deploy action <deploy_to_tftp_kernel_type>`.
+
 The type of boot, dependent on the U-Boot configuration. This needs to match
 the supported boot types in the device configuration, e.g. it may change the
 load addresses passed to U-Boot.

@@ -43,6 +43,7 @@ actions:
     to: tftp
     kernel:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      type: zimage
     ramdisk:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
       compression: gz
@@ -65,6 +66,7 @@ actions:
     to: tftp
     kernel:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      type: zimage
     ramdisk:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
       compression: gz
@@ -88,7 +90,6 @@ actions:
     - server
     method: u-boot
     commands: nfs
-    type: bootz
     auto_login:
       login_prompt: 'login:'
       username: root

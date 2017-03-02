@@ -112,9 +112,7 @@ Boot
 ====
 
 U-Boot support in LAVA supports a variety of deployment methods. This standard
-job will use the ``ramdisk`` commands from the :term:`device type` template and
-the ``bootz`` boot method (as the supplied Debian kernel file, ``vmlinuz`` is
-compressed).
+job will use the ``ramdisk`` commands from the :term:`device type` template.
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml

@@ -677,7 +677,6 @@ action:
  - boot:
     method: u-boot
     commands: ramdisk
-    type: bootz
     parameters:
       shutdown-message: "reboot: Restarting system"
     prompts:
