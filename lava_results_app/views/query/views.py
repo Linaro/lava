@@ -702,7 +702,7 @@ def _export_query(query_results, content_type, filename):
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % filename)
 
-    query_keys = content_type.model_class()._meta.get_all_field_names()
+    query_keys = [field.name for field in content_type.model_class()._meta.get_fields()]
 
     query_keys.sort()
     # Remove non-relevant columns for CSV file.
@@ -728,9 +728,9 @@ def _export_query(query_results, content_type, filename):
         out.writeheader()
 
         for result in query_results:
-
             result_dict = result.__dict__.copy()
-            out.writerow(result_dict)
+            # Encode the strings if necessary.
+            out.writerow({k: (v.encode('utf8') if isinstance(v, basestring) else v) for k, v in result_dict.items()})
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % filename

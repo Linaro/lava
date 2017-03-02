@@ -12,7 +12,7 @@
 <h2 class="modal-header">Custom Query Matches</h2>
 
 <div class="btn-group-headline"><small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
-  <small><a href="{% url 'lava.results.query_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small>
+  <small><a href="{% url 'lava.results.query_export_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small>
 <small><a href="#" id="bookmark_query" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-star-empty"></span>  Bookmark</a></small></div>
 
 <div class="alert alert-info">
