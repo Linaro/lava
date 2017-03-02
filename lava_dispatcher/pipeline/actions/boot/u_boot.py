@@ -100,7 +100,8 @@ class UBootAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
         if 'type' in parameters:
-            self.logger.warning("Specifying a type in the boot action is no longer needed for u-boot, ignored.")
+            self.logger.warning("Specifying a type in the boot action is deprecated. "
+                                "Please specify the kernel type in the deploy parameters.")
         self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())

@@ -200,7 +200,8 @@ class AutoLoginAction(Action):
             self.check_kernel_messages(connection, max_end_time)
             if 'success' in self.results:
                 if LOGIN_INCORRECT_MSG in self.results['success'].values():
-                    self.logger.warning("Login incorrect message matched before the login prompt. Please check that the login prompt is correct. Retrying login...")
+                    self.logger.warning("Login incorrect message matched before the login prompt. "
+                                        "Please check that the login prompt is correct. Retrying login...")
             self.logger.debug("Sending username %s", params['username'])
             connection.sendline(params['username'], delay=self.character_delay)
             # clear the kernel_messages patterns
@@ -353,6 +354,11 @@ class BootloaderCommandOverlay(Action):
             '{LAVA_MAC}': self.lava_mac
         }
         self.bootcommand = self.get_namespace_data(action='uboot-prepare-kernel', label='bootcommand', key='bootcommand')
+        if not self.bootcommand:
+            if 'type' in self.parameters:
+                self.logger.warning("Using type from the boot action as the boot-command. "
+                                    "Declaring a kernel type in the deploy is preferred.")
+                self.bootcommand = self.parameters['type']
         prepared_kernel = self.get_namespace_data(action='prepare-kernel', label='file', key='kernel')
         if prepared_kernel:
             self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
