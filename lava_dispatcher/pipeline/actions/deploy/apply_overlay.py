@@ -30,7 +30,8 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     LXC_PATH,
-    RAMDISK_FNAME
+    RAMDISK_FNAME,
+    UBOOT_DEFAULT_HEADER_LENGTH,
 )
 from lava_dispatcher.pipeline.utils.installers import (
     add_late_command,
@@ -426,8 +427,8 @@ class ExtractRamdisk(Action):
             suffix = ".%s" % compression
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
         if self.parameters['ramdisk'].get('header', None) == 'u-boot':
-            # TODO: 64 bytes is empirical - may need to be configurable in the future
-            cmd = ('dd if=%s of=%s ibs=64 skip=1' % (ramdisk, ramdisk_compressed_data)).split(' ')
+            cmd = ('dd if=%s of=%s ibs=%s skip=1' % (
+                ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)).split(' ')
             try:
                 self.run_command(cmd)
             except:

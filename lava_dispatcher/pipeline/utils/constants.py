@@ -41,6 +41,9 @@ UBOOT_INTERRUPT_CHARACTER = ' '
 # u-boot default timeout for commands
 UBOOT_DEFAULT_CMD_TIMEOUT = 90
 
+# size of u-boot header to be removed from ramdisks, in bytes.
+UBOOT_DEFAULT_HEADER_LENGTH = 64
+
 # Ramdisk default filenames
 RAMDISK_FNAME = 'ramdisk.cpio'
 
