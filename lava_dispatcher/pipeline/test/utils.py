@@ -34,3 +34,6 @@ class DummyLogger(object):
 
     def results(self, *args, **kwargs):
         pass
+
+    def target(self, *args, **kwargs):
+        pass

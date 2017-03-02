@@ -23,6 +23,7 @@ import os
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
 from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
@@ -51,6 +52,7 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 
