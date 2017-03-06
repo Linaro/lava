@@ -278,26 +278,21 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
-            # overly broad exceptions will cause issues with RetryActions
-            # always ensure the unit tests continue to pass with changes here.
-            except (AttributeError, KeyError, NameError, OSError, SyntaxError,
-                    TypeError, ValueError) as exc:
-                exc_message = str(exc)
-                action.logger.error(exc_message)
-                action.logger.exception(traceback.format_exc())
-                action.errors = exc_message
-                # Raise a RuntimeError that will be correctly classified later
-                raise RuntimeError(exc_message)
-            except (InfrastructureError, JobError, RuntimeError, TestError) as exc:
+            except LAVAError as exc:
                 exc_message = str(exc)
                 action.errors = exc_message
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
-                action.log_action_results()
                 action.logger.error(exc_message)
                 self._diagnose(connection)
                 raise
+            except Exception as exc:
+                exc_message = str(exc)
+                action.logger.exception(traceback.format_exc())
+                action.errors = exc_message
+                # Raise a LAVABug that will be correctly classified later
+                raise LAVABug(exc_message)
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
@@ -308,6 +303,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 action.log_action_results()
+
             if new_connection:
                 connection = new_connection
         return connection
