@@ -543,10 +543,7 @@ class TestShellAction(TestAction):
                 self.logger.info("Waiting for USB device(s) ...")
                 usb_device_wait(self.job, device_actions=['add'])
 
-            try:
-                self.signal_director.signal(name, params)
-            except KeyboardInterrupt:
-                raise
+            self.signal_director.signal(name, params)
             ret_val = True
 
         elif event == "test_case":
@@ -597,8 +594,6 @@ class TestShellAction(TestAction):
                     # a getattr lookup for the callable (codehelp). So disable checkers:
                     # noinspection PyCallingNonCallable
                     handler(*params)
-                except KeyboardInterrupt:
-                    raise
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
                     self.logger.exception(str(exc))
