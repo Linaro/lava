@@ -21,11 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-import os.path
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
-    InfrastructureError,
     LAVABug,
     Pipeline,
 )

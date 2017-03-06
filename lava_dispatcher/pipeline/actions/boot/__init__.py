@@ -38,7 +38,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LOGIN_TIMED_OUT_MSG
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
-from lava_dispatcher.pipeline.utils.strings import substitute, map_kernel_uboot
+from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 from lava_dispatcher.pipeline.utils.udev import usb_device_wait

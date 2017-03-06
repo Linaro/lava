@@ -42,7 +42,6 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import (
     decompress_file,
-    mkdtemp,
     copy_directory_contents,
     remove_directory_contents,
 )
