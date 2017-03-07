@@ -521,15 +521,22 @@ class QCowConversionAction(Action):
             key='file'
         )
         origin = fname
-        # Change the extension only if the file ends with '.qcow2'
+        # Remove the '.qcow2' extension and add '.img'
         if fname.endswith('.qcow2'):
-            fname = fname[:-5] + "img"
-        else:
-            fname += ".img"
+            fname = fname[:-6]
+        fname += ".img"
 
         self.logger.debug("Converting downloaded image from qcow2 to raw")
-        subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
-                               '-O', 'raw', origin, fname])
+        try:
+            subprocess.check_output(['qemu-img', 'convert',
+                                     '-f', 'qcow2',
+                                     '-O', 'raw', origin, fname],
+                                    stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as exc:
+            self.logger.error("Unable to convert the qcow2 image")
+            self.logger.error(exc.output)
+            raise JobError(exc.output)
+
         self.set_namespace_data(action=self.name, label=self.key, key='file', value=fname)
         self.set_namespace_data(action=self.name, label='file', key=self.key, value=fname)
         return connection
