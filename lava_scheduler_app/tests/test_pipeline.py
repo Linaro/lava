@@ -815,6 +815,10 @@ class TestYamlMultinode(TestCaseWithFactory):
         logger.disabled = True
         logger.propagate = False
 
+    def tearDown(self):
+        super(TestYamlMultinode, self).tearDown()
+        Device.objects.all().delete()
+
     def test_multinode_split(self):
         """
         Test just the split of pipeline YAML
@@ -1140,10 +1144,10 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertNotIn(fakeqemu1, allowed_devices)
 
         # set one candidate device to RETIRED to force the bug
-        fakeqemu2.status = Device.RETIRED
-        fakeqemu2.save(update_fields=['status'])
+        fakeqemu4.status = Device.RETIRED
+        fakeqemu4.save(update_fields=['status'])
         # refresh the device_list
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
+        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True).order_by('hostname')
         allowed_devices = []
         # test the old code to force the exception
         try:
@@ -1154,16 +1158,16 @@ class TestYamlMultinode(TestCaseWithFactory):
                     allowed_devices.append(device)
         except DevicesUnavailableException:
             self.assertEqual(len(allowed_devices), 2)
-            self.assertIn(fakeqemu2, device_list)
-            self.assertIn(fakeqemu2.status, [Device.RETIRED])
+            self.assertIn(fakeqemu4, device_list)
+            self.assertIn(fakeqemu4.status, [Device.RETIRED])
         else:
             self.fail("Missed DevicesUnavailableException")
         allowed_devices = []
         allowed_devices.extend(_check_submit_to_device(list(device_list), user))
         self.assertEqual(len(allowed_devices), 2)
         self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu2, allowed_devices)
+        self.assertIn(fakeqemu2, allowed_devices)
+        self.assertNotIn(fakeqemu4, allowed_devices)
         self.assertNotIn(fakeqemu1, allowed_devices)
         allowed_devices = []
 
@@ -1173,8 +1177,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         allowed_devices.extend(_check_submit_to_device(list(device_list), user))
         self.assertEqual(len(allowed_devices), 2)
         self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu2, allowed_devices)
+        self.assertIn(fakeqemu2, allowed_devices)
+        self.assertNotIn(fakeqemu4, allowed_devices)
         self.assertNotIn(fakeqemu1, allowed_devices)
 
     def test_multinode_v2_metadata(self):
