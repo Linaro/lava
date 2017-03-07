@@ -10,6 +10,8 @@ timeouts:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
 visibility: public
+context:
+  arch: amd64
 
 actions:
 

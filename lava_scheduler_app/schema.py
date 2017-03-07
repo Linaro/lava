@@ -293,7 +293,8 @@ def _device_schema():
         'usb_filesystem_label': str,
         'usb_serial_driver': str,
         'actions': _device_actions_schema(),
-        'timeouts': _device_timeouts_schema()
+        'timeouts': _device_timeouts_schema(),
+        'available_architectures': list
     })
 
 

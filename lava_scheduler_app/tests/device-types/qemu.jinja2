@@ -9,6 +9,14 @@ device_type: qemu
 {% set base_guest_fs_size = guestfs_size | default(512) %}
 {% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
 
+available_architectures:
+- arm64
+- arm
+- aarch64
+- amd64
+- x86_64
+- i386
+
 actions:
   deploy:
     methods:
