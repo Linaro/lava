@@ -149,6 +149,12 @@ class CallQemuAction(Action):
         if uefi_dir:
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
+        # Check for enable-kvm command line option in device configuration.
+        if "-enable-kvm" in self.job.device['actions']['boot']['methods']['qemu']['parameters']['options']:
+            # Check if the worker has kvm enabled.
+            if not os.path.exists("/sys/class/misc/kvm"):
+                self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
+
     def run(self, connection, max_end_time, args=None):
         """
         CommandRunner expects a pexpect.spawn connection which is the return value

@@ -21,7 +21,6 @@ actions:
             boot_order: c  # See qemu-system man page for -boot [order=drives] option - arch-specific
           options:
             - -nographic
-            - -enable-kvm
             - -cpu host
             - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
             - -m 2048
