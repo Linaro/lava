@@ -30,6 +30,10 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.pipeline.actions.boot.lxc import (
+    LxcStartAction,
+    LxcStopAction,
+)
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
@@ -109,6 +113,11 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
                                           parameters=parameters)
         self.internal_pipeline.add_action(LxcCreateAction())
+        if 'packages' in parameters:
+            self.internal_pipeline.add_action(LxcStartAction())
+            self.internal_pipeline.add_action(LxcAptUpdateAction())
+            self.internal_pipeline.add_action(LxcAptInstallAction())
+            self.internal_pipeline.add_action(LxcStopAction())
         # needed if export device environment is also to be used
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
         self.internal_pipeline.add_action(OverlayAction())
@@ -160,9 +169,6 @@ class LxcCreateAction(DeployAction):
             if self.lxc_data['lxc_security_mirror']:
                 lxc_cmd += ['--security-mirror',
                             self.lxc_data['lxc_security_mirror']]
-            if 'packages' in self.parameters:
-                lxc_cmd += ['--packages',
-                            ','.join(self.parameters['packages'])]
             self.logger.debug('Generation complete.')
         else:
             lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
@@ -174,6 +180,61 @@ class LxcCreateAction(DeployAction):
             raise InfrastructureError("Unable to create lxc container")
         else:
             self.results = {'status': self.lxc_data['lxc_name']}
+        return connection
+
+
+class LxcAptUpdateAction(DeployAction):
+    """
+    apt-get update the lxc container.
+    """
+
+    def __init__(self):
+        super(LxcAptUpdateAction, self).__init__()
+        self.name = "lxc-apt-update"
+        self.description = "lxc apt update action"
+        self.summary = "lxc apt update"
+        self.retries = 10
+        self.sleep = 10
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcAptUpdateAction, self).run(connection,
+                                                         max_end_time, args)
+        lxc_name = self.get_namespace_data(action='lxc-create-action',
+                                           label='lxc', key='name')
+        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', 'update']
+        if not self.run_command(cmd, allow_silent=True):
+            raise JobError("Unable to apt-get update in lxc container")
+        return connection
+
+
+class LxcAptInstallAction(DeployAction):
+    """
+    apt-get install packages to the lxc container.
+    """
+
+    def __init__(self):
+        super(LxcAptInstallAction, self).__init__()
+        self.name = "lxc-apt-install"
+        self.description = "lxc apt install packages action"
+        self.summary = "lxc apt install"
+        self.retries = 10
+        self.sleep = 10
+
+    def validate(self):
+        super(LxcAptInstallAction, self).validate()
+        if 'packages' not in self.parameters:
+            raise LAVABug("%s package list unavailable" % self.name)
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcAptInstallAction, self).run(connection,
+                                                          max_end_time, args)
+        lxc_name = self.get_namespace_data(action='lxc-create-action',
+                                           label='lxc', key='name')
+        packages = self.parameters['packages']
+        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y',
+               'install'] + packages
+        if not self.run_command(cmd):
+            raise JobError("Unable to install using apt-get in lxc container")
         return connection
 
 

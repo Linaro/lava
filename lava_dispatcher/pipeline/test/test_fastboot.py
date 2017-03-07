@@ -116,6 +116,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
+        description_ref = pipeline_reference('hi6220-hikey.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
         self.assertIn('commands', uefi_menu.parameters)
         self.assertIn('fastboot', uefi_menu.parameters['commands'])
@@ -128,11 +130,11 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         job.validate()
         self.assertEqual(
             {
-                '1.3.3.20': '4_android-optee',
-                '1.3.3.4': '0_get-adb-serial',
-                '1.3.3.12': '2_android-busybox',
-                '1.3.3.8': '1_android-meminfo',
-                '1.3.3.16': '3_android-ping-dns'},
+                '1.7.3.20': '4_android-optee',
+                '1.7.3.4': '0_get-adb-serial',
+                '1.7.3.12': '2_android-busybox',
+                '1.7.3.8': '1_android-meminfo',
+                '1.7.3.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
         for testdef in testdef.test_list:
             self.assertEqual('git', testdef['from'])
@@ -153,7 +155,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 if action.parameters['namespace'] == 'tlxc':
-                    overlay = action.pipeline.actions[2]
+                    overlay = action.pipeline.actions[6]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
