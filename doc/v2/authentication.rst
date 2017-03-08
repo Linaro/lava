@@ -28,7 +28,7 @@ Using Lightweight Directory Access Protocol (LDAP)
 --------------------------------------------------
 
 LAVA server may be configured to authenticate via Lightweight
-Directory Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_
+Directory Access Protocol (LDAP). LAVA uses the `django_auth_ldap`_
 backend for LDAP authentication.
 
 .. _`django_auth_ldap`: http://www.pythonhosted.org/django-auth-ldap/
@@ -45,7 +45,8 @@ LDAP server support is configured using the following parameters in
     "email": "mail"
   },
 
-Use the following parameter to set a custom LDAP login page message::
+Use the following parameter to configure a custom LDAP login page
+message::
 
     "LOGIN_MESSAGE_LDAP": "If your Linaro email is first.second@linaro.org then use first.second as your username"
 
@@ -58,8 +59,11 @@ Other supported parameters are::
     "is_superuser": "cn=superuser,ou=django,ou=groups,dc=example,dc=com"
   }
 
-.. note:: Apart from the above supported parameters, in order to do
-          more advanced configuration, make changes to
+.. note:: If you need to make deeper changes that don't fit into the
+          exposed configuration, it is quite simple to tweak things in
+          the code here. Edit
           ``/usr/lib/python2.7/dist-packages/lava_server/settings/common.py``
 
-Restart ``lava-server`` and ``apache2`` services if this is changed.
+Restart the ``lava-server`` and ``apache2`` services after any
+changes.
+
