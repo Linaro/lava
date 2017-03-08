@@ -60,6 +60,7 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
 
@@ -295,6 +296,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie, 4212, None, "",
                                output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
         u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
@@ -358,7 +360,6 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
 
     def test_xz_nfs(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
-        job.logger = DummyLogger()
         # this job won't validate as the .xz nfsrootfs URL is a fiction
         self.assertRaises(JobError, job.validate)
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]

@@ -81,6 +81,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         try:
             job.validate()
         except JobError:
@@ -111,6 +112,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
@@ -193,6 +195,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         boot_params = [
             methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][1]['boot']

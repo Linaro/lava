@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.pipeline.actions.boot.lxc import BootAction
@@ -47,6 +48,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4577, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
     def create_bbb_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -57,6 +59,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4577, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 
