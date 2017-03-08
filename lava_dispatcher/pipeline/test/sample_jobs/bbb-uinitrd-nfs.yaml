@@ -20,10 +20,10 @@ actions:
       minutes: 4
     to: tftp
     kernel:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
       type: zimage
     ramdisk:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
       # unit test support:
       # compression: gz
       # the bootloader needs a u-boot header on the modified ramdisk
@@ -31,14 +31,14 @@ actions:
       install_overlay: false
     # commented out for the unit test - an actual job would need to supply appropriate modules with the specified kernel
     # modules:
-    #   url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+    #   url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
     #   compression: gz
     nfsrootfs:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
       compression: gz
     os: oe
     dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 
 - boot:
     method: u-boot

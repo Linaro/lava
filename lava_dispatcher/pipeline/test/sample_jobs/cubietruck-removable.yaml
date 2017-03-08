@@ -20,22 +20,22 @@ actions:
         minutes: 4
       to: tftp
       kernel:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
         type: zimage
       ramdisk:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
         compression: gz
         # the bootloader needs a u-boot header on the modified ramdisk
         add-header: u-boot
       modules:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
         compression: gz
       nfsrootfs:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
         compression: gz
       os: debian
       dtb:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/sun7i-a20-cubietruck.dtb
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/sun7i-a20-cubietruck.dtb
 
   - boot:
       namespace: boot1

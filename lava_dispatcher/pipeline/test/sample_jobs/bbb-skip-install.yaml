@@ -19,21 +19,21 @@ actions:
       minutes: 4
     to: tftp
     kernel:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/vmlinuz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
     ramdisk:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/initramfs.cpio.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
       compression: gz
       add-header: u-boot
     modules:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/modules.tar.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
       compression: gz
     nfsrootfs:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/jessie-armhf-nfs.tar.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
       compression: gz
       prefix: jessie/
     os: oe
     dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/dtbs/am335x-boneblack.dtb
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 
 - boot:
     method: u-boot
