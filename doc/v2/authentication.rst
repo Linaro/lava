@@ -14,10 +14,10 @@ tested and supported authentication methods for LAVA.
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
-.. note:: The previous OpenID support is not compatible with newer versions of django
-   (versions 1.8 or later). As of LAVA version 2016.8, versions of django older
-   than 1.8 are not supported, so installing this version will **remove** the
-   OpenID support.
+.. note:: LAVA used to include support for OpenID authentication
+	  (prior to version 2016.8), but this support had to be
+	  **removed** when incompatible changes in Django (version
+	  1.8) caused it to break.
 
 Local Django user accounts are supported. When using local Django user
 accounts, new user accounts need to be created by Django admin prior to use.
@@ -27,13 +27,13 @@ accounts, new user accounts need to be created by Django admin prior to use.
 Using Lightweight Directory Access Protocol (LDAP)
 --------------------------------------------------
 
-LAVA server could be configured to authenticate via Lightweight Directory
-Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_ backend for LDAP
-authentication.
+LAVA server may be configured to authenticate via Lightweight
+Directory Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_
+backend for LDAP authentication.
 
 .. _`django_auth_ldap`: http://www.pythonhosted.org/django-auth-ldap/
 
-Your chosen LDAP server is configured using the following parameters in
+LDAP server support is configured using the following parameters in
 ``/etc/lava-server/settings.conf`` (JSON syntax)::
 
   "AUTH_LDAP_SERVER_URI": "ldap://ldap.example.com",
