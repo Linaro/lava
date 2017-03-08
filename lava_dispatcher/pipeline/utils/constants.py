@@ -164,3 +164,6 @@ METADATA_MESSAGE_LIMIT = 8192
 
 # Versatile Express autorun interrupt character
 VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '
+
+# sys class kvm path
+SYS_CLASS_KVM = '/sys/class/misc/kvm'

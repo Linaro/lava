@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.shell import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
@@ -163,7 +164,7 @@ class CallQemuAction(Action):
         # Check for enable-kvm command line option in device configuration.
         if "-enable-kvm" in self.job.device['actions']['boot']['methods']['qemu']['parameters']['options']:
             # Check if the worker has kvm enabled.
-            if not os.path.exists("/sys/class/misc/kvm"):
+            if not os.path.exists(SYS_CLASS_KVM):
                 self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
 
     def run(self, connection, max_end_time, args=None):
