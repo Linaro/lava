@@ -12,6 +12,9 @@ logging_level: DEBUG
 priority: medium
 visibility: public
 
+context:
+  arch: amd64
+
 actions:
 
     - commands:

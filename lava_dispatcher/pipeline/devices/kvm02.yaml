@@ -1,5 +1,13 @@
 device_type: qemu
 
+available_architectures:
+- arm64
+- arm
+- aarch64
+- amd64
+- x86_64
+- i386
+
 actions:
   deploy:
     methods:

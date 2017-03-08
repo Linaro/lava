@@ -110,6 +110,17 @@ class CallQemuAction(Action):
 
     def validate(self):
         super(CallQemuAction, self).validate()
+
+        # 'arch' must be defined in job definition context.
+        try:
+            if self.job.parameters['context']['arch'] not in \
+               self.job.device['available_architectures']:
+                self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
+                return
+        except KeyError:
+            self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
+            return
+
         if self.parameters['method'] == 'qemu' and 'prompts' not in self.parameters:
             if self.test_has_shell(self.parameters):
                 self.errors = "Unable to identify boot prompts from job definition."
