@@ -26,7 +26,10 @@ from django.core.exceptions import (
 )
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
+from django.core.validators import (
+    validate_email,
+    validate_comma_separated_integer_list
+)
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -3037,10 +3040,8 @@ class Notification(models.Model):
         verbose_name=_(u"Type"),
     )
 
-    # CommaSeparatedIntegerField has been deprecated in 1.10.
-    # Support for it (except in historical migrations) will be removed in Django 2.0.
-    # Use CharField(validators=[validate_comma_separated_integer_list]) instead.
-    job_status_trigger = models.CommaSeparatedIntegerField(
+    job_status_trigger = models.CharField(
+        validators=[validate_comma_separated_integer_list],
         choices=TestJob.STATUS_CHOICES,
         max_length=30,
         default=TestJob.COMPLETE,
