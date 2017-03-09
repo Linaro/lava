@@ -236,7 +236,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.cleanup(connection=None)
             self.logger.results({"definition": "lava",
                                  "case": "job",
-                                 "result": "fail"})
+                                 "result": "fail",
+                                 "error_type": exc.error_type,
+                                 "error_message": exc.error_msg})
             self.logger.error(exc.error_msg)
             raise
 
@@ -287,41 +289,47 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         """
         error_msg = ""
         return_code = 0
+        error_type = ""
         try:
             self._run()
         except LAVAError as exc:
             error_msg = exc.error_msg
             return_code = exc.error_code
-        except RuntimeError:
-            # TODO: should be replaced by LAVABug
-            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
-            return_code = 3
+            error_type = exc.error_type
         except KeyboardInterrupt:
             error_msg = "KeyboardInterrupt: the job was canceled."
             return_code = 6
+            error_type = "Canceled"
         except Exception as exc:
             self.logger.exception(traceback.format_exc())
             error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
             return_code = 7
+            error_type = "Unknown"
 
         # Cleanup now
         self.cleanup(self.connection)
 
+        # Detect errors based on pipeline.errors
+        # TODO: shouldn't be needed anymore
+        if not error_msg and self.pipeline.errors:
+            return_code = -1
+            error_msg = "Errors detected: %s" % self.pipeline.errors
+            error_type = "Unknown"
+
+        # Build the job result
         result_dict = {"definition": "lava",
                        "case": "job"}
         if error_msg:
             result_dict["result"] = "fail"
+            result_dict["error_type"] = error_type
+            result_dict["error_message"] = error_msg
             self.logger.results(result_dict)
             self.logger.error(error_msg)
-        elif self.pipeline.errors:
-            result_dict["result"] = "fail"
-            self.logger.results(result_dict)
-            self.logger.error("Errors detected: %s", self.pipeline.errors)
-            return_code = -1
         else:
             result_dict["result"] = "pass"
             self.logger.results(result_dict)
             self.logger.info("Job finished correctly")
+
         return return_code
 
     def cleanup(self, connection):
