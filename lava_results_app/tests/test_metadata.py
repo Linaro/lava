@@ -46,6 +46,7 @@ class TestMetaTypes(TestCaseWithFactory):
             self.factory.make_job_yaml(), self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
+        job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
@@ -173,6 +174,7 @@ class TestMetaTypes(TestCaseWithFactory):
             self.factory.make_job_yaml(), self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
+        job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
@@ -225,6 +227,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
+        job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
@@ -257,6 +260,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(data, self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
+        job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
@@ -296,6 +300,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
+        job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()

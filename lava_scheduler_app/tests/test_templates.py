@@ -194,10 +194,22 @@ class TestTemplates(unittest.TestCase):
 {% set exclusive = 'True' %}"""))
 
     def test_qemu_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
+        data = """{% extends 'qemu.jinja2' %}
 {% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
-{% set memory = 512 %}""", job_ctx={'arch': 'amd64'}))
+{% set memory = 512 %}"""
+        job_ctx = {'arch': 'amd64', 'no_kvm': True}
+        self.assertTrue(self.validate_data('staging-x86-01', data, job_ctx))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
+        self.assertNotIn('-enable-kvm', options)
+        job_ctx = {'arch': 'amd64', 'no_kvm': False}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
+        self.assertIn('-enable-kvm', options)
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}
