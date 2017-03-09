@@ -182,3 +182,9 @@ Support
 
    support
 
+Full documentation
+******************
+
+LAVA V2 comes with :ref:`comprehensive documentation <contents_top>`
+about use and installation, including advice on how to manage a test
+lab.

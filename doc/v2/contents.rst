@@ -1,3 +1,5 @@
+.. _contents_top:
+
 Contents
 ########
 
