@@ -189,38 +189,6 @@ class PowerOn(Action):
         return connection
 
 
-# FIXME: Unused action, but can give fine grained control.
-class LxcStop(Action):
-    """
-    Stops the lxc container at the end of a job
-    """
-    def __init__(self):
-        super(LxcStop, self).__init__()
-        self.name = "lxc_stop"
-        self.summary = "send stop command"
-        self.description = "stop the lxc container"
-
-    def validate(self):
-        super(LxcStop, self).validate()
-        self.errors = infrastructure_error('lxc-stop')
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(LxcStop, self).run(connection, max_end_time, args)
-        lxc_name = self.get_namespace_data(
-            action='lxc-create-action',
-            label='lxc',
-            key='name'
-        )
-        if not lxc_name:
-            return connection
-        lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
-        command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
-            raise InfrastructureError("Unable to stop lxc container: %s" %
-                                      command_output)
-        return connection
-
-
 class PowerOff(Action):
     """
     Turns power off at the end of a job

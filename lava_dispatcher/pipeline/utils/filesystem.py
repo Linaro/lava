@@ -215,13 +215,24 @@ def copy_in_overlay(image, root_partition, overlay):
     guest.umount(guest_partition)
 
 
-def copy_to_lxc(lxc_name, src):
+def lxc_path(dispatcher_config):
+    """
+    Returns LXC_PATH which is a constant, unless a dispatcher specific path is
+    configured via lxc_path key in dispatcher_config.
+    """
+    try:
+        return dispatcher_config["lxc_path"]
+    except (KeyError, TypeError):
+        return LXC_PATH
+
+
+def copy_to_lxc(lxc_name, src, dispatcher_config):
     """Copies given file in SRC to lxc filesystem '/' with the provided
-    LXC_NAME and configured LXC_PATH
+    LXC_NAME and configured lxc_path
 
     For example, SRC such as '/var/lib/lava/dispatcher/tmp/tmpuuI_U0/system.img'
     will get copied to '/var/lib/lxc/lxc-nexus4-test-None/rootfs/system.img'
-    where, '/var/lib/lxc' is the LXC_PATH and 'lxc-nexus4-test-None' is the
+    where, '/var/lib/lxc' is the lxc_path and 'lxc-nexus4-test-None' is the
     LXC_NAME
 
     Returns the destination path within lxc. For example, '/boot.img'
@@ -229,7 +240,8 @@ def copy_to_lxc(lxc_name, src):
     Raises JobError if the copy failed.
     """
     filename = os.path.basename(src)
-    dst = os.path.join(LXC_PATH, lxc_name, 'rootfs', filename)
+    dst = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
+                       filename)
     try:
         shutil.copyfile(src, dst)
     except IOError:

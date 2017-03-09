@@ -30,7 +30,6 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
-    LXC_PATH,
     RAMDISK_FNAME,
     UBOOT_DEFAULT_HEADER_LENGTH,
 )
@@ -39,6 +38,7 @@ from lava_dispatcher.pipeline.utils.installers import (
     add_to_kickstart
 )
 from lava_dispatcher.pipeline.utils.filesystem import (
+    lxc_path,
     mkdtemp,
     prepare_guestfs,
     copy_in_overlay,
@@ -587,11 +587,12 @@ class ApplyLxcOverlay(Action):
         lxc_name = self.get_namespace_data(
             action='lxc-create-action',
             label='lxc', key='name')
-        lxc_path = os.path.join(LXC_PATH, lxc_name, 'rootfs')
-        if not os.path.exists(lxc_path):
+        lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
+        lxc_rootfs_path = os.path.join(lxc_default_path, lxc_name, 'rootfs')
+        if not os.path.exists(lxc_rootfs_path):
             raise LAVABug("Lxc container rootfs not found")
-        tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_path, '-xaf',
-                   overlay_file]
+        tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_rootfs_path,
+                   '-xaf', overlay_file]
         command_output = self.run_command(tar_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to untar overlay: %s" %
@@ -602,7 +603,7 @@ class ApplyLxcOverlay(Action):
         #        creation of the overlay instead. Make a special case to copy
         #        lxc specific scripts, with distro specific versions.
         fname = os.path.join(self.lava_test_dir, 'lava-test-runner')
-        output_file = '%s/bin/%s' % (lxc_path, os.path.basename(fname))
+        output_file = '%s/bin/%s' % (lxc_rootfs_path, os.path.basename(fname))
         self.logger.debug("Copying %s", output_file)
         try:
             shutil.copy(fname, output_file)

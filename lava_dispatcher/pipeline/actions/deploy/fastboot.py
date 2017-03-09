@@ -277,7 +277,7 @@ class FastbootFlashAction(DeployAction):
             src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
             if not src:
                 continue
-            dst = copy_to_lxc(lxc_name, src)
+            dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
             sequence = self.job.device['actions']['boot']['methods'].get(
                 'fastboot', [])
             if 'boot' in sequence and flash_cmd in ['boot']:

@@ -39,10 +39,15 @@ from lava_dispatcher.pipeline.actions.boot.lxc import (
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
+    LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
+    LXC_DEFAULT_PACKAGES,
 )
 from lava_dispatcher.pipeline.utils.udev import get_usb_devices
-from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
+from lava_dispatcher.pipeline.utils.filesystem import (
+    debian_package_version,
+    lxc_path,
+)
 
 # pylint: disable=superfluous-parens
 
@@ -157,6 +162,8 @@ class LxcCreateAction(DeployAction):
             self.lxc_data['lxc_mirror'] = protocol.lxc_mirror
             self.lxc_data['lxc_security_mirror'] = protocol.lxc_security_mirror
             self.lxc_data['verbose'] = protocol.verbose
+            self.lxc_data['lxc_persist'] = protocol.persistence
+            self.lxc_data['custom_lxc_path'] = protocol.custom_lxc_path
 
     def validate(self):
         super(LxcCreateAction, self).validate()
@@ -166,12 +173,18 @@ class LxcCreateAction(DeployAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcCreateAction, self).run(connection, max_end_time, args)
         verbose = '' if self.lxc_data['verbose'] else '-q'
+        lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
+        if self.lxc_data['custom_lxc_path']:
+            lxc_create = ['lxc-create', '-P', lxc_default_path]
+        else:
+            lxc_create = ['lxc-create']
         if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
-            lxc_cmd = ['lxc-create', verbose, '-t',
-                       self.lxc_data['lxc_template'], '-n',
-                       self.lxc_data['lxc_name'], '--', '--release',
-                       self.lxc_data['lxc_release'], '--arch',
-                       self.lxc_data['lxc_arch']]
+            lxc_cmd = lxc_create + [verbose, '-t',
+                                    self.lxc_data['lxc_template'], '-n',
+                                    self.lxc_data['lxc_name'], '--',
+                                    '--release',
+                                    self.lxc_data['lxc_release'], '--arch',
+                                    self.lxc_data['lxc_arch']]
             if self.lxc_data['lxc_mirror']:
                 lxc_cmd += ['--mirror', self.lxc_data['lxc_mirror']]
             if self.lxc_data['lxc_security_mirror']:
@@ -179,18 +192,36 @@ class LxcCreateAction(DeployAction):
                             self.lxc_data['lxc_security_mirror']]
             # FIXME: Should be removed when LAVA's supported distro is bumped
             #        to Debian Stretch or any distro that supports systemd
-            lxc_cmd += ['--packages', 'systemd,systemd-sysv']
+            lxc_cmd += ['--packages', LXC_DEFAULT_PACKAGES]
         else:
-            lxc_cmd = ['lxc-create', verbose, '-t',
-                       self.lxc_data['lxc_template'], '-n',
-                       self.lxc_data['lxc_name'], '--', '--dist',
-                       self.lxc_data['lxc_distribution'], '--release',
-                       self.lxc_data['lxc_release'], '--arch',
-                       self.lxc_data['lxc_arch']]
-        if not self.run_command(lxc_cmd, allow_silent=True):
-            raise InfrastructureError("Unable to create lxc container")
+            lxc_cmd = lxc_create + [verbose, '-t',
+                                    self.lxc_data['lxc_template'], '-n',
+                                    self.lxc_data['lxc_name'], '--', '--dist',
+                                    self.lxc_data['lxc_distribution'],
+                                    '--release',
+                                    self.lxc_data['lxc_release'], '--arch',
+                                    self.lxc_data['lxc_arch']]
+        cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
+        # FIXME: We should check for 'exists' in the command output to check
+        #        if lxc-create returns a 'Container already exists', but
+        #        unfortunately, when allow_silent and allow_fail is set as
+        #        'True' the command on failure returns a None instead of
+        #        command output which needs to be fixed in self.run_command()
+        if cmd_out and self.lxc_data['lxc_persist']:
+            self.logger.debug('Persistant container exists')
+        elif not cmd_out:
+            raise JobError("Unable to create lxc container")
         else:
+            self.logger.debug('Container created successfully')
             self.results = {'status': self.lxc_data['lxc_name']}
+        # Create symlink in default container path ie., /var/lib/lxc defined by
+        # LXC_PATH so that we need not add '-P' option to every lxc-* command.
+        dst = os.path.join(LXC_PATH, self.lxc_data['lxc_name'])
+        if self.lxc_data['custom_lxc_path'] and not os.path.exists(dst):
+            os.symlink(os.path.join(lxc_default_path,
+                                    self.lxc_data['lxc_name']),
+                       os.path.join(LXC_PATH,
+                                    self.lxc_data['lxc_name']))
         return connection
 
 
