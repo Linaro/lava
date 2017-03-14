@@ -321,8 +321,9 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         self.assertTrue(self.validate_data('staging-panda-01', data))
+        context = {'extra_kernel_args': 'intel_mmio=on mmio=on'}
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
-        rendered = test_template.render()
+        rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
@@ -330,9 +331,11 @@ class TestTemplates(unittest.TestCase):
         checked = False
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
+        self.assertIn('usb start', commands)
         for line in commands:
             if 'setenv bootargs' in line:
                 self.assertIn('console=ttyO2', line)
+                self.assertIn(' ' + context['extra_kernel_args'] + ' ', line)
                 checked = True
         self.assertTrue(checked)
         checked = False
