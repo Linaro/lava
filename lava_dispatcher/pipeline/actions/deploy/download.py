@@ -111,7 +111,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.name = "download_action"
         self.description = "download action"
         self.summary = "download-action"
-        self.proxy = None
+
         self.url = url
         self.key = key
         # Store the files in a sub-directory to keep the path unique
@@ -430,10 +430,11 @@ class HttpDownloadAction(DownloadHandler):
 
             self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
+            self.logger.error("Request timed out")
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
-            # TODO: find a better way to report the error
-            self.errors = str(exc)
+            self.logger.error("Ressource not available")
+            self.errors = "Unable to get '%s': %s" % (self.url.geturl(), str(exc))
         finally:
             if res is not None:
                 res.close()
