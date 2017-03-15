@@ -7,7 +7,7 @@ timeouts:
   job:
     minutes: 15 
   action:
-   minutes: 5
+    minutes: 5
 priority: medium
 visibility: public
 

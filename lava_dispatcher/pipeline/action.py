@@ -166,38 +166,41 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if 'default_connection_timeout' in parameters:
             # some action handlers do not need to pass all parameters to their children.
             action.connection_timeout.duration = parameters['default_connection_timeout']
-        # Set the timeout
+
+        # Compute the timeout
+        timeouts = []
+        # FIXME: Only needed for the auto-tests
+        if self.job is not None:
+            if self.job.device is not None:
+                # First, the device level overrides
+                timeouts.append(self.job.device.get('timeouts', {}))
+            # Then job level overrides
+            timeouts.append(self.job.parameters.get('timeouts', {}))
+
+        def dict_merge_get(dicts, key):
+            value = None
+            for d in dicts:
+                value = d.get(key, value)
+            return value
+
+        def subdict_merge_get(dicts, key, subkey):
+            value = None
+            for d in dicts:
+                value = d.get(key, {}).get(subkey, value)
+            return value
+
+        # Set the timeout. The order is:
+        # 1/ the global action timeout
+        # 2/ the individual action timeout
+        # 3/ the action block timeout
         # pylint: disable=protected-access
-        # FIXME: only the last test is really useful. The first ones are only
-        # needed to run the tests that do not use a device and job.
-        # TODO: factorize this in one loop
-        if self.job is not None and self.job.device is not None:
-            # set device level overrides
-            overrides = self.job.device.get('timeouts', {})
-            if 'actions' in overrides and action.name in overrides['actions']:
-                action._override_action_timeout(overrides['actions'])
-            elif action.name in overrides:
-                action._override_action_timeout(overrides)
-                parameters['timeout'] = overrides[action.name]
-            if 'connections' in overrides and action.name in overrides['connections']:
-                action._override_connection_timeout(overrides['connections'])
-        # Set the parameters after populate so the sub-actions are also
-        # getting the parameters.
-        # Also set the parameters after the creation of the default timeout
-        # so timeouts specified in the job override the defaults.
-        # job overrides device timeouts:
-        if self.job and 'timeouts' in self.job.parameters:
-            overrides = self.job.parameters['timeouts']
-            if 'actions' in overrides and action.name in overrides['actions']:
-                # set job level overrides
-                action._override_action_timeout(overrides['actions'])
-            elif action.name in overrides:
-                action._override_action_timeout(overrides)
-                parameters['timeout'] = overrides[action.name]
-            elif 'timeout' in parameters:
-                action.timeout.duration = Timeout.parse(parameters['timeout'])
-            if 'connections' in overrides and action.name in overrides['connections']:
-                action._override_connection_timeout(overrides['connections'])
+        action._override_action_timeout(dict_merge_get(timeouts, 'action'))
+        action._override_action_timeout(subdict_merge_get(timeouts, 'actions', action.name))
+        action._override_action_timeout(parameters.get('timeout', None))
+
+        action._override_connection_timeout(dict_merge_get(timeouts, 'connection'))
+        action._override_connection_timeout(subdict_merge_get(timeouts, 'connections', action.name))
+
         action.parameters = parameters
 
     def describe(self, verbose=True):
@@ -760,31 +763,25 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     def mkdtemp(self, override=None):
         return self.job.mkdtemp(self.name, override=override)
 
-    def _override_action_timeout(self, override):
+    def _override_action_timeout(self, timeout):
         """
         Only to be called by the Pipeline object, add_action().
         """
-        if not isinstance(override, dict):
+        if timeout is None:
             return
-        self.timeout = Timeout(
-            self.name,
-            Timeout.parse(
-                override[self.name]
-            )
-        )
+        if not isinstance(timeout, dict):
+            raise JobError("Invalid timeout %s" % str(timeout))
+        self.timeout = Timeout(self.name, Timeout.parse(timeout))
 
-    def _override_connection_timeout(self, override):
+    def _override_connection_timeout(self, timeout):
         """
         Only to be called by the Pipeline object, add_action().
         """
-        if not isinstance(override, dict):
+        if timeout is None:
             return
-        self.connection_timeout = Timeout(
-            self.name,
-            Timeout.parse(
-                override[self.name]
-            )
-        )
+        if not isinstance(timeout, dict):
+            raise JobError("Invalid connection timeout %s" % str(timeout))
+        self.connection_timeout = Timeout(self.name, Timeout.parse(timeout))
 
     def log_action_results(self):
         if self.results and isinstance(self.logger, YAMLLogger):
@@ -872,7 +869,7 @@ class Timeout(object):
                                       seconds=data.get('seconds', 0))
         if not duration:
             return Timeout.default_duration()
-        return duration.total_seconds()
+        return int(duration.total_seconds())
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
         duration = int(time.time() - self.start)

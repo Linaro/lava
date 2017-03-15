@@ -8,8 +8,6 @@ timeouts:
     minutes: 5
   action:
     minutes: 1
-  test:
-    minutes: 3
 priority: medium
 visibility: public
 
@@ -35,6 +33,8 @@ actions:
           - 'root@debian:~#'
 
     - test:
+        timeout:
+          minutes: 3
         failure_retry: 3
         name: kvm-basic-singlenode  # is not present, use "test $N"
         definitions:

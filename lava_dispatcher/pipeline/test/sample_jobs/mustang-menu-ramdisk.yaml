@@ -6,8 +6,9 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  menu-interrupt:
-    minutes: 3
+  actions:
+    menu-interrupt:
+      minutes: 3
 priority: medium
 visibility: public
 

@@ -3,10 +3,11 @@
 device_type: qemu
 
 job_name: kvm-pipeline
-job_timeout:
-  minutes: 15            # timeout for the whole job (default: ??h)
-action_timeout:
-  minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
 visibility: public
 

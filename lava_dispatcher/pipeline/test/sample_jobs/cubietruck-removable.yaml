@@ -6,8 +6,9 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
-  dd-image:
-    minutes: 8
+  actions:
+    dd-image:
+      minutes: 8
 priority: medium
 visibility: public
 

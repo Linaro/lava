@@ -8,10 +8,11 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
-  extract-nfsrootfs:
-    seconds: 90
-  call-kexec:
-    seconds: 45  # artificially short
+  actions:
+    extract-nfsrootfs:
+      seconds: 90
+    call-kexec:
+      seconds: 45  # artificially short
 priority: medium
 visibility: public
 

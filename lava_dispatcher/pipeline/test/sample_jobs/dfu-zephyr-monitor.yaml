@@ -10,8 +10,6 @@ timeouts:
     minutes: 5
   action:
     minutes: 1
-  test:
-    minutes: 3
 priority: medium
 visibility: public
 
@@ -35,6 +33,8 @@ actions:
       minutes: 10
 
 - test:
+    timeout:
+      minutes: 3
     monitors:
     - name: Test AES128
       start: tc_start()

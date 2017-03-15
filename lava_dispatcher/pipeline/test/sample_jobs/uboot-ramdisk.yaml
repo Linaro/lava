@@ -8,13 +8,13 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  connection:
-    minutes: 4
   actions:
     lava-test-shell:
       minutes: 7
     auto-login-action:
       minutes: 9
+  connection:
+    minutes: 4
   connections:
     auto-login-action:
       minutes: 12

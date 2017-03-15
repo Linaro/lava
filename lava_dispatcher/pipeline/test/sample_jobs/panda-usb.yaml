@@ -8,8 +8,9 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  extract-nfsrootfs:
-   seconds: 60
+  actions:
+    extract-nfsrootfs:
+      seconds: 60
 priority: medium
 visibility: public
 

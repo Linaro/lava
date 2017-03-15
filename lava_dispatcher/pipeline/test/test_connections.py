@@ -294,7 +294,7 @@ class TestTimeouts(StdoutTestCase):
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
         self.assertEqual(test_shell.connection_timeout.duration, 240)  # job specifies 4 minutes
-        self.assertEqual(test_shell.timeout.duration, 420)  # job specifies 7 minutes
+        self.assertEqual(test_shell.timeout.duration, 300)  # job (test action block) specifies 5 minutes
         self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
         self.assertNotEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertNotEqual(deploy.connection_timeout.duration, test_shell.connection_timeout)
@@ -325,7 +325,7 @@ class TestTimeouts(StdoutTestCase):
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
         self.assertEqual(test_shell.connection_timeout.duration, 20)
-        self.assertEqual(test_shell.timeout.duration, 420)
+        self.assertEqual(test_shell.timeout.duration, 300)
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         auto = [action for action in retry.internal_pipeline.actions if action.name == 'auto-login-action'][0]
@@ -340,14 +340,8 @@ class TestTimeouts(StdoutTestCase):
             data = yaml.load(uboot_ramdisk)
         connection_timeout = Timeout.parse(data['timeouts']['connection'])
         self.assertEqual(connection_timeout, 240)
-        data['timeouts']['connections'] = {'uboot-retry': {}}
-        data['timeouts']['connections']['uboot-retry'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))
         boot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
-        self.assertEqual(retry.timeout.duration, Timeout.parse(job.device['timeouts']['actions'][retry.name]))
-        self.assertEqual(
-            Timeout.parse(data['timeouts']['connections'][retry.name]),
-            retry.connection_timeout.duration
-        )
-        self.assertEqual(90, retry.timeout.duration)
+        self.assertEqual(retry.timeout.duration, 90)  # Set by the job global action timeout
+        self.assertEqual(retry.connection_timeout.duration, 45)
