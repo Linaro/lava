@@ -149,6 +149,8 @@ timeouts:
       minutes: {{ action_timeout_bootloader_commands | default(3) }}
     bootloader-interrupt:
       seconds: {{ action_timeout_bootloader_interrupt | default(30) }}
+    u-boot-interrupt:
+      seconds: {{ action_timeout_u_boot_interrupt | default(30) }}
     umount-retry:
       seconds: {{ action_timeout_umount_retry | default(45) }}
     auto-login-action:
@@ -172,4 +174,6 @@ timeouts:
       minutes: {{ connection_timeout_auto_login | default(2) }}
     bootloader-interrupt:
       seconds: {{ connection_timeout_bootloader_interrupt | default(30) }}
+    u-boot-interrupt:
+      seconds: {{ connection_timeout_u_boot_interrupt | default(30) }}
 {% endblock -%}
