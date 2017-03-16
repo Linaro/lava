@@ -5,8 +5,6 @@ timeouts:
     minutes: 15
   action:
     minutes: 10
-  test:
-    minutes: 3
   connection:
     minutes: 10
 

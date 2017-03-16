@@ -8,11 +8,11 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
-  connection:
-    minutes: 4
   actions:
     u-boot-commands:
       minutes: 3
+  connection:
+    minutes: 4
   connections:
     lava-test-shell:
       minutes: 4
