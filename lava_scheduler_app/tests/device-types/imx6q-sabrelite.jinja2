@@ -1,0 +1,15 @@
+# i.MX6Q SABRE Lite
+{% extends 'base-uboot.jinja2' %}
+
+{% set device_type = "imx6q-sabrelite" %}
+
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot') %}
+{% set console_device = console_device|default('ttymxc1') %}
+
+{% set bootm_kernel_addr = '0x10000000' %}
+{% set bootm_ramdisk_addr = '0x13000000' %}
+{% set bootm_dtb_addr = '0x12000000' %}
+{% set bootz_kernel_addr = '0x10000000' %}
+{% set bootz_ramdisk_addr = '0x13000000' %}
+{% set bootz_dtb_addr = '0x12000000' %}
+{% set uboot_mkimage_arch = 'arm' %}
