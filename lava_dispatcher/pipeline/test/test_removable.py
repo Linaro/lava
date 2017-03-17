@@ -178,6 +178,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, bbb, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('usb', bbb['parameters']['media'].keys())

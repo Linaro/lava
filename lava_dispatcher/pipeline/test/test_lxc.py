@@ -174,6 +174,7 @@ class TestLxcWithDevices(StdoutTestCase):
                                         '../devices/bbb-01.yaml'))
         job = parser.parse(yaml.dump(data), device, 4577, None, "",
                            output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
         overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]

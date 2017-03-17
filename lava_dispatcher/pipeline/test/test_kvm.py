@@ -315,6 +315,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
         parser = JobParser()
         job = parser.parse(yaml.dump(job_data), device, 4212, None, "",
                            output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         boot_image = [action for action in job.pipeline.actions if action.name == 'boot_image_retry'][0]
         boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]

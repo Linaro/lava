@@ -32,6 +32,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=superfluous-parens,too-few-public-methods
 
@@ -164,6 +165,7 @@ class Factory(object):
             with open(kvm_yaml) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
+            job.logger = DummyLogger()
         except NotImplementedError as exc:
             print(exc)
             # some deployments listed in basics.yaml are not implemented yet

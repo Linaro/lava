@@ -348,6 +348,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, "",
                            output_dir='/tmp')
+        job.logger = DummyLogger()
         job.validate()
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions
@@ -399,6 +400,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_zimage_bootz(self):
         self.deploy_block['kernel']['type'] = 'zimage'
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
@@ -411,6 +413,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_image(self):
         self.deploy_block['kernel']['type'] = 'image'
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
@@ -424,6 +427,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_uimage(self):
         self.deploy_block['kernel']['type'] = 'uimage'
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
@@ -438,6 +442,7 @@ class TestKernelConversion(StdoutTestCase):
         del self.device['parameters']['bootz']
         self.deploy_block['kernel']['type'] = 'zimage'
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
@@ -452,6 +457,7 @@ class TestKernelConversion(StdoutTestCase):
         del self.deploy_block['kernel']['type']
         self.boot_block['type'] = 'bootm'
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]

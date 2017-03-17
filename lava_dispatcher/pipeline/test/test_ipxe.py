@@ -266,6 +266,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, "",
                            output_dir='/tmp')
+        job.logger = DummyLogger()
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         retry = [action for action in bootloader.internal_pipeline.actions

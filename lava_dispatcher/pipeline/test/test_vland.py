@@ -179,6 +179,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
+        job.logger = DummyLogger()
         description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
         job.validate()
@@ -223,6 +224,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         parser = JobParser()
         job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
         job.validate()
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
         self.assertTrue(vprotocol.valid)
@@ -267,6 +269,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         vland_overlay = [action for action in overlay.internal_pipeline.actions if action.name == 'lava-vland-overlay'][0]
         vland_overlay.validate()
+        job.logger = DummyLogger()
         job.validate()
 
     # pylint: disable=protected-access

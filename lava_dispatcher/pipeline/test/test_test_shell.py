@@ -41,15 +41,14 @@ class TestPatterns(StdoutTestCase):
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        logger = DummyLogger()
+        self.job.logger = DummyLogger()
         self.job.validate()
         self.ret = False
         test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
         self.test_shell = [action for action in test_retry.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
-        self.test_shell.logger = logger
+        self.test_shell.logger = DummyLogger()
 
     def test_case_result(self):
-        self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
         self.assertTrue(os.path.exists(self.testdef))
         with open(self.testdef, 'r') as par:

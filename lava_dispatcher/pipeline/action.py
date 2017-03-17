@@ -45,7 +45,7 @@ if sys.version > '3':
 class LAVAError(Exception):
     """ Base class for all exceptions in LAVA """
     error_code = 0
-    error_msg = ""
+    error_help = ""
     error_type = ""
 
 
@@ -62,8 +62,8 @@ class InfrastructureError(LAVAError):
     Use LAVABug for errors arising from bugs in LAVA code.
     """
     error_code = 1
-    error_msg = "InfrastructureError: The Infrastructure is not working " \
-                "correctly. Please report this error to LAVA admins."
+    error_help = "InfrastructureError: The Infrastructure is not working " \
+                 "correctly. Please report this error to LAVA admins."
     error_type = "Infrastructure"
 
 
@@ -75,7 +75,7 @@ class JobError(LAVAError):
     does not recognise.
     """
     error_code = 2
-    error_msg = "JobError: Your job cannot terminate cleanly."
+    error_help = "JobError: Your job cannot terminate cleanly."
     error_type = "Job"
 
 
@@ -85,7 +85,7 @@ class LAVABug(LAVAError):
     when a bug is encountered.
     """
     error_code = 3
-    error_msg = "LAVABug: This is probably a bug in LAVA, please report it."
+    error_help = "LAVABug: This is probably a bug in LAVA, please report it."
     error_type = "Bug"
 
 
@@ -96,14 +96,14 @@ class TestError(LAVAError):
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
     error_code = 4
-    error_msg = "TestError: A test failed to run, look at the error message."
+    error_help = "TestError: A test failed to run, look at the error message."
     error_type = "Test"
 
 
 class ConfigurationError(LAVAError):
     error_code = 5
-    error_msg = "ConfigurationError: The LAVA instance is not configured " \
-                "correctly. Please report this error to LAVA admins."
+    error_help = "ConfigurationError: The LAVA instance is not configured " \
+                 "correctly. Please report this error to LAVA admins."
     error_type = "Configuration"
 
 

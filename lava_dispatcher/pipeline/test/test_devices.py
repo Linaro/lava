@@ -192,6 +192,7 @@ overrides:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
+        job.logger = DummyLogger()
         self.assertEqual(
             job.parameters['env_dut'],
             data

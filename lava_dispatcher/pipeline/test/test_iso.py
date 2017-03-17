@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.strings import substitute
 
 
@@ -38,6 +39,7 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
         try:
             with open(sample_job_file) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, "", output_dir=output_dir)
+            job.logger = DummyLogger()
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None

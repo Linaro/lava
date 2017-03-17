@@ -50,6 +50,7 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
     def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -59,6 +60,7 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
 
@@ -68,7 +70,6 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         super(TestConnection, self).setUp()
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
-        self.job.logger = DummyLogger()
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 

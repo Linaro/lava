@@ -193,9 +193,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 self.logger.info("Canceled")
                 raise JobError("Canceled")
             except LAVAError:
+                self.logger.error("Configuration failed for protocol %s", protocol.name)
                 raise
             except Exception as exc:
-                self.logger.error("Protocol configuration failed")
+                self.logger.error("Configuration failed for protocol %s", protocol.name)
                 self.logger.exception(traceback.format_exc())
                 raise LAVABug(exc)
 
@@ -233,14 +234,21 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         try:
             self._validate(simulate)
         except LAVAError as exc:
+            self.logger.results({"definition": "lava",
+                                 "case": "validate",
+                                 "result": "fail"})
             self.cleanup(connection=None)
             self.logger.results({"definition": "lava",
                                  "case": "job",
                                  "result": "fail",
-                                 "error_type": exc.error_type,
-                                 "error_message": exc.error_msg})
-            self.logger.error(exc.error_msg)
+                                 "error_msg": str(exc),
+                                 "error_type": exc.error_type})
+            self.logger.error(exc.error_help)
             raise
+        else:
+            self.logger.results({"definition": "lava",
+                                 "case": "validate",
+                                 "result": "pass"})
 
     def cancelling_handler(*_):
         """
@@ -287,24 +295,28 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
+        error_help = ""
         error_msg = ""
-        return_code = 0
         error_type = ""
+        return_code = 0
         try:
             self._run()
         except LAVAError as exc:
-            error_msg = exc.error_msg
-            return_code = exc.error_code
+            error_help = exc.error_help
+            error_msg = str(exc)
             error_type = exc.error_type
+            return_code = exc.error_code
         except KeyboardInterrupt:
-            error_msg = "KeyboardInterrupt: the job was canceled."
-            return_code = 6
+            error_help = "KeyboardInterrupt: the job was canceled."
+            error_msg = "The job was canceled"
             error_type = "Canceled"
+            return_code = 6
         except Exception as exc:
             self.logger.exception(traceback.format_exc())
-            error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
-            return_code = 7
+            error_help = "%s: unknown exception, please report it" % exc.__class__.__name__
+            error_msg = str(exc)
             error_type = "Unknown"
+            return_code = 7
 
         # Cleanup now
         self.cleanup(self.connection)
@@ -312,19 +324,20 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Detect errors based on pipeline.errors
         # TODO: shouldn't be needed anymore
         if not error_msg and self.pipeline.errors:
-            return_code = -1
-            error_msg = "Errors detected: %s" % self.pipeline.errors
+            error_help = "Errors detected"
+            error_msg = self.pipeline.errors
             error_type = "Unknown"
+            return_code = 7
 
         # Build the job result
         result_dict = {"definition": "lava",
                        "case": "job"}
         if error_msg:
             result_dict["result"] = "fail"
+            result_dict["error_msg"] = error_msg
             result_dict["error_type"] = error_type
-            result_dict["error_message"] = error_msg
             self.logger.results(result_dict)
-            self.logger.error(error_msg)
+            self.logger.error(error_help)
         else:
             result_dict["result"] = "pass"
             self.logger.results(result_dict)
