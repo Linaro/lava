@@ -22,7 +22,7 @@
 
 import os
 import yaml
-from lava_dispatcher.pipeline.action import Action, LAVABug, Pipeline
+from lava_dispatcher.pipeline.action import Action, LAVABug, Pipeline, JobError
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -193,6 +193,8 @@ class PrepareSsh(Action):
                 action=MultinodeProtocol.name,
                 label=MultinodeProtocol.name,
                 key=self.parameters['parameters']['hostID'])
+            if not host_data:
+                raise JobError("Unable to retrieve %s - missing ssh deploy?" % self.parameters['parameters']['hostID'])
             self.set_namespace_data(
                 action=self.name,
                 label='ssh-connection',
