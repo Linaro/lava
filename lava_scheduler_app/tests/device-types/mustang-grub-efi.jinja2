@@ -61,7 +61,8 @@ actions:
           - insmod efinet
           - net_bootp
 {% endif %}
-          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/ram0 rw {{ base_ip_args }}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug
+            root=/dev/ram0 rw {{ base_ip_args }} {{ extra_kernel_args }}
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
         installed:
@@ -71,7 +72,8 @@ actions:
           - insmod efinet
           - net_bootp
 {% endif %}
-          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/sda2 rw {{ base_ip_args }}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug
+            root=/dev/sda2 rw {{ base_ip_args }} {{ extra_kernel_args }}
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
         nfs:
@@ -81,7 +83,8 @@ actions:
           - insmod efinet
           - net_bootp
 {% endif %}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug
+            root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ extra_kernel_args }}'
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
       uefi-menu:
