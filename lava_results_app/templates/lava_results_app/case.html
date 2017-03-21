@@ -43,29 +43,25 @@
       <h4><a
       title="view test job output for this failed test"
       href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
-      Logfile: {{ job.id }}<span
-      class="glyphicon glyphicon-chevron-right"></span></a></h4>
+      Log entry: {{ job.id }}</a></h4>
   {% elif testcase.result == 2 %}
   <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;skipped</h3>
       <h4><a
       title="view test job output for this test which was skipped"
       href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
-      Logfile: {{ job.id }}<span
-      class="glyphicon glyphicon-chevron-right"></span></a></h4>
+      Log entry: {{ job.id }}</a></h4>
   {% elif testcase.result == 3 %}
   <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;unknown</h3>
       <h4><a
       title="view test job output for this test which gave an unknown result"
       href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
-      Logfile: {{ job.id }}<span
-      class="glyphicon glyphicon-chevron-right"></span></a></h4>
+      Log entry: {{ job.id }}</a></h4>
   {% else %}
   <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
       <h4><a
       title="view test job output for this passed test"
       href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
-      Logfile: {{ job.id }}<span
-      class="glyphicon glyphicon-chevron-right"></span></a></h4>
+      Log entry: {{ job.id }}</a></h4>
   {% endif %}
   {% if testcase.test_set %}
       {% if test_cases|length > 1 %}
@@ -79,7 +75,7 @@
   {% if key == 'extra' and extra_source %}
       <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ testcase_extra }}</pre></li>
   {% elif key == 'level' %}
-    <li><strong>{{ key }}</strong>: <a
+    <li><strong>Pipeline description</strong>: <a
             href="{% url 'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
   {% elif key == 'duration' %}
     <li><strong>{{ key }}</strong>: {{ value|floatformat:2 }} secs</li>
