@@ -54,7 +54,7 @@ access devices and debug test jobs.
 .. _SSH: http://www.openssh.com/
 .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
 
-.. index:: templates as code; device-type template files
+.. index:: templates as code, device-type template files
 
 .. _developing_device_type_templates:
 
