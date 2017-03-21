@@ -96,12 +96,15 @@ class UBootAction(BootAction):
         self.description = "interactive uboot action"
         self.summary = "pass uboot commands"
 
+    def validate(self):
+        super(UBootAction, self).validate()
+        if 'type' in self.parameters:
+            self.logger.warning("Specifying a type in the boot action is deprecated. "
+                                "Please specify the kernel type in the deploy parameters.")
+
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        if 'type' in parameters:
-            self.logger.warning("Specifying a type in the boot action is deprecated. "
-                                "Please specify the kernel type in the deploy parameters.")
         self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
