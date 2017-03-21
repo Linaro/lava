@@ -354,8 +354,6 @@ class TestShellAction(TestAction):
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
-            'revision': self.get_namespace_data(
-                action='test', label=uuid, key='revision'),
             'repository': self.get_namespace_data(
                 action='test', label=uuid, key='repository'),
             'path': self.get_namespace_data(
@@ -363,6 +361,8 @@ class TestShellAction(TestAction):
             "duration": "%.02f" % (time.time() - self.start),
             "result": "pass"
         }
+        revision = self.get_namespace_data(action='test', label=uuid, key='revision')
+        res['revision'] = revision if revision else 'unspecified'
         commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
         if commit_id:
             res['commit_id'] = commit_id
