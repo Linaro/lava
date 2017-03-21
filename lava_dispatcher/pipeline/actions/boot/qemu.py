@@ -192,7 +192,8 @@ class CallQemuAction(Action):
         # initialise the first Connection object, a command line shell into the running QEMU.
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
-        if 'qemu-nfs' in self.methods:
+        if 'qemu-nfs' in self.methods and self.parameters['media'] == 'nfs':
+            self.logger.debug("Adding NFS arguments to kernel command line.")
             root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             self.substitutions["{NFSROOTFS}"] = root_dir
             params = self.methods['qemu-nfs']['parameters']['append']
