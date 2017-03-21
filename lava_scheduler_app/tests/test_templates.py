@@ -180,6 +180,37 @@ class TestTemplates(unittest.TestCase):
         self.assertNotEqual(150, template_dict['character_delays']['boot'])
         self.assertEqual(400, template_dict['character_delays']['boot'])
 
+    def test_x86_interface_template(self):
+        # test boot interface override
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
+            if 'commands' in value:
+                self.assertIn('dhcp net0', value['commands'])
+                self.assertNotIn('dhcp net1', value['commands'])
+        # test boot interface override
+        data = """{% extends 'x86.jinja2' %}
+{% set boot_interface = 'net1' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
+            if 'commands' in value:
+                self.assertIn('dhcp net1', value['commands'])
+                self.assertNotIn('dhcp net0', value['commands'])
+
     def test_beaglebone_black_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
 {% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
