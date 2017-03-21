@@ -25,8 +25,8 @@ actions:
     methods:
       uefi-menu:
         parameters:
-          interrupt_prompt: {{ interrupt_prompt|default("Android Fastboot mode") }}
-          interrupt_string: {{ interrupt_string|default("'x'") }}
+          interrupt_prompt: {{ interrupt_prompt|default("The default boot selection will start in") }}
+          interrupt_string: {{ interrupt_string|default("' '") }}
           item_markup:
             - "["
             - "]"
