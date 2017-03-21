@@ -24,8 +24,9 @@ from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
     InfrastructureError,
-    Pipeline,
     JobError,
+    LAVABug,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
