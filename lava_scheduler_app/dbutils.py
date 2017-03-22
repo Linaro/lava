@@ -36,7 +36,7 @@ from lava_dispatcher.pipeline.device import PipelineDevice
 def match_vlan_interface(device, job_def):
     if not isinstance(job_def, dict):
         raise RuntimeError("Invalid vlan interface data")
-    if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols']:
+    if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols'] or not device:
         return False
     interfaces = []
     logger = logging.getLogger('dispatcher-master')
@@ -57,7 +57,7 @@ def match_vlan_interface(device, job_def):
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
                 break
-    logger.info("Matched: %s" % (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
+    logger.info("Matched: %s", (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
     return len(interfaces) == len(job_def['protocols']['lava-vland'].keys())
 
 
@@ -298,6 +298,13 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 device = check_device_and_job(job, device)
+                if job.is_pipeline:
+                    job_dict = yaml.load(job.definition)
+                    if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+                        logger.info("[%d] checking %s for vlan interface support", job.id, str(device.hostname))
+                        if not match_vlan_interface(device, job_dict):
+                            logger.info("%s does not match vland tags", str(device.hostname))
+                            continue
                 return device
     return None
 
@@ -519,15 +526,6 @@ def assign_jobs():
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
         if device:
-            if job.is_pipeline:
-                job_dict = yaml.load(job.definition)
-                if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
-                    logger.info("[%d] checking vlan interface support", job.id)
-                    if not match_vlan_interface(device, job_dict):
-                        logger.info("%s does not match vland tags", str(device.hostname))
-                        if device in devices:
-                            devices.remove(device)
-                        continue
             if not _validate_idle_device(job, device) and device in devices:
                 logger.debug("Removing %s from the list of available devices",
                              str(device.hostname))
