@@ -326,7 +326,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
-            'success': commit_id,
+            'commit': commit_id,
             'repository': self.parameters['repository'],
             'path': self.parameters['path']}
 
@@ -390,7 +390,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
-            'success': commit_id,
+            'commit': commit_id,
             'repository': self.parameters['repository'],
             'path': self.parameters['path']
         }
@@ -808,7 +808,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         # this run then only does the incidental files.
 
         self.results = {
-            'success': self.test_uuid,
+            'uuid': self.test_uuid,
             'name': self.parameters['name'],
             'path': self.parameters['path'],
             'from': self.parameters['from'],
@@ -949,7 +949,7 @@ class TestInstallAction(TestOverlayAction):
             if 'git-repos' not in self.skip_options:
                 self.install_git_repos(testdef, runner_path)
 
-        self.results = {'success': self.test_uuid}
+        self.results = {'uuid': self.test_uuid}
         return connection
 
 
@@ -1035,7 +1035,7 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
 
         self.results = {
-            'success': self.test_uuid,
+            'uuid': self.test_uuid,
             "filename": filename,
             'name': self.parameters['name'],
             'path': self.parameters['path'],
