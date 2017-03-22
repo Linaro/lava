@@ -13,6 +13,7 @@ import re
 import sys
 
 from django import forms
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
@@ -33,6 +34,7 @@ from django.shortcuts import (
 from django.template import loader
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.utils.timesince import timeuntil
 from django_tables2 import (
     RequestConfig,
 )
@@ -1674,19 +1676,32 @@ def job_section_log(request, job, log_name):
 
 def job_status(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    response_dict = {'job_status': job.get_status_display()}
-    if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
-            job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response_dict['device'] = render_to_string("lava_scheduler_app/_device_refresh.html",
-                                                   {'job': job})
-    response_dict['timing'] = render_to_string("lava_scheduler_app/_job_timing.html",
-                                               {'job': job})
-    if job.status == TestJob.SUBMITTED and not job.actual_device:
-        response_dict['priority'] = job.priority
-    if job.failure_comment:
-        response_dict['failure'] = job.failure_comment
+    response_dict = {'actual_device': "<i>...</i>",
+                     'duration': "<i>...</i>",
+                     'job_status': job.get_status_display(),
+                     'started': "<i>...</i>"}
+
+    if job.actual_device:
+        url = job.actual_device.get_absolute_url()
+        host = job.actual_device.hostname
+        html = "<a href=\"%s\">%s</a> " % (url, host)
+        html += "<a href=\"%s\"><span class=\"glyphicon glyphicon-stats\"></span></a>" % (reverse("lava.scheduler.device_report", args=[job.actual_device.pk]))
+        response_dict['actual_device'] = html
+
+    if job.start_time:
+        response_dict['started'] = naturaltime(job.start_time)
+        response_dict['duration'] = timeuntil(timezone.now(), job.start_time)
+
+    if job.status <= job.RUNNING:
+        response_dict['job_status'] = job.get_status_display()
+    elif job.status == job.COMPLETE:
+        response_dict['job_status'] = '<span class="label label-success">Complete</span>'
+    else:
+        response_dict['job_status'] = "<span class=\"label label-danger\">%s</span>" % job.get_status_display()
+
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response_dict['X-JobStatus'] = '1'
+
     response = HttpResponse(json.dumps(response_dict), content_type='text/json')
     return response
 
