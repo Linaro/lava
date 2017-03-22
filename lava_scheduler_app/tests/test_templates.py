@@ -667,7 +667,7 @@ class TestTemplates(unittest.TestCase):
         fdesc, device_yaml = tempfile.mkstemp()
         os.write(fdesc, yaml.dump(template_dict))
         panda = NewDevice(device_yaml)
-        lxc_yaml = os.path.join(os.path.dirname(__file__), 'panda-lxc-aep.yaml')
+        lxc_yaml = os.path.join(os.path.dirname(__file__), 'devices', 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
             job = parser.parse(sample_job_data, panda, 4577, None, "",

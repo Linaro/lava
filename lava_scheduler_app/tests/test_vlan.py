@@ -41,7 +41,7 @@ class VlandFactory(YamlFactory):
         self.cubie1 = self.make_device(cubie_type, hostname='cubie1')
 
     def make_vland_job(self, **kw):
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         data.update(kw)
@@ -106,7 +106,7 @@ class TestVlandDevices(TestCaseWithFactory):
         device_dict = DeviceDictionary(hostname=self.factory.cubie1.hostname)
         self.assertIsNone(device_dict.to_dict()['parameters'])
         user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
@@ -189,7 +189,7 @@ class TestVlandDevices(TestCaseWithFactory):
         }
         device_dict.save()
         user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         del(data['protocols']['lava-multinode']['roles']['client']['tags'])
@@ -263,7 +263,7 @@ class TestVlandDevices(TestCaseWithFactory):
         device_dict.save()
         devices = list(Device.objects.filter(status=Device.IDLE).order_by('is_public'))
         user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-bbb-vland-group.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-bbb-vland-group.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
@@ -447,7 +447,7 @@ class TestVlandDevices(TestCaseWithFactory):
         }
         device_dict.save()
         user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
@@ -506,7 +506,7 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         client_handle, client_file_name = tempfile.mkstemp()
         yaml.dump(client_job, open(client_file_name, 'w'))
         # YAML device file, as required by lava-dispatch --target
-        device_yaml_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'bbb-01.yaml'))
+        device_yaml_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'devices', 'bbb-01.yaml'))
         self.assertTrue(os.path.exists(device_yaml_file))
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)
