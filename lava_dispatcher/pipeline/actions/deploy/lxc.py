@@ -171,7 +171,9 @@ class LxcCreateAction(DeployAction):
             if self.lxc_data['lxc_security_mirror']:
                 lxc_cmd += ['--security-mirror',
                             self.lxc_data['lxc_security_mirror']]
-            self.logger.debug('Generation complete.')
+            # FIXME: Should be removed when LAVA's supported distro is bumped
+            #        to Debian Stretch or any distro that supports systemd
+            lxc_cmd += ['--packages', 'systemd,systemd-sysv']
         else:
             lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
                        '-n', self.lxc_data['lxc_name'], '--', '--dist',
