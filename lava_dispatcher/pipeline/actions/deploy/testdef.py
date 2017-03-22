@@ -839,6 +839,7 @@ class TestInstallAction(TestOverlayAction):
         self.skip_list = ['keys', 'sources', 'deps', 'steps', 'git-repos',
                           'all']  # keep 'all' as the last item
         self.skip_options = []
+        self.param_keys = ['url', 'destination', 'branch']
 
     def validate(self):
         if 'skip_install' in self.parameters:
@@ -849,6 +850,30 @@ class TestInstallAction(TestOverlayAction):
             else:
                 self.skip_options = self.parameters['skip_install']
         super(TestInstallAction, self).validate()
+
+    def _lookup_params(self, lookup_key, variable, testdef):
+        # lookup_key 'branch'
+        # variable ODP_BRANCH which has a value in the parameters of "master"
+        ret = variable
+        if not variable or not lookup_key or not testdef:
+            return None
+        if not isinstance(testdef, dict) or not isinstance(lookup_key, str):
+            return None
+        if lookup_key not in self.param_keys:
+            return variable
+        # prioritise the value in the testdef
+        if 'params' in testdef:
+            if variable in testdef['params']:
+                self.logger.info("Substituting test definition parameter '%s' with value '%s'.",
+                                 variable, self.parameters['parameters'][variable])
+                ret = testdef['params'][variable]
+        # now override with a value from the job, if any
+        if 'parameters' in self.parameters:
+            if variable in self.parameters['parameters']:
+                self.logger.info("Overriding job parameter '%s' with value '%s'.",
+                                 variable, self.parameters['parameters'][variable])
+                ret = self.parameters['parameters'][variable]
+        return ret
 
     def install_git_repos(self, testdef, runner_path):
         repos = testdef['install'].get('git-repos', [])
@@ -864,11 +889,14 @@ class TestInstallAction(TestOverlayAction):
                 # specific repository should be skipped. The value
                 # for 'skip_by_default' comes from job parameters.
                 url = repo.get('url', '')
+                url = self._lookup_params('url', url, testdef)
                 branch = repo.get('branch', None)
+                branch = self._lookup_params('branch', branch, testdef)
                 if not url:
                     raise TestError('Invalid git-repos dictionary in install definition.')
                 subdir = url.replace('.git', '', len(url) - 1)  # drop .git from the end, if present
                 destination = repo.get('destination', os.path.basename(subdir))
+                destination = self._lookup_params('destination', destination, testdef)
                 if destination:
                     dest_path = os.path.join(runner_path, destination)
                     if os.path.abspath(runner_path) != os.path.dirname(dest_path):
