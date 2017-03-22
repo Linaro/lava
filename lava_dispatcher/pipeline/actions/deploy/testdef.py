@@ -333,10 +333,12 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         self.logger.debug("Tests stored (tmp) in %s", yaml_file)
-        if not os.path.exists(yaml_file):
-            raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-        with open(yaml_file, 'r') as test_file:
-            testdef = yaml.safe_load(test_file)
+        try:
+            with open(yaml_file, 'r') as test_file:
+                testdef = yaml.safe_load(test_file)
+        except IOError as exc:
+            raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
+                                                                        str(exc)))
 
         # set testdef metadata in base class
         self.store_testdef(testdef, 'git', commit_id)
@@ -395,10 +397,12 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
-        if not os.path.exists(yaml_file):
-            raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-        with open(yaml_file, 'r') as test_file:
-            self.testdef = yaml.safe_load(test_file)
+        try:
+            with open(yaml_file, 'r') as test_file:
+                self.testdef = yaml.safe_load(test_file)
+        except IOError as exc:
+            raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
+                                                                        str(exc)))
 
         # set testdef metadata in base class
         self.store_testdef(self.testdef, 'bzr', commit_id)
@@ -775,14 +779,15 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
     def run(self, connection, max_end_time, args=None):
         connection = super(TestOverlayAction, self).run(connection, max_end_time, args)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
+
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
-        # FIXME: check the existence at the same time as the open.
-        if not os.path.exists(yaml_file):
-            raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-
-        with open(yaml_file, 'r') as test_file:
-            testdef = yaml.safe_load(test_file)
+        try:
+            with open(yaml_file, 'r') as test_file:
+                testdef = yaml.safe_load(test_file)
+        except IOError as exc:
+            raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
+                                                                        str(exc)))
 
         # FIXME: change lava-test-runner to accept a variable instead of duplicating the YAML?
         with open("%s/testdef.yaml" % runner_path, 'w') as run_file:
@@ -880,13 +885,15 @@ class TestInstallAction(TestOverlayAction):
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-statements
         connection = super(TestInstallAction, self).run(connection, max_end_time, args)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
+
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
-        if not os.path.exists(yaml_file):
-            raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-
-        with open(yaml_file, 'r') as test_file:
-            testdef = yaml.safe_load(test_file)
+        try:
+            with open(yaml_file, 'r') as test_file:
+                testdef = yaml.safe_load(test_file)
+        except IOError as exc:
+            raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
+                                                                        str(exc)))
 
         if 'install' not in testdef:
             self.results = {'skipped %s' % self.name: self.test_uuid}
@@ -987,13 +994,15 @@ class TestRunnerAction(TestOverlayAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(TestRunnerAction, self).run(connection, max_end_time, args)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
+
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
-        if not os.path.exists(yaml_file):
-            raise JobError("Unable to find test definition YAML: %s" % yaml_file)
-        testdef_levels = self.get_namespace_data(action=self.name, label=self.name, key='testdef_levels')
-        with open(yaml_file, 'r') as test_file:
-            testdef = yaml.safe_load(test_file)
+        try:
+            with open(yaml_file, 'r') as test_file:
+                testdef = yaml.safe_load(test_file)
+        except IOError as exc:
+            raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
+                                                                        str(exc)))
 
         self.logger.debug("runner path: %s test_uuid %s", runner_path, self.test_uuid)
         filename = '%s/run.sh' % runner_path
@@ -1003,6 +1012,7 @@ class TestRunnerAction(TestOverlayAction):
         if self.parameters['name'] == 'lava':
             raise TestError('The "lava" test definition name is reserved.')
 
+        testdef_levels = self.get_namespace_data(action=self.name, label=self.name, key='testdef_levels')
         with open(filename, 'a') as runsh:
             for line in content:
                 runsh.write(line)
