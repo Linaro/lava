@@ -489,34 +489,9 @@ class Worker(models.Model):
     def get_description(self):
         return mark_safe(self.description)
 
-    def get_hardware_info(self):
-        return ''
-
-    def get_software_info(self):
-        return ''
-
-    def too_long_since_last_heartbeat(self):
-        """
-        DEPRECATED
-
-        Always returns False.
-        """
-        return False
-
-    def attached_devices(self):
-        return Device.objects.filter(worker_host=self)
-
     def update_description(self, description):
         self.description = description
         self.save()
-
-    # pylint: disable=no-member
-    @classmethod
-    def update_heartbeat(cls, heartbeat_data):
-        return False
-
-    def on_master(self):
-        return self.is_master
 
     @classmethod
     def get_master(cls):
@@ -544,19 +519,6 @@ class Worker(models.Model):
             return localhost
         except Worker.DoesNotExist:
             raise ValueError("Worker node unavailable")
-
-    @classmethod
-    def record_last_master_scheduler_tick(cls):
-        """Records the master's last scheduler tick timestamp.
-        """
-        pass
-
-    def master_scheduler_tick(self):
-        """Returns django.utils.timezone object of master's last scheduler tick
-        timestamp. If the master's last scheduler tick is not yet recorded
-        return the current timestamp.
-        """
-        return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):
@@ -934,11 +896,6 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
-
-    def too_long_since_last_heartbeat(self):
-        """This is same as worker heartbeat.
-        """
-        return False
 
     def get_existing_health_check_job(self):
         """Get the existing health check job.
