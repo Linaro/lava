@@ -153,6 +153,7 @@ class LxcCreateAction(DeployAction):
             self.lxc_data['lxc_template'] = protocol.lxc_template
             self.lxc_data['lxc_mirror'] = protocol.lxc_mirror
             self.lxc_data['lxc_security_mirror'] = protocol.lxc_security_mirror
+            self.lxc_data['verbose'] = protocol.verbose
 
     def validate(self):
         super(LxcCreateAction, self).validate()
@@ -161,9 +162,11 @@ class LxcCreateAction(DeployAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcCreateAction, self).run(connection, max_end_time, args)
+        verbose = '' if self.lxc_data['verbose'] else '-q'
         if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
-            lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
-                       '-n', self.lxc_data['lxc_name'], '--', '--release',
+            lxc_cmd = ['lxc-create', verbose, '-t',
+                       self.lxc_data['lxc_template'], '-n',
+                       self.lxc_data['lxc_name'], '--', '--release',
                        self.lxc_data['lxc_release'], '--arch',
                        self.lxc_data['lxc_arch']]
             if self.lxc_data['lxc_mirror']:
@@ -175,8 +178,9 @@ class LxcCreateAction(DeployAction):
             #        to Debian Stretch or any distro that supports systemd
             lxc_cmd += ['--packages', 'systemd,systemd-sysv']
         else:
-            lxc_cmd = ['lxc-create', '-q', '-t', self.lxc_data['lxc_template'],
-                       '-n', self.lxc_data['lxc_name'], '--', '--dist',
+            lxc_cmd = ['lxc-create', verbose, '-t',
+                       self.lxc_data['lxc_template'], '-n',
+                       self.lxc_data['lxc_name'], '--', '--dist',
                        self.lxc_data['lxc_distribution'], '--release',
                        self.lxc_data['lxc_release'], '--arch',
                        self.lxc_data['lxc_arch']]

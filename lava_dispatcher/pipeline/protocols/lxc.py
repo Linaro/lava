@@ -50,6 +50,7 @@ class LxcProtocol(Protocol):
                                                                  None)
         self.lxc_security_mirror = parameters['protocols'][self.name].get(
             'security_mirror', None)
+        self.verbose = parameters['protocols'][self.name].get('verbose', False)
         self.fastboot_reboot = parameters.get('reboot_to_fastboot', True)
         self.logger = logging.getLogger('dispatcher')
 
