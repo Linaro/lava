@@ -81,6 +81,8 @@ and a small number of users. This layout does not scale well. Adding too many
 devices or users to this setup can lead to the highest overall maintenance
 burden, per test job, of all the layouts here.
 
+.. seealso:: :ref:`scaling`
+
 In all of these example diagrams, **Infrastructure** represents the extra
 equipment that might be used alongside the LAVA master and workers, such as
 mirrors, caching proxies etc.
@@ -275,6 +277,17 @@ How many devices is too many for one worker?
 * Be conservative and allow your lab to continue growing, slowly. Compare your
   plans with existing instances and :ref:`talk to us <getting_support>` about
   your plans before making commitments.
+
+* If a worker starts struggling when test jobs start close together, it is time
+  to provide at least one more worker. Watch for workers which need to use swap
+  or other indications of high load. In the short term, admins may choose to take
+  devices offline to manage spikes in load on workers but every such incident
+  should raise the priority of adding more workers to the instance. LAVA test
+  jobs can involve a lot of I/O, particularly in the deploy stage. A worker
+  with devices which typically run lots of small, fast test jobs will be
+  beneficial for CI but will run at a higher load than a worker with devices
+  which run fewer, longer test jobs. Consider which devices are attached to which
+  worker when balancing the load across the instance.
 
 .. index:: geographic locations
 
