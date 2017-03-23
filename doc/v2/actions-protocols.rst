@@ -373,6 +373,7 @@ Protocol elements
       arch: amd64
       mirror: http://ftp.us.debian.org/debian/
       security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+      verbose: true
 
 The characteristics of the LXC container is defined by the following data
 elements that are accepted by the LXC protocol:
@@ -417,3 +418,7 @@ elements that are accepted by the LXC protocol:
 * **security_mirror** *(optional)* - Specifies the Debian security mirror to use
   during installation. This is specific to the 'debian' template. There is no
   effect when this is specified for the 'download' template.
+
+* **verbose** *(optional)* - Controls the output produced during LXC
+  creation. By default the value is `False`. When `verbose` is set to `True`
+  the LXC creation command produces detailed output.
