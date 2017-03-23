@@ -332,6 +332,8 @@ class DeviceType(models.Model):
         default=None
     )
 
+    # FIXME: deprecated, should be removed in 2017.5
+    # Replaced by Device.get_health_check()
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job])
 
@@ -897,18 +899,6 @@ class Device(RestrictedResource):
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
-    def get_existing_health_check_job(self):
-        """Get the existing health check job.
-        """
-        try:
-            return TestJob.objects.filter((models.Q(actual_device=self) |
-                                           models.Q(requested_device=self)),
-                                          status__in=[TestJob.SUBMITTED,
-                                                      TestJob.RUNNING],
-                                          health_check=True)[0]
-        except IndexError:
-            return None
-
     def load_device_configuration(self, job_ctx=None, system=True):
         """
         Maps the DeviceDictionary to the static templates in /etc/.
@@ -970,6 +960,29 @@ class Device(RestrictedResource):
             jinja_str = utils.devicedictionary_to_jinja2(
                 device_dict['parameters'], device_dict['parameters']['extends'])
         return jinja_str
+
+    def get_health_check(self):
+        # Keep the old behavior for v1 devices
+        if not self.is_pipeline:
+            return self.device_type.health_check_job
+
+        # Get the device dictionary
+        device_dict = DeviceDictionary.get(self.hostname)
+        if not device_dict:
+            # TODO: will be removed in the next release
+            return self.device_type.health_check_job
+        device_dict = device_dict.to_dict()
+        extends = device_dict['parameters']['extends']
+        extends = os.path.splitext(extends)[0]
+
+        filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks",
+                                "%s.yaml" % extends)
+        try:
+            with open(filename, "r") as f_in:
+                return f_in.read()
+        except IOError:
+            # TODO: will be removed in the next release
+            return self.device_type.health_check_job
 
 
 class TemporaryDevice(Device):

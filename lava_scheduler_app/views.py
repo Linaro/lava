@@ -808,11 +808,7 @@ def device_type_detail(request, pk):
     desc = dt.description if dt.description else ''
     aliases = ', '.join([alias.name for alias in dt.aliases.all()])
 
-    if dt.health_check_job == "":
-        health_freq_str = ""
-    elif not Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED)).count():
-        health_freq_str = ""
-    elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
+    if dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
@@ -845,7 +841,6 @@ def device_type_detail(request, pk):
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
             'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
-            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
@@ -979,7 +974,7 @@ def health_job_list(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
-                device.device_type.health_check_job != "",
+                device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance':
                 device.can_admin(request.user) and
@@ -2428,7 +2423,7 @@ def device_detail(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
-                device.device_type.health_check_job != "",
+                device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,

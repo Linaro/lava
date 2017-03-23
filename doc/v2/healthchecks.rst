@@ -19,8 +19,15 @@ providing information on the failed checks:
 
 https://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
 
-Health checks are defined in the admin interface for each device type and run
-as the lava-health user.
+Health checks are defined in
+**/etc/lava-server/dispatcher-config/health-checks** for each device type and
+run as the lava-health user.
+
+.. note:: To generate the filename of the health check, the scheduler takes the
+   name of the template extended in the device dictionary (for instance
+   *qemu.jinja2* for qemu devices) and replace the extension with *.yaml*.
+   The health check will be called
+   */etc/lava-server/dispatcher-config/health-checks/qemu.yaml*.
 
 .. _yaml_health_checks:
 
