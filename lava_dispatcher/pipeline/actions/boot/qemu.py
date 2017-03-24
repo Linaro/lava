@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 # pylint: disable=too-many-instance-attributes,too-many-branches
@@ -129,6 +130,12 @@ class CallQemuAction(Action):
         except KeyError:
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
+        if self.job.parameters['context']['arch'] in ['amd64', 'x86_64']:
+            self.logger.info("qemu-system-x86, installed at version: %s" %
+                             debian_package_version(pkg='qemu-system-x86', split=False))
+        if self.job.parameters['context']['arch'] in ['arm64', 'arm', 'armhf', 'aarch64']:
+            self.logger.info("qemu-system-arm, installed at version: %s" %
+                             debian_package_version(pkg='qemu-system-arm', split=False))
 
         if self.parameters['method'] in ['qemu', 'qemu-nfs']:
             if 'prompts' not in self.parameters:

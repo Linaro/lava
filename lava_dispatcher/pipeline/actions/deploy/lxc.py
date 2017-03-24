@@ -42,6 +42,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_TEMPLATE_WITH_MIRROR,
 )
 from lava_dispatcher.pipeline.utils.udev import get_usb_devices
+from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
 
 # pylint: disable=superfluous-parens
 
@@ -102,6 +103,8 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def validate(self):
         super(LxcAction, self).validate()
+        self.logger.info("lxc, installed at version: %s" %
+                         debian_package_version(pkg='lxc', split=False))
         if LxcProtocol.name not in [protocol.name for protocol in self.job.protocols]:
             self.errors = "Invalid job - missing protocol"
         self.errors = infrastructure_error('lxc-create')
