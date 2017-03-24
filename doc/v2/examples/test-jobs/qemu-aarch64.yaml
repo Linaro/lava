@@ -24,6 +24,8 @@ context:
 metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
   path: qemu-aarch64.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/debian-arm64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-sid-arm64/8/console
 
 actions:
 - deploy:
@@ -33,10 +35,10 @@ actions:
     images:
       kernel:
         image_arg: -kernel {kernel}
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/vmlinuz-4.9.0-2-arm64
       initrd:
         image_arg: -initrd {initrd}
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/initrd.img-4.9.0-2-arm64
     os: debian
     root_partition: 1
 
@@ -49,4 +51,3 @@ actions:
     # escape the brackets to ensure that the prompt does not match
     # kernel debug lines which may mention initramfs
     - '\(initramfs\)'
-

@@ -33,6 +33,9 @@ protocols:
 metadata:
   docs-source: actions-deploy-to-ssh
   docs-filename: examples/test-jobs/mustang-ssh-guest.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/debian-arm64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-arm64/3/console
+  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/build-foreign-nfs.sh
 
 actions:
 - deploy:
