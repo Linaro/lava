@@ -20,15 +20,17 @@
 
 import os
 import re
+import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
     JobError,
-    Timeout
-)
+    Timeout,
+    LAVABug)
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_SHELL_PROMPT,
+    DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
@@ -45,6 +47,7 @@ from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
+# pylint: disable=too-many-branches,too-many-statements
 
 
 class BootAction(RetryAction):
@@ -407,6 +410,57 @@ class BootloaderCommandOverlay(Action):
         subs = substitute(self.commands, substitutions)
         self.set_namespace_data(action='bootloader-overlay', label=self.method, key='commands', value=subs)
         self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
+        return connection
+
+
+class OverlayUnpack(Action):
+    """
+    Transfer the overlay.tar.gz to the device using test writer tools
+    Can be used with inline bootloader commands or where the rootfs is
+    not deployed directly by LAVA.
+    Whether the device has booted by tftp or ipxe or something else does
+    not matter for this action - the file will be downloaded from the
+    worker tmp dir using the default apache config.
+    """
+    def __init__(self):
+        super(OverlayUnpack, self).__init__()
+        self.name = 'overlay-unpack'
+        self.description = 'transfer and unpack overlay to persistent rootfs after login'
+        self.summary = 'transfer and unpack overlay'
+        self.url = None
+
+    def cleanup(self, connection):
+        super(OverlayUnpack, self).cleanup(connection)
+        if self.url:
+            os.unlink(self.url)
+
+    def validate(self):
+        super(OverlayUnpack, self).validate()
+        if 'transfer_overlay' not in self.parameters:
+            self.errors = "Unable to identify transfer commands for overlay."
+            return
+        if 'download_command' not in self.parameters['transfer_overlay']:
+            self.errors = "Unable to identify download command for overlay."
+        if 'unpack_command' not in self.parameters['transfer_overlay']:
+            self.errors = "Unable to identify unpack command for overlay."
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(OverlayUnpack, self).run(connection, max_end_time, args)
+        if not connection:
+            raise LAVABug("Cannot transfer overlay, no connection available.")
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
+        overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+        if not overlay_file:
+            raise JobError("No overlay file identified for the transfer.")
+        overlay = os.path.basename(overlay_file).strip()
+        self.url = os.path.join(DISPATCHER_DOWNLOAD_DIR, overlay)
+        shutil.move(overlay_file, self.url)
+        self.logger.debug("Moved %s to %s", overlay_file, self.url)
+        dwnld = self.parameters['transfer_overlay']['download_command']
+        dwnld += " http://%s/tmp/%s" % (ip_addr, overlay)
+        unpack = self.parameters['transfer_overlay']['unpack_command']
+        unpack += ' ' + overlay
+        connection.sendline("rm %s; %s && %s" % (overlay, dwnld, unpack))
         return connection
 
 

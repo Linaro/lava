@@ -32,7 +32,8 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction
+    BootloaderCommandsAction,
+    OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.uefi_menu import (
     UEFIMenuInterrupt,
@@ -106,6 +107,8 @@ class GrubMainAction(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
             if self.has_boot_finished(parameters):

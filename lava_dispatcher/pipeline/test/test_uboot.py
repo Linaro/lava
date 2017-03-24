@@ -230,6 +230,21 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
         self.assertEqual(overlay.commands, ['a list', 'of commands', 'with a {KERNEL_ADDR} substitution'])
 
+    def test_transfer_media(self):
+        """
+        Test adding the overlay to existing rootfs
+        """
+        job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk-inline-commands.yaml')
+        job.validate()
+        description_ref = pipeline_reference('uboot-ramdisk-inline-commands.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        transfer = [action for action in retry.internal_pipeline.actions if action.name == 'overlay-unpack'][0]
+        self.assertIn('transfer_overlay', transfer.parameters)
+        self.assertIn('download_command', transfer.parameters['transfer_overlay'])
+        self.assertIn('unpack_command', transfer.parameters['transfer_overlay'])
+
     def test_download_action(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         for action in job.pipeline.actions:

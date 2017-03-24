@@ -37,7 +37,7 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import AutoLoginAction, OverlayUnpack
 
 # pylint: disable=too-many-instance-attributes,too-many-branches
 
@@ -89,6 +89,8 @@ class BootQEMUImageAction(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 

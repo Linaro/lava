@@ -26,13 +26,13 @@ actions:
     images:
       nfsrootfs:
         image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard,intr'
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
         compression: gz
       kernel:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
         image_arg: -kernel {kernel}
       initrd:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
         image_arg: -initrd {initrd}
 
 - boot:

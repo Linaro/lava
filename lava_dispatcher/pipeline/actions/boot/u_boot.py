@@ -32,7 +32,8 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction
+    BootloaderCommandsAction,
+    OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -129,6 +130,8 @@ class UBootRetry(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):

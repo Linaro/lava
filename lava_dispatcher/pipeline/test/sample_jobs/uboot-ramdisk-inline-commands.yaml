@@ -47,6 +47,9 @@ actions:
      - with a {KERNEL_ADDR} substitution
      parameters:
        shutdown-message: "reboot: Restarting system"
+     transfer_overlay:
+       download_command: wget -S --progress=dot:giga
+       unpack_command: tar -C / -xaf
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
