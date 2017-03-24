@@ -1,3 +1,5 @@
+# mustang devices now use grub-efi, not UBoot
+# This file exists only as an example of the initial UBoot support.
 device_type: mustang
 job_name: mustang singlenode with Debian jessie
 priority: medium
@@ -5,7 +7,7 @@ visibility: public
 
 metadata:
   # please change these fields when modifying this job for your own tests.
-  docs-source: pipeline-admin-example
+  docs-source: migrating-admin-example.html
   docs-filename: mustang-admin-example-job.yaml
 
 timeouts:

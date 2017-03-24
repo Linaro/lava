@@ -192,6 +192,24 @@ fastboot
 
 The ``fastboot`` boot method takes no arguments or parameters.
 
+.. index:: boot method grub
+
+.. _boot_method_grub:
+
+grub
+====
+
+The ``grub`` boot method takes no arguments or parameters.
+
+.. index:: boot method grub-efi
+
+.. _boot_method_grub_efi:
+
+grub-efi
+========
+
+The ``grub-efi`` boot method takes no arguments or parameters.
+
 .. index:: boot method ipxe
 
 .. _boot_method_ipxe:
@@ -292,21 +310,71 @@ in Debian is available at http://tracker.debian.org/qemu
 .. seealso:: :ref:`essential_components` and :ref:`qemu-iso boot method
    <boot_method_qemu_iso>`
 
-.. index:: boot method qemu media
+.. index:: boot method qemu media tmpfs
 
-.. _boot_method_qemu_media:
+.. _boot_method_qemu_media_tmpfs:
 
 media
 -----
 
 When booting a QEMU image file directly, the ``media`` needs to be specified as
-``tmpfs``
+``tmpfs``.
 
 .. code-block:: yaml
 
  - boot:
      method: qemu
      media: tmpfs
+
+.. index:: boot method qemu-nfs
+
+.. _boot_method_qemu_nfs:
+
+qemu-nfs
+========
+
+The ``qemu-nfs`` method is used to boot a downloaded ``kernel`` with a root
+filesystem deployed on the worker. Only certain elements of the command line
+are available for modification using the :term:`job context`. The available
+values can vary depending on local admin configuration. For example, many
+admins restrict the available memory of each QEMU device, so the ``memory``
+option in the job context may be ignored.
+
+The version of ``qemu`` installed on the dispatcher is a choice made by the
+admin. Generally, this will be the same as the version of ``qemu`` available
+from Debian in the same suite as the rest of the packages installed on the
+dispatcher, e.g. ``jessie``. Information on the available versions of ``qemu``
+in Debian is available at http://tracker.debian.org/qemu
+
+QEMU can be used with an NFS using the ``qemu-nfs`` method and the ``nfs``
+media:
+
+.. literalinclude:: examples/test-jobs/qemu-nfs.yaml
+    :language: yaml
+    :lines: 49-54
+
+.. seealso:: :ref:`boot method qemu <boot_method_qemu>`.
+
+When using ``qemu-nfs``, the hostname element of the prompt will vary according
+to the worker running QEMU:
+
+.. literalinclude:: examples/test-jobs/qemu-nfs.yaml
+    :language: yaml
+    :lines: 58-59
+
+.. index:: boot method qemu media nfs
+
+.. _boot_method_qemu_media_nfs:
+
+media
+-----
+
+When booting a QEMU image using NFS, the ``media`` needs to be specified as
+``nfs``.
+
+.. literalinclude:: examples/test-jobs/qemu-nfs.yaml
+    :language: yaml
+    :lines: 49-54
 
 .. index:: boot method qemu-iso
 

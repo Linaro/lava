@@ -66,13 +66,17 @@ declare the IPv4 address of the host machine.
 
 The secondary connection support picks up the IP address in the pipeline
 actions, so the id of the message needs to be declared to the relevant action.
-The test shell sends::
+The test shell sends:
 
- lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :lines: 135
 
-Then it tells the secondary connections to start::
+Then it tells the secondary connections to start:
 
- lava-send lava-start
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :lines: 136
 
 This tells the dispatcher for the ``guest`` role to start the deployment. The
 test definition files for secondary connection jobs are copied onto the host
@@ -86,18 +90,9 @@ their own tests before proceeding to run a final test shell of smoke tests.
 
 The receiving action is declared as:
 
-.. code-block:: yaml
-
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-wait
-            # messageID matches hostID
-            messageID: ipv4
-            message:
-              # the key of the message matches value of the host_key
-              # the value of the message gets substituted
-              ipaddr: $ipaddr
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :lines: 65-74
 
 .. note:: the messageID specified to ``lava-send`` (*ipv4*), is also the
    messageID specified to the ``prepare-scp-overlay`` action within the
@@ -114,15 +109,9 @@ Finally, the jobs with the ``guest`` role are *booted* - this establishes the
 connection between the dispatcher and the host device using ssh. Once logged
 in, each job completes the boot stage and starts the test shell for that job.
 
-.. code-block:: yaml
-
-    - boot:
-        method: ssh
-        role: [guest]
-        prompts: ['root@linaro-nano:']
-        parameters:
-          hostID: ipv4  # messageID
-          host_key: ipaddr  # message key
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :lines: 95-103
 
 Notes
 -----
@@ -148,130 +137,12 @@ Notes
   correctly, resulting in the secondary connection jobs being incomplete. A
   final test definition of smoke tests or other quick checks could be useful.
 
-https://git.linaro.org/lava-team/refactoring.git/tree/mustang-ssh-guest.yaml
+`View or Download mustang-ssh-guest.yaml <examples/test-jobs/mustang-ssh-guest.yaml>`_
 
-.. code-block:: yaml
-
-    actions:
-    - deploy:
-        role: [host]
-        authorize: ssh
-        dtb:
-          url: http://images-internal/mustang/mustang.dtb_1.11
-        kernel:
-          url: http://images-internal/mustang/uImage_1.11
-          type: uimage
-        nfsrootfs:
-          url: https://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-          compression: gz
-        os: debian
-        timeout: {minutes: 5}
-        to: tftp
-    - deploy:
-        role: [guest]
-        connection: ssh
-        os: debian
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-wait
-            # messageID matches hostID
-            messageID: ipv4
-            message:
-              # the key of the message matches value of the host_key
-              # the value of the message gets substituted
-              ipaddr: $ipaddr
-            timeout:  # delay_start timeout
-              minutes: 5
-        timeout: {seconds: 30}
-        to: ssh
-    - boot:
-        role: [host]
-        auto_login: {login_prompt: 'login:', username: root}
-        commands: nfs
-        prompts: ['root@linaro-nano:']
-        method: u-boot
-        timeout: {minutes: 5}
-    - boot:
-        role: [guest]
-        method: ssh
-        prompts: ['root@linaro-nano:']
-        parameters:
-          hostID: ipv4  # messageID
-          host_key: ipaddr  # message key
-        timeout: {minutes: 3}
-    - test:
-        role: [host]
-        definitions:
-        - from: inline
-          name: ssh-inline
-          path: inline/ssh-install.yaml
-          repository:
-            install:
-              deps: [openssh-server, ntpdate]
-            metadata:
-              description: install step
-              format: Lava-Test Test Definition 1.0
-              name: install-ssh
-              os: [debian]
-              scope: [functional]
-            run:
-              steps: [ntpdate-debian, lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0), lava-send lava_start]
-        # insert a test definition here which starts the VM(s)
-        - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}
-        - from: inline
-          name: completion
-          path: inline/client-completion.yaml
-          repository:
-            metadata:
-              description: synchronisation once clients are complete
-              format: Lava-Test Test Definition 1.0
-              name: client-completion
-              os: [debian]
-            run:
-              steps: [lava-sync clients]
-        name: client-completion
-        timeout: {minutes: 30}
-    - test:
-        role: [guest]
-        definitions:
-        - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}
-        - from: inline
-          name: ssh-client
-          path: inline/ssh-client.yaml
-          repository:
-            metadata:
-              description: client complete
-              format: Lava-Test Test Definition 1.0
-              name: client-ssh
-              os: [debian]
-              scope: [functional]
-            run:
-              steps: [df -h, free, lava-sync clients]
-        name: kvm-basic-singlenode
-        timeout: {minutes: 5}
-    job_name: mustang-guest-ssh
-    priority: medium
-    visibility: public
-    protocols:
-      lava-multinode:
-        roles:
-          guest:
-            connection: ssh
-            count: 3
-            expect_role: host
-            host_role: host
-            request: lava-start
-            timeout: {minutes: 15}
-          host:
-            count: 1
-            device_type: mustang
-            timeout: {minutes: 10}
-    timeouts:
-      action: {minutes: 3}
-      job: {minutes: 30}
-      connection:
-        minutes: 3
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :linenos:
+    :emphasize-lines: 22-24, 67-74, 101-103, 137, 171
 
 .. _running_inside_vm:
 

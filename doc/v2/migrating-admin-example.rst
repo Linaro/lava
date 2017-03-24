@@ -34,6 +34,11 @@ The objective is to migrate the configuration of the existing device such that
 exactly the same commands are sent to the device as in the current dispatcher
 jobs, with the benefit of pipeline validation, results and metadata.
 
+.. note:: The specific example follows a real conversion but the hardware
+   concerned has since changed to a different deployment method. The examples
+   here worked when the example was written but will not work on current
+   deployments of the hardware concerned.
+
 .. _writing_device_config_yaml:
 
 Writing a device configuration in YAML

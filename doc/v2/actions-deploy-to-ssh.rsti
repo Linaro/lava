@@ -26,8 +26,6 @@ connection
 protocols
 =========
 
-
-.. include:: examples/test-jobs/mustang-ssh-guest.yaml
-   :code: yaml
-   :start-after: DEPLOY_SSH_BLOCK
-   :end-before: # BOOT_HOST_BLOCK
+.. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
+    :language: yaml
+    :lines: 60-79
