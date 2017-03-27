@@ -81,7 +81,7 @@ and a small number of users. This layout does not scale well. Adding too many
 devices or users to this setup can lead to the highest overall maintenance
 burden, per test job, of all the layouts here.
 
-.. seealso:: :ref:`scaling`
+.. seealso:: :ref:`lab_scaling`
 
 In all of these example diagrams, **Infrastructure** represents the extra
 equipment that might be used alongside the LAVA master and workers, such as
