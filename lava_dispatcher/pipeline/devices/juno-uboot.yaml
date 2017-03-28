@@ -27,6 +27,14 @@ parameters:
         uuid: "usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0"
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     parameters:

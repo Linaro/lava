@@ -38,10 +38,6 @@ from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import (
-    SHUTDOWN_MESSAGE,
-    BOOT_MESSAGE,
-)
 
 
 class X86Factory(Factory):  # pylint: disable=too-few-public-methods
@@ -111,7 +107,8 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('ipxe', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['ipxe']['parameters']
-        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        boot_message = params.get('boot_message',
+                                  job.device.get_constant('boot-message'))
         self.assertIsNotNone(boot_message)
         bootloader_action = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         bootloader_retry = [action for action in bootloader_action.internal_pipeline.actions if action.name == 'bootloader-retry'][0]
@@ -124,7 +121,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                 self.assertEqual('ipxe', action.parameters['method'])
                 self.assertEqual(
                     'reboot: Restarting system',
-                    action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+                    action.parameters.get('parameters', {}).get('shutdown-message', job.device.get_constant('shutdown-message'))
                 )
             if isinstance(action, TftpAction):
                 self.assertIn('ramdisk', action.parameters)

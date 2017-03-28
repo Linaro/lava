@@ -130,6 +130,13 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
             device.power_state = ''
         self.assertEqual(device.power_command, '')
 
+    def test_device_constants(self):
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        self.assertIn('constants', device)
+        self.assertEqual(device.get_constant('boot-message'), "Booting Linux")
+        self.assertRaises(ConfigurationError,
+                          device.get_constant, ('non-existing-const'))
+
 
 class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-methods
     """

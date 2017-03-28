@@ -7,6 +7,14 @@ board_id: '024002015F511E4CA2AFE3F4'
 usb_vendor_id: '0d28'
 usb_product_id: '0204'
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     methods:

@@ -27,6 +27,14 @@ commands:
 # requires mainline u-boot, e.g. from Debian:
 # https://wiki.debian.org/InstallingDebianOn/Allwinner#U-boot_versions_for_sunxi-based_systems
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     parameters:

@@ -24,7 +24,6 @@ from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
@@ -159,8 +158,10 @@ class ConnectSsh(Action):
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
         connection = super(ConnectSsh, self).run(connection, max_end_time, args)
-        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
-        connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+        connection.sendline('export PS1="%s"' % self.job.device.get_constant(
+            'default-shell-prompt'))
+        connection.prompt_str = [self.job.device.get_constant(
+            'default-shell-prompt')]
         connection.connected = True
         self.wait(connection)
         res = 'failed' if self.errors else 'success'

@@ -50,7 +50,6 @@ from lava_dispatcher.pipeline.connection import (
 )
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
-    DEFAULT_SHELL_PROMPT,
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
@@ -233,7 +232,8 @@ class TestShellAction(TestAction):
         self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
 
         if not connection.prompt_str:
-            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+            connection.prompt_str = [self.job.device.get_constant(
+                'default-shell-prompt')]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         connection.timeout = self.connection_timeout

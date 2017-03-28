@@ -41,10 +41,6 @@ from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import (
-    SHUTDOWN_MESSAGE,
-    BOOT_MESSAGE,
-)
 
 
 class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -122,7 +118,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         params = job.device['actions']['deploy']['parameters']
         self.assertIn('mkimage_arch', params)
-        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        boot_message = params.get('boot_message',
+                                  job.device.get_constant('boot-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
@@ -131,7 +128,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 self.assertEqual('u-boot', action.parameters['method'])
                 self.assertEqual(
                     'reboot: Restarting system',
-                    action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+                    action.parameters.get('parameters', {}).get('shutdown-message', job.device.get_constant('shutdown-message'))
                 )
             if isinstance(action, TftpAction):
                 self.assertIn('ramdisk', action.parameters)

@@ -47,7 +47,6 @@ from lava_dispatcher.pipeline.utils.compression import untar_file
 from lava_dispatcher.pipeline.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
-    HTTP_DOWNLOAD_TIMEOUT,
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
 
@@ -420,14 +419,13 @@ class HttpDownloadAction(DownloadHandler):
         res = None
         try:
             self.logger.debug("Validating that %s exists", self.url.geturl())
-            res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
+            res = requests.head(self.url.geturl(), allow_redirects=True)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 # try using (the slower) get for services with broken redirect support
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
                 res = requests.get(
-                    self.url.geturl(), allow_redirects=True, stream=True,
-                    timeout=HTTP_DOWNLOAD_TIMEOUT)
+                    self.url.geturl(), allow_redirects=True, stream=True)
                 if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                     self.errors = "Resources not available at '%s'" % (self.url.geturl())
 
@@ -445,7 +443,8 @@ class HttpDownloadAction(DownloadHandler):
     def reader(self):
         res = None
         try:
-            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
+            res = requests.get(self.url.geturl(), allow_redirects=True,
+                               stream=True)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.

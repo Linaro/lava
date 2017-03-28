@@ -40,10 +40,6 @@ from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
-from lava_dispatcher.pipeline.utils.constants import (
-    UBOOT_AUTOBOOT_PROMPT,
-    UBOOT_INTERRUPT_CHARACTER,
-)
 
 
 def uboot_accepts(device, parameters):
@@ -186,9 +182,9 @@ class UBootInterrupt(Action):
         connection = super(UBootInterrupt, self).run(connection, max_end_time, args)
         device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', UBOOT_AUTOBOOT_PROMPT)
+        interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', self.job.device.get_constant('uboot-autoboot-prompt'))
         # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
-        interrupt_char = device_methods['u-boot']['parameters'].get('interrupt_char', UBOOT_INTERRUPT_CHARACTER)
+        interrupt_char = device_methods['u-boot']['parameters'].get('interrupt_char', self.job.device.get_constant('uboot-interrupt-character'))
         # vendor u-boot builds may require one or more control characters
         interrupt_control_chars = device_methods['u-boot']['parameters'].get('interrupt_ctrl_list', [])
         self.logger.debug("Changing prompt to '%s'", interrupt_prompt)

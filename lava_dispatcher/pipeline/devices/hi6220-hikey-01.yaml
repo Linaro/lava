@@ -13,6 +13,14 @@ flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
                   'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
                   'vendor', 'system', 'cache', 'userdata', ]
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     methods:

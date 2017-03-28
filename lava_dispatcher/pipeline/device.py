@@ -103,6 +103,13 @@ class PipelineDevice(dict):
             raise ConfigurationError("Attempting to set an invalid power state")
         self['power_state'] = state
 
+    def get_constant(self, const):
+        if 'constants' not in self:
+            raise ConfigurationError("constants section not present in the device config.")
+        if const not in self['constants']:
+            raise ConfigurationError("Constant %s does not exist in the device config 'constants' section." % const)
+        return self['constants'][const]
+
 
 class NewDevice(PipelineDevice):
     """
