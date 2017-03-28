@@ -193,10 +193,21 @@ each worker.
 
 Current support includes:
 
+* Sets the dispatcher_ip, if the dispatcher has many IPs
+
 .. code-block:: yaml
 
  # Only set this key, if this dispatcher has many IPs
  #dispatcher_ip: <this-dispatcher-ip>
+
+* Sets the container creation path.
+
+.. code-block:: yaml
+
+ # Set this key, if you want to change the default lxc creation path
+ # No trailing /
+ # The default path is /var/lib/lxc
+ #lxc_path: <custom-path>
 
 .. seealso:: :ref:`keep_dispatcher_dumb`
 

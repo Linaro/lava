@@ -66,6 +66,30 @@ Example 4 - A device and optional additional hardware ::
 .. include:: examples/device-configurations/hi6220-hikey.yaml
    :code: yaml
 
+Configuration: Persistent Containers
+------------------------------------
+A test job can request a persistent container which will not get destroyed after
+the test job is complete. This allows the container to be reused for subsequent test
+jobs. This is useful when users want to setup some software on a container and
+use it for subsequent test jobs without re-creating the setup every time, which
+may prove time consuming.
+
+In such a case the admins can choose to switch the container creation path from
+the default i.e., `/var/lib/lxc` to some other path, which could be a larger
+partition mounted on the dispatcher to give more space for such persistent
+container users. To set a different container creation path on a per dispatcher
+basis `lxc_path` key is used in the dispatcher configuration as described in
+:ref:`dispatcher_configuration`
+
+Once the `lxc_path` key is set in dispatch configuration, both persistent and
+non-persistent containers will get created in this path.
+
+.. note:: LAVA does not have a mechanism to limit the amount of disk space such
+          persistent containers could use. Hence, administrators should setup
+          some kind of external monitoring in order to watch the size of these
+          persistent containers and free space whenever required or destroy
+          unused persistent containers.
+
 Configuration: Unprivileged containers as root
 ----------------------------------------------
 
@@ -89,7 +113,7 @@ container.
 .. note:: To apply configurations system wide for all LXC devices attached to
   the dispatcher use ``/etc/lxc/default.conf`` file.
 
-Other resources
+  Other resources
 ---------------
 For advanced LXC configurations and usage refer the following links:
 

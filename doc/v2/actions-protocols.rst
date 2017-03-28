@@ -374,6 +374,7 @@ Protocol elements
       mirror: http://ftp.us.debian.org/debian/
       security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
       verbose: true
+      persist: true
 
 The characteristics of the LXC container is defined by the following data
 elements that are accepted by the LXC protocol:
@@ -422,3 +423,8 @@ elements that are accepted by the LXC protocol:
 * **verbose** *(optional)* - Controls the output produced during LXC
   creation. By default the value is `False`. When `verbose` is set to `True`
   the LXC creation command produces detailed output.
+
+* **persist** *(optional)* - Persists the container if set to `true`. When the
+  same `name` is used again, the persistent container from the previous test job
+  will be used, instead of creating a fresh container. By default the value is
+  `false`.
