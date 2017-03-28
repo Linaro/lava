@@ -9,7 +9,7 @@ A job defines what software should be deployed on the ``device under test``
 (DUT) and what actions should be performed there. Jobs are defined in *YAML*
 files.
 
-.. index:: first job definition
+.. index:: first job definition, job definition
 
 .. _first_job_definition:
 
