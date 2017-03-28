@@ -230,8 +230,7 @@ match.
 Avoid using URLs which include shortcuts like ``latest`` when providing
 the checksum. Specify the full URL to ensure consistency between tests.
 
-.. seealso:: :ref:`standard_kernel_initramfs_rootfs` and
-   :ref:`make_tests_verbose`
+.. seealso:: :ref:`make_tests_verbose`
 
 Using LAVA Test Shell
 =====================

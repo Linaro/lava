@@ -37,6 +37,50 @@ covering a wide range of skills.
 * **Triage**
 * **Python/Django knowledge** - for debugging
 
+Debian system administration
+****************************
+
+At a simple level, LAVA requires a variety of Debian system administration
+tasks, including:
+
+* installing, upgrading and maintaining the installed packages and apt sources
+
+* configuring services outside LAVA, including:
+
+  * apache - LAVA provides an example apache configuration but many instances
+    will need to adapt this for their own hosting requirements.
+
+  * DHCP - Most :term:`devices <DUT>` will need networking support using DHCP.
+
+  * configuration management - LAVA has a variety of configuration files and
+    a number of other services and tools will also need to be configured, for
+    example serial console services, TFTP services and authentication services.
+
+    .. seealso:: :ref:`admin_backups`
+
+  * email - LAVA can use email for notifications, if test writers include
+    appropriate requests in the test job submissions. To send email, LAVA
+    relies on the basic Django email support using a standard sendmail
+    interface. Only the master needs to be configured to send email,
+    notifications from workers are handled via the master.
+
+Infrastructure
+**************
+
+LAVA instances will need some level of infrastructure, including:
+
+* :abbr:`UPS (Uninterruptible Power Supply)`
+
+* network switches
+
+* remote power control hardware
+
+* master and worker hardware
+
+Many instances will also require specialised hardware to assist with the
+automation of specific :term:`devices <DUT>`, including switchable USB hubs or
+specialised relay boards.
+
 .. _simple_admin_small:
 
 Start small
