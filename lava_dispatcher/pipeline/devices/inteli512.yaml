@@ -1,0 +1,67 @@
+
+parameters:
+  pass:
+device_type: intel-d1521
+
+commands:
+  connect: ssh
+  power_off: /homes/drio/ELTF/scripturiDiverse/lava/inteld1521_wrapper.sh off
+  power_on: /homes/drio/ELTF/scripturiDiverse/lava/inteld1521_wrapper.sh on
+
+actions:
+  deploy:
+    methods:
+      ssh:
+  boot:
+    methods:
+      ssh:
+    connections:
+      ssh:
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download_retry:
+      minutes: 5
+    http_download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power_off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30

@@ -83,6 +83,9 @@ class ScpOverlay(DeployAction):
         self.items = [
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
+        if not self.test_has_shell:
+            self.errors = "Scp overlay needs a test action."
+            return
         lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_base % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)

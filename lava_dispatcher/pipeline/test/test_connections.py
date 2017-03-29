@@ -190,6 +190,15 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
                     if 'boot' in boot and 'schroot' in boot['boot']][0]
         self.assertEqual(boot_act['schroot'], schroot.parameters['schroot'])
 
+    def test_primary_ssh(self):
+        factory = ConnectionFactory()
+        job = factory.create_ssh_job('sample_jobs/primary-ssh.yaml', mkdtemp())
+        job.validate()
+        overlay = [action for action in job.pipeline.actions if action.name == 'scp-overlay'][0]
+        self.assertIsNotNone(overlay.parameters['deployment_data'])
+        tar_flags = overlay.parameters['deployment_data']['tar_flags'] if 'tar_flags' in overlay.parameters['deployment_data'].keys() else ''
+        self.assertIsNotNone(tar_flags)
+
     def test_guest_ssh(self):  # pylint: disable=too-many-locals,too-many-statements
         self.assertIsNotNone(self.guest_job)
         description_ref = pipeline_reference('bbb-ssh-guest.yaml')
