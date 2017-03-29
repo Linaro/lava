@@ -111,9 +111,9 @@
           <ul class="dropdown-menu">
             {% for subjob in job.sub_jobs_list %}
             {% if subjob.id == job.id %}
-            <li class="disabled"><a href=".">#{{ subjob.sub_id }} (self)</a></li>
+            <li class="disabled"><a href=".">#{{ subjob.sub_id }} ({{ subjob.device_role }})</a></li>
             {% else %}
-            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }}</a></li>
+            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_status_display }}</span></a></li>
             {% endif %}
             {% endfor %}
           </ul>
@@ -643,6 +643,10 @@
           $('#started').html(data['started']);
           $('#jobstatus').html(data['job_status']);
           $('#duration').html(data['duration']);
+          for(var i = 0; i < data['subjobs'].length; i++) {
+            var d = data['subjobs'][i];
+            $('#subjob_' + d[0]).html(d[1]);
+          }
           if ('X-JobStatus' in data) {
             $('#cancel').css('display', 'none');
             poll_status = 0;

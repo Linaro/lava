@@ -1679,7 +1679,8 @@ def job_status(request, pk):
     response_dict = {'actual_device': "<i>...</i>",
                      'duration': "<i>...</i>",
                      'job_status': job.get_status_display(),
-                     'started': "<i>...</i>"}
+                     'started': "<i>...</i>",
+                     'subjobs': []}
 
     if job.actual_device:
         url = job.actual_device.get_absolute_url()
@@ -1698,6 +1699,10 @@ def job_status(request, pk):
         response_dict['job_status'] = '<span class="label label-success">Complete</span>'
     else:
         response_dict['job_status'] = "<span class=\"label label-danger\">%s</span>" % job.get_status_display()
+
+    if job.is_multinode:
+        for subjob in job.sub_jobs_list:
+            response_dict['subjobs'].append((subjob.id, subjob.get_status_display()))
 
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response_dict['X-JobStatus'] = '1'
