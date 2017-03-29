@@ -160,8 +160,9 @@ Summary of the example job timeouts
 
 * No one action (deploy, boot or test) will take longer than **5 minutes** or
   that action will timeout. Each operation within the action (the action class)
-  will pass on the remaining time to the next operation. This is shown in the
-  logs as a decreasing ``timeout`` value with each ``start`` operation:
+  will pass on the remaining time to the next operation. Enable the debug logs
+  at the top of the log page to see this as a decreasing ``timeout`` value with
+  each ``start`` operation:
 
   .. code-block:: none
 
