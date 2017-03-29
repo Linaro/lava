@@ -565,6 +565,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
             if exc.returncode != 0 and allow_fail:
                 self.logger.info(msg)
+                log = exc.output.strip()
             else:
                 for error in errors:
                     self.errors = error

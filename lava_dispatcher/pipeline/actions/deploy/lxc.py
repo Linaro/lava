@@ -202,12 +202,7 @@ class LxcCreateAction(DeployAction):
                                     self.lxc_data['lxc_release'], '--arch',
                                     self.lxc_data['lxc_arch']]
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
-        # FIXME: We should check for 'exists' in the command output to check
-        #        if lxc-create returns a 'Container already exists', but
-        #        unfortunately, when allow_silent and allow_fail is set as
-        #        'True' the command on failure returns a None instead of
-        #        command output which needs to be fixed in self.run_command()
-        if cmd_out and self.lxc_data['lxc_persist']:
+        if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
             self.logger.debug('Persistant container exists')
         elif not cmd_out:
             raise JobError("Unable to create lxc container")
