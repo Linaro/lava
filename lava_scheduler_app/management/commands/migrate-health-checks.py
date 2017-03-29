@@ -31,8 +31,15 @@ import errno
 import os
 
 
+def is_device_type_retired(dt):
+    """
+    Return True if all devices of this type are RETIRED.
+    """
+    return all([device.status == Device.RETIRED for device in dt.device_set.all()])
+
+
 def is_device_type_exclusive(dt):
-    return all([device.is_exclusive for device in dt.device_set.all()])
+    return all([device.is_exclusive or device.status == Device.RETIRED for device in dt.device_set.all()])
 
 
 class Command(BaseCommand):
@@ -64,7 +71,8 @@ health check will be used for each variant."""
 
         dt_skipped = []
         for dt in DeviceType.objects.order_by('name'):
-            if not dt.health_check_job:
+
+            if not dt.health_check_job or not dt.display or is_device_type_retired(dt):
                 dt_skipped.append((dt.name, False))
                 continue
 
@@ -81,11 +89,11 @@ health check will be used for each variant."""
 
             # Remove the health check from the data base (if needed)
             if options["clean"]:
-                if is_device_type_exclusive(dt):
+                if is_device_type_exclusive(dt) or is_device_type_retired(dt) or not dt.display:
                     dt.health_check_job = None
                     dt.save(update_fields=["health_check_job"])
                 else:
-                    self.stderr.write("-> Not cleaning %s, some devices are not exclusive" % dt.name)
+                    self.stderr.write("-> Not cleaning %s, some devices still support V1" % dt.name)
 
         self.stdout.write("Device types skipped:")
         for (dt, has_health_check) in dt_skipped:
