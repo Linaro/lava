@@ -217,6 +217,11 @@ class DeviceAdmin(admin.ModelAdmin):
     has_health_check.boolean = True
     has_health_check.short_description = "Health check"
 
+    def valid_device(self, obj):
+        return bool(obj.is_valid())
+    valid_device.boolean = True
+    valid_device.short_description = "V2 configuration"
+
     def exclusive_device(self, obj):
         return obj.is_exclusive
     exclusive_device.boolean = True
@@ -237,7 +242,7 @@ class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ('device_dictionary_yaml', 'device_dictionary_jinja')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'status', 'health_status', 'has_health_check', 'is_public',
-                    'is_pipeline', 'exclusive_device')
+                    'is_pipeline', 'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
 

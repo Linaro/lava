@@ -244,6 +244,10 @@ def check_device_and_job(job, device):
         logger.warning("Refusing to reserve %s for %s - current job is %s",
                        device, job, bad_job)
         return None
+    if job.is_pipeline and device.is_pipeline and not device.is_valid:
+        # check for invalid templates from local admin changes
+        logger.warning("[%d] Refusing to reserve for broken V2 device %s", job.id, device.hostname)
+        return None
     return device
 
 

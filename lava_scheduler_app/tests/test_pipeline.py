@@ -172,6 +172,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         job_ctx = data.get('context', {})
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         validate_device(device_config)
+        self.assertTrue(device.is_valid(system=False))
         self.assertIn('tags', data)
         self.assertEqual(type(data['tags']), list)
         self.assertIn('usb', data['tags'])
@@ -386,6 +387,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        self.assertTrue(device.is_valid(system=False))
         self.assertEqual(
             device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
             'qemu-system-x86_64'
@@ -420,6 +422,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'base_ip_args': 'ip=dhcp'
         }
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        self.assertTrue(device.is_valid(system=False))
         self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
         self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
         menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
@@ -534,6 +537,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
             self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
 
+        self.assertTrue(device.is_valid(system=False))
         device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
@@ -577,6 +581,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         }
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         self.assertIsNotNone(device_config)
+        self.assertTrue(device.is_valid(system=False))
         devicetype_blocks = []
         devicedict_blocks = []
         allowed = []
@@ -884,6 +889,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
             self.fail('[%d] device-dictionary error: %s' % (host_job.id, msg))
 
+        self.assertTrue(device.is_valid(system=False))
         device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
@@ -1123,6 +1129,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     device_object.target = device.hostname
                 device_object['hostname'] = device.hostname
 
+            self.assertTrue(device.is_valid(system=False))
             validate_list = job.sub_jobs_list if job.is_multinode else [job]
             for check_job in validate_list:
                 parser_device = None if job.dynamic_connection else device_object
@@ -1258,6 +1265,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         job_ctx = client_submission.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_device_configuration(job_ctx)  # raw dict
+        self.assertTrue(device.is_valid(system=False))
         parser_device = PipelineDevice(device_config, device.hostname)
         parser = JobParser()
         pipeline_job = parser.parse(
@@ -1355,6 +1363,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 if 'target' not in device_object:
                     device_object.target = device.hostname
                 device_object['hostname'] = device.hostname
+                self.assertTrue(device.is_valid(system=False))
 
             self.assertNotEqual(job.device_role, 'Error')
             parser_device = None if job.dynamic_connection else device_object

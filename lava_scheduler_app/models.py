@@ -38,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
-from django.utils import timezone
+
 
 from django_restricted_resource.models import (
     RestrictedResource,
@@ -49,16 +49,16 @@ from lava_scheduler_app.schema import validate_submission, SubmissionException
 from dashboard_app.models import (
     Bundle,
     BundleStream,
-    NamedAttribute,
     get_domain
 )
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
-
+from lava_scheduler_app.schema import validate_device
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
+# pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
 
 # Make the open function accept encodings in python < 3.x
 if sys.version_info[0] < 3:
@@ -798,6 +798,16 @@ class Device(RestrictedResource):
         if user.username == "lava-health":
             return True
         return self.is_owned_by(user)
+
+    def is_valid(self, system=True):
+        if not self.is_pipeline:
+            return False  # V1 config cannot be checked
+        rendered = self.load_device_configuration(system=system)
+        try:
+            validate_device(rendered)
+        except SubmissionException:
+            return False
+        return True
 
     def log_admin_entry(self, user, reason):
         device_ct = ContentType.objects.get_for_model(Device)
