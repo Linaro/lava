@@ -113,8 +113,9 @@ container.
 .. note:: To apply configurations system wide for all LXC devices attached to
   the dispatcher use ``/etc/lxc/default.conf`` file.
 
-  Other resources
+Other resources
 ---------------
+
 For advanced LXC configurations and usage refer the following links:
 
 * https://wiki.debian.org/LXC
