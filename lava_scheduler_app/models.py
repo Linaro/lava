@@ -342,6 +342,10 @@ class DeviceType(models.Model):
         default=24
     )
 
+    disable_health_check = models.BooleanField(
+        default=False,
+        verbose_name="Disable health check for devices of this type")
+
     HEALTH_PER_HOUR = 0
     HEALTH_PER_JOB = 1
     HEALTH_DENOMINATOR = (

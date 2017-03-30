@@ -509,8 +509,8 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = DeviceType
         exclude = [
-            'display', 'health_check_job', 'owners_only', 'architecture',
-            'health_denominator', 'health_frequency',
+            'display', 'disable_health_check', 'health_check_job', 'owners_only',
+            'architecture', 'health_denominator', 'health_frequency',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
         searches = {
@@ -847,6 +847,6 @@ class RunningTable(LavaTable):
             'name', 'reserved', 'running', 'jobs'
         ]
         exclude = [
-            'display', 'health_check_job', 'owners_only', 'architecture',
+            'display', 'disable_health_check', 'health_check_job', 'owners_only', 'architecture',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]

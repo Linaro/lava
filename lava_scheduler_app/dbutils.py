@@ -111,7 +111,10 @@ def submit_health_check_jobs():
         run_health_check = False
         if device.device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             time_denominator = False
-        if not device.get_health_check():
+
+        if device.device_type.disable_health_check:
+            run_health_check = False
+        elif not device.get_health_check():
             run_health_check = False
         elif device.health_status == Device.HEALTH_UNKNOWN:
             run_health_check = True

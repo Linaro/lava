@@ -34,6 +34,9 @@ used by the device. Health checks are run as the lava-health user.
    information, see
    https://lists.linaro.org/pipermail/lava-announce/2017-March/000027.html
 
+.. note:: Admins can temporarily disable health checks for all devices of a
+   given type in the device-type admin page.
+
 .. _yaml_health_checks:
 
 Pipeline YAML health checks

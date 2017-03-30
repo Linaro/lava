@@ -810,7 +810,9 @@ def device_type_detail(request, pk):
     desc = dt.description if dt.description else ''
     aliases = ', '.join([alias.name for alias in dt.aliases.all()])
 
-    if dt.health_denominator == DeviceType.HEALTH_PER_JOB:
+    if dt.disable_health_check:
+        health_freq_str = "Disabled"
+    elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
@@ -976,6 +978,7 @@ def health_job_list(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
+                not device.device_type.disable_health_check and
                 device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance':
@@ -2443,6 +2446,7 @@ def device_detail(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
+                not device.device_type.disable_health_check and
                 device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
