@@ -80,7 +80,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row" id="top">
   <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>Description</dt>
@@ -270,6 +270,10 @@
       <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
       {% endif %}
     </div>
+    <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
+    {% if job.status >= job.RUNNING %}
+    <p><a href="/static/docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
+    {% endif %}
   </div>
 
   <div class="tab-pane" id="Description">
