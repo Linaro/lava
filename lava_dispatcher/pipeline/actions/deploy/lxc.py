@@ -202,8 +202,10 @@ class LxcCreateAction(DeployAction):
                                     self.lxc_data['lxc_release'], '--arch',
                                     self.lxc_data['lxc_arch']]
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
-        if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
-            self.logger.debug('Persistant container exists')
+        if isinstance(cmd_out, str):
+            if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
+                self.logger.debug('Persistant container exists')
+                self.results = {'status': self.lxc_data['lxc_name']}
         elif not cmd_out:
             raise JobError("Unable to create lxc container")
         else:
