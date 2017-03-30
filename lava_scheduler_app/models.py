@@ -3020,7 +3020,6 @@ class Notification(models.Model):
     )
 
     job_status_trigger = models.CharField(
-        validators=[validate_comma_separated_integer_list],
         choices=TestJob.STATUS_CHOICES,
         max_length=30,
         default=TestJob.COMPLETE,
