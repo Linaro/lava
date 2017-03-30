@@ -405,11 +405,11 @@ class BootloaderCommandOverlay(Action):
             write_bootscript(substitute(self.commands, substitutions), bootscript)
             bootscript_commands = ['dhcp net0', "chain %s" % bootscripturi]
             self.set_namespace_data(action=self.name, label=self.method, key='commands', value=bootscript_commands)
-            self.logger.debug("Parsed boot commands: %s", '; '.join(bootscript_commands))
+            self.logger.info("Parsed boot commands: %s", '; '.join(bootscript_commands))
             return connection
         subs = substitute(self.commands, substitutions)
         self.set_namespace_data(action='bootloader-overlay', label=self.method, key='commands', value=subs)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
+        self.logger.info("Parsed boot commands: %s", '; '.join(subs))
         return connection
 
 
