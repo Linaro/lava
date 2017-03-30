@@ -172,6 +172,7 @@ BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
 BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework")
 BRANDING_SOURCE_URL = distro_settings.get_setting("BRANDING_SOURCE_URL", "https://git.linaro.org/gitweb?s=lava%2Flava")
+BRANDING_MESSAGE = distro_settings.get_setting("BRANDING_MESSAGE", '')
 
 HIDE_V1_DOCS = distro_settings.get_setting("HIDE_V1_DOCS", False)
 HIDE_V2_DOCS = distro_settings.get_setting("HIDE_V2_DOCS", False)

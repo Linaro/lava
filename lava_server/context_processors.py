@@ -45,6 +45,7 @@ def lava(request):
             'branding_width': settings.BRANDING_WIDTH,
             'branding_bug_url': settings.BRANDING_BUG_URL,
             'branding_source_url': settings.BRANDING_SOURCE_URL,
+            'branding_message': settings.BRANDING_MESSAGE,
         }
     }
 

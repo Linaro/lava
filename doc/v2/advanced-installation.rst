@@ -249,6 +249,12 @@ syntax)::
    "BRANDING_BUG_URL": "http://bugs.example.org/lava",
    "BRANDING_SOURCE_URL": "https://github.com/example/lava-server",
 
+Admins can include a sentence describing the purpose of the instance to give more
+detail than is available via the instance name. This will be added in a paragraph
+on the home page under "About the {{instance_name}} LAVA instance"::
+
+   "BRANDING_MESSAGE": "Example site for local testing",
+
 If the icon is available under the django static files location, this location
 can be specified instead of a URL::
 
