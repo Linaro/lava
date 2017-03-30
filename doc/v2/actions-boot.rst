@@ -447,6 +447,51 @@ When booting an installer using QEMU, the ``media`` needs to be specified as
      method: qemu-iso
      media: img
 
+.. index:: transfer overlay
+
+.. _boot_transfer_overlay:
+
+transfer_overlay
+================
+
+An overlay is a tarball of scripts which run the LAVA Test Shell for
+the test job. The tarball also includes the git checkouts of the
+repository specified in the test job submission and the LAVA helper
+scripts. Normally, this overlay is integrated into the test job
+automatically. In some situations, for example when using a command
+list to specify an alternative rootfs, it is necessary to transfer the
+overlay from the worker to the device using commands within the booted
+system prior to starting to run the test shell.
+
+.. note:: The situations where ``transfer_overlay`` is useful tend to
+   also require restricting the test job to specific devices of a
+   particular device type. This needs to be arranged with the lab
+   admins who can create suitable :term:`device tags <device tag>`
+   which will need to be specified in all test job definitions.
+
+.. seealso:: :ref:`secondary_media` which is more flexible but slower.
+
+The overlay is transferred before any test shell operations can occur,
+so the method of transferring and then unpacking the overlay **must**
+work without any further setup of the rootfs. All dependencies must be
+pre-installed and all configuration must be in place (possibly using a
+hacking session). This includes the **network** configuration - the
+worker offers an apache host to download the overlay and LAVA can
+populate the URL but the device **must** automatically configure the
+networking immediately upon boot and the network **must** work
+straight away.
+
+.. code-block:: yaml
+
+    transfer_overlay:
+      download_command: wget -S --progress=dot:giga
+      unpack_command: tar -C / -xaf
+
+.. note:: The ``-C /`` command to tar is **essential** or the test shell will
+   not be able to start. The ``-S --progress=dot:giga`` options to wget simply
+   optimise the output for serial console logging to avoid wasting line upon
+   line of progress percentage dots.
+
 .. index:: boot method u-boot
 
 .. _boot_method_u_boot:
