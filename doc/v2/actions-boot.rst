@@ -201,6 +201,12 @@ grub
 
 The ``grub`` boot method takes no arguments or parameters.
 
+.. code-block:: yaml
+
+  - boot:
+      method: grub
+      commands: ramdisk
+
 .. index:: boot method grub-efi
 
 .. _boot_method_grub_efi:
@@ -208,7 +214,19 @@ The ``grub`` boot method takes no arguments or parameters.
 grub-efi
 ========
 
-The ``grub-efi`` boot method takes no arguments or parameters.
+The ``grub-efi`` boot method takes no arguments or parameters. **However**, in
+most cases, starting Grub from UEFI requires using the
+:ref:`boot_method_uefi_menu` as well.
+
+.. literalinclude:: examples/test-jobs/mustang-grub-efi.yaml
+   :language: yaml
+   :lines: 42, 47, 48
+
+`Download or view mustang-grub-efi.yaml <examples/test-jobs/mustang-grub-efi.yaml>`_
+
+.. note:: Admins can refer to the ``mustang-grub-efi.jinja2`` template for an
+   example of how to make selections from a UEFI menu to load Grub. See
+   :ref:`device_type_templates`.
 
 .. index:: boot method ipxe
 
@@ -475,3 +493,75 @@ load addresses passed to U-Boot.
    type: bootz
    prompts:
      - 'root@debian:~#'
+
+.. index:: boot method uefi-menu
+
+.. _boot_method_uefi_menu:
+
+uefi-menu
+=========
+
+The ``uefi-menu`` method selects a pre-defined menu in the UEFI configuration
+for the device. In most cases, this is used to execute a different bootloader.
+For example, a ``fastboot`` device can execute ``fastboot`` from a menu item or
+a device could execute an ``PXE`` menu item to download and execute Grub.
+
+.. caution:: Although it *is possible* to create new menu entries in UEFI each
+   time a test job starts, this has proven to be unreliable on both of the
+   device types tested so far. If the build of UEFI is not able to download a
+   bootloader using ``PXE``, then experiment with creating a UEFI menu item
+   which is able to execute a local file and have a build of Grub on local
+   storage. Build the grub binary using ``grub-mkstandalone`` to ensure that
+   all modules are available.
+
+UEFI menus will renumber themselves each time a new item is added or removed,
+so LAVA must be able to match the description of the menu item and then
+identify the correct selector to be able to send the correct character to
+execute that menu option. This means that the admins must create the same menu
+structures on each device of the same device type and correlate the text
+content of the menu with the :ref:`jinja2 templates
+<developing_device_type_templates>`.
+
+To use ``uefi-menu``, the device must offer a menu from which items can be
+selected using a standard regular expression: ``'a-zA-Z0-9\s\:'``, for example:
+
+.. code-block:: shell
+
+  [1] bootloader
+  [2] boot from eMMC
+  [3] Boot Manager
+  [4] Reboot
+
+The :term:`device type` template would need to specify the ``separator``
+(whitespace in the example) as well as how to identify the **item** matching
+the requested selector:
+
+.. code-block:: yaml
+
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+
+This allows LAVA to match a menu item matching ``\[[0-9]\] ['a-zA-Z0-9\s\:']``
+and select the correct selector when the menu item string matches one (and only
+one) line output by the UEFI menu. In this example, the selector must be a
+digit.
+
+The template must then also specify which menu item to select, according to
+the ``commands`` set in the testjob:
+
+.. code-block:: yaml
+
+    method: uefi-menu
+    commands: fastboot
+
+The template would then need:
+
+.. code-block:: yaml
+
+        fastboot:
+        - select:
+            items:
+             - 'boot from eMMC'
