@@ -1,6 +1,6 @@
 device_type: cubietruck
 
-# NFS fails on panda and arndale.
+# NFS fails on arndale.
 
 job_name: standard Debian ARMMP nfs test on cubietruck
 timeouts:

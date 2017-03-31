@@ -1,21 +1,18 @@
-device_type: beaglebone-black
+device_type: panda
 
-# NFS fails on arndale.
-
-job_name: standard Debian ARMMP nfs test on bbb
+job_name: standard Debian ARMMP nfs test on panda
 timeouts:
   job:
-    minutes: 10
+    minutes: 15
   action:
     minutes: 5
   connection:
-    minutes: 2
+    minutes: 3
 priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
-  path: doc/v2/examples/test-jobs/standard-armmp-nfs-bbb.yaml
+  path: doc/v2/examples/test-jobs/standard-armmp-nfs-panda.yaml
   build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
   build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/4/console
   build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
@@ -23,7 +20,7 @@ metadata:
 actions:
 - deploy:
     timeout:
-      minutes: 4
+      minutes: 3
     to: tftp
     kernel:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
@@ -41,7 +38,7 @@ actions:
       compression: gz
     os: debian
     dtb:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/omap4-panda.dtb
 
 - boot:
     method: u-boot
@@ -52,7 +49,7 @@ actions:
     prompts:
     - 'root@jessie:'
     timeout:
-      minutes: 2
+      minutes: 10
 
 - test:
     timeout:
@@ -62,3 +59,4 @@ actions:
       from: git
       path: ubuntu/smoke-tests-basic.yaml
       name: smoke-tests
+
