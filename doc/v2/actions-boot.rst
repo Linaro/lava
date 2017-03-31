@@ -103,7 +103,7 @@ password
 Whenever a ``password_prompt`` is specified, a ``password`` will also be
 required.
 
-.. index:: prompt list, prompts, boot prompt list, boot prompts
+.. index:: prompt list, prompts - test jobs, boot prompt list, boot prompts
 
 .. _boot_prompts:
 

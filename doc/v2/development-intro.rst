@@ -1,4 +1,4 @@
-.. index:: jinja2, developer, developer guide, develop, contribute
+.. index:: jinja2 - development, developer, developer guide, develop, contribute
 
 .. _developer_guide:
 
@@ -135,6 +135,8 @@ codebase. The best way to maintain support is to :ref:`contribute_upstream` so
 that new features can be tested against your templates and new releases can
 automatically include updates to your templates.
 
+.. index:: developer workflow
+
 .. _developer_workflow:
 
 Developer workflows
@@ -177,6 +179,8 @@ which relies on newer versions of the modules than are currently available in
 Debian testing.
 
 .. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
+
+.. index:: naming conventions
 
 .. _naming_conventions:
 
@@ -313,6 +317,8 @@ examples.
 
 .. _RST: http://sphinx-doc.org/rest.html
 
+.. index:: code locations
+
 .. _developer_code_locations:
 
 Code locations
@@ -407,6 +413,8 @@ relevant master after rendering the Jinja2 templates on that master. There is
 ``lava-dispatcher`` codebase would work with any real devices, even of the
 declared :term:`device-type <device type>`.
 
+.. index:: contribute upstream
+
 .. _contribute_upstream:
 
 Contributing Upstream
@@ -418,6 +426,8 @@ you don't run the risk of LAVA changed in a way that is incompatible with your
 changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
+
+.. index:: development planning
 
 .. _developer_planning:
 
@@ -456,6 +466,8 @@ the fix from the review.
 .. _Jira: http://www.atlassian.com/jira-software
 .. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
 
+.. index:: community contributions
+
 .. _community_contributions:
 
 Community contributions
@@ -486,6 +498,8 @@ branch. Use the :ref:`lava_repositories` and/or :ref:`developer_build_version`
 to ensure that your instance is up to date with master.
 
 .. seealso:: :ref:`lava_release_process`.
+
+.. index:: patches and fixes
 
 Patches, fixes and code
 -----------------------
@@ -531,6 +545,8 @@ Linaro (or already be part of Linaro) to be able to forward bug reports and
 patches into the upstream LAVA systems.
 
 .. seealso:: https://www.debian.org/Bugs/Reporting
+
+.. index:: register - contributor
 
 .. _register:
 

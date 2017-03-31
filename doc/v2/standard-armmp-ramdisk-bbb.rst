@@ -100,6 +100,8 @@ When you copy this standard test job for your own testing, remember to
      :start-after: visibility: public
      :end-before: # ACTION_BLOCK
 
+.. seealso:: :ref:`job_metadata`
+
 Deploy
 ======
 

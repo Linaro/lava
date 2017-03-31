@@ -9,7 +9,7 @@ A job defines what software should be deployed on the ``device under test``
 (DUT) and what actions should be performed there. Jobs are defined in *YAML*
 files.
 
-.. index:: first job definition, job definition
+.. index:: first job definition, job definition - first
 
 .. _first_job_definition:
 
@@ -52,18 +52,18 @@ the above job definition to a file, (for example */tmp/job.yaml*), use
 
   $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
   /tmp/job.yaml
-  Please enter password for encrypted keyring:
-  submitted as job id: 82287
+  submitted as job: https://validation.linaro.org/scheduler/job/1303132
 
 .. note:: Replace *username* with your username. Enter the password for the
-   encrypted keyring which is the same that was used when adding the
-   authentication token.
+   encrypted keyring (if using older versions of ``lava-tool``) - this is the
+   same that was used when adding the authentication token
 
 Once the job is submitted successfully, the job id is returned; this may be
 used in order to check the status of the job via the web UI. In the above
-submission the job id returned is 82287. Visit
-``https://validation.linaro.org/scheduler/job/<job-id>`` in order to see the
-details of the job run: the test device chosen, the test results, etc.
+submission the job id returned is 82287. Visit the link provided -
+``https://validation.linaro.org/scheduler/job/<job-id>`` - in order to see the
+details of the job run: the test device chosen, the test results, etc. (Older
+versions of ``lava-tool`` only return the job ID number.)
 
 .. image:: images/first-job-submitted.png
 
@@ -127,7 +127,7 @@ value of each command is used to determine whether the test case passed or
 failed. You can try any of these commands on a Ubuntu or Debian system to see
 what the commands should create as output.
 
-.. seealso:: :ref:`writing_tests`
+.. seealso:: :ref:`writing_tests` and :ref:`job_metadata`
 
 .. index: results
 

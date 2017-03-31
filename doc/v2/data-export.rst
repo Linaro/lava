@@ -55,7 +55,7 @@ XML-RPC can also be used to query data anonymously::
 Individual XML-RPC commands are documented on the `API Help <../../api/help>`_
 page.
 
-.. index:: notifications_summary
+.. index:: notifications - summary
 
 .. _notification_summary:
 

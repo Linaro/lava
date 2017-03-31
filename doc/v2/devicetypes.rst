@@ -160,10 +160,12 @@ Matching the template
 
 .. # comment: prevent this in the submission API once V1 jobs are rejected.
 
-The name of a device type **must** match an available template. Templates are a
-lot more than configuration. The format supports conditional logic, inheritance
-and other features of code. On the master, device-type templates are configured
-using :term:`jinja2` files in the directory::
+The name of a device type does not need to match an available template, however
+the :term:`device dictionary` for all devices **must** ``extend`` a template
+file which exists on the instance. Templates are a lot more than configuration.
+The format supports conditional logic, inheritance and other features of code.
+On the master, device-type templates are configured using :term:`jinja2` files
+in the directory::
 
  /etc/lava-server/dispatcher-config/device-types/
 
@@ -216,9 +218,13 @@ the :ref:`django admin interface<django_admin_interface>`. The following fields
 are supported:
 
 Name - the name of the device type
-   See :ref:`naming_device_types`. Needs to match the name of a jinja
-   template in ``/etc/lava-server/dispatcher-config/device-types/``,
-   without the ``.jinja2`` suffix.
+   See :ref:`naming_device_types`. It is helpful to make the device type name
+   similar to or the same as the name of the template file which will be
+   extended by the device dictionary. The scheduler logs will use the database
+   name, irrespective of what the device dictionaries extend. Use an ``alias``
+   where the device type name differs from the template name(s) in use by
+   devices of this type. (An Alias is one of the
+   :ref:`device_type_descriptive_fields`.)
 
 Health check job - the YAML test job submission for a health check
    See :term:`health check`
@@ -235,6 +241,8 @@ Owners only - device type is only visible to owners of devices of this type
 Health check frequency - how often to run health checks
    Each device type can run health checks at a specified frequency which can be
    based on time intervals or numbers of test jobs.
+
+.. _device_type_descriptive_fields:
 
 Descriptive fields
 ------------------

@@ -134,7 +134,7 @@ Deploying a pre-built QEMU image
               compression: gz
         os: debian
 
-.. index:: device tag
+.. index:: device tag example
 
 .. _device_tags_example:
 

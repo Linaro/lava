@@ -2,13 +2,9 @@
 
    How the bootstrap theme works.
 
-   Any chapter sections (#####) in this file appear in the Site menu.
    Same for any files included into this file.
    Same for any files directly included into any file covered by the above.
-   Chapter sections in files not listed in the Site menu will show as
-     the top entry of the Page menu on that page.
-   The Site menu appears on all pages - use to provide gross navigation. Pages
-   still need to appear in the contents.rst toctree for prev+next navigation.
+   Pages need to appear in the contents.rst toctree for prev+next navigation.
    conf.py adds permanent links to genindex - the navbar
       gets folded into a menu by bootstrap on narrow screens.
 
@@ -19,18 +15,32 @@
 LAVA V2 - Pipeline model
 ########################
 
+Navigation
+**********
+
 [ `Help Overview <../>`_]
 [ `Help V1 <../v1/>`_]
 [ `Home <../../../>`_ ]
 [ `Results <../../../results/>`_ ]
 [ `Scheduler <../../../scheduler/>`_ ]
 [ `API <../../../api/help/>`_ ]
+[ `V2 Help Index <genindex.html>`_ ]
+[ `V2 Help Contents <contents.html>`_ ]
+
+Use the navigation bar at the top of the page to quickly navigate between
+sections of the documentation.
+
+Each page also has a **Page** menu for topics within the page as well as
+forward and back navigation to lead readers through in a logical manner.
 
 .. figure:: images/lava.svg
     :width: 50%
     :align: center
     :alt: LAVA logo
     :figclass: fig-float
+
+About LAVA V2
+*************
 
 LAVA V2 is the second major version of LAVA. The major user-visible features
 are:

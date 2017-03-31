@@ -2,14 +2,22 @@
 
 .. _writing_tests:
 
-Writing a LAVA test definition
-##############################
+Writing a LAVA test shell definition
+####################################
 
-A LAVA Test Job comprises
+.. note:: A Lava Test Shell Definition is distinct from a test job
+   definition, although both use YAML. Typically, the test job definition
+   includes URLs for one or more test shell definitions. The
+   :ref:`lava_test_shell` action then executes the test shell definitions and
+   reports results as part of the test job. See also :ref:`job definition
+   <first_job_definition>` and :ref:`job_metadata`.
 
-#. Metadata describing the test job
+A LAVA Test Definition comprises
+
+#. Metadata describing the test definition, used by the test writers but not
+   read by LAVA.
 #. The actions and parameters to set up the test(s)
-#. The instructions to run as part of the test(s)
+#. The instructions or steps to run as part of the test(s)
 
 For certain tests, the instructions can be included inline with the actions.
 For more complex tests or to share test definitions across multiple devices,

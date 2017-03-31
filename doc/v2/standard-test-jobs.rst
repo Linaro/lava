@@ -37,7 +37,7 @@ of the closest standard test job for quick reference.
    shipped with LAVA and are routinely tested on
    ``staging.validation.linaro.org``.
 
-.. index:: job metadata, metadata
+.. index:: job metadata, metadata - test jobs
 
 .. _job_metadata:
 
@@ -78,3 +78,8 @@ QA team. These jobs will provide a known baseline for test definition writers,
 in a similar manner to the way the existing QA test definitions provide a base
 for more elaborate testing.
 
+.. note:: Metadata also exists in the Lava Test Shell Definition but this is
+   only used when writing the test shell definition, it is not picked up by
+   LAVA. It remains useful to record the maintainer of a test shell definition,
+   the scope and the kinds of devices for which the definition is expected to
+   be useful. see also :ref:`test_definitions`.

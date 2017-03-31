@@ -411,7 +411,7 @@ Best practice
 .. _`puppet`: https://github.com/puppetlabs/puppet
 .. _`ansible`: https://www.ansible.com/
 
-.. index:: admin triage, triage, admin debug, administration
+.. index:: admin triage, triage, admin debug, administration roles
 
 .. _admin_triage:
 
