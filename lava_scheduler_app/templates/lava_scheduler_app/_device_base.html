@@ -1,31 +1,12 @@
 {% extends "layouts/content-bootstrap.html" %}
-
 {% load django_tables2 %}
-
-{% block styles %}
-  <style>
-    details, summary { display: block; padding: 0.2em; }
-    summary { cursor: pointer; }
-    summary:hover, summary:focus { background: #ddd; }
-    .no-details details > * { display: none; }
-    .no-details details.open > * { display: block; }
-    .no-details details summary:before { width: 20px; content: '► '; }
-    .no-details details.open summary:before { content: '▼ '; }
-    .no-details details summary { display: block; }
-    .ui-button { width: 250px }
-    dd {padding-left: 1em; padding-right: 1em;}
-    dt {padding-right: 1em;}
-    .oneline { white-space: nowrap; }
-  </style>
-{% endblock %}
 
 {% block content %}
 
 {% if device.device_type.owners_only %}
 <div class="alert alert-warning alert-dismissable">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <p><strong><i>{{  device.device_type.name }}</i> is a hidden device type.</strong></p>
-  Only owners of one or more devices of type <i>{{ device.device_type }}</i> can see this information.
+  <strong><i>{{ device.device_type.name }}</i> is a hidden device type:</strong> Only owners of one or more devices of that type can see this page.
 </div>
 {% endif %}
 
@@ -43,99 +24,100 @@
 
 <div class="row">
   <div class="col-md-4">
-    <h4 class="modal-header">Device</h4>
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
-      <dd>{{ device.hostname }}</dd>
-      <dt>Type</dt>
-      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
-{% if device.is_pipeline %}
-    <dt>Configuration</dt>
-    <dd><a href="{{ device.get_absolute_url }}/devicedict">Device Dictionary</a></dd>
-{% endif %}
-      <dt>Description</dt>
-      <dd>{{ device.get_description|default:"<i>None</i>"|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
-      <dt>Tags</dt>
-    {% for tag in device.tags.all %}
-      <dd>{{ tag.name }}
-      {% if tag.description %}
-        <abbr title="{{ tag.description }}">(?)</abbr>
+      <dd>{{ device.hostname }}
+          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
+      </dd>
+      <dt>Device-type</dt>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dt><abbr title="If specified, submissions are restricted to this user or group">Owner</abbr></dt>
+      <dd>
+      {% if device.user %}
+      <a href="mailto:{{ device.user.email }}">{{ device.user.get_full_name|default:user.username }}</a>
+      {% elif device.group %}
+      Group <em>{{ device.group }}</em>
+      {% else %}
+      ...
       {% endif %}
       </dd>
-    {% empty %}
-      <dd><i>None</i></dd>
-    {% endfor %}
-      <dt>Version</dt>
-      <dd>{{ device.device_version|default:"<i>Unknown</i>" }}</dd>
-    </dl>
-  </div>
-  <div class="col-md-4">
-    <h4 class="modal-header">Owners and status</h4>
-    <dl class="dl-horizontal">
-      <dt>Owner <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr></dt>
+      <dt>Restriction</dt>
+      <dd><span class="label label-{{ device.is_public|yesno:"success,warning" }}">{{ device.is_public|yesno:"Public,Private" }}</span></dd>
+      <dt>Tags</dt>
+      {% if device.tags.all %}
       <dd>
-          {% if device.user %}
-          <a href="mailto:{{ device.user.email }}">{{ device.user.email }}</a>
-          {% elif device.group %}
-          Group <em>{{ device.group }}</em>
-          {% else %}
-          <i>Unrestricted</i>
-          {% endif %}
-      </dd>
-      <dt>Physical access <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr></dt>
-      <dd>
-          {% if device.physical_owner %}
-          <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.email }}</a>
-          {% elif device.physical_group %}
-          Group <em>{{ device.physical_group }}</em>
-          {% else %}
-          <i>Unknown</i>
-          {% endif %}
-      </dd>
-{% if not device.temporarydevice %}
-      <dt>Worker</dt>
-      <dd>
-        {% if device.worker_host.is_master %}
-          <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
+      {% for tag in device.tags.all %}
+        {% if tag.description %}
+        <abbr title="{{ tag.description }}">{{ tag.name }}</abbr>{% if not forloop.last %},{% endif %}
         {% else %}
-          <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
+        {{ tag.name }}{% if not forloop.last %},{% endif %}
         {% endif %}
+      {% endfor %}
       </dd>
-{% endif %}
-    {% if exclusive %}
-        <dt>Exclusive</dt>
-        <dd><b>pipeline jobs only</b>.</dd>
-    {% elif pipeline %}
-        <dt>Pipeline</dt>
-        <dd>{{ device.hostname }} accepts both pipeline and JSON jobs.</dd>
-    {% else %}
-        <dt>Pipeline</dt>
-        <dd><b>False</b>. JSON jobs only.</dd>
-    {% endif %}
+      {% else %}
+      <dd>...</dd>
+      {% endif %}
     </dl>
   </div>
   <div class="col-md-4">
-    <h4 class="modal-header">Reports</h4>
     <dl class="dl-horizontal">
       <dt>Status</dt>
       <dd>
-        {{ device.get_status_display }}
-        {% if transition %}
-        (reason: <i>{{ transition }}</i>)
-        {% endif %}
-        {% if device.current_job %}
-        (<a href="{{ device.current_job.get_absolute_url }}">Job {{ device.current_job.pk }}</a>)
-        {% endif %}
+      {% if transition %}<abbr title="{{ transition }}">{% endif %}
+      {% if device.status == device.OFFLINE or device.status == device.OFFLINING %}
+      <span class="label label-warning">{{ device.get_status_display }}</span>
+      {% elif device.status == device.IDLE or device.status == device.RUNNING or device.status == device.RESERVED %}
+      <span class="label label-success">{{ device.get_status_display }}</span>
+      {% else %}
+      <span class="label label-danger">{{ device.get_status_display }}</span>
+      {% endif %}
+      {% if transition %}</abbr>{% endif %}
       </dd>
-{% if device.device_type.name != 'dynamic-vm' %}
       <dt>Health</dt>
-      <dd>{{ device.get_health_status_display }}</dd>
-      <dt>Checks/failures</dt>
-      <dd><a href="{% url 'lava.scheduler.device_report' device.pk %}">Graphical reports</a></dd>
-{% endif %}
+      {% if device.health_status ==  device.HEALTH_PASS %}
+      <dd class="text-success">Pass</dd>
+      {% elif device.health_status ==  device.HEALTH_FAIL %}
+      <dd class="text-danger">Fail</dd>
+      {% else %}
+      <dd class="text-warning">{{ device.get_health_status_display }}</dd>
+      {% endif %}
+      <dt>Worker</dt>
+      <dd><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></dd>
+      <dt>Support</dt>
+      {% if exclusive %}
+      <dd>v2 only</dd>
+      {% elif pipeline %}
+      <dd>v1 and v2</dd>
+      {% else %}
+      <dd>v1 only</dd>
+      {% endif %}
+      {% if device.is_pipeline %}
+      <dt>Device dictionary</dt>
+      <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
+      {% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <dl class="dl-horizontal">
+      <dt><abbr title="This is the user or group with physical access to the device">Physical access</abbr></dt>
+      <dd>
+      {% if device.physical_owner %}
+      <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.get_full_name|default:device.physical_owner.username }}</a>
+      {% elif device.physical_group %}
+      Group <em>{{ device.physical_group }}</em>
+      {% else %}
+      ...
+      {% endif %}
+      </dd>
+      <dt>Description</dt>
+      <dd>{{ device.get_description|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
+      <dt>Version</dt>
+      <dd>{{ device.device_version|default:"..." }}</dd>
     </dl>
   </div>
 </div>
+
+{% if show_maintenance or cancel_looping or show_online or show_forcehealthcheck or edit_description or show_pool %}
 <div class="row">
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
@@ -414,7 +396,7 @@
   </div>
   </div>
 </div>
-
+{% endif %}
 
 {% block content_columns %}
 {% endblock %}

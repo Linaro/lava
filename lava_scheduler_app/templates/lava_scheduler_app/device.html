@@ -13,7 +13,6 @@
     <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="glyphicon glyphicon-forward"></span></a>
   </li>
 </ul>
-<h2>Device {{ device.hostname }} - {{ device.device_type }} {{ device.device_type.architecture|default:'' }}</h2>
 
 {% if user.is_staff and device.device_type.name != 'dynamic-vm' and device.get_health_check == '' %}
   <div class="alert alert-info">
