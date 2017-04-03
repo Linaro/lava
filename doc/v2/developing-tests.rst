@@ -41,8 +41,8 @@ Assumptions at the start of this guide
 #. A user account (username, password, email address) is already created by a
    LAVA administrator on your behalf, with permissions to submit jobs.
 
-#. ``lava-tool`` is already installed on your test system and a suitable token
-   has been added.
+#. ``lava-tool`` is already installed on your test system and a
+   suitable authentication token has been added.
 
 #. You are familiar with submitting jobs written by someone else, including
    viewing the logs file for a job, viewing the definition used for that job
@@ -65,9 +65,10 @@ To find out more about viewing job details, see :ref:`job_submission`.
 Checking device availability
 ****************************
 
-Use the LAVA scheduler to view available device types and devices. The main
-scheduler status page shows data for each :term:`device type` as well as the
-currently active jobs. Also check the Devices pages:
+Use the LAVA scheduler to view the device types and devices available
+in your LAVA instance. The main scheduler status page shows data for
+each :term:`device type` as well as the currently active jobs. Also
+check the Devices pages:
 
 * All Devices - includes retired devices to which jobs cannot be submitted.
 
@@ -78,41 +79,45 @@ currently active jobs. Also check the Devices pages:
 * My Devices - available from your profile menu by clicking on your
   name once signed into the instance.
 
-For a :ref:`writing_multinode` job, you may need to check more than one
-:term:`device type`.
+For a :ref:`MultiNode <writing_multinode>` job, you may need to check
+more than one :term:`device type`.
 
-Devices are considered available for new jobs according to the
-:ref:`device_status`.
+LAVA looks at the :ref:`device status <device_status>` when working
+out if a particular device is available for a new job:
 
-* Idle, Reserved, Offline, Offlining - jobs can be submitted.
+* Idle, Reserved, Offline, Offlining - jobs can be submitted OK.
 
-* Restricted - only available for submissions made by declared users.
+* Restricted - only specific users may submit jobs.
 
-* Retired - jobs will be rejected if all remaining devices of this type are
-  retired.
+* Retired - this device is not available; jobs will be rejected if all
+  devices of this type are retired.
 
 Finding an image to run on the device
 *************************************
 
-Start with an image which is already in use in LAVA. You can find one of these
-images by checking the :term:`device type` in LAVA and viewing some of the jobs
-for devices of this type from the table on that page. e.g. for QEMU devices on
-validation.linaro.org:
+Typically, the easiest thing to do here is to start with an image
+which is already in use in LAVA. You can find one of these images by
+checking the :term:`device type` in LAVA and viewing some of the jobs
+for devices of this type from the table on that page. e.g. for QEMU
+devices on validation.linaro.org:
 
 https://validation.linaro.org/scheduler/device_type/qemu
 
 Actions to be run for a LAVA test
 *********************************
 
-There are three important sets of actions that will be run for a LAVA test:
+There are three important sets of actions that will normally be run
+for a LAVA test:
 
-#. Deploy: The information needed to set up a device to boot a test image. Each
-   device type supports a range of deployment methods.
+#. **Deploy**: The actions needed to set up a device to boot a test
+   image. Each device type may support a range of different deployment
+   methods.
 
-#. Boot: The steps to follow to start the test image on the device. Each device
-   type supports a range of boot methods.
+#. **Boot**: The steps to follow to start the test image on the
+   device. Each device type may support a range of different boot
+   methods.
 
-#. Test: Run the lava test shell, running the specified tests.
+#. **Test**: Run the lava test shell, running the specified tests.
 
 Examples
 ********
@@ -141,21 +146,23 @@ Deploying a pre-built QEMU image
 Using device tags
 =================
 
-A :term:`device tag` marks a specified device as having specific hardware
-capabilities which other devices of the same :term:`device type` do not. To
-test these capabilities, a Test Job can specify a list of tags which the device
-**must** support. If no devices exist which match all of the required tags, the
-job submission will fail. If devices support a wider range of tags than
-required in the Test Job (or the Test Job requires no tags), any of those
-devices can be used for the Test Job.
+A :term:`device tag` marks a specified device as having specific
+hardware capabilities which other devices of the same :term:`device
+type` may not. To test these capabilities, a test job can specify a
+list of tags which the device **must** support. If no devices exist
+which match all of the required tags, the job submission will fail. If
+devices support a wider range of tags than required in the test job
+(or the test job requires no tags), any of those devices can be used
+for the test job.
 
-.. note:: Test jobs which use :term:`device tag` support can **only** be
-   submitted to instances which have those tags defined **and** assigned to the
-   requested boards. Check the device information on the instance to get the
-   correct tag information.
+.. note:: Test jobs which use :term:`device tag` support can **only**
+   be submitted to instances which have those tags defined **and**
+   assigned to the requested boards. In your LAVA instance, check the
+   device information to see what tags are used.
 
-For singlenode jobs, tags are a top level list of strings in the job
-definition, the same level as ``job_name``, ``timeouts``, ``metadata`` and
+When writing a normal single-node test job, the desired tags should be
+listed as a top level list of strings in the job definition, i.e. at
+the same level as ``job_name``, ``timeouts``, ``metadata`` and
 ``device_type``:
 
 .. code-block:: yaml
@@ -187,8 +194,8 @@ definition, the same level as ``job_name``, ``timeouts``, ``metadata`` and
       docs-source: first-job
       docs-filename: qemu-pipeline-first-job.yaml
 
-For :term:`multinode` test jobs, the tags are defined as part of the MultiNode
-protocol:
+For :term:`MultiNode <multinode>` test jobs, the tags are defined as
+part of the MultiNode protocol block:
 
 .. code-block:: yaml
 
@@ -212,8 +219,8 @@ protocol:
         timeout:
           seconds: 60
 
-Device tags are only relevant during scheduling of the testjob and have no
-meaning to the dispatcher.
+Device tags are only relevant during scheduling of the test job and
+have no meaning to the dispatcher once the job is running.
 
 .. index:: checksum
 
@@ -235,8 +242,8 @@ the checksum. Specify the full URL to ensure consistency between tests.
 Using LAVA Test Shell
 =====================
 
-The ``lava_test_shell`` action provides a way to employ a black-box style
-testing approach with the target device. Its format is:
+The ``lava_test_shell`` action provides a way to employ a black-box
+approach to testing on the target device. Its format is:
 
 .. code-block:: yaml
 
@@ -266,9 +273,9 @@ testing approach with the target device. Its format is:
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
 
-The "definitions" list here may contain multiple test definition URLs. These
-will all be run sequentially in one go; the system will not be rebooted between
-the definitions.
+The ``definitions`` list here may contain multiple test definition
+URLs. These will all be run sequentially in one run on the test
+device, and it will not be rebooted between the definitions.
 
 .. seealso:: :ref:`Dispatcher Actions <test_action_definitions>`
 
