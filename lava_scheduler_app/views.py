@@ -2909,3 +2909,85 @@ def similar_jobs(request, pk):
         "%s?entity=%s&conditions=%s" % (
             reverse('lava.results.query_custom'),
             entity, conditions))
+
+
+@BreadCrumb("Migration", parent=index)
+def migration(request):
+    v1_problems = {}
+    db_healthchecks = {}
+    no_healthcheck = {}
+    exclusive = {}
+
+    # total active
+    active = Device.objects.filter(~Q(status=Device.RETIRED), Q(device_type__display=True))
+    active_count = len(active)
+
+    active_v1 = Device.objects.filter(
+        Q(is_pipeline=False), ~Q(status=Device.RETIRED),
+        Q(device_type__display=True)
+    )
+    active_v1_count = len(active_v1)
+    healthchecks = active_count
+    for dev in active_v1:
+        if dev.device_type.health_check_job not in ['', None]:
+            healthchecks -= 1
+            db_healthchecks[dev.hostname] = dev.get_absolute_url()
+        else:
+            v1_problems[dev.hostname] = dev.get_absolute_url()
+
+    v2_devices = Device.objects.filter(
+        Q(is_pipeline=True), ~Q(status=Device.RETIRED), Q(device_type__display=True))
+    for dev in v2_devices:
+        exclusive[dev.hostname] = dev.is_exclusive
+        if dev.device_type.health_check_job not in [None, '']:
+            db_healthchecks[dev.hostname] = dev.get_absolute_url()
+            healthchecks -= 1
+
+    nonhc_devices = active_count
+    for dev in active:
+        hc = dev.get_health_check()
+        if hc == '' or hc == dev.device_type.health_check_job:
+            nonhc_devices -= 1
+        if hc == '':
+            no_healthcheck[dev.hostname] = dev.get_absolute_url()
+
+    active_percent = int(100 * (active_count - active_v1_count) / active_count)
+    exclusion = int(100 * len([dev for dev in exclusive if exclusive[dev]]) / active_count)
+    hc_percent = int(100 * healthchecks / active_count)
+    no_hc_percent = int(100 * nonhc_devices / active_count)
+
+    templates = {}
+    for hostname, _ in no_healthcheck.items():
+        device_dict = DeviceDictionary.get(hostname)
+        if not device_dict:
+            templates[hostname] = ''
+            continue
+        device_dict = device_dict.to_dict()
+        extends = device_dict['parameters']['extends']
+        extends = os.path.splitext(extends)[0]
+        templates[hostname] = "%s.yaml" % extends
+
+    template = loader.get_template("lava_scheduler_app/migration.html")
+    return HttpResponse(template.render(
+        {
+            # 'migration_table': migration_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(migration),
+            'v1_problems': v1_problems,
+            'db_healthchecks': db_healthchecks,
+            'no_healthcheck': no_healthcheck,
+            'exclusive_count': len([dev for dev in exclusive if exclusive[dev]]),
+            'exclusive': exclusive,
+            'exclusion': exclusion,
+            'active_devices': active_count,
+            'active_v1_devices': active_v1_count,
+            'active_level': active_count - active_v1_count,
+            'active_percent': active_percent,
+            'healthchecks': healthchecks,
+            'health_check_level': active_count - healthchecks,
+            'hc_percent': hc_percent,
+            'nonhc_devices': nonhc_devices,
+            'no_hc_percent': no_hc_percent,
+            'templates': templates,
+            'context_help': BreadCrumbTrail.show_help(migration),
+        },
+        request=request))

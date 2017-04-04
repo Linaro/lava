@@ -49,6 +49,8 @@ the jinja markup. Jinja is used to:
   template and that variable is not set in the device dictionary, it becomes
   available for the job submission to set that variable.
 
+.. _admin_device_dictionary:
+
 Device dictionary
 *****************
 

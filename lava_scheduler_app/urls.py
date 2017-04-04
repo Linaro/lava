@@ -15,7 +15,7 @@ from lava_scheduler_app.views import (
     job_log_file_plain, job_log_incremental, job_log_pipeline_incremental,
     job_output, job_pipeline_incremental, job_pipeline_sections,
     job_pipeline_timing, job_resubmit, job_section_log, job_status,
-    job_submit, job_submit_wizard, job_toggle_favorite, lab_health,
+    job_submit, job_submit_wizard, job_toggle_favorite, lab_health, migration,
     longest_jobs, multinode_job_definition, multinode_job_definition_plain,
     mydevice_list, mydevices_health_history_log, myjobs, online_device_list,
     passing_health_checks, pipeline, pipeline_device_list, queue, reports,
@@ -178,4 +178,5 @@ urlpatterns = [
         name='lava_scheduler_download_device_type_yaml'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/similarjobs$', similar_jobs,
         name='lava.scheduler.job.similar_jobs'),
+    url(r'^migration$', migration, name='lava.scheduler.migration'),
 ]
