@@ -58,7 +58,7 @@ Architecture: all
 Section: metapackages
 Depends: lava-server (= ${binary:Version}), lava-server-doc,
  lava-dispatcher, lava-coordinator, lava-dev, lava-tool,
- lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86),
+ lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
 Recommends: lavapdu-daemon, linaro-image-tools, schroot,
  android-tools-fsutils | img2simg
