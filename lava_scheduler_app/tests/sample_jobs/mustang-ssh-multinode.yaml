@@ -34,20 +34,18 @@ actions:
     role:
       - host
     authorize: ssh
-    dtb:
-      url: https://storage.kernelci.org/mainline/v4.11-rc2/arm64-defconfig/dtbs/apm/apm-mustang.dtb
     kernel:
-      url: https://storage.kernelci.org/mainline/v4.11-rc2/arm64-defconfig/Image
-      type: image
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/vmlinuz-4.9.0-2-arm64
+      type: zimage
     modules:
-      url: https://storage.kernelci.org/mainline/v4.11-rc2/arm64-defconfig/modules.tar.xz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/modules.tar.gz
       compression: xz
     nfsrootfs:
-      url: http://releases.linaro.org/debian/images/developer-arm64/16.07/linaro-jessie-developer-20160722-88.tar.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz
       compression: gz
       prefix: binary/
     ramdisk:
-      url: http://people.linaro.org/~riku.voipio/initramfs.arm64.cpio.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64
       compression: gz
     os: debian
     timeout:
@@ -59,7 +57,7 @@ actions:
     role:
     - guest
     connection: ssh
-    os: ubuntu
+    os: debian
     protocols:
       lava-multinode:
       - action: prepare-scp-overlay
