@@ -147,7 +147,7 @@ class Scp(ConnectSsh):
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
-
+        connection = super(Scp, self).run(connection, max_end_time, args)
         if self.identity_file:
             command.extend(['-i', self.identity_file])
         # add arguments to ignore host key checking of the host device

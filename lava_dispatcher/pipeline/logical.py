@@ -54,10 +54,10 @@ class RetryAction(Action):
     def run(self, connection, max_end_time, args=None):
         while self.retries < self.max_retries:
             try:
-                new_connection = self.internal_pipeline.run_actions(connection, max_end_time)
+                connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
-                    return new_connection
+                    return connection
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
                 # Print the error message
