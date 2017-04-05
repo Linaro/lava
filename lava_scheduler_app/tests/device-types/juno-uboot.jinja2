@@ -173,3 +173,66 @@ actions:
           commands:
           - boot
 {% endblock -%}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: {{ action_timeout_apply_overlay_image | default(2) }}
+    dd-image:
+      minutes: {{ action_timeout_dd_image | default(20) }}
+    download_retry:
+      minutes: {{ action_timeout_download_retry | default(5) }}
+    http_download:
+      minutes: {{ action_timeout_http_download | default(10) }} # large due to android images etc
+    lava-test-shell:
+      minutes: {{ action_timeout_lava_test_shell | default(3) }}
+    nfs-deploy:
+      minutes: {{ action_timeout_nfs_deploy | default(10) }}
+    power_off:
+      seconds: {{ action_timeout_power_off | default(5) }}
+    bootloader-commands:
+      minutes: {{ action_timeout_bootloader_commands | default(3) }}
+    bootloader-interrupt:
+      seconds: {{ action_timeout_bootloader_interrupt | default(30) }}
+    u-boot-interrupt:
+      minutes: {{ action_timeout_u_boot_interrupt | default(2) }}
+    u-boot-commands:
+      minutes: {{ action_timeout_u_boot_commands | default(2) }}
+    umount-retry:
+      seconds: {{ action_timeout_umount_retry | default(45) }}
+    auto-login-action:
+      minutes: {{ action_timeout_auto_login | default(5) }}
+    bootloader-action:
+      minutes: {{ action_timeout_bootloader_action | default(3)}}
+    uboot-action:
+      minutes: {{ action_timeout_uboot_action | default(3)}}
+    uboot-retry:
+      minutes: {{ action_timeout_uboot_retry | default(3)}}
+    bootloader-retry:
+      minutes: {{ action_timeout_bootloader_retry | default(3)}}
+    boot_qemu_image:
+      minutes: {{ action_timeout_boot_qemu_image | default(2) }}
+    boot_image_retry:
+      minutes: {{ action_timeout_boot_image_retry | default(2) }}
+  connections:
+    dd-image:
+      minutes: {{ connection_timeout_dd_image | default(20) }}
+    u-boot-interrupt:
+      minutes: {{ action_timeout_u_boot_interrupt | default(2) }}
+    uboot-retry:
+      minutes: {{ action_timeout_u_boot_retry | default(3) }}
+    u-boot-commands:
+      minutes: {{ action_timeout_u_boot_commands | default(2) }}
+    bootloader-commands:
+      seconds: {{ connection_timeout_bootloader_commands | default(30) }}
+    auto-login-action:
+      minutes: {{ connection_timeout_auto_login | default(5) }}
+    bootloader-interrupt:
+      seconds: {{ connection_timeout_bootloader_interrupt | default(30) }}
+    http_download:
+      minutes: {{ action_timeout_http_download | default(10) }} # large due to android images etc
+    u-boot-interrupt:
+      minutes: {{ connection_timeout_u_boot_interrupt | default(2) }}
+{% endblock -%}
+
