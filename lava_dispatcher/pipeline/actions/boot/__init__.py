@@ -500,6 +500,7 @@ class BootloaderCommandsAction(Action):
 
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         # allow for auto_login
         if self.parameters.get('prompts', None):
             connection.prompt_str = [

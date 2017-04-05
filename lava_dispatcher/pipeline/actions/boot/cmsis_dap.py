@@ -131,4 +131,5 @@ class FlashCMSISAction(Action):
             raise InfrastructureError("Unable to (un)mount USB device: %s" % self.usb_mass_device)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

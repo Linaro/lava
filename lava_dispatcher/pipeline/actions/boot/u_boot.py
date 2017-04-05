@@ -148,6 +148,7 @@ class UBootRetry(BootAction):
         # Log an error only when needed
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         if self.errors:
             self.logger.error(self.errors)
         return connection

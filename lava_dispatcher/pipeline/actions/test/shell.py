@@ -213,6 +213,8 @@ class TestShellAction(TestAction):
         # Get the connection, specific to this namespace
         connection = self.get_namespace_data(
             action='shared', label='shared', key='connection', deepcopy=False)
+        if not connection:
+            raise LAVABug("No connection retrieved from namespace data")
 
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if res != "success":

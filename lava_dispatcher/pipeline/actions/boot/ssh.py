@@ -165,6 +165,7 @@ class Scp(ConnectSsh):
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -224,6 +225,7 @@ class ScpOverlayUnpack(Action):
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
