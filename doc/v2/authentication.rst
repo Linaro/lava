@@ -52,12 +52,16 @@ message::
 
 Other supported parameters are::
 
-  "AUTH_LDAP_GROUP_SEARCH": "ou=groups,dc=example,dc=com",
+  "AUTH_LDAP_GROUP_SEARCH": "LDAPSearch('ou=groups,dc=example,dc=com', ldap.SCOPE_SUBTREE, '(objectClass=groupOfNames)'",
   "AUTH_LDAP_USER_FLAGS_BY_GROUP": {
     "is_active": "cn=active,ou=django,ou=groups,dc=example,dc=com",
     "is_staff": "cn=staff,ou=django,ou=groups,dc=example,dc=com",
     "is_superuser": "cn=superuser,ou=django,ou=groups,dc=example,dc=com"
   }
+
+Similarly::
+
+  "AUTH_LDAP_USER_SEARCH": "LDAPSearch('o=base', ldap.SCOPE_SUBTREE, '(uid=%(user)s)')"
 
 .. note:: If you need to make deeper changes that don't fit into the
           exposed configuration, it is quite simple to tweak things in
@@ -66,4 +70,3 @@ Other supported parameters are::
 
 Restart the ``lava-server`` and ``apache2`` services after any
 changes.
-
