@@ -172,6 +172,91 @@ parameter. Example:
        namespace: boot2
    # ...
 
+.. index:: boot commands
+
+.. _boot_commands:
+
+commands
+********
+
+One of the key definitions in the :term:`device type` template for
+each device is the list(s) of boot ``commands`` that the device
+needs. These are sets of specific commands that will be run to boot
+the device to start a test. The definitions will typically include
+placeholders which LAVA will substitute with dynamic data as
+necessary. For example, the full path to a tftp kernel image will be
+expanded to include a job-specific temporary directory when a job is
+started.
+
+As a simple example from a U-Boot template:
+
+.. code-block:: yaml
+
+  - setenv autoload no
+  - setenv initrd_high '0xffffffff'
+  - setenv fdt_high '0xffffffff'
+  - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+  - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+  - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+  - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+  - boot
+
+.. note:: In some cases, the boot commands list in the template may
+   not provide **all** of the commands used; lines will also be
+   generated from other data in the template. For example: the command
+   ``setenv kernel_addr_r '0x82000000'`` might be generated from the
+   load addresses which match the type of kernel being deployed.
+
+When a test is started, the appropriate list of commands will be
+selected. LAVA then substitutes the placeholders in the list to
+generate a complete command list. The final parsed and expanded boot
+commands used for a test are reported in the logs for that test job,
+e.g.:
+
+.. code-block:: none
+
+ Parsed boot commands: setenv autoload no; setenv initrd_high '0xffffffff';
+ setenv fdt_high '0xffffffff'; setenv kernel_addr_r '0x82000000'; setenv
+ initrd_addr_r '0x83000000'; setenv fdt_addr_r '0x88000000'; setenv loadkernel
+ 'tftp ${kernel_addr_r} 158349/tftp-deploy-Fo78o6/vmlinuz'; setenv loadinitrd
+ 'tftp ${initrd_addr_r} 158349/tftp-deploy-Fo78o6/ramdisk.cpio.gz.uboot; setenv
+ initrd_size ${filesize}'; setenv loadfdt 'tftp ${fdt_addr_r}
+ 158349/tftp-deploy-Fo78o6/am335x-boneblack.dtb'; setenv bootargs
+ 'console=ttyO0,115200n8 root=/dev/ram0  ip=dhcp'; setenv bootcmd 'dhcp; setenv
+ serverip 10.3.1.1; run loadkernel; run loadinitrd; run loadfdt; bootz
+ 0x82000000 0x83000000 0x88000000'; boot
+
+Specifying commands in full
+===========================
+
+During testing and development, it can **sometimes** be useful to use
+a different set of boot commands instead of what is listed in the
+jinja2 template for the device-type. This allows test writers to
+change boot commands beyond the scope of existing overrides. To work
+sensibly in the LAVA environment, these commands will still need to
+**include the placeholders** such that temporary paths etc. can be
+substituted in when the test job is started.
+
+In this example (for an x86 test machine using iPXE), the commands
+change the ``root`` argument to the kernel to boot from a SATA drive
+which has been configured separately. (For example, by the admins or
+by test writers from a hacking session.)
+
+.. literalinclude:: examples/test-jobs/x86-sata-commands.yaml
+   :language: yaml
+   :lines: 32, 36-42
+
+.. caution:: This support is **only** recommended for use for corner
+   cases and administrator-level debugging. Accordingly, LAVA will
+   raise a warning each time this support is used. Abuse of this
+   support can potentially stop devices from working in subsequent
+   tests, or maybe even damage them permanently - be careful!
+
+   If the commands are to be used regularly, `file a bug
+   <https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework>`_
+   requesting that a label is created in the templates for this set of
+   commands. Alternatively, the bug report can request a new override
+   to make the existing labels more flexible.
 
 .. index:: boot method
 
