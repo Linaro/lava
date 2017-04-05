@@ -59,6 +59,35 @@ character_delays:
 {% endif -%}
 {% endblock -%}
 
+{% block constants %}
+constants:
+     # OS shutdown message
+     # Override: set as the shutdown-message parameter of an Action.
+     # SHUTDOWN_MESSAGE
+     shutdown-message: '{{ shutdown_message | default("The system is going down for reboot NOW") }}'
+
+     # Kernel starting message
+     # BOOT_MESSAGE
+     boot-message: '{{ boot_message | default("Booting Linux") }}'
+
+     # CPU reset message
+     # CPU_RESET_MESSAGE
+     cpu-reset-message: '{{ cpu_reset_message | default("Resetting CPU") }}'
+
+     # Default shell prompt for AutoLogin
+     # DEFAULT_SHELL_PROMPT
+     default-shell-prompt: '{{ default_shell_prompt | default("lava-test: # ") }}'
+
+     # u-boot auto boot prompt
+     # UBOOT_AUTOBOOT_PROMPT
+     uboot-autoboot-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
+
+     # u-boot interrupt character
+     # UBOOT_INTERRUPT_CHARACTER = ' '
+     uboot-interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
+
+{% endblock -%}
+
 {% block commands %}
 {% if connection_command %}
 commands:

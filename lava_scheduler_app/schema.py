@@ -279,6 +279,7 @@ def _device_schema():
     return Schema({
         'character_delays': dict,
         'commands': dict,
+        'constants': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
         'fastboot_options': [str],

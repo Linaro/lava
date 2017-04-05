@@ -793,14 +793,27 @@ Overriding device constants
 ===========================
 
 The dispatcher uses a variety of constants and some of these can be overridden
-in the test job definition.
+in the device configuration.
 
 .. FIXME: add links to the dispatcher actions which support overrides
 
 A common override used when operating devices on your desk or when a
 :term:`PDU` is not available, allows the dispatcher to recognise a soft reboot.
-This uses the ``shutdown-message`` parameter support in the ``u-boot`` boot
-action:
+Another example is setting up the kernel starting message that the LAVA will
+recognize during boot time.
+This uses the ``shutdown_message`` and ``boot_message`` keys in the
+``constants`` section of the device config:
+
+.. code-block:: yaml
+
+ {% extends 'my-device.jinja2' %}
+ {% set shutdown_message = "reboot: Restarting system" %}
+ {% set boot_message = "Booting Linux" %}
+
+
+Some of the constants can also be overridden in the test job definition, i.e.
+looking at the same example ``shutdown-message`` parameter support in the
+``u-boot`` boot action:
 
 .. code-block:: yaml
 
