@@ -87,6 +87,8 @@ In addition, LAVA templates need to **always** render to valid YAML. It is this
 YAML which is sent to the worker as ``device.yaml``. The worker does not handle
 the templates. All operations are done on the master.
 
+.. _testing_new_devicetype_templates:
+
 Testing new device-type templates
 ---------------------------------
 
@@ -497,7 +499,7 @@ from Debian (unstable or stable backports) which are based on the release
 branch. Use the :ref:`lava_repositories` and/or :ref:`developer_build_version`
 to ensure that your instance is up to date with master.
 
-.. seealso:: :ref:`lava_release_process`.
+.. seealso:: :ref:`lava_release_process` and :ref:`lava_development`.
 
 .. index:: patches and fixes
 
@@ -568,13 +570,27 @@ subscribe to the :ref:`lava_devel` mailing list and talk to us on IRC::
 Contributing via GitHub
 -----------------------
 
-You can use GitHub to fork the LAVA packages and make pull requests
+You can use the GitHub mirrors of ``git.linaro.org`` to fork the LAVA packages
+and make pull requests. Remember to make your change against the ``master``
+branch, not the github default branch of ``release``. Production releases are
+based on the ``release`` branch.
 
 https://github.com/Linaro
 
 It is worth sending an email to the :ref:`lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
 
-.. note:: You will need to respond to comments on the review and the
-   process of updating the review is **not** linked to the github pull request
-   process.
+.. note:: The process of creating or updating the review is **not** currently
+   linked to the github pull request process. You will need to respond to
+   comments on the review which will **not** appear in the pull request. LAVA
+   is not developed on github, the code is simply mirrored to github from
+   ``git.linaro.org`` when a release is made. (So the github mirror of
+   ``master`` can also be significantly behind current ``master`` from
+   ``git.linaro.org``. Reviews use ``git.linaro.org``.)
+
+* https://git.linaro.org/lava/lava-server.git/
+* https://git.linaro.org/lava/lava-dispatcher.git/
+* https://git.linaro.org/lava/lava-tool.git/
+* https://git.linaro.org/lava/lava-coordinator.git/
+
+.. seealso:: :ref:`lava_development`.
