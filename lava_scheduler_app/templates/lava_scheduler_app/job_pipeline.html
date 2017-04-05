@@ -178,7 +178,7 @@
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
     <div class="btn-group" data-toggle="buttons" id="logbuttons">
-      <label class="btn btn-default active" id="debug_label" for="debug" style="text-decoration: line-through"><input type="checkbox" id="debug" autocomplete="off" checked>debug</label>
+      <label class="btn btn-default" id="debug_label" for="debug"><input type="checkbox" id="debug" autocomplete="off">debug</label>
       <label class="btn btn-info" id="info_label" for="info"><input type="checkbox" id="info" autocomplete="off">info</label>
       <label class="btn btn-warning" id="warning_label" for="warning"><input type="checkbox" id="warning" autocomplete="off">warning</label>
       <label class="btn btn-danger" id="error_label" for="error"><input type="checkbox" id="error" autocomplete="off">error</label>
@@ -519,7 +519,7 @@
       // Create the list of styles
       // Debug are deactivated by default
       var styles = {
-        'debug': sheet.insertRule('.debug { display: None }', 0),
+        'debug': sheet.insertRule('.debug { display: block }', 0),
         'keyboard': sheet.insertRule('.keyboard { display: block }', 1),
         'info': sheet.insertRule('.info { display: block }', 2),
         'warning': sheet.insertRule('.warning { display: block }', 3),
