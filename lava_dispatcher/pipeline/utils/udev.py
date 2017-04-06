@@ -20,6 +20,7 @@
 
 
 import pyudev
+import logging
 from lava_dispatcher.pipeline.action import Action, LAVABug
 
 
@@ -51,7 +52,7 @@ class WaitUSBSerialDeviceAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(WaitUSBSerialDeviceAction, self).run(connection, max_end_time, args)
-        self.logger.debug("Waiting for usb serial device: %s" % self.serial_device)
+        self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
         return connection
 
@@ -82,7 +83,7 @@ class WaitDFUDeviceAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(WaitDFUDeviceAction, self).run(connection, max_end_time, args)
-        self.logger.debug("Waiting for DFU device: %s" % self.dfu_device)
+        self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(action='add', match_dict=self.dfu_device, subsystem='usb', devtype='usb_device')
         return connection
 
@@ -117,12 +118,12 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(WaitUSBMassStorageDeviceAction, self).run(connection, max_end_time, args)
-        self.logger.debug("Waiting for USB mass storage device: %s" % self.ms_device)
+        self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
         return connection
 
 
-def _dict_compare(d1, d2):
+def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
     intersect_keys = d1_keys.intersection(d2_keys)
@@ -156,7 +157,7 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None)
             break
 
 
-def get_usb_devices(job):
+def get_usb_devices(job, logger=None):
     context = pyudev.Context()
     device_paths = set()
     for usb_device in job.device.get('device_info', []):
@@ -166,20 +167,23 @@ def get_usb_devices(job):
         # check if device is already connected
         # try with all parameters such as board id, usb_vendor_id and
         # usb_product_id
-        for device in context.list_devices():
-            if (device.get('ID_SERIAL_SHORT') == board_id) \
-               and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
-               and (device.get('ID_MODEL_ID') == usb_product_id):
-                device_paths.add(device.device_node)
-        # try with parameters such as board id, usb_vendor_id
-        for device in context.list_devices():
-            if (device.get('ID_SERIAL_SHORT') == board_id) \
-               and (device.get('ID_VENDOR_ID') == usb_vendor_id):
-                device_paths.add(device.device_node)
-        # try with board id alone
-        for device in context.list_devices():
-            if device.get('ID_SERIAL_SHORT') == board_id:
-                device_paths.add(device.device_node)
+        for device in context.list_devices(subsystem='usb'):
+            if board_id and usb_vendor_id and usb_product_id:
+                if (device.get('ID_SERIAL_SHORT') == board_id) \
+                   and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
+                   and (device.get('ID_MODEL_ID') == usb_product_id):
+                    device_paths.add(device.device_node)
+            elif board_id and usb_vendor_id and not usb_product_id:
+                # try with parameters such as board id, usb_vendor_id
+                if (device.get('ID_SERIAL_SHORT') == board_id) \
+                   and (device.get('ID_VENDOR_ID') == usb_vendor_id):
+                    device_paths.add(device.device_node)
+            elif board_id and not usb_vendor_id and not usb_product_id:
+                # try with board id alone
+                if device.get('ID_SERIAL_SHORT') == board_id:
+                    device_paths.add(device.device_node)
+    if logger:
+        logger.debug("Adding %s", ', '.join(device_paths))
     return list(device_paths)
 
 
@@ -201,14 +205,14 @@ def usb_device_wait(job, device_actions=None):
                    and device.action in device_actions:
                     break
             return
-        if board_id and usb_vendor_id:
+        elif board_id and usb_vendor_id and not usb_product_id:
             for device in iter(monitor.poll, None):
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
                    and device.action in device_actions:
                     break
             return
-        if board_id:
+        elif board_id and not usb_vendor_id and not usb_product_id:
             for device in iter(monitor.poll, None):
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and device.action in device_actions:

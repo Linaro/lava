@@ -281,7 +281,7 @@ class WaitUSBDeviceAction(Action):
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
-        self.logger.info("Waiting for USB device(s) ...")
+        self.logger.info("Waiting for USB device(s) with actions %s ...", self.device_actions)
         usb_device_wait(self.job, device_actions=self.device_actions)
         return connection
 

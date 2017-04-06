@@ -464,8 +464,16 @@ class TestShellAction(TestAction):
         if not lxc_name:
             self.logger.debug("No LXC device requested")
             return False
-        self.logger.info("Get USB device(s) ...")
-        device_paths = get_usb_devices(self.job)
+        self.logger.info(
+            "Get USB device(s) using: %s",
+            yaml.dump(self.job.device.get('device_info', [])).strip()
+        )
+        device_paths = get_usb_devices(self.job, self.logger)
+        if device_paths:
+            self.logger.debug("Adding %s", ', '.join(device_paths))
+        else:
+            self.logger.warning("No USB devices added to the LXC.")
+            return False
         for device in device_paths:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
                        os.path.realpath(device)]

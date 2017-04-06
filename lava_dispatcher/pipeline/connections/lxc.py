@@ -59,7 +59,7 @@ class ConnectLxc(Action):
             return connection
 
         self.logger.info("Get USB device(s) ...")
-        device_paths = get_usb_devices(self.job)
+        device_paths = get_usb_devices(self.job, logger=self.logger)
         for device in device_paths:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
                        os.path.realpath(device)]
