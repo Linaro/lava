@@ -13,15 +13,15 @@
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 
 {% set base_uboot_bootcmd = (
-"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
 {% set base_uboot_tftp_bootcmd = (
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
 {% set base_uboot_nfs_bootcmd = (
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
 {% set base_uboot_usb_commands = (
