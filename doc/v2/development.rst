@@ -551,6 +551,8 @@ functionality using :ref:`XML-RPC <xml_rpc>`.
    ``models.py`` or in ``dbutils.py``. Wherever possible, re-use existing
    functions with wrappers for error handling in the API code.
 
+.. _lava_instance_settings:
+
 Instance settings
 *****************
 

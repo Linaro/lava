@@ -628,6 +628,92 @@ TestJob data
   are the complete log file (``output.yaml``) and the logs for each specific
   action within the job in a directory tree below the ``pipeline`` directory.
 
+.. _admin_configuration_files:
+
+V2 configuration files
+======================
+
+.. seealso:: :ref:`admin_backups`
+
+lava-coordinator
+----------------
+
+* **lava-coordinator.conf** - ``/etc/lava-coordinator/lava-coordinator.conf``
+  contains the lookup information for workers to find the ``lava-coordinator``
+  for :term:`multinode` test jobs. Each worker **must** share a single
+  ``lava-coordinator`` with all other workers attached to the same instance.
+  Instances may share a ``lava-coordinator`` with other instances or can choose
+  to have one each, depending on expected load and maintenance priorities. The
+  ``lava-coordinator`` daemon itself does not need to be installed on a master
+  but that is the typical way to use the coordinator.
+
+  .. caution:: Restarting ``lava-coordinator`` will cause errors for **any**
+     running MultiNode test job. However, changes to
+     ``/etc/lava-coordinator/lava-coordinator.conf`` on a worker can be made
+     without needing to restart the ``lava-coordinator`` daemon itself.
+
+  .. seealso:: :ref:`disable_v1_worker`
+
+lava-dispatcher
+---------------
+
+Files and directories in ``/etc/lava-dispatcher/``:
+
+* **lava-slave** - Each slave needs configuration to be able to locate the
+  correct master using ZMQ. This involves a URL for a ZMQ socket on the master
+  and optionally the location of the ZMQ certificates to support authentication
+  and encryption of the ZMQ messages.
+
+  .. seealso:: :ref:`configuring_lava_slave`
+
+* **certificates.d/** - On a worker, this directory contains the master
+  certificate for each worker. On a master, this directory contains a copy of
+  the certificate for each worker which is allowed to connect to the master.
+
+  .. seealso:: :ref:`zmq_curve`
+
+lava-server
+-----------
+
+Files and directories in ``/etc/lava-server/``:
+
+* **dispatcher.d** - worker specific configuration. Files in this directory
+  need to be created by the admin and have a filename which matches the
+  reported hostname of the worker in ``/var/log/lava-server/lava-master.log``.
+
+  .. seealso:: :ref:`dispatcher_configuration`
+
+*  **dispatcher-config** - contains V2 device configuration, including
+   :ref:`device_type_templates` and V2 :ref:`health checks <health_checks>`.
+
+* **env.yaml** - Configures the environment that will be used by the server and
+  the dispatcher. This can be used to modify environment variables to support a
+  proxy or other lab-specific requirements. The file is part of the
+  ``lava-server`` package and contains comments on how changes can be made.
+
+* **instance.conf** - Local database configuration for the master. This file is
+  managed by the package installation process.
+
+* **lava-master** - Each master needs configuration to set up the correct ZMQ
+  ports on the master. This involves a URL for a ZMQ socket on the master
+  and optionally the location of the ZMQ certificates to support authentication
+  and encryption of the ZMQ messages.
+
+  .. seealso:: :ref:`zmq_curve` and :ref:`configuring_lava_slave`
+
+* **lava-server-gunicorn.service** - example file for a systemd service to run
+  ``lava-server-gunicorn`` instead of letting systemd generate a service file
+  from the sysvinit support included in the package.
+
+* **secret_key.conf** - This key is used by Django to ensure the security of
+  various cookies and # one-time values. To learn more please visit:
+  http://docs.djangoproject.com/en/1.8/ref/settings/#secret-key.
+
+* **settings.conf** - Instance-specific settings used by Django and lava-server
+  including authentication backends, branding support and event notifications.
+
+  .. seealso:: :ref:`lava_instance_settings`
+
 .. index:: override device
 
 .. _overriding_device_configuration:
