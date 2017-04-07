@@ -63,9 +63,8 @@ class ModelFactory(object):
         qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
         qemu.save()
 
-    def make_device_type(self, name='qemu', health_check_job=None):
-        (device_type, created) = DeviceType.objects.get_or_create(
-            name=name, health_check_job=health_check_job)
+    def make_device_type(self, name='qemu'):
+        (device_type, created) = DeviceType.objects.get_or_create(name=name)
         if created:
             device_type.save()
         return device_type

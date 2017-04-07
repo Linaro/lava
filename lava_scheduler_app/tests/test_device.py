@@ -71,7 +71,7 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.health_status, Device.HEALTH_LOOPING, "should be LOOPING")
 
     def test_access_while_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden = DeviceType(name="hidden", owners_only=True)
         device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
         user = self.factory.make_user()
         device.user = user
@@ -83,7 +83,7 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.can_submit(user), True)
 
     def test_access_retired_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden = DeviceType(name="hidden", owners_only=True)
         device = Device(device_type=hidden, hostname='hidden2', status=Device.RETIRED)
         user = self.factory.make_user()
         device.user = user

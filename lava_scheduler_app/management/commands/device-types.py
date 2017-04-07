@@ -54,9 +54,6 @@ class Command(BaseCommand):
                                      "Passing '*' will add all known V2 device types.")
         health = add_parser.add_argument_group("health check",
                                                "Only supported when creating a single device-type")
-        health.add_argument("--health-check",
-                            default=None,
-                            help="The health check (filename) for the given device type.")
         health.add_argument("--health-frequency",
                             default=24,
                             help="How often to run health checks.")
@@ -95,7 +92,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["device-type"], options["health_check"],
+            self.handle_add(options["device-type"],
                             options["health_denominator"],
                             options["health_frequency"])
         elif options["sub_command"] == "details":
@@ -103,7 +100,7 @@ class Command(BaseCommand):
         else:
             self.handle_list(options["show_all"], options["csv"])
 
-    def handle_add(self, device_type, health_check, health_denominator,
+    def handle_add(self, device_type, health_denominator,
                    health_frequency):
         """ Add a device type """
         if device_type == "*":
@@ -117,11 +114,6 @@ class Command(BaseCommand):
                 self.stdout.write("* %s" % dt_name)
                 DeviceType.objects.create(name=dt_name)
         else:
-            if health_check is not None:
-                health_job = open(health_check).read()
-            else:
-                health_job = None
-
             if health_denominator == "hours":
                 health_denominator = DeviceType.HEALTH_PER_HOUR
             else:
@@ -129,7 +121,6 @@ class Command(BaseCommand):
 
             DeviceType.objects.create(
                 name=device_type,
-                health_check_job=health_job,
                 health_frequency=health_frequency,
                 health_denominator=health_denominator)
 
@@ -141,15 +132,15 @@ class Command(BaseCommand):
             self.stderr.write("Unable to find device-type '%s'" % name)
             sys.exit(1)
 
-        self.stdout.write("device_type : %s" % name)
-        self.stdout.write("description : %s" % device_type.description)
-        self.stdout.write("display     : %s" % device_type.display)
-        self.stdout.write("owners_only : %s" % device_type.owners_only)
-        self.stdout.write("health_check: %s" % bool(device_type.health_check_job))
+        self.stdout.write("device_type    : %s" % name)
+        self.stdout.write("description    : %s" % device_type.description)
+        self.stdout.write("display        : %s" % device_type.display)
+        self.stdout.write("owners_only    : %s" % device_type.owners_only)
+        self.stdout.write("health disabled: %s" % device_type.disable_health_check)
         if not devices:
-            self.stdout.write("devices     : %d" % device_type.device_set.count())
+            self.stdout.write("devices        : %d" % device_type.device_set.count())
         else:
-            self.stdout.write("devices     :")
+            self.stdout.write("devices        :")
             for device in device_type.device_set.all():
                 self.stdout.write("- %s" % device.hostname)
 

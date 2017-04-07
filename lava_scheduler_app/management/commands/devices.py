@@ -186,6 +186,7 @@ class Command(BaseCommand):
         self.stdout.write("device_type: %s" % device.device_type.name)
         self.stdout.write("status     : %s" % device.get_status_display())
         self.stdout.write("health     : %s" % device.get_health_status_display())
+        self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
         self.stdout.write("public     : %s" % device.is_public)
         self.stdout.write("pipeline   : %s" % device.is_pipeline)

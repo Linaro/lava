@@ -85,22 +85,20 @@ class ModelFactory(object):
         self.make_device(device_type)
         return device_type
 
-    def make_device_type(self, name=None, health_check_job=None):
+    def make_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
-        device_type, created = DeviceType.objects.get_or_create(
-            name=name, health_check_job=health_check_job)
+        device_type, created = DeviceType.objects.get_or_create(name=name)
         if created:
             device_type.save()
         logging.debug("asking for a device of type %s", device_type.name)
         return device_type
 
-    def make_hidden_device_type(self, name=None, health_check_job=None):
+    def make_hidden_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
         device_type, created = DeviceType.objects.get_or_create(
-            owners_only=True,
-            name=name, health_check_job=health_check_job)
+            owners_only=True, name=name)
         if created:
             device_type.save()
         logging.debug("asking for a device of type %s", device_type.name)

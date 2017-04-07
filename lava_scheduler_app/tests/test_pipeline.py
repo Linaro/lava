@@ -71,10 +71,9 @@ class YamlFactory(ModelFactory):
         qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
         qemu.save()
 
-    def make_device_type(self, name='qemu', health_check_job=None):
+    def make_device_type(self, name='qemu'):
 
-        device_type = DeviceType.objects.get_or_create(
-            name=name, health_check_job=health_check_job)[0]
+        device_type = DeviceType.objects.get_or_create(name=name)[0]
         device_type.save()
         return device_type
 
