@@ -2917,13 +2917,21 @@ def similar_jobs(request, pk):
 
 @BreadCrumb("Migration", parent=index)
 def migration(request):
+    # with no devices, there is nothing to do, so start at 100%
+    # only once there are devices do the calculations make any sense.
+    active_percent = 100
+    exclusion = 100
+    hc_percent = 100
+    no_hc_percent = 100
     v1_problems = {}
     db_healthchecks = {}
     no_healthcheck = {}
     exclusive = {}
 
     # total active
-    active = Device.objects.filter(~Q(status=Device.RETIRED), Q(device_type__display=True))
+    active = Device.objects.filter(
+        ~Q(status=Device.RETIRED),
+        Q(device_type__display=True))
     active_count = len(active)
 
     active_v1 = Device.objects.filter(
@@ -2931,35 +2939,47 @@ def migration(request):
         Q(device_type__display=True)
     )
     active_v1_count = len(active_v1)
-    healthchecks = active_count
+    active_health = active.filter(device_type__disable_health_check=False)
+    active_h_count = active_health.count()
+
+    healthchecks = active_h_count
+
+    # all active devices (V1 and V2), including disabled healthchecks
     for dev in active_v1:
+        # all active devices which support V1 at all need migration
         v1_problems[dev.hostname] = dev.get_absolute_url()
         if dev.device_type.health_check_job not in ['', None]:
+            # all active devices with a database health check need migration.
             healthchecks -= 1
             db_healthchecks[dev.hostname] = dev.get_absolute_url()
 
+    # check V2 exclusive, including disabled healthchecks
     v2_devices = Device.objects.filter(
-        Q(is_pipeline=True), ~Q(status=Device.RETIRED), Q(device_type__display=True))
+        Q(is_pipeline=True), ~Q(status=Device.RETIRED),
+        Q(device_type__display=True))
     for dev in v2_devices:
-        exclusive[dev.hostname] = dev.is_exclusive
-        if dev.device_type.health_check_job not in [None, '']:
-            db_healthchecks[dev.hostname] = dev.get_absolute_url()
-            healthchecks -= 1
+        if not dev.is_exclusive:
+            # highlight devices which are not exclusive to V2
+            exclusive[dev.hostname] = dev.get_absolute_url()
 
-    nonhc_devices = active_count
-    for dev in active:
+    # iterate over all devices, excluding disabled healthchecks
+    for dev in active_health:
         hc = dev.get_health_check()
-        if hc == '' or hc == dev.device_type.health_check_job:
-            nonhc_devices -= 1
-        if hc == '':
+        # even if hc contains data, check for a database entry
+        # need migration if either db has entry or hc is empty
+        if hc == '' or dev.device_type.health_check_job not in ['', None]:
             no_healthcheck[dev.hostname] = dev.get_absolute_url()
 
-    active_percent = int(100 * (active_count - active_v1_count) / active_count)
-    exclusion = int(100 * len([dev for dev in exclusive if exclusive[dev]]) / active_count)
-    hc_percent = int(100 * healthchecks / active_count)
-    no_hc_percent = int(100 * nonhc_devices / active_count)
+    if active_count:
+        active_percent = int(100 * (active_count - active_v1_count) / active_count)
+        exclusion = int(100 * (active_count - len(exclusive.keys())) / active_count)
+    if active_h_count:
+        hc_percent = int(100 * healthchecks / active_h_count)
+        no_hc_percent = int(100 * (active_h_count - len(no_healthcheck.keys())) / active_h_count)
 
     templates = {}
+    # V2 devices without a health check
+    # lookup the appropriate health check filename
     for hostname, _ in no_healthcheck.items():
         device_dict = DeviceDictionary.get(hostname)
         if not device_dict:
@@ -2978,17 +2998,18 @@ def migration(request):
             'v1_problems': v1_problems,
             'db_healthchecks': db_healthchecks,
             'no_healthcheck': no_healthcheck,
-            'exclusive_count': len([dev for dev in exclusive if exclusive[dev]]),
+            'exclusive_count': active_count - len(exclusive.keys()),
             'exclusive': exclusive,
             'exclusion': exclusion,
             'active_devices': active_count,
+            'active_health': active_h_count,
             'active_v1_devices': active_v1_count,
             'active_level': active_count - active_v1_count,
             'active_percent': active_percent,
             'healthchecks': healthchecks,
-            'health_check_level': active_count - healthchecks,
+            'health_check_level': active_h_count - healthchecks,
             'hc_percent': hc_percent,
-            'nonhc_devices': nonhc_devices,
+            'nonhc_devices': active_h_count - len(no_healthcheck.keys()),
             'no_hc_percent': no_hc_percent,
             'templates': templates,
             'context_help': BreadCrumbTrail.show_help(migration),

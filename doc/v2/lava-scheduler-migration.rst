@@ -9,6 +9,11 @@ Active devices in this context are defined as:
 
 #. Device type for this device has ``Display`` set to True.
 
+For health checks, devices where the health check has been disabled are
+excluded.
+
+.. seealso:: :ref:`health_checks`
+
 Migration of active V1 devices to V2
 ====================================
 

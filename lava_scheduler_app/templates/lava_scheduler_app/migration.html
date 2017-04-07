@@ -32,9 +32,9 @@
     <p>Number of active V2 devices which only support V2.</p>
     <div class="progress">
     <div
-{% if exclusion < 25 %}
+{% if exclusion < 50 %}
         class="progress-bar progress-bar-danger"
-{% elif exclusion < 50 %}
+{% elif exclusion < 75 %}
         class="progress-bar progress-bar-warning"
 {% else %}
         class="progress-bar progress-bar-success"
@@ -52,21 +52,21 @@
     {% endfor %}
     {% endif %}
 
-    <h3>Migration of active devices to V2 healthchecks</h3>
-    <p>Number of active devices with health checks undefined in the database.</p>
+    <h3>Migration of active devices to enabled V2 healthchecks</h3>
+    <p>Number of active devices with enabled health checks undefined in the database.</p>
     <div class="progress">
     <div
 {% if hc_percent < 50 %}
         class="progress-bar progress-bar-danger"
-{% elif hc_percent < 25 %}
+{% elif hc_percent < 75 %}
         class="progress-bar progress-bar-warning"
 {% else %}
         class="progress-bar progress-bar-success"
 {% endif %}
         role="progressbar" aria-valuenow="{{ healthchecks }}"
-         aria-valuemin="0" aria-valuemax="{{ active_devices }}"
+         aria-valuemin="0" aria-valuemax="{{ active_health }}"
          style="width: {{ hc_percent }}%; min-width: 6em">
-        {{ healthchecks }} of {{ active_devices }}
+        {{ healthchecks }} of {{ active_health }}
     </div>
     </div>
     {% if health_check_level > 0 %}
@@ -76,21 +76,21 @@
     {% endfor %}
     {% endif %}
 
-    <h3>Active devices with healthchecks</h3>
-    <p>Number of active devices with a healthcheck.</p>
+    <h3>Active devices with enabled healthchecks</h3>
+    <p>Number of active devices with an enabled healthcheck.</p>
     <div class="progress">
     <div
-{% if no_hc_percent > 75 %}
+{% if no_hc_percent < 25 %}
         class="progress-bar progress-bar-danger"
-{% elif no_hc_percent > 50 %}
+{% elif no_hc_percent < 50 %}
         class="progress-bar progress-bar-warning"
 {% else %}
         class="progress-bar progress-bar-success"
 {% endif %}
         role="progressbar" aria-valuenow="{{ nonhc_devices }}"
-         aria-valuemin="0" aria-valuemax="{{ active_devices }}"
+         aria-valuemin="0" aria-valuemax="{{ active_health }}"
          style="width: {{ no_hc_percent }}%; min-width: 6em">
-        {{ nonhc_devices }} of {{ active_devices }}
+        {{ nonhc_devices }} of {{ active_health }}
     </div>
     </div>
     {% if no_healthcheck %}
