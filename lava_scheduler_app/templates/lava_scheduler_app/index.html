@@ -9,6 +9,9 @@
   .grey {
     color: grey;
   }
+  .red {
+      color: red;
+  }
   </style>
 {% endblock %}
 
@@ -50,6 +53,8 @@
       class="glyphicon glyphicon-phone pull-right green"></span> Active Devices</a></li>
       <li><a href="{% url 'lava.scheduler.labhealth' %}"><span
       class="glyphicon glyphicon-heart pull-right"></span> Devices Health</a></li>
+      <li><a href="{% url 'lava.scheduler.migration' %}"><span
+      class="glyphicon glyphicon-bell pull-right red"></span> Migration</a></li>
     </ul>
   </div>
   <div class="col-md-4">

@@ -28,8 +28,8 @@
     {% endfor %}
     {% endif %}
 
-    <h3>Active devices exclusive to V2</h3>
-    <p>Number of active devices which only support V2.</p>
+    <h3>Active V2 devices exclusive to V2</h3>
+    <p>Number of active V2 devices which only support V2.</p>
     <div class="progress">
     <div
 {% if exclusion < 25 %}
@@ -46,7 +46,7 @@
     </div>
     </div>
     {% if exclusive_count != active_devices %}
-    <h4>Active devices which are not exclusive to V2:</h4>
+    <h4>Active V2 devices which are not exclusive to V2:</h4>
     {% for hostname, dev in exclusive.items %}
         [ <a href="{{ dev }}">{{ hostname }}</a> ]
     {% endfor %}

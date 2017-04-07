@@ -2929,11 +2929,10 @@ def migration(request):
     active_v1_count = len(active_v1)
     healthchecks = active_count
     for dev in active_v1:
+        v1_problems[dev.hostname] = dev.get_absolute_url()
         if dev.device_type.health_check_job not in ['', None]:
             healthchecks -= 1
             db_healthchecks[dev.hostname] = dev.get_absolute_url()
-        else:
-            v1_problems[dev.hostname] = dev.get_absolute_url()
 
     v2_devices = Device.objects.filter(
         Q(is_pipeline=True), ~Q(status=Device.RETIRED), Q(device_type__display=True))
