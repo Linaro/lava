@@ -125,19 +125,19 @@
       <dd id="actual_device"><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a
       href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
       {% else %}
-      <dd id="actual_device"><i>...</i></dd>
+      <dd id="actual_device">...</dd>
       {% endif %}
       <dt>Started</dt>
-      <dd id="started" title="{{ job.start_time }}">{% if job.start_time %}{{ job.start_time|naturaltime }}{% else %}<i>...</i>{% endif %}</dd>
+      <dd id="started" title="{{ job.start_time }}">{% if job.start_time %}{{ job.start_time|naturaltime }}{% else %}...{% endif %}</dd>
       <dt>Duration</dt>
       {% if job.status <= job.RUNNING %}
-      <dd id="duration"><i>...</i></dd>
+      <dd id="duration">...</dd>
       {% else %}
       <dd id="duration" title="{{ job.duration }}">{{ job.end_time|timeuntil:job.start_time }}</dd>
       {% endif %}
       {% if job.results_link %}
       <dt>Results</dt>
-      <dd><a href="{{ job.results_link }}"><span class="glyphicon glyphicon-signal"></span></a></dd>
+      <dd><a href="{{ job.results_link }}" class="btn btn-success btn-xs">&nbsp;<span class="glyphicon glyphicon-signal"></span>&nbsp;</a></dd>
       {% endif %}
     </dl>
   </div>
