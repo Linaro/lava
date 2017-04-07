@@ -23,20 +23,12 @@ actions:
       lxc:
       serial:
     methods:
-      uefi-menu:
-        parameters:
-          interrupt_prompt: {{ interrupt_prompt|default("The default boot selection will start in") }}
-          interrupt_string: {{ interrupt_string|default("' '") }}
-          item_markup:
-            - "["
-            - "]"
-          item_class: '0-9'
-          separator: ' '
-          bootloader_prompt: "{{ bootloader_prompt|default('Start:') }}"
-          boot_message: {{ boot_message|default("Booting Linux Kernel...") }}
-        fastboot:
-        - select:
-            items:
-             - {{ fastboot_select_item|default('boot from eMMC') }}
+      fastboot:
+        - boot
+        - wait-usb-add
+        - lxc-add-device
+        - auto-login
+        - shell-session
+        - export-env
 
 {% endblock %} {# end body block #}
