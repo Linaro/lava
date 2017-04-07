@@ -24,7 +24,7 @@
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
-{% set base_uboot_usb_commands = (
+{% set base_uboot_usb_commands = uboot_usb_commands|default(
 "          - usb start") -%}
 
 {% set uboot_needs_usb = uboot_needs_usb|default(false) %}
