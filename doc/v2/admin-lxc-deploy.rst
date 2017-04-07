@@ -1,4 +1,4 @@
-.. index:: admin deploy lxc
+.. index:: admin deploy lxc, device_info - lxc
 
 .. _lxc_deploy:
 
@@ -29,6 +29,8 @@ Refer the following links in order to setup networking for LXC in Debian:
 * VLAN Networking - https://wiki.debian.org/LXC/VlanNetworking
 * libvirt - https://wiki.debian.org/LXC/LibVirtDefaultNetwork
 
+.. _add_android_devices_lxc:
+
 Android testing with LXC support
 --------------------------------
 
@@ -55,16 +57,55 @@ Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` 
 
  {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_vendor_id': 'd109'}] %}
 
-Example 4 - A device and optional additional hardware ::
-
- {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775'}, {'board_id': '45645629342'}] %}
-
 .. note:: Do not run `adb daemon` on the dispatcher host, which will grab the
           :term:`DUT` and will hinder exposing it to LXC. Similarly, remove
           `fastboot` packages from the dispatcher host.
 
 .. include:: examples/device-configurations/hi6220-hikey.yaml
    :code: yaml
+
+.. _add_usb_devices_lxc:
+
+Arbitrary USB devices with LXC support
+--------------------------------------
+
+Some workers have other USB devices attached, for example an energy probe,
+which also need to be added to the LXC for access by the test shell. These can
+be added as supplementary ``device_info`` dictionaries. In the case of an
+energy probe, the probe may be measuring a single DUT whilst being connected to
+the worker as a USB device. The ``id`` of that USB device needs to be in the
+``device_info`` of the DUT so that the test shell running in the LXC can
+control the probe.
+
+The keys given in the dictionary are **not** arbitrary and follow the same
+rules as for :ref:`Android devices <add_android_devices_lxc>`::
+
+ [{'board_id': '0123456789ABCDEF'}, {'board_id': 'S/NO44440001'}]
+
+.. caution:: Ensure that the ``device_info`` relates to a USB device which is
+   attached to the same worker as the DUT but is **not** a DUT itself.
+
+The value to specify is what shows up in ``pyudev`` bindings as the
+``ID_SERIAL_SHORT``. This is typically the ``SerialNumber`` reported by
+``dmesg`` but it is worth checking:
+
+.. code-block:: python
+
+  >>> import pyudev
+  >>> context = pyudev.Context()
+  >>> [ device.get('ID_SERIAL_SHORT') for device in context.list_devices(subsystem='usb')]
+  [u'0000:00:1a.0', None, None, None, None, u'889FFAE94013', None, None, None, None,
+  None, u'FTGNRL22', None, None, None, None, None, None, None, None, None, None, None,
+  None, None, None, None, None, u'0000:00:1d.0', None, None, None]
+  >>>
+
+For ``usb_vendor_id``, the corresponding pyudev key is ``ID_VENDOR_ID``.
+For ``usb_product_id``, the corresponding pyudev key is ``ID_MODEL_ID``.
+
+If using multiple keys for the same ``device_info``, ensure that the key value
+pairs are in a single dictionary within the list of dictionaries::
+
+ {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
 
 Configuration: Persistent Containers
 ------------------------------------
