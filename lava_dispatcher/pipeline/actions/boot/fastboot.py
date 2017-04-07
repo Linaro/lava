@@ -42,6 +42,7 @@ def _fastboot_sequence_map(sequence):
     """Maps fastboot sequence with corresponding class."""
     sequence_map = {'boot': (FastbootBootAction, None),
                     'reboot': (FastbootRebootAction, None),
+                    'no-flash-boot': (FastbootBootAction, None),
                     'wait-usb-add': (WaitUSBDeviceAction, ['add']),
                     'wait-usb-remove': (WaitUSBDeviceAction, ['remove']),
                     'lxc-add-device': (LxcAddDeviceAction, None),
@@ -161,6 +162,11 @@ class FastbootBootAction(Action):
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        if self.job.device.pre_os_command:
+            self.logger.info("Running pre OS command.")
+            command = self.job.device.pre_os_command
+            if not self.run_command(command.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % command)
         return connection
 
 

@@ -280,7 +280,7 @@ class FastbootFlashAction(DeployAction):
             dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
             sequence = self.job.device['actions']['boot']['methods'].get(
                 'fastboot', [])
-            if 'boot' in sequence and flash_cmd in ['boot']:
+            if 'no-flash-boot' in sequence and flash_cmd in ['boot']:
                 continue
             serial_number = self.job.device['fastboot_serial_number']
             fastboot_opts = self.job.device['fastboot_options']
