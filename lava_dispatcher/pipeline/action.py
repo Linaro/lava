@@ -563,13 +563,16 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
 
-            if exc.returncode != 0 and allow_fail:
+            # the exception is raised due to a non-zero exc.returncode
+            if allow_fail:
                 self.logger.info(msg)
                 log = exc.output.strip()
             else:
                 for error in errors:
                     self.errors = error
                 self.logger.error(msg)
+                # if not allow_fail, fail the command
+                return False
 
         # allow for commands which return no output
         if not log and allow_silent:
