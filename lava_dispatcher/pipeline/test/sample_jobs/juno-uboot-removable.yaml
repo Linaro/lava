@@ -79,6 +79,8 @@ actions:
          tool: /usr/bin/wget
          prompt: HTTP request sent, awaiting response
          options: --no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O - {DOWNLOAD_URL}
+     deployment_msgs:
+       - '[0-9]+\+[0-9]+ records out'
 
   - deploy:
      namespace: android

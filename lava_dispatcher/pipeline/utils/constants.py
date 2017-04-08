@@ -114,8 +114,8 @@ INSTALLER_QUIET_MSG = 'Loading initial ramdisk'
 DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
 DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
 
-# Message for notifying completion of secondary deployment
-SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
+# List of DD output prompts for notifying completion of secondary deployment
+DD_PROMPTS = ['[0-9]+\+[0-9]+ records out', '[0-9]+ bytes \(.*\) copied']
 
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
