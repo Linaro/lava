@@ -7,7 +7,7 @@
 "          - setenv initrd_high " + uboot_initrd_high|default('0xffffffff') + "
           - setenv fdt_high " + uboot_fdt_high|default('0xffffffff') ) -%}
 
-{% set base_uboot_tftp_commands = (
+{% set base_uboot_tftp_commands = uboot_tftp_commands|default(
 "          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
