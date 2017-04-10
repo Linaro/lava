@@ -6,39 +6,42 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
-  dd-image:
-    minutes: 8
+  actions:
+    dd-image:
+      minutes: 8
 priority: medium
 visibility: public
 
 actions:
   - deploy:
+      parameters:
+        mkimage_arch: arm # uses 32bit UBoot
       namespace: boot1
       timeout:
         minutes: 4
       to: tftp
       kernel:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+        type: zimage
       ramdisk:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
         compression: gz
         # the bootloader needs a u-boot header on the modified ramdisk
         add-header: u-boot
       modules:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
         compression: gz
       nfsrootfs:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
         compression: gz
       os: debian
       dtb:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/sun7i-a20-cubietruck.dtb
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/sun7i-a20-cubietruck.dtb
 
   - boot:
       namespace: boot1
       method: u-boot
       commands: nfs
-      type: bootz
       auto_login:
         login_prompt: 'login:'
         username: root
@@ -84,7 +87,7 @@ actions:
         dtb: /boot/dtb-3.16.0-4-armmp-lpae
         root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
         boot_part: 1  # the partition on the media from which the bootloader can read the kernel, ramdisk & dtb
-        type: bootz
+        kernel_type: zimage  # image, zimage or uimage, determines the UBoot boot command.
         prompts:
           - 'linaro-test'
           - 'root@debian:~#'

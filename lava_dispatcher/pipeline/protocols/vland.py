@@ -223,7 +223,7 @@ class VlandProtocol(Protocol):
         reply = json.loads(response)
         if 'data' in reply:
             return reply['data']
-        raise RuntimeError(reply)
+        raise JobError("Deploy vlans failed for %s: %s" % (friendly_name, reply))
 
     def _declare_created(self, friendly_name, tag):
         if not self.configured:
@@ -432,10 +432,7 @@ class VlandProtocol(Protocol):
         else:
             for friendly_name, _ in self.names.items():
                 self.logger.info("Deploying vlan %s : %s", friendly_name, self.names[friendly_name])
-                try:
-                    self.vlans[friendly_name], tag = self._create_vlan(friendly_name)
-                except RuntimeError as exc:
-                    raise JobError("Deploy vlans failed for %s: %s" % (friendly_name, exc))
+                self.vlans[friendly_name], tag = self._create_vlan(friendly_name)
                 self.logger.debug("vlan name: %s vlan tag: %s", self.vlans[friendly_name], tag)
                 if not tag:  # error state from create_vlan
                     raise JobError("Unable to create vlan %s", friendly_name)

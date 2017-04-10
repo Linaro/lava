@@ -12,7 +12,7 @@ from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.action import JobError, LAVAError
 from lava_dispatcher.pipeline.job import ZMQConfig
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.device import NewDevice
@@ -89,14 +89,12 @@ def get_pipeline_runner(job):
             job.validate(simulate=validate_only)
             if not validate_only:
                 exitcode = job.run()
-        except (JobError, RuntimeError, TypeError, ValueError) as exc:
-            # TODO: not needed anymore
-            import traceback
-            traceback.print_exc()
-            sys.exit(2)
+        except (LAVAError, KeyboardInterrupt) as exc:
+            exitcode = 1
+
         if exitcode:
             sys.exit(exitcode)
-        # FIXME: should we call the cleanup function in the finally block?
+
     return run_pipeline_job
 
 

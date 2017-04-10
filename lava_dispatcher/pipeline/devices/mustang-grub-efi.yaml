@@ -1,0 +1,139 @@
+device_type: mustang-grub
+
+commands:
+  connect: telnet localhost 7012
+  hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05
+  power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
+  power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05
+
+character_delays:
+      boot: 10
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      usb:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - '22'
+        host: 172.16.200.165
+        identity_file: device/dynamic_vm_keys/lava
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      kexec:
+      ssh:
+      grub-efi:
+        menu_options: pxe-grub
+        parameters:
+          bootloader_prompt: grub>
+        ramdisk:
+          commands:
+          - insmod gzio
+          - linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug root=/dev/ram0 rw ip=dhcp
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        installed:
+          commands:
+          - insmod gzio
+          - linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug root=/dev/sda2 rw ip=dhcp
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        nfs:
+          commands:
+          - insmod gzio
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=:::::eth0:dhcp'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+      uefi-menu:
+        parameters:
+          interrupt_prompt: The default boot selection will start in
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          bootloader_prompt: 'Start:'
+        pxe-grub:
+        - select:
+            items:
+            - 'test pxe'
+        nfs:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+             - 'Remove Boot Device Entry'
+            fallback: Return to Main Menu
+            wait: Delete entry
+        - select:
+            items:
+             - '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:01:73:69:5A:EF'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: "Boot Type:"
+        - select:
+            enter: f
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the FDT :"
+        - select:
+            enter: '{DTB}'
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA NFS Test Image

@@ -8,8 +8,6 @@ timeouts:
     minutes: 30
   action:
     minutes: 10
-  test:
-    minutes: 3
   connection:
     minutes: 15
 

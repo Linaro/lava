@@ -20,18 +20,24 @@
 
 import os
 import re
+import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
-    Timeout
-)
+    JobError,
+    Timeout,
+    LAVABug)
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_SHELL_PROMPT,
+    DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
-    BOOT_MESSAGE
+    BOOT_MESSAGE,
+    CPU_RESET_MESSAGE,
+    LOGIN_INCORRECT_MSG,
+    LOGIN_TIMED_OUT_MSG
 )
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
@@ -41,6 +47,7 @@ from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
+# pylint: disable=too-many-branches,too-many-statements
 
 
 class BootAction(RetryAction):
@@ -159,6 +166,7 @@ class AutoLoginAction(Action):
 
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
+
         # linesep should come from deployment_data as from now on it is OS dependent
         linesep = self.get_namespace_data(
             action='deploy-device-env',
@@ -173,38 +181,64 @@ class AutoLoginAction(Action):
         if not params:
             self.logger.debug("No login prompt set.")
             self.force_prompt = True
+            # If auto_login is not enabled, login will time out if login
+            # details are requested.
+            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
+            if 'success' in self.results:
+                check = self.results['success'].values()
+                if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
+                    raise JobError("auto_login not enabled but image requested login details.")
             # clear kernel message prompt patterns
-            connection.prompt_str = self.parameters.get('prompts', [])
+            connection.prompt_str = list(self.parameters.get('prompts', []))
             # already matched one of the prompts
         else:
             self.logger.info("Waiting for the login prompt")
             connection.prompt_str.append(params['login_prompt'])
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
 
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
+            if 'success' in self.results:
+                if LOGIN_INCORRECT_MSG in self.results['success'].values():
+                    self.logger.warning("Login incorrect message matched before the login prompt. "
+                                        "Please check that the login prompt is correct. Retrying login...")
             self.logger.debug("Sending username %s", params['username'])
             connection.sendline(params['username'], delay=self.character_delay)
             # clear the kernel_messages patterns
-            connection.prompt_str = self.parameters.get('prompts', [])
+            connection.prompt_str = list(self.parameters.get('prompts', []))
 
             if 'password_prompt' in params:
                 self.logger.info("Waiting for password prompt")
                 connection.prompt_str.append(params['password_prompt'])
+                # This can happen if password_prompt is misspelled.
+                connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+
                 # wait for the password prompt
                 index = self.wait(connection, max_end_time)
                 if index:
                     self.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
+                    if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                        raise JobError("Password prompt not matched, please update the job definition with the correct one.")
                 self.logger.debug("Sending password %s", params['password'])
                 connection.sendline(params['password'], delay=self.character_delay)
                 # clear the Password pattern
-                connection.prompt_str = self.parameters.get('prompts', [])
+                connection.prompt_str = list(self.parameters.get('prompts', []))
 
+            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
+            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
             # wait for the login process to provide the prompt
             index = self.wait(connection, max_end_time)
             if index:
                 self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
+                if connection.prompt_str[index] == LOGIN_INCORRECT_MSG:
+                    self.errors = LOGIN_INCORRECT_MSG
+                    raise JobError(LOGIN_INCORRECT_MSG)
+                if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                    self.errors = LOGIN_TIMED_OUT_MSG
+                    raise JobError(LOGIN_TIMED_OUT_MSG)
 
         connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
@@ -247,7 +281,7 @@ class WaitUSBDeviceAction(Action):
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
-        self.logger.info("Waiting for USB device(s) ...")
+        self.logger.info("Waiting for USB device(s) with actions %s ...", self.device_actions)
         usb_device_wait(self.job, device_actions=self.device_actions)
         return connection
 
@@ -272,6 +306,7 @@ class BootloaderCommandOverlay(Action):
         self.method = ""
         self.use_bootscript = False
         self.lava_mac = None
+        self.bootcommand = ''
 
     def validate(self):
         super(BootloaderCommandOverlay, self).validate()
@@ -321,25 +356,27 @@ class BootloaderCommandOverlay(Action):
             '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
             '{LAVA_MAC}': self.lava_mac
         }
-
-        if 'type' in self.parameters:
-            kernel_addr = self.job.device['parameters'][self.parameters['type']]['kernel']
-            dtb_addr = self.job.device['parameters'][self.parameters['type']]['dtb']
-            ramdisk_addr = self.job.device['parameters'][self.parameters['type']]['ramdisk']
+        self.bootcommand = self.get_namespace_data(action='uboot-prepare-kernel', label='bootcommand', key='bootcommand')
+        if not self.bootcommand:
+            if 'type' in self.parameters:
+                self.logger.warning("Using type from the boot action as the boot-command. "
+                                    "Declaring a kernel type in the deploy is preferred.")
+                self.bootcommand = self.parameters['type']
+        prepared_kernel = self.get_namespace_data(action='prepare-kernel', label='file', key='kernel')
+        if prepared_kernel:
+            self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
+            substitutions['{KERNEL}'] = prepared_kernel
+        if self.bootcommand:
+            kernel_addr = self.job.device['parameters'][self.bootcommand]['kernel']
+            dtb_addr = self.job.device['parameters'][self.bootcommand]['dtb']
+            ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
                     and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
                 ramdisk_addr = '-'
 
-            bootcommand = self.parameters['type']
-            if self.parameters['type'] == 'uimage':
-                bootcommand = 'bootm'
-            elif self.parameters['type'] == 'zimage':
-                bootcommand = 'bootz'
-            elif self.parameters['type'] == 'image':
-                bootcommand = 'booti'
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
-                bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
+                self.bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
             substitutions['{KERNEL_ADDR}'] = kernel_addr
             substitutions['{DTB_ADDR}'] = dtb_addr
             substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
@@ -368,11 +405,62 @@ class BootloaderCommandOverlay(Action):
             write_bootscript(substitute(self.commands, substitutions), bootscript)
             bootscript_commands = ['dhcp net0', "chain %s" % bootscripturi]
             self.set_namespace_data(action=self.name, label=self.method, key='commands', value=bootscript_commands)
-            self.logger.debug("Parsed boot commands: %s", '; '.join(bootscript_commands))
+            self.logger.info("Parsed boot commands: %s", '; '.join(bootscript_commands))
             return connection
         subs = substitute(self.commands, substitutions)
         self.set_namespace_data(action='bootloader-overlay', label=self.method, key='commands', value=subs)
-        self.logger.debug("Parsed boot commands: %s", '; '.join(subs))
+        self.logger.info("Parsed boot commands: %s", '; '.join(subs))
+        return connection
+
+
+class OverlayUnpack(Action):
+    """
+    Transfer the overlay.tar.gz to the device using test writer tools
+    Can be used with inline bootloader commands or where the rootfs is
+    not deployed directly by LAVA.
+    Whether the device has booted by tftp or ipxe or something else does
+    not matter for this action - the file will be downloaded from the
+    worker tmp dir using the default apache config.
+    """
+    def __init__(self):
+        super(OverlayUnpack, self).__init__()
+        self.name = 'overlay-unpack'
+        self.description = 'transfer and unpack overlay to persistent rootfs after login'
+        self.summary = 'transfer and unpack overlay'
+        self.url = None
+
+    def cleanup(self, connection):
+        super(OverlayUnpack, self).cleanup(connection)
+        if self.url:
+            os.unlink(self.url)
+
+    def validate(self):
+        super(OverlayUnpack, self).validate()
+        if 'transfer_overlay' not in self.parameters:
+            self.errors = "Unable to identify transfer commands for overlay."
+            return
+        if 'download_command' not in self.parameters['transfer_overlay']:
+            self.errors = "Unable to identify download command for overlay."
+        if 'unpack_command' not in self.parameters['transfer_overlay']:
+            self.errors = "Unable to identify unpack command for overlay."
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(OverlayUnpack, self).run(connection, max_end_time, args)
+        if not connection:
+            raise LAVABug("Cannot transfer overlay, no connection available.")
+        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
+        overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+        if not overlay_file:
+            raise JobError("No overlay file identified for the transfer.")
+        overlay = os.path.basename(overlay_file).strip()
+        self.url = os.path.join(DISPATCHER_DOWNLOAD_DIR, overlay)
+        shutil.move(overlay_file, self.url)
+        self.logger.debug("Moved %s to %s", overlay_file, self.url)
+        dwnld = self.parameters['transfer_overlay']['download_command']
+        dwnld += " http://%s/tmp/%s" % (ip_addr, overlay)
+        unpack = self.parameters['transfer_overlay']['unpack_command']
+        unpack += ' ' + overlay
+        connection.sendline("rm %s; %s && %s" % (overlay, dwnld, unpack))
         return connection
 
 
@@ -412,9 +500,21 @@ class BootloaderCommandsAction(Action):
 
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         # allow for auto_login
         if self.parameters.get('prompts', None):
-            connection.prompt_str = self.params.get('boot_message', BOOT_MESSAGE)
-            self.logger.debug("Changing prompt to boot_message %s", connection.prompt_str)
-            self.wait(connection)
+            connection.prompt_str = [
+                self.params.get('boot_message', BOOT_MESSAGE),
+                CPU_RESET_MESSAGE
+            ]
+            self.logger.debug("Changing prompt to boot_message %s",
+                              connection.prompt_str)
+            index = self.wait(connection)
+            if connection.prompt_str[index] == CPU_RESET_MESSAGE:
+                self.logger.error("Bootloader reset detected: Bootloader "
+                                  "failed to load the required file into "
+                                  "memory correctly so the bootloader reset "
+                                  "the CPU.")
+                self.errors = "Bootloader reset detected"
+                raise InfrastructureError("Bootloader reset detected")
         return connection

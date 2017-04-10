@@ -374,14 +374,14 @@ class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-method
 
 
 @nottest
-def check_rpcinfo():
+def check_rpcinfo(server='127.0.0.1'):
     """
     Supports the unittest.SkipIf
     needs to return True if skip, so
     returns True on failure.
     """
     try:
-        subprocess.check_call(['/usr/sbin/rpcinfo'])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs'])
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
@@ -427,7 +427,7 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero")
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]

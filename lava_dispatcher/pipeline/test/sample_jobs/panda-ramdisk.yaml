@@ -19,6 +19,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/panda/uImage
+         type: uimage
      ramdisk:
          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
          compression: gz
@@ -30,7 +31,6 @@ actions:
   - boot:
      method: u-boot
      commands: ramdisk
-     type: bootm
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

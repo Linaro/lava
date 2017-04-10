@@ -1,0 +1,22 @@
+# Sample JOB definition for a juno u-boot tftp job with firmware deployment
+
+device_type: juno
+
+job_name: juno-fw-uboot-tftp
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+     timeout:
+       minutes: 10
+     to: vemsd
+     recovery_image:
+         url:  http://releases.linaro.org/members/arm/platforms/16.12/juno-latest-oe-uboot.zip
+         compression: zip

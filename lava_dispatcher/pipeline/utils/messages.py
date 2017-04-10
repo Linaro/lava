@@ -160,6 +160,9 @@ class LinuxKernelMessages(Action):
                     })
                     continue
                 else:
+                    results.append({
+                        'success': connection.prompt_str[index]
+                    })
                     break
             else:
                 break

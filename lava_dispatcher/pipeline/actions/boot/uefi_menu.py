@@ -21,8 +21,9 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
+    ConfigurationError,
     InfrastructureError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.menus.menus import (
     SelectorMenuAction,
@@ -60,13 +61,13 @@ class UefiMenu(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'method' not in parameters:
-            raise RuntimeError("method not specified in boot parameters")
+            raise ConfigurationError("method not specified in boot parameters")
         if parameters['method'] != 'uefi-menu':
             return False
         if 'boot' not in device['actions']:
             return False
         if 'methods' not in device['actions']['boot']:
-            raise RuntimeError("Device misconfiguration")
+            raise ConfigurationError("Device misconfiguration")
         if 'uefi-menu' in device['actions']['boot']['methods']:
             params = device['actions']['boot']['methods']['uefi-menu']['parameters']
             if 'interrupt_prompt' in params and 'interrupt_string' in params:
@@ -81,13 +82,14 @@ class UEFIMenuInterrupt(MenuInterrupt):
         self.name = 'uefi-menu-interrupt'
         self.summary = 'interrupt for uefi menu'
         self.description = 'interrupt for uefi menu'
+        self.params = None
 
     def validate(self):
         super(UEFIMenuInterrupt, self).validate()
-        params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
-        if 'interrupt_prompt' not in params:
+        self.params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
+        if 'interrupt_prompt' not in self.params:
             self.errors = "Missing interrupt prompt"
-        if 'interrupt_string' not in params:
+        if 'interrupt_string' not in self.params:
             self.errors = "Missing interrupt string"
 
     def run(self, connection, max_end_time, args=None):
@@ -95,10 +97,9 @@ class UEFIMenuInterrupt(MenuInterrupt):
             self.logger.debug("%s called without active connection", self.name)
             return
         connection = super(UEFIMenuInterrupt, self).run(connection, max_end_time, args)
-        params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
-        connection.prompt_str = params['interrupt_prompt']
+        connection.prompt_str = self.params['interrupt_prompt']
         self.wait(connection)
-        connection.raw_connection.send(params['interrupt_string'])
+        connection.raw_connection.send(self.params['interrupt_string'])
         return connection
 
 
@@ -110,6 +111,8 @@ class UefiMenuSelector(SelectorMenuAction):
         self.summary = 'select options in the uefi menu'
         self.description = 'select specified uefi menu items'
         self.selector.prompt = "Start:"
+        self.method_name = 'uefi-menu'
+        self.commands = []
         self.boot_message = None
 
     def validate(self):
@@ -117,14 +120,18 @@ class UefiMenuSelector(SelectorMenuAction):
         Setup the items and pattern based on the parameters for this
         specific action, then let the base class complete the validation.
         """
+        # pick up the uefi-menu structure
         params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
         if ('item_markup' not in params or
                 'item_class' not in params or 'separator' not in params):
             self.errors = "Missing device parameters for UEFI menu operations"
-        if 'commands' not in self.parameters:
+            return
+        if 'commands' not in self.parameters and not self.commands:
             self.errors = "Missing commands in action parameters"
             return
-        if self.parameters['commands'] not in self.job.device['actions']['boot']['methods']['uefi-menu']:
+        commands = self.commands if self.commands else self.parameters['commands']
+        # pick up the commands for the specific menu
+        if self.parameters['commands'] not in self.job.device['actions']['boot']['methods'][self.method_name]:
             self.errors = "Missing commands for %s" % self.parameters['commands']
         self.selector.item_markup = params['item_markup']
         self.selector.item_class = params['item_class']
@@ -134,9 +141,11 @@ class UefiMenuSelector(SelectorMenuAction):
         else:
             # label_class is problematic via jinja and yaml templating.
             self.selector.label_class = DEFAULT_UEFI_LABEL_CLASS
-        self.selector.prompt = params['bootloader_prompt']  # initial prompt
-        self.boot_message = params['boot_message']  # final prompt
-        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
+        self.selector.prompt = params['bootloader_prompt']  # initial uefi menu prompt
+        if 'boot_message' in params:
+            self.boot_message = params['boot_message']  # final prompt
+        # pick up the commands specific to the menu implementation
+        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][commands]
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
@@ -152,11 +161,13 @@ class UefiMenuSelector(SelectorMenuAction):
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
         connection = super(UefiMenuSelector, self).run(connection, max_end_time, args)
-        self.logger.debug("Looking for %s", self.boot_message)
-        connection.prompt_str = self.boot_message
-        self.wait(connection)
+        if self.boot_message:
+            self.logger.debug("Looking for %s", self.boot_message)
+            connection.prompt_str = self.boot_message
+            self.wait(connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 

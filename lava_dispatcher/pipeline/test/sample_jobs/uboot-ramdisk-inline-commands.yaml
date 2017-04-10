@@ -23,11 +23,14 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     parameters:
+       mkimage_arch: arm
      timeout:
        minutes: 2
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      ramdisk:
          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
          header: u-boot
@@ -42,9 +45,11 @@ actions:
      - a list
      - of commands
      - with a {KERNEL_ADDR} substitution
-     type: bootz
      parameters:
        shutdown-message: "reboot: Restarting system"
+     transfer_overlay:
+       download_command: wget -S --progress=dot:giga
+       unpack_command: tar -C / -xaf
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

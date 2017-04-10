@@ -22,9 +22,10 @@ import os
 import re
 import glob
 from lava_dispatcher.pipeline.action import (
+    Action,
     JobError,
     InfrastructureError,
-    Action,
+    LAVABug,
     Pipeline
 )
 from lava_dispatcher.pipeline.logical import RetryAction
@@ -107,7 +108,7 @@ class LoopCheckAction(DeployAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(LoopCheckAction, self).run(connection, max_end_time, args)
         if not self.get_namespace_data(action=self.name, label=self.key, key='available_loops'):
-            raise RuntimeError("Unable to check available loop devices")
+            raise LAVABug("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
         pro = self.run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
@@ -152,8 +153,8 @@ class LoopMountAction(RetryAction):
         self.mntdir = mkdtemp(autoremove=False)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
-        self.set_namespace_data(action=self.name, label='mntdir', key=self.mntdir)
-        self.set_namespace_data(action='mount_action', label='mntdir', key=test_mntdir)
+        self.set_namespace_data(action=self.name, label='mntdir', key='mntdir', value=self.mntdir)
+        self.set_namespace_data(action='mount_action', label='mntdir', key='mntdir', value=test_mntdir)
         offset = self.get_namespace_data(action='download_action', label=self.key, key='offset')
         mount_cmd = [
             'mount',
@@ -167,8 +168,8 @@ class LoopMountAction(RetryAction):
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
         return connection
 
-    def cleanup(self, connection, message):
-        super(LoopMountAction, self).cleanup(connection, message)
+    def cleanup(self, connection):
+        super(LoopMountAction, self).cleanup(connection)
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
@@ -198,7 +199,7 @@ class MountAction(DeployAction):
         as part of the deployment selection step.
         """
         if not self.job:
-            raise RuntimeError("No job object supplied to action")
+            raise LAVABug("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(OffsetAction(self.key))

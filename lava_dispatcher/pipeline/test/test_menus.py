@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import Timeout, JobError
 from lava_dispatcher.pipeline.shell import ShellSession, ShellCommand
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.menus.menus import SelectorMenu
 
@@ -88,6 +89,7 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
 

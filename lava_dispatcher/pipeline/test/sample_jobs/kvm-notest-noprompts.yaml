@@ -8,8 +8,7 @@ timeouts:
     minutes: 5            # timeout for the whole job (default: ??h)
   action:
     minutes: 1         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  test:
-    minutes: 3
+
 priority: medium
 visibility: public
 

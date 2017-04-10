@@ -42,6 +42,8 @@ actions:
     connections:
       lxc:
       serial:
+    parameters:
+      mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
     methods:
       tftp:
       usb:
@@ -78,7 +80,6 @@ actions:
           bootloader_prompt: U-Boot
           boot_message: Booting Linux
           send_char: False
-          mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
           # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
         oe:

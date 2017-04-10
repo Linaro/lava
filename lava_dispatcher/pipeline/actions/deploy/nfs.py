@@ -21,7 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import ConfigurationError, Pipeline
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
@@ -46,11 +46,11 @@ def nfs_accept(device, parameters):
     if not device:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
     if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -72,6 +72,8 @@ class Nfs(Deployment):
     @classmethod
     def accepts(cls, device, parameters):
         if not nfs_accept(device, parameters):
+            return False
+        if 'image' in device['actions']['deploy']['methods']:
             return False
         if 'nfs' in device['actions']['deploy']['methods']:
             return True

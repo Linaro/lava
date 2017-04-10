@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
 
@@ -114,7 +115,7 @@ class TestMultiDeploy(StdoutTestCase):
         self.assertIsNotNone(device)
         job.device = device
         job.parameters['output_dir'] = mkdtemp()
-        job.setup_logging()
+        job.logger = DummyLogger()
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data['actions']:

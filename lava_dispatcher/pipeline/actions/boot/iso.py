@@ -20,7 +20,12 @@
 
 
 import os
-from lava_dispatcher.pipeline.action import Action, JobError, Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.action import (
+    Action,
+    ConfigurationError,
+    JobError,
+    Pipeline,
+)
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.utils.shell import which
@@ -170,7 +175,7 @@ class IsoRebootAction(Action):
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
         except AttributeError as exc:
-            raise InfrastructureError(exc)
+            raise ConfigurationError(exc)
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 

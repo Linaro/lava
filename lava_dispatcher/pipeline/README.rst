@@ -97,7 +97,7 @@ Main concepts in the design
   static within each action and is used to validate the action before any
   pipeline is run. Dynamic data is set in the context which is available
   via the parent pipeline of any action. Actions must be idempotent and
-  must raise a RuntimeError exception if the dynamic data is absent or
+  must raise a LAVABug exception if the dynamic data is absent or
   unusable. Errors in parameter data must raise a JobError exception.
   Each command will receive a connection as an input parameter and can
   optionally provide a different connection to the command that
@@ -143,7 +143,7 @@ Exceptions
 
 LAVA must be clear on what was the likely cause of an incomplete test
 job or a failed test result. Any one failure must trigger only one
-exception. e.g. A JobError which results in a RuntimeError is still
+exception. e.g. A JobError which results in a LAVABug is still
 a bug in the dispatcher code as it should have been caught during
 the validation step.
 
@@ -168,7 +168,7 @@ the validation step.
 - *TestError*: exceptions raised when the device under test did not
     behave as expected.
 
-- *RuntimeError*: Exceptions arising from dynamic data prepared by
+- *LAVABug*: Exceptions arising from dynamic data prepared by
     LAVA Dispatcher and failures of Actions not already handled by
     the code. Runtime errors are bugs in lava-dispatcher code. (It is
     also a bug to use the wrong exception type). Fixes for runtime

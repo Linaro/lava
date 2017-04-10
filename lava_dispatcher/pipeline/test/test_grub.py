@@ -23,11 +23,12 @@ import os
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.boot.grub import GrubMainAction
 from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import JobError, Pipeline
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -51,6 +52,17 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
+    def create_mustang_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mustang-grub-efi.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 
@@ -184,7 +196,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
-                raise RuntimeError(action.errors)
+                raise JobError(action.errors)
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -206,7 +218,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(test_dir)
         self.assertIn('/lava-', test_dir)
         self.assertIsNotNone(extract)
-        self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
+        self.assertEqual(extract.timeout.duration, 600)
 
     def test_reset_actions(self):
         job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
@@ -228,3 +240,15 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.validate()
         description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_grub_via_efi(self):
+        job = self.factory.create_mustang_job('sample_jobs/mustang-grub-efi-nfs.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = pipeline_reference('mustang-grub-efi-nfs.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
+        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
+        self.assertIn('item_class', menu.params)
+        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
+        self.assertEqual('pxe-grub', grub_efi.commands)

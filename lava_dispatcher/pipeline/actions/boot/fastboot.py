@@ -21,9 +21,10 @@
 
 import os
 from lava_dispatcher.pipeline.action import (
-    Pipeline,
     Action,
+    ConfigurationError,
     JobError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
@@ -35,6 +36,20 @@ from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.shell import ExpectShellSession
+
+
+def _fastboot_sequence_map(sequence):
+    """Maps fastboot sequence with corresponding class."""
+    sequence_map = {'boot': (FastbootBootAction, None),
+                    'reboot': (FastbootRebootAction, None),
+                    'no-flash-boot': (FastbootBootAction, None),
+                    'wait-usb-add': (WaitUSBDeviceAction, ['add']),
+                    'wait-usb-remove': (WaitUSBDeviceAction, ['remove']),
+                    'lxc-add-device': (LxcAddDeviceAction, None),
+                    'auto-login': (AutoLoginAction, None),
+                    'shell-session': (ExpectShellSession, None),
+                    'export-env': (ExportDeviceEnvironment, None), }
+    return sequence_map.get(sequence, (None, None))
 
 
 class BootFastboot(Boot):
@@ -55,6 +70,8 @@ class BootFastboot(Boot):
         if 'method' in parameters:
             if parameters['method'] == 'fastboot':
                 return True
+        if 'methods' not in device['actions']['boot']:
+            raise ConfigurationError("Device misconfiguration")
         return False
 
 
@@ -69,27 +86,26 @@ class BootFastbootAction(BootAction):
         self.summary = "fastboot boot"
         self.description = "fastboot boot into the system"
 
+    def validate(self):
+        super(BootFastbootAction, self).validate()
+        sequences = self.job.device['actions']['boot']['methods'].get(
+            'fastboot', [])
+        for sequence in sequences:
+            if not _fastboot_sequence_map(sequence):
+                self.errors = "Unknown boot sequence '%s'" % sequence
+
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if self.job.device.get('fastboot_via_uboot', False):
-            self.internal_pipeline.add_action(FastbootRebootAction())
-            self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                device_actions=['add', 'change', 'online']))
-        else:
-            self.internal_pipeline.add_action(FastbootBootAction())
-            # Check if the device has a power command such as HiKey,
-            # Dragonboard, etc. against device that doesn't like Nexus, etc.
-            if self.job.device.power_command:
-                self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                    device_actions=['add', 'change', 'online', 'remove']))
-            else:
-                self.internal_pipeline.add_action(WaitUSBDeviceAction(
-                    device_actions=['add', 'change', 'online']))
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
-        if self.job.device.power_command:
-            self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExpectShellSession())
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        sequences = self.job.device['actions']['boot']['methods'].get(
+            'fastboot', [])
+        for sequence in sequences:
+            mapped = _fastboot_sequence_map(sequence)
+            if mapped[1]:
+                self.internal_pipeline.add_action(
+                    mapped[0](device_actions=mapped[1]))
+            elif mapped[0]:
+                self.internal_pipeline.add_action(mapped[0]())
 
 
 class FastbootBootAction(Action):
@@ -109,6 +125,10 @@ class FastbootBootAction(Action):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootBootAction, self).run(connection, max_end_time, args)
@@ -130,7 +150,8 @@ class FastbootBootAction(Action):
         else:
             boot_img = os.path.join('/', os.path.basename(boot_img))
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'boot', boot_img]
+                        '-s', serial_number, 'boot',
+                        boot_img] + self.job.device['fastboot_options']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
@@ -140,6 +161,12 @@ class FastbootBootAction(Action):
             self.results = {'status': status}
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        if self.job.device.pre_os_command:
+            self.logger.info("Running pre OS command.")
+            command = self.job.device.pre_os_command
+            if not self.run_command(command.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % command)
         return connection
 
 
@@ -160,6 +187,10 @@ class FastbootRebootAction(Action):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootRebootAction, self).run(connection, max_end_time, args)
@@ -174,8 +205,9 @@ class FastbootRebootAction(Action):
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'reboot']
+        fastboot_opts = self.job.device['fastboot_options']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
+                        serial_number, 'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to fastboot reboot: %s" % command_output)
@@ -185,4 +217,5 @@ class FastbootRebootAction(Action):
             self.results = {'status': status}
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

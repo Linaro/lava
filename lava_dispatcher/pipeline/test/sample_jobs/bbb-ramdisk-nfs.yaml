@@ -18,7 +18,8 @@ actions:
     to: tftp
     kernel:
       url: file:///tmp/armhf/vmlinuz
-    ramdisk: 
+      type: zimage
+    ramdisk:
       url: file:///tmp/armhf/initramfs.cpio.gz
       sha256sum: 0447396e1a92b462c330ed61d14f4964281e9f663897142df713cdf6f8c2a06e
       compression: gz
@@ -37,7 +38,6 @@ actions:
 - boot:
     method: u-boot
     commands: nfs
-    type: bootz
     auto_login:
       login_prompt: 'login:'
       username: root

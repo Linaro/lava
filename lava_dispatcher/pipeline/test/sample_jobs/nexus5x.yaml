@@ -1,0 +1,80 @@
+device_type: nexus5x
+job_name: lxc-nexus5x-testing
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: nexus5x-simple.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-nexus5x-test
+    template: debian
+    distribution: debian
+    release: jessie
+    arch: amd64
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 5
+    to: fastboot
+    namespace: droid
+    images:
+      boot:
+        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/boot.img
+      cache:
+        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/cache.img
+      userdata:
+        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/userdata.img
+      system:
+        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/system.img
+      vendor:
+        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/vendor.img
+    os: debian
+
+- boot:
+    namespace: droid
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 15
+    method: fastboot
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/android/get-adb-serial.yaml
+      name: get-nexus5x-serial

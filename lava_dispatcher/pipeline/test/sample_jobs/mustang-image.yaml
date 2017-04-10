@@ -34,7 +34,6 @@ actions:
   - boot:
      method: u-boot
      commands: ramdisk
-     type: uimage
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

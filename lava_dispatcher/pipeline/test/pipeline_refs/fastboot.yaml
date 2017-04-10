@@ -2,6 +2,10 @@
   name: lxc-deploy
   pipeline:
   - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: actions.deploy.lxc.LxcAptUpdateAction, name: lxc-apt-update}
+  - {class: actions.deploy.lxc.LxcAptInstallAction, name: lxc-apt-install}
+  - {class: actions.boot.lxc.LxcStopAction, name: lxc-stop}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
@@ -51,7 +55,7 @@
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot_boot
   pipeline:
-  - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
+  - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
   - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry

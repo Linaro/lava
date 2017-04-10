@@ -22,7 +22,7 @@
 
 import os
 import yaml
-from lava_dispatcher.pipeline.action import Pipeline, Action
+from lava_dispatcher.pipeline.action import Action, LAVABug, Pipeline, JobError
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -130,6 +130,7 @@ class Scp(ConnectSsh):
 
     def run(self, connection, max_end_time, args=None):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
+        host_address = None
         if not path:
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error("%s: could not find details of '%s'", self.name, self.key)
@@ -137,9 +138,9 @@ class Scp(ConnectSsh):
         overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
         if not self.primary:
             self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
-            self.host = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
-            self.logger.debug("Using common data for host: %s", self.host)
-        elif not self.host:
+            host_address = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
+            self.logger.debug("Using common data for host: %s", host_address)
+        elif not host_address:
             self.errors = "%s: could not find host for deployment" % self.name
             self.logger.error("%s: could not find host for deployment", self.name)
             return connection
@@ -147,7 +148,7 @@ class Scp(ConnectSsh):
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
-
+        connection = super(Scp, self).run(connection, max_end_time, args)
         if self.identity_file:
             command.extend(['-i', self.identity_file])
         # add arguments to ignore host key checking of the host device
@@ -155,9 +156,9 @@ class Scp(ConnectSsh):
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
-        self.logger.info("Copying %s using %s to %s", self.key, command_str, self.host)
+        self.logger.info("Copying %s using %s to %s", self.key, command_str, host_address)
         # add the remote as destination, with :/ top level directory
-        command.extend(["%s@%s:/%s" % (self.ssh_user, self.host, destination)])
+        command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
         connection = super(Scp, self).run(connection, max_end_time, args)
@@ -165,6 +166,7 @@ class Scp(ConnectSsh):
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -193,6 +195,8 @@ class PrepareSsh(Action):
                 action=MultinodeProtocol.name,
                 label=MultinodeProtocol.name,
                 key=self.parameters['parameters']['hostID'])
+            if not host_data:
+                raise JobError("Unable to retrieve %s - missing ssh deploy?" % self.parameters['parameters']['hostID'])
             self.set_namespace_data(
                 action=self.name,
                 label='ssh-connection',
@@ -213,7 +217,7 @@ class ScpOverlayUnpack(Action):
     def run(self, connection, max_end_time, args=None):
         connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("Cannot unpack, no connection available.")
+            raise LAVABug("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
         tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
@@ -222,6 +226,7 @@ class ScpOverlayUnpack(Action):
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 

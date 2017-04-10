@@ -31,3 +31,4 @@ from lava_dispatcher.pipeline.actions.deploy.fastboot import Fastboot
 from lava_dispatcher.pipeline.actions.deploy.lxc import Lxc
 from lava_dispatcher.pipeline.actions.deploy.iso import DeployIso
 from lava_dispatcher.pipeline.actions.deploy.nfs import Nfs
+from lava_dispatcher.pipeline.actions.deploy.vemsd import VExpressMsd

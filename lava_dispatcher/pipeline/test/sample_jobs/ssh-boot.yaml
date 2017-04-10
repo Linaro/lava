@@ -10,8 +10,6 @@ timeouts:
     minutes: 5
   action:
     minutes: 1
-  test:
-    minutes: 3
 
 actions:
     - deploy:
@@ -29,6 +27,8 @@ actions:
           - 'root@debian:~#'
 
     - test:
+        timeout:
+          minutes: 3
         failure_retry: 3
         name: kvm-basic-singlenode
         definitions:

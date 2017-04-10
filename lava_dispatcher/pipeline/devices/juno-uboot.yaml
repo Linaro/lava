@@ -1,5 +1,16 @@
 device_type: juno
 
+board_id: 'V2M-JUNO'
+usb_vendor_id: 'c251'
+usb_product_id: '4003'
+usb_filesystem_label: 'JUNO'
+
+commands:
+    connect: telnet localhost 7002
+    hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 02 --delay 10
+    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 02 --delay 10
+    power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 02 --delay 10
+
 parameters:
   booti:
     kernel: '0x80080000'
@@ -16,12 +27,6 @@ parameters:
         uuid: "usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0"
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
 
-commands:
-  connect: telnet localhost 7002
-  hard_reset: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02; sleep 10; /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
-  power_off: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02
-  power_on: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
-
 actions:
   deploy:
     parameters:
@@ -33,6 +38,27 @@ actions:
       nfs:
       tftp:
       usb:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+        user: root
+        port: 22
+        identity_file: device/dynamic_vm_keys/lava
+      vemsd:
+        parameters:
+          mcc_prompt: 'Cmd>'
+          msd_mount_cmd: 'usb_on'
+          flash_prompt: 'Flash>'
+          flash_enter_cmd: 'flash'
+          flash_erase_cmd: 'eraseall'
+          flash_erase_msg: 'Erasing Flash'
+          flash_exit_cmd: 'exit'
+          autorun_prompt: 'Press Enter to stop auto boot...'
     connections:
       adb:
       lxc:
@@ -43,14 +69,15 @@ actions:
       adb:
       lxc:
       serial:
+      ssh:
     # list of boot methods which this device supports.
     methods:
       lxc:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: VExpress64
           boot_message: Linux version
-          send_char: False
           mkimage_arch: arm64
         ramdisk-local:
           commands:
@@ -91,12 +118,9 @@ actions:
           - setenv fdt_high '0xffffffff'
           - setenv bootdelay 1
           - setenv ethact smc911x-0
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
-          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
           - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
           - boot
@@ -107,12 +131,9 @@ actions:
           - setenv fdt_high '0xffffffff'
           - setenv bootdelay 1
           - setenv ethact smc911x-0
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
-          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/sda2 ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
           - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
           - boot
@@ -126,8 +147,6 @@ actions:
           - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'afs load ramdisk.img {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'
           - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot
         usb:
           commands:
           - usb start
@@ -147,6 +166,7 @@ actions:
         use-defaults:
           commands:
           - boot
+
 timeouts:
   actions:
     apply-overlay-image:
@@ -163,23 +183,35 @@ timeouts:
       minutes: 10
     power_off:
       seconds: 5
-    u-boot-commands:
+    bootloader-commands:
       minutes: 3
-    u-boot-interrupt:
+    bootloader-interrupt:
       seconds: 30
     umount-retry:
       seconds: 45
     auto-login-action:
       minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    u-boot-interrupt:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
   connections:
     dd-image:
       minutes: 10
     uboot-retry:
-      minutes: 4
-    u-boot-commands:
-      minutes: 2
+      seconds: 30
+    u-boot-interrupt:
+      minutes: 3
+    bootloader-commands:
+      seconds: 30
     auto-login-action:
       minutes: 2
-    u-boot-interrupt:
+    bootloader-interrupt:
       seconds: 30
 

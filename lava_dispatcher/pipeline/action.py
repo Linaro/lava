@@ -42,7 +42,14 @@ if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
 
 
-class InfrastructureError(Exception):
+class LAVAError(Exception):
+    """ Base class for all exceptions in LAVA """
+    error_code = 0
+    error_help = ""
+    error_type = ""
+
+
+class InfrastructureError(LAVAError):
     """
     Exceptions based on an error raised by a component of the
     test which is neither the LAVA dispatcher code nor the
@@ -52,29 +59,52 @@ class InfrastructureError(Exception):
     is connected (serial console connection, ethernet switches or
     internet connection beyond the control of the device under test).
 
-    Use the existing RuntimeError exception for errors arising
-    from bugs in LAVA code.
+    Use LAVABug for errors arising from bugs in LAVA code.
     """
-    pass
+    error_code = 1
+    error_help = "InfrastructureError: The Infrastructure is not working " \
+                 "correctly. Please report this error to LAVA admins."
+    error_type = "Infrastructure"
 
 
-class JobError(Exception):
+class JobError(LAVAError):
     """
     An Error arising from the information supplied as part of the TestJob
     e.g. HTTP404 on a file to be downloaded as part of the preparation of
     the TestJob or a download which results in a file which tar or gzip
     does not recognise.
     """
-    pass
+    error_code = 2
+    error_help = "JobError: Your job cannot terminate cleanly."
+    error_type = "Job"
 
 
-class TestError(Exception):
+class LAVABug(LAVAError):
+    """
+    An error that is raised when an un-expected error is catched. Only happen
+    when a bug is encountered.
+    """
+    error_code = 3
+    error_help = "LAVABug: This is probably a bug in LAVA, please report it."
+    error_type = "Bug"
+
+
+class TestError(LAVAError):
     """
     An error in the operation of the test definition, e.g.
     in parsing measurements or commands which fail.
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    pass
+    error_code = 4
+    error_help = "TestError: A test failed to run, look at the error message."
+    error_type = "Test"
+
+
+class ConfigurationError(LAVAError):
+    error_code = 5
+    error_help = "ConfigurationError: The LAVA instance is not configured " \
+                 "correctly. Please report this error to LAVA admins."
+    error_type = "Configuration"
 
 
 class InternalObject(object):  # pylint: disable=too-few-public-methods
@@ -101,18 +131,18 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if parent is not None:
             # parent must be an Action
             if not isinstance(parent, Action):
-                raise RuntimeError("Internal pipelines need an Action as a parent")
+                raise LAVABug("Internal pipelines need an Action as a parent")
             if not parent.level:
-                raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
+                raise LAVABug("Tried to create a pipeline using a parent action with no level set.")
             self.parent = parent
 
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
-            raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
+            raise LAVABug("Only actions can be added to a pipeline: %s" % action)
         # if isinstance(action, DiagnosticAction):
-        #     raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
+        #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
-            raise RuntimeError("Unable to add empty action to pipeline")
+            raise LAVABug("Unable to add empty action to pipeline")
 
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
@@ -136,38 +166,41 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if 'default_connection_timeout' in parameters:
             # some action handlers do not need to pass all parameters to their children.
             action.connection_timeout.duration = parameters['default_connection_timeout']
-        # Set the timeout
+
+        # Compute the timeout
+        timeouts = []
+        # FIXME: Only needed for the auto-tests
+        if self.job is not None:
+            if self.job.device is not None:
+                # First, the device level overrides
+                timeouts.append(self.job.device.get('timeouts', {}))
+            # Then job level overrides
+            timeouts.append(self.job.parameters.get('timeouts', {}))
+
+        def dict_merge_get(dicts, key):
+            value = None
+            for d in dicts:
+                value = d.get(key, value)
+            return value
+
+        def subdict_merge_get(dicts, key, subkey):
+            value = None
+            for d in dicts:
+                value = d.get(key, {}).get(subkey, value)
+            return value
+
+        # Set the timeout. The order is:
+        # 1/ the global action timeout
+        # 2/ the individual action timeout
+        # 3/ the action block timeout
         # pylint: disable=protected-access
-        # FIXME: only the last test is really useful. The first ones are only
-        # needed to run the tests that do not use a device and job.
-        # TODO: factorize this in one loop
-        if self.job is not None and self.job.device is not None:
-            # set device level overrides
-            overrides = self.job.device.get('timeouts', {})
-            if 'actions' in overrides and action.name in overrides['actions']:
-                action._override_action_timeout(overrides['actions'])
-            elif action.name in overrides:
-                action._override_action_timeout(overrides)
-                parameters['timeout'] = overrides[action.name]
-            if 'connections' in overrides and action.name in overrides['connections']:
-                action._override_connection_timeout(overrides['connections'])
-        # Set the parameters after populate so the sub-actions are also
-        # getting the parameters.
-        # Also set the parameters after the creation of the default timeout
-        # so timeouts specified in the job override the defaults.
-        # job overrides device timeouts:
-        if self.job and 'timeouts' in self.job.parameters:
-            overrides = self.job.parameters['timeouts']
-            if 'actions' in overrides and action.name in overrides['actions']:
-                # set job level overrides
-                action._override_action_timeout(overrides['actions'])
-            elif action.name in overrides:
-                action._override_action_timeout(overrides)
-                parameters['timeout'] = overrides[action.name]
-            elif 'timeout' in parameters:
-                action.timeout.duration = Timeout.parse(parameters['timeout'])
-            if 'connections' in overrides and action.name in overrides['connections']:
-                action._override_connection_timeout(overrides['connections'])
+        action._override_action_timeout(dict_merge_get(timeouts, 'action'))
+        action._override_action_timeout(subdict_merge_get(timeouts, 'actions', action.name))
+        action._override_action_timeout(parameters.get('timeout', None))
+
+        action._override_connection_timeout(dict_merge_get(timeouts, 'connection'))
+        action._override_connection_timeout(subdict_merge_get(timeouts, 'connections', action.name))
+
         action.parameters = parameters
 
     def describe(self, verbose=True):
@@ -203,13 +236,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
         for child in self.actions:
-            child.cleanup(connection, message)
+            child.cleanup(connection)
 
     def _diagnose(self, connection):
         """
@@ -229,7 +262,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if diagnose:
                 connection = diagnose.run(connection, None)
             else:
-                raise RuntimeError("No diagnosis for trigger %s" % complaint)
+                raise LAVABug("No diagnosis for trigger %s" % complaint)
         self.job.triggers = []
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
@@ -254,26 +287,21 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
-            # overly broad exceptions will cause issues with RetryActions
-            # always ensure the unit tests continue to pass with changes here.
-            except (AttributeError, KeyError, NameError, OSError, SyntaxError,
-                    TypeError, ValueError) as exc:
-                exc_message = str(exc)
-                action.logger.error(exc_message)
-                action.logger.exception(traceback.format_exc())
-                action.errors = exc_message
-                # Raise a RuntimeError that will be correctly classified later
-                raise RuntimeError(exc_message)
-            except (InfrastructureError, JobError, RuntimeError, TestError) as exc:
+            except LAVAError as exc:
                 exc_message = str(exc)
                 action.errors = exc_message
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
-                action.log_action_results()
                 action.logger.error(exc_message)
                 self._diagnose(connection)
                 raise
+            except Exception as exc:
+                exc_message = str(exc)
+                action.logger.exception(traceback.format_exc())
+                action.errors = exc_message
+                # Raise a LAVABug that will be correctly classified later
+                raise LAVABug(exc_message)
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
@@ -284,6 +312,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 action.log_action_results()
+
             if new_connection:
                 connection = new_connection
         return connection
@@ -402,7 +431,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         try:
             self.__parameters__.update(data)
         except ValueError:
-            raise RuntimeError("Action parameters need to be a dictionary")
+            raise LAVABug("Action parameters need to be a dictionary")
 
         # Set the timeout name now
         self.timeout.name = self.name
@@ -445,7 +474,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         try:
             self.__results__.update(data)
         except ValueError:
-            raise RuntimeError("Action results need to be a dictionary")
+            raise LAVABug("Action results need to be a dictionary")
 
     def validate(self):
         """
@@ -505,7 +534,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         # FIXME: add option to only check stdout or stderr for failure output
         if not isinstance(command_list, list):
-            raise RuntimeError("commands to run_command need to be a list")
+            raise LAVABug("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
@@ -534,12 +563,16 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
                     exc.output.split('\n'), exc.returncode)
 
-            if exc.returncode != 0 and allow_fail:
+            # the exception is raised due to a non-zero exc.returncode
+            if allow_fail:
                 self.logger.info(msg)
+                log = exc.output.strip()
             else:
                 for error in errors:
                     self.errors = error
                 self.logger.error(msg)
+                # if not allow_fail, fail the command
+                return False
 
         # allow for commands which return no output
         if not log and allow_silent:
@@ -604,7 +637,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -618,7 +651,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         instead of using cleanup().
         """
         if self.internal_pipeline:
-            self.internal_pipeline.cleanup(connection, message)
+            self.internal_pipeline.cleanup(connection)
 
     def explode(self):
         """
@@ -734,31 +767,25 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     def mkdtemp(self, override=None):
         return self.job.mkdtemp(self.name, override=override)
 
-    def _override_action_timeout(self, override):
+    def _override_action_timeout(self, timeout):
         """
         Only to be called by the Pipeline object, add_action().
         """
-        if not isinstance(override, dict):
+        if timeout is None:
             return
-        self.timeout = Timeout(
-            self.name,
-            Timeout.parse(
-                override[self.name]
-            )
-        )
+        if not isinstance(timeout, dict):
+            raise JobError("Invalid timeout %s" % str(timeout))
+        self.timeout = Timeout(self.name, Timeout.parse(timeout))
 
-    def _override_connection_timeout(self, override):
+    def _override_connection_timeout(self, timeout):
         """
         Only to be called by the Pipeline object, add_action().
         """
-        if not isinstance(override, dict):
+        if timeout is None:
             return
-        self.connection_timeout = Timeout(
-            self.name,
-            Timeout.parse(
-                override[self.name]
-            )
-        )
+        if not isinstance(timeout, dict):
+            raise JobError("Invalid connection timeout %s" % str(timeout))
+        self.connection_timeout = Timeout(self.name, Timeout.parse(timeout))
 
     def log_action_results(self):
         if self.results and isinstance(self.logger, YAMLLogger):
@@ -766,7 +793,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
-                "duration": self.timeout.elapsed_time,
+                "duration": "%.02f" % self.timeout.elapsed_time,
                 "result": "fail" if self.errors else "pass",
                 "extra": self.results})
             self.results.update(
@@ -839,14 +866,14 @@ class Timeout(object):
         and can therefore exceed the clamp.
         """
         if not isinstance(data, dict):
-            raise RuntimeError("Invalid timeout data")
+            raise ConfigurationError("Invalid timeout data")
         duration = datetime.timedelta(days=data.get('days', 0),
                                       hours=data.get('hours', 0),
                                       minutes=data.get('minutes', 0),
                                       seconds=data.get('seconds', 0))
         if not duration:
             return Timeout.default_duration()
-        return duration.total_seconds()
+        return int(duration.total_seconds())
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
         duration = int(time.time() - self.start)

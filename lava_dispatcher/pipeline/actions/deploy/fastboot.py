@@ -24,8 +24,9 @@ from lava_dispatcher.pipeline.power import (
     PowerOn,
 )
 from lava_dispatcher.pipeline.action import (
+    ConfigurationError,
+    InfrastructureError,
     Pipeline,
-    JobError,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
@@ -60,15 +61,17 @@ def fastboot_accept(device, parameters):
     if not device:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
     if 'adb_serial_number' not in device:
         return False
     if 'fastboot_serial_number' not in device:
         return False
+    if 'fastboot_options' not in device:
+        return False
     if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -131,7 +134,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(WaitUSBDeviceAction(
-            device_actions=['add', 'change', 'online']))
+            device_actions=['add']))
 
         fastboot_dir = self.mkdtemp()
         image_keys = list(parameters['images'].keys())
@@ -176,6 +179,10 @@ class EnterFastbootAction(DeployAction):
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
@@ -199,21 +206,23 @@ class EnterFastbootAction(DeployAction):
             self.logger.debug("Device is in adb: %s", command_output)
             adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
                        '-s', adb_serial_number, 'reboot-bootloader']
-            command_output = self.run_command(adb_cmd)
+            self.run_command(adb_cmd)
             return connection
 
         # Enter fastboot mode with fastboot.
+        fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
-                        fastboot_serial_number, 'devices']
+                        fastboot_serial_number, 'devices'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', fastboot_serial_number, 'reboot-bootloader']
+                            '-s', fastboot_serial_number,
+                            'reboot-bootloader'] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
-                raise JobError("Unable to enter fastboot: %s" %
-                               command_output)  # FIXME: JobError needs a unit test
+                raise InfrastructureError("Unable to enter fastboot: %s" %
+                                          command_output)
             else:
                 status = [status.strip() for status in command_output.split(
                     '\n') if 'finished' in status][0]
@@ -242,8 +251,12 @@ class FastbootFlashAction(DeployAction):
                 self.errors = "device fastboot serial number unset"
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+            if not isinstance(self.job.device['fastboot_options'], list):
+                self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
@@ -264,14 +277,18 @@ class FastbootFlashAction(DeployAction):
             src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
             if not src:
                 continue
-            dst = copy_to_lxc(lxc_name, src)
-            if flash_cmd in ['boot']:
+            dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
+            sequence = self.job.device['actions']['boot']['methods'].get(
+                'fastboot', [])
+            if 'no-flash-boot' in sequence and flash_cmd in ['boot']:
                 continue
             serial_number = self.job.device['fastboot_serial_number']
+            fastboot_opts = self.job.device['fastboot_options']
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', serial_number, 'flash', flash_cmd, dst]
+                            '-s', serial_number, 'flash', flash_cmd,
+                            dst] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'error' in command_output:
-                raise JobError("Unable to flash %s using fastboot: %s",
-                               flash_cmd, command_output)  # FIXME: JobError needs a unit test
+                raise InfrastructureError("Unable to flash %s using fastboot: %s" %
+                                          (flash_cmd, command_output))
         return connection

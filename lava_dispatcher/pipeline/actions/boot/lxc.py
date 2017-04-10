@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import time
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -87,6 +88,7 @@ class LxcStartAction(Action):
         self.name = "boot-lxc"
         self.summary = "attempt to boot"
         self.description = "boot into lxc container"
+        self.sleep = 10
 
     def validate(self):
         super(LxcStartAction, self).validate()
@@ -99,5 +101,40 @@ class LxcStartAction(Action):
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output is not '':
             raise JobError("Unable to start lxc container: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        lxc_cmd = ['lxc-attach', '-n', lxc_name, 'runlevel']
+        self.logger.debug("Waiting for '%s' to become ready", lxc_name)
+        while True:
+            command_output = self.run_command(lxc_cmd, allow_fail=True)
+            if command_output and command_output not in ['unknown', 'S']:
+                break
+            time.sleep(self.sleep)  # poll every 10 seconds.
+        self.logger.info("'%s' is ready", lxc_name)
+        return connection
+
+
+class LxcStopAction(Action):
+    """
+    This action calls lxc-stop to stop the container.
+    """
+
+    def __init__(self):
+        super(LxcStopAction, self).__init__()
+        self.name = "lxc-stop"
+        self.summary = "stop lxc"
+        self.description = "stop the lxc container"
+
+    def validate(self):
+        super(LxcStopAction, self).validate()
+        self.errors = infrastructure_error('lxc-stop')
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcStopAction, self).run(connection, max_end_time, args)
+        lxc_name = self.get_namespace_data(action='lxc-create-action',
+                                           label='lxc', key='name')
+        lxc_cmd = ['lxc-stop', '-k', '-n', lxc_name]
+        command_output = self.run_command(lxc_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to stop lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection

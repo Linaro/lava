@@ -29,10 +29,11 @@ import socket
 import time
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.action import (
-    Timeout,
-    JobError,
+    ConfigurationError,
     InfrastructureError,
-    TestError
+    JobError,
+    TestError,
+    Timeout,
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
@@ -93,7 +94,7 @@ class MultinodeProtocol(Protocol):
             try:
                 json_default = json.loads(jobdata)
             except ValueError as exc:
-                raise InfrastructureError("Invalid JSON settings for %s: %s" % (self.name, exc))
+                raise ConfigurationError("Invalid JSON settings for %s: %s" % (self.name, exc))
         if "port" in json_default:
             settings['port'] = json_default['port']
         if "blocksize" in json_default:
@@ -171,7 +172,7 @@ class MultinodeProtocol(Protocol):
         if isinstance(timeout, float):
             timeout = int(timeout)
         elif not isinstance(timeout, int):
-            raise RuntimeError("Invalid timeout duration type: %s %s" % (type(timeout), timeout))
+            raise ConfigurationError("Invalid timeout duration type: %s %s" % (type(timeout), timeout))
         msg_len = len(message)
         if msg_len > 0xFFFE:
             raise JobError("Message was too long to send!")
@@ -291,11 +292,13 @@ class MultinodeProtocol(Protocol):
         self._send(init_msg, True)
 
     def finalise_protocol(self, device=None):
-        fin_msg = {
-            "request": "clear_group",
-            "group_size": self.parameters['protocols'][self.name]['group_size']
-        }
-        self._send(fin_msg, True)
+        # If the protocol hasn't been setup correctly
+        if self.base_message is not None:
+            fin_msg = {
+                "request": "clear_group",
+                "group_size": self.parameters['protocols'][self.name]['group_size']
+            }
+            self._send(fin_msg, True)
         self.logger.debug("%s protocol finalised.", self.name)
 
     def _check_data(self, data):

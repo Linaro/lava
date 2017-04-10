@@ -29,7 +29,11 @@ import traceback
 import os
 import yaml
 
-from lava_dispatcher.pipeline.action import JobError, InfrastructureError, TestError
+from lava_dispatcher.pipeline.action import (
+    LAVABug,
+    LAVAError,
+    JobError,
+)
 from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
@@ -171,44 +175,80 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         os.chmod(tmp_dir, 0o755)
         return tmp_dir
 
-    def validate(self, simulate=False):
+    def _validate(self, simulate):
         """
-        Needs to validate the parameters
-        Then needs to validate the context
-        Finally expose the context so that actions can see it.
+        Validate the pipeline and raise an exception (that inherit from
+        LAVAError) if it fails.
+        If simulate is True, then print the pipeline description.
         """
         label = "lava-dispatcher, installed at version: %s" % debian_package_version()
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
+
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
             except KeyboardInterrupt:
-                self.cleanup(connection=None, message="Canceled")
                 self.logger.info("Canceled")
                 raise JobError("Canceled")
-            except (JobError, RuntimeError, KeyError, TypeError) as exc:
-                raise JobError(exc)
+            except LAVAError:
+                self.logger.error("Configuration failed for protocol %s", protocol.name)
+                raise
+            except Exception as exc:
+                self.logger.error("Configuration failed for protocol %s", protocol.name)
+                self.logger.exception(traceback.format_exc())
+                raise LAVABug(exc)
+
             if not protocol.valid:
                 msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
                 self.logger.exception(msg)
                 raise JobError(msg)
+
         if simulate:
             # output the content and then any validation errors (python3 compatible)
             print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
-        # FIXME: validate the device config
-        # FIXME: pretty output of exception messages needed.
+
         try:
             self.pipeline.validate_actions()
-        except (JobError, InfrastructureError) as exc:
-            self.cleanup(connection=None, message="Invalid job definition")
+        except KeyboardInterrupt:
+            self.logger.info("Canceled")
+            raise JobError("Canceled")
+        except LAVAError as exc:
             self.logger.error("Invalid job definition")
             self.logger.exception(str(exc))
             # This should be re-raised to end the job
             raise
+        except Exception as exc:
+            self.logger.error("Validation failed")
+            self.logger.exception(traceback.format_exc())
+            raise LAVABug(exc)
         finally:
             self.logger.info("validate duration: %.02f", time.time() - start)
+
+    def validate(self, simulate=False):
+        """
+        Public wrapper for the pipeline validation.
+        Send a "fail" results if needed.
+        """
+        try:
+            self._validate(simulate)
+        except LAVAError as exc:
+            self.logger.results({"definition": "lava",
+                                 "case": "validate",
+                                 "result": "fail"})
+            self.cleanup(connection=None)
+            self.logger.results({"definition": "lava",
+                                 "case": "job",
+                                 "result": "fail",
+                                 "error_msg": str(exc),
+                                 "error_type": exc.error_type})
+            self.logger.error(exc.error_help)
+            raise
+        else:
+            self.logger.results({"definition": "lava",
+                                 "case": "validate",
+                                 "result": "pass"})
 
     def cancelling_handler(*_):
         """
@@ -220,6 +260,34 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         raise KeyboardInterrupt
 
+    def _run(self):
+        """
+        Run the pipeline under the run() wrapper that will catch the exceptions
+        """
+        # Set the signal handler
+        signal.signal(signal.SIGINT, self.cancelling_handler)
+        signal.signal(signal.SIGTERM, self.cancelling_handler)
+
+        # Setup the protocols
+        for protocol in self.protocols:
+            try:
+                protocol.set_up()
+            except LAVAError:
+                raise
+            except Exception as exc:
+                self.logger.error("Unable to setup the protocols")
+                self.logger.exception(traceback.format_exc())
+                raise LAVABug(exc)
+
+            if not protocol.valid:
+                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                self.logger.exception(msg)
+                raise JobError(msg)
+
+        # Run the pipeline and wait for exceptions
+        with self.timeout() as max_end_time:
+            self.pipeline.run_actions(self.connection, max_end_time)
+
     def run(self):
         """
         Top level routine for the entire life of the Job, using the job level timeout.
@@ -227,63 +295,57 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
+        error_help = ""
+        error_msg = ""
+        error_type = ""
         return_code = 0
-        error_msg = None
         try:
-            # Set the signal handler
-            signal.signal(signal.SIGINT, self.cancelling_handler)
-            signal.signal(signal.SIGTERM, self.cancelling_handler)
-
-            # Setup the protocols
-            for protocol in self.protocols:
-                try:
-                    protocol.set_up()
-                except (KeyError, TypeError) as exc:
-                    self.logger.error("Unable to setup the protocols")
-                    self.logger.exception(exc)
-                    raise RuntimeError(exc)
-                if not protocol.valid:
-                    msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
-                    self.logger.exception(msg)
-                    raise JobError(msg)
-
-            # Run the pipeline and wait for exceptions
-            with self.timeout() as max_end_time:
-                self.pipeline.run_actions(self.connection, max_end_time)
-        except InfrastructureError:
-            error_msg = "InfrastructureError: the Infrastructure is not working correctly. " \
-                        "Please report it to the LAVA admin."
-            return_code = 1
-        except JobError:
-            error_msg = "JobError: your job cannot terminate cleanly."
-            return_code = 2
+            self._run()
+        except LAVAError as exc:
+            error_help = exc.error_help
+            error_msg = str(exc)
+            error_type = exc.error_type
+            return_code = exc.error_code
         except KeyboardInterrupt:
-            error_msg = "KeyboardInterrupt: the job was canceled."
-            return_code = 3
-        except RuntimeError:
-            error_msg = "RuntimeError: this is probably a bug in LAVA, please report it."
-            return_code = 4
-        except TestError:
-            error_msg = "TestError: a test failed to run, look at the error message."
-            return_code = 5
+            error_help = "KeyboardInterrupt: the job was canceled."
+            error_msg = "The job was canceled"
+            error_type = "Canceled"
+            return_code = 6
         except Exception as exc:
             self.logger.exception(traceback.format_exc())
-            error_msg = "%s: unknown exception, please report it" % exc.__class__.__name__
-            return_code = 6
+            error_help = "%s: unknown exception, please report it" % exc.__class__.__name__
+            error_msg = str(exc)
+            error_type = "Unknown"
+            return_code = 7
 
         # Cleanup now
-        self.cleanup(self.connection, None)
+        self.cleanup(self.connection)
 
+        # Detect errors based on pipeline.errors
+        # TODO: shouldn't be needed anymore
+        if not error_msg and self.pipeline.errors:
+            error_help = "Errors detected"
+            error_msg = self.pipeline.errors
+            error_type = "Unknown"
+            return_code = 7
+
+        # Build the job result
+        result_dict = {"definition": "lava",
+                       "case": "job"}
         if error_msg:
-            self.logger.error(error_msg)
-        elif self.pipeline.errors:
-            self.logger.error("Errors detected: %s", self.pipeline.errors)
-            return_code = -1
+            result_dict["result"] = "fail"
+            result_dict["error_msg"] = error_msg
+            result_dict["error_type"] = error_type
+            self.logger.results(result_dict)
+            self.logger.error(error_help)
         else:
+            result_dict["result"] = "pass"
+            self.logger.results(result_dict)
             self.logger.info("Job finished correctly")
+
         return return_code
 
-    def cleanup(self, connection, message):
+    def cleanup(self, connection):
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
 
@@ -291,7 +353,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # connection and poweroff the device (the cleanup action will do that
         # for us)
         self.logger.info("Cleaning after the job")
-        self.pipeline.cleanup(connection, message)
+        self.pipeline.cleanup(connection)
 
         for tmp_dir in self.base_overrides.values():
             self.logger.info("Override tmp directory removed at %s", tmp_dir)

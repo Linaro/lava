@@ -44,6 +44,7 @@ actions:
      os: oe
      kernel:
          url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/Image
+         type: image
      dtb:
          url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/juno.dtb
      ramdisk:
@@ -59,7 +60,6 @@ actions:
      namespace: openembedded
      method: u-boot
      commands: ramdisk-tftp
-     type: booti
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:
@@ -88,6 +88,7 @@ actions:
      os: android
      kernel:
          url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/Image
+         type: image
      ramdisk:
          url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/ramdisk.img
          header: u-boot
@@ -99,7 +100,6 @@ actions:
   - boot:
      namespace: android
      method: u-boot
-     type: booti
      commands: ramdisk-tftp-usb
      timeout:
        minutes: 5

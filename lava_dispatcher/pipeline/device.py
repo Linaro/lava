@@ -22,6 +22,8 @@
 import os
 import yaml
 
+from lava_dispatcher.pipeline.action import ConfigurationError
+
 
 class PipelineDevice(dict):
     """
@@ -96,9 +98,9 @@ class PipelineDevice(dict):
     @power_state.setter
     def power_state(self, state):
         if 'commands' not in self or 'power_off' not in self['commands']:
-            raise RuntimeError("Power state not supported for %s" % self['hostname'])
+            raise ConfigurationError("Power state not supported for %s" % self['hostname'])
         if state is '' or state is not 'on' and state is not 'off':
-            raise RuntimeError("Attempting to set an invalid power state")
+            raise ConfigurationError("Attempting to set an invalid power state")
         self['power_state'] = state
 
 
@@ -116,7 +118,7 @@ class NewDevice(PipelineDevice):
             with open(target) as f_in:
                 self.update(yaml.load(f_in))
         except yaml.parser.ParserError:
-            raise RuntimeError("%s could not be parsed" % target)
+            raise ConfigurationError("%s could not be parsed" % target)
 
         # Get the device name (/path/to/kvm01.yaml => kvm01)
         self.target = os.path.splitext(os.path.basename(target))[0]

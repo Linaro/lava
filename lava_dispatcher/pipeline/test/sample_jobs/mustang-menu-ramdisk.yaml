@@ -6,8 +6,9 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  menu-interrupt:
-    minutes: 3
+  actions:
+    menu-interrupt:
+      minutes: 3
 priority: medium
 visibility: public
 
@@ -22,6 +23,7 @@ actions:
          url: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
      kernel:
          url: http://images.validation.linaro.org/mustang/uImage_1.11
+         # uefi-menu does not support UBoot load addresses, so no type: here.
      nfsrootfs:
          url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
          compression: gz
@@ -33,7 +35,6 @@ actions:
      method: uefi-menu
      auto_login: {login_prompt: 'login:', username: root}
      commands: nfs
-     type: bootm
      prompts:
      - 'linaro-test'
      - 'root@debian:~#'
