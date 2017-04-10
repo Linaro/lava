@@ -77,15 +77,25 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
         self.last_msg = time.time()
 
 
-class FileHandler(object):  # pylint: disable=too-few-public-methods
-
-    def __init__(self, name):
-        self.filename = name
-        self.fd = open(name, 'a+')  # pylint: disable=invalid-name
+class JobHandler(object):  # pylint: disable=too-few-public-methods
+    def __init__(self, job, level, filename):
+        self.output_dir = job.output_dir
+        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
+        self.current_level = level
+        self.sub_log = open(filename, 'a+')
         self.last_usage = time.time()
 
+    def write(self, message):
+        self.output.write(message)
+        self.output.write('\n')
+        self.output.flush()
+        self.sub_log.write(message)
+        self.sub_log.write('\n')
+        self.sub_log.flush()
+
     def close(self):
-        self.fd.close()
+        self.output.close()
+        self.sub_log.close()
 
 
 def load_optional_yaml_file(filename):
@@ -122,7 +132,7 @@ class Command(BaseCommand):
         self.pull_socket = None
         self.controler = None
         # List of logs
-        self.logs = {}
+        self.jobs = {}
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         self.dispatchers = {}
@@ -162,10 +172,6 @@ class Command(BaseCommand):
         parser.add_argument('--dispatchers-config',
                             default="/etc/lava-server/dispatcher.d",
                             help="Directory that might contain dispatcher specific configuration")
-        parser.add_argument('--output-dir',
-                            default='/var/lib/lava-server/default/media/job-output',
-                            help="Directory where to store job outputs. "
-                                 "Default: /var/lib/lava-server/default/media/job-output")
 
     def send_status(self, hostname):
         """
@@ -218,21 +224,33 @@ class Command(BaseCommand):
         if '/' in level or '/' in name:
             self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
             return
-        filename = "%s/job-%s/pipeline/%s/%s-%s.yaml" % (options['output_dir'],
-                                                         job_id, level.split('.')[0],
-                                                         level, name)
 
         # Find the handler (if available)
-        if job_id in self.logs:
-            if filename != self.logs[job_id].filename:
+        if job_id in self.jobs:
+            if level != self.jobs[job_id].current_level:
                 # Close the old file handler
-                self.logs[job_id].close()
+                self.jobs[job_id].sub_log.close()
+                filename = os.path.join(self.jobs[job_id].output_dir,
+                                        "pipeline", level.split('.')[0],
+                                        "%s-%s.yaml" % (level, name))
                 mkdir(os.path.dirname(filename))
-                self.logs[job_id] = FileHandler(filename)
+                self.current_level = level
+                self.jobs[job_id].sub_log = open(filename, 'a+')
         else:
+            # Query the database for the job
+            try:
+                job = TestJob.objects.get(id=job_id)
+            except TestJob.DoesNotExist:
+                self.logger.error("[%s] Unknown job id", job_id)
+                return
+
             self.logger.info("[%s] Receiving logs from a new job", job_id)
+            filename = os.path.join(job.output_dir,
+                                    "pipeline", level.split('.')[0],
+                                    "%s-%s.yaml" % (level, name))
+            # Create the sub directories (if needed)
             mkdir(os.path.dirname(filename))
-            self.logs[job_id] = FileHandler(filename)
+            self.jobs[job_id] = JobHandler(job, level, filename)
 
         if message_lvl == "results":
             try:
@@ -248,26 +266,14 @@ class Command(BaseCommand):
                     job_id, message)
 
         # Mark the file handler as used
-        # TODO: try to use a more pythonnic way
-        self.logs[job_id].last_usage = time.time()
+        self.jobs[job_id].last_usage = time.time()
 
         # n.b. logging here would produce a log entry for every message in every job.
         # The format is a list of dictionaries
         message = "- %s" % message
 
         # Write data
-        f_handler = self.logs[job_id].fd
-        f_handler.write(message)
-        f_handler.write('\n')
-        f_handler.flush()
-
-        # TODO: keep the file handler to avoid calling open for each line
-        filename = os.path.join(options['output_dir'],
-                                "job-%s" % job_id,
-                                'output.yaml')
-        with open(filename, 'a+') as f_out:
-            f_out.write(message)
-            f_out.write('\n')
+        self.jobs[job_id].write(message)
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
@@ -653,11 +659,11 @@ class Command(BaseCommand):
 
                 # Garbage collect file handlers
                 now = time.time()
-                for job_id in self.logs.keys():  # pylint: disable=consider-iterating-dictionary
-                    if now - self.logs[job_id].last_usage > FD_TIMEOUT:
+                for job_id in self.jobs.keys():  # pylint: disable=consider-iterating-dictionary
+                    if now - self.jobs[job_id].last_usage > FD_TIMEOUT:
                         self.logger.info("[%s] Closing log file", job_id)
-                        self.logs[job_id].close()
-                        del self.logs[job_id]
+                        self.jobs[job_id].close()
+                        del self.jobs[job_id]
 
                 # Command socket
                 if sockets.get(self.controler) == zmq.POLLIN:
