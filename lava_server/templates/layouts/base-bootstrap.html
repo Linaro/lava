@@ -15,6 +15,14 @@
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
   <![endif]-->
+  <script>
+    // Hack for fixed navbar anchor problem.
+    // Source: https://github.com/twbs/bootstrap/issues/1786
+    var shiftWindow = function() { scrollBy(0, -50) };
+    window.addEventListener("hashchange", shiftWindow);
+    function fix_anchor_offset() { if (window.location.hash) shiftWindow(); }
+  </script>
+
   <style>
     body {
       padding-top: 60px;
@@ -50,7 +58,7 @@
   {% block extrahead %}{% endblock %}
 </head>
 
-<body>
+<body onload="fix_anchor_offset()">
 {% analytics %}
 {% block body %}{% endblock %}
 
