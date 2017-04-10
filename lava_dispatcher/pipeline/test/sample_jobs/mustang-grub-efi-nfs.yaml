@@ -1,0 +1,56 @@
+device_type: mustang
+
+job_name: grub-efi mustang NFS test
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    kernel:
+      url: http://people.linaro.org/~neil.williams/stretch-files/vmlinuz-4.9.0-1-arm64
+      type: zimage
+    ramdisk:
+      url: http://people.linaro.org/~neil.williams/stretch-files/initrd.img-4.9.0-1-arm64
+      compression: gz
+    modules:
+      url: http://people.linaro.org/~neil.williams/stretch-files/modules2.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/functional-test-images/debian-jessie-arm64-rootfs.tar.gz
+      compression: gz
+    os: debian
+    timeout:
+      minutes: 8
+    to: tftp
+
+- boot:
+     timeout:
+       minutes: 4
+     method: grub-efi
+     auto_login: {login_prompt: 'login:', username: root}
+     commands: nfs
+     prompts:
+     - 'root@jessie:'
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+
+- test:
+     failure_retry: 3
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode02.yaml
+           name: singlenode-intermediate

@@ -1,0 +1,55 @@
+available_architectures:
+- arm64
+- arm
+- aarch64
+- amd64
+- x86_64
+- i386
+
+actions:
+  boot:
+    connections: {serial: null, ssh: null}
+    methods:
+      qemu-nfs:
+        parameters:
+          append:
+            console: ttyAMA0
+            root: /dev/nfs
+            nfsrootargs: 'nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr'
+            ipargs: ip=dhcp
+          boot_options: {console: ttyAMA0 115200, ip: dhcp, mem: 1024M, root: /dev/vda2
+              rw rootwait}
+          command: qemu-system-aarch64
+          extra: [-smp, 1]
+          options: [-cpu cortex-a57, -machine virt, -nographic, '-net nic,model=virtio,macaddr=52:54:00:12:34:59
+              -net tap', -m 2048, -monitor none]
+  deploy:
+    methods:
+      image:
+        parameters:
+          guest: {interface: ide, size: 512}
+      nfs: null
+device_type: qemu
+timeouts:
+  actions:
+    apply-overlay-image: {minutes: 2}
+    auto-login-action: {minutes: 2}
+    bootloader-action: {minutes: 3}
+    bootloader-commands: {minutes: 3}
+    bootloader-interrupt: {seconds: 30}
+    bootloader-retry: {minutes: 3}
+    dd-image: {minutes: 10}
+    download_retry: {minutes: 5}
+    http_download: {minutes: 5}
+    lava-test-shell: {minutes: 3}
+    nfs-deploy: {minutes: 10}
+    power_off: {seconds: 5}
+    uboot-action: {minutes: 3}
+    uboot-retry: {minutes: 3}
+    umount-retry: {seconds: 45}
+  connections:
+    auto-login-action: {minutes: 2}
+    bootloader-commands: {seconds: 30}
+    bootloader-interrupt: {seconds: 30}
+    dd-image: {minutes: 10}
+    uboot-retry: {seconds: 30}

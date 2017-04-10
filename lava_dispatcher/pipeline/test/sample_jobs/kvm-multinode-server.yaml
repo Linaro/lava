@@ -7,8 +7,6 @@ timeouts:
     minutes: 5
   action:
     minutes: 1
-  test:
-    minutes: 3
 
 protocols:
   lava-multinode:
@@ -52,6 +50,8 @@ actions:
           - 'root@debian:~#'
 
     - test:
+        timeout:
+          minutes: 3
         failure_retry: 3
         role: server
         name: kvm-basic-singlenode

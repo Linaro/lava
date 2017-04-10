@@ -4,11 +4,10 @@ commands:
     power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
     power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 08
     pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
-    adb_command: adb -s 0123456789
-    fastboot_command: fastboot -u -s 96B0201601000691
 device_type: hi6220-hikey
 adb_serial_number: 0123456789
 fastboot_serial_number: 96B0201601000691
+fastboot_options: ['-S', '256M']
 device_info: [{'board_id': '96B0201601000691'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
                   'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',

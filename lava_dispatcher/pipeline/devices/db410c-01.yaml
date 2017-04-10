@@ -1,4 +1,3 @@
-
 commands:
     connect: telnet localhost 7112
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 19 --delay 20
@@ -11,6 +10,7 @@ flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1
 device_type: dragonboard-410c
 adb_serial_number: c2e02318
 fastboot_serial_number: c2e02318
+fastboot_options: []
 
 actions:
   deploy:
@@ -26,7 +26,13 @@ actions:
       serial:
     methods:
       lxc:
-      fastboot-boot-image:
+      fastboot:
+        - no-flash-boot
+        - wait-usb-remove
+        - lxc-add-device
+        - auto-login
+        - shell-session
+        - export-env
 
 timeouts:
   actions:

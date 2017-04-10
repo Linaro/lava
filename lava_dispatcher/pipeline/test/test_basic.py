@@ -27,11 +27,12 @@ import simplejson
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, LAVABug
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=superfluous-parens,too-few-public-methods
 
@@ -164,6 +165,7 @@ class Factory(object):
             with open(kvm_yaml) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
+            job.logger = DummyLogger()
         except NotImplementedError as exc:
             print(exc)
             # some deployments listed in basics.yaml are not implemented yet
@@ -196,12 +198,12 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(action.description, "test action only")
         self.assertEqual(action.summary, "starter")
         # action needs to be added to a top level pipe first
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             Pipeline(action)
         pipe = Pipeline()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             pipe.add_action(None)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             pipe.add_action(pipe)
         pipe.add_action(action)
         self.assertEqual(pipe.actions, [action])
@@ -231,7 +233,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action.name = "child_action"
         action.summary = "child"
         action.description = "action implementing an internal pipe"
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LAVABug):
             Pipeline(action)
         pipe.add_action(action)
         self.assertEqual(action.level, "2")

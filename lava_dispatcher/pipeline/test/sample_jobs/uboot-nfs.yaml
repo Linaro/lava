@@ -8,8 +8,9 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  extract-nfsrootfs:
-    seconds: 90
+  actions:
+    extract-nfsrootfs:
+      seconds: 90
 priority: medium
 visibility: public
 
@@ -24,6 +25,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      nfsrootfs:
          url: http://images.validation.linaro.org/no-such-file-rootfs.tar.xz
          compression: xz
@@ -34,7 +36,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

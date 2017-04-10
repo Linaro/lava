@@ -8,8 +8,9 @@ timeouts:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  extract-nfsrootfs:
-    seconds: 90
+  actions:
+    extract-nfsrootfs:
+      seconds: 90
 priority: medium
 visibility: public
 
@@ -19,12 +20,15 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
+     parameters:
+       mkimage_arch: arm # uses 32bit UBoot
      namespace: boot1
      timeout:
        minutes: 2
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      nfsrootfs:
          url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
          compression: gz
@@ -36,7 +40,6 @@ actions:
      namespace: boot1
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
@@ -60,7 +63,6 @@ actions:
      namespace: boot2
      method: u-boot
      commands: ramdisk
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

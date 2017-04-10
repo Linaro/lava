@@ -8,10 +8,11 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
+  actions:
+    uefi-menu-selector:
+      minutes: 5
   connection:
     minutes: 3
-  uefi-menu-selector:
-    minutes: 5
 priority: medium
 visibility: public
 

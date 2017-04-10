@@ -8,15 +8,18 @@ timeouts:
     minutes: 15
   action:
     minutes: 5
-  extract-nfsrootfs:
-    seconds: 90
-  call-kexec:
-    seconds: 45  # artificially short
+  actions:
+    extract-nfsrootfs:
+      seconds: 90
+    call-kexec:
+      seconds: 45  # artificially short
 priority: medium
 visibility: public
 
 actions:
   - deploy:
+     parameters:
+       mkimage_arch: arm
      timeout:
        minutes: 2
      to: tftp
@@ -24,6 +27,7 @@ actions:
      # this YAML is just an example.
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      # ramdisk: some file somewhere ...
      nfsrootfs:
          url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
@@ -35,7 +39,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

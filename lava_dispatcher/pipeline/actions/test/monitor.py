@@ -23,8 +23,9 @@ import pexpect
 
 from collections import OrderedDict
 from lava_dispatcher.pipeline.action import (
-    Pipeline,
     InfrastructureError,
+    LAVABug,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.actions.test import (
     TestAction,
@@ -108,7 +109,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         # Sanity test: could be a missing deployment for some actions
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
         if res != 'success':
-            raise RuntimeError("No boot action result found")
+            raise LAVABug("No boot action result found")
         connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
         if res != "success":
             self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")

@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from time import sleep
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -60,7 +59,7 @@ class ConnectLxc(Action):
             return connection
 
         self.logger.info("Get USB device(s) ...")
-        device_paths = get_usb_devices(self.job)
+        device_paths = get_usb_devices(self.job, logger=self.logger)
         for device in device_paths:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
                        os.path.realpath(device)]

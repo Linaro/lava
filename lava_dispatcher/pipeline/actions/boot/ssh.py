@@ -22,7 +22,7 @@
 
 import os
 import yaml
-from lava_dispatcher.pipeline.action import Pipeline, Action
+from lava_dispatcher.pipeline.action import Action, LAVABug, Pipeline, JobError
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -147,7 +147,7 @@ class Scp(ConnectSsh):
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
-
+        connection = super(Scp, self).run(connection, max_end_time, args)
         if self.identity_file:
             command.extend(['-i', self.identity_file])
         # add arguments to ignore host key checking of the host device
@@ -165,6 +165,7 @@ class Scp(ConnectSsh):
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -193,6 +194,8 @@ class PrepareSsh(Action):
                 action=MultinodeProtocol.name,
                 label=MultinodeProtocol.name,
                 key=self.parameters['parameters']['hostID'])
+            if not host_data:
+                raise JobError("Unable to retrieve %s - missing ssh deploy?" % self.parameters['parameters']['hostID'])
             self.set_namespace_data(
                 action=self.name,
                 label='ssh-connection',
@@ -213,7 +216,7 @@ class ScpOverlayUnpack(Action):
     def run(self, connection, max_end_time, args=None):
         connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("Cannot unpack, no connection available.")
+            raise LAVABug("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
         tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
@@ -222,6 +225,7 @@ class ScpOverlayUnpack(Action):
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 

@@ -20,7 +20,7 @@
 
 import os
 import unittest
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, ConfigurationError, JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAction
 from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # Test the loading of test definitions within the deploy stage
 
@@ -125,7 +126,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
         self.assertEqual(device.power_state, '')
         self.assertEqual(device.hard_reset_command, '')
         self.assertEqual(device.power_command, '')
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ConfigurationError):
             device.power_state = ''
         self.assertEqual(device.power_command, '')
 
@@ -168,6 +169,7 @@ overrides:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
+        job.logger = DummyLogger()
         self.assertEqual(
             job.parameters['env_dut'],
             data
@@ -190,6 +192,7 @@ overrides:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
                 output_dir='/tmp', env_dut=data)
+        job.logger = DummyLogger()
         self.assertEqual(
             job.parameters['env_dut'],
             data
@@ -230,7 +233,7 @@ class TestCommand(StdoutTestCase):
         command = 'false'
         # sets return code non-zero with no output
         log = fake.run_command(command.split(' '))
-        self.assertIsNone(log)
+        self.assertFalse(log)
         self.assertNotEqual([], fake.errors)
 
     def test_allow_silent_error(self):
@@ -244,7 +247,7 @@ class TestCommand(StdoutTestCase):
         fake = FakeAction()
         command = './no-script'
         log = fake.run_command(command.split(' '))
-        self.assertIsNone(log)
+        self.assertFalse(log)
         self.assertNotEqual([], fake.errors)
 
     def test_allow_silent_invalid(self):

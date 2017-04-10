@@ -21,8 +21,9 @@
 import time
 from lava_dispatcher.pipeline.action import (
     Action,
-    JobError,
     InfrastructureError,
+    JobError,
+    LAVABug,
     TestError,
 )
 
@@ -48,16 +49,16 @@ class RetryAction(Action):
         """
         super(RetryAction, self).validate()
         if not self.internal_pipeline:
-            raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
+            raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 
     def run(self, connection, max_end_time, args=None):
         while self.retries < self.max_retries:
             try:
-                new_connection = self.internal_pipeline.run_actions(connection, max_end_time)
+                connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
-                    return new_connection
-            # Do not retry for RuntimeError (as it's a bug in LAVA)
+                    return connection
+            # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
                 # Print the error message
                 self.retries += 1
@@ -66,7 +67,7 @@ class RetryAction(Action):
                 self.logger.error(msg)
                 self.errors = msg
                 # Cleanup the action to allow for a safe restart
-                self.cleanup(connection, msg)
+                self.cleanup(connection)
 
                 # re-raise if this is the last loop
                 if self.retries == self.max_retries:
@@ -74,6 +75,8 @@ class RetryAction(Action):
                     res = 'failed' if self.errors else 'success'
                     self.set_namespace_data(action='boot', label='shared',
                                             key='boot-result', value=res)
+                    self.set_namespace_data(action='shared', label='shared',
+                                            key='connection', value=connection)
                     raise
 
                 # Wait some time before retrying
@@ -86,7 +89,7 @@ class RetryAction(Action):
             self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
             # tried and failed
             # TODO: raise the right exception
-            JobError(self.errors)
+            raise JobError(self.errors)
         return connection
 
 
@@ -144,7 +147,7 @@ class AdjuvantAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("Called %s without an active Connection" % self.name)
+            raise LAVABug("Called %s without an active Connection" % self.name)
         if not self.valid or self.key() not in self.data:
             return connection
         if self.data[self.key()]:

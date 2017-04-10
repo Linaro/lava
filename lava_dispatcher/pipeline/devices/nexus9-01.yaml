@@ -1,7 +1,9 @@
 device_type: nexus9
 adb_serial_number: HT4B7JT01005
 fastboot_serial_number: HT4B7JT01005
-device_path: ['/dev/bus/usb/004']
+fastboot_options: []
+device_info: [{'board_id': 'HT4B7JT01005'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system']
 
 actions:
   deploy:
@@ -17,6 +19,9 @@ actions:
     methods:
       lxc:
       fastboot:
+        - reboot
+        - wait-usb-add
+        - lxc-add-device
 
 timeouts:
   actions:

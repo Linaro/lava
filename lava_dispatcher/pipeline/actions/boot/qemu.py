@@ -34,7 +34,12 @@ from lava_dispatcher.pipeline.shell import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
+from lava_dispatcher.pipeline.utils.constants import SYS_CLASS_KVM
+from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.utils.filesystem import debian_package_version
+from lava_dispatcher.pipeline.actions.boot import AutoLoginAction, OverlayUnpack
+
+# pylint: disable=too-many-instance-attributes,too-many-branches
 
 
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
@@ -59,11 +64,12 @@ class BootQEMU(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'qemu' not in device['actions']['boot']['methods']:
+        methods = device['actions']['boot']['methods']
+        if 'qemu' not in methods and 'qemu-nfs' not in methods:
             return False
         if 'method' not in parameters:
             return False
-        if parameters['method'] not in ['qemu', 'monitor']:
+        if parameters['method'] not in ['qemu', 'qemu-nfs', 'monitor']:
             return False
         return True
 
@@ -83,6 +89,8 @@ class BootQEMUImageAction(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
@@ -107,14 +115,38 @@ class CallQemuAction(Action):
         self.description = "call qemu to boot the image"
         self.summary = "execute qemu to boot the image"
         self.sub_command = []
+        self.substitutions = {}
+        self.commands = []
+        self.methods = None
+        self.nfsrootfs = None
 
     def validate(self):
         super(CallQemuAction, self).validate()
-        if self.parameters['method'] == 'qemu' and 'prompts' not in self.parameters:
-            if self.test_has_shell(self.parameters):
-                self.errors = "Unable to identify boot prompts from job definition."
+
+        # 'arch' must be defined in job definition context.
         try:
-            boot = self.job.device['actions']['boot']['methods']['qemu']
+            if self.job.parameters['context']['arch'] not in \
+               self.job.device['available_architectures']:
+                self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
+                return
+        except KeyError:
+            self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
+            return
+        if self.job.parameters['context']['arch'] in ['amd64', 'x86_64']:
+            self.logger.info("qemu-system-x86, installed at version: %s" %
+                             debian_package_version(pkg='qemu-system-x86', split=False))
+        if self.job.parameters['context']['arch'] in ['arm64', 'arm', 'armhf', 'aarch64']:
+            self.logger.info("qemu-system-arm, installed at version: %s" %
+                             debian_package_version(pkg='qemu-system-arm', split=False))
+
+        if self.parameters['method'] in ['qemu', 'qemu-nfs']:
+            if 'prompts' not in self.parameters:
+                if self.test_has_shell(self.parameters):
+                    self.errors = "Unable to identify boot prompts from job definition."
+        self.methods = self.job.device['actions']['boot']['methods']
+        method = self.parameters['method']
+        boot = self.methods['qemu'] if 'qemu' in self.methods else self.methods['qemu-nfs']
+        try:
             if 'parameters' not in boot or 'command' not in boot['parameters']:
                 self.errors = "Invalid device configuration - missing parameters"
             elif not boot['parameters']['command']:
@@ -126,28 +158,34 @@ class CallQemuAction(Action):
                 ['%s' % item for item in boot['parameters'].get('extra', [])])
         except AttributeError as exc:
             self.errors = "Unable to parse device options: %s %s" % (
-                exc, self.job.device['actions']['boot']['methods']['qemu'])
+                exc, self.job.device['actions']['boot']['methods'][method])
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
-        substitutions = {}
-        commands = []
         namespace = self.parameters.get('namespace', 'common')
         for label in self.data[namespace]['download_action'].keys():
-            if label == 'offset' or label == 'available_loops' or label == 'uefi':
+            if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
                 continue
             image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
             action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % label
                 continue
-            substitutions["{%s}" % label] = action_arg
-            commands.append(image_arg)
-        self.sub_command.extend(substitute(commands, substitutions))
+            self.substitutions["{%s}" % label] = action_arg
+            self.commands.append(image_arg)
+        self.substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(self.job.parameters['dispatcher'])
+        self.sub_command.extend(substitute(self.commands, self.substitutions))
         if not self.sub_command:
             self.errors = "No QEMU command to execute"
         uefi_dir = self.get_namespace_data(action='deployimages', label='image', key='uefi_dir')
         if uefi_dir:
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
+
+        # Check for enable-kvm command line option in device configuration.
+        options = self.job.device['actions']['boot']['methods'][method]['parameters']['options']
+        if "-enable-kvm" in options:
+            # Check if the worker has kvm enabled.
+            if not os.path.exists(SYS_CLASS_KVM):
+                self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
 
     def run(self, connection, max_end_time, args=None):
         """
@@ -162,7 +200,22 @@ class CallQemuAction(Action):
         """
         # initialise the first Connection object, a command line shell into the running QEMU.
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
-        if guest:
+        # check for NFS
+        if 'qemu-nfs' in self.methods and self.parameters['media'] == 'nfs':
+            self.logger.debug("Adding NFS arguments to kernel command line.")
+            root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
+            self.substitutions["{NFSROOTFS}"] = root_dir
+            params = self.methods['qemu-nfs']['parameters']['append']
+            # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
+            append = [
+                'console=%s' % params['console'],
+                'root=/dev/nfs',
+                '%s rw' % substitute([params['nfsrootargs']], self.substitutions)[0],
+                "%s" % params['ipargs']
+            ]
+            self.sub_command.append('--append')
+            self.sub_command.append('"%s"' % ' '.join(append))
+        elif guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             # interface is ide by default in qemu
             interface = self.job.device['actions']['deploy']['methods']['image']['parameters']['guest'].get('interface', 'ide')

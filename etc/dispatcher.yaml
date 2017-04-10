@@ -6,3 +6,8 @@
 
 # Only set this key, if this dispatcher has many IPs
 #dispatcher_ip: <this-dispatcher-ip>
+
+# Set this key, if you want to change the default lxc creation path
+# No trailing /
+# The default path is /var/lib/lxc
+#lxc_path: <custom-path>

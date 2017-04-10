@@ -1,0 +1,55 @@
+device_type: juno
+
+job_name: juno-uboot-fw-debian
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+- deploy:
+    namespace: recovery
+    timeout:
+      minutes: 10
+    to: vemsd
+    recovery_image:
+      url:  http://releases.linaro.org/members/arm/platforms/16.10/juno-latest-oe-uboot.zip
+      compression: zip
+
+- deploy:
+    namespace: debian
+    timeout:
+      minutes: 2
+    to: tftp
+    os: debian
+    kernel:
+      url: http://images.validation.linaro.org/functional-test-images/juno/16.10/juno-latest-oe-uboot/SOFTWARE/Image
+    dtb:
+      url: http://images.validation.linaro.org/functional-test-images/juno/16.10/juno-latest-oe-uboot/SOFTWARE/juno.dtb
+    ramdisk:
+      url: http://images.validation.linaro.org/functional-test-images/juno/16.10/juno-latest-oe-uboot/SOFTWARE/ramdisk.img
+      header: u-boot
+      install_overlay: false
+      install_modules: false
+    nfsrootfs:
+      url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+      compression: gz
+
+- boot:
+    namespace: debian
+    method: u-boot
+    connection-namespace: recovery
+    commands: ramdisk-tftp
+    type: booti
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    parameters:
+      shutdown-message: 'Powering up system...'
+    prompts:
+    - root@(.*):~#

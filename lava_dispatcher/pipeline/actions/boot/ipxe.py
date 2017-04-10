@@ -23,6 +23,8 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
+    ConfigurationError,
+    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot
@@ -30,7 +32,8 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction
+    BootloaderCommandsAction,
+    OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -43,15 +46,15 @@ from lava_dispatcher.pipeline.utils.constants import (
 
 def bootloader_accepts(device, parameters):
     if 'method' not in parameters:
-        raise RuntimeError("method not specified in boot parameters")
+        raise ConfigurationError("method not specified in boot parameters")
     if parameters['method'] != 'ipxe':
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'boot' not in device['actions']:
         return False
     if 'methods' not in device['actions']['boot']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -121,6 +124,8 @@ class BootloaderRetry(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
@@ -138,6 +143,7 @@ class BootloaderRetry(BootAction):
         connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -170,7 +176,7 @@ class BootloaderInterrupt(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
         self.logger.debug("Changing prompt to '%s'", IPXE_BOOT_PROMPT)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle

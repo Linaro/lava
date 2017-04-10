@@ -22,18 +22,20 @@
 # ramdisk, always cpio, comp: gz,xz
 # rootfs, always tar, comp: gz,xz,bzip2
 # android images: tar + xz,bz2,gz, or just gz,xz,bzip2
+# vexpress recovery images: any compression though usually zip
 
 import os
 import subprocess
 import tarfile
 
 from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
     JobError
 )
 
 # https://www.kernel.org/doc/Documentation/xz.txt
 compress_command_map = {'xz': 'xz --check=crc32', 'gz': 'gzip', 'bz2': 'bzip2'}
-decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
+decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zip': 'unzip'}
 
 
 def compress_file(infile, compression):
@@ -50,7 +52,7 @@ def compress_file(infile, compression):
         os.chdir(pwd)
         return "%s.%s" % (infile, compression)
     except (OSError, subprocess.CalledProcessError) as exc:
-        raise RuntimeError('unable to compress file %s: %s' % (infile, exc))
+        raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
 
 
 def decompress_file(infile, compression):
@@ -68,7 +70,7 @@ def decompress_file(infile, compression):
         log = subprocess.check_output(cmd, shell=True)
         return outfile
     except (OSError, subprocess.CalledProcessError) as exc:
-        raise RuntimeError('unable to decompress file %s: %s' % (infile, exc))
+        raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))
 
 
 def untar_file(infile, outdir, member=None, outfile=None):
@@ -85,4 +87,4 @@ def untar_file(infile, outdir, member=None, outfile=None):
             tar.extractall(outdir)
             tar.close()
     except tarfile.TarError as exc:
-        raise JobError("Unable to unpack %s" % infile)
+        raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))

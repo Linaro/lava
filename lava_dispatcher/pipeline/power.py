@@ -24,11 +24,10 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
     InfrastructureError,
+    LAVABug,
+    Pipeline,
     TestError,
-    JobError,
-    action_namespaces,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -68,7 +67,7 @@ class RebootDevice(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("Called %s without an active Connection" % self.name)
+            raise LAVABug("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
         if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
@@ -190,38 +189,6 @@ class PowerOn(Action):
         return connection
 
 
-# FIXME: Unused action, but can give fine grained control.
-class LxcStop(Action):
-    """
-    Stops the lxc container at the end of a job
-    """
-    def __init__(self):
-        super(LxcStop, self).__init__()
-        self.name = "lxc_stop"
-        self.summary = "send stop command"
-        self.description = "stop the lxc container"
-
-    def validate(self):
-        super(LxcStop, self).validate()
-        self.errors = infrastructure_error('lxc-stop')
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(LxcStop, self).run(connection, max_end_time, args)
-        lxc_name = self.get_namespace_data(
-            action='lxc-create-action',
-            label='lxc',
-            key='name'
-        )
-        if not lxc_name:
-            return connection
-        lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
-        command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
-            raise JobError("Unable to stop lxc container: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
 class PowerOff(Action):
     """
     Turns power off at the end of a job
@@ -287,18 +254,7 @@ class FinalizeAction(Action):
 
         for protocol in self.job.protocols:
             protocol.finalise_protocol(self.job.device)
-        if self.errors:
-            self.results = {'status': self.errors}
-            self.logger.error('status: %s', self.errors)
-        elif self.job.pipeline.errors:
-            self.results = {'status': "Incomplete"}
-            self.errors = "Incomplete"
-            self.logger.error('Status: Incomplete\nErrors %s', self.job.pipeline.errors)
-        else:
-            self.results = {'success': "Complete"}
-            self.logger.info("Status: Complete")
 
-    def cleanup(self, connection, message):
-        self.errors = message
+    def cleanup(self, connection):
         if not self.ran:
             self.run(connection, None, None)

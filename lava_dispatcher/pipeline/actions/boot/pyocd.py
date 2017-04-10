@@ -88,21 +88,23 @@ class FlashPyOCDAction(Action):
         self.name = "flash-pyocd"
         self.description = "flash pyocd to boot the image"
         self.summary = "flash pyocd to boot the image"
-        self.sub_command = []
+        self.base_command = []
+        self.exec_list = []
 
     def validate(self):
         super(FlashPyOCDAction, self).validate()
         boot = self.job.device['actions']['boot']['methods']['pyocd']
         pyocd_binary = boot['parameters']['command']
         self.errors = infrastructure_error(pyocd_binary)
-        self.sub_command = [pyocd_binary]
-        self.sub_command.extend(boot['parameters'].get('options', []))
+        self.base_command = [pyocd_binary]
+        self.base_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':
             self.errors = "board_id unset"
         substitutions = {}
-        self.sub_command.extend(['--board', self.job.device['board_id']])
+        self.base_command.extend(['--board', self.job.device['board_id']])
         namespace = self.parameters['namespace']
         for action in self.data[namespace]['download_action'].keys():
+            pyocd_full_command = []
             image_arg = self.get_namespace_data(action='download_action', label=action, key='image_arg')
             action_arg = self.get_namespace_data(action='download_action', label=action, key='file')
             if image_arg:
@@ -110,20 +112,24 @@ class FlashPyOCDAction(Action):
                     self.errors = "image_arg is not a string (try quoting it)"
                     continue
                 substitutions["{%s}" % action] = action_arg
-                self.sub_command.extend(substitute([image_arg], substitutions))
+                pyocd_full_command.extend(self.base_command)
+                pyocd_full_command.extend(substitute([image_arg], substitutions))
+                self.exec_list.append(pyocd_full_command)
             else:
-                self.sub_command.extend([action_arg])
-        if not self.sub_command:
+                pyocd_full_command.extend(self.base_command)
+                pyocd_full_command.extend([action_arg])
+                self.exec_list.append(pyocd_full_command)
+        if len(self.exec_list) < 1:
             self.errors = "No PyOCD command to execute"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FlashPyOCDAction, self).run(connection, max_end_time, args)
-        pyocd = ' '.join(self.sub_command)
-        self.logger.info("PyOCD command: %s", pyocd)
-        if self.run_command(pyocd.split(' ')):
-            pass
-        else:
-            raise JobError("%s command failed" % (self.sub_command))
+        for pyocd_command in self.exec_list:
+            pyocd = ' '.join(pyocd_command)
+            self.logger.info("PyOCD command: %s", pyocd)
+            if not self.run_command(pyocd.split(' ')):
+                raise JobError("%s command failed" % (pyocd.split(' ')))
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

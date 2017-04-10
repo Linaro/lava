@@ -23,14 +23,21 @@
 
 from lava_dispatcher.pipeline.action import (
     Action,
-    Pipeline,
+    ConfigurationError,
+    LAVABug,
+    Pipeline
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction
+    BootloaderCommandsAction,
+    OverlayUnpack,
+)
+from lava_dispatcher.pipeline.actions.boot.uefi_menu import (
+    UEFIMenuInterrupt,
+    UefiMenuSelector
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -46,15 +53,15 @@ from lava_dispatcher.pipeline.utils.constants import (
 
 def bootloader_accepts(device, parameters):
     if 'method' not in parameters:
-        raise RuntimeError("method not specified in boot parameters")
-    if parameters['method'] != 'grub':
+        raise ConfigurationError("method not specified in boot parameters")
+    if parameters["method"] not in ["grub", "grub-efi"]:
         return False
     if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
+        raise ConfigurationError("Invalid device configuration")
     if 'boot' not in device['actions']:
         return False
     if 'methods' not in device['actions']['boot']:
-        raise RuntimeError("Device misconfiguration")
+        raise ConfigurationError("Device misconfiguration")
     return True
 
 
@@ -73,7 +80,8 @@ class Grub(Boot):
     def accepts(cls, device, parameters):
         if not bootloader_accepts(device, parameters):
             return False
-        return 'grub' in device['actions']['boot']['methods']
+        params = device['actions']['boot']['methods']
+        return 'grub' in params or 'grub-efi' in params
 
 
 class GrubMainAction(BootAction):
@@ -90,12 +98,17 @@ class GrubMainAction(BootAction):
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
+        if parameters['method'] == 'grub-efi':
+            self.internal_pipeline.add_action(UEFIMenuInterrupt())
+            self.internal_pipeline.add_action(GrubMenuSelector())
         self.internal_pipeline.add_action(BootloaderInterrupt())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
             if self.has_boot_finished(parameters):
@@ -107,6 +120,7 @@ class GrubMainAction(BootAction):
         connection = super(GrubMainAction, self).run(connection, max_end_time, args)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
 
@@ -134,12 +148,14 @@ class BootloaderInterrupt(Action):
         else:
             self.logger.debug("%s may need manual intervention to reboot", hostname)
         device_methods = self.job.device['actions']['boot']['methods']
+        if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
+            self.type = 'grub-efi'
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
         self.logger.debug("Changing prompt to '%s'", GRUB_BOOT_PROMPT)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
@@ -147,6 +163,31 @@ class BootloaderInterrupt(Action):
         self.wait(connection)
         connection.sendline("c")
         return connection
+
+
+class GrubMenuSelector(UefiMenuSelector):
+
+    def __init__(self):
+        super(UefiMenuSelector, self).__init__()
+        self.name = 'grub-efi-menu-selector'
+        self.summary = 'select grub options in the efi menu'
+        self.description = 'select specified grub-efi menu items'
+        self.selector.prompt = "Start:"
+        self.method_name = 'grub-efi'
+        self.commands = None
+        self.boot_message = None
+        self.params = None
+
+    def validate(self):
+        if self.method_name not in self.job.device['actions']['boot']['methods']:
+            self.errors = "No %s in device boot methods" % self.method_name
+            return
+        self.params = self.job.device['actions']['boot']['methods'][self.method_name]
+        if 'menu_options' not in self.params:
+            self.errors = "Missing entry for menu item to use for %s" % self.method_name
+            return
+        self.commands = self.params['menu_options']
+        super(GrubMenuSelector, self).validate()
 
 
 class InstallerWait(Action):
@@ -174,4 +215,5 @@ class InstallerWait(Action):
         self.wait(connection)
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

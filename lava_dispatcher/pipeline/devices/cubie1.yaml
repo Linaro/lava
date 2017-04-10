@@ -29,6 +29,8 @@ commands:
 
 actions:
   deploy:
+    parameters:
+      mkimage_arch: arm  # default
     # list of deployment methods which this device supports
     methods:
       usb:

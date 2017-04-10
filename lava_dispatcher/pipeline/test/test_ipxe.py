@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
@@ -57,6 +58,7 @@ class X86Factory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 
@@ -206,7 +208,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIsNotNone(test_dir)
         self.assertIn('/lava-', test_dir)
         self.assertIsNotNone(extract)
-        self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
+        self.assertEqual(extract.timeout.duration, 120)
 
     def test_reset_actions(self):
         job = self.factory.create_job('sample_jobs/ipxe.yaml')
@@ -264,6 +266,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, "",
                            output_dir='/tmp')
+        job.logger = DummyLogger()
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         retry = [action for action in bootloader.internal_pipeline.actions

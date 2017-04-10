@@ -21,7 +21,7 @@
 import re
 import pexpect
 from lava_dispatcher.pipeline.shell import ShellSession
-from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.action import Action, JobError, LAVABug
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 
 # pylint: disable=too-few-public-methods,too-many-branches
@@ -85,7 +85,7 @@ class SelectorMenu(object):
 
 class MenuSession(ShellSession):
 
-    def wait(self):
+    def wait(self, max_end_time=None):
         """
         Simple wait without sendling blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
@@ -129,7 +129,7 @@ class MenuConnect(ConnectDevice):
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuConnect, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("%s needs a Connection")
+            raise LAVABug("%s needs a Connection")
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
         connection.prompt_str = self.parameters['prompts']
@@ -150,7 +150,7 @@ class MenuReset(ConnectDevice):
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuReset, self).run(connection, max_end_time, args)
         if not connection:
-            raise RuntimeError("%s needs a Connection")
+            raise LAVABug("%s needs a Connection")
 
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
@@ -217,6 +217,8 @@ class SelectorMenuAction(Action):
                             self.logger.debug("Selecting option %s", action)
                         elif 'fallback' in block['select']:
                             action = self.selector.select(menu_text, block['select']['fallback'])
+                        if not action:
+                            raise JobError("No selection was made")
                         connection.sendline(action, delay=self.character_delay)
                         self._change_prompt(connection, change_prompt)
                 if 'escape' in block['select']:

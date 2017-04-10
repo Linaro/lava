@@ -41,6 +41,9 @@ UBOOT_INTERRUPT_CHARACTER = ' '
 # u-boot default timeout for commands
 UBOOT_DEFAULT_CMD_TIMEOUT = 90
 
+# size of u-boot header to be removed from ramdisks, in bytes.
+UBOOT_DEFAULT_HEADER_LENGTH = 64
+
 # Ramdisk default filenames
 RAMDISK_FNAME = 'ramdisk.cpio'
 
@@ -71,6 +74,9 @@ SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
 # Kernel starting message
 BOOT_MESSAGE = 'Booting Linux'
 
+# CPU reset message
+CPU_RESET_MESSAGE = 'Resetting CPU'
+
 # Default shell prompt for AutoLogin
 DEFAULT_SHELL_PROMPT = 'lava-test: # '
 
@@ -95,6 +101,9 @@ LAVA_LXC_TIMEOUT = 30
 
 # LXC templates with mirror option
 LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
+
+# LXC default packages
+LXC_DEFAULT_PACKAGES = "systemd,systemd-sysv"
 
 # Timeout used by the vland protocol when waiting for vland to
 # respond to the api.create_vlan request, in seconds.
@@ -124,6 +133,11 @@ KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
 # init dropping to a shell - often needs a sendline
 KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
 
+# Login incorrect message
+LOGIN_INCORRECT_MSG = 'Login incorrect'
+# Login incorrect message
+LOGIN_TIMED_OUT_MSG = 'Login timed out'
+
 # qemu installer size limit in Mb
 # (i.e. size * 1024 * 1024)
 INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
@@ -150,3 +164,9 @@ DEFAULT_TESTDEF_NAME_CLASS = r'^[\w\d\_\-]+$'
 
 # Limit repetitive messages
 METADATA_MESSAGE_LIMIT = 8192
+
+# Versatile Express autorun interrupt character
+VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '
+
+# sys class kvm path
+SYS_CLASS_KVM = '/sys/class/misc/kvm'

@@ -106,13 +106,15 @@ class GitHelper(VCSHelper):
     def clone(self, dest_path, revision=None, branch=None):
         logger = logging.getLogger('dispatcher')
         try:
-            logger.debug("Running '%s clone %s %s'", self.binary, self.url,
-                         dest_path)
             if branch is not None:
+                logger.debug("Running '%s clone -b %s %s %s'", self.binary,
+                             branch, self.url, dest_path)
                 subprocess.check_output([self.binary, 'clone', '-b', branch,
                                          self.url, dest_path],
                                         stderr=subprocess.STDOUT)
             else:
+                logger.debug("Running '%s clone %s %s'", self.binary, self.url,
+                             dest_path)
                 subprocess.check_output([self.binary, 'clone', self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT)
@@ -128,18 +130,10 @@ class GitHelper(VCSHelper):
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
-            logger = logging.getLogger('dispatcher')
-            exc_command = [i.strip() for i in exc.cmd]
             if sys.version > '3':
-                exc_message = str(exc)  # pylint: disable=redefined-variable-type
-                exc_output = str(exc).split('\n')
+                logger.error(str(exc))
             else:
-                exc_message = [i.strip() for i in exc.message],  # pylint: disable=redefined-variable-type
-                exc_output = exc.output.split('\n')
-            logger.exception(yaml.dump({
-                'command': exc_command,
-                'message': exc_message,
-                'output': exc_output}))
+                logger.error(exc.output)
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
 

@@ -18,6 +18,7 @@ actions:
      to: tftp
      kernel:
          url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
      persistent_nfs:
        address: "127.0.0.1:/nfs/debian-jessie.armhf"
      os: debian
@@ -27,7 +28,6 @@ actions:
   - boot:
      method: u-boot
      commands: nfs
-     type: bootz
      prompts:
      - 'linaro-test'
      - 'root@debian:~#'
