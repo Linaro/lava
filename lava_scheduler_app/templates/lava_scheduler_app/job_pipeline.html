@@ -621,13 +621,6 @@
       })
     });
 
-    // Hack for fixed navbar anchor problem.
-    // Source: https://github.com/twbs/bootstrap/issues/1768
-    var shiftWindow = function() { scrollBy(0, -50) };
-    window.addEventListener("hashchange", shiftWindow);
-    function load() { if (window.location.hash) shiftWindow(); }
-    $("body").on("load", load);
-
     // Add the links only for non-running jobs
     {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
