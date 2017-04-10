@@ -777,7 +777,7 @@ def get_shared_device_config(filename):
 
 def mkdir(path):
     try:
-        os.makedirs(path)
+        os.makedirs(path, mode=0o755)
     except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
