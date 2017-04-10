@@ -1,3 +1,148 @@
+lava-server (2017.4-1) unstable; urgency=medium
+
+  * New production release
+    7e36443dd Restore UEFI boot method for HiKeys.
+    6679d548e Fix dragoboard410c boot sequence.
+    5082adc80 Move anchoring fix for navbar to base template.
+    187c8520a Allow to override U-boot tftp command
+    0d28de652 Handle OSError as well as IOError in metadata store
+    be04868ff Update migration status page for disabled healthchecks
+    5f689e930 Improve job page
+    ed4dee272 Expand the docs on arbitrary device_info elements
+    35a7378e0 Remove references to deprecated health_check_job
+    5e5e6890c Add a link to the migration page
+    84f88a4fc Allow to override U-boot usb command
+    043bfeea4 LAVA-916 - Restore adb connectivity with hikey in V2
+    4211de051 Don't force {BOOTX} macro in U-boot template
+    571d71313 Don't force dhcp in U-boot template
+    b0184585c Add a section on which file is what in /etc/
+    9701ad6a0 Adding timeouts to Juno template
+    b2b8d8851 Add content on developer workflow
+    e36889a81 Revert change for debug filter button
+    c06ed4a22 Fix bug 2927 - typo in OPTIONS for $MASTER_CERT
+    cfa0c02c5 Fix navbar problem with in-page anchors.
+    bd554a2c4 Add docs on boot commands.
+    624c79ee1 Fix bug #2925 - LDAP Configuration demo mismatch distro.py
+    1ddde696b Another parent timeout needed for qemu
+    c3f356c0b Allow boot_qemu_image action timeout to be overriden
+    b24fe09af Use standard paths to keep the unit tests running
+    7433bb4e4 Add note on installing developer builds
+    a0e7756c7 Add a migration status page
+    ce59699ad Tweak the device type docs
+    adf670e7d Update copyright year for the docs to 2017
+    b2428ad8c Small updates to the docs for test development
+    6610ce36f Allow to import token from another instance
+    d57e5217b Cleanups for advanced installation docs
+    0119fc57f Fix job submission page
+    0c4e68769 Dedupe the index page and add more entries
+    ec0aa40ad Improve device page
+    912c174b1 add notes on the new lava-tool features
+    a662f0ed6 Add a standard NFS test job for panda
+    e80ed1e13 Update docs on transfer_overlay
+    b0ae30b56 Update migration for job_status_trigger for backwards compatibility.
+    f28af7fbe Fix mustang doc examples and add uefi-menu
+    a755b4b12 LAVA-768 allow to disable hc for a device type
+    7a05b7941 Add support for a branding message
+    b18e8d293 log: add a link to the top and to the doc
+    0fd8c985e fix typo in rst header
+    75d411f14 Do not send a spurious POST submit request
+    d7f8d6322 Update docs for change in behaviour of log file UI
+    acd068173 LAVA-112: display status and role for sub jobs
+    bf144047f Check V2 devices have valid config before reservation.
+    0a2da3f92 Skip retired and obsolete device types
+    c106b17c0 LAVA-913 - Documentation for lxc persistence
+    14c733d30 Add another index entry for the example first job definition
+    b8629e0e3 Expand simple admin to include administration outline
+    43bb9da87 V2 jinja2 template for armada-8040-db
+    ca05a93d0 Add a command to migrate health checks to the fs
+    ad55286d6 doc: fix label
+    0b17a0496 Add qemu NFS docs
+    a8bf524f4 Update of doc examples
+    7bc903e70 LAVA-736: move health checks to the file system
+    1de7ea5b3 LAVA-912 - Document verbose for lxc protocol
+    643c23efc Remove deprecated (and unused) functions
+    91cff154b Add notes on when to add more workers
+    69df43a50 LAVA-904: Improve job page layout
+    3e3075f2f Reorganise the scheduler app test files
+    639600952 LAVA-910 allow iteration if vland tag check fails
+    1ebe9d217 Improve readability of testcase results
+    b7792c56e fix typo in index syntax
+    143b5f742 Allow boot_interface override
+    b85bc07a6 Update default interrupt_* in hi6220-hikey device type jinja2 template
+    a561326bc Add a test case for secondary connections
+    d6a441c16 Add Acer Chromebook 13 CB5-311
+    7ded576cb Add Rada Rock 2 Square
+    65e2b1e22 Add Renesas R-Car Starter Kit Pro
+    61edf0180 Add Samsung Chromebook 2
+    068005a9a Add i.mx6q sabre lite board
+    a84a509e4 Allow u-boot-interrupt timeouts to be overridden
+    b7a23dbfd Fix test job timeouts and fix doc
+    c94238613 Ensure extra_kernel_args is used from job context
+    77693f080 Clean up error handling in is_deprecated_json method.
+    8b5fa8130 Add a 'full docs' link to the front page
+    9ab49a8e9 Allow unit tests to run without kvm module
+    e47c5c005 Change job_status_trigger field type to a non-deprecated one.
+    6ec411a55 Tweak the authentication configuration docs
+    7ee493bb1 Tweak the authentication configuration docs
+    baa9f5ebb Update references for a permanent location.
+    da79c4be7 Add available architectures for qemu 'arch' validation.
+    65e4c35ec Prevent intermittent unit test failure.
+    7f9b8760d LAVA-215 QEMU NFS support (server side)
+    3f2f414e2 LAVA-619 document changes for bootz to zimage
+    8bbbd425f Ensure missing font is available for packaging.
+    0f2d8a4ff X-axis attribute in charts now use NamedTestAttribute table.
+    93cc20aa6 Fix export custom queries feature.
+    a8d6cab43 Display results sorted naturally by key in job logs.
+    e7aa614c5 Update the default length of the job result table.
+    e2c07c1ac Fix doc example YAML syntax to read from file
+    ce59d6b94 Fix sphinx build errors in manpage
+    63d5f6fa5 Add a check on all templates in source tree
+    d9eb3e1f3 Ensure character delays are supported by overdrive
+    75efcb00b Allow repeating test cases
+    93d620a53 Explain how connection-namespace parameter works.
+    9041b0dc0 Begin a section on common YAML syntax errors.
+    6521cc0f8 LAVA-894 - Document lava lxc device add / wait command
+    ee3e5964f Fix documentation - punctuations, links, bullets.
+    988d89a34 Add server side support for mustang EFI Grub.
+    525d9ed47 Fix code blocks in Boot Action documentation.
+    106f7f4fc LAVA-890 - Allow DUT to stay in Android OS
+    887175d82 Remove unused images
+    9f9e8d304 Fix unknown test case handling in tables
+    bff6ea8ff LAVA-888 - Download button in Device Dictionary page
+    3314966de LAVA-887 - Introduce fastboot sequence in device type templates
+    1a1be1ff2 LAVA-867 - Allow fastboot options in device dictionary
+    d876d1463 Remove legacy nexus deploy document from V2 docs.
+    2750804af Updating Juno jinja2 template to accommodate vemsd deploy action
+    2b6d3d277 Deprecate "pipeline-worker" in favor of "workers"
+    587bc8931 Add a "details" command to "device-type" and "workers"
+    96761e533 Add a command to manage devices
+    3b2f27ee0 Encode maintenance state machine in unit tests
+    730b57b81 Do not put into maintenance retired devices
+    c0adfd2c2 Add a command to go into maintenance
+    49abd8bf7 Fix state transition when OFFLINING a device
+    f337d7d1c Go from OFFLINING to RUNNING when a job exists
+    39b50ec15 Extend docs on simplistic testing
+    8e56315eb Workers: allow to set properties
+    944caa4fd pylint improvements
+    c42629220 Use continue in a loop, not return
+    61b6886f9 add notes on debugging multinode as admin
+    2ed1f35c7 Device tables: add more fields to select_related
+    d95ad2d5b job logs: Highlight all failing results
+    ace40b01a Generate less database queries
+    7fcbd7c68 Allow to use last version of Django Debug Toolbar
+    61069528d LAVA-862 - Integrate Google Pixel into LAVA V2
+    e7925e7a1 Update docs on publishing and attaching to tests
+    da99f08f0 Fix a typo in nexus5x device template used for unit test.
+    ba5a106db More stdout changes to clean up the test output
+    c84741460 Skip panda_lxc template check if lxc not installed
+    6a0a73d36 Fix a typo in documentation.
+    79ea7cedd Fix looping bug in template
+    466f1506a LAVA-841 - Document device_info attribute
+    d420b9d5f LAVA-856 - Integrate nexus5x into LAVA V2
+    de33008ec Autologin doc update.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Apr 2017 13:49:35 +0100
+
 lava-server (2017.2-1) unstable; urgency=medium
 
   * New production release
