@@ -979,7 +979,7 @@ def health_job_list(request, pk):
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
-                device.get_health_check() != "",
+                device.get_health_check(),
             'can_admin': device.can_admin(request.user),
             'show_maintenance':
                 device.can_admin(request.user) and
@@ -2447,7 +2447,7 @@ def device_detail(request, pk):
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
-                device.get_health_check() != "",
+                device.get_health_check(),
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
@@ -2967,7 +2967,7 @@ def migration(request):
         hc = dev.get_health_check()
         # even if hc contains data, check for a database entry
         # need migration if either db has entry or hc is empty
-        if hc == '' or dev.device_type.health_check_job not in ['', None]:
+        if not hc or dev.device_type.health_check_job:
             no_healthcheck[dev.hostname] = dev.get_absolute_url()
 
     if active_count:
