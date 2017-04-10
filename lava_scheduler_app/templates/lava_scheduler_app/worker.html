@@ -29,7 +29,7 @@
       <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
         <dd>
           {% csrf_token %}
-          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}</div>
+          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"..." }}</div>
         </dd>
       </form>
       {% else %}

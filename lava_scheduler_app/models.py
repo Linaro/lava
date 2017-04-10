@@ -493,7 +493,7 @@ class Worker(models.Model):
         return ("lava.scheduler.worker.detail", [self.pk])
 
     def get_description(self):
-        return mark_safe(self.description)
+        return mark_safe(self.description) if self.description else None
 
     def update_description(self, description):
         self.description = description
@@ -751,7 +751,7 @@ class Device(RestrictedResource):
         return ("lava.scheduler.labhealth.detail", [self.pk])
 
     def get_description(self):
-        return mark_safe(self.description)
+        return mark_safe(self.description) if self.description else None
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
