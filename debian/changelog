@@ -1,3 +1,97 @@
+lava-dispatcher (2017.4-1) unstable; urgency=medium
+
+  * New production release.
+    7aac7ae5 Fix problem with self.host on secondary connections
+    530ca366 Ban / in test case names, replace with underscore.
+    31ee0012 If allow_fail is not set, ensure the command fails
+    e53a280f Remove old device_type config files which are unused.
+    80fb3997 LAVA-916 - Restore adb connectivity with hikey in V2
+    c57a102b Add debug output to the LXC device operations.
+    7deea0fb Add missing calls to super
+    341ac593 Writing connection info to namespace data
+    3ee2af87 Upgrade the boot commands output to info
+    a1a87daa Fix bug in checking return value of action run_command output.
+    604323b0 Add a unit test for primary ssh connections
+    561f78a6 LAVA-914 - Action run_command should return log on allow_fail
+    a8fb0d9d device-types: add Armada 8040 DB board
+    98fc1d4d LAVA-911 transfer overlay to the rootfs
+    e85af0a2 Report versions of critical software on the worker
+    bdc97bd5 LAVA-901 - Allow lxc debug output if requested in job
+    93aab7ab Add systemd packages as default for debian and ubuntu templates.
+    d01f01a3 Allow params for install git repos support
+    eb821dc8 testdefs: rename the extra results keys
+    f262b21c testdefs: fix TOCTOU issues with test definitions
+    07affb55 Print warnings in validate and not in populate
+    3de0aac9 Make empty revision message more friendly
+    685eea49 Do not populate append when using tmpfs GuestFS
+    22a7ba93 Add missing imports
+    a1baf85e Add missing JobError import.
+    9e8c3c2f Improve validate and job summary
+    b1100080 Catch error in secondary connections
+    7428a9ae Improve git error logs
+    949b3fcd Rework the timeout settings in job and device conf
+    6933ac63 download: improve error message
+    304c39f7 LAVA-852 - LXC fastboot support for persistent devices in V2
+    fc28aafe Add an error type to the job result
+    522946b8 Make '/sys/class/misc/kvm' a constant.
+    f9a1b381 tests: use the DummyLogger whenever needed
+    ee11c796 tests: use permanent urls
+    538ff35f Context architecture validation for qemu.
+    bd88adab Check for enabled kvm module on workers.
+    28c66090 Fix bug #2898 - Job doesn't exit on fastboot-deploy failure
+    2879c019 Handle qcow2 conversion errors
+    7daf65d1 Action: use LAVAError base exception class
+    603fd049 shell: remove unused exception handling
+    da97077d Add missing import and remove uneeded one
+    beccc4da LAVA-215 QEMU NFS support (dispatcher)
+    c2e3ee34 Use DummyLogger for grub and add .target()
+    ed3519d2 Get uboot header length from utils.constants
+    7df2904d If no kernel type given in deploy, use the boot type until deprecated
+    82237860 Ensure the deployment data shell is exported.
+    108ef4a3 Add the commit-id to the lava testdef results
+    1e3dd3ce run: improve error handling
+    41b08257 lava-dispatch: use the new LAVAError base class
+    171e8b65 device-types: add Allwinner A23 EVB board
+    5898747b device-types: add OrangePi PC board
+    4ffb4c1e Simplify lava-test-shell by removing stdout.log
+    a5222296 validate: improve error handling
+    c2df0b20 Remove the message from cleanup()
+    78c334c2 Simplify test/shell.py check_patterns signals.
+    68f1c822 test-runner: remove redundant functions and files
+    3fe2105e Fix bug #2888 - adb root command from job breaks connection to device
+    22157cd2 Add a base class for LAVA exceptions
+    44af91c3 Support using UEFI Menu to load Grub using PXE
+    b667f2fd Use LAVA exceptions
+    1690ed95 Pylint updates for deploy actions
+    e538b5d8 LAVA-890 - Allow DUT to stay in Android OS
+    bbcf76fd Raise a TestError when the test installer fails
+    0d45d8fa test-runner: use the current shell
+    27593024 Blacklist brltty on workers
+    e2593966 Allow reusing of serial connection from another namespace.
+    cfe9821b LAVA-867 - Allow fastboot options in device dictionary
+    d5094f28 Fix unknown usage command in lava-test-reference
+    381eca8d LAVA-881 - Sequence list for fastboot pipeline
+    e84c00b1 action: be consitent when printing result duration
+    82d7f82f Print the result of a test run only when avaiable
+    1d09ece0 Catch python3 errors to clean up output
+    833d7207 python3: only show requests logs above warnings
+    5fb1e8a0 rpcinfo: also capture the output
+    496c7181 Sanitise default mkimage_arch and kernel handling
+    a6838ecb LAVA-862 - Integrate Google Pixel into LAVA V2
+    d2f968e3 Follow up to stabilize dragonboard 410c.
+    8ab18e05 rpcinfo check needs to specifically check NFS service
+    61777bb0 Refactor wait usb device action to stabilize dragonboard 410c.
+    e7649e64 Remove references to device_path in device configuration.
+    3fd11d81 LAVA-856 - Integrate nexus5x into LAVA V2
+    d970298d Adding new action for monitoring USB mass storage devices via udev
+    94876fd7 pyocd: allow multiple images to be flashed
+    26528b0c Detect bootloader resets.
+    09650ab1 Adding a Versatile Express Firmware deployment action
+    605fe529 Detect errors during auto login.
+    00306b79 Job: log the job result as a logger.results
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Apr 2017 13:50:02 +0100
+
 lava-dispatcher (2017.2-1) unstable; urgency=medium
 
   * New production release
