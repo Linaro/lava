@@ -3,8 +3,11 @@
 {% set console_device = console_device|default('ttyMSM0') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set device_type = "apq8016-sbc" %}
-
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "debug loglevel=7 " + extra_kernel_args %}
+{% else %}
 {% set extra_kernel_args = "debug loglevel=7" %}
+{% endif %}
 {% set interrupt_prompt = 'Qualcomm-DragonBoard 410C' %}
 {% set bootloader_prompt = '=>' %}
 {% set action_timeout_u_boot_commands = 90 %}

@@ -63,9 +63,8 @@ class ModelFactory(object):
         qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
         qemu.save()
 
-    def make_device_type(self, name='qemu', health_check_job=None):
-        (device_type, created) = DeviceType.objects.get_or_create(
-            name=name, health_check_job=health_check_job)
+    def make_device_type(self, name='qemu'):
+        (device_type, created) = DeviceType.objects.get_or_create(name=name)
         if created:
             device_type.save()
         return device_type
@@ -125,7 +124,8 @@ class TestTestSuite(TestCaseWithFactory):
         for sample in result_samples:
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
-        self.assertEqual(4, TestCase.objects.count())
+        # the duplicate smoke-tests-basic is allowed here as the lava test suite supports multiples
+        self.assertEqual(5, TestCase.objects.count())
         val = URLValidator()
         for testcase in TestCase.objects.all():
             self.assertIsNotNone(testcase.name)

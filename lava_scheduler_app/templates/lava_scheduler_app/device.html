@@ -1,6 +1,7 @@
 {% extends "lava_scheduler_app/_device_base.html" %}
 {% load django_tables2 %}
 {% load i18n %}
+{% load utils %}
 
 {% block device_heading %}
 <ul class="pager">
@@ -12,12 +13,23 @@
     <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="glyphicon glyphicon-forward"></span></a>
   </li>
 </ul>
-<h2>Device {{ device.hostname }} - {{ device.device_type }} {{ device.device_type.architecture|default:'' }}</h2>
 
+{% if user.is_staff and device.device_type.name != 'dynamic-vm' and device.get_health_check == '' %}
+  <div class="alert alert-info">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>The device has no
+    {% if not 'HIDE_V2_DOCS'|get_settings %}
+      <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a></strong>
+    Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
+    {% else %}
+      <a href="{{ STATIC_URL }}docs/v1/glossary.html#term-health-check">health check job</a></strong>
+    Consider adding a <a href="{{ STATIC_URL }}docs/v1/healthchecks.html#health-checks">health check definition</a>.
+    {% endif %}
+  </div>
+{% endif %}
 {% endblock %}
 
 {% block content_columns %}
-
 <hr/>
 <h3>Recent jobs on {{ device.hostname }}</h3>
 <div id="recent_job">

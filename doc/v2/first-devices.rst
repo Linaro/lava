@@ -11,7 +11,7 @@ Requirements
 You need to be familiar with these sections:
 
 #. :ref:`installation`
-#. :ref:`creating a pipeline worker <setting_up_pipeline_instance>`.
+#. :ref:`Creating a pipeline worker <setting_up_pipeline_instance>`.
 #. :ref:`adding_pipeline_devices_to_worker`
 #. :ref:`create_superuser`
 #. :ref:`logging_in` (as superuser)
@@ -142,13 +142,13 @@ The only value needed for the QEMU device type is the **Name**, just check that
 On the command line, you can add device types (for instance QEMU and panda)
 using::
 
-  lava-server manage add-device-type qemu panda
+  lava-server manage device-types add qemu panda
 
 It's also possible to add all known device types at the same time with:
 
 .. code-block:: none
 
-  lava-server manage add-device-type '*'
+  lava-server manage device-types add '*'
 
 Descriptive fields like ``Architecture name``, ``Processor name``, ``CPU model
 name``, ``List of cores`` and ``Bit count`` cannot be set on the command line.
@@ -158,7 +158,7 @@ types:
 
 .. code-block:: none
 
-  lava-server manage add-device-type --list
+  lava-server manage device-types list --all
 
 .. index:: add-device, adding a device, create a device in the database
 
@@ -330,7 +330,25 @@ Sometimes, the supplied bootloader **must** be modified to allow automation.
 Some devices need electrical modifications or specialised hardware to be
 automated.
 
-.. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`.
+Integrating a new device type will involve some level of development work, the
+device type templates are more than configuration. Testing new device type
+templates requires setting up a developer workflow and running unit tests as
+well as running test jobs on a LAVA instance. If the new device type involves a
+new boot or deployment method, there will also need to be changes in the
+``lava-dispatcher`` codebase. New elements of the test job submissions and
+device configuration may also need changes to the schema in ``lava-server``.
+Some new device types will be a lot easier than others - for example UBoot
+tends to have a reasonably consistent interface across multiple devices, so
+changes for a new UBoot device could be as little as setting variables after
+extending the ``base-uboot.jinja2`` template.
+
+LAVA encourages new device type templates to be :ref:`contributed upstream
+<contribute_upstream>` as a :ref:`community contribution
+<community_contributions>` to LAVA.
+
+.. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`. Also
+   :ref:`developing_device_type_templates` and
+   :ref:`migrating_known_device_example`
 
 Hints
 =====

@@ -71,7 +71,7 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.health_status, Device.HEALTH_LOOPING, "should be LOOPING")
 
     def test_access_while_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden = DeviceType(name="hidden", owners_only=True)
         device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
         user = self.factory.make_user()
         device.user = user
@@ -83,7 +83,7 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.can_submit(user), True)
 
     def test_access_retired_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden = DeviceType(name="hidden", owners_only=True)
         device = Device(device_type=hidden, hostname='hidden2', status=Device.RETIRED)
         user = self.factory.make_user()
         device.user = user
@@ -108,6 +108,26 @@ class DeviceTest(TestCaseWithFactory):
         device.put_into_maintenance_mode(None, None)
 
         self.assertEqual(device.status, Device.OFFLINING, "should be offlining")
+
+        device.status = Device.RETIRED
+        device.put_into_maintenance_mode(None, None)
+        self.assertEqual(device.status, Device.RETIRED, "should be retired")
+
+    def test_online_mode(self):
+        foo = DeviceType(name='foo')
+        device = Device(device_type=foo, hostname='foo02', status=Device.OFFLINE)
+        device.save()
+        device.put_into_online_mode(None, None)
+        self.assertEqual(device.status, Device.IDLE, "should be idle")
+
+        device.status = Device.OFFLINING
+        device.put_into_online_mode(None, None)
+        self.assertIsNone(device.current_job)
+        self.assertEqual(device.status, Device.IDLE, "should be idle")
+
+        device.status = Device.RETIRED
+        device.put_into_online_mode(None, None)
+        self.assertEqual(device.status, Device.RETIRED, "should be retired")
 
 
 class DeviceDictionaryTest(TestCaseWithFactory):

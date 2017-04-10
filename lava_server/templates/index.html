@@ -20,6 +20,10 @@ href="{{ STATIC_URL }}docs/v1/glossary.html#term-device-type"
 on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
 of each type are available for tests and currently running jobs.</p>
 
+{% if lava.branding_message %}
+<h3>About the LAVA {{ lava.instance_name }} instance</h3>
+    {{ lava.branding_message }}
+{% endif %}
 <h3>LAVA components</h3>
 <ul>
     <li>

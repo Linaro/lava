@@ -4,13 +4,11 @@ commands:
     power_off: /usr/bin/pduclient --daemon services --hostname pdu00 --command off --port 00
     power_on: /usr/bin/pduclient --daemon services --hostname pdu00 --command on --port 00
     pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 0000 -m sync -u 00
-    adb_command: adb -s 12312BA123B123B1
-    fastboot_command: fastboot -u -s 12312BA123B123B1
 device_type: hi6220-hikey
 adb_serial_number: 12312BA123B123B1
 fastboot_serial_number: 12312BA123B123B1
-device_path: ['/dev/hikey01']  # This is a symlink created for HiKey using a
-                               # udev rule.
+fastboot_options: ['-S', '256M']
+device_info: [{'board_id': '12312BA123B123B1'}]  # It is a list of dictionaries
 
 actions:
   deploy:

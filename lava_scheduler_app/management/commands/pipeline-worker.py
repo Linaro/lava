@@ -45,6 +45,8 @@ class Command(BaseCommand):
             help='prevent pipeline jobs running on this worker.')
 
     def handle(self, *args, **options):
+        self.stderr.write("This command is deprecated, use \"workers\" instead")
+
         hostname = options['hostname']
         if hostname is None:
             self.stderr.write("Please specify a hostname")

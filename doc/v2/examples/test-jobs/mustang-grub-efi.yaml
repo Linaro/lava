@@ -1,0 +1,60 @@
+# mustang devices now use grub-efi, not UBoot
+
+device_type: mustang
+job_name: mustang singlenode with Debian stretch
+priority: medium
+visibility: public
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-filename: mustang-grub-efi.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/debian-arm64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-arm64/3/console
+  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/build-foreign-nfs.sh
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 2
+  connection:
+    minutes: 2
+actions:
+- deploy:
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/vmlinuz-4.9.0-2-arm64
+      type: zimage
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64
+      compression: gz
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz
+      sha256sum: be163cf08119f8f1b8cb44fa4bf1b4a6e10873ac92df6872645535751ad92154
+      compression: gz
+    os: debian
+    timeout:
+      minutes: 5
+    to: tftp
+
+- boot:
+    timeout:
+      minutes: 4
+    prompts:
+      - 'root@stretch:'
+    method: grub-efi
+    commands: nfs
+    auto_login:
+      login_prompt: "login:"
+      username: root
+- test:
+    timeout:
+      minutes: 5
+    name: singlenode-mustang-demo
+    definitions:
+      - repository: https://git.linaro.org/people/neil.williams/temp-functional-tests.git
+        from: git
+        path: singlenode/singlenode03.yaml
+        name: singlenode-advanced

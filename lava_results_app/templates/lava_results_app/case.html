@@ -1,6 +1,20 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-
+{% load results_accessibility_tags %}
+{% load utils %}
+{% block styles %}
+  <style>
+    .glyphicon-remove {
+      color: red;
+    }
+    .glyphicon-minus {
+      color: blue;
+    }
+    .glyphicon-ok {
+      color: green;
+    }
+  </style>
+{% endblock %}
 {% block content %}
 <h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
 {% if not test_cases %}
@@ -24,7 +38,31 @@
   {% if testcase.test_set %}
   <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
   {% endif %}
-  <h3>{{ testcase.name }} <a href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}"><span class="glyphicon glyphicon-chevron-right"></span></a></h3>
+  {% if testcase.result == 1%}
+  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-remove"></span>&nbsp;fail</h3>
+      <h4><a
+      title="view test job output for this failed test"
+      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
+      Log entry: {{ job.id }}</a></h4>
+  {% elif testcase.result == 2 %}
+  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;skipped</h3>
+      <h4><a
+      title="view test job output for this test which was skipped"
+      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
+      Log entry: {{ job.id }}</a></h4>
+  {% elif testcase.result == 3 %}
+  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;unknown</h3>
+      <h4><a
+      title="view test job output for this test which gave an unknown result"
+      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
+      Log entry: {{ job.id }}</a></h4>
+  {% else %}
+  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
+      <h4><a
+      title="view test job output for this passed test"
+      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
+      Log entry: {{ job.id }}</a></h4>
+  {% endif %}
   {% if testcase.test_set %}
       {% if test_cases|length > 1 %}
       <a href="{{ testcase.get_absolute_url }}">{{ testcase.test_set }}/{{ testcase.name }}</a>
@@ -32,14 +70,16 @@
   {% endif %}
   {% if testcase.action_metadata %}
   <ul class="list-unstyled">
-  {% for key, value in testcase.action_metadata.items %}
+  {% for key, value in testcase.action_metadata.items|sort_items %}
+  {% get_extra_source testcase extra_source as testcase_extra %}
   {% if key == 'extra' and extra_source %}
-      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ extra_source }}</pre></li>
+      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ testcase_extra }}</pre></li>
   {% elif key == 'level' %}
-    <li><strong>{{ key }}</strong>: <a
+    <li><strong>Pipeline description</strong>: <a
             href="{% url 'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
   {% elif key == 'duration' %}
     <li><strong>{{ key }}</strong>: {{ value|floatformat:2 }} secs</li>
+  {% elif key == 'case' or key == 'result' or key == 'definition' %}
   {% elif value.items %}
     <li><strong>{{ key }}</strong><ul>
     {% for k, v in value.items %}

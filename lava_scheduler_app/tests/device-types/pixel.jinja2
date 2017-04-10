@@ -1,0 +1,30 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: pixel
+adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
+fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
+fastboot_options: {{ fastboot_options|default([]) }}
+
+{% block vland %}
+{# skip the parameters dict at top level #}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      fastboot:
+        - reboot
+        - wait-usb-add
+        - lxc-add-device
+
+{% endblock %}

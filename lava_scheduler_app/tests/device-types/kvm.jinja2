@@ -16,6 +16,8 @@ actions:
             size: {{ base_guest_fs_size }}  # in Mb
             interface: {{ qemu_guest_fs_interface }}
   boot:
+    connections:
+      serial:
     methods:
       qemu:
         parameters:

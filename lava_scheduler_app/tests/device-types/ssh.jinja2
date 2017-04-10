@@ -1,8 +1,6 @@
 {% extends 'base.jinja2' %}
 {% block body %}
 
-connection: ssh
-
 actions:
   deploy:
     methods:
@@ -28,7 +26,6 @@ actions:
           {{ schroot_name_list|default(['unstable', 'sid'])}}
 {% endblock schroot %}
       ssh:
-#      vm:
 
 {{ timeouts }}
 {% endblock %}

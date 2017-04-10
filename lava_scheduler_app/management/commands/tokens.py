@@ -22,6 +22,7 @@ import csv
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db.utils import IntegrityError
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -47,6 +48,8 @@ class Command(BaseCommand):
                                 help="The token owner")
         add_parser.add_argument("--description", "-d", type=str, default="",
                                 help="The token description")
+        add_parser.add_argument("--secret", type=str, default=None,
+                                help="The token to import")
 
         list_parser = sub.add_parser("list", help="List the tokens")
         list_parser.add_argument("--user", "-u", type=str, required=True,
@@ -60,19 +63,26 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["user"], options["description"])
+            self.handle_add(options["user"], options["description"],
+                            options["secret"])
         elif options["sub_command"] == "list":
             self.handle_list(options["user"], options["csv"])
         else:
             self.handle_rm(options["token"])
 
-    def handle_add(self, username, description):
+    def handle_add(self, username, description, secret):
         """ Create a token """
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             raise CommandError("Unable to find user '%s'" % username)
-        token = AuthToken.objects.create(user=user, description=description)
+        if secret is None:
+            token = AuthToken.objects.create(user=user, description=description)
+        else:
+            try:
+                token = AuthToken.objects.create(user=user, description=description, secret=secret)
+            except IntegrityError:
+                raise CommandError("Check that the token secret is not already used")
         self.stdout.write(token.secret)
 
     def handle_list(self, username, format_as_csv):

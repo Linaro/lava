@@ -1,0 +1,100 @@
+job_name: x86 vlan test support
+# based on https://lng.validation.linaro.org/scheduler/job/17924/multinode_definition
+
+timeouts:
+    job:
+        hours: 4
+    action:
+        hours: 5
+    connection:
+        minutes: 10
+
+visibility: public
+priority: medium
+device_type: x86
+
+protocols:
+    lava-multinode:
+        roles:
+            client:
+                device_type: x86
+                count: 1
+            server:
+                device_type: x86
+                count: 1
+        timeout:
+            minutes: 15
+    lava-vland:
+        client:
+            vlan_jpc:
+                tags:
+                    - 10G
+        server:
+            vlan_jpc:
+                tags:
+                    - 10G
+
+actions:
+- deploy:
+    role:
+        - server
+        - client
+    timeout:
+        minutes: 10
+    to: tftp
+    kernel:
+        url: http://people.linaro.org/~anders.roxell/ubuntu-v4.4/vmlinuz-4.4.0-31-generic
+    nfsrootfs:
+        url: https://people.linaro.org/~josep.puigdemont/kernel4.4/linaro-jessie-nano-20150123-1.tar.gz
+        compression: gz
+        prefix: binary/
+    modules:
+        url: http://people.linaro.org/~anders.roxell/ubuntu-v4.4/overlay.tar.gz
+        compression: gz
+    ramdisk:
+        url: http://people.linaro.org/~anders.roxell/bridge-initramfs/initramfs.amd64-new18.cpio.gz
+        compression: gz
+    os: debian
+
+- boot:
+    role:
+        - server
+        - client
+    timeout:
+        minutes: 10
+    method: ipxe
+    commands: nfs
+    parameters:
+        shutdown-message: "reboot: Restarting system"
+    prompts:
+        - 'linaro-test'
+        - 'root@linaro-nano:'
+        - 'root@linaro'
+
+- test:
+    role:
+        - server
+    timeout:
+        hours: 4
+    definitions:
+        - repository: http://git.linaro.org/people/josep.puigdemont/lavalets.git
+          from: git
+          path: nginx-from-git/build-dpdk.yaml
+          name: build-dpdk
+          parameters:
+              BASE_DIR: /build
+              SRC_URI: http://fast.dpdk.org/rel/dpdk-16.07.1.tar.xz;basepath=dpdk-stable-16.07.1
+
+- test:
+    role:
+        - client
+    timeout:
+        hours: 4
+    definitions:
+        - repository: http://git.linaro.org/people/josep.puigdemont/test-definitions.git
+          from: git
+          path: automated/linux/httperf-client/httperf-client.yaml
+          name: nginx-client-linux
+          revision: httperf-nginx-use-files
+          parameters:
+              VLAND_NAME: vlan_jpc

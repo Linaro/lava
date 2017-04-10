@@ -212,7 +212,7 @@ class TestHiddenDevicesInDeviceTable(TestCase):
             self.getUniqueString())
 
     def test_device_table_view(self):
-        device_type = DeviceType(name="generic", owners_only=False, health_check_job='')
+        device_type = DeviceType(name="generic", owners_only=False)
         device_type.save()  # pylint: disable=no-member
         device = Device(device_type=device_type, hostname='generic1', status=Device.OFFLINE)
         user = self.make_user()
@@ -222,7 +222,7 @@ class TestHiddenDevicesInDeviceTable(TestCase):
         self.assertEqual(len(view.get_queryset()), 1)
 
     def test_device_table_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden = DeviceType(name="hidden", owners_only=True)
         hidden.save()  # pylint: disable=no-member
         device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
         device.save()  # pylint: disable=no-member

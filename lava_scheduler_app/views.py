@@ -13,6 +13,7 @@ import re
 import sys
 
 from django import forms
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
@@ -33,6 +34,7 @@ from django.shortcuts import (
 from django.template import loader
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.utils.timesince import timeuntil
 from django_tables2 import (
     RequestConfig,
 )
@@ -287,9 +289,9 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type").order_by(
-            "hostname").filter(temporarydevice=None,
-                               device_type__in=visible)
+        return Device.objects.select_related("device_type", "current_job__submitter", "worker_host") \
+                             .order_by("hostname") \
+                             .filter(temporarydevice=None, device_type__in=visible)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -649,7 +651,7 @@ def filter_device_types(user):
     """
     visible = []
     for device_type in DeviceType.objects.filter(display=True).only('name', 'owners_only'):
-        if device_type.num_devices_visible_to(user) > 0:
+        if device_type.some_devices_visible_to(user):
             visible.append(device_type.name)
     return visible
 
@@ -658,8 +660,10 @@ class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible)\
-            .exclude(status=Device.RETIRED).order_by("hostname")
+        return Device.objects.filter(device_type__in=visible) \
+                             .exclude(status=Device.RETIRED) \
+                             .select_related("device_type", "current_job__submitter", "worker_host") \
+                             .order_by("hostname")
 
 
 class PipelineDeviceView(DeviceTableView):
@@ -697,7 +701,7 @@ def device_type_detail(request, pk):
         raise Http404()
     # Check that at least one device is visible to the current user
     if dt.owners_only:
-        if dt.num_devices_visible_to(request.user) == 0:
+        if not dt.some_devices_visible_to(request.user):
             raise Http404('No device type matches the given query.')
 
     # Get some test job statistics
@@ -806,10 +810,8 @@ def device_type_detail(request, pk):
     desc = dt.description if dt.description else ''
     aliases = ', '.join([alias.name for alias in dt.aliases.all()])
 
-    if dt.health_check_job == "":
-        health_freq_str = ""
-    elif not Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED)).count():
-        health_freq_str = ""
+    if dt.disable_health_check:
+        health_freq_str = "Disabled"
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
@@ -843,7 +845,6 @@ def device_type_detail(request, pk):
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
             'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
-            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
@@ -910,6 +911,18 @@ def device_type_reports(request, pk):
         request=request))
 
 
+def device_dictionary_plain(request, pk):
+    element = DeviceDictionary.get(pk)
+    data = utils.devicedictionary_to_jinja2(element.parameters,
+                                            element.parameters['extends'])
+    template = utils.prepare_jinja_template(pk, data,
+                                            system_path=True)
+    device_configuration = template.render()
+    response = HttpResponse(device_configuration, content_type='text/yaml')
+    response['Content-Disposition'] = "attachment; filename=%s.yaml" % pk
+    return response
+
+
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)
@@ -965,7 +978,8 @@ def health_job_list(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
-                device.device_type.health_check_job != "",
+                not device.device_type.disable_health_check and
+                device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance':
                 device.can_admin(request.user) and
@@ -1665,19 +1679,37 @@ def job_section_log(request, job, log_name):
 
 def job_status(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    response_dict = {'job_status': job.get_status_display()}
-    if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
-            job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response_dict['device'] = render_to_string("lava_scheduler_app/_device_refresh.html",
-                                                   {'job': job})
-    response_dict['timing'] = render_to_string("lava_scheduler_app/_job_timing.html",
-                                               {'job': job})
-    if job.status == TestJob.SUBMITTED and not job.actual_device:
-        response_dict['priority'] = job.priority
-    if job.failure_comment:
-        response_dict['failure'] = job.failure_comment
+    response_dict = {'actual_device': "<i>...</i>",
+                     'duration': "<i>...</i>",
+                     'job_status': job.get_status_display(),
+                     'started': "<i>...</i>",
+                     'subjobs': []}
+
+    if job.actual_device:
+        url = job.actual_device.get_absolute_url()
+        host = job.actual_device.hostname
+        html = "<a href=\"%s\">%s</a> " % (url, host)
+        html += "<a href=\"%s\"><span class=\"glyphicon glyphicon-stats\"></span></a>" % (reverse("lava.scheduler.device_report", args=[job.actual_device.pk]))
+        response_dict['actual_device'] = html
+
+    if job.start_time:
+        response_dict['started'] = naturaltime(job.start_time)
+        response_dict['duration'] = timeuntil(timezone.now(), job.start_time)
+
+    if job.status <= job.RUNNING:
+        response_dict['job_status'] = job.get_status_display()
+    elif job.status == job.COMPLETE:
+        response_dict['job_status'] = '<span class="label label-success">Complete</span>'
+    else:
+        response_dict['job_status'] = "<span class=\"label label-danger\">%s</span>" % job.get_status_display()
+
+    if job.is_multinode:
+        for subjob in job.sub_jobs_list:
+            response_dict['subjobs'].append((subjob.id, subjob.get_status_display()))
+
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         response_dict['X-JobStatus'] = '1'
+
     response = HttpResponse(json.dumps(response_dict), content_type='text/json')
     return response
 
@@ -2199,8 +2231,8 @@ def edit_transition(request):
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
     device_type = transition.device.device_type
-    if device_type.num_devices_visible_to(request.user) == 0:
-        raise Http404()
+    if not device_type.some_devices_visible_to(request.user):
+        raise Http404('No device type matches the given query.')
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
@@ -2326,12 +2358,12 @@ def device_detail(request, pk):
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
     except Device.DoesNotExist:
-        raise Http404()
+        raise Http404('No device matches the given query.')
 
     # Any user that can access to a device_type can
     # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        if device.device_type.num_devices_visible_to(request.user) == 0:
+        if not device.device_type.some_devices_visible_to(request.user):
             raise Http404('No device matches the given query.')
 
     # Find previous and next device
@@ -2414,7 +2446,8 @@ def device_detail(request, pk):
             'show_forcehealthcheck':
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
-                device.device_type.health_check_job != "",
+                not device.device_type.disable_health_check and
+                device.get_health_check() != "",
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
@@ -2446,12 +2479,12 @@ def device_dictionary(request, pk):
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
     except Device.DoesNotExist:
-        raise Http404()
+        raise Http404('No device matches the given query.')
 
     # Any user that can access to a device_type can
     # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        if device.device_type.num_devices_visible_to(request.user) == 0:
+        if not device.device_type.some_devices_visible_to(request.user):
             raise Http404('No device matches the given query.')
 
     if not device.is_pipeline:
@@ -2880,3 +2913,105 @@ def similar_jobs(request, pk):
         "%s?entity=%s&conditions=%s" % (
             reverse('lava.results.query_custom'),
             entity, conditions))
+
+
+@BreadCrumb("Migration", parent=index)
+def migration(request):
+    # with no devices, there is nothing to do, so start at 100%
+    # only once there are devices do the calculations make any sense.
+    active_percent = 100
+    exclusion = 100
+    hc_percent = 100
+    no_hc_percent = 100
+    v1_problems = {}
+    db_healthchecks = {}
+    no_healthcheck = {}
+    exclusive = {}
+
+    # total active
+    active = Device.objects.filter(
+        ~Q(status=Device.RETIRED),
+        Q(device_type__display=True))
+    active_count = len(active)
+
+    active_v1 = Device.objects.filter(
+        Q(is_pipeline=False), ~Q(status=Device.RETIRED),
+        Q(device_type__display=True)
+    )
+    active_v1_count = len(active_v1)
+    active_health = active.filter(device_type__disable_health_check=False)
+    active_h_count = active_health.count()
+
+    healthchecks = active_h_count
+
+    # all active devices (V1 and V2), including disabled healthchecks
+    for dev in active_v1:
+        # all active devices which support V1 at all need migration
+        v1_problems[dev.hostname] = dev.get_absolute_url()
+        if dev.device_type.health_check_job not in ['', None]:
+            # all active devices with a database health check need migration.
+            healthchecks -= 1
+            db_healthchecks[dev.hostname] = dev.get_absolute_url()
+
+    # check V2 exclusive, including disabled healthchecks
+    v2_devices = Device.objects.filter(
+        Q(is_pipeline=True), ~Q(status=Device.RETIRED),
+        Q(device_type__display=True))
+    for dev in v2_devices:
+        if not dev.is_exclusive:
+            # highlight devices which are not exclusive to V2
+            exclusive[dev.hostname] = dev.get_absolute_url()
+
+    # iterate over all devices, excluding disabled healthchecks
+    for dev in active_health:
+        hc = dev.get_health_check()
+        # even if hc contains data, check for a database entry
+        # need migration if either db has entry or hc is empty
+        if hc == '' or dev.device_type.health_check_job not in ['', None]:
+            no_healthcheck[dev.hostname] = dev.get_absolute_url()
+
+    if active_count:
+        active_percent = int(100 * (active_count - active_v1_count) / active_count)
+        exclusion = int(100 * (active_count - len(exclusive.keys())) / active_count)
+    if active_h_count:
+        hc_percent = int(100 * healthchecks / active_h_count)
+        no_hc_percent = int(100 * (active_h_count - len(no_healthcheck.keys())) / active_h_count)
+
+    templates = {}
+    # V2 devices without a health check
+    # lookup the appropriate health check filename
+    for hostname, _ in no_healthcheck.items():
+        device_dict = DeviceDictionary.get(hostname)
+        if not device_dict:
+            templates[hostname] = ''
+            continue
+        device_dict = device_dict.to_dict()
+        extends = device_dict['parameters']['extends']
+        extends = os.path.splitext(extends)[0]
+        templates[hostname] = "%s.yaml" % extends
+
+    template = loader.get_template("lava_scheduler_app/migration.html")
+    return HttpResponse(template.render(
+        {
+            # 'migration_table': migration_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(migration),
+            'v1_problems': v1_problems,
+            'db_healthchecks': db_healthchecks,
+            'no_healthcheck': no_healthcheck,
+            'exclusive_count': active_count - len(exclusive.keys()),
+            'exclusive': exclusive,
+            'exclusion': exclusion,
+            'active_devices': active_count,
+            'active_health': active_h_count,
+            'active_v1_devices': active_v1_count,
+            'active_level': active_count - active_v1_count,
+            'active_percent': active_percent,
+            'healthchecks': healthchecks,
+            'health_check_level': active_h_count - healthchecks,
+            'hc_percent': hc_percent,
+            'nonhc_devices': active_h_count - len(no_healthcheck.keys()),
+            'no_hc_percent': no_hc_percent,
+            'templates': templates,
+            'context_help': BreadCrumbTrail.show_help(migration),
+        },
+        request=request))

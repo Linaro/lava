@@ -101,8 +101,8 @@ For the majority of cases, the above approach is the easiest thing to do: write
 shell code that outputs "test-case-id: result" for each test case you are
 interested in. See the Test Developer Guide:
 
-* :ref:`test_developer`,
-* :ref:`writing_tests`
+* :ref:`test_developer`.
+* :ref:`writing_tests`.
 * :ref:`parsing_output`.
 
 A possible advantage of the parsing approach is that it means your test is easy
@@ -115,11 +115,17 @@ When you need it, there is also a more powerful, LAVA-specific, way of writing
 tests. When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
-* ``lava-test-case``
-* ``lava-test-case-attach``
-* ``lava-test-run-attach``
-* ``lava-background-process-start``
-* ``lava-background-process-stop``
+* :ref:`lava-test-case`
+* :ref:`lava-test-case-attach`
+* :ref:`lava-test-run-attach`
+* :ref:`lava-background-process-start`
+* :ref:`lava-background-process-stop`
+* :ref:`lava-lxc-device-add`
+* :ref:`lava-lxc-device-wait-add`
+
+.. seealso:: :ref:`multinode_api`
+
+.. _lava-test-case:
 
 lava-test-case
 --------------
@@ -229,50 +235,25 @@ executed correctly but that the result of that execution was a failure::
 #. **echo2** - pass
 #. **test2b** - fail
 
+.. _lava-test-case-attach:
+
 lava-test-case-attach
 ---------------------
 
-.. caution:: ``lava-test-case-attach`` is retained in the pipeline dispatcher
-  (V2) but the effect of the script needs consideration by the test writer. See
-  :ref:`test_attach`.
+.. caution:: ``lava-test-case-attach`` is **disabled** in the V2 dispatcher as
+   there is no submit stage and no bundle creation stage on the device.
 
-This attaches a file to a test result with a particular ID, for example:
+.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
 
-.. code-block:: yaml
-
-  steps:
-    - "echo content > file.txt"
-    - "lava-test-case test-attach --result pass"
-    - "lava-test-case-attach test-attach file.txt text/plain"
-
-The arguments are:
-
-#. The test case id
-#. The file to attach
-#. (optional) The MIME type of the file (if no MIME type is passed, a
-   guess is made based on the filename)
+.. _lava-test-run-attach:
 
 lava-test-run-attach
 --------------------
 
-.. caution:: ``lava-test-run-attach`` is retained in the pipeline dispatcher
-   (V2) but the effect of the script needs consideration by the test writer.
-   See :ref:`test_attach`.
+.. caution:: ``lava-test-run-attach`` is **disabled** in the V2 dispatcher as
+   there is no submit stage and no bundle creation stage on the device.
 
-This attaches a file to the overall test run that lava-test-shell is currently
-executing, for example:
-
-.. code-block:: yaml
-
-  steps:
-    - "echo content > file.txt"
-    - "lava-test-run-attach file.txt text/plain"
-
-The arguments are:
-
-#. The file to attach
-#. (optional) The MIME type of the file (if no MIME type is passed, a
-   guess is made based on the filename)
+.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
 
 .. _lava-background-process-start:
 
@@ -298,6 +279,8 @@ The arguments are:
 
 See :ref:`test_attach`.
 
+.. _lava-background-process-stop:
+
 lava-background-process-stop
 ----------------------------
 
@@ -322,6 +305,57 @@ The arguments are:
 #. (optional) An indication that you want to attach file(s) to the
    test run with specified mime type. See :ref:`test_attach`.
 
+.. _lava-lxc-device-add:
+
+lava-lxc-device-add
+-------------------
+
+Within lava-test-shell there is a possibility that the device attached to the
+:term:`lxc` container, gets re-enumerated i.e., disconnects and reconnects,
+in which case the :term:`lxc` container loses its visibility to the device,
+hence making it unusable within the :term:`lxc` container. This command adds or
+re-adds the device to the :term:`lxc` container. In most cases this command is
+used along with :ref:`lava-lxc-device-wait-add`, which waits for an `add` event
+in `udev`_, for the device to reappear after a disconnection and reconnection.
+
+For example:
+
+.. code-block:: yaml
+
+  steps:
+    - adb devices
+    - adb reboot bootloader
+    - lava-lxc-device-add
+    - fastboot devices
+
+.. seealso:: :ref:`lava-lxc-device-wait-add`
+
+.. _lava-lxc-device-wait-add:
+
+lava-lxc-device-wait-add
+------------------------
+
+This command waits for an `add` event of an USB device to reappear in `udev`_
+after a disconnection and reconnection of the device. In most cases this
+command is used along with :ref:`lava-lxc-device-add`
+
+For example:
+
+.. code-block:: yaml
+
+  steps:
+    - adb start-server
+    - adb wait-for-device
+    - adb devices
+    - adb root
+    - lava-lxc-device-wait-add
+    - lava-lxc-device-add
+    - adb wait-for-device
+    - adb devices
+
+.. seealso:: :ref:`lava-lxc-device-add`
+.. _udev: https://en.wikipedia.org/wiki/Udev
+
 .. _test_attach:
 
 Handling test attachments
@@ -341,6 +375,8 @@ the test device into an environment where the network connection is known to
 work, however the eventual location of the file needs to be managed by the test
 writer. An alternative method for text based data is simply to output the
 contents into the log file.
+
+.. seealso:: :ref:`publishing_artifacts`
 
 .. _handling_dependencies:
 

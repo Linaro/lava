@@ -36,7 +36,7 @@ from lava_dispatcher.pipeline.device import PipelineDevice
 def match_vlan_interface(device, job_def):
     if not isinstance(job_def, dict):
         raise RuntimeError("Invalid vlan interface data")
-    if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols']:
+    if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols'] or not device:
         return False
     interfaces = []
     logger = logging.getLogger('dispatcher-master')
@@ -57,7 +57,7 @@ def match_vlan_interface(device, job_def):
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
                 break
-    logger.info("Matched: %s" % (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
+    logger.info("Matched: %s", (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
     return len(interfaces) == len(job_def['protocols']['lava-vland'].keys())
 
 
@@ -73,11 +73,7 @@ def initiate_health_check_job(device):
         logger.error("[%s] has been retired", device)
         return None
 
-    existing_health_check_job = device.get_existing_health_check_job()
-    if existing_health_check_job:
-        return existing_health_check_job
-
-    job_data = device.device_type.health_check_job
+    job_data = device.get_health_check()
     user = User.objects.get(username='lava-health')
     if not job_data:
         # This should never happen, it's a logic error.
@@ -115,7 +111,10 @@ def submit_health_check_jobs():
         run_health_check = False
         if device.device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             time_denominator = False
-        if not device.device_type.health_check_job:
+
+        if device.device_type.disable_health_check:
+            run_health_check = False
+        elif not device.get_health_check():
             run_health_check = False
         elif device.health_status == Device.HEALTH_UNKNOWN:
             run_health_check = True
@@ -248,6 +247,10 @@ def check_device_and_job(job, device):
         logger.warning("Refusing to reserve %s for %s - current job is %s",
                        device, job, bad_job)
         return None
+    if job.is_pipeline and device.is_pipeline and not device.is_valid:
+        # check for invalid templates from local admin changes
+        logger.warning("[%d] Refusing to reserve for broken V2 device %s", job.id, device.hostname)
+        return None
     return device
 
 
@@ -298,6 +301,13 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 device = check_device_and_job(job, device)
+                if job.is_pipeline:
+                    job_dict = yaml.load(job.definition)
+                    if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+                        logger.info("[%d] checking %s for vlan interface support", job.id, str(device.hostname))
+                        if not match_vlan_interface(device, job_dict):
+                            logger.info("%s does not match vland tags", str(device.hostname))
+                            continue
                 return device
     return None
 
@@ -519,15 +529,6 @@ def assign_jobs():
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
         if device:
-            if job.is_pipeline:
-                job_dict = yaml.load(job.definition)
-                if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
-                    logger.info("[%d] checking vlan interface support", job.id)
-                    if not match_vlan_interface(device, job_dict):
-                        logger.info("%s does not match vland tags", str(device.hostname))
-                        if device in devices:
-                            devices.remove(device)
-                        continue
             if not _validate_idle_device(job, device) and device in devices:
                 logger.debug("Removing %s from the list of available devices",
                              str(device.hostname))
@@ -671,9 +672,11 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
     device = handle_health(job)
-    # Transition device only if it's not in OFFLINE/ING mode
+    # Transition device only if it's not in OFFLINE mode
     # (by failed health check job which already transitions it)
-    if device.status not in [Device.OFFLINE, Device.OFFLINING]:
+    if device.status == Device.OFFLINING:
+        device.state_transition_to(Device.OFFLINE, message=msg, job=job, master=True)
+    elif device.status != Device.OFFLINE:
         device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     device.current_job = None
     # Save the result
@@ -689,7 +692,12 @@ def cancel_job(job):
         return
     msg = "Job %d cancelled" % job.id
     device = handle_health(job)
-    device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
+    # Transition device only if it's not in OFFLINE mode
+    # (by failed health check job which already transitions it)
+    if device.status == Device.OFFLINING:
+        device.state_transition_to(Device.OFFLINE, message=msg, job=job, master=True)
+    elif device.status != Device.OFFLINE:
+        device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
@@ -750,7 +758,6 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
     device = None
-    device_object = None
     if not job.dynamic_connection:
         device = job.actual_device
 

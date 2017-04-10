@@ -16,7 +16,7 @@ Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
 device type template.
 
-Dictionary elements are shown in three blocks; commands, vland and others.
+Dictionary elements are shown in three blocks: commands, vland and others.
 
 Commands
 ********
@@ -43,17 +43,17 @@ Commands
 * **pre_os_command**  - ancillary command used for special cases, dependent
   on deployment method and device type template support.
 
-* **device_path** - a list of paths which can be added to the LXC for device
-  specific tasks.
-
-* **adb_command** - command to access the device using ADB.
+* **device_info** - a list of dictionaries, where each dictionary value can
+  contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which can
+  be added to the LXC for device specific tasks.
 
 * **adb_serial_number** - value to pass to ADB to connect to this device.
 
-* **fastboot_command** - command to access the device using fastboot.
-
-* **fastboot_serial_number** - value to pass to fastboot to connect to this
+* **fastboot_serial_number** - value to pass to ``fastboot`` to connect to this
   device.
+
+* **fastboot_options** - a list of strings, used for specifying additional
+  options to the ``fastboot`` command.
 
 VLANd support
 *************
@@ -75,3 +75,17 @@ VLANd support
 
 * **sysfs** - a dictionary of interface labels containing the ``sysfs`` path of
   the interface associated with the interface label on that device.
+
+The "download" button present in the :term:`device dictionary` page is used to
+download a YAML file of the :term:`device dictionary`, which is the equivalent
+of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
+is not intended for admin support and cannot be used to modify the
+:term:`device dictionary` itself.
+
+Other parameters
+****************
+
+* **flash_cmds_order** - a list of strings, used for specifying the order in
+  which the images should be flashed to the :term:`DUT` using the ``fastboot``
+  command.
+

@@ -2,6 +2,7 @@
 
 # in milliseconds
 {% set boot_character_delay = boot_character_delay | default(500) %}
+{% set boot_interface = boot_interface | default('net0') %}
 {% block body %}
 device_type: x86
 
@@ -37,7 +38,7 @@ actions:
           lava_mac: {{ lava_mac_address|default('00:90:05:af:00:7d') }}
         nfs:
           commands:
-          - dhcp net0
+          - dhcp {{ boot_interface }}
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
@@ -45,7 +46,7 @@ actions:
           - boot
         ramdisk:
           commands:
-          - dhcp net0
+          - dhcp {{ boot_interface }}
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - set extraargs {{ base_kernel_args }} {{ base_ip_args }}
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}

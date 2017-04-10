@@ -2,7 +2,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import Q
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
@@ -212,8 +211,25 @@ class DeviceAdmin(admin.ModelAdmin):
                    'health_status', 'worker_host')
     raw_id_fields = ['current_job', 'last_health_report_job']
 
+    def has_health_check(self, obj):
+        return bool(obj.get_health_check())
+    has_health_check.boolean = True
+    has_health_check.short_description = "Health check"
+
+    def health_check_enabled(self, obj):
+        return not obj.device_type.disable_health_check
+    health_check_enabled.boolean = True
+    health_check_enabled.short_description = "Health check enabled"
+
+    def valid_device(self, obj):
+        return bool(obj.is_valid())
+    valid_device.boolean = True
+    valid_device.short_description = "V2 configuration"
+
     def exclusive_device(self, obj):
-        return 'pipeline only' if obj.is_exclusive else ''
+        return obj.is_exclusive
+    exclusive_device.boolean = True
+    exclusive_device.short_description = "v2 only"
 
     fieldsets = (
         ('Properties', {
@@ -229,7 +245,9 @@ class DeviceAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('device_dictionary_yaml', 'device_dictionary_jinja')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
-                    'status', 'health_status', 'is_public', 'is_pipeline', 'exclusive_device')
+                    'status', 'health_status', 'has_health_check',
+                    'health_check_enabled', 'is_public', 'is_pipeline',
+                    'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
 
@@ -292,10 +310,14 @@ class DeviceStateTransitionAdmin(admin.ModelAdmin):
     )
 
 
+def disable_health_check_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
+    queryset.update(disable_health_check=False)
+
+
+disable_health_check_action.short_description = "disable health checks"
+
+
 class DeviceTypeAdmin(admin.ModelAdmin):
-    def has_health_check(self, obj):
-        return bool(obj.health_check_job)
-    has_health_check.boolean = True
 
     def architecture_name(self, obj):
         if obj.architecture:
@@ -328,19 +350,20 @@ class DeviceTypeAdmin(admin.ModelAdmin):
                 ','.join([core.name for core in obj.cores.all().order_by('name')]))
         return ''
 
+    def health_check_enabled(self, obj):
+        return not obj.disable_health_check
+    health_check_enabled.boolean = True
+    health_check_enabled.short_description = "Health check enabled"
+
     def health_check_frequency(self, device_type):
-        if not device_type.health_check_job:
-            return ""
-        if not device_type.device_set.filter(~Q(status=Device.RETIRED)).count():
-            return ""
         if device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             return "every %d jobs" % device_type.health_frequency
         return "every %d hours" % device_type.health_frequency
 
+    actions = [disable_health_check_action]
     list_filter = ('name', 'display', 'cores',
                    'architecture', 'processor')
-    list_display = ('name', 'has_health_check', 'display', 'owners_only',
-                    'health_check_frequency',
+    list_display = ('name', 'display', 'owners_only', 'health_check_enabled', 'health_check_frequency',
                     'architecture_name', 'processor_name', 'cpu_model_name',
                     'list_of_cores', 'bit_count')
     ordering = ['name']

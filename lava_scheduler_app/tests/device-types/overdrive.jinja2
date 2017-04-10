@@ -7,6 +7,7 @@ device_type: overdrive
 
 {% set kernel_args = kernel_args | default('acpi=force r8169.use_dac=1') %}
 {% block character_delays %}
+{{ super() }}
 {% endblock %}
 
 {% block vland %}

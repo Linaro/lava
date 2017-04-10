@@ -17,7 +17,11 @@ standard test jobs available for ``arndale``, ``cubietruck`` and ``panda``
 devices. "These files are very similar; typically the only substantive changes
 come down to the :abbr:`DTB (Device Tree Blob)` for the relevant device type.
 
-* `panda <examples/test-jobs/standard-armmp-ramdisk-panda.yaml>`_
+* `panda ramdisk <examples/test-jobs/standard-armmp-ramdisk-panda.yaml>`_
+
+  * ``omap4-panda.dtb``
+
+* `panda NFS <examples/test-jobs/standard-armmp-nfs-panda.yaml>`_
 
   * ``omap4-panda.dtb``
 
@@ -25,7 +29,11 @@ come down to the :abbr:`DTB (Device Tree Blob)` for the relevant device type.
 
   * ``exynos5250-arndale.dtb``
 
-* `cubietruck <examples/test-jobs/standard-armmp-ramdisk-cubietruck.yaml>`_
+* `cubietruck ramdisk <examples/test-jobs/standard-armmp-ramdisk-cubietruck.yaml>`_
+
+  * ``sun7i-a20-cubietruck.dtb``
+
+* `cubietruck NFS <examples/test-jobs/standard-armmp-nfs-cubietruck.yaml>`_
 
   * ``sun7i-a20-cubietruck.dtb``
 
@@ -40,7 +48,11 @@ The first standard job for a beaglebone-black is a simple ramdisk test job.
      :code: yaml
      :end-before: metadata:
 
-`Download / view <examples/test-jobs/standard-armmp-ramdisk-bbb.yaml>`_
+`Download / view standard-armmp-ramdisk-bbb.yaml
+<examples/test-jobs/standard-armmp-ramdisk-bbb.yaml>`_
+
+`Download / view standard-armmp-nfs-bbb.yaml
+<examples/test-jobs/standard-armmp-nfs-bbb.yaml>`_
 
 Features of a ramdisk test job
 ------------------------------
@@ -59,6 +71,24 @@ Features of a ramdisk test job
   the operation of the test shell. Once modified, LAVA has to repack the
   ramdisk, including adding a U-Boot header if the device requires one.
 
+Features of an NFS test job
+---------------------------
+
+* **Full system** - a basic bootstrap of the OS like Debian, Ubuntu or Fedora
+  with configured users and a full init system, e.g. systemd. When building a
+  new rootfs, ensure the root user password is set or cleared, many systems
+  will use a random root password until set. Network configuration may also
+  be needed, e.g. to use DNS.
+
+* **Standard prompt** - typically ``root@jessie:`` or similar. When building
+  or modifying a rootfs, ensure that the prompt is described alongside the
+  rootfs tarball so that other users are able to use the file.
+
+* **Modifications** - LAVA needs to modify the rootfs if a test action is
+  specified in an NFS test job to be able to add the scripts which support the
+  operation of the test shell. If modules are provided, these are added to the
+  rootfs as well.
+
 Metadata
 ========
 
@@ -69,6 +99,8 @@ When you copy this standard test job for your own testing, remember to
      :code: yaml
      :start-after: visibility: public
      :end-before: # ACTION_BLOCK
+
+.. seealso:: :ref:`job_metadata`
 
 Deploy
 ======
@@ -112,9 +144,7 @@ Boot
 ====
 
 U-Boot support in LAVA supports a variety of deployment methods. This standard
-job will use the ``ramdisk`` commands from the :term:`device type` template and
-the ``bootz`` boot method (as the supplied Debian kernel file, ``vmlinuz`` is
-compressed).
+job will use the ``ramdisk`` commands from the :term:`device type` template.
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml

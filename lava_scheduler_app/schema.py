@@ -233,7 +233,8 @@ def _job_schema():
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
-            'notify': _job_notify_schema()
+            'notify': _job_notify_schema(),
+            'reboot_to_fastboot': bool
         }
     )
 
@@ -280,6 +281,7 @@ def _device_schema():
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
+        'fastboot_options': [str],
         'fastboot_via_uboot': bool,
         'device_info': [dict],
         'flash_cmds_order': list,
@@ -288,9 +290,11 @@ def _device_schema():
         'board_id': str,
         'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
         'usb_product_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
+        'usb_filesystem_label': str,
         'usb_serial_driver': str,
         'actions': _device_actions_schema(),
-        'timeouts': _device_timeouts_schema()
+        'timeouts': _device_timeouts_schema(),
+        'available_architectures': list
     })
 
 

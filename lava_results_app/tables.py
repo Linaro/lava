@@ -197,7 +197,7 @@ class SuiteTable(LavaTable):
     """
     def __init__(self, *args, **kwargs):
         super(SuiteTable, self).__init__(*args, **kwargs)
-        self.length = 10
+        self.length = 25
 
     name = tables.Column()
     test_set = tables.Column(verbose_name="Test Set")
@@ -214,15 +214,7 @@ class SuiteTable(LavaTable):
         )
 
     def render_result(self, record):  # pylint: disable=no-self-use
-        # Keep backward compatibility with the previous log format for V2
-        if record.metadata:
-            if record.result != TestCase.RESULT_UNKNOWN:
-                code = record.result_code
-            else:
-                code = 'pass' if 'success' in record.action_metadata else 'fail'
-        else:
-            code = record.result_code
-
+        code = record.result_code
         if code == 'pass':
             icon = 'ok'
         elif code == 'fail':

@@ -58,6 +58,13 @@ use with ``$ sudo dpkg -i``.
    packages restart apache, although the ``lava-server`` service will be
    restarted each time ``lava-server`` is installed or updated.
 
+To install any package, including the developer build packages, the
+corresponding package **must** already be installed at the current production
+release version (or better), on the same machine. This ensures that all of the
+runtime dependencies already exist on the system. (If you are building for
+installation on Jessie, you will need a fully installed Jessie VM to test the
+packages built for Jessie.)
+
 .. _devel_branches:
 
 Which branch to use for changes

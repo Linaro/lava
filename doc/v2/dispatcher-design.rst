@@ -951,7 +951,6 @@ Boot commands
         dtb: /boot/dtb-3.16.0-4-armmp-lpae'
         root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
         boot_part: 1  # the partition on the media from which the bootloader can read the kernel, ramdisk & dtb
-        type: bootz
         prompts:
           - 'linaro-test'
           - 'root@debian:~#'

@@ -1,6 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load utils %}
-{% load django_tables2 %}
+{% load humanize %}
 
 {% block styles %}
   <style>
@@ -32,6 +32,17 @@
     .btn-keyboard {
       color: #fff;
       background-color: #333;
+      border-color: #333;
+    }
+
+    .btn-keyboard:hover {
+      color: #fff;
+      background-color: #000;
+      border-color: #000;
+    }
+
+    .btn-keyboard.focus {
+      color: #fff;
     }
 
     .affix {
@@ -70,130 +81,90 @@
 
 {% block content %}
 <div class="row" id="top">
-  <div class="col-md-4">
-    <h4 class="modal-header">Job information</h4>
+  <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>Description</dt>
-      <dd>{{job.description|default:"<i>not set</i>" }}</dd>
-      <dt>Status<dt>
-      <dd id="jobstatusdef">{{ job.get_status_display }}</dd>
+      <dd>{{ job.description|default:"<i>not set</i>" }}</dd>
+      <dt>Device-type</dt>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dt>Submitter</dt>
+      <dd><a href="mailto:{{ job.submitter.email }}">{{ job.submitter.get_full_name|default:job.submitter.username }}</a></dd>
+      <dt>Created</dt>
+      <dd title="{{ job.submit_time }}">{{ job.submit_time|naturaltime }}</dd>
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
-      <dt>Submitter</dt>
-      <dd>{{ job.submitter }}</dd>
-      <dt>Visibility</dt>
-      <dd>{{ job.get_visibility_display }}</dd>
-      {% if job.visibility == 2 %}
-      <dt>Visibility groups</dt>
-      <dd>
-	{% for group in job.viewing_groups.all %}
-	{{ group }}&nbsp;
-	{% endfor %}
+    </dl>
+  </div>
+  <div class="col-md-6">
+    <dl class="dl-horizontal">
+      <dt>#{{ job.sub_id|default:job.id }}</dt>
+      {% if job.status <= job.RUNNING %}
+      <dd><span id="jobstatus">{{ job.get_status_display }}</span>
+      {% elif job.status == job.COMPLETE %}
+      <dd><span class="label label-success">Complete</span>
+      {% else %}
+      <dd><span class="label label-danger">{{ job.get_status_display }}</span>
+      {% endif %}
+      {% if job.is_multinode %}
+        <div class="btn-group">
+          <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">sub jobs <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+            {% for subjob in job.sub_jobs_list %}
+            {% if subjob.id == job.id %}
+            <li class="disabled"><a href=".">#{{ subjob.sub_id }} ({{ subjob.device_role }})</a></li>
+            {% else %}
+            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_status_display }}</span></a></li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
       </dd>
+      <dt>Device</dt>
+      {% if job.actual_device %}
+      <dd id="actual_device"><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      {% else %}
+      <dd id="actual_device">...</dd>
+      {% endif %}
+      <dt>Started</dt>
+      <dd id="started" title="{{ job.start_time }}">{% if job.start_time %}{{ job.start_time|naturaltime }}{% else %}...{% endif %}</dd>
+      <dt>Duration</dt>
+      {% if job.status <= job.RUNNING %}
+      <dd id="duration">...</dd>
+      {% else %}
+      <dd id="duration" title="{{ job.duration }}">{{ job.end_time|timeuntil:job.start_time }}</dd>
+      {% endif %}
+      {% if job.results_link %}
+      <dt>Results</dt>
+      <dd><a href="{{ job.results_link }}" class="btn btn-success btn-xs">&nbsp;<span class="glyphicon glyphicon-signal"></span>&nbsp;</a></dd>
       {% endif %}
     </dl>
   </div>
-  <div class="col-md-4">
-    <h4 class="modal-header">Device</h4>
-    <div id="statusblock">
-{% include 'lava_scheduler_app/_device_refresh.html' %}
-    </div>
-  </div>
-  <div class="col-md-4" id="jobtiming">
-{% include 'lava_scheduler_app/_job_timing.html' %}
-  </div>
 </div>
-<div class="row">
-  <div class="col-md-12">
-    <h4 class="modal-header">Actions</h4>
-    <div class="row">
-      <div class="col-md-3">
-        <ul class="nav nav-pills nav-stacked">
-        <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
-                                                                                class="glyphicon glyphicon-fast-forward"></span></a></li>
-        <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" class="btn btn-primary">Plain log <span class="glyphicon glyphicon-save-file"></span></a></li>
-          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
-        {% if job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
-        {% elif job.is_vmgroup %}
-           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
-        {% elif expand %}
-          <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
-          {% endif %}
-        </ul>
-      </div>
-      <div class="col-md-3">
-        <ul class="nav nav-pills nav-stacked">
-        {% if job.results_link and not job.archived_bundle %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
-        {% endif %}
-        {% if user.is_authenticated %}
-        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
-            {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
-            <span class="glyphicon glyphicon-star"></span>
-        </a></li>
-        <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a></li>
-        {% endif %}
-        </ul>
-      </div>
-      <div class="col-md-3">
-        <ul class="nav nav-pills nav-stacked">
-        {% if show_resubmit and not job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-info">Resubmit</a></li>
-        {% endif %}
-        {% if show_failure %}
-          <li><ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
-        {% endif %}
-        {% if user.is_authenticated and user.is_superuser %}
-        <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
-            Admin this TestJob
-        </a></li></ul></li>
-        {% endif %}
-        </ul>
-      </div>
-      <div class="col-md-3">
-        {% if show_cancel %}
-        <ul class="nav nav-pills nav-stacked">
-          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
-        </ul>
-        {% endif %}
-        {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
-        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
-          {% csrf_token %}
-          <button id="priority-button" class="btn btn-default">Set priority</button><br />
-          {{ job.priority|get_priority_select }}
-        </form>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+
+{% if job.archived_job_file %}
+<div class="alert alert-info">
+  <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>
 </div>
-<hr/>
-{% if job.is_multinode or job.is_vmgroup %}
-<div class="row">
-  <div class="col-md-6">
-    <h4 class="modal-header">Sub jobs</h4>
-    <div class="row">
-    <dl class="dl-horizontal">
-    {% for subjob in job.sub_jobs_list %}
-      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
-        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
-            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
-        {% endif %}
-      ({{ subjob.id }})
-      </dt>
-        <dd>
-    {% if subjob.actual_device.hostname %}
-      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
-      as: {{ subjob.device_role }}
-    {% else %}
-      No device assigned as {{ subjob.device_role }}.
-    {% endif %}
-        </dd>
-    {% endfor %}
-    </dl>
-    </div>
+{% endif %}
+{% if job.failure_comment %}
+<div id="failure_block">
+  <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
+</div>
+{% endif %}
+{% if size_warning %}
+<div class="alert alert-danger" id="size-warning">
+<p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
+    It can only be downloaded.</p>
+</div>
+{% else %}
+<div class="affix hidden-xs hidden-sm">
+  <h4>Pipeline <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
+  <div id="affix-full">
+    <ul class="list-unstyled">
+      {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=pipeline_data %}
+    </ul>
   </div>
 </div>
 {% endif %}
@@ -203,108 +174,108 @@
   <li><a href="#Description" data-toggle="tab">Job description</a></li>
   <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
 </ul>
+
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
-    {% if job.archived_job_file %}
-    <div class="alert alert-info">
-      <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>
-    </div>
-    {% endif %}
-    {% if job.failure_comment %}
-    <div id="failure_block">
-      <h4 class="modal-header">Job failure comment</h4>
-      <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
-    </div>
-    {% endif %}
-    {% if size_warning %}
-    <div class="alert alert-danger" id="size-warning">
-    <p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
-        It can only be downloaded.</p>
-    </div>
-    {% else %}
-    <div class="affix">
-      <h4>Actions <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
-      <div id="affix-full">
-        <ul class="list-unstyled">
-          {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=pipeline_data %}
-        </ul>
-      </div>
-    </div>
-
     <div class="btn-group" data-toggle="buttons" id="logbuttons">
       <label class="btn btn-default" id="debug_label" for="debug"><input type="checkbox" id="debug" autocomplete="off">debug</label>
       <label class="btn btn-info" id="info_label" for="info"><input type="checkbox" id="info" autocomplete="off">info</label>
       <label class="btn btn-warning" id="warning_label" for="warning"><input type="checkbox" id="warning" autocomplete="off">warning</label>
       <label class="btn btn-danger" id="error_label" for="error"><input type="checkbox" id="error" autocomplete="off">error</label>
-      <label class="btn btn-default btn-keyboard" id="keyboard_label" for="keyboard"><input type="checkbox" id="keyboard" autocomplete="off">input</label>
+      <label class="btn btn-keyboard" id="keyboard_label" for="keyboard"><input type="checkbox" id="keyboard" autocomplete="off">input</label>
       <label class="btn btn-success" id="target_label" for="target"><input type="checkbox" id="target" autocomplete="off">output</label>
       <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
     </div>
 
-    <div class="row" id="sectionlogs">
-      <div class="col-md-12">
-        {% for line in log_data %}
-          {% if line.lvl == "debug" %}
-            {% if "sending" in line.msg %}
-        <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
-            {% else %}
-              {% get_action_id line.msg as act_id %}
-        <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
-            {% endif %}
-          {% elif line.lvl == "target" %}
-        <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
-          {% elif line.lvl == "results" %}
-              {% if line.msg.set %}
-                {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
-              {% else %}
-                {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
-              {% endif %}
-        <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" and line.msg.definition != "lava" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
-          {% for key, value in line.msg.items %}
-            {% if value.items %}
-              {% if key == "extra" %}
-                extra: ...<br />
-              {% else %}
-                {% for k, v in value.items %}
-                  {{ k }}: {{ v }}<br />
-                {% endfor %}
-              {% endif %}
-            {% else %}
-                {{ key }}: {{ value }}<br />
-            {% endif %}
-          {% endfor %}
-        </code></a>
-          {% elif line.lvl == "error" or line.lvl == "exception" %}
-        <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
-          {% else %}
-            {% get_action_id line.msg as act_id %}
-        <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
-          {% endif %}
-        {% endfor %}
-        {% if job.status <= job.RUNNING %}
-        <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
+    <div class="btn-group pull-right">
+      {% if job.is_multinode %}
+      <a class="btn btn-info" href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}">Multinode</a>
+      {% else %}
+      <a class="btn btn-info" href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a>
+      {% endif %}
+      {% if show_cancel %}
+        {% if job.is_multinode %}
+      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.sub_id %}">Cancel</a>
+        {% else %}
+      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.pk %}">Cancel</a>
         {% endif %}
+      {% endif %}
+      {% if show_resubmit %}
+      <a class="btn btn-primary" href="{% url 'lava.scheduler.job.resubmit' job.pk %}">Resubmit</a>
+      {% endif %}
+      <div class="btn-group">
+        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a></li>
+          {% endif %}
+          <li><a href="#bottom"><span class="glyphicon glyphicon-fast-forward"></span> End of log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></li>
+          <li role="separator" class="divider"></li>
+          <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"><span class="glyphicon glyphicon-star{% if not is_favorite %}-empty{% endif %}"></span> {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}</a></li>
+          <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal"><span class="glyphicon glyphicon-search"></span> Similar jobs</a></li>
+          {% if show_failure or user.is_superuser %}
+          <li role="separator" class="divider"></li>
+          {% if show_failure %}
+          <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}">Comment</a></li>
+          {% endif %}
+          {% if user.is_superuser %}
+          <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}">Admin this TestJob</a></li>
+          {% endif %}
+          {% endif %}
+        </ul>
       </div>
     </div>
-     {% if job.status > job.RUNNING %}
-    <div class="row">
-     <div class="col-md-12">
-      <h4>Debugging test failures</h4>
-      <div class="row">
-       <div class="col-md-6">
-      <a target="_blank" href="/static/docs/v2/debugging.html">Please read the triage
-      guidelines</a> for help on debugging failures in the test job, test definitions or
-      in individual test cases.
-      </div>
-       <div class="col-md-6">
-        <ul class="nav nav-pills">
-        <li><a class="btn btn-sm btn-default" href="#top"><span
-                class="glyphicon glyphicon-fast-backward"> Top of page</span></a></li>
-        </ul></div></div>
-        </div></div>
-     {% endif %}
-    {% endif %}  {# filesizelimit #}
+
+    <div id="sectionlogs">
+      {% for line in log_data %}
+        {% if line.lvl == "debug" %}
+          {% if "sending" in line.msg %}
+      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
+          {% else %}
+            {% get_action_id line.msg as act_id %}
+      <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
+          {% endif %}
+        {% elif line.lvl == "target" %}
+      <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+        {% elif line.lvl == "results" %}
+            {% if line.msg.set %}
+              {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
+            {% else %}
+              {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+            {% endif %}
+      <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+        {% for key, value in line.msg.items|sort_items %}
+          {% if value.items %}
+            {% if key == "extra" %}
+              extra: ...<br />
+            {% else %}
+              {% for k, v in value.items %}
+                {{ k }}: {{ v }}<br />
+              {% endfor %}
+            {% endif %}
+          {% else %}
+              {{ key }}: {{ value }}<br />
+          {% endif %}
+        {% endfor %}
+      </code></a>
+        {% elif line.lvl == "error" or line.lvl == "exception" %}
+      <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+        {% else %}
+          {% get_action_id line.msg as act_id %}
+      <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
+        {% endif %}
+      {% endfor %}
+      {% if job.status <= job.RUNNING %}
+      <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
+      {% endif %}
+    </div>
+    <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
+    {% if job.status >= job.RUNNING %}
+    <p><a href="/static/docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
+    {% endif %}
   </div>
+
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
       <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
@@ -502,12 +473,12 @@
               </div>
             </div>
             <!-- Inner accordion ends here -->
-
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <div class="tab-pane" id="Timing">
     <h2>Job Timings</h2>
     <p>This section helps test writers to check for actions with a duration which
@@ -518,10 +489,10 @@
 
     <div id="timing_block">Loading the data...</div>
   </div>
+
 </div>
 
 {% include "_similar_jobs.html" %}
-
 <div id="bottom"></div>
 {% endblock %}
 
@@ -546,14 +517,15 @@
       })();
 
       // Create the list of styles
+      // Debug are deactivated by default
       var styles = {
-        'debug': sheet.insertRule('.debug { display: block}', 0),
-        'keyboard': sheet.insertRule('.keyboard { display: block}', 1),
-        'info': sheet.insertRule('.info{ display: block}', 2),
-        'warning': sheet.insertRule('.warning { display: block}', 3),
-        'error': sheet.insertRule('.error { display: block}', 4),
-        'target': sheet.insertRule('.target { display: block}', 5),
-        'results': sheet.insertRule('.results { display: block}', 6),
+        'debug': sheet.insertRule('.debug { display: block }', 0),
+        'keyboard': sheet.insertRule('.keyboard { display: block }', 1),
+        'info': sheet.insertRule('.info { display: block }', 2),
+        'warning': sheet.insertRule('.warning { display: block }', 3),
+        'error': sheet.insertRule('.error { display: block }', 4),
+        'target': sheet.insertRule('.target { display: block }', 5),
+        'results': sheet.insertRule('.results { display: block }', 6),
       };
 
       // Handle click events on buttons
@@ -649,6 +621,13 @@
       })
     });
 
+    // Hack for fixed navbar anchor problem.
+    // Source: https://github.com/twbs/bootstrap/issues/1768
+    var shiftWindow = function() { scrollBy(0, -50) };
+    window.addEventListener("hashchange", shiftWindow);
+    function load() { if (window.location.hash) shiftWindow(); }
+    $("body").on("load", load);
+
     // Add the links only for non-running jobs
     {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
@@ -671,17 +650,16 @@
       $.ajax({
         url: '{% url 'lava.scheduler.job_status' pk=job.pk %}',
         success: function(data, success, xhr) {
-          $('#jobstatusdef').html(data['job_status']);
-          $('#statusblock').html(data['device']);
-          $('#jobtiming').html(data['timing']);
-          if(!('priority' in data)) {
-            $('#priority-choice').css('display', 'none')
-          }
-          if('failure_comment' in data) {
-            $('#failure_comment').html(data['failure_comment']);
-            $('#failure_block').css('display', 'block');
+          $('#actual_device').html(data['actual_device']);
+          $('#started').html(data['started']);
+          $('#jobstatus').html(data['job_status']);
+          $('#duration').html(data['duration']);
+          for(var i = 0; i < data['subjobs'].length; i++) {
+            var d = data['subjobs'][i];
+            $('#subjob_' + d[0]).html(d[1]);
           }
           if ('X-JobStatus' in data) {
+            $('#cancel').css('display', 'none');
             poll_status = 0;
           }
         }
@@ -729,7 +707,7 @@
                 id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
                 var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
                 var node;
-                if(d['msg']['result'] == 'fail' && d['msg']['definition'] != 'lava') {
+                if(d['msg']['result'] == 'fail') {
                   node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
                 } else {
                   node = $('<code class="results bg-primary" id="' + id + '"></code>');

@@ -138,18 +138,14 @@ The second reason for a job timeout is that it allows the UI to derive an
 estimate of how long the job will take to inform other users who may be waiting
 for their jobs to start on the busy devices.
 
-.. comment: FIXME: choose a UBoot example job for this guide once such a job exists
-            makes it easier to talk about connection timeouts.
-            ensure it uses actions and connections timeout overrrides
-
-.. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
+.. include:: examples/test-jobs/standard-armmp-ramdisk-arndale.yaml
    :code: yaml
-   :start-after: job_name: QEMU pipeline, first job
-   :end-before: # ACTION_BLOCK
+   :start-after: job_name: standard Debian ARMMP ramdisk test on arndale
+   :end-before: priority
 
 The ``timeouts`` block specifies the job timeout, as well as the
 :ref:`default_action_timeouts` (5 minutes in this example) and
-:ref:`default_connection_timeouts` (2 minutes in this example).
+:ref:`default_connection_timeouts` (4 minutes in this example).
 
 .. seealso:: :ref:`action_block_timeout_overrides`,
    :ref:`individual_action_timeout_overides` and
@@ -164,8 +160,9 @@ Summary of the example job timeouts
 
 * No one action (deploy, boot or test) will take longer than **5 minutes** or
   that action will timeout. Each operation within the action (the action class)
-  will pass on the remaining time to the next operation. This is shown in the
-  logs as a decreasing ``timeout`` value with each ``start`` operation:
+  will pass on the remaining time to the next operation. Enable the debug logs
+  at the top of the log page to see this as a decreasing ``timeout`` value with
+  each ``start`` operation:
 
   .. code-block:: none
 
@@ -195,17 +192,17 @@ Default action timeouts
 An action timeout covers the entire operation of all operations performed by
 that action. Check the V2 logs for lines like::
 
- start: 1.1.1 http_download (max 300s)
+ start: 1.1.1 http_download (timeout 00:05:00)
 
 ::
 
- http_download duration: 25.65
+ end: 1.1.1 file_download (duration 00:00:25)
 
-The action timeout ``(max 300s)`` comes from this part of the job definition:
+The action timeout ``00:05:00`` comes from this part of the job definition:
 
-.. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
+.. include:: examples/test-jobs/standard-armmp-ramdisk-arndale.yaml
    :code: yaml
-   :start-after: job_name: QEMU pipeline, first job
+   :start-after: job_name: standard Debian ARMMP ramdisk test on arndale
    :end-before: connection
 
 The complete list of actions for any test job is available from the job
@@ -214,7 +211,7 @@ definition page, on the pipeline tab.
 .. note:: Not all actions in any one pipeline will perform any operations.
    Action classes are idempotent and can skip operations depending on the
    parameters of the testjob. Hence some actions will show a duration of
-   ``0.00``.
+   ``00:00:00``.
 
 .. _default_connection_timeouts:
 
@@ -243,23 +240,12 @@ than most other devices with similar support.
 Details of these timeouts can be seen on the device type page on the *Support*
 tab and can be overridden using the overrides in the test job.
 
-.. _action_block_timeout_overrides:
-
-Action block overrides
-**********************
-
-The test job submission action blocks, (``deploy``, ``boot`` and ``test``) can
-also have timeouts. These will override the default action timeout for all
-actions within that block. Action blocks are identified by the start of the
-:term:`action level` and the timeout value is set within that action block:
-
-.. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
-   :code: yaml
-   :start-after: qemu-pipeline-first-job.yaml
-   :end-before: to: tmpfs
-
-Unless individual actions within this block have overrides, the default action
-timeout for each will be set to the specified timeout.
+.. note:: The actual timeout for each action is computed by taking the device
+   configuration and overriding the values with the timeouts from the job
+   definition.
+   The timeout will be the first defined value in:
+   :ref:`action_block_timeout_overrides`,
+   :ref:`individual_action_timeout_overides` and :ref:`default_action_timeouts`.
 
 .. _individual_action_timeout_overides:
 
@@ -293,3 +279,22 @@ specific connection timeout which can be longer or shorter than the default.
    connections:
      http_download:
        minutes: 2
+
+.. _action_block_timeout_overrides:
+
+Action block overrides
+**********************
+
+The test job submission action blocks, (``deploy``, ``boot`` and ``test``) can
+also have timeouts. These will override the default action timeout for all
+actions within that block. Action blocks are identified by the start of the
+:term:`action level` and the timeout value is set within that action block:
+
+.. include:: examples/test-jobs/standard-armmp-ramdisk-arndale.yaml
+   :code: yaml
+   :start-after: build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
+   :end-before: to: tftp
+
+Unless individual actions within this block have overrides, the
+default action timeout for each will be set to the specified
+timeout.

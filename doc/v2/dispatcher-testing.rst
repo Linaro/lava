@@ -66,7 +66,9 @@ Jinja2 templates
    <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_ to identify the
    problems with the YAML output. Once the basic validation passes, add an
    initial device dictionary, following the examples and identify specific
-   values in the output which can be asserted
+   values in the output which can be asserted.
+
+   .. seealso:: :ref:`YAML syntax errors <writing_new_job_yaml>`
 
 #. Compare the output of the template with a realistic device dictionary, using
    the unit test, with the test YAML used when developing the underlying

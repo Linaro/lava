@@ -135,6 +135,7 @@ try:
 except ImportError:
     pass
 
+USE_DEBUG_TOOLBAR = False
 
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
@@ -148,6 +149,7 @@ BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22
 BRANDING_BUG_URL = "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework"
 BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
+BRANDING_MESSAGE = ''
 
 # Logging
 

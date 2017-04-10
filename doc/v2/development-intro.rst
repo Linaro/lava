@@ -1,4 +1,4 @@
-.. index:: jinja2, developer, developer guide, develop, contribute
+.. index:: jinja2 - development, developer, developer guide, develop, contribute
 
 .. _developer_guide:
 
@@ -54,6 +54,91 @@ access devices and debug test jobs.
 .. _SSH: http://www.openssh.com/
 .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
 
+.. index:: templates as code, device-type template files
+
+.. _developing_device_type_templates:
+
+Developing using device-type templates
+======================================
+
+If you are an administrator, you may think the previous link sent you to the
+wrong section. However, administrators need to understand how device-type
+templates operate and how the template engine will use the template to be able
+to make changes.
+
+.. important:: Device type templates are more than configuration files - the
+   templates are processed as source code at runtime. Anyone making changes to
+   a device-type ``.jinja2`` template file **must** understand the basics of
+   how to test templates using the same tools as developers.
+
+Device type templates as code
+-----------------------------
+
+Jinja2_ provides a powerful templating engine. Templates in LAVA use several
+standard programming concepts:
+
+* Conditional Logic
+
+* Inheritance
+
+* Default values
+
+In addition, LAVA templates need to **always** render to valid YAML. It is this
+YAML which is sent to the worker as ``device.yaml``. The worker does not handle
+the templates. All operations are done on the master.
+
+.. _testing_new_devicetype_templates:
+
+Testing new device-type templates
+---------------------------------
+
+The simplest check is to render the new template to YAML and check that it
+contains the expected commands. As with test job files, there are common YAML
+errors which can block the use of new templates.
+
+.. seealso:: :ref:`YAML syntax errors <writing_new_job_yaml>`
+
+.. code-block:: shell
+
+ lava-server manage device-dictionary --hostname <HOSTNAME> --review
+
+A more rigorous test is to use the dedicated unit test which does **not**
+require ``lava-server`` to be installed, i.e. it does not require a database to
+be configured. This test can be run directly from a git checkout of
+``lava-server`` with a few basic python packages installed (including
+``python-jinja2``).
+
+.. code-block:: shell
+
+ $ python -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_all_templates
+
+Individual templates have their own unit tests to test for specific elements of
+the rendered device configuration.
+
+Most changes to device-type templates take effect **immediately** - as soon as
+the file is changed in ``/etc/lava-server/dispatcher-config/device-types/`` the
+next testjob for that device-type will use the output of that template. Always
+test your templates locally **before** deploying the template to the master.
+(Test jobs which have already started are not affected by template changes.)
+
+Use version-control for device-type templates
+---------------------------------------------
+
+This cannot be stressed enough. **ALL admins** need to keep device-type
+templates in some form of version control. The template files are code and
+admins will need to be able to upgrade templates when packages are upgraded
+**and** when devices need to implement new support.
+
+Contribute device-type templates back upstream
+----------------------------------------------
+
+As code, device-type templates need to develop alongside the rest of the
+codebase. The best way to maintain support is to :ref:`contribute_upstream` so
+that new features can be tested against your templates and new releases can
+automatically include updates to your templates.
+
+.. index:: developer workflow
+
 .. _developer_workflow:
 
 Developer workflows
@@ -96,6 +181,8 @@ which relies on newer versions of the modules than are currently available in
 Debian testing.
 
 .. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
+
+.. index:: naming conventions
 
 .. _naming_conventions:
 
@@ -232,6 +319,8 @@ examples.
 
 .. _RST: http://sphinx-doc.org/rest.html
 
+.. index:: code locations
+
 .. _developer_code_locations:
 
 Code locations
@@ -326,6 +415,8 @@ relevant master after rendering the Jinja2 templates on that master. There is
 ``lava-dispatcher`` codebase would work with any real devices, even of the
 declared :term:`device-type <device type>`.
 
+.. index:: contribute upstream
+
 .. _contribute_upstream:
 
 Contributing Upstream
@@ -337,6 +428,8 @@ you don't run the risk of LAVA changed in a way that is incompatible with your
 changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
+
+.. index:: development planning
 
 .. _developer_planning:
 
@@ -375,6 +468,8 @@ the fix from the review.
 .. _Jira: http://www.atlassian.com/jira-software
 .. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
 
+.. index:: community contributions
+
 .. _community_contributions:
 
 Community contributions
@@ -404,7 +499,9 @@ from Debian (unstable or stable backports) which are based on the release
 branch. Use the :ref:`lava_repositories` and/or :ref:`developer_build_version`
 to ensure that your instance is up to date with master.
 
-.. seealso:: :ref:`lava_release_process`.
+.. seealso:: :ref:`lava_release_process` and :ref:`lava_development`.
+
+.. index:: patches and fixes
 
 Patches, fixes and code
 -----------------------
@@ -451,6 +548,8 @@ patches into the upstream LAVA systems.
 
 .. seealso:: https://www.debian.org/Bugs/Reporting
 
+.. index:: register - contributor
+
 .. _register:
 
 Register with Linaro as a Community contributor
@@ -471,13 +570,27 @@ subscribe to the :ref:`lava_devel` mailing list and talk to us on IRC::
 Contributing via GitHub
 -----------------------
 
-You can use GitHub to fork the LAVA packages and make pull requests
+You can use the GitHub mirrors of ``git.linaro.org`` to fork the LAVA packages
+and make pull requests. Remember to make your change against the ``master``
+branch, not the github default branch of ``release``. Production releases are
+based on the ``release`` branch.
 
 https://github.com/Linaro
 
 It is worth sending an email to the :ref:`lava_devel` mailing list, so
 that someone can migrate the pull request to a review.
 
-.. note:: You will need to respond to comments on the review and the
-   process of updating the review is **not** linked to the github pull request
-   process.
+.. note:: The process of creating or updating the review is **not** currently
+   linked to the github pull request process. You will need to respond to
+   comments on the review which will **not** appear in the pull request. LAVA
+   is not developed on github, the code is simply mirrored to github from
+   ``git.linaro.org`` when a release is made. (So the github mirror of
+   ``master`` can also be significantly behind current ``master`` from
+   ``git.linaro.org``. Reviews use ``git.linaro.org``.)
+
+* https://git.linaro.org/lava/lava-server.git/
+* https://git.linaro.org/lava/lava-dispatcher.git/
+* https://git.linaro.org/lava/lava-tool.git/
+* https://git.linaro.org/lava/lava-coordinator.git/
+
+.. seealso:: :ref:`lava_development`.

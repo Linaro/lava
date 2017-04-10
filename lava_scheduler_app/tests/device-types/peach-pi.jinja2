@@ -1,0 +1,17 @@
+# Peach pi AKA Samsung Chromebook 2 running u-boot (chainloaded by vendor
+# u-boot)
+{% extends 'base-uboot.jinja2' %}
+
+{% set device_type = "peach-pi" %}
+
+{% set bootloader_prompt = bootloader_prompt|default('Peach') %}
+{% set console_device = console_device|default('ttySAC3') %}
+
+{% set bootm_kernel_addr = '0x22000000' %}
+{% set bootm_ramdisk_addr = '0x23300000' %}
+{% set bootm_dtb_addr = '0x23000000' %}
+{% set bootz_kernel_addr = '0x22000000' %}
+{% set bootz_ramdisk_addr = '0x23300000' %}
+{% set bootz_dtb_addr = '0x23000000' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_needs_usb = true %}

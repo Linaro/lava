@@ -14,10 +14,10 @@ visibility: public
 
 metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
-  path: standard/standard-armmp-ramdisk-panda.yaml
-  build-readme: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/debian-armmp-armhf-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/1/console
-  build-script: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/armmp-nfs.sh
+  path: doc/v2/examples/test-jobs/standard-armmp-ramdisk-panda.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/4/console
+  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
 
 actions:
 - deploy:
@@ -25,19 +25,20 @@ actions:
       minutes: 3
     to: tftp
     kernel:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      type: zimage
     ramdisk:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
       compression: gz
       # the bootloader needs a u-boot header on the modified ramdisk
       add-header: u-boot
     modules:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
       compression: gz
     # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
     os: oe
     dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/omap4-panda.dtb
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/omap4-panda.dtb
 
 - boot:
     method: u-boot
@@ -46,7 +47,6 @@ actions:
     # escape the brackets to ensure that the prompt does not match
     # kernel debug lines which may mention initramfs
     - '\(initramfs\)'
-    type: bootz
     timeout:
       minutes: 3
 

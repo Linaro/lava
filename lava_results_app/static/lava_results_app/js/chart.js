@@ -1085,7 +1085,13 @@ $(document).ready(function () {
                     if (chart_data.basic.is_keys_numeric) {
                         return val;
                     } else {
-                        return ticks[val].replace(" ", "<br/>");
+                        // Bug with jflot if there's only one tick, it adds
+                        // two more of the same name.
+                        if (ticks.length == 1) {
+                            return ticks[0].replace(" ", "<br/>");
+                        } else {
+                            return ticks[val].replace(" ", "<br/>");
+                        }
                     }
             }
 

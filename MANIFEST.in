@@ -3,7 +3,7 @@ include HACKING
 include INSTALL 
 include NEWS 
 include README 
-recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff
+recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff *.woff2
 recursive-include lava_server/templates *.html
 recursive-include lava_results_app/templates *.html
 recursive-include lava_results_app/tests *.yaml

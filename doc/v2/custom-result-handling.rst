@@ -5,7 +5,7 @@
 Custom result handling
 ######################
 
-.. index:: ci loop
+.. index:: ci loop - closing
 
 .. _ci_loop:
 
