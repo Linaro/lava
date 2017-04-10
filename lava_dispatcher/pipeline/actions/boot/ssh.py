@@ -130,6 +130,7 @@ class Scp(ConnectSsh):
 
     def run(self, connection, max_end_time, args=None):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
+        host_address = None
         if not path:
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error("%s: could not find details of '%s'", self.name, self.key)
@@ -137,9 +138,9 @@ class Scp(ConnectSsh):
         overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
         if not self.primary:
             self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
-            self.host = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
-            self.logger.debug("Using common data for host: %s", self.host)
-        elif not self.host:
+            host_address = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
+            self.logger.debug("Using common data for host: %s", host_address)
+        elif not host_address:
             self.errors = "%s: could not find host for deployment" % self.name
             self.logger.error("%s: could not find host for deployment", self.name)
             return connection
@@ -155,9 +156,9 @@ class Scp(ConnectSsh):
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
-        self.logger.info("Copying %s using %s to %s", self.key, command_str, self.host)
+        self.logger.info("Copying %s using %s to %s", self.key, command_str, host_address)
         # add the remote as destination, with :/ top level directory
-        command.extend(["%s@%s:/%s" % (self.ssh_user, self.host, destination)])
+        command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
         connection = super(Scp, self).run(connection, max_end_time, args)
