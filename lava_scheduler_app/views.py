@@ -1333,7 +1333,7 @@ def job_detail(request, pk):
         ),
     }
     if job.is_pipeline:
-        description = description_data(job.id)
+        description = description_data(job)
         job_data = description.get('job', {})
         action_list = job_data.get('actions', [])
         pipeline = description.get('pipeline', {})
@@ -1439,7 +1439,7 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    description = description_data(job.id) if job.is_pipeline else {}
+    description = description_data(job) if job.is_pipeline else {}
     template = loader.get_template("lava_scheduler_app/job_definition.html")
     return HttpResponse(template.render(
         {
@@ -1456,7 +1456,7 @@ def job_description_yaml(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404()
-    filename = description_filename(job.id)
+    filename = description_filename(job)
     if not filename:
         raise Http404()
     with open(filename, 'r') as desc:
@@ -1621,7 +1621,7 @@ def job_complete_log(request, pk):
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
 
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:
@@ -1718,7 +1718,7 @@ def job_pipeline_sections(request, pk):
     job = get_restricted_job(request.user, pk)
     if not job.is_pipeline:
         raise Http404
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:
@@ -1823,7 +1823,7 @@ def job_pipeline_incremental(request, pk):
     # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
     job = get_restricted_job(request.user, pk)
     summary = int(request.GET.get('summary', 0)) == 1
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:

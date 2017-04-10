@@ -20,22 +20,22 @@ class StreamEcho(object):  # pylint: disable=too-few-public-methods
         return value
 
 
-def description_filename(job_id):
-    filename = os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % job_id, 'description.yaml')
+def description_filename(job):
+    filename = os.path.join(job.output_dir, 'description.yaml')
     if not os.path.exists(filename):
         return None
     return filename
 
 
-def description_data(job_id):
+def description_data(job):
     logger = logging.getLogger('lava_results_app')
-    filename = description_filename(job_id)
+    filename = description_filename(job)
     if not filename:
         return {}
     try:
         data = yaml.load(open(filename, 'r'))
     except yaml.YAMLError:
-        logger.error("Unable to parse description for %s" % job_id)
+        logger.error("Unable to parse description for %s" % job.id)
         return {}
     if not data:
         return {}
