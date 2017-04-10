@@ -1,4 +1,4 @@
-.. index:: user notifications
+.. index:: user notifications, notifications
 
 .. _notifications:
 

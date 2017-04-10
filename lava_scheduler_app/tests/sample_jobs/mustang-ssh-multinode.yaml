@@ -1,0 +1,136 @@
+device_type: mustang
+job_name: KVM pipeline test
+
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 20
+  connection:
+    minutes: 2
+
+priority: medium
+visibility: public
+
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        connection: ssh
+        count: 1
+        expect_role: host
+        host_role: host
+        request: lava-start
+        timeout:
+          minutes: 15
+      host:
+        count: 1
+        device_type: mustang
+        timeout:
+          minutes: 10
+
+actions:
+- deploy:
+    role:
+      - host
+    authorize: ssh
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/vmlinuz-4.9.0-2-arm64
+      type: zimage
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/modules.tar.gz
+      compression: xz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz
+      compression: gz
+      prefix: binary/
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64
+      compression: gz
+    os: debian
+    timeout:
+      minutes: 12
+    to: tftp
+
+# wait for the guest IP to deploy lava overlay on it
+- deploy:
+    role:
+    - guest
+    connection: ssh
+    os: debian
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-wait
+        # messageID matches hostID
+        messageID: ipv4
+        message:
+          ipaddr: $ipaddr
+        timeout:  # delay_start timeout
+          minutes: 21
+    timeout:
+      minutes: 22
+    to: ssh
+
+- boot:
+    role:
+    - host
+    commands: nfs
+    method: grub-efi
+    type: uimage
+    prompts:
+    - 'root@linaro-developer:'
+    timeout:
+      minutes: 5
+
+# run tests on guest over ssh
+- boot:
+    role:
+    - guest
+    method: ssh
+    prompts:
+    - 'root@linaro-developer:'
+    parameters:
+      hostID: ipv4  # messageID
+      host_key: ipaddr  # message key
+    timeout:
+      minutes: 23
+
+# host tests
+- test:
+    role:
+    - host
+    definitions:
+    - from: git
+      name: hackbench-host
+      path: automated/linux/hackbench/hackbench.yaml
+      repository: https://git.linaro.org/qa/test-definitions.git
+    - from: git
+      name: kvm-guest
+      path: ubuntu/start-kvm.yaml
+      parameters:
+          GUEST_ARCH: aarch64
+          GUEST_CORES: 4
+          GUEST_IMAGE: https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-arm64-uefi1.img
+      repository: https://git.linaro.org/qa/test-definitions.git
+    timeout:
+      minutes: 40
+
+- test:
+    role:
+    - guest
+    definitions:
+    - from: git
+      name: hackbench-guest
+      path: automated/linux/hackbench/hackbench.yaml
+      repository: https://git.linaro.org/qa/test-definitions.git
+    - from: git
+      name: guest-complete
+      path: ubuntu/stop-guest.yaml
+      repository: https://git.linaro.org/qa/test-definitions.git
+    timeout:
+      minutes: 41
+
+context:
+    kernel_loglevel: ""
+

@@ -230,7 +230,7 @@ actions:
         device_type = self.factory.make_device_type('beaglebone-black')
         device = self.factory.make_device(device_type=device_type, hostname="black01")
         device.save()
-        filename = os.path.join(os.path.dirname(__file__), 'master-check.json')
+        filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'master-check.json')
         self.assertTrue(os.path.exists(filename))
         with open(filename, 'r') as json_file:
             definition = json_file.read()
@@ -278,7 +278,7 @@ actions:
         definition = json.dumps(def_dict)
         self.assertRaises(Device.DoesNotExist, testjob_submission, definition, user)
         # check multinode API submission. bug #2130
-        filename = os.path.join(os.path.dirname(__file__), 'master-multinode.json')
+        filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'master-multinode.json')
         self.assertTrue(os.path.exists(filename))
         with open(filename, 'r') as json_file:
             definition = json_file.read()
@@ -363,7 +363,7 @@ actions:
         print >> sys.stderr, timezone.now(), "%d dummy devices created" % count
         device_list = list(get_available_devices())
         print >> sys.stderr, timezone.now(), "%d available devices" % len(device_list)
-        filename = os.path.join(os.path.dirname(__file__), 'master-check.json')
+        filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'master-check.json')
         self.assertTrue(os.path.exists(filename))
         with open(filename, 'r') as json_file:
             definition = json_file.read()

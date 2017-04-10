@@ -125,6 +125,121 @@ Make sure that your changes do not cause any failures in the unit tests::
 
 Wherever possible, always add new unit tests for new code.
 
+Testing local changes
+=====================
+
+For any sufficiently large change, :ref:`building <dev_builds>` and installing
+a new package on a local instance is recommended. Ensure that the test instance
+is already running the most recent production release.
+
+If the test instance has a separate worker, ensure that the master and the
+worker always have precisely the same code applied. For some changes, it may be
+necessary to have a test instance which is a clone of a production instance,
+complete with devices. **Never** make live changes to a production instance.
+(This is why integrating new device types into LAVA requires multiple devices.)
+
+Once your change is working successfully:
+
+#. Ensure that your local branch is clean - check for left over debug code.
+
+#. Ensure that your local branch has been rebased against current ``master``
+
+#. Build and install a package from the ``master`` branch. If you have added
+   any new files in your local change, make sure these have been removed.
+   Reproduce the original bug or problem.
+
+#. Build and install a package from your local branch and repeat the tests.
+
+lava-dispatcher
+---------------
+
+Changes to most files in ``lava-dispatcher`` can be symlinked or copied into
+the packaged locations. e.g.::
+
+ PYTHONDIR=/usr/lib/python2.7/dist-packages/
+ sudo cp <path_to_file> $PYTHONDIR/<path_to_file>
+
+There is no need to copy files used solely by the unit tests.
+
+Changes to files in ``./etc/`` will require restarting the relevant service.
+
+Changes to files in ``./lava/dispatcher/`` will need the ``lava-slave``
+service to be restarted.
+
+lava-server
+-----------
+
+Changes to device-type templates and device dictionaries take effect
+immediately, so simply submitting a test job will pick up the latest
+version of the code in
+``/etc/lava-server/dispatcher-config/device-types/``. Make changes to
+the templates in ``lava_scheduler_app/tests/device-types/``. Check
+them using the ``test_all_templates`` test, and only then copy the
+updates into ``/etc/lava-server/dispatcher-config/device-types/`` when
+the tests pass.
+
+.. seealso:: :ref:`testing_new_devicetype_templates`
+
+Changes to django templates can be applied immediately by copying the template
+into the packaged path, e.g. html files in
+``lava_scheduler_app/templates/lava_scheduler_app/`` can be copied or symlinked
+to
+``/usr/lib/python2.7/dist-packages/lava_scheduler_app/templates/lava_scheduler_app/``
+
+Changes to python code generally require copying the files and restarting the
+``lava-server-gunicorn`` service before the changes will be applied::
+
+ sudo service lava-server-gunicorn restart
+
+Changes to ``lava_scheduler_app/models.py``, ``lava_scheduler_app/db_utils.py``
+or ``lava_results_app/dbutils`` will require restarting the ``lava-master``
+service::
+
+ sudo service lava-master restart
+
+Changes to files in ``./etc/`` will require restarting the relevant service. If
+multiple services are affected, it is normally best to build and install a new
+package.
+
+:ref:`database_migrations` are a complex area - read up on the django
+documentation for migrations. Instead of ``python ./manage.py``, use
+``sudo lava-server manage``.
+
+lava-server-doc
+---------------
+
+Documentation files in ``doc/v2`` can be built locally in the git checkout
+using ``make``::
+
+ make -C doc/v2 clean
+ make -C doc/v2 html
+
+Files can then be checked in a web browser using the ``file://`` url scheme and
+the ``_build/html/`` subdirectory. For example:
+``file:///home/neil/code/lava/lava-server/doc/v2/_build/html/first_steps.html``
+
+Some documentation changes can add images, example test jobs, test definitions
+and other files. Depending on the type of file, it may be necessary to make
+changes to the packaging, so :ref:`talk to us <getting_support>` before making such
+changes.
+
+Documentation is written in RST, so the `RST Primer
+<http://www.sphinx-doc.org/en/stable/rest.html>`_ is essential reading when
+modifying the documentation.
+
+#. Keep all documentation paragraphs wrapped to 80 lines.
+
+#. Use ``en_GB`` unless referring to elements of code which use ``en_US``.
+
+#. Use syntax highlighting for code and check the rendered page. For example,
+   ``code-block:: shell`` relates to the contents of shell scripts, not the
+   output of commands or scripts in a shell (those should use ``code-block::
+   none``)
+
+#. Wherever possible, pull in code samples from working example files so that
+   these can be checked for accuracy on `staging
+   <https://staging.validation.linaro.org/>`_ before future releases.
+
 .. _developer_commit_for_review:
 
 Send your commits for review
@@ -435,6 +550,8 @@ functionality using :ref:`XML-RPC <xml_rpc>`.
 #. Move as much of the work into the relevant app as possible, either in
    ``models.py`` or in ``dbutils.py``. Wherever possible, re-use existing
    functions with wrappers for error handling in the API code.
+
+.. _lava_instance_settings:
 
 Instance settings
 *****************

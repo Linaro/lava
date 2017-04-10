@@ -1,0 +1,62 @@
+device_type: panda
+
+job_name: standard Debian ARMMP nfs test on panda
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+priority: medium
+visibility: public
+
+metadata:
+  path: doc/v2/examples/test-jobs/standard-armmp-nfs-panda.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/4/console
+  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      type: zimage
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      compression: gz
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/omap4-panda.dtb
+
+- boot:
+    method: u-boot
+    commands: nfs
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 10
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
+

@@ -306,7 +306,7 @@ class SchedulerAPI(ExposedAPI):
         keys = ['busy', 'idle', 'offline']
 
         for dev_type in DeviceType.objects.all():
-            if dev_type.num_devices_visible_to(self.user) == 0:
+            if not dev_type.some_devices_visible_to(self.user):
                 continue
             device_type_names.append(dev_type.name)
 
@@ -734,7 +734,7 @@ class SchedulerAPI(ExposedAPI):
                 continue
             if device_type.owners_only:
                 # do the more expensive check second and only for a hidden device type
-                if device_type.num_devices_visible_to(self.user) == 0:
+                if not device_type.some_devices_visible_to(self.user):
                     continue
             job_status[str(job.display_id)] = job.get_status_display()
         return job_status

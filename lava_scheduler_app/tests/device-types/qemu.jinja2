@@ -9,9 +9,18 @@ device_type: qemu
 {% set base_guest_fs_size = guestfs_size | default(512) %}
 {% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
 
+available_architectures:
+- arm64
+- arm
+- aarch64
+- amd64
+- x86_64
+- i386
+
 actions:
   deploy:
     methods:
+      nfs:
       image:
         parameters:
           guest:
@@ -23,6 +32,7 @@ actions:
       ssh:
     methods:
       qemu:
+{% block qemu_method %}
         parameters:
           command:
 {% if arch == 'arm64' or arch == 'aarch64' %}
@@ -71,4 +81,12 @@ actions:
           extra: {{ extra_options }}
 {% endif %}
 {% endblock -%}
+{% endblock %}
+      qemu-nfs:
+{{ self.qemu_method() }}
+          append:
+            console: {{ console_device|default('ttyAMA0') }}
+            root: /dev/nfs
+            nfsrootargs: {{ base_nfsroot_args }}
+            ipargs: {{ base_ip_args }}
 {% endblock %}

@@ -1,0 +1,90 @@
+device_type: x86
+
+job_name: x86_64 stretch SATA
+
+timeouts:
+  job:
+    hours: 2
+  action:
+    minutes: 3
+  connection:
+    minutes: 2
+
+visibility: public
+priority: medium
+
+actions:
+- deploy:
+    timeout:
+      minutes: 8
+    to: tftp
+    kernel:
+      url: http://people.linaro.org/~neil.williams/stretch-x86_64/vmlinuz-4.8.0-2-amd64
+      type: zimage
+    modules:
+      url: http://people.linaro.org/~neil.williams/stretch-x86_64/modules.tar.gz
+      compression: gz
+    ramdisk:
+      url: http://people.linaro.org/~neil.williams/stretch-x86_64/initrd.img-4.8.0-2-amd64
+      compression: gz
+    os: debian
+
+- boot:
+    timeout:
+      minutes: 8
+    method: ipxe
+    commands:
+      - dhcp net0
+      - set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}
+      - set extraargs ip=dhcp root=/dev/sda1 rw
+      - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
+      - initrd tftp://{SERVER_IP}/{RAMDISK}
+      - boot
+    auto_login:
+      login_prompt: "login:"
+      username: root
+      password_prompt: "Password:"
+      password: root
+    transfer_overlay:
+      download_command: ifconfig ; sleep 10 ; wget -S --progress=dot:giga
+      unpack_command: tar -C / -xaf
+    prompts:
+    - 'root@stretch:'
+
+- test:
+    timeout:
+      hours: 1
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: apache-server
+          description: "sata checks"
+          os:
+          - debian
+          scope:
+          - functional
+        install:
+          deps:
+          - lvm2
+        run:
+          steps:
+          - mount
+          - ls -l /dev/disk/by-id/
+          - lvdisplay
+          - pvdisplay
+          - vgdisplay
+      from: inline
+      name: sata
+      path: inline/sata.yaml
+    - repository: http://git.linaro.org/qa/test-definitions.git
+      path: ubuntu/smoke-tests-basic.yaml
+      from: git
+      name: smoke-tests
+    - repository: http://git.linaro.org/lava-team/hacking-session.git
+      from: git
+      path: hacking-session-debian.yaml
+      name: hacking
+      parameters:
+        IRC_USER: "codehelp"
+        PUB_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAknO1c1Ei//49GeBNtmIWUJUvy+f4OBlpqgGf0PetL90S4C+Xk0/el4AKnGHAEBaJKZF71IJmAoDuGF9y9OP4wFi7n60Zgz3cGABJ2UgMuBo5rEfDYUstwS7Yua9gR8iijIv6l3ITz0fibbH3OwK/GJRjOWgL0QOjd5tHEfxoHkk= neil@garfield"

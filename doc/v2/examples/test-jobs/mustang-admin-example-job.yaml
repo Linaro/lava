@@ -1,3 +1,6 @@
+# mustang devices now use grub-efi, not UBoot
+# This file exists only as an example of the initial UBoot support.
+
 device_type: mustang
 job_name: mustang singlenode with Debian jessie
 priority: medium

@@ -335,7 +335,7 @@ def testcase(request, job, pk, case):
     job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
     test_sets = TestSet.objects.filter(name=case, suite=test_suite)
-    extra_source = ''
+    extra_source = {}
     logger = logging.getLogger('dispatcher-master')
     for extra_case in test_cases:
         try:
@@ -349,7 +349,8 @@ def testcase(request, job, pk, case):
                 items = yaml.load(extra_file, Loader=yaml.CLoader)
             # hide the !!python OrderedDict prefix from the output.
             for key, value in items.items():
-                extra_source += "%s: %s\n" % (key, value)
+                extra_source.setdefault(extra_case.id, '')
+                extra_source[extra_case.id] += "%s: %s\n" % (key, value)
     template = loader.get_template("lava_results_app/case.html")
     return HttpResponse(template.render(
         {

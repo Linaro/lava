@@ -26,7 +26,10 @@ from django.core.exceptions import (
 )
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
+from django.core.validators import (
+    validate_email,
+    validate_comma_separated_integer_list
+)
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -35,7 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
-from django.utils import timezone
+
 
 from django_restricted_resource.models import (
     RestrictedResource,
@@ -46,16 +49,16 @@ from lava_scheduler_app.schema import validate_submission, SubmissionException
 from dashboard_app.models import (
     Bundle,
     BundleStream,
-    NamedAttribute,
     get_domain
 )
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
-
+from lava_scheduler_app.schema import validate_device
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
+# pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
 
 # Make the open function accept encodings in python < 3.x
 if sys.version_info[0] < 3:
@@ -111,8 +114,6 @@ def is_deprecated_json(data):
         validate_job_data(ob)
     except (AttributeError, simplejson.JSONDecodeError, ValueError):
         deprecated_json = False
-    except (JSONDataError, simplejson.JSONDecodeError, ValueError) as exc:
-        raise SubmissionException("Decoding job submission failed: %s." % exc)
     return deprecated_json
 
 
@@ -331,6 +332,8 @@ class DeviceType(models.Model):
         default=None
     )
 
+    # FIXME: deprecated, should be removed in 2017.5
+    # Replaced by Device.get_health_check()
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job])
 
@@ -338,6 +341,10 @@ class DeviceType(models.Model):
         verbose_name="How often to run health checks",
         default=24
     )
+
+    disable_health_check = models.BooleanField(
+        default=False,
+        verbose_name="Disable health check for devices of this type")
 
     HEALTH_PER_HOUR = 0
     HEALTH_PER_JOB = 1
@@ -384,6 +391,22 @@ class DeviceType(models.Model):
             return len([d for d in devices if d.is_owned_by(user)])
         else:
             return devices.count()
+
+    def some_devices_visible_to(self, user):
+        """
+        :param user: User to check
+        :return: True if some devices of this DeviceType are visible
+        """
+        devices = Device.objects.filter(device_type=self) \
+                                .only('user', 'group') \
+                                .select_related('user', 'group')
+        if self.owners_only:
+            for d in devices:
+                if d.is_owned_by(user):
+                    return True
+            return False
+        else:
+            return devices.exists()
 
 
 class DefaultDeviceOwner(models.Model):
@@ -472,34 +495,9 @@ class Worker(models.Model):
     def get_description(self):
         return mark_safe(self.description)
 
-    def get_hardware_info(self):
-        return ''
-
-    def get_software_info(self):
-        return ''
-
-    def too_long_since_last_heartbeat(self):
-        """
-        DEPRECATED
-
-        Always returns False.
-        """
-        return False
-
-    def attached_devices(self):
-        return Device.objects.filter(worker_host=self)
-
     def update_description(self, description):
         self.description = description
         self.save()
-
-    # pylint: disable=no-member
-    @classmethod
-    def update_heartbeat(cls, heartbeat_data):
-        return False
-
-    def on_master(self):
-        return self.is_master
 
     @classmethod
     def get_master(cls):
@@ -527,19 +525,6 @@ class Worker(models.Model):
             return localhost
         except Worker.DoesNotExist:
             raise ValueError("Worker node unavailable")
-
-    @classmethod
-    def record_last_master_scheduler_tick(cls):
-        """Records the master's last scheduler tick timestamp.
-        """
-        pass
-
-    def master_scheduler_tick(self):
-        """Returns django.utils.timezone object of master's last scheduler tick
-        timestamp. If the master's last scheduler tick is not yet recorded
-        return the current timestamp.
-        """
-        return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):
@@ -793,7 +778,7 @@ class Device(RestrictedResource):
         if self.device_type.owners_only:
             if not user:
                 return False
-            if self.device_type.num_devices_visible_to(user) == 0:
+            if not self.device_type.some_devices_visible_to(user):
                 return False
         if not self.is_public:
             if not user:
@@ -817,6 +802,16 @@ class Device(RestrictedResource):
         if user.username == "lava-health":
             return True
         return self.is_owned_by(user)
+
+    def is_valid(self, system=True):
+        if not self.is_pipeline:
+            return False  # V1 config cannot be checked
+        rendered = self.load_device_configuration(system=system)
+        try:
+            validate_device(rendered)
+        except SubmissionException:
+            return False
+        return True
 
     def log_admin_entry(self, user, reason):
         device_ct = ContentType.objects.get_for_model(Device)
@@ -850,7 +845,14 @@ class Device(RestrictedResource):
         return True
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
+        """
+        Put a device OFFLINE whenever possible. If the device is running a job,
+        the status will be OFFLINING.
+        Returns False if the device status is unchanged (retired devices)
+        """
         logger = logging.getLogger('dispatcher-master')
+        if self.status == self.RETIRED:
+            return False
         if self.status in [self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
         elif self.status == self.RUNNING:
@@ -868,10 +870,13 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
+        return True
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         logger = logging.getLogger('dispatcher-master')
-        if self.status == Device.OFFLINING:
+        if self.status == self.RETIRED:
+            return False
+        if self.status == Device.OFFLINING and self.current_job is not None:
             new_status = self.RUNNING
         else:
             new_status = self.IDLE
@@ -884,6 +889,7 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
+        return True
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
@@ -906,23 +912,6 @@ class Device(RestrictedResource):
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
-
-    def too_long_since_last_heartbeat(self):
-        """This is same as worker heartbeat.
-        """
-        return False
-
-    def get_existing_health_check_job(self):
-        """Get the existing health check job.
-        """
-        try:
-            return TestJob.objects.filter((models.Q(actual_device=self) |
-                                           models.Q(requested_device=self)),
-                                          status__in=[TestJob.SUBMITTED,
-                                                      TestJob.RUNNING],
-                                          health_check=True)[0]
-        except IndexError:
-            return None
 
     def load_device_configuration(self, job_ctx=None, system=True):
         """
@@ -985,6 +974,29 @@ class Device(RestrictedResource):
             jinja_str = utils.devicedictionary_to_jinja2(
                 device_dict['parameters'], device_dict['parameters']['extends'])
         return jinja_str
+
+    def get_health_check(self):
+        # Keep the old behavior for v1 devices
+        if not self.is_pipeline:
+            return self.device_type.health_check_job
+
+        # Get the device dictionary
+        device_dict = DeviceDictionary.get(self.hostname)
+        if not device_dict:
+            # TODO: will be removed in the next release
+            return self.device_type.health_check_job
+        device_dict = device_dict.to_dict()
+        extends = device_dict['parameters']['extends']
+        extends = os.path.splitext(extends)[0]
+
+        filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks",
+                                "%s.yaml" % extends)
+        try:
+            with open(filename, "r") as f_in:
+                return f_in.read()
+        except IOError:
+            # TODO: will be removed in the next release
+            return self.device_type.health_check_job
 
 
 class TemporaryDevice(Device):
@@ -1170,7 +1182,7 @@ def _get_device_type(user, name):
         msg = "Device type '%s' is unavailable. %s" % (name, e)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
-    if device_type.num_devices_visible_to(user) == 0:
+    if not device_type.some_devices_visible_to(user):
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -2320,7 +2332,7 @@ class TestJob(RestrictedResource):
             return True
         device_type = self.job_device_type()
         if device_type and device_type.owners_only:
-            if device_type.num_devices_visible_to(user) == 0:
+            if not device_type.some_devices_visible_to(user):
                 return False
         if self.is_public:
             return True
@@ -2683,19 +2695,20 @@ class TestJob(RestrictedResource):
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
 
+        from lava_results_app.models import NamedTestAttribute, TestData
         attribute = None
         if xaxis_attribute:
             try:
-                from lava_results_app.models import TestData
-                content_type_id = ContentType.objects.get_for_model(
-                    TestData).id
-                attribute = NamedAttribute.objects.filter(
-                    content_type_id=content_type_id,
-                    object_id__in=self.testdata_set.all().values_list(
-                        'id', flat=True),
-                    name=xaxis_attribute).values_list('value', flat=True)[0]
+                testdata = TestData.objects.filter(testjob=self).first()
+                if testdata:
+                    attribute = NamedTestAttribute.objects.filter(
+                        content_type=ContentType.objects.get_for_model(
+                            TestData),
+                        object_id=testdata.id,
+                        name=xaxis_attribute).values_list('value', flat=True)[0]
+
             # FIXME: bare except
-            except:  # There's no attribute, use date.
+            except:  # There's no attribute, skip this result.
                 pass
 
         return attribute
@@ -3010,10 +3023,7 @@ class Notification(models.Model):
         verbose_name=_(u"Type"),
     )
 
-    # CommaSeparatedIntegerField has been deprecated in 1.10.
-    # Support for it (except in historical migrations) will be removed in Django 2.0.
-    # Use CharField(validators=[validate_comma_separated_integer_list]) instead.
-    job_status_trigger = models.CommaSeparatedIntegerField(
+    job_status_trigger = models.CharField(
         choices=TestJob.STATUS_CHOICES,
         max_length=30,
         default=TestJob.COMPLETE,

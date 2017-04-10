@@ -3,7 +3,11 @@
 {% set console_device = console_device|default('ttyS0') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set device_type = "mustang" %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250-32bit,0x1c020000 panic=1 debug " + extra_kernel_args %}
+{% else %}
 {% set extra_kernel_args = "earlycon=uart8250-32bit,0x1c020000 panic=1 debug" %}
+{% endif %}
 {% set bootloader_prompt = bootloader_prompt|default('Mustang') %}
 {% set bootm_kernel_addr = '0x4002000000' %}
 {% set bootm_ramdisk_addr = '0x4004000000' %}

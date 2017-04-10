@@ -1477,7 +1477,7 @@ class ChartQuery(models.Model):
     xaxis_attribute = models.CharField(
         blank=True,
         null=True,
-        max_length=20,
+        max_length=100,
         verbose_name='X-axis attribute')
 
     representation = models.CharField(

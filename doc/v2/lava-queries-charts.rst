@@ -283,6 +283,12 @@ Chart display depends mostly on the object set selected in the query so for
 example if the query object set is test job, charts will display results per
 test job, etc.
 
+The "X axis" will by default represent the date (i.e. job completion date in
+case of the Test job query) but this behavior can be changed by utilizing the
+"X-axis attribute" field. This field must be correctly set to the existing
+:term:`metadata` field. If done so, the X axis of the chart will be split into
+this fields' values.
+
 Chart type represents the type of information chart will be collecting from the
 query and currently options 'Pass/fail', 'Measurement' and 'Attributes' are
 supported.

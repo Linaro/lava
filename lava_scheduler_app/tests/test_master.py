@@ -1,3 +1,5 @@
+import sys
+import logging
 import unittest
 from lava_scheduler_app.dbutils import (
     create_job,
@@ -34,6 +36,14 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         self.remote, _ = Worker.objects.get_or_create(hostname='remote')
         # exclude remote from the list
         self.dispatchers = [self.worker.hostname]
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('unittests')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('dispatcher')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
 
     def restart(self):  # pylint: disable=no-self-use
         # make sure the DB is in a clean state wrt devices and jobs

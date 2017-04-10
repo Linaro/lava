@@ -1,17 +1,20 @@
 import os
 import sys
+import glob
 import yaml
 import jinja2
 import unittest
 import logging
 import tempfile
+# pylint: disable=superfluous-parens,ungrouped-imports
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
-# pylint: disable=superfluous-parens
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-public-methods
 # pylint: disable=too-many-nested-blocks
 
 
@@ -77,9 +80,29 @@ class TestTemplates(unittest.TestCase):
             self.fail(exc)
         return ret
 
+    def test_all_templates(self):
+        templates = glob.glob(os.path.join(jinja_template_path(system=self.system), 'device-types', '*.jinja2'))
+        self.assertNotEqual([], templates)
+        for template in templates:
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            try:
+                self.validate_data('device', data)
+            except AssertionError as exc:
+                self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
+
+    def test_x15_template(self):
+        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
+{% set connection_command = 'adb -s R32D300FRYP shell' %}
+{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
+"""))
+
     def test_nexus10_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 {% set connection_command = 'adb -s R32D300FRYP shell' %}
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
@@ -157,6 +180,37 @@ class TestTemplates(unittest.TestCase):
         self.assertNotEqual(150, template_dict['character_delays']['boot'])
         self.assertEqual(400, template_dict['character_delays']['boot'])
 
+    def test_x86_interface_template(self):
+        # test boot interface override
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
+            if 'commands' in value:
+                self.assertIn('dhcp net0', value['commands'])
+                self.assertNotIn('dhcp net1', value['commands'])
+        # test boot interface override
+        data = """{% extends 'x86.jinja2' %}
+{% set boot_interface = 'net1' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.assertTrue(self.validate_data('staging-x86-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
+            if 'commands' in value:
+                self.assertIn('dhcp net1', value['commands'])
+                self.assertNotIn('dhcp net0', value['commands'])
+
     def test_beaglebone_black_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
 {% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
@@ -172,10 +226,22 @@ class TestTemplates(unittest.TestCase):
 {% set exclusive = 'True' %}"""))
 
     def test_qemu_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
+        data = """{% extends 'qemu.jinja2' %}
 {% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
-{% set memory = 512 %}""", job_ctx={'arch': 'amd64'}))
+{% set memory = 512 %}"""
+        job_ctx = {'arch': 'amd64', 'no_kvm': True}
+        self.assertTrue(self.validate_data('staging-x86-01', data, job_ctx))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
+        self.assertNotIn('-enable-kvm', options)
+        job_ctx = {'arch': 'amd64', 'no_kvm': False}
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
+        self.assertIn('-enable-kvm', options)
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}
@@ -209,6 +275,57 @@ class TestTemplates(unittest.TestCase):
             if 'setenv fdt_high' in line:
                 self.fail('Mustang should not have fdt_high set')
 
+    def test_mustang_pxe_grub_efi_template(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
+        self.assertIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertNotIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        # label class regex is mangled by jinja/yaml processing
+        self.assertNotIn('label_class', template_dict['actions']['boot']['methods']['uefi-menu']['parameters'])
+        self.assertIn('grub-efi', template_dict['actions']['boot']['methods'])
+        self.assertIn('menu_options', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertEqual(template_dict['actions']['boot']['methods']['grub-efi']['menu_options'], 'pxe-grub')
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['ramdisk'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['nfs'])
+        nfs_commands = template_dict['actions']['boot']['methods']['grub-efi']['nfs']['commands']
+        self.assertNotIn('insmod efinet', nfs_commands)
+        self.assertNotIn('net_bootp', nfs_commands)
+
+    def test_mustang_grub_efi_template(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set grub_efi_method = 'grub' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
+        self.assertNotIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
+        self.assertEqual(template_dict['actions']['boot']['methods']['grub-efi']['menu_options'], 'grub')
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['ramdisk'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['grub-efi'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['grub-efi']['nfs'])
+        nfs_commands = template_dict['actions']['boot']['methods']['grub-efi']['nfs']['commands']
+        self.assertIn('insmod efinet', nfs_commands)
+        self.assertIn('net_bootp', nfs_commands)
+
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
@@ -221,6 +338,8 @@ class TestTemplates(unittest.TestCase):
         self.assertIsInstance(template_dict['device_info'], list)
         self.assertEqual(template_dict['device_info'][0]['board_id'],
                          '0123456789')
+        self.assertIsInstance(template_dict['fastboot_options'], list)
+        self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -233,8 +352,9 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         self.assertTrue(self.validate_data('staging-panda-01', data))
+        context = {'extra_kernel_args': 'intel_mmio=on mmio=on'}
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
-        rendered = test_template.render()
+        rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
@@ -242,9 +362,11 @@ class TestTemplates(unittest.TestCase):
         checked = False
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
+        self.assertIn('usb start', commands)
         for line in commands:
             if 'setenv bootargs' in line:
                 self.assertIn('console=ttyO2', line)
+                self.assertIn(' ' + context['extra_kernel_args'] + ' ', line)
                 checked = True
         self.assertTrue(checked)
         checked = False
@@ -324,6 +446,37 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('-global', options)
         self.assertIn('-cpu cortex-a57', options)
 
+    def test_qemu_cortex_a57_nfs(self):
+        data = """{% extends 'qemu.jinja2' %}
+{% set memory = 2048 %}
+{% set mac_addr = '52:54:00:12:34:59' %}
+{% set arch = 'arm64' %}
+{% set base_guest_fs_size = 2048 %}
+        """
+        job_ctx = {
+            'arch': 'amd64',
+            'qemu_method': 'qemu-nfs',
+            'netdevice': 'tap',
+            'extra_options': ['-smp', 1]
+        }
+        self.assertTrue(self.validate_data('staging-qemu-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        self.assertIsNotNone(rendered)
+        template_dict = yaml.load(rendered)
+        self.assertIn('qemu-nfs', template_dict['actions']['boot']['methods'])
+        params = template_dict['actions']['boot']['methods']['qemu-nfs']['parameters']
+        self.assertIn('command', params)
+        self.assertEqual(params['command'], 'qemu-system-aarch64')
+        self.assertIn('options', params)
+        self.assertIn('-cpu cortex-a57', params['options'])
+        self.assertEqual('qemu-system-aarch64', params['command'])
+        self.assertIn('-smp', params['extra'])
+        self.assertIn('append', params)
+        self.assertIn('nfsrootargs', params['append'])
+        self.assertEqual(params['append']['root'], '/dev/nfs')
+        self.assertEqual(params['append']['console'], 'ttyAMA0')
+
     def test_overdrive_template(self):
         data = """{% extends 'overdrive.jinja2' %}
 {% set connection_command = 'telnet serial4 7001' %}
@@ -337,7 +490,8 @@ class TestTemplates(unittest.TestCase):
 {% set sysfs = {'iface0': '/sys/devices/platform/AMDI8001:00/net/',
 'iface1': '/sys/devices/platform/AMDI8001:01/net/',
 'iface2': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.0/net/',
-'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}"""
+'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
+{% set boot_character_delay = 100 %}"""
         self.assertTrue(self.validate_data('staging-overdrive-01', data))
         test_template = prepare_jinja_template('staging-overdrive-01', data, system_path=self.system)
         rendered = test_template.render()
@@ -346,6 +500,9 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('parameters', template_dict)
         self.assertIn('interfaces', template_dict['parameters'])
         self.assertIn('actions', template_dict)
+        self.assertIn('character_delays', template_dict)
+        self.assertIn('boot', template_dict['character_delays'])
+        self.assertEqual(100, template_dict['character_delays']['boot'])
         self.assertIn('iface2', template_dict['parameters']['interfaces'])
         self.assertIn('iface1', template_dict['parameters']['interfaces'])
         self.assertIn('iface0', template_dict['parameters']['interfaces'])
@@ -488,6 +645,7 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
         self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
 
+    @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_panda_lxc_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -506,15 +664,18 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        fd, device_yaml = tempfile.mkstemp()
-        os.write(fd, yaml.dump(template_dict))
+        fdesc, device_yaml = tempfile.mkstemp()
+        os.write(fdesc, yaml.dump(template_dict))
         panda = NewDevice(device_yaml)
-        lxc_yaml = os.path.join(os.path.dirname(__file__), 'panda-lxc-aep.yaml')
+        lxc_yaml = os.path.join(os.path.dirname(__file__), 'devices', 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
             job = parser.parse(sample_job_data, panda, 4577, None, "",
                                output_dir='/tmp')
-        os.close(fd)
+        os.close(fdesc)
+        job.logger = DummyLogger()
+        job.logger.disabled = True
+        job.logger.propagate = False
         job.validate()
 
     def test_ethaddr(self):
@@ -592,3 +753,17 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('boot', template_dict['character_delays'])
         self.assertNotIn('test', template_dict['character_delays'])
         self.assertEqual(30, template_dict['character_delays']['boot'])
+
+    def test_nexus5x_template(self):
+        self.assertTrue(self.validate_data('staging-nexus5x-01', """{% extends 'nexus5x.jinja2' %}
+{% set adb_serial_number = '10de1214adae123' %}
+{% set fastboot_serial_number = '10de1214adae123' %}
+{% set device_info = [{'board_id': '10de1214adae123'}] %}
+"""))
+
+    def test_pixel_template(self):
+        self.assertTrue(self.validate_data('staging-pixel-01', """{% extends 'pixel.jinja2' %}
+{% set adb_serial_number = 'FDAC1231DAD' %}
+{% set fastboot_serial_number = 'FDAC1231DAD' %}
+{% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
+"""))

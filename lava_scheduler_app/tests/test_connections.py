@@ -18,7 +18,7 @@ from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 class YamlSshFactory(YamlFactory):
 
     def make_job_data(self, actions=None, **kw):
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'qemu-ssh-guest.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'devices', 'qemu-ssh-guest.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         data.update(kw)
@@ -61,7 +61,7 @@ class SecondaryConnections(TestCaseWithFactory):
 
         sub_id = []
         group_size = 0
-        path = os.path.dirname(os.path.join(__file__))
+        path = os.path.join(os.path.dirname(os.path.join(__file__)), 'devices')
         host_role = []
         for job in jobs:
             data = yaml.load(job.definition)

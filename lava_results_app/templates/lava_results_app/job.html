@@ -50,13 +50,14 @@
     <a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
   </div>
   <div class="col-md-4">
-    {% if job.actual_device %}
     <h4 class="modal-header">Details</h4>
+    {% if job.actual_device %}
     <dl class="dl-horizontal">
         <dt>Device :</dt>
         <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a></dd>
     {% endif %}
 {% if job.is_multinode %}
+    <dl class="dl-horizontal">
 {% for role in job.sub_jobs_list %}
   {% if role.id != job.id %}
      <dt>{{ role.device_role }} role:</dt>
@@ -98,25 +99,25 @@
       </p>
       <p>Metadata submitted as part of the job submission is also included, if present.</p>
        <div class="row">
-       <div class="col-xs-6">
+       <div class="col-xs-12">
         <ul>
           {% for key, value in metadata.items %}
               {% if 'target' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ key|markup_metadata:value }}</li>
               {% elif 'deploy' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ value }}</li>
               {% elif 'omit.' in key %}
                   <!-- inline without test cases -->
               {% elif 'boot' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ value }}</li>
               {% elif 'test' in key %}
-                  <li><b>{{ key|metadata_key}}</b>:
+                  <li><b>{{ key }}</b>:
                   {{ key|markup_metadata:value }}</li>
               {% elif 'parameters' in key %}
-                  <li><b>{{ key|metadata_key }}</b>:
+                  <li><b>{{ key }}</b>:
                   <ul>{% for paramkey, paramvalue in value.items %}
                       <li>{{ paramkey }}: {{ paramvalue }}</li>
                       {% endfor %}

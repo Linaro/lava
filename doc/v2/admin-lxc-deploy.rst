@@ -1,4 +1,4 @@
-.. index:: admin deploy lxc
+.. index:: admin deploy lxc, device_info - lxc
 
 .. _lxc_deploy:
 
@@ -29,6 +29,8 @@ Refer the following links in order to setup networking for LXC in Debian:
 * VLAN Networking - https://wiki.debian.org/LXC/VlanNetworking
 * libvirt - https://wiki.debian.org/LXC/LibVirtDefaultNetwork
 
+.. _add_android_devices_lxc:
+
 Android testing with LXC support
 --------------------------------
 
@@ -36,9 +38,24 @@ Android testing with LXC support
 use-cases which removes the need for writing complex job definitions using
 :ref:`Multinode <multinode>`. This is made possible by adding the usb path of
 the :term:`DUT` that is attached to the dispatcher. The device configuration
-takes a special parameter called `device_path` with which the usb path of the
-:term:`DUT` is exposed to LXC for Android testing. The `device_path` takes a
-list of paths (the path can be a symlink) which will get exposed to LXC.
+takes a special parameter called `device_info` which will be used to expose the
+:term:`DUT` to LXC for Android testing. The `device_info` takes a list of
+dictionaries, where each dictionary value can contain keys such as `board_id`,
+`usb_vendor_id`, `usb_product_id`.
+
+Examples of `device_info` configuration are as follows.
+
+Example 1 - Single device with just `board_id` ::
+
+ {% set device_info = [{'board_id': '0123456789'}] %}
+
+Example 2 - Single device with `board_id` and `usb_vendor_id` ::
+
+ {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451'}] %}
+
+Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` ::
+
+ {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_vendor_id': 'd109'}] %}
 
 .. note:: Do not run `adb daemon` on the dispatcher host, which will grab the
           :term:`DUT` and will hinder exposing it to LXC. Similarly, remove
@@ -46,6 +63,73 @@ list of paths (the path can be a symlink) which will get exposed to LXC.
 
 .. include:: examples/device-configurations/hi6220-hikey.yaml
    :code: yaml
+
+.. _add_usb_devices_lxc:
+
+Arbitrary USB devices with LXC support
+--------------------------------------
+
+Some workers have other USB devices attached, for example an energy probe,
+which also need to be added to the LXC for access by the test shell. These can
+be added as supplementary ``device_info`` dictionaries. In the case of an
+energy probe, the probe may be measuring a single DUT whilst being connected to
+the worker as a USB device. The ``id`` of that USB device needs to be in the
+``device_info`` of the DUT so that the test shell running in the LXC can
+control the probe.
+
+The keys given in the dictionary are **not** arbitrary and follow the same
+rules as for :ref:`Android devices <add_android_devices_lxc>`::
+
+ [{'board_id': '0123456789ABCDEF'}, {'board_id': 'S/NO44440001'}]
+
+.. caution:: Ensure that the ``device_info`` relates to a USB device which is
+   attached to the same worker as the DUT but is **not** a DUT itself.
+
+The value to specify is what shows up in ``pyudev`` bindings as the
+``ID_SERIAL_SHORT``. This is typically the ``SerialNumber`` reported by
+``dmesg`` but it is worth checking:
+
+.. code-block:: python
+
+  >>> import pyudev
+  >>> context = pyudev.Context()
+  >>> [ device.get('ID_SERIAL_SHORT') for device in context.list_devices(subsystem='usb')]
+  [u'0000:00:1a.0', None, None, None, None, u'889FFAE94013', None, None, None, None,
+  None, u'FTGNRL22', None, None, None, None, None, None, None, None, None, None, None,
+  None, None, None, None, None, u'0000:00:1d.0', None, None, None]
+  >>>
+
+For ``usb_vendor_id``, the corresponding pyudev key is ``ID_VENDOR_ID``.
+For ``usb_product_id``, the corresponding pyudev key is ``ID_MODEL_ID``.
+
+If using multiple keys for the same ``device_info``, ensure that the key value
+pairs are in a single dictionary within the list of dictionaries::
+
+ {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
+
+Configuration: Persistent Containers
+------------------------------------
+A test job can request a persistent container which will not get destroyed after
+the test job is complete. This allows the container to be reused for subsequent test
+jobs. This is useful when users want to setup some software on a container and
+use it for subsequent test jobs without re-creating the setup every time, which
+may prove time consuming.
+
+In such a case the admins can choose to switch the container creation path from
+the default i.e., `/var/lib/lxc` to some other path, which could be a larger
+partition mounted on the dispatcher to give more space for such persistent
+container users. To set a different container creation path on a per dispatcher
+basis `lxc_path` key is used in the dispatcher configuration as described in
+:ref:`dispatcher_configuration`
+
+Once the `lxc_path` key is set in dispatch configuration, both persistent and
+non-persistent containers will get created in this path.
+
+.. note:: LAVA does not have a mechanism to limit the amount of disk space such
+          persistent containers could use. Hence, administrators should setup
+          some kind of external monitoring in order to watch the size of these
+          persistent containers and free space whenever required or destroy
+          unused persistent containers.
 
 Configuration: Unprivileged containers as root
 ----------------------------------------------
@@ -72,6 +156,7 @@ container.
 
 Other resources
 ---------------
+
 For advanced LXC configurations and usage refer the following links:
 
 * https://wiki.debian.org/LXC

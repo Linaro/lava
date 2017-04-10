@@ -1,9 +1,9 @@
-.. index:: health check
+.. index:: health check - writing, health check - migrating
 
 .. _health_checks:
 
-Writing Health Checks for device types
-**************************************
+Writing Health Checks for devices
+*********************************
 
 A health check is a special type of test job, designed to validate that the a
 test device and the infrastructure around it are suitable for running LAVA
@@ -19,8 +19,23 @@ providing information on the failed checks:
 
 https://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_check=1
 
-Health checks are defined in the admin interface for each device type and run
-as the lava-health user.
+Health checks are defined in
+``/etc/lava-server/dispatcher-config/health-checks`` according to the template
+used by the device. Health checks are run as the lava-health user.
+
+.. note:: To generate the filename of the health check of a V2 device, the
+   scheduler takes the name of the template extended in the device dictionary
+   (for instance ``qemu.jinja2`` for qemu devices) and replace the extension
+   with ``.yaml``. The health check will be called
+   ``/etc/lava-server/dispatcher-config/health-checks/qemu.yaml``.  The health
+   check job database field in the device-type is used for devices which are
+   able to run V1 test jobs. To migrate health checks out of the database, use
+   the ``lava-server manage migrate-health-checks`` command. For more
+   information, see
+   https://lists.linaro.org/pipermail/lava-announce/2017-March/000027.html
+
+.. note:: Admins can temporarily disable health checks for all devices of a
+   given type in the device-type admin page.
 
 .. _yaml_health_checks:
 

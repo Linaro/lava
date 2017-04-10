@@ -2,8 +2,10 @@
 {% set boot_character_delay = 10 %}
 {% block body %}
 device_type: hi6220-hikey
-adb_serial_number: {{ adb_serial_number|default('0000000000') }}
-fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
+fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
+fastboot_options: {{ fastboot_options|default([]) }}
+
 {% block vland %}
 {#  #}
 {% endblock %}
@@ -21,10 +23,17 @@ actions:
       lxc:
       serial:
     methods:
+      fastboot:
+        - boot
+        - wait-usb-add
+        - lxc-add-device
+        - auto-login
+        - shell-session
+        - export-env
       uefi-menu:
         parameters:
-          interrupt_prompt: {{ interrupt_prompt|default("Android Fastboot mode") }}
-          interrupt_string: {{ interrupt_string|default("'x'") }}
+          interrupt_prompt: {{ interrupt_prompt|default("The default boot selection will start in") }}
+          interrupt_string: {{ interrupt_string|default("' '") }}
           item_markup:
             - "["
             - "]"

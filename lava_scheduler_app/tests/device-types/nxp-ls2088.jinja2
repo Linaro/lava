@@ -2,7 +2,11 @@
 {% set console_device = console_device|default('ttyS1') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set device_type = "nxp-ls2088" %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600 nousb default_hugepagesz=2m hugepagesz=2m hugepages=256 " + extra_kernel_args %}
+{% else %}
 {% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600 nousb default_hugepagesz=2m hugepagesz=2m hugepages=256" %}
+{% endif %}
 {% set bootloader_prompt = '=>' %}
 {% set bootm_kernel_addr = '0x80080000' %}
 {% set bootm_ramdisk_addr = '0x91000000' %}

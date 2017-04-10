@@ -234,9 +234,8 @@ Glossary of terms
     A test job for one specific :term:`device type` which is automatically run
     at regular intervals to ensure that the physical device is capable of
     performing the minimum range of tasks. If the health check fails on a
-    particular device of the specified device type, LAVA will automatically put
-    that device :term:`Offline`. Health checks have higher :term:`priority`
-    than any other jobs.
+    particular device, LAVA will automatically put that device :term:`Offline`.
+    Health checks have higher :term:`priority` than any other jobs.
 
     .. seealso:: :ref:`health_checks`.
 

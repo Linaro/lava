@@ -1,0 +1,105 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load django_tables2 %}
+{% load utils %}
+{% block content %}
+<h2>Migration Status</h2>
+
+    <h3>Migration of active V1 devices to V2</h3>
+    <p>Number of active devices which have V2 support.</p>
+    <div class="progress">
+    <div
+{% if active_percent < 50 %}
+        class="progress-bar progress-bar-danger"
+{% elif active_percent < 75 %}
+        class="progress-bar progress-bar-warning"
+{% else %}
+        class="progress-bar progress-bar-success"
+{% endif %}
+        role="progressbar" aria-valuenow="{{ active_v1_devices }}"
+         aria-valuemin="0" aria-valuemax="{{ active_devices }}"
+         style="width: {{ active_percent }}%; min-width: 6em">
+        {{ active_level }} of {{ active_devices }}
+    </div>
+    </div>
+    {% if active_level != active_devices %}
+    <h4>Active devices still using V1:</h4>
+    {% for hostname, dev in v1_problems.items %}
+        [ <a href="{{ dev }}">{{ hostname }}</a> ]
+    {% endfor %}
+    {% endif %}
+
+    <h3>Active V2 devices exclusive to V2</h3>
+    <p>Number of active V2 devices which only support V2.</p>
+    <div class="progress">
+    <div
+{% if exclusion < 50 %}
+        class="progress-bar progress-bar-danger"
+{% elif exclusion < 75 %}
+        class="progress-bar progress-bar-warning"
+{% else %}
+        class="progress-bar progress-bar-success"
+{% endif %}
+        role="progressbar" aria-valuenow="{{ exclusive_count }}"
+         aria-valuemin="0" aria-valuemax="{{ active_devices }}"
+         style="width: {{ exclusion }}%; min-width: 6em">
+        {{ exclusive_count }} of {{ active_devices }}
+    </div>
+    </div>
+    {% if exclusive_count != active_devices %}
+    <h4>Active V2 devices which are not exclusive to V2:</h4>
+    {% for hostname, dev in exclusive.items %}
+        [ <a href="{{ dev }}">{{ hostname }}</a> ]
+    {% endfor %}
+    {% endif %}
+
+    <h3>Migration of active devices to enabled V2 healthchecks</h3>
+    <p>Number of active devices with enabled health checks undefined in the database.</p>
+    <div class="progress">
+    <div
+{% if hc_percent < 50 %}
+        class="progress-bar progress-bar-danger"
+{% elif hc_percent < 75 %}
+        class="progress-bar progress-bar-warning"
+{% else %}
+        class="progress-bar progress-bar-success"
+{% endif %}
+        role="progressbar" aria-valuenow="{{ healthchecks }}"
+         aria-valuemin="0" aria-valuemax="{{ active_health }}"
+         style="width: {{ hc_percent }}%; min-width: 6em">
+        {{ healthchecks }} of {{ active_health }}
+    </div>
+    </div>
+    {% if health_check_level > 0 %}
+    <h4>Active devices still using healthchecks in the database:</h4>
+    {% for hostname, dev in db_healthchecks.items %}
+        [ <a href="{{ dev }}">{{ hostname }}</a> ]
+    {% endfor %}
+    {% endif %}
+
+    <h3>Active devices with enabled healthchecks</h3>
+    <p>Number of active devices with an enabled healthcheck.</p>
+    <div class="progress">
+    <div
+{% if no_hc_percent < 25 %}
+        class="progress-bar progress-bar-danger"
+{% elif no_hc_percent < 50 %}
+        class="progress-bar progress-bar-warning"
+{% else %}
+        class="progress-bar progress-bar-success"
+{% endif %}
+        role="progressbar" aria-valuenow="{{ nonhc_devices }}"
+         aria-valuemin="0" aria-valuemax="{{ active_health }}"
+         style="width: {{ no_hc_percent }}%; min-width: 6em">
+        {{ nonhc_devices }} of {{ active_health }}
+    </div>
+    </div>
+    {% if no_healthcheck %}
+    <h4>Active devices without V2 healthchecks:</h4>
+        <ul>
+    {% for hostname, dev_url in no_healthcheck.items %}
+        <li><a href="{{ dev_url }}">{{ hostname }}</a> {{ templates|get_item:hostname }}</li>
+    {% endfor %}
+        </ul>
+    {% endif %}
+
+{% endblock %}

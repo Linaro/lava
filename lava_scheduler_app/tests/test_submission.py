@@ -2,6 +2,7 @@
 import logging
 import sys
 import warnings
+import yaml
 from dashboard_app.models import BundleStream
 
 from django.contrib.auth.models import Group, Permission, User
@@ -18,6 +19,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     DeviceDictionary,
     _check_exclusivity,
+    is_deprecated_json,
 )
 import simplejson
 
@@ -83,22 +85,20 @@ class ModelFactory(object):
         self.make_device(device_type)
         return device_type
 
-    def make_device_type(self, name=None, health_check_job=None):
+    def make_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
-        device_type, created = DeviceType.objects.get_or_create(
-            name=name, health_check_job=health_check_job)
+        device_type, created = DeviceType.objects.get_or_create(name=name)
         if created:
             device_type.save()
         logging.debug("asking for a device of type %s", device_type.name)
         return device_type
 
-    def make_hidden_device_type(self, name=None, health_check_job=None):
+    def make_hidden_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
         device_type, created = DeviceType.objects.get_or_create(
-            owners_only=True,
-            name=name, health_check_job=health_check_job)
+            owners_only=True, name=name)
         if created:
             device_type.save()
         logging.debug("asking for a device of type %s", device_type.name)
@@ -138,6 +138,13 @@ class ModelFactory(object):
 
     def make_job_json(self, **kw):
         return simplejson.dumps(self.make_job_data(**kw), sort_keys=True, indent=4 * ' ')
+
+    def make_invalid_job_json(self, **kw):
+        actions = [{'command': 'invalid_command'}]
+        return simplejson.dumps(self.make_job_data(actions, **kw), sort_keys=True, indent=4 * ' ')
+
+    def make_job_yaml(self, **kw):
+        return yaml.dump(self.make_job_data(**kw))
 
     def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
@@ -688,6 +695,13 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
             ValueError, TestJob.from_json_and_user, job_json,
             self.factory.make_user())
         self.factory.cleanup()
+
+    def test_is_deprecated_json(self):
+        self.assertTrue(is_deprecated_json(self.factory.make_job_json()))
+        self.assertFalse(is_deprecated_json(self.factory.make_job_yaml()))
+
+        invalid_job_data = self.factory.make_invalid_job_json()
+        self.assertFalse(is_deprecated_json(invalid_job_data))
 
 
 class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors

@@ -332,8 +332,8 @@ template syntax) for nexus 10 will look like the following::
  {% extends 'nexus10.jinja2' %}
  {% set adb_serial_number = 'R32D300FRYP' %}
  {% set fastboot_serial_number = 'R32D300FRYP' %}
- {% set adb_command = 'adb -s R32D300FRYP' %}
- {% set fastboot_command = 'fastboot -s R32D300FRYP' %}
+ {% set fastboot_options = ['-u'] %}
+ {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
  {% set connection_command = 'adb -s R32D300FRYP shell' %}
  {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 
@@ -344,6 +344,8 @@ The corresponding :term:`device type` template for nexus 10 is as follows::
  device_type: nexus10
  adb_serial_number: {{ adb_serial_number|default('0000000000') }}
  fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
+ fastboot_options: {{ fastboot_options|default([]) }}
+ device_info: [{'board_id': 'R32D300FRYP'}]
 
  {% block vland %}
  {# skip the parameters dict at top level #}
@@ -386,12 +388,11 @@ like the following for a nexus 10 device:
  commands:
      connect: adb -s R32D300FRYP shell
      soft_reboot: adb -s R32D300FRYP reboot bootloader
-     adb_command: adb -s R32D300FRYP
-     fastboot_command: fastboot -s R32D300FRYP
  device_type: nexus10
  adb_serial_number: R32D300FRYP
  fastboot_serial_number: R32D300FRYP
-
+ fastboot_options: ['-u']
+ device_info: [{'board_id': 'R32D300FRYP'}]
 
  actions:
    deploy:

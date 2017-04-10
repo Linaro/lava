@@ -92,6 +92,10 @@ urlpatterns = [
         include('lava_scheduler_app.urls')),
 ]
 
+if settings.USE_DEBUG_TOOLBAR:
+    import debug_toolbar
+    urlpatterns.append(url(r'^__debug__/', include(debug_toolbar.urls)))
+
 try:
     import hijack
     from hijack.urls import urlpatterns as hijack_urlpatterns

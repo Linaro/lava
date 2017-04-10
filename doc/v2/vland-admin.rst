@@ -1,4 +1,4 @@
-.. index:: vland
+.. index:: vland - admin
 
 .. _admin_vland_lava:
 

@@ -5,8 +5,8 @@
 Standard test job for QEMU - Jessie amd64
 #########################################
 
-The first standard job to look at is a small step on from the first
-example job:
+The first standard job to look at is a small step on from the first example
+job:
 
 .. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
      :code: yaml

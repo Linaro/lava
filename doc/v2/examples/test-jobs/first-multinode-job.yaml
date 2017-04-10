@@ -7,10 +7,8 @@ timeouts:
     minutes: 10
   action:
     minutes: 2
-  test:
-    minutes: 3
   connection:
-   minutes: 4
+    minutes: 4
   actions:
     multinode-test:
       minutes: 5

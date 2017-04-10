@@ -218,7 +218,7 @@ Extra dependencies
 The ``lava`` metapackage brings in extra dependencies which may be
 useful on some instances.
 
-.. index:: backports
+.. index:: backports, jessie-backports, install using backports
 
 .. _install_debian_jessie:
 
@@ -378,6 +378,8 @@ proxify the same base URL. For instance you can have::
 Having two different base URLs is more awkward to setup. In this case you will
 have to also setup Apache modules like `Substitute` to alter the HTML content
 on the fly. This is not a recommended setup.
+
+.. index:: superuser, create superuser
 
 .. _create_superuser:
 

@@ -12,9 +12,7 @@ queries.
 Whenever you look for support for LAVA, there are some guidelines
 to follow:
 
-.. index::
-   single: pastebin
-   single: support guidelines
+.. index:: support guidelines
 
 .. _guidelines:
 
