@@ -50,6 +50,9 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-target-ip
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-target-mac
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-reference
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-add-keys
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-add-sources
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-install-packages
 
 # android specific
 #lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
