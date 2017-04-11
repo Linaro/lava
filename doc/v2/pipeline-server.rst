@@ -323,7 +323,7 @@ If you have changed the name or location of the master certificate or the
 location of the slave certificates, specify those locations and names
 explicitly::
 
- # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
+ # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
  # SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d"
 
 .. note:: Each master needs to find the **secret** key for that master and the
