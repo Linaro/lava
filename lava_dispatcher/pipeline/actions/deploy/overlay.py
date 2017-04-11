@@ -163,7 +163,13 @@ class OverlayAction(DeployAction):
         for fname in self.scripts_to_copy:
             with open(fname, 'r') as fin:
                 output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
-                self.logger.debug("Creating %s", output_file)
+                if os.path.exists(output_file):
+                    self.logger.debug(
+                        "Applying distro script: distro/%s/%s",
+                        self.parameters['deployment_data']['distro'],
+                        os.path.basename(fname))
+                else:
+                    self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())

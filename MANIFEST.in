@@ -2,6 +2,10 @@ include README
 recursive-include lava_dispatcher/default-config *.conf
 include lava_dispatcher/lava_test_shell/*
 include lava_dispatcher/pipeline/lava_test_shell/*
+include lava_dispatcher/pipeline/lava_test_shell/distro/oe/*
+include lava_dispatcher/pipeline/lava_test_shell/distro/fedora/*
+include lava_dispatcher/pipeline/lava_test_shell/distro/debian/*
+include lava_dispatcher/pipeline/lava_test_shell/distro/ubuntu/*
 include .testr.conf
 include .gitreview
 include COPYING
