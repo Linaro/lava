@@ -130,19 +130,20 @@ class Scp(ConnectSsh):
 
     def run(self, connection, max_end_time, args=None):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
-        host_address = None
         if not path:
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error("%s: could not find details of '%s'", self.name, self.key)
             return connection
         overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
-        if not self.primary:
+        if self.primary:
+            host_address = self.job.device['actions']['deploy']['methods']['ssh']['host']
+        else:
             self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
             host_address = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
             self.logger.debug("Using common data for host: %s", host_address)
-        elif not host_address:
+        if not host_address:
             self.errors = "%s: could not find host for deployment" % self.name
-            self.logger.error("%s: could not find host for deployment", self.name)
+            self.logger.error("%s: could not find host for deployment using %s", self.name, self.key)
             return connection
         destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
         command = self.scp[:]  # local copy
