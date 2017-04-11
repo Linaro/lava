@@ -23,6 +23,7 @@ import os
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
+    InfrastructureError,
     JobError,
     Pipeline,
 )
