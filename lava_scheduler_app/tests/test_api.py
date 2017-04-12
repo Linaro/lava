@@ -305,12 +305,14 @@ actions:
         device.save()
         server = self.server_proxy('test', 'test')
         self.assertEqual(
-            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01', 'offline_by': None},
+            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
+                'offline_by': None, 'is_pipeline': False},
             server.scheduler.get_device_status('black01'))
         offline_device = self.factory.make_device(device_type=device_type, hostname="black02", status=Device.OFFLINE)
         offline_device.save()
         self.assertEqual(
-            {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02', 'offline_by': ''},
+            {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02',
+                'offline_by': '', 'is_pipeline': False},
             server.scheduler.get_device_status('black02')
         )
 

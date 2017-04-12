@@ -407,6 +407,7 @@ class SchedulerAPI(ExposedAPI):
             device_dict["job"] = None
             device_dict["offline_since"] = None
             device_dict["offline_by"] = None
+            device_dict["is_pipeline"] = device.is_pipeline
 
             if device.current_job:
                 device_dict["job"] = device.current_job.pk
