@@ -54,44 +54,52 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.apply_overlay.ApplyOverlaySparseRootfs, name: apply-overlay-sparse-rootfs}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot_flash_action}
 - class: actions.boot.fastboot.BootFastbootAction

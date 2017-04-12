@@ -236,6 +236,7 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(UefiMenuSelector())
             self.internal_pipeline.add_action(MenuReset())
             self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(ExportDeviceEnvironment())
             self.internal_pipeline.add_action(LxcAddDeviceAction())
         else:
             self.internal_pipeline.add_action(UefiSubstituteCommands())
