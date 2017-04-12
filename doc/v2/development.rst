@@ -89,7 +89,7 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-See also :ref:`testing_pipeline_code`.
+See also :ref:`testing_pipeline_code` and :ref:`developer_preparations`
 
 Functional testing
 ==================
@@ -634,8 +634,9 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
-.. seealso:: :ref:`testing_pipeline_code` for examples of how to run
-   individual unit tests or all unit tests within a class or module.
+.. seealso:: :ref:`developer_preparations` and :ref:`testing_pipeline_code` for
+   examples of how to run individual unit tests or all unit tests within a
+   class or module.
 
 LAVA database model visualization
 *********************************

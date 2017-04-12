@@ -24,12 +24,48 @@ compared to the old lava-deployment-tool buildouts.
    environment and re-install. Backports to stable in Debian are always built
    in a stable chroot or VM for this reason.
 
+.. index:: developer - preparation, lava-dev
+
+.. _developer_preparations:
+
+Preparing for LAVA development
+==============================
+
+LAVA provides a ``lava-dev`` package which supplies all the dependencies which
+are required :ref:`to build local LAVA packages <dev_builds>`. This package is
+intended primarily for developers working on laptops and other systems where
+a full desktop environment is already installed::
+
+  $ sudo apt install lava-dev
+
+.. note:: There are problems with the version of ``python-sphinx`` in jessie
+   for building the documentation. Newer versions of ``lava-dev`` depend on
+   the version of ``python-sphinx`` from ``jessie-backports``::
+
+    $ sudo apt -t jessie-backports install python-sphinx
+    $ sudo apt install lava-dev
+
+If you want to build local packages on a headless box or a system with limited
+space, you can trim the set of dependencies by pre-installing
+``pinentry-curses`` instead of the default ``pinentry-gtk2``. QEMU is still
+required and will bring in some X11 dependencies but these are minimal compared
+to the full dependencies of ``pinentry-gtk2`` which is brought in via
+``gnupg2``::
+
+  $ sudo apt install pinentry-curses
+  $ sudo apt-get --purge remove pinentry-gtk2
+  $ sudo apt-get --purge autoremove
+  $ sudo apt install lava-dev
+
 .. index:: developer-builds
 
 .. _dev_builds:
 
 Developer package build
 ***********************
+
+.. seealso:: :ref:`developer_preparations` and
+   :ref:`development_pre_requisites`
 
 The ``lava-dev`` package includes a helper script which is also present in the
 source code in ``lava-server/share/``. The script requires a normal Debian
