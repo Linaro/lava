@@ -30,7 +30,10 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseRootfs
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
+    ApplyOverlayImage,
+    ApplyOverlaySparseImage,
+)
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
@@ -144,14 +147,14 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 download = DownloaderAction(image, fastboot_dir)
                 download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
                 self.internal_pipeline.add_action(download)
-                if image == 'rootfs':
+                if parameters['images'][image].get('apply-overlay', False):
                     if self.test_needs_overlay(parameters):
                         self.internal_pipeline.add_action(
-                            ApplyOverlaySparseRootfs())
-                    if self.test_needs_deployment(parameters):
-                        self.internal_pipeline.add_action(
-                            DeployDeviceEnvironment())
-
+                            ApplyOverlaySparseImage(image))
+                if self.test_needs_overlay(parameters) and \
+                   self.test_needs_deployment(parameters):
+                    self.internal_pipeline.add_action(
+                        DeployDeviceEnvironment())
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
