@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.action import (
 )
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
+# pylint: disable=unused-argument,no-self-use
 
 
 class BaseSignalHandler(object):
@@ -235,7 +236,7 @@ class Protocol(object):
         """
         return False
 
-    def _api_select(self, data):  # pylint: disable=no-self-use
+    def _api_select(self, data, action=None):  # pylint: disable=no-self-use
         if not data:
             return None
         raise LAVABug("'_api_select' not implemented")

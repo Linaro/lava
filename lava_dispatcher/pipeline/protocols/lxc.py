@@ -19,12 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import re
 import os
+import yaml
 import pexpect
 import logging
+import traceback
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
+    LAVABug,
+    TestError,
+    JobError,
     Timeout,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand
@@ -35,7 +41,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 from lava_dispatcher.pipeline.utils.filesystem import lxc_path
 
 
-class LxcProtocol(Protocol):
+class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     """
     Lxc API protocol.
     """
@@ -63,12 +69,12 @@ class LxcProtocol(Protocol):
         self.verbose = parameters['protocols'][self.name].get('verbose', False)
         self.fastboot_reboot = parameters.get('reboot_to_fastboot', True)
         self.custom_lxc_path = False
-        if not LXC_PATH == lxc_path(parameters['dispatcher']):
+        if LXC_PATH != lxc_path(parameters['dispatcher']):
             self.custom_lxc_path = True
         self.logger = logging.getLogger('dispatcher')
 
     @classmethod
-    def accepts(cls, parameters):
+    def accepts(cls, parameters):  # pylint: disable=too-many-return-statements
         if 'protocols' not in parameters:
             return False
         if 'lava-lxc' not in parameters['protocols']:
@@ -88,6 +94,30 @@ class LxcProtocol(Protocol):
         Called from the job at the start of the run step.
         """
         pass
+
+    def _api_select(self, data, action=None):
+        if not data:
+            raise TestError("Protocol called without any data")
+        if not action:
+            raise LAVABug('LXC protocol needs to be called from an action.')
+        if 'pre-os-command' in data:
+            action.logger.info("Running pre OS command.")
+            command = action.job.device.pre_os_command
+            if not action.run_command(command.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % command)
+
+    def __call__(self, *args, **kwargs):
+        action = None
+        if kwargs is not None:
+            if 'self' in kwargs:
+                action = kwargs['self']
+        logger = action.logger if action else logging.getLogger("dispatcher")
+        try:
+            return self._api_select(args, action=action)
+        except yaml.YAMLError as exc:
+            msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+            logger.exception(msg)
+            raise JobError("Invalid call to %s %s" % (self.name, exc))
 
     def finalise_protocol(self, device=None):
         """Called by Finalize action to power down and clean up the assigned
