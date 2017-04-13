@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.menus.menus import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
@@ -103,7 +104,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
         return connection
 
 
-class UefiMenuSelector(SelectorMenuAction):
+class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         super(UefiMenuSelector, self).__init__()
@@ -149,7 +150,7 @@ class UefiMenuSelector(SelectorMenuAction):
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
-        if self.job.device.pre_os_command:
+        if self.job.device.pre_os_command and LxcProtocol not in self.job.protocols:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
             if not self.run_command(command.split(' '), allow_silent=True):

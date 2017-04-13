@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -118,9 +119,31 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
+    def test_lxc_api(self):
+        job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
+                                            mkdtemp())
+        job.logger = DummyLogger()
+        description_ref = pipeline_reference('hikey-oe.yaml')
+        job.validate()
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
+        self.assertEqual(len(job.protocols), 1)
+        self.assertIsNone(job.device.pre_os_command)  # FIXME: a real device config would typically need this.
+        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
+        select = [action for action in uefi_menu.internal_pipeline.actions if action.name == 'uefi-menu-selector'][0]
+        self.assertIn(LxcProtocol.name, select.parameters.keys())
+        self.assertIn('protocols', select.parameters.keys())
+        self.assertIn(LxcProtocol.name, select.parameters['protocols'].keys())
+        self.assertEqual(len(select.parameters['protocols'][LxcProtocol.name]), 1)
+        for calling in select.parameters['protocols'][LxcProtocol.name]:
+            self.assertEqual(calling['action'], select.name)
+            self.assertEqual(calling['request'], 'pre-os-command')
+
+    @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
+        job.logger = DummyLogger()
         description_ref = pipeline_reference('hi6220-hikey.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
