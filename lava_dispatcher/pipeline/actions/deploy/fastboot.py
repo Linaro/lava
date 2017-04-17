@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import (
@@ -43,6 +44,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
+from lava_dispatcher.pipeline.utils.udev import get_usb_devices
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
@@ -277,6 +279,7 @@ class FastbootFlashAction(DeployAction):
         flash_cmds = flash_cmds_order + list(flash_cmds)
 
         for flash_cmd in flash_cmds:
+            self.logger.info("Rebooting device to refresh ptable.")
             src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
             if not src:
                 continue
@@ -294,4 +297,49 @@ class FastbootFlashAction(DeployAction):
             if command_output and 'error' in command_output:
                 raise InfrastructureError("Unable to flash %s using fastboot: %s" %
                                           (flash_cmd, command_output))
+            # See: https://projects.linaro.org/browse/LAVA-920
+            # NOTE: Though the following appears as a workaround for HiKey
+            #       firmware, it is always safe to reboot to bootloader after
+            #       flashing the ptable (partition table) for any device,
+            #       provided the device enters fastboot mode after a
+            #       'fastboot reboot-bootloader' command
+            if flash_cmd in ['ptable']:
+                if self.job.device.hard_reset_command:
+                    # It is more reliable in some devices (like HiKey) to hard
+                    # reset, than to issue 'fastboot reboot-bootloader' which
+                    # sometimes hungs the device in UEFI startup.
+                    command = self.job.device.hard_reset_command
+                    # FIXME: run_command should handle commands that are string
+                    #        or list properly.
+                    if isinstance(command, list):
+                        for cmd in command:
+                            if not self.run_command(cmd.split(' '),
+                                                    allow_silent=True):
+                                raise InfrastructureError("%s failed" % cmd)
+                    else:
+                        if not self.run_command(command.split(' '),
+                                                allow_silent=True):
+                            raise InfrastructureError("%s failed" % command)
+                else:
+                    fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
+                                    'fastboot', '-s', serial_number,
+                                    'reboot-bootloader'] + fastboot_opts
+                    command_output = self.run_command(fastboot_cmd)
+                    if command_output and 'error' in command_output:
+                        raise InfrastructureError(
+                            "Unable to reboot-bootloader: %s"
+                            % (command_output))
+                self.logger.info("Get USB device(s) ...")
+                device_paths = []
+                while True:
+                    device_paths = get_usb_devices(self.job,
+                                                   logger=self.logger)
+                    if device_paths:
+                        break
+                for device in device_paths:
+                    lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
+                               os.path.realpath(device)]
+                    log = self.run_command(lxc_cmd)
+                self.logger.debug(log)
+                self.logger.debug("%s: device %s added", lxc_name, device)
         return connection
