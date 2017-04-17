@@ -182,7 +182,7 @@ def get_usb_devices(job, logger=None):
                 # try with board id alone
                 if device.get('ID_SERIAL_SHORT') == board_id:
                     device_paths.add(device.device_node)
-    if logger:
+    if logger and device_paths:
         logger.debug("Adding %s", ', '.join(device_paths))
     return list(device_paths)
 
