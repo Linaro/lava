@@ -80,6 +80,8 @@ actions:
     protocols:
       lava-lxc:
       # other action could be boot-fastboot
+      # actual test jobs would be better doing this in uefi-commands
+      # to make the process clearer in the log files.
       - action: uefi-menu-selector
         request: pre-os-command
         timeout:
