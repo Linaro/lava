@@ -551,6 +551,10 @@ class Command(BaseCommand):
         self.logger = logging.getLogger('dispatcher-master')
 
     def handle(self, *args, **options):
+        # Set a proper umask value
+        os.umask(0o022)
+
+        # Set the logging level
         if options['level'] == 'ERROR':
             self.logger.setLevel(logging.ERROR)
         elif options['level'] == 'WARN':

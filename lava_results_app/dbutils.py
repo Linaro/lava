@@ -89,7 +89,7 @@ def create_metadata_store(results, job, level):
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
     if not os.path.exists(os.path.dirname(meta_filename)):
-        os.makedirs(os.path.dirname(meta_filename))
+        os.makedirs(os.path.dirname(meta_filename), mode=0o755)
     if os.path.exists(meta_filename):
         with open(meta_filename, 'r') as existing_store:
             data = yaml.load(existing_store)
