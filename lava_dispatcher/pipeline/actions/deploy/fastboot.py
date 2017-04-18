@@ -279,7 +279,6 @@ class FastbootFlashAction(DeployAction):
         flash_cmds = flash_cmds_order + list(flash_cmds)
 
         for flash_cmd in flash_cmds:
-            self.logger.info("Rebooting device to refresh ptable.")
             src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
             if not src:
                 continue
@@ -304,6 +303,7 @@ class FastbootFlashAction(DeployAction):
             #       provided the device enters fastboot mode after a
             #       'fastboot reboot-bootloader' command
             if flash_cmd in ['ptable']:
+                self.logger.info("Rebooting device to refresh ptable.")
                 if self.job.device.hard_reset_command:
                     # It is more reliable in some devices (like HiKey) to hard
                     # reset, than to issue 'fastboot reboot-bootloader' which
