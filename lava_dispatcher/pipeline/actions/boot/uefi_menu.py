@@ -150,12 +150,14 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
-        if self.job.device.pre_os_command and LxcProtocol not in self.job.protocols:
+        lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
+        if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
             if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s failed" % command)
         if not connection:
+            self.logger.debug("Existing connection in %s", self.name)
             return connection
         connection.prompt_str = self.selector.prompt
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR

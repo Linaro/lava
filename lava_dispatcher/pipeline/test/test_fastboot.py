@@ -135,6 +135,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIn('protocols', select.parameters.keys())
         self.assertIn(LxcProtocol.name, select.parameters['protocols'].keys())
         self.assertEqual(len(select.parameters['protocols'][LxcProtocol.name]), 1)
+        lxc_active = any([protocol for protocol in job.protocols if protocol.name == LxcProtocol.name])
+        self.assertTrue(lxc_active)
         for calling in select.parameters['protocols'][LxcProtocol.name]:
             self.assertEqual(calling['action'], select.name)
             self.assertEqual(calling['request'], 'pre-os-command')

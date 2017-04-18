@@ -100,17 +100,20 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             raise TestError("Protocol called without any data")
         if not action:
             raise LAVABug('LXC protocol needs to be called from an action.')
-        if 'pre-os-command' in data:
-            action.logger.info("Running pre OS command.")
-            command = action.job.device.pre_os_command
-            if not action.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s failed" % command)
+        for item in data:
+            if 'request' not in item:
+                raise LAVABug("Malformed protocol request data.")
+            if 'pre-os-command' in item['request']:
+                action.logger.info("Running pre OS command via protocol.")
+                command = action.job.device.pre_os_command
+                if not action.run_command(command.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % command)
 
     def __call__(self, *args, **kwargs):
         action = None
         if kwargs is not None:
-            if 'self' in kwargs:
-                action = kwargs['self']
+            if 'action' in kwargs:
+                action = kwargs['action']
         logger = action.logger if action else logging.getLogger("dispatcher")
         try:
             return self._api_select(args, action=action)
