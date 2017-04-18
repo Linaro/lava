@@ -79,5 +79,5 @@ def debian_package_version():
     if os.path.exists(changelog):
         deb_version = subprocess.check_output((
             'dpkg-query', '-W', "-f=${Version}\n", 'lava-server')).strip().decode('utf-8')
-        # example version returned would be '2016.11'
-        return deb_version.split('-')[0]
+        # example version returned would be '2016.11-1'
+        return deb_version
