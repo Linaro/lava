@@ -892,7 +892,7 @@ class Device(RestrictedResource):
         return True
 
     def put_into_looping_mode(self, user, reason):
-        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+        if self.status != Device.OFFLINE:
             return
         logger = logging.getLogger('dispatcher-master')
         self.health_status = Device.HEALTH_LOOPING

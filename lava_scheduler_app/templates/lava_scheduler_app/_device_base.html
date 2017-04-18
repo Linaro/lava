@@ -231,6 +231,7 @@
             </div>
           </div>
         </div>
+  {% if device.status == device.OFFLINE %}
         <div class="btn-group btn-group-justified">
           <div class="btn-group">
             <button class="btn btn-warning" data-toggle="modal" data-target="#loopingDialog">Looping mode</button>
@@ -263,6 +264,7 @@
             </div>
           </div>
         </div>
+  {% endif %}
 {% endif %}
 {% if show_forcehealthcheck %}
         <div class="btn-group btn-group-justified">
