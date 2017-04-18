@@ -118,7 +118,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
+    @unittest.skipIf(infrastructure_error('lxc-info') or infrastructure_error('img2simg'), "lxc and img2simg not installed")
     def test_lxc_api(self):
         job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
                                             mkdtemp())

@@ -58,14 +58,18 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.apply_overlay.ApplyOverlaySparseImage, name: apply-overlay-sparse-image}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot_flash_action}
 - class: actions.boot.uefi_menu.UefiMenuAction
@@ -76,6 +80,7 @@
   - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
   - {class: menus.menus.MenuReset, name: menu-reset}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
