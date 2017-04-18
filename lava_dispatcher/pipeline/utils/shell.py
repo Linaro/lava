@@ -60,3 +60,12 @@ def infrastructure_error(path):
     if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
         return "%s is not executable" % exefile
     return None
+
+
+def infrastructure_error_multi_paths(path_list):
+    """
+    Similar to infrastructure_error, but accepts a list of paths.
+    """
+    for path in path_list:
+        if infrastructure_error(path):
+            return infrastructure_error(path)

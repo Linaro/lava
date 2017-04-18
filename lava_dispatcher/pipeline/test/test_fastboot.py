@@ -24,7 +24,10 @@ import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.shell import (
+    infrastructure_error,
+    infrastructure_error_multi_paths,
+)
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
@@ -118,7 +121,9 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error('lxc-info') or infrastructure_error('img2simg'), "lxc and img2simg not installed")
+    @unittest.skipIf(infrastructure_error_multi_paths(
+        ['lxc-info', 'img2simg', 'simg2img']),
+        "lxc or img2simg or simg2img not installed")
     def test_lxc_api(self):
         job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
                                             mkdtemp())
