@@ -181,7 +181,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         LAVAError) if it fails.
         If simulate is True, then print the pipeline description.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version()
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
