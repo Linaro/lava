@@ -89,7 +89,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         self.assertEqual(testdef.run_levels,
-                         {'smoke-tests': 0, 'singlenode-advanced': 1})
+                         {'smoke-tests': 0, 'singlenode-advanced': 0})
         if not testdef.valid:
             # python3 compatible
             print(testdef.errors)  # pylint: disable=superfluous-parens

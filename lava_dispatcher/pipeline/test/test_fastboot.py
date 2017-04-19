@@ -171,7 +171,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 '1.7.3.8': '1_android-meminfo',
                 '1.7.3.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
-        for testdef in testdef.test_list:
+        for testdef in testdef.test_list[0]:
             self.assertEqual('git', testdef['from'])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),

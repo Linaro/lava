@@ -243,48 +243,47 @@ class TestShellAction(TestAction):
 
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
-        stage = self.get_namespace_data(action='test-definition', label='lava-test-shell', key='stages')
+        running = self.parameters['stage']
         pre_command_list = self.get_namespace_data(action='test', label="lava-test-shell", key='pre-command-list')
         lava_test_results_dir = self.get_namespace_data(
             action='test', label='results', key='lava_test_results_dir')
         lava_test_sh_cmd = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
 
-        for running in xrange(stage + 1):
-            if pre_command_list and running == 0:
-                for command in pre_command_list:
-                    connection.sendline(command)
+        if pre_command_list and running == 0:
+            for command in pre_command_list:
+                connection.sendline(command)
 
-            self.logger.debug("Using %s" % lava_test_results_dir)
-            connection.sendline('ls -l %s/' % lava_test_results_dir)
-            if lava_test_sh_cmd:
-                connection.sendline('export SHELL=%s' % lava_test_sh_cmd)
+        self.logger.debug("Using %s" % lava_test_results_dir)
+        connection.sendline('ls -l %s/' % lava_test_results_dir)
+        if lava_test_sh_cmd:
+            connection.sendline('export SHELL=%s' % lava_test_sh_cmd)
 
-            try:
-                with connection.test_connection() as test_connection:
-                    # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                    test_connection.sendline(
-                        "%s/bin/lava-test-runner %s/%s" % (
-                            lava_test_results_dir,
-                            lava_test_results_dir,
-                            running),
-                        delay=self.character_delay)
+        try:
+            with connection.test_connection() as test_connection:
+                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                test_connection.sendline(
+                    "%s/bin/lava-test-runner %s/%s" % (
+                        lava_test_results_dir,
+                        lava_test_results_dir,
+                        running),
+                    delay=self.character_delay)
 
-                    self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
-                    if self.timeout.duration > self.connection_timeout.duration:
-                        self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
-                        test_connection.timeout = self.timeout.duration
-                    else:
-                        self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
-                        test_connection.timeout = self.connection_timeout.duration
+                self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+                if self.timeout.duration > self.connection_timeout.duration:
+                    self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                    test_connection.timeout = self.timeout.duration
+                else:
+                    self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
+                    test_connection.timeout = self.connection_timeout.duration
 
-                    while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                        pass
-            finally:
-                if self.current_run is not None:
-                    self.logger.error("Marking unfinished test run as failed")
-                    self.current_run["duration"] = "%.02f" % (time.time() - self.start)
-                    self.logger.results(self.current_run)  # pylint: disable=no-member
-                    self.current_run = None
+                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                    pass
+        finally:
+            if self.current_run is not None:
+                self.logger.error("Marking unfinished test run as failed")
+                self.current_run["duration"] = "%.02f" % (time.time() - self.start)
+                self.logger.results(self.current_run)  # pylint: disable=no-member
+                self.current_run = None
 
         # Only print if the report is not empty
         if self.report:
