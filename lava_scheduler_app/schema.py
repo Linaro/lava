@@ -1,7 +1,15 @@
 import re
 from voluptuous import (
-    Schema, Required, All, Length,
-    Any, Invalid, Optional, MultipleInvalid, Match
+    All,
+    Any,
+    Exclusive,
+    Invalid,
+    Length,
+    Match,
+    MultipleInvalid,
+    Optional,
+    Required,
+    Schema
 )
 
 
@@ -14,32 +22,37 @@ class SubmissionException(UserWarning):
 
 def _timeout_schema():
     return Schema({
-        'days': int, 'hours': int, 'minutes': int, 'seconds': int
+        Exclusive('days', 'timeout_unit'): int,
+        Exclusive('hours', 'timeout_unit'): int,
+        Exclusive('minutes', 'timeout_unit'): int,
+        Exclusive('seconds', 'timeout_unit'): int
     })
 
 
 def _deploy_tftp_schema():
     return Schema({
         Required('to'): 'tftp',
+        Optional('timeout'): _timeout_schema(),
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
         Optional('nbdroot'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
+        Optional('modules'): {Required('url'): str},
     }, extra=True)
 
 
 def _job_deploy_schema():
     return Schema({
         Required('to'): str,
-        Optional('timeouts'): _timeout_schema(),
+        Optional('timeout'): _timeout_schema(),
     }, extra=True)
 
 
 def _auto_login_schema():
     return Schema({
-        Optional('login_prompt'): str,
-        Optional('username'): str,
+        Required('login_prompt'): str,
+        Required('username'): str,
         Optional('password_prompt'): str,
         Optional('password'): str
     })
@@ -63,7 +76,7 @@ def _context_schema():
 def _job_boot_schema():
     return Schema({
         Required('method'): str,
-        Optional('timeouts'): _timeout_schema(),
+        Optional('timeout'): _timeout_schema(),
         Optional('auto_login'): _auto_login_schema(),
         Optional('parameters'): _simple_params(),
     }, extra=True)
@@ -78,7 +91,7 @@ def _inline_schema():
     })
 
 
-def _job_definition_schema():
+def _test_definition_schema():
     return Schema([
         {
             Required('repository'): Any(_inline_schema(), str),
@@ -93,15 +106,15 @@ def _job_definition_schema():
 
 def _job_test_schema():
     return Schema({
-        Required('definitions'): _job_definition_schema(),
-        Optional('timeouts'): _timeout_schema(),
+        Required('definitions'): _test_definition_schema(),
+        Optional('timeout'): _timeout_schema(),
     }, extra=True)
 
 
 def _job_monitor_schema():
     return Schema({
         Required('monitors'): _monitor_def_schema(),
-        Optional('timeouts'): _timeout_schema()
+        Optional('timeout'): _timeout_schema()
     }, extra=True)
 
 
@@ -222,8 +235,15 @@ def _job_protocols_schema():
 def _job_timeout_schema():
     return Schema({
         Required('job'): _timeout_schema(),
-        Required('action'): _timeout_schema(),
-        'connection': _timeout_schema(),
+        Optional('action'): _timeout_schema(),
+        Optional('connection'): _timeout_schema(),
+        Optional('actions'): {
+            All(str): _timeout_schema()
+        },
+        Optional('connections'): {
+            All(str): _timeout_schema()
+        },
+
     }, extra=True)
 
 
@@ -237,17 +257,17 @@ def _job_schema():
         {
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
             Required('job_name'): All(str, Length(min=1, max=200)),
-            'priority': Any('high', 'medium', 'low'),
-            'protocols': _job_protocols_schema(),
-            'context': _context_schema(),
-            'metadata': dict,
-            'secrets': dict,
-            'tags': [str],
+            Optional('priority'): Any('high', 'medium', 'low'),
+            Optional('protocols'): _job_protocols_schema(),
+            Optional('context'): _context_schema(),
+            Optional('metadata'): dict,
+            Optional('secrets'): dict,
+            Optional('tags'): [str],
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
-            'notify': _job_notify_schema(),
-            'reboot_to_fastboot': bool
+            Optional('notify'): _job_notify_schema(),
+            Optional('reboot_to_fastboot'): bool
         }
     )
 

@@ -95,7 +95,7 @@ setup(
         'pyzmq',
         'jinja2',
         'django-auth-ldap >= 1.1.8',
-        'voluptuous',
+        'voluptuous >= 0.8.8',
         # dashboard
         'pygments >= 1.2',
 
