@@ -154,8 +154,23 @@ class JobTable(LavaTable):
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = tables.DateColumn(format="Nd, g:ia")
-    end_time = tables.DateColumn(format="Nd, g:ia")
+    submit_time = tables.DateColumn(format=u"Nd, g:ia")
+    end_time = tables.DateColumn(format=u"Nd, g:ia")
+
+    def render_status(self, record):
+        text = 'text-default'
+        if record.status == TestJob.COMPLETE:
+            text = 'text-success'
+        elif record.status == TestJob.RUNNING:
+            text = 'text-info'
+        elif record.status == TestJob.INCOMPLETE:
+            text = 'text-danger'
+        elif record.status in [TestJob.CANCELING, TestJob.CANCELED]:
+            text = 'text-warning'
+        elif record.status == TestJob.SUBMITTED:
+            text = 'text-muted'
+        return mark_safe('<span class="%s"><strong>%s</strong></span>' %
+                         (text, TestJob.STATUS_CHOICES[record.status][1]))
 
     def render_device(self, record):
         if record.actual_device:
