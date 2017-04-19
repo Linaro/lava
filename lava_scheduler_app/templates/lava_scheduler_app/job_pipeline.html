@@ -143,6 +143,12 @@
   </div>
 </div>
 
+{% if invalid_log_data %}
+<div class="alert alert-warning">
+  <p><strong>Unable to parse invalid logs:</strong> This is maybe a bug in LAVA that should be reported.</p>
+</div>
+{% endif %}
+
 {% if job.archived_job_file %}
 <div class="alert alert-info">
   <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>

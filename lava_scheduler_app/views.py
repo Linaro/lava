@@ -1365,6 +1365,8 @@ def job_detail(request, pk):
 
             except IOError:
                 log_data = []
+            except yaml.YAMLError:
+                log_data = None
 
         data.update({
             'device_data': description.get('device', {}),
@@ -1373,7 +1375,8 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'log_data': log_data,
+            'log_data': log_data if log_data else [],
+            'invalid_log_data': log_data is None,
             'default_section': default_section,
         })
 
