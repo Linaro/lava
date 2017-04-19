@@ -144,7 +144,10 @@ class UBootPrepareKernelAction(Action):
             if 'text_offset' in self.job.device['parameters']:
                 load_addr = self.job.device['parameters']['text_offset']
             arch = self.params['mkimage_arch']
-            self.create_uimage(filename, load_addr, False, arch, 'uImage')
+            use_xip = self.params.get('use_xip', False)
+            if use_xip:
+                self.logger.debug("Using xip")
+            self.create_uimage(filename, load_addr, use_xip, arch, 'uImage')
             new_kernel = os.path.dirname(old_kernel) + '/uImage'
             # overwriting namespace data
             self.set_namespace_data(
