@@ -31,7 +31,6 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class ResetDevice(Action):

@@ -23,7 +23,6 @@ from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
-    InfrastructureError,
     JobError,
     LAVABug,
     Pipeline,

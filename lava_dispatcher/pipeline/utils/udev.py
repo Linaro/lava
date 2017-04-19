@@ -20,7 +20,6 @@
 
 
 import pyudev
-import logging
 from lava_dispatcher.pipeline.action import Action, LAVABug
 
 

@@ -31,10 +31,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
-    ApplyOverlayImage,
-    ApplyOverlaySparseImage,
-)
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseImage
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
