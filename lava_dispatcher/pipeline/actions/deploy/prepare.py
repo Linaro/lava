@@ -59,6 +59,16 @@ class UBootPrepareKernelAction(Action):
         self.kernel_type = None
         self.mkimage_conversion = False
 
+    def append_dtb(self, kernel_file, dtb_file, dest_file):
+        self.logger.info("Appending %s to %s" % (dtb_file, kernel_file))
+        # Can't use cat here because it will be called with subprocess.check_output that catches stdout
+        cmd = ["dd", "if=%s" % kernel_file, "of=%s" % dest_file]
+        cmd2 = ["dd", "if=%s" % dtb_file, "of=%s" % dest_file, "oflag=append", "conv=notrunc"]
+        if not self.run_command(cmd):
+            raise InfrastructureError("DTB appending failed")
+        if not self.run_command(cmd2):
+            raise InfrastructureError("DTB appending failed")
+
     def create_uimage(self, kernel, load_addr, xip, arch, output):  # pylint: disable=too-many-arguments
         load_addr = int(load_addr, 16)
         uimage_path = '%s/%s' % (os.path.dirname(kernel), output)
@@ -115,6 +125,18 @@ class UBootPrepareKernelAction(Action):
             label='file',
             key='kernel'
         )
+        if self.params.get('append_dtb', False):
+            kernel_file = self.get_namespace_data(action='download_action', label='kernel', key='file')
+            dtb_file = self.get_namespace_data(action='download_action', label='dtb', key='file')
+            kerneldtb_file = os.path.join(os.path.dirname(kernel_file), 'kernel-dtb')
+            self.append_dtb(kernel_file, dtb_file, kerneldtb_file)
+            new_kernel = os.path.join(os.path.dirname(old_kernel), 'kernel-dtb')
+            self.set_namespace_data(
+                action='download_action',
+                label='kernel', key='file', value=kerneldtb_file)
+            self.set_namespace_data(
+                action='prepare-kernel',
+                label='file', key='kernel', value=new_kernel)
         if self.mkimage_conversion:
             self.logger.info("Converting downloaded kernel to a uImage")
             filename = self.get_namespace_data(action='download_action', label='kernel', key='file')
