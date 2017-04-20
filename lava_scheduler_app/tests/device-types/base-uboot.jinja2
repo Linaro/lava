@@ -12,15 +12,15 @@
           - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 
-{% set base_uboot_bootcmd = (
+{% set base_uboot_bootcmd = uboot_bootcmd|default(
 "          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
-{% set base_uboot_tftp_bootcmd = (
+{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
-{% set base_uboot_nfs_bootcmd = (
+{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
           - boot") -%}
 
