@@ -289,6 +289,12 @@ How many devices is too many for one worker?
   which run fewer, longer test jobs. Consider which devices are attached to which
   worker when balancing the load across the instance.
 
+* Consider the types of devices on the worker. Some deployment methods have
+  much larger I/O requirements than others. This can have a direct impact on
+  how many devices of a particular type should be assigned to workers.
+
+  .. seealso:: :ref:`bootloader_differences`
+
 .. index:: geographic locations
 
 .. _geography_and_workers:
@@ -332,6 +338,46 @@ as your expected scheduled downtime.
 .. caution:: A typical datacentre will not have the infrastructure to handle
    LAVA devices and is unlikely to provide the kind of prompt physical access
    which will be needed by the admins.
+
+.. _bootloader_differences:
+
+Differences between bootloader types
+====================================
+
+The bootloader types used by the devices attached to a worker can have a major
+impact on how many devices that worker can support. Some bootloaders are
+comparatively lightweight, as they depend on the device **pulling** files from
+the dispatcher during boot via a protocol like TFTP. This type of protocol
+tends to be quite forgiving on timing while transferring files. Other
+bootloaders (e.g. fastboot) work by **pushing** files to the device, which is
+often much more demanding. Sometimes the data needs to be modified as it is
+pushed *and* it is common that the device receiving the data cares about the
+timing of the incoming data. A small delay at an inconvenient point may cause
+an unexpected failure. When running multiple tests in parallel, the software
+pushing the files may cause problems - it is designed to maximise the speed of
+the first transfer at the expense of anything else. This "greedy" model means
+that later requests running concurrently may block, thereby causing test jobs
+to fail.
+
+For this reason, we recommend that ``fastboot`` type devices are restricted to
+**one device, one CPU core** (not a hyperthread, a real silicon core). This may
+well apply to other bootloaders which require files to be pushed to devices but
+has been most clearly shown with ``fastboot``.
+
+Take particular care if the worker is a virtual machine and ensure that the
+VM has as many cores as it has fastboot devices.
+
+Also be careful if running the **master** and worker(s) on the same physical
+hardware (e.g. running as VMs on the same server). The master also has CPU
+requirements: users pulling results over the API or viewing test jobs in a
+browser will cause load on the master, and the database can also add more load
+as the number of test jobs increases. Try to avoid putting all the workers and
+the master onto the same physical hardware. Even if this setup works initially,
+unexpected failures can occur later as load increases.
+
+Pay attention to the types of failures observed. If a previously working device
+starts to fail in intermittent and unexpected ways, this could be a sign that
+the infrastructure supporting that worker is suffering from excess load.
 
 .. _maintenance_windows_remote:
 
