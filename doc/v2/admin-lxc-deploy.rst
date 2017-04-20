@@ -107,6 +107,13 @@ pairs are in a single dictionary within the list of dictionaries::
 
  {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
 
+.. note:: Devices which include a forward slash ``/`` in the serial number will have
+   that replaced by an underscore when processed through ``pyudev``. e.g.::
+
+    udev: ATTRS{serial}=="S/NO44440001"
+    pydev: S_NO44440001
+    device_info: {% set device_info = [{'board_id': 'S_NO44440001'}] %}
+
 Configuration: Persistent Containers
 ------------------------------------
 A test job can request a persistent container which will not get destroyed after
