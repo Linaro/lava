@@ -1,0 +1,125 @@
+device_type: hi6220-hikey
+
+# Uses the LXC protocol to determine when and if the pre-os-command is called
+# Allows same device to run both AOSP and OE test jobs without interference.
+
+job_name: HiKey OE with pre-os-command
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+# temporary tag as an example
+tags:
+  - oe-only
+
+metadata:
+  source: https://git.linaro.org/lava/lava-dispatcher.git/
+  unit-test: test_lxc_api
+
+protocols:
+  lava-lxc:
+    name: lxc-hikey-oe
+    template: debian
+    distribution: debian
+    release: jessie
+    arch: amd64
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 15
+    to: lxc
+    packages:
+    - android-tools-fastboot
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'hikey:/'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 30
+    to: fastboot
+    namespace: hikey-oe
+    connection: lxc
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/bootloader/ptable-linux-8g.img
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/boot-0.0+AUTOINC+06e4def583-4adfdd06f1-r0-hikey-20170411131448-30.uefi.img
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/rpb-console-image-hikey-20170411131448-30.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+    os: oe
+
+- boot:
+    namespace: hikey-oe
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@hikey:~#'
+    timeout:
+      minutes: 5
+    method: uefi-menu
+    commands: fastboot
+    protocols:
+      lava-lxc:
+      # other action could be boot-fastboot
+      # actual test jobs would be better doing this in uefi-commands
+      # to make the process clearer in the log files.
+      - action: uefi-menu-selector
+        request: pre-os-command
+        timeout:
+          minutes: 2
+
+- test:
+    namespace: hikey-oe
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/refactoring.git
+      from: git
+      path: openembedded/smoke-tests-basic.yaml
+      name: smoke-tests-basic-oe
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: network-tests
+          description: "Basic network tests"
+        run:
+          steps:
+          - netstat
+          - ip a
+          - ifconfig
+          - df
+          - lava-test-case google --shell ping -c 4 8.8.8.8
+          - lava-test-case codehelp --shell ping -c 4 93.93.131.118
+          - lava-test-case dns --shell ping -c 4 linux.codehelp.co.uk
+      name: network-inline
+      path: inline/network.yaml
+
+- test:
+   namespace: tlxc
+   timeout:
+     minutes: 5
+   definitions:
+   - repository: git://git.linaro.org/qa/test-definitions.git
+     from: git
+     path: ubuntu/smoke-tests-basic.yaml
+     name: smoke-tests-basic-ubuntu

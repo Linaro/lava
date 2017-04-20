@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.menus.menus import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
@@ -103,7 +104,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
         return connection
 
 
-class UefiMenuSelector(SelectorMenuAction):
+class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         super(UefiMenuSelector, self).__init__()
@@ -149,12 +150,14 @@ class UefiMenuSelector(SelectorMenuAction):
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
-        if self.job.device.pre_os_command:
+        lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
+        if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
             if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s failed" % command)
         if not connection:
+            self.logger.debug("Existing connection in %s", self.name)
             return connection
         connection.prompt_str = self.selector.prompt
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
@@ -236,6 +239,7 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(UefiMenuSelector())
             self.internal_pipeline.add_action(MenuReset())
             self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(ExportDeviceEnvironment())
             self.internal_pipeline.add_action(LxcAddDeviceAction())
         else:
             self.internal_pipeline.add_action(UefiSubstituteCommands())

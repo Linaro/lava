@@ -199,6 +199,7 @@ class SelectorMenuAction(Action):
         :param logger: Action logger
         :return: connection
         """
+        connection = super(SelectorMenuAction, self).run(connection, max_end_time, args)
         if not connection:
             self.logger.error("%s called without a Connection", self.name)
             return connection

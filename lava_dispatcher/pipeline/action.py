@@ -177,6 +177,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             # Then job level overrides
             timeouts.append(self.job.parameters.get('timeouts', {}))
 
+        # pylint: disable=invalid-name
+
         def dict_merge_get(dicts, key):
             value = None
             for d in dicts:
@@ -605,7 +607,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     del call_dict['timeout']['yaml_line']
                 protocol.check_timeout(self.connection_timeout.duration, call_dict)
                 self.logger.info("Making protocol call for %s using %s", self.name, protocol.name)
-                reply = protocol(call_dict)
+                reply = protocol(call_dict, action=self)
                 message = protocol.collate(reply, call_dict)
                 if message:
                     self.logger.info("Setting namespace data key %s to %s", message[0], message[1])

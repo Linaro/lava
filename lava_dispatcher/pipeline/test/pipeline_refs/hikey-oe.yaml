@@ -45,6 +45,10 @@
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.InlineRepoAction, name: inline-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
@@ -64,53 +68,20 @@
     name: download_retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download_retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - {class: actions.deploy.apply_overlay.ApplyOverlaySparseImage, name: apply-overlay-sparse-image}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot_flash_action}
-- class: actions.boot.fastboot.BootFastbootAction
-  name: fastboot_boot
+- class: actions.boot.uefi_menu.UefiMenuAction
+  name: uefi-menu-action
   pipeline:
-  - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
-  - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
-  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
+  - {class: actions.boot.uefi_menu.UefiSubstituteCommands, name: uefi-commands}
+  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
+  - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
+  - {class: menus.menus.MenuReset, name: menu-reset}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
+  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

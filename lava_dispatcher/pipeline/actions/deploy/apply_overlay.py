@@ -113,16 +113,17 @@ class ApplyOverlayImage(Action):
         return connection
 
 
-class ApplyOverlaySparseRootfs(Action):
+class ApplyOverlaySparseImage(Action):
 
-    def __init__(self):
-        super(ApplyOverlaySparseRootfs, self).__init__()
-        self.name = "apply-overlay-sparse-rootfs"
-        self.summary = "apply overlay to sparse rootfs image"
-        self.description = "apply overlay to sparse rootfs image"
+    def __init__(self, image_key):
+        super(ApplyOverlaySparseImage, self).__init__()
+        self.name = "apply-overlay-sparse-image"
+        self.summary = "apply overlay to sparse image"
+        self.description = "apply overlay to sparse image"
+        self.image_key = image_key  # the sparse image key in the parameters
 
     def validate(self):
-        super(ApplyOverlaySparseRootfs, self).validate()
+        super(ApplyOverlaySparseImage, self).validate()
         self.errors = infrastructure_error('/usr/bin/simg2img')
         self.errors = infrastructure_error('/bin/mount')
         self.errors = infrastructure_error('/bin/umount')
@@ -134,7 +135,7 @@ class ApplyOverlaySparseRootfs(Action):
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
             decompressed_image = self.get_namespace_data(
-                action='download_action', label='rootfs', key='file')
+                action='download_action', label=self.image_key, key='file')
             self.logger.debug("Image: %s", decompressed_image)
             copy_overlay_to_sparse_fs(decompressed_image, overlay_file)
         else:
