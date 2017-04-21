@@ -93,10 +93,25 @@ class YAMLLogger(logging.Logger):
             data['msg'] = message % args
         else:
             data['msg'] = message
+
         # Set width to a really large value in order to always get one line.
-        self._log(level, yaml.dump(data, default_flow_style=True,
-                                   default_style='"',
-                                   width=sys.maxsize)[:-1], ())
+        # But keep this reasonable because the logs will be loaded by CLoader
+        # that is limited to around 10**7 chars
+        data_str = yaml.dump(data, default_flow_style=True,
+                             default_style='"',
+                             width=10**6,
+                             Dumper=yaml.CDumper)[:-1]
+        # Test the limit and skip if the line is too long
+        if len(data_str) >= 10**6:
+            if isinstance(message, str):
+                data['msg'] = "<line way too long ...>"
+            else:
+                data['msg'] = {"skip": "line way too long ..."}
+            data_str = yaml.dump(data, default_flow_style=True,
+                                 default_style='"',
+                                 width=10**6,
+                                 Dumper=yaml.CDumper)[:-1]
+        self._log(level, data_str, ())
 
     def exception(self, exc, *args, **kwargs):
         self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
