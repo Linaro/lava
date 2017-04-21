@@ -199,7 +199,7 @@ class Command(BaseCommand):
             return
 
         try:
-            scanned = yaml.load(message)
+            scanned = yaml.load(message, Loader=yaml.CLoader)
         except yaml.YAMLError:
             self.logger.error("[%s] data are not valid YAML, dropping", job_id)
             return
