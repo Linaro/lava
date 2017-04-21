@@ -673,6 +673,12 @@ class PipelineDeviceView(DeviceTableView):
                              .order_by("hostname")
 
 
+class DeviceHealthView(DeviceTableView):
+
+    def get_queryset(self):
+        return super(DeviceHealthView, self).get_queryset().exclude(status=Device.RETIRED)
+
+
 class DeviceTypeOverView(JobTableView):
 
     def get_queryset(self):
@@ -922,7 +928,7 @@ def device_dictionary_plain(request, pk):
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
-    data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)
+    data = DeviceHealthView(request, model=Device, table_class=DeviceHealthTable)
     ptable = DeviceHealthTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     template = loader.get_template("lava_scheduler_app/labhealth.html")
