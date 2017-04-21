@@ -1,3 +1,19 @@
+lava-dispatcher (2017.4.post1-1) unstable; urgency=medium
+
+  * Production hotfix release for LKFT support.
+    3f99cc3 Add missing super call to WaitUSBDeviceAction
+    5436658 Fix indent typo
+    4847bf1 Put device rebooting info message at the correct place.
+    6b85382 Fix call to lava-lxc protocol for pre-os-command
+    bdb4d12 Fix test_lxc_api unit test
+    e9df320 LAVA-920 - Workaround ptable issue in firmware
+    7b4096c Allow LXC protocol to call pre-os-command
+    b33d04b Fix OE image support for HiKey.
+    d714a9b Add missing test shell helpers
+    9518e74 Add missing import
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 21 Apr 2017 08:19:52 +0100
+
 lava-dispatcher (2017.4-1) unstable; urgency=medium
 
   * New production release.
