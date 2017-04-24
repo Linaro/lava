@@ -426,6 +426,7 @@ class TestVlandDevices(TestCaseWithFactory):
         self.factory.cubie1.save()
         device_dict = DeviceDictionary(hostname=self.factory.bbb1.hostname)
         device_dict.parameters = {
+            'extends': 'beaglebone-black.jinja2',
             'interfaces': ['eth0', 'eth1'],
             'sysfs': {
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
@@ -437,6 +438,7 @@ class TestVlandDevices(TestCaseWithFactory):
         device_dict.save()
         device_dict = DeviceDictionary(hostname=self.factory.cubie1.hostname)
         device_dict.parameters = {
+            'extends': 'cubietruck.jinja2',
             'interfaces': ['eth0', 'eth1'],
             'sysfs': {
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
