@@ -199,23 +199,7 @@ class JobParser(object):
                                              pipeline, test_info, counts[name])
 
                 else:
-                    # May only end up being used for submit as other actions all need strategy method objects
-                    # select the specific action of this class for this job
-                    action = Action.select(name)()
-                    action.job = job
-                    # put parameters (like rootfs_type, results_dir) into the actions.
-                    if isinstance(action_data[name], dict):
-                        action.parameters = action_data[name]
-                    elif name == "commands":
-                        # FIXME
-                        pass
-                    elif isinstance(action_data[name], list):
-                        for param in action_data[name]:
-                            action.parameters = param
-                    action.summary = name
-                    action.timeout = Timeout(action.name, self.context['default_action_duration'])
-                    action.connection_timeout = Timeout(action.name, self.context['default_connection_duration'])
-                    pipeline.add_action(action)
+                    raise JobError("Unknown action name '%'" % name)
                 counts[name] += 1
 
         # there's always going to need to be a finalize_process action
