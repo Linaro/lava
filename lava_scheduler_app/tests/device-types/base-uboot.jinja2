@@ -74,14 +74,8 @@
     ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
 {% endif %}
-{%- if usb_uuid or sata_uuid %}
+{%- if sata_uuid or sd_uuid or usb_uuid %}
   media:
-{% if usb_uuid %}
-    usb:
-      {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
-        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
-{% endif %}
 {% if sata_uuid %}
     sata:
       UUID-required: False
@@ -89,6 +83,18 @@
         uuid: {{ sata_uuid }}
         device_id: {{ sata_id|default(0) }}
         uboot_interface: {{ sata_interface|default('scsi') }}
+{% endif %}
+{% if sd_uuid %}
+    sd:
+      {{ sd_label }}:
+        uuid: {{ sd_uuid }}
+        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
+{% endif %}
+{% if usb_uuid %}
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
 {% endif %}
 {%- endif %}
 {% endblock %}
