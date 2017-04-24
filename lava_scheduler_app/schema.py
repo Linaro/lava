@@ -1,8 +1,11 @@
 import re
 from voluptuous import (
     Schema, Required, All, Length,
-    Any, Invalid, Optional, MultipleInvalid
+    Any, Invalid, Optional, MultipleInvalid, Match
 )
+
+
+INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 
 
 class SubmissionException(UserWarning):
@@ -80,7 +83,8 @@ def _job_definition_schema():
         {
             Required('repository'): Any(_inline_schema(), str),
             Required('from'): str,
-            Required('name'): str,
+            Required('name'): Match(r'^[a-zA-Z0-9-_]+$',
+                                    msg=INVALID_CHARACTER_ERROR_MSG),
             Required('path'): str,
             Optional('parameters'): dict,
         }
@@ -104,7 +108,8 @@ def _job_monitor_schema():
 def _monitor_def_schema():
     return Schema([
         {
-            Required('name'): str,
+            Required('name'): Match(r'^[a-zA-Z0-9-_]+$',
+                                    msg=INVALID_CHARACTER_ERROR_MSG),
             Required('start'): str,
             Required('end'): str,
             Required('pattern'): str,
