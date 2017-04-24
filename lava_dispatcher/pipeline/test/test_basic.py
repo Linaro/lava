@@ -27,7 +27,7 @@ import simplejson
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, LAVABug
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, LAVABug, LAVAError
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
@@ -152,7 +152,7 @@ class Factory(object):
             with open(sample_job_file) as sample_job_data:
                 job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
-        except NotImplementedError:
+        except LAVAError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
@@ -166,7 +166,7 @@ class Factory(object):
                 job = parser.parse(sample_job_data, device, 4212, None, "",
                                    output_dir=output_dir)
             job.logger = DummyLogger()
-        except NotImplementedError as exc:
+        except LAVAError as exc:
             print(exc)
             # some deployments listed in basics.yaml are not implemented yet
             return None
