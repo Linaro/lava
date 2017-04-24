@@ -499,7 +499,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             self.errors = "action %s (%s) lacks a description" % (self.name, self)
 
         if not self.section:
-            self.errors = "%s action has no section set" % self
+            self.errors = "action %s (%s) has no section set" % (self.name, self)
 
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
@@ -539,7 +539,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             raise LAVABug("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
-        command_list.insert(0, 'nice')
+        command_list = ['nice'] + [str(s) for s in command_list]
         self.logger.debug("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
