@@ -44,7 +44,7 @@ def _auto_login_schema():
 
 def _simple_params():
     return Schema({
-        Any(str): str
+        Any(str): Any(str, bool)
     })
 
 
