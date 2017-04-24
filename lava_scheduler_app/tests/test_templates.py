@@ -356,6 +356,7 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
+        self.assertEqual('panda',  (template_dict['device_type']))
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
