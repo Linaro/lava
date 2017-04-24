@@ -118,6 +118,13 @@ def _monitor_def_schema():
     ])
 
 
+def _job_command_schema():
+    return Schema({
+        Required('name'): str,
+        Optional('timeout'): _timeout_schema()
+    })
+
+
 def _job_actions_schema():
     return Schema([
         {
@@ -126,7 +133,8 @@ def _job_actions_schema():
                 _job_deploy_schema()),
             'boot': _job_boot_schema(),
             'test': Any(_job_monitor_schema(),
-                        _job_test_schema())
+                        _job_test_schema()),
+            'command': _job_command_schema()
         }
     ])
 
@@ -277,13 +285,29 @@ def _device_timeouts_schema():
     }, extra=True)
 
 
+def _device_user_commands():
+    return Schema({
+        All(str): {
+            Required('do'): str,
+            Optional('undo'): str
+        }
+    })
+
+
+def _device_commands_schema():
+    return Schema({
+        All(str): str,
+        Optional('users'): _device_user_commands()
+    })
+
+
 def _device_schema():
     """
     Less strict than the job_schema as this is primarily admin / template controlled.
     """
     return Schema({
         'character_delays': dict,
-        'commands': dict,
+        'commands': _device_commands_schema(),
         'constants': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
