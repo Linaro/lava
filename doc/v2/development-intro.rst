@@ -23,6 +23,22 @@ modifications.
 LAVA is complex and works to solve complex problems. This has implications
 for how LAVA is developed, tested, deployed and used.
 
+.. index:: git branches, development branches
+
+.. __lava_git_branches:
+
+LAVA and git branches
+=====================
+
+Development occurs on the ``master`` branch, testing of each release happens on
+the ``staging`` branch and releases are made from the ``release`` branch. Git
+tags are also based on the ``release`` branch. All reviews need to be made
+against the ``master`` branch.
+
+.. note:: It is worth checking if someone already has a review which relates to
+   your proposed changes. Check for open reviews on gerrit, e.g.
+   ``https://review.linaro.org/#/q/status:open+lava-dispatcher``
+
 Other elements involved in LAVA development
 ===========================================
 
