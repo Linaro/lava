@@ -18,3 +18,5 @@ tags
 tmp*/
 _build/
 .eggs
+*.e4p
+.eric6project/
