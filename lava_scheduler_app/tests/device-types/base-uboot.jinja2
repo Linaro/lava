@@ -38,19 +38,9 @@
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
-{% block body %}
-device_type: {{ device_type|default('uboot') }}
-
-{% set console_device = console_device | default('ttyS0') %}
-{% set baud_rate = baud_rate | default(115200) %}
-{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
-{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
-
 {# adds the parameters: top level block #}
 {% block vland %}
-{{ super() }}
-{% endblock %}
+{{ super() -}}
 {% if text_offset %}
   text_offset: '{{text_offset}}'
 {% endif %}
@@ -99,8 +89,18 @@ device_type: {{ device_type|default('uboot') }}
         uuid: {{ sata_uuid }}
         device_id: {{ sata_id|default(0) }}
         uboot_interface: {{ sata_interface|default('scsi') }}
+{% endif %}
 {%- endif %}
-{%- endif %}
+{% endblock %}
+
+{% block body %}
+device_type: {{ device_type|default('uboot') }}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
 
 actions:
   deploy:
@@ -187,8 +187,4 @@ actions:
           - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_bootcmd }}
-{% endblock %}
-
-{% block timeouts %}
-{{ super() }}
 {% endblock %}

@@ -6,13 +6,6 @@ device_type: overdrive
 {% set baud_rate = baud_rate | default(115200) %}
 
 {% set kernel_args = kernel_args | default('acpi=force r8169.use_dac=1') %}
-{% block character_delays %}
-{{ super() }}
-{% endblock %}
-
-{% block vland %}
-{{ super() }}
-{% endblock %}
 
 actions:
   deploy:
