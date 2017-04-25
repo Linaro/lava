@@ -38,7 +38,7 @@ from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.connection import Protocol
 # Bring in the strategy subclass lists, ignore pylint warnings.
 # pylint: disable=unused-import,too-many-arguments,too-many-nested-blocks,too-many-branches
-from lava_dispatcher.pipeline.actions.commands import CommandsAction
+from lava_dispatcher.pipeline.actions.commands import CommandAction
 import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies
 import lava_dispatcher.pipeline.actions.test.strategies
@@ -197,6 +197,11 @@ class JobParser(object):
                                 repeating[repeat_action]['repeat-count'] = c_iter
                                 parse_action(repeating, repeat_action, device,
                                              pipeline, test_info, counts[name])
+
+                elif name == 'command':
+                    action = CommandAction()
+                    action.parameters = action_data[name]
+                    pipeline.add_action(action)
 
                 else:
                     raise JobError("Unknown action name '%'" % name)
