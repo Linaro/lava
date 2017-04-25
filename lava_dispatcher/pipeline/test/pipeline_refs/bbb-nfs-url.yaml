@@ -2,13 +2,13 @@
   name: tftp-deploy
   pipeline:
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.apply_overlay.PrepareOverlayTftp
     name: prepare-tftp-overlay
     pipeline:
@@ -51,8 +51,8 @@
       name: reboot-device
       pipeline:
       - {class: power.RebootDevice, name: soft-reboot}
-      - {class: power.PDUReboot, name: pdu_reboot}
-      - {class: power.PowerOn, name: power_on}
+      - {class: power.PDUReboot, name: pdu-reboot}
+      - {class: power.PowerOn, name: power-on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
     - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
@@ -65,4 +65,4 @@
 - class: power.FinalizeAction
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power_off}
+  - {class: power.PowerOff, name: power-off}

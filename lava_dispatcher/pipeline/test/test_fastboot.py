@@ -231,7 +231,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             yaml.dump(job.pipeline.describe(False), describe)
         description_ref = pipeline_reference('db410c.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
         self.assertEqual(wait.device_actions, ['remove'])
 

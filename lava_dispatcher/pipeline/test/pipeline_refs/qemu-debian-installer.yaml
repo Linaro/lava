@@ -3,13 +3,13 @@
   pipeline:
   - {class: actions.deploy.iso.IsoEmptyImage, name: prepare-empty-image}
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.iso.IsoPullInstaller, name: pull-installer-files}
   - {class: actions.deploy.iso.QemuCommandLine, name: prepare-qemu-commands}
   - {class: actions.deploy.overlay.CustomisationAction, name: customise}
@@ -30,7 +30,7 @@
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.iso.BootIsoInstallerAction
-  name: boot_installer_iso
+  name: boot-installer-iso
   pipeline:
   - {class: actions.boot.iso.IsoCommandLine, name: execute-installer-command}
   - {class: actions.boot.iso.MonitorInstallerSession, name: monitor-installer-connection}
@@ -45,4 +45,4 @@
 - class: power.FinalizeAction
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power_off}
+  - {class: power.PowerOff, name: power-off}

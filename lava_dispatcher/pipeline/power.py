@@ -123,7 +123,7 @@ class PDUReboot(AdjuvantAction):
 
     @classmethod
     def key(cls):
-        return 'pdu_reboot'
+        return 'pdu-reboot'
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PDUReboot, self).run(connection, max_end_time, args)
@@ -155,7 +155,7 @@ class PowerOn(Action):
     """
     def __init__(self):
         super(PowerOn, self).__init__()
-        self.name = "power_on"
+        self.name = "power-on"
         self.summary = "send power_on command"
         self.description = "supply power to device"
 
@@ -193,7 +193,7 @@ class PowerOff(Action):
     """
     def __init__(self):
         super(PowerOff, self).__init__()
-        self.name = "power_off"
+        self.name = "power-off"
         self.summary = "send power_off command"
         self.description = "discontinue power to device"
 

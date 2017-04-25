@@ -100,7 +100,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
         self.assertTrue(uboot_action.valid)
         for action in uboot_action.internal_pipeline.actions:
             if isinstance(action, UBootInterrupt):
-                self.assertIn('power_on', action.job.device['commands'])
+                self.assertIn('power-on', action.job.device['commands'])
                 self.assertIn('hard_reset', action.job.device['commands'])
                 self.assertIn('connect', action.job.device['commands'])
                 self.assertEqual(action.job.device['commands']['connect'].split(' ')[0], 'telnet')

@@ -78,7 +78,7 @@ class BootQEMUImageAction(BootAction):
 
     def __init__(self):
         super(BootQEMUImageAction, self).__init__()
-        self.name = 'boot_image_retry'
+        self.name = 'boot-image-retry'
         self.description = "boot image with retry"
         self.summary = "boot with retry"
 
@@ -98,7 +98,7 @@ class BootQemuRetry(RetryAction):
 
     def __init__(self):
         super(BootQemuRetry, self).__init__()
-        self.name = 'boot_qemu_image'
+        self.name = 'boot-qemu-image'
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
 
@@ -162,11 +162,11 @@ class CallQemuAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         namespace = self.parameters.get('namespace', 'common')
-        for label in self.data[namespace]['download_action'].keys():
+        for label in self.data[namespace]['download-action'].keys():
             if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
                 continue
-            image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
-            action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
+            image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
+            action_arg = self.get_namespace_data(action='download-action', label=label, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % label
                 continue

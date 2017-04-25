@@ -2,9 +2,9 @@
   name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
 - class: actions.boot.cmsis_dap.BootCMSIS
   name: boot-cmsis
   pipeline:
@@ -18,4 +18,4 @@
 - class: power.FinalizeAction
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power_off}
+  - {class: power.PowerOff, name: power-off}

@@ -150,7 +150,7 @@ class DDAction(Action):
         device to write directly to the secondary media, without needing to cache on the device.
         """
         connection = super(DDAction, self).run(connection, max_end_time, args)
-        d_file = self.get_namespace_data(action='download_action', label='image', key='file')
+        d_file = self.get_namespace_data(action='download-action', label='image', key='file')
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection

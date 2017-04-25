@@ -85,7 +85,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download_retry', 'download_retry', 'download_retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -232,8 +232,8 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                 reset_action = action
         names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
         self.assertIn('soft-reboot', names)
-        self.assertIn('pdu_reboot', names)
-        self.assertIn('power_on', names)
+        self.assertIn('pdu-reboot', names)
+        self.assertIn('power-on', names)
 
     @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
     def test_prompt_from_job(self):  # pylint: disable=too-many-locals

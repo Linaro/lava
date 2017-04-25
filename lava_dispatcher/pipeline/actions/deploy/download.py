@@ -69,7 +69,7 @@ class DownloaderAction(RetryAction):
     """
     def __init__(self, key, path):
         super(DownloaderAction, self).__init__()
-        self.name = "download_retry"
+        self.name = "download-retry"
         self.description = "download with retry"
         self.summary = "download-retry"
         self.key = key  # the key in the parameters of what to download
@@ -124,7 +124,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if os.path.exists(self.path):
             self.logger.debug("Cleaning up download directory: %s", self.path)
             shutil.rmtree(self.path)
-        self.set_namespace_data(action='download_action', label=self.key, key='file', value='')
+        self.set_namespace_data(action='download-action', label=self.key, key='file', value='')
         super(DownloadHandler, self).cleanup(connection)
 
     def _url_to_fname_suffix(self, path, modify):
@@ -205,9 +205,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
             image_arg = image.get('image_arg', None)
             overlay = image.get('overlay', False)
-            self.set_namespace_data(action='download_action', label=self.key,
+            self.set_namespace_data(action='download-action', label=self.key,
                                     key='file', value=image_name)
-            self.set_namespace_data(action='download_action', label=self.key,
+            self.set_namespace_data(action='download-action', label=self.key,
                                     key='image_arg', value=image_arg)
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
@@ -215,10 +215,10 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             archive = self.parameters[self.key].get('archive', None)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
-            self.set_namespace_data(action='download_action', label=self.key, key='file', value=fname)
+            self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
 
         if overlay:
-            self.set_namespace_data(action='download_action', label=self.key, key='overlay', value=overlay)
+            self.set_namespace_data(action='download-action', label=self.key, key='overlay', value=overlay)
         if compression:
             if compression not in ['gz', 'bz2', 'xz', 'zip']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
@@ -228,7 +228,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # pass kernel type to boot Action
         if self.key == 'kernel' and ('kernel' in self.parameters):
             self.set_namespace_data(
-                action='download_action', label='type', key=self.key,
+                action='download-action', label='type', key=self.key,
                 value=self.parameters[self.key].get('type', None))
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -301,9 +301,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
-        self.set_namespace_data(action='download_action', label=self.key, key='file', value=fname)
-        self.set_namespace_data(action='download_action', label=self.key, key='md5', value=md5.hexdigest())
-        self.set_namespace_data(action='download_action', label=self.key, key='sha256', value=sha256.hexdigest())
+        self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
+        self.set_namespace_data(action='download-action', label=self.key, key='md5', value=md5.hexdigest())
+        self.set_namespace_data(action='download-action', label=self.key, key='sha256', value=sha256.hexdigest())
 
         # handle archive files
         if 'images' in self.parameters and self.key in self.parameters['images']:
@@ -321,26 +321,26 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             if archive == 'tar':
                 untar_file(origin, None, member=target_fname,
                            outfile=target_fname_path)
-                self.set_namespace_data(action='download_action', label=self.key, key='file', value=target_fname_path)
-                self.set_namespace_data(action='download_action', label='file', key=self.key, value=target_fname)
+                self.set_namespace_data(action='download-action', label=self.key, key='file', value=target_fname_path)
+                self.set_namespace_data(action='download-action', label='file', key=self.key, value=target_fname)
             self.logger.debug("Using %s archive" % archive)
 
         if md5sum is not None:
-            chk_md5sum = self.get_namespace_data(action='download_action', label=self.key, key='md5')
+            chk_md5sum = self.get_namespace_data(action='download-action', label=self.key, key='md5')
             if md5sum != chk_md5sum:
                 self.logger.error("md5sum of downloaded content: %s" % chk_md5sum)
                 self.logger.info("sha256sum of downloaded content: %s" % (
-                    self.get_namespace_data(action='download_action', label=self.key, key='sha256')))
+                    self.get_namespace_data(action='download-action', label=self.key, key='sha256')))
                 self.results = {'fail': {
                     'md5': md5sum, 'download': chk_md5sum}}
                 raise JobError("MD5 checksum for '%s' does not match." % fname)
             self.results = {'success': {'md5': md5sum}}
 
         if sha256sum is not None:
-            chk_sha256sum = self.get_namespace_data(action='download_action', label=self.key, key='sha256')
+            chk_sha256sum = self.get_namespace_data(action='download-action', label=self.key, key='sha256')
             if sha256sum != chk_sha256sum:
                 self.logger.info("md5sum of downloaded content: %s" % (
-                    self.get_namespace_data(action='download_action', label=self.key, key='md5')))
+                    self.get_namespace_data(action='download-action', label=self.key, key='md5')))
                 self.logger.error("sha256sum of downloaded content: %s" % chk_sha256sum)
                 self.results = {'fail': {
                     'sha256': sha256sum, 'download': chk_sha256sum}}
@@ -351,21 +351,21 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if self.parameters['to'] == 'tftp':
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp',
                                              key='suffix')
-            self.set_namespace_data(action='download_action', label='file', key=self.key,
+            self.set_namespace_data(action='download-action', label='file', key=self.key,
                                     value=os.path.join(suffix, self.key, os.path.basename(fname)))
         elif self.parameters['to'] == 'iso-installer':
             suffix = self.get_namespace_data(action='deploy-iso-installer',
                                              label='iso', key='suffix')
-            self.set_namespace_data(action='download_action', label='file', key=self.key,
+            self.set_namespace_data(action='download-action', label='file', key=self.key,
                                     value=os.path.join(suffix, self.key, os.path.basename(fname)))
         else:
-            self.set_namespace_data(action='download_action', label='file', key=self.key, value=fname)
+            self.set_namespace_data(action='download-action', label='file', key=self.key, value=fname)
         self.results = {
             'label': self.key,
             'md5sum': str(self.get_namespace_data(
-                action='download_action', label=self.key, key='md5')),
+                action='download-action', label=self.key, key='md5')),
             'sha256sum': str(self.get_namespace_data(
-                action='download_action', label=self.key, key='sha256'))
+                action='download-action', label=self.key, key='sha256'))
         }
         return connection
 
@@ -377,7 +377,7 @@ class FileDownloadAction(DownloadHandler):
 
     def __init__(self, key, path, url):
         super(FileDownloadAction, self).__init__(key, path, url)
-        self.name = "file_download"
+        self.name = "file-download"
         self.description = "copy a local file"
         self.summary = "local file copy"
 
@@ -410,7 +410,7 @@ class HttpDownloadAction(DownloadHandler):
 
     def __init__(self, key, path, url):
         super(HttpDownloadAction, self).__init__(key, path, url)
-        self.name = "http_download"
+        self.name = "http-download"
         self.description = "use http to download the file"
         self.summary = "http download"
 
@@ -465,7 +465,7 @@ class ScpDownloadAction(DownloadHandler):
 
     def __init__(self, key, path, url):
         super(ScpDownloadAction, self).__init__(key, path, url)
-        self.name = "scp_download"
+        self.name = "scp-download"
         self.description = "Use scp to copy the file"
         self.summary = "scp download"
 
@@ -511,7 +511,7 @@ class QCowConversionAction(Action):
 
     def __init__(self, key):
         super(QCowConversionAction, self).__init__()
-        self.name = "qcow2_convert"
+        self.name = "qcow2-convert"
         self.description = "convert qcow image using qemu-img"
         self.summary = "qcow conversion"
         self.key = key
@@ -519,7 +519,7 @@ class QCowConversionAction(Action):
     def run(self, connection, max_end_time, args=None):
         connection = super(QCowConversionAction, self).run(connection, max_end_time, args)
         fname = self.get_namespace_data(
-            action='download_action',
+            action='download-action',
             label=self.key,
             key='file'
         )

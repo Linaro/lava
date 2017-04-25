@@ -59,7 +59,7 @@ class BootKexecAction(BootAction):
     """
     def __init__(self):
         super(BootKexecAction, self).__init__()
-        self.name = "kexec_boot"
+        self.name = "kexec-boot"
         self.summary = "kexec a new kernel"
         self.description = "replace current kernel using kexec"
 

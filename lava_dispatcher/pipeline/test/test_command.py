@@ -31,6 +31,9 @@ class TestCommand(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = pipeline_reference('kvm-command.yaml')
+        import yaml
+        with open('/tmp/test.yaml', 'w') as describe:
+            yaml.dump(self.job.pipeline.describe(False), describe)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         command = [action for action in self.job.pipeline.actions if action.name == 'user-command'][0]

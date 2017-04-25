@@ -147,7 +147,7 @@ class ExtractVExpressRecoveryImage(Action):
     def validate(self):
         super(ExtractVExpressRecoveryImage, self).validate()
         if not self.get_namespace_data(
-                action='download_action', label=self.param_key, key='file'):
+                action='download-action', label=self.param_key, key='file'):
             self.errors = "no file specified extract as %s" % self.param_key
         self.compression = self.parameters[self.file_key].get('compression', None)
         if not self.compression:
@@ -159,7 +159,7 @@ class ExtractVExpressRecoveryImage(Action):
         connection = super(ExtractVExpressRecoveryImage, self).run(connection, max_end_time, args)
 
         # copy recovery image to a temporary directory and unpack
-        recovery_image = self.get_namespace_data(action='download_action', label=self.param_key, key='file')
+        recovery_image = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         recovery_image_dir = self.mkdtemp()
         shutil.copy(recovery_image, recovery_image_dir)
         tmp_recovery_image = os.path.join(recovery_image_dir, os.path.basename(recovery_image))

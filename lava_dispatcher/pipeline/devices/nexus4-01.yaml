@@ -37,9 +37,9 @@ timeouts:
       minutes: 2
     dd-image:
       minutes: 10
-    download_retry:
+    download-retry:
       minutes: 5
-    http_download:
+    http-download:
       minutes: 5
     lava-test-shell:
       minutes: 3

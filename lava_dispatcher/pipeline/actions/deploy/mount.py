@@ -44,22 +44,22 @@ class OffsetAction(DeployAction):
 
     def __init__(self, key):
         super(OffsetAction, self).__init__()
-        self.name = "offset_action"
+        self.name = "offset-action"
         self.description = "calculate offset of the image"
         self.summary = "offset calculation"
         self.key = key
 
     def validate(self):
         super(OffsetAction, self).validate()
-        if not self.get_namespace_data(action='download_action', label=self.key, key='file'):
+        if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, max_end_time, args=None):
-        if self.get_namespace_data(action='download_action', label=self.key, key='offset'):
+        if self.get_namespace_data(action='download-action', label=self.key, key='offset'):
             # idempotency
             return connection
         connection = super(OffsetAction, self).run(connection, max_end_time, args)
-        image = self.get_namespace_data(action='download_action', label=self.key, key='file')
+        image = self.get_namespace_data(action='download-action', label=self.key, key='file')
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
         part_data = self.run_command([
@@ -92,7 +92,7 @@ class LoopCheckAction(DeployAction):
 
     def __init__(self, key):
         super(LoopCheckAction, self).__init__()
-        self.name = "loop_check"
+        self.name = "loop-check"
         self.description = "ensure a loop back mount operation is possible"
         self.summary = "check available loop back support"
         self.key = key
@@ -132,7 +132,7 @@ class LoopMountAction(RetryAction):
 
     def __init__(self, key):
         super(LoopMountAction, self).__init__()
-        self.name = "loop_mount"
+        self.name = "loop-mount"
         self.description = "Mount using a loopback device and offset"
         self.summary = "loopback mount"
         self.retries = 10
@@ -145,7 +145,7 @@ class LoopMountAction(RetryAction):
         lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_base % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-        if not self.get_namespace_data(action='download_action', label=self.key, key='file'):
+        if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
             self.errors = "no file specified to mount"
 
     def run(self, connection, max_end_time, args=None):
@@ -154,13 +154,13 @@ class LoopMountAction(RetryAction):
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
         self.set_namespace_data(action=self.name, label='mntdir', key='mntdir', value=self.mntdir)
-        self.set_namespace_data(action='mount_action', label='mntdir', key='mntdir', value=test_mntdir)
-        offset = self.get_namespace_data(action='download_action', label=self.key, key='offset')
+        self.set_namespace_data(action='mount-action', label='mntdir', key='mntdir', value=test_mntdir)
+        offset = self.get_namespace_data(action='download-action', label=self.key, key='offset')
         mount_cmd = [
             'mount',
             '-o',
             'loop,offset=%s' % offset,
-            self.get_namespace_data(action='download_action', label=self.key, key='file'),
+            self.get_namespace_data(action='download-action', label=self.key, key='file'),
             self.mntdir
         ]
         command_output = self.run_command(mount_cmd)
@@ -187,7 +187,7 @@ class MountAction(DeployAction):
 
     def __init__(self, key):
         super(MountAction, self).__init__()
-        self.name = "mount_action"
+        self.name = "mount-action"
         self.description = "mount with offset"
         self.summary = "mount loop"
         self.key = key

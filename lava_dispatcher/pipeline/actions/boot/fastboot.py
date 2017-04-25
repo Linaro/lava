@@ -83,7 +83,7 @@ class BootFastbootAction(BootAction):
     """
     def __init__(self):
         super(BootFastbootAction, self).__init__()
-        self.name = "fastboot_boot"
+        self.name = "fastboot-boot"
         self.summary = "fastboot boot"
         self.description = "fastboot boot into the system"
 
@@ -144,7 +144,7 @@ class FastbootBootAction(Action):
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
-        boot_img = self.get_namespace_data(action='download_action',
+        boot_img = self.get_namespace_data(action='download-action',
                                            label='boot', key='file')
         if not boot_img:
             raise JobError("Boot image not found, unable to boot")

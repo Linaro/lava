@@ -28,7 +28,7 @@ class DiagnoseNetwork(DiagnosticAction):
     """
     def __init__(self):
         super(DiagnoseNetwork, self).__init__()
-        self.name = "dispatcher_network_issues"
+        self.name = "dispatcher-network-issues"
         self.summary = "output IP data on dispatcher"
         self.description = "add information to the job output about the dispatcher network"
 
@@ -47,7 +47,7 @@ class DiagnoseTargetNetwork(DiagnosticAction):
     """
     def __init__(self):
         super(DiagnoseTargetNetwork, self).__init__()
-        self.name = "target_network_issues"
+        self.name = "target-network-issues"
         self.summary = "output IP data on device"
         self.description = "add information to the job output about the device network"
 
@@ -66,7 +66,7 @@ class DiagnoseUBoot(DiagnosticAction):
     """
     def __init__(self):
         super(DiagnoseUBoot, self).__init__()
-        self.name = "uboot_environment"
+        self.name = "uboot-environment"
         self.summary = "run printenv"
         self.description = "report the uboot environment"
 

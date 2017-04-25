@@ -492,6 +492,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         if ' ' in self.name:  # pylint: disable=unsupported-membership-test
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
+        if '_' in self.name:
+            self.errors = "Use - instead of _ in action names: %s" % self.name
+
         if not self.summary:
             self.errors = "action %s (%s) lacks a summary" % (self.name, self)
 

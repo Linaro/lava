@@ -2,9 +2,9 @@
   name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
-    name: download_retry
+    name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
@@ -23,10 +23,10 @@
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.qemu.BootQEMUImageAction
-  name: boot_image_retry
+  name: boot-image-retry
   pipeline:
   - class: actions.boot.qemu.BootQemuRetry
-    name: boot_qemu_image
+    name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
@@ -39,4 +39,4 @@
 - class: power.FinalizeAction
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power_off}
+  - {class: power.PowerOff, name: power-off}

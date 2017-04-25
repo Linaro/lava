@@ -351,11 +351,11 @@ class BootloaderCommandOverlay(Action):
 
         substitutions = {
             '{SERVER_IP}': ip_addr,
-            '{PRESEED_CONFIG}': self.get_namespace_data(action='download_action', label='file', key='preseed'),
+            '{PRESEED_CONFIG}': self.get_namespace_data(action='download-action', label='file', key='preseed'),
             '{PRESEED_LOCAL}': self.get_namespace_data(action='compress-ramdisk', label='file', key='preseed_local'),
-            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
+            '{DTB}': self.get_namespace_data(action='download-action', label='file', key='dtb'),
             '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
-            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
+            '{KERNEL}': self.get_namespace_data(action='download-action', label='file', key='kernel'),
             '{LAVA_MAC}': self.lava_mac
         }
         self.bootcommand = self.get_namespace_data(action='uboot-prepare-kernel', label='bootcommand', key='bootcommand')
@@ -374,7 +374,7 @@ class BootloaderCommandOverlay(Action):
             ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
-                    and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
+                    and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
                 ramdisk_addr = '-'
 
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
@@ -389,7 +389,7 @@ class BootloaderCommandOverlay(Action):
             }
 
         nfs_address = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
+        nfs_root = self.get_namespace_data(action='download-action', label='file', key='nfsrootfs')
         if nfs_root:
             substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr

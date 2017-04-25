@@ -198,11 +198,11 @@ class UefiSubstituteCommands(Action):
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
             '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
-            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
-            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
+            '{KERNEL}': self.get_namespace_data(action='download-action', label='file', key='kernel'),
+            '{DTB}': self.get_namespace_data(action='download-action', label='file', key='dtb'),
             'TEST_MENU_NAME': "LAVA %s test image" % self.parameters['commands']
         }
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsroot')
+        nfs_root = self.get_namespace_data(action='download-action', label='file', key='nfsroot')
         if nfs_root:
             substitution_dictionary['{NFSROOTFS}'] = nfs_root
         for item in self.items:

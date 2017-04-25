@@ -165,7 +165,7 @@ class EnterFastbootAction(DeployAction):
 
     def __init__(self):
         super(EnterFastbootAction, self).__init__()
-        self.name = "enter_fastboot_action"
+        self.name = "enter-fastboot-action"
         self.description = "enter fastboot bootloader"
         self.summary = "enter fastboot"
         self.retries = 10
@@ -239,7 +239,7 @@ class FastbootFlashAction(DeployAction):
 
     def __init__(self):
         super(FastbootFlashAction, self).__init__()
-        self.name = "fastboot_flash_action"
+        self.name = "fastboot-flash-action"
         self.description = "fastboot_flash"
         self.summary = "fastboot flash"
         self.retries = 3
@@ -271,12 +271,12 @@ class FastbootFlashAction(DeployAction):
         # Order flash commands so that some commands take priority over others
         flash_cmds_order = self.job.device['flash_cmds_order']
         namespace = self.parameters.get('namespace', 'common')
-        flash_cmds = set(self.data[namespace]['download_action'].keys()).difference(
+        flash_cmds = set(self.data[namespace]['download-action'].keys()).difference(
             set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
 
         for flash_cmd in flash_cmds:
-            src = self.get_namespace_data(action='download_action', label=flash_cmd, key='file')
+            src = self.get_namespace_data(action='download-action', label=flash_cmd, key='file')
             if not src:
                 continue
             dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])

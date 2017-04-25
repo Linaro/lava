@@ -317,8 +317,8 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
                            output_dir='/tmp/')
         job.logger = DummyLogger()
         job.validate()
-        boot_image = [action for action in job.pipeline.actions if action.name == 'boot_image_retry'][0]
-        boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        boot_image = [action for action in job.pipeline.actions if action.name == 'boot-image-retry'][0]
+        boot_qemu = [action for action in boot_image.internal_pipeline.actions if action.name == 'boot-qemu-image'][0]
         qemu = [action for action in boot_qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
         self.assertIsInstance(qemu.sub_command, list)
         [self.assertIsInstance(item, str) for item in qemu.sub_command]  # pylint: disable=expression-not-assigned
@@ -388,7 +388,7 @@ class TestAutoLogin(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         self.job.validate()
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'auto_login': {'login_prompt': 'login:',
@@ -411,7 +411,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'auto_login': {'login_prompt': '',
@@ -425,7 +425,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': []})
@@ -437,7 +437,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['']})
@@ -449,7 +449,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#', '']})
@@ -461,7 +461,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
@@ -478,7 +478,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ''})
@@ -490,7 +490,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_missing_autologin_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
@@ -507,7 +507,7 @@ class TestAutoLogin(StdoutTestCase):
     def test_autologin_login_incorrect(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
@@ -539,8 +539,8 @@ class TestChecksum(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
         deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
-        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download-retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http-download'][0]
 
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
@@ -555,8 +555,8 @@ class TestChecksum(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
         deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
-        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download-retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http-download'][0]
 
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
@@ -572,8 +572,8 @@ class TestChecksum(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
         deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
-        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download-retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http-download'][0]
 
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
@@ -586,8 +586,8 @@ class TestChecksum(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
         deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
-        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download-retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http-download'][0]
 
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
@@ -603,8 +603,8 @@ class TestChecksum(StdoutTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
         deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
-        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download-retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http-download'][0]
 
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
@@ -637,8 +637,8 @@ class TestChecksum(StdoutTestCase):
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        download = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry'][0]
-        helper = [action for action in download.internal_pipeline.actions if action.name == 'file_download'][0]
+        download = [action for action in deploy.internal_pipeline.actions if action.name == 'download-retry'][0]
+        helper = [action for action in download.internal_pipeline.actions if action.name == 'file-download'][0]
         remote = helper.parameters[helper.key]
         md5sum = remote.get('md5sum', None)
         self.assertIsNone(md5sum)
@@ -669,7 +669,7 @@ class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
                      'qemu-system-x86_64 not installed')
     def test_uefi_path(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
-        downloaders = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']
+        downloaders = [action for action in deploy.internal_pipeline.actions if action.name == 'download-retry']
         self.assertEqual(len(downloaders), 2)
         uefi_download = downloaders[0]
         image_download = downloaders[1]
@@ -678,8 +678,8 @@ class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(uefi_dir)
         self.assertTrue(os.path.exists(uefi_dir))  # no download has taken place, but the directory needs to exist
         self.assertFalse(uefi_dir.endswith('bios-256k.bin'))
-        boot = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
-        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        boot = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
+        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot-qemu-image'][0]
         execute = [action for action in qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
         self.job.validate()
         self.assertIn('-L', execute.sub_command)
@@ -711,8 +711,8 @@ class TestQemuNFS(StdoutTestCase):
         description_ref = pipeline_reference('qemu-nfs.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-        boot = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
-        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        boot = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
+        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot-qemu-image'][0]
         execute = [action for action in qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
         self.job.validate()
         self.assertNotEqual([], [line for line in execute.sub_command if line.startswith('-kernel')])
