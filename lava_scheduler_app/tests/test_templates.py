@@ -99,6 +99,40 @@ class TestTemplates(unittest.TestCase):
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
 """))
 
+    def test_armada375_template(self):
+        """
+        Test the armada-375 template as if it was a device dictionary
+        """
+        data = """
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "armada-375-db" %}
+{% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
+{% set bootm_kernel_addr = '0x02080000' %}
+{% set bootm_ramdisk_addr = '0x02880000' %}
+{% set bootm_dtb_addr = '0x02000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set append_dtb = true %}
+{% set use_xip = true %}
+{% set uboot_bootx_cmd = "bootm {KERNEL_ADDR} {RAMDISK_ADDR}" %}
+        """
+        self.assertTrue(self.validate_data('armada-375-01', data))
+        test_template = prepare_jinja_template('armada-375-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        params = template_dict['actions']['deploy']['parameters']
+        self.assertIsNotNone(params)
+        self.assertIn('use_xip', params)
+        self.assertIn('append_dtb', params)
+        self.assertTrue(params['use_xip'])
+        self.assertTrue(params['append_dtb'])
+        params = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        for line in params:
+            if 'run loadkernel' in line:
+                self.assertIn('bootm', line)
+
     def test_nexus10_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
