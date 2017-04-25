@@ -113,6 +113,13 @@ class AutoLoginAction(Action):
                 if 'password' not in params:
                     self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
 
+            if 'login_commands' in params:
+                login_commands = params['login_commands']
+                if not isinstance(login_commands, list):
+                    self.errors = "'login_commands' must be a list"
+                if not login_commands:
+                    self.errors = "'login_commands' must not be empty"
+
         prompts = self.parameters.get('prompts', None)
         if prompts is None:
             self.errors = "'prompts' is mandatory for AutoLoginAction"
@@ -237,6 +244,12 @@ class AutoLoginAction(Action):
                 if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
+
+            login_commands = params.get('login_commands', None)
+            if login_commands is not None:
+                self.logger.debug("Running login commands")
+                for command in login_commands:
+                    connection.sendline(command)
 
         connection.prompt_str.extend([self.job.device.get_constant(
             'default-shell-prompt')])

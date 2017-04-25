@@ -75,3 +75,22 @@ class AutoLoginTestCase(StdoutTestCase):
                                'password_prompt': 'pass:',
                                'password': 'abc',
                            }})
+
+    def test_login_commands(self):
+        auto_login = {
+            'login_prompt': 'login:',
+            'username': 'bob',
+        }
+
+        auto_login['login_commands'] = None
+        self._check_errors({'prompts': 'hello', 'auto_login': auto_login},
+                           ["'login_commands' must be a list",
+                            "'login_commands' must not be empty"])
+        auto_login['login_commands'] = 'su'
+        self._check_errors({'prompts': 'hello', 'auto_login': auto_login},
+                           ["'login_commands' must be a list"])
+        auto_login['login_commands'] = []
+        self._check_errors({'prompts': 'hello', 'auto_login': auto_login},
+                           ["'login_commands' must not be empty"])
+        auto_login['login_commands'] = ['sudo su']
+        self._check_valid({'prompts': 'hello', 'auto_login': auto_login})
