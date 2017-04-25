@@ -153,6 +153,11 @@ codebase. The best way to maintain support is to :ref:`contribute_upstream` so
 that new features can be tested against your templates and new releases can
 automatically include updates to your templates.
 
+Some individual device files exist in the codebase in
+``lava_scheduler_app/tests/devices`` but these are only for use in the
+existing unit tests. There is no need to contribute individual device dictionaries
+unless there are new unit tests which use those device dictionaries.
+
 .. index:: developer workflow
 
 .. _developer_workflow:
