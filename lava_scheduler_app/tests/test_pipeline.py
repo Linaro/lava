@@ -451,6 +451,10 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'password': "hello"
         })
         validate_submission(data)
+        auto_login['login_commands'] = True
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login['login_commands'] = ['whoami', 'sudo su']
+        validate_submission(data)
 
     def test_visibility(self):
         user = self.factory.make_user()
