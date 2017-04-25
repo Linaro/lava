@@ -26,10 +26,7 @@ from django.core.exceptions import (
 )
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import (
-    validate_email,
-    validate_comma_separated_integer_list
-)
+from django.core.validators import validate_email
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver

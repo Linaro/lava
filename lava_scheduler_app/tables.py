@@ -3,7 +3,6 @@ import json
 import logging
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
@@ -43,7 +42,6 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
     def render(self, record, table=None):
         user = table.context.get('request').user
-        device_type = record.job_device_type()
         if record.can_view(user):
             return pklink(record)
         else:
@@ -52,8 +50,6 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 def pklink(record):
     job_id = record.pk
-    complete = ''
-    button = ''
     if isinstance(record, TestJob):
         if record.sub_jobs_list:
             job_id = record.sub_id
@@ -235,7 +231,6 @@ class JobTable(LavaTable):
         times = {
             'submit_time': 'hours',
             'end_time': 'hours',
-            # 'duration': 'minutes' FIXME: needs a function call
         }
 
 
@@ -816,7 +811,7 @@ class RunningTable(LavaTable):
         super(RunningTable, self).__init__(*args, **kwargs)
         self.length = 50
 
-    # FIXME: dynamic connections are TestJob without a device, add extra column
+    # deprecated: dynamic connections are TestJob without a device
 
     def render_jobs(self, record):  # pylint: disable=no-self-use
         count = TestJob.objects.filter(

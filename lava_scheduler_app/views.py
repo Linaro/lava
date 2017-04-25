@@ -78,9 +78,6 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
-    TestSet,
-    TestSuite,
-    TestCase
 )
 
 from lava_scheduler_app.template_helper import expand_template
@@ -1550,7 +1547,7 @@ def vmgroup_job_definition_plain(request, pk):
 
 @BreadCrumb("My Jobs", parent=index)
 def myjobs(request):
-    user = get_object_or_404(User, pk=request.user.id)
+    get_object_or_404(User, pk=request.user.id)
     data = MyJobsView(request, model=TestJob, table_class=JobTable)
     ptable = JobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
