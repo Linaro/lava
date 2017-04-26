@@ -371,10 +371,21 @@ class TestShellAction(TestAction):
         self.logger.results(res)  # pylint: disable=no-member
         self.start = None
 
+    def _replace_invalid_url_characters(self, slug):
+        new_slug = re.sub('[^0-9a-zA-Z-_]+', '_', slug)
+        if new_slug != slug:
+            self.logger.warning("'%s' contains invalid slug characters and will be replaced with '%s'" % (slug, new_slug))
+        return new_slug
+
     @nottest
     def signal_test_case(self, params):
         try:
             data = handle_testcase(params)
+            if "test_case_id" in data:
+                # Replace invalid characters in test_case_id with '_'.
+                data["test_case_id"] = self._replace_invalid_url_characters(
+                    data["test_case_id"])
+
             # get the fixup from the pattern_dict
             res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
         except (JobError, TestError) as exc:
