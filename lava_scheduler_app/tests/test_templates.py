@@ -374,6 +374,12 @@ class TestTemplates(unittest.TestCase):
                          '0123456789')
         self.assertIsInstance(template_dict['fastboot_options'], list)
         self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
+        order = template_dict['flash_cmds_order']
+        self.assertEqual(0, order.index('ptable'))
+        self.assertEqual(1, order.index('fastboot'))
+        self.assertIn('cache', order)
+        self.assertIn('system', order)
+        self.assertIn('userdata', order)
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
