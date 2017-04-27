@@ -42,7 +42,7 @@ class TestMonitor(LavaTest):
     """
     def __init__(self, parent, parameters):
         super(TestMonitor, self).__init__(parent)
-        self.action = TestMonitorAction()
+        self.action = TestMonitorRetry()
         self.action.job = self.job
         self.action.section = self.action_type
         parent.add_action(self.action, parameters)
