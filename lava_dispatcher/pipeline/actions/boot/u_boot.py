@@ -47,6 +47,8 @@ def uboot_accepts(device, parameters):
         raise ConfigurationError("method not specified in boot parameters")
     if parameters['method'] != 'u-boot':
         return False
+    if 'commands' not in parameters:
+        raise ConfigurationError("commands not specified in boot parameters")
     if 'actions' not in device:
         raise ConfigurationError("Invalid device configuration")
     if 'boot' not in device['actions']:
