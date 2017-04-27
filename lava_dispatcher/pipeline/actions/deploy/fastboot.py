@@ -41,7 +41,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
-from lava_dispatcher.pipeline.utils.udev import get_usb_devices
+from lava_dispatcher.pipeline.utils.udev import get_udev_devices
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
@@ -329,8 +329,8 @@ class FastbootFlashAction(DeployAction):
                 self.logger.info("Get USB device(s) ...")
                 device_paths = []
                 while True:
-                    device_paths = get_usb_devices(self.job,
-                                                   logger=self.logger)
+                    device_paths = get_udev_devices(self.job,
+                                                    logger=self.logger)
                     if device_paths:
                         break
                 for device in device_paths:

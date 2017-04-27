@@ -54,7 +54,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_V1_FIXUP,
 )
 from lava_dispatcher.pipeline.utils.udev import (
-    get_usb_devices,
+    get_udev_devices,
     usb_device_wait,
 )
 if sys.version > '3':
@@ -467,7 +467,7 @@ class TestShellAction(TestAction):
             "Get USB device(s) using: %s",
             yaml.dump(self.job.device.get('device_info', [])).strip()
         )
-        device_paths = get_usb_devices(self.job, self.logger)
+        device_paths = get_udev_devices(self.job, self.logger)
         if device_paths:
             self.logger.debug("Adding %s", ', '.join(device_paths))
         else:

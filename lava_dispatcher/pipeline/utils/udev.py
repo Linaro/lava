@@ -156,7 +156,13 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None)
             break
 
 
-def get_usb_devices(job, logger=None):
+def get_udev_devices(job, logger=None):
+    """
+    Get udev device nodes based on serial, vendor and product ID
+    All subsystems are allowed so that additional hardware like
+    tty devices can be added to the LXC. The ID to match is controlled
+    by the lab admin.
+    """
     context = pyudev.Context()
     device_paths = set()
     for usb_device in job.device.get('device_info', []):
@@ -166,7 +172,7 @@ def get_usb_devices(job, logger=None):
         # check if device is already connected
         # try with all parameters such as board id, usb_vendor_id and
         # usb_product_id
-        for device in context.list_devices(subsystem='usb'):
+        for device in context.list_devices():
             if board_id and usb_vendor_id and usb_product_id:
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
