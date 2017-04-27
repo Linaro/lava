@@ -320,6 +320,86 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def get_recent_jobs_for_device(self, device, count=1, restrict_to_user=False):
+        """
+        Name
+        ----
+
+        `get_recent_jobs_for_device` (`device`, `count=1`, `restrict_to_user=False`)
+
+        Description
+        -----------
+        Get details of recently finished jobs for a given device. Limits the list
+        to test jobs submitted by the user making the query if restrict_to_user is set to
+        True. Get only the most recent job by default, but count can be set higher to
+        get for example the last 10 jobs.
+
+        Arguments
+        ---------
+        `device`: string
+            Name of the device for which you want the jobs
+        `count`: integer (Optional, default=1)
+            Number of last jobs you want
+        `restrict_to_user`: boolean (Optional, default=False)
+            Fetch only the jobs submitted by the user making the query if set to True
+
+        Return value
+        ------------
+        This function returns a list of dictionaries, which correspond to the
+        list of recently finished jobs informations (Complete or Incomplete)
+        for this device, ordered from youngest to oldest.
+
+        [
+            {
+                'description': 'mainline--armada-370-db--multi_v7_defconfig--network',
+                'id': 359828,
+                'status': 'Complete'
+            },
+            {
+                'description': 'mainline--armada-370-db--multi_v7_defconfig--sata',
+                'id': 359827
+                'status': 'Incomplete'
+            }
+        ]
+        """
+        if not device:
+            raise xmlrpclib.Fault(
+                400, "Bad request: device was not specified."
+            )
+        if count < 0:
+            raise xmlrpclib.Fault(
+                400, "Bad request: count must not be negative."
+            )
+        try:
+            device_obj = Device.objects.get(hostname=device)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % device
+            )
+
+        if not device_obj.is_visible_to(self.user):
+            raise xmlrpclib.Fault(
+                403, "Device '%s' not available to user '%s'." %
+                (device, self.user)
+            )
+        job_qs = TestJob.objects.filter(
+            status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE),
+            actual_device=device_obj)\
+            .order_by('-id')
+        if restrict_to_user:
+            job_qs = job_qs.filter(submitter=self.user)
+        job_list = []
+        for job in job_qs.all()[:count]:
+            job_dict = {
+                "id": job.id,
+                "description": job.description,
+                "status": job.get_status_display(),
+            }
+            if not job.can_view(self.user):
+                job_dict["id"] = None
+            job_list.append(job_dict)
+        return job_list
+
     def get_device_type_by_alias(self, alias):
         """
         Name
