@@ -232,19 +232,25 @@ def _job_protocols_schema():
     })
 
 
+def action_name(value):
+    if re.match(r'^[a-z-]+$', str(value)):
+        return str(value)
+    else:
+        raise Invalid(value)
+
+
 def _job_timeout_schema():
     return Schema({
         Required('job'): _timeout_schema(),
         Optional('action'): _timeout_schema(),
         Optional('connection'): _timeout_schema(),
         Optional('actions'): {
-            All(str): _timeout_schema()
+            All(action_name): _timeout_schema()
         },
         Optional('connections'): {
-            All(str): _timeout_schema()
+            All(action_name): _timeout_schema()
         },
-
-    }, extra=True)
+    })
 
 
 def visibility_schema():
@@ -296,13 +302,13 @@ def _device_actions_schema():
 
 def _device_timeouts_schema():
     return Schema({
-        'actions': {
-            All(str): _timeout_schema()
+        Optional('actions'): {
+            All(action_name): _timeout_schema()
         },
-        'connections': {
-            All(str): _timeout_schema()
-        },
-    }, extra=True)
+        Optional('connections'): {
+            All(action_name): _timeout_schema()
+        }
+    })
 
 
 def _device_user_commands():
