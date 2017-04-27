@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
 from lava_dispatcher.pipeline.test.test_uboot import UBootFactory
 from lava_dispatcher.pipeline.actions.boot.kexec import BootKexecAction, KexecAction

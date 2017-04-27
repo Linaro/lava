@@ -48,7 +48,7 @@ def compress_file(infile, compression):
     cmd = "%s %s" % (compress_command_map[compression], infile)
     try:
         # safe to use shell=True here, no external arguments
-        log = subprocess.check_output(cmd, shell=True)
+        subprocess.check_output(cmd, shell=True)
         os.chdir(pwd)
         return "%s.%s" % (infile, compression)
     except (OSError, subprocess.CalledProcessError) as exc:
@@ -67,7 +67,7 @@ def decompress_file(infile, compression):
         outfile = infile[:-(len(compression) + 1)]
     try:
         # safe to use shell=True here, no external arguments
-        log = subprocess.check_output(cmd, shell=True)
+        subprocess.check_output(cmd, shell=True)
         return outfile
     except (OSError, subprocess.CalledProcessError) as exc:
         raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))

@@ -158,7 +158,6 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         overlay = BootloaderCommandOverlay()
         pipeline.add_action(overlay)
         ip_addr = dispatcher_ip(None)
-        parsed = []
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
 
