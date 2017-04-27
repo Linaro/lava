@@ -181,6 +181,10 @@ class CallQemuAction(Action):
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
         # Check for enable-kvm command line option in device configuration.
+        if method not in self.job.device['actions']['boot']['methods']:
+            self.errors = "Unknown boot method '%s'" % method
+            return
+
         options = self.job.device['actions']['boot']['methods'][method]['parameters']['options']
         if "-enable-kvm" in options:
             # Check if the worker has kvm enabled.
@@ -201,7 +205,7 @@ class CallQemuAction(Action):
         # initialise the first Connection object, a command line shell into the running QEMU.
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
-        if 'qemu-nfs' in self.methods and self.parameters['media'] == 'nfs':
+        if 'qemu-nfs' in self.methods and self.parameters.get('media', None) == 'nfs':
             self.logger.debug("Adding NFS arguments to kernel command line.")
             root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             self.substitutions["{NFSROOTFS}"] = root_dir
