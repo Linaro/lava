@@ -159,6 +159,7 @@ def _job_notify_schema():
     return Schema({
         Required('criteria'): _notify_criteria_schema(),
         'recipients': _recipient_schema(),
+        'callback': _callback_schema(),
         'verbosity': Any('verbose', 'quiet', 'status-only'),
         'compare': _notify_compare_schema()
     }, extra=True)
@@ -183,7 +184,7 @@ def _recipient_schema():
 def _notify_criteria_schema():
     return Schema({
         Required('status'): Any('running', 'complete', 'incomplete',
-                                'canceled'),
+                                'canceled', 'finished'),
         'type': Any('progression', 'regression')
     }, extra=True)
 
@@ -207,6 +208,16 @@ def _query_conditions_schema():
         Required('entity'): str,
         'conditions': dict
     })
+
+
+def _callback_schema():
+    return Schema({
+        'method': Any('GET', 'POST'),
+        Required('url'): str,
+        'token': str,
+        'dataset': Any('minimal', 'logs', 'results', 'all'),
+        'content-type': Any('json', 'urlencoded')
+    }, extra=True)
 
 
 def vlan_name(value):

@@ -351,13 +351,9 @@ class Command(BaseCommand):
 
             # Find the corresponding job and update the status
             try:
-                with transaction.atomic():
-                    job = TestJob.objects.select_for_update().get(id=job_id)
-                    if job.status == TestJob.CANCELING:
-                        cancel_job(job)
-                    fail_job(job, fail_msg=error_msg, job_status=status)
 
                 # Save the description
+                job = TestJob.objects.get(id=job_id)
                 filename = os.path.join(job.output_dir, 'description.yaml')
                 try:
                     with open(filename, 'w') as f_description:
@@ -367,6 +363,13 @@ class Command(BaseCommand):
                                       job_id)
                     self.logger.exception(exc)
                 parse_job_description(job)
+
+                # Update status.
+                with transaction.atomic():
+                    job = TestJob.objects.select_for_update().get(id=job_id)
+                    if job.status == TestJob.CANCELING:
+                        cancel_job(job)
+                    fail_job(job, fail_msg=error_msg, job_status=status)
 
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)

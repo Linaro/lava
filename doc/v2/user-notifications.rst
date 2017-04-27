@@ -19,7 +19,8 @@ The basic setup of the ``notify`` block in job definitions will have
   be.
 
 * **Criteria** can be set by job status (running, complete, incomplete,
-  canceled) and the type (regression, progression).
+  canceled) and the type (regression, progression). There is a special status of
+  'finished', which will match any of (complete, incomplete, canceled).
 
 The basic **email** template includes job details, device details and results,
 based on the level of **verbosity** (``verbose``, ``quiet``, ``status-only``).
@@ -31,6 +32,54 @@ The method and destination of each notification can be set for each recipient.
 Currently, two notification methods are supported, **email** and **IRC**.
 
 Recipients can be specified using the LAVA username or in full.
+
+If the **recipients** section is omitted in the notify block, the system will
+send an email to the job submitter only, provided the **criteria** is satisfied,
+and there is no **callback** section.
+
+Notification callback
+=====================
+
+In addition to sending email and IRC messages to **recipients**, the system can
+send a URL callback action. This will do a GET or POST request to the specified
+URL in the **callback** subsection. This can be used to trigger some action
+remotely. If a callback uses the POST request, the system will attach job data
+as described below.
+The **callback** section supports following options:
+
+* **url** The URL for the request. This also supports field value
+  substitution, i.e. in http://my.remote.site/{ID}/{STATUS} **id** and
+  **status** will be replaced with corresponding values from the job.
+
+* **method** GET or POST
+
+* **token** This option is used to supply the API token of the
+  authenticated user, appended as the POST request parameter. If the submitting
+  user has an XMLRPC auth token with a description that matches this field, that
+  token is returned instead. The token is included in the POST data, and also in
+  an Authorization header.
+
+* **dataset** This option specifies style of data that the system
+  will provide in the callback. It applies only for the POST request. The format
+  of the data and possible options are as following:
+
+  * **minimal** This will provide basic job info such as job id, status,
+    submit_time, start_time, end_time, submitter_username, is_pipeline,
+    failure_comment, priority, description, actual_device_id, definition and
+    metadata.
+  * **logs** In addition to minimal data this will also attach the job log
+    output in the url encoded format
+  * **results** In addition to minimal data this will also attach the job
+    results as a list of test suites exported in yaml format.
+  * **all** In addition to minimal data this will include both the **logs** and
+    **results** datasets as described above.
+
+* **content-type** This option is used to determine how the POST data is returned
+  * **urlencoded** (Default) Will return a standard HTTP POST request, with an
+  application/x-www-form-urlencoded Content-Type header and data sent as an
+  urlencoded query string.
+  * **json** The data is dumped into JSON and returned with an application/json 
+  Content-Type header.
 
 Using profile settings
 ----------------------
