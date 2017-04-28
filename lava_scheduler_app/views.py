@@ -1377,6 +1377,7 @@ def job_detail(request, pk):
             'test_list': test_list,
             'log_data': log_data if log_data else [],
             'invalid_log_data': log_data is None,
+            'job_tags': job.tags.all(),
             'default_section': default_section,
         })
 
