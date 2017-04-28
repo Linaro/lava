@@ -163,9 +163,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
         action.populate(parameters)
-        if 'default_connection_timeout' in parameters:
-            # some action handlers do not need to pass all parameters to their children.
-            action.connection_timeout.duration = parameters['default_connection_timeout']
 
         # Compute the timeout
         timeouts = []

@@ -54,10 +54,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             datetime.timedelta(seconds=time_int).total_seconds(),
             testshell.timeout.duration
         )
-        self.assertNotEqual(
-            testshell.parameters['default_action_timeout'],
-            testshell.timeout.duration
-        )
 
     def test_eventpatterns(self):
         testshell = None

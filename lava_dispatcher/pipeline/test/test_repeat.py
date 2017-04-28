@@ -58,7 +58,7 @@ class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIn('test', repeat_block['actions'][1])
         self.assertIn('boot', repeat_block['actions'][2])
         self.assertIn('test', repeat_block['actions'][3])
-        self.assertEqual(len(params), 5)
+        self.assertEqual(len(params), 2)
 
     def test_nested_structure(self):
         self.assertIn(['repeat'], [list(actions.keys()) for actions in self.job.parameters['actions']])
