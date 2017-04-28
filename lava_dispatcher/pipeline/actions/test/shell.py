@@ -364,6 +364,7 @@ class TestShellAction(TestAction):
         }
         revision = self.get_namespace_data(action='test', label=uuid, key='revision')
         res['revision'] = revision if revision else 'unspecified'
+        res['namespace'] = self.parameters['namespace']
         commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
         if commit_id:
             res['commit_id'] = commit_id
