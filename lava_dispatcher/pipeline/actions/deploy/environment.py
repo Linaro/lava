@@ -68,9 +68,6 @@ class DeployDeviceEnvironment(Action):
                 value=environment
             )
 
-        else:
-            self.logger.info("no device environment specified")
-
         self.set_namespace_data(
             action=self.name,
             label='environment',
