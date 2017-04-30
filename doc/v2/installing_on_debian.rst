@@ -129,6 +129,9 @@ Then update to locate the required dependencies::
 
  $ sudo apt update
 
+.. note:: The above repositories use `https` hence install the package
+          `apt-transport-https` if it is not already installed.
+
 .. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
 
 .. index:: production release
