@@ -1,0 +1,7 @@
+# Common parameters for Exynos 5420 based devices which have an odd ram based
+# address compared to others in the Exynos 4 and 5 families
+{% extends 'exynos4-5-common.jinja2' %}
+
+{% set bootm_kernel_addr = '0x22000000' %}
+{% set bootm_ramdisk_addr = '0x23300000' %}
+{% set bootm_dtb_addr = '0x23000000' %}

@@ -1,0 +1,13 @@
+# Common parameters for Exynos 4 and 5 based devices
+{% extends 'base-uboot.jinja2' %}
+
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0x42000000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x43300000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0x43000000') %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_needs_usb = true %}
+
+{% set base_ip_args = base_ip_args|default('ip=:::::eth0:dhcp') %}
