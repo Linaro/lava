@@ -21,7 +21,6 @@
 
 import datetime
 import logging
-import sys
 import yaml
 import zmq
 import zmq.auth
@@ -99,17 +98,17 @@ class YAMLLogger(logging.Logger):
         # that is limited to around 10**7 chars
         data_str = yaml.dump(data, default_flow_style=True,
                              default_style='"',
-                             width=10**6,
+                             width=10 ** 6,
                              Dumper=yaml.CDumper)[:-1]
         # Test the limit and skip if the line is too long
-        if len(data_str) >= 10**6:
+        if len(data_str) >= 10 ** 6:
             if isinstance(message, str):
                 data['msg'] = "<line way too long ...>"
             else:
                 data['msg'] = {"skip": "line way too long ..."}
             data_str = yaml.dump(data, default_flow_style=True,
                                  default_style='"',
-                                 width=10**6,
+                                 width=10 ** 6,
                                  Dumper=yaml.CDumper)[:-1]
         self._log(level, data_str, ())
 
