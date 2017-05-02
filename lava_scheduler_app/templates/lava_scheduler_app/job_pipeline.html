@@ -76,6 +76,13 @@
     .tickLabel {
       transform: rotate(-30deg);
     }
+
+    .text-white {
+      color: white;
+    }
+    .text-white:hover {
+      color: white;
+    }
   </style>
 {% endblock %}
 
@@ -265,7 +272,8 @@
             {% else %}
               {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
             {% endif %}
-      <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.level }}">
+        <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
         {% for key, value in line.msg.items|sort_items %}
           {% if value.items %}
             {% if key == "extra" %}
@@ -279,7 +287,7 @@
               {{ key }}: {{ value }}<br />
           {% endif %}
         {% endfor %}
-      </code></a>
+        </a></code>
         {% elif line.lvl == "error" or line.lvl == "exception" %}
       <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% else %}
