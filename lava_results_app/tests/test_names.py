@@ -10,7 +10,6 @@ from lava_results_app.dbutils import map_scanned_results
 from lava_scheduler_app.models import (
     TestJob, Device,
     DeviceType, DeviceDictionary,
-    JobPipeline,
 )
 from django_testscenarios.ubertest import TestCase as DjangoTestCase
 
@@ -103,15 +102,6 @@ class TestTestSuite(TestCaseWithFactory):
     """
     Test suite naming
     """
-
-    def test_result_store(self):
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), self.user)
-        store = JobPipeline.get(job.id)
-        self.assertIsNotNone(store)
-        self.assertIsInstance(store, JobPipeline)
-        self.assertIs(type(store.pipeline), dict)
-        self.factory.cleanup()
 
     def test_pipelinestore(self):
         job = TestJob.from_yaml_and_user(

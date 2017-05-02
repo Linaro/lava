@@ -7,7 +7,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceDictionary,
-    JobPipeline,
     TestJob,
     Tag,
     DevicesUnavailableException,
@@ -779,86 +778,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         include_data = {'key': 'value'}
         job_data = include_yaml(job_data, include_data)
         self.assertEqual(job_data['key'], 'value')
-
-
-class TestPipelineStore(TestCaseWithFactory):
-
-    def setUp(self):
-        super(TestPipelineStore, self).setUp()
-        self.factory = YamlFactory()
-        self.device_type = self.factory.make_device_type()
-        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
-
-    def test_new_pipeline_store(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        store = JobPipeline.get('foo')
-        self.assertIsNone(store)
-        store = JobPipeline.get(job.id)
-        self.assertIsNotNone(store)
-        self.assertIsInstance(store, JobPipeline)
-        self.assertIs(type(store.pipeline), dict)
-
-    def test_pipeline_results(self):
-        result_sample = """
-- results: !!python/object/apply:collections.OrderedDict
-  - - [linux-linaro-ubuntu-pwd, pass]
-    - [linux-linaro-ubuntu-uname, pass]
-    - [linux-linaro-ubuntu-vmstat, pass]
-    - [linux-linaro-ubuntu-ifconfig, pass]
-    - [linux-linaro-ubuntu-lscpu, pass]
-    - [linux-linaro-ubuntu-lsb_release, pass]
-    - [linux-linaro-ubuntu-netstat, pass]
-    - [linux-linaro-ubuntu-ifconfig-dump, pass]
-    - [linux-linaro-ubuntu-route-dump-a, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up-lo, pass]
-    - [linux-linaro-ubuntu-route-dump-b, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up, pass]
-    - [ping-test, fail]
-    - [realpath-check, fail]
-    - [ntpdate-check, pass]
-    - [curl-ftp, pass]
-    - [tar-tgz, pass]
-    - [remove-tgz, pass]
-        """
-        result_store = {
-            'result_sample': OrderedDict([
-                ('linux-linaro-ubuntu-pwd', 'pass'),
-                ('linux-linaro-ubuntu-uname', 'pass'),
-                ('linux-linaro-ubuntu-vmstat', 'pass'),
-                ('linux-linaro-ubuntu-ifconfig', 'pass'),
-                ('linux-linaro-ubuntu-lscpu', 'pass'),
-                ('linux-linaro-ubuntu-lsb_release', 'pass'),
-                ('linux-linaro-ubuntu-netstat', 'pass'),
-                ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
-                ('linux-linaro-ubuntu-route-dump-a', 'pass'),
-                ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
-                ('linux-linaro-ubuntu-route-dump-b', 'pass'),
-                ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
-                ('ping-test', 'fail'),
-                ('realpath-check', 'fail'),
-                ('ntpdate-check', 'pass'),
-                ('curl-ftp', 'pass'),
-                ('tar-tgz', 'pass'),
-                ('remove-tgz', 'pass')])}
-        name = "result_sample"
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        store = JobPipeline.get(job.id)
-        scanned = yaml.load(result_sample)
-        if isinstance(scanned, list) and len(scanned) == 1:
-            if 'results' in scanned[0] and isinstance(scanned[0], dict):
-                store.pipeline.update({name: scanned[0]['results']})
-                # too often to save the results?
-                store.save()
-        self.assertIsNotNone(store.pipeline)
-        self.assertIsNot({}, store.pipeline)
-        self.assertIs(type(store.pipeline), dict)
-        self.assertIn('result_sample', store.pipeline)
-        self.assertIs(type(store.pipeline['result_sample']), OrderedDict)
-        self.assertEqual(store.pipeline, result_store)
 
 
 class TestYamlMultinode(TestCaseWithFactory):

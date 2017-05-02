@@ -10,7 +10,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceDictionary,
-    JobPipeline,
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
@@ -452,21 +451,6 @@ switches:
                 port_list.append({'port': port, 'device': device})
                 network_map['switches'] = {switch: port_list}
         self.assertEqual(chk_map, network_map)
-
-
-class JobPipelineTest(TestCaseWithFactory):
-    """
-    Test that the JobPipeline KVStore is separate from the Device Dictionary KVStore.
-    """
-    def test_new_dictionary(self):
-        foo = JobPipeline.get('foo')
-        self.assertIsNone(foo)
-        foo = DeviceDictionary(hostname='foo')
-        foo.save()
-        self.assertEqual(foo.hostname, 'foo')
-        self.assertIsInstance(foo, DeviceDictionary)
-        foo = DeviceDictionary.get('foo')
-        self.assertIsNotNone(foo)
 
 
 class DeviceTypeTest(TestCaseWithFactory):

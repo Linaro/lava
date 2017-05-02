@@ -574,13 +574,6 @@ class DeviceKVStore(ExtendedKVStore):
     kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')
 
 
-class PipelineKVStore(ExtendedKVStore):
-    """
-    Set a different backend table
-    """
-    kvstore = get_kvstore('db://lava_scheduler_app_pipelinestore')
-
-
 class DeviceDictionary(DeviceKVStore):
     """
     KeyValue store for Pipeline device support
@@ -1284,15 +1277,6 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     for grp in viewing_groups:
         job.viewing_groups.add(grp)
 
-    # add pipeline to jobpipeline, update with results later - needs the job.id.
-    dupe = JobPipeline.get(job.id)
-    if dupe:
-        # this should be impossible
-        # FIXME: needs a unit test
-        raise RuntimeError("Duplicate job id?")
-    store = JobPipeline(job_id=job.id)
-    store.pipeline = {}
-    store.save()
     return job
 
 
@@ -1413,38 +1397,6 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 job_object_list.append(job)
 
         return job_object_list
-
-
-class PipelineStore(models.Model):
-    kee = models.CharField(max_length=255)
-    value = models.TextField()
-
-    def lookup_job_pipeline(self):
-        """
-        Exports the pipeline as YAML
-        """
-        val = self.kee
-        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
-        data = JobPipeline.get(msg)
-        if isinstance(data.pipeline, str):
-            # if this fails, fix lava_dispatcher.pipeline.actions.explode()
-            data.pipeline = yaml.load(data.pipeline)
-        return data
-
-    def __unicode__(self):
-        return ''
-
-
-class JobPipeline(PipelineKVStore):
-    """
-    KeyValue store for Pipeline device support
-    Not a RestricedResource - may need a new class based on kvmodels
-    """
-    job_id = kvmodels.Field(pk=True)
-    pipeline = kvmodels.Field()
-
-    class Meta:  # pylint: disable=old-style-class,no-init
-        app_label = 'pipeline'
 
 
 class TestJob(RestrictedResource):
