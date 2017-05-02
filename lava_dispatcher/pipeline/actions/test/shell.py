@@ -230,6 +230,8 @@ class TestShellAction(TestAction):
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
+        if self.character_delay > 0:
+            self.logger.debug("Using a character delay of %i (ms)", self.character_delay)
 
         if not connection.prompt_str:
             connection.prompt_str = [self.job.device.get_constant(
@@ -251,12 +253,12 @@ class TestShellAction(TestAction):
 
         if pre_command_list and running == 0:
             for command in pre_command_list:
-                connection.sendline(command)
+                connection.sendline(command, delay=self.character_delay)
 
         self.logger.debug("Using %s" % lava_test_results_dir)
-        connection.sendline('ls -l %s/' % lava_test_results_dir)
+        connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
         if lava_test_sh_cmd:
-            connection.sendline('export SHELL=%s' % lava_test_sh_cmd)
+            connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
         try:
             with connection.test_connection() as test_connection:
