@@ -284,7 +284,7 @@ class TagsColumn(tables.Column):
         if len(values) > 0:
             tags = '<p class="collapse" id="%s">' % tag_id
             tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in values)
-            tags += '</p><p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></p></a></p>' % tag_id
+            tags += '</p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></a>' % tag_id
         return mark_safe(tags)
 
 
