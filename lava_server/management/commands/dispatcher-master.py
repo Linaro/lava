@@ -478,7 +478,7 @@ class Command(BaseCommand):
 
                 # Load device configuration
                 device_configuration = '' \
-                    if job.dynamic_connection else device.load_device_configuration(job_ctx)
+                    if job.dynamic_connection else device.load_configuration(job_ctx)
 
                 # Load env.yaml, env-dut.yaml and dispatcher configuration
                 # All three are optional

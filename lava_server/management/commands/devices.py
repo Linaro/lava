@@ -18,19 +18,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import argparse
 import csv
-import sys
 
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import (
+    BaseCommand,
+    CommandError,
+    CommandParser
+)
 
 from lava_scheduler_app.models import (
     Device,
-    DeviceDictionary,
     DeviceType,
     Worker
 )
-from lava_scheduler_app.utils import jinja2_to_devicedictionary
 
 
 class Command(BaseCommand):
@@ -73,9 +73,6 @@ class Command(BaseCommand):
                                 help="Device type")
         add_parser.add_argument("--description", default=None,
                                 help="Device description")
-        add_parser.add_argument("--dictionary", default=None,
-                                type=argparse.FileType("r"),
-                                help="Device dictionary")
         add_parser.add_argument("--non-pipeline", action="store_false",
                                 dest="pipeline", default=True,
                                 help="Create a v1 device (v2 by default)")
@@ -112,9 +109,6 @@ class Command(BaseCommand):
                                 help="Hostname of the device")
         set_parser.add_argument("--description", default=None,
                                 help="Set the description")
-        set_parser.add_argument("--dictionary", default=None,
-                                type=argparse.FileType("r"),
-                                help="Device dictionary")
         display = set_parser.add_mutually_exclusive_group()
         display.add_argument("--public", default=None, action="store_true",
                              help="make the device public")
@@ -135,8 +129,8 @@ class Command(BaseCommand):
         if options["sub_command"] == "add":
             self.handle_add(options["hostname"], options["device_type"],
                             options["worker"], options["description"],
-                            options["dictionary"], options["pipeline"],
-                            options["public"], options["online"])
+                            options["pipeline"], options["public"],
+                            options["online"])
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
@@ -146,17 +140,16 @@ class Command(BaseCommand):
             self.handle_set(options)
 
     def handle_add(self, hostname, device_type, worker_name,
-                   description, dictionary, pipeline, public, online):
+                   description, pipeline, public, online):
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
-            self.stderr.write("Unable to find device-type '%s'" % device_type)
-            sys.exit(1)
+            raise CommandError("Unable to find device-type '%s'" % device_type)
+
         try:
             worker = Worker.objects.get(hostname=worker_name)
         except Worker.DoesNotExist:
-            self.stderr.write("Unable to find worker '%s'" % worker_name)
-            sys.exit(1)
+            raise CommandError("Unable to find worker '%s'" % worker_name)
 
         status = Device.IDLE if online else Device.OFFLINE
         Device.objects.create(hostname=hostname, device_type=dt,
@@ -164,23 +157,12 @@ class Command(BaseCommand):
                               is_pipeline=pipeline, status=status,
                               is_public=public)
 
-        if dictionary is not None:
-            data = jinja2_to_devicedictionary(dictionary.read())
-            if data is None:
-                self.stderr.write("Invalid device dictionary")
-                sys.exit(1)
-            element = DeviceDictionary(hostname=hostname)
-            element.hostname = hostname
-            element.parameters = data
-            element.save()
-
     def handle_details(self, hostname):
         """ Print device details """
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            self.stderr.write("Unable to find device '%s'" % hostname)
-            sys.exit(1)
+            raise CommandError("Unable to find device '%s'" % hostname)
 
         self.stdout.write("hostname   : %s" % hostname)
         self.stdout.write("device_type: %s" % device.device_type.name)
@@ -191,8 +173,8 @@ class Command(BaseCommand):
         self.stdout.write("public     : %s" % device.is_public)
         self.stdout.write("pipeline   : %s" % device.is_pipeline)
 
-        element = DeviceDictionary.get(hostname)
-        self.stdout.write("device-dict: %s" % bool(element))
+        config = device.load_configuration(output_format="raw")
+        self.stdout.write("device-dict: %s" % bool(config))
         self.stdout.write("worker     : %s" % device.worker_host.hostname)
         self.stdout.write("current_job: %s" % device.current_job)
 
@@ -227,8 +209,7 @@ class Command(BaseCommand):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            self.stderr.write("Unable to find device '%s'" % hostname)
-            sys.exit(1)
+            raise CommandError("Unable to find device '%s'" % hostname)
 
         status = options["status"]
         if status is not None:
@@ -248,25 +229,11 @@ class Command(BaseCommand):
                 worker = Worker.objects.get(hostname=worker_name)
                 device.worker_host = worker
             except Worker.DoesNotExist:
-                self.stderr.write("Unable to find worker '%s'" % worker_name)
-                sys.exit(1)
+                raise CommandError("Unable to find worker '%s'" % worker_name)
 
         public = options["public"]
         if public is not None:
             device.is_public = public
-
-        dictionary = options["dictionary"]
-        if dictionary is not None:
-            data = jinja2_to_devicedictionary(dictionary.read())
-            if data is None:
-                self.stderr.write("Invalid device dictionary")
-                sys.exit(1)
-            element = DeviceDictionary.get(hostname)
-            if element is None:
-                element = DeviceDictionary(hostname=hostname)
-                element.hostname = hostname
-            element.parameters = data
-            element.save()
 
         # Save the modifications
         device.save()

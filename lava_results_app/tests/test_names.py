@@ -9,7 +9,7 @@ from lava_results_app.models import (
 from lava_results_app.dbutils import map_scanned_results
 from lava_scheduler_app.models import (
     TestJob, Device,
-    DeviceType, DeviceDictionary,
+    DeviceType
 )
 from django_testscenarios.ubertest import TestCase as DjangoTestCase
 
@@ -38,7 +38,6 @@ class ModelFactory(object):
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
         TestJob.objects.all().delete()
-        [item.delete() for item in DeviceDictionary.object_list()]
         User.objects.all().delete()
 
     def make_user(self):
@@ -57,11 +56,6 @@ class ModelFactory(object):
     def make_job_yaml(self, **kw):
         return yaml.safe_dump(self.make_job_data(**kw))
 
-    def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
-        qemu = DeviceDictionary(hostname=hostname)
-        qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
-        qemu.save()
-
     def make_device_type(self, name='qemu'):
         (device_type, created) = DeviceType.objects.get_or_create(name=name)
         if created:
@@ -76,7 +70,6 @@ class ModelFactory(object):
         if tags and type(tags) != list:
             tags = []
         device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
-        self.make_fake_qemu_device(hostname)
         if tags:
             device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'"

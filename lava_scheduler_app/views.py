@@ -2,6 +2,7 @@
 from collections import defaultdict, OrderedDict
 import copy
 import yaml
+import jinja2
 import json
 import logging
 import os
@@ -53,7 +54,6 @@ from lava_scheduler_app.logfile_helper import (
 )
 from lava_scheduler_app.models import (
     Device,
-    DeviceDictionary,
     DeviceType,
     DeviceStateTransition,
     Tag,
@@ -66,8 +66,9 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
-    initiate_health_check_job,
     device_type_summary,
+    initiate_health_check_job,
+    load_devicetype_template,
     testjob_submission
 )
 from dashboard_app.models import BundleStream
@@ -915,12 +916,8 @@ def device_type_reports(request, pk):
 
 
 def device_dictionary_plain(request, pk):
-    element = DeviceDictionary.get(pk)
-    data = utils.devicedictionary_to_jinja2(element.parameters,
-                                            element.parameters['extends'])
-    template = utils.prepare_jinja_template(pk, data,
-                                            system_path=True)
-    device_configuration = template.render()
+    device = get_object_or_404(Device, pk=pk)
+    device_configuration = device.load_configuration()
     response = HttpResponse(device_configuration, content_type='text/yaml')
     response['Content-Disposition'] = "attachment; filename=%s.yaml" % pk
     return response
@@ -2448,11 +2445,10 @@ def device_detail(request, pk):
     overrides = None
     if device.is_pipeline:
         overrides = []
-        path = utils.jinja_template_path(system=True)
-        device_dict = DeviceDictionary.get(device.hostname)
-        if device_dict:
-            extends = device_dict.to_dict()['parameters']['extends']
-            devicetype_file = os.path.join(path, 'device-types', '%s' % extends)
+        extends = device.get_extends()
+        if extends:
+            path = os.path.dirname(device.CONFIG_PATH)
+            devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % extends)
             mismatch = not os.path.exists(devicetype_file)
 
     template = loader.get_template("lava_scheduler_app/device.html")
@@ -2498,6 +2494,7 @@ def device_detail(request, pk):
 
 @BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
 def device_dictionary(request, pk):
+    # FIXME: not working well now
     # Find the device and raise 404 if we are not allowed to see it
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
@@ -2513,24 +2510,30 @@ def device_dictionary(request, pk):
     if not device.is_pipeline:
         raise Http404
 
-    device_dict = DeviceDictionary.get(device.hostname)
-    if not device_dict:
+    raw_device_dict = device.load_configuration(output_format="raw")
+    if not raw_device_dict:
         raise Http404
 
-    device_dict = device_dict.to_dict()
+    # Parse the template
+    env = jinja2.Environment()
+    ast = env.parse(raw_device_dict)
+    device_dict = {}
+    for node in ast.find_all(jinja2.nodes.Assign):
+        device_dict[node.target.name] = node.node.value
+
     dictionary = OrderedDict()
     vland = OrderedDict()
     extra = {}
     sequence = utils.device_dictionary_sequence()
     for item in sequence:
-        if item in device_dict['parameters'].keys():
-            dictionary[item] = device_dict['parameters'][item]
+        if item in device_dict.keys():
+            dictionary[item] = device_dict[item]
     vlan_sequence = utils.device_dictionary_vlan()
     for item in vlan_sequence:
-        if item in device_dict['parameters'].keys():
-            vland[item] = yaml.dump(device_dict['parameters'][item], default_flow_style=False)
-    for item in set(device_dict['parameters'].keys()) - set(sequence) - set(vlan_sequence):
-        extra[item] = device_dict['parameters'][item]
+        if item in device_dict.keys():
+            vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
+    for item in set(device_dict.keys()) - set(sequence) - set(vlan_sequence):
+        extra[item] = device_dict[item]
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
     return HttpResponse(template.render(
         {
@@ -2854,7 +2857,7 @@ def download_device_type_template(request, pk):
     if not device_type:
         raise Http404
     device_type = device_type[0]
-    data = utils.load_devicetype_template(device_type.name)
+    data = load_devicetype_template(device_type.name)
     if not data:
         raise Http404
     response = HttpResponse(yaml.dump(data), content_type='text/plain; charset=utf-8')
@@ -3004,13 +3007,11 @@ def migration(request):
     # V2 devices without a health check
     # lookup the appropriate health check filename
     for hostname, _ in no_healthcheck.items():
-        device_dict = DeviceDictionary.get(hostname)
-        if not device_dict:
+        device = Device.objects.get(hostname=hostname)
+        extends = device.get_extends()
+        if not extends:
             templates[hostname] = ''
             continue
-        device_dict = device_dict.to_dict()
-        extends = device_dict['parameters']['extends']
-        extends = os.path.splitext(extends)[0]
         templates[hostname] = "%s.yaml" % extends
 
     template = loader.get_template("lava_scheduler_app/migration.html")

@@ -22,8 +22,6 @@ import re
 import copy
 import errno
 import yaml
-import pprint
-import jinja2
 import socket
 import logging
 import urlparse
@@ -395,104 +393,6 @@ def is_member(user, group):
     return user.groups.filter(name='%s' % group).exists()
 
 
-def devicedictionary_to_jinja2(data_dict, extends):
-    """
-    Formats a DeviceDictionary as a jinja2 string dictionary
-    Arguments:
-        data_dict: the DeviceDictionary.to_dict()
-        extends: the name of the jinja2 device_type template file to extend.
-        (including file name extension / suffix) which jinja2 will later
-        assume to be in the jinja2 device_types folder
-    """
-    if not isinstance(data_dict, dict):
-        return None
-    pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
-    data = u'{%% extends \'%s\' %%}\n' % extends
-    for key, value in data_dict.items():
-        if key == 'extends':
-            continue
-        data += u'{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
-    return data
-
-
-def jinja2_to_devicedictionary(data_dict):
-    """
-    Do some string mangling to convert the template to a key value store
-    The reverse of lava_scheduler_app.utils.devicedictionary_to_jinja2
-    """
-    if not isinstance(data_dict, str):
-        return None
-    data = {}
-    data_dict = data_dict.replace('\n', '')
-    data_dict = data_dict.replace('%}', '%}\n')
-    for line in data_dict.replace('{% ', '').replace(' %}', '').split('\n'):
-        if line == '':
-            continue
-        if line.startswith('extends'):
-            base = line.replace('extends ', '')
-            base = base.replace('"', "'").replace("'", '')
-            data['extends'] = base
-        if line.startswith('set '):
-            key = line.replace('set ', '')
-            key = re.sub(' = .*$', '', key)
-            value = re.sub('^.* = ', '', line)
-            data[key] = yaml.load(value)
-    if 'extends' not in data:
-        return None
-    return data
-
-
-def jinja_template_path(system=True):
-    """
-    Use the source code for jinja2 templates, e.g. for unit tests
-    """
-    path = '/etc/lava-server/dispatcher-config/'
-    if os.path.exists(path) and system:
-        return path
-    path = os.path.realpath(os.path.join(os.path.dirname(__file__), 'tests'))
-    if not os.path.exists(path):
-        raise RuntimeError("Misconfiguration of jinja templates")
-    return path
-
-
-def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
-    string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
-    if not path:
-        path = jinja_template_path(system=system_path)
-    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-    env = jinja2.Environment(
-        loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-        trim_blocks=True)
-    return env.get_template("%s.jinja2" % hostname)
-
-
-def load_devicetype_template(device_type_name, system_path=True, path=None):
-    """
-    Loads the bare device-type template as a python dictionary object for
-    representation within the device_type templates.
-    No device-specific details are parsed - default values only, so some
-    parts of the dictionary may be unexpectedly empty. Not to be used when
-    rendering device configuration for a testjob.
-    :param device_type_name: DeviceType.name (string)
-    :param system_path: use the system path (False for unit tests)
-    :param path: optional alternative path to templates
-    :return: None or a dictionary of the device type template.
-    """
-    if not path:
-        path = jinja_template_path(system=system_path)
-    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-    env = jinja2.Environment(
-        loader=jinja2.ChoiceLoader([type_loader]),
-        trim_blocks=True)
-    try:
-        template = env.get_template("%s.jinja2" % device_type_name)
-    except jinja2.TemplateNotFound:
-        return None
-    if not template:
-        return None
-    return yaml.load(template.render())
-
-
 def _read_log(log_path):
     logger = logging.getLogger('lava_scheduler_app')
     if not os.path.exists(log_path):
@@ -539,81 +439,6 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
                 else:
                     log_data[key] = logs[key]
     return log_data
-
-
-def map_context_overrides(base_template, devicetype_template, system=True):  # pylint: disable=too-many-locals
-    """
-    The problem here is that this function needs to reproduce how
-    jinja2 handles templates and overrides.
-
-    :param base_template: filename of the base template
-    :param devicetype_template: filename of the device type template which
-           extends the base_template (and only the base_template)
-    :param system: Whether to use system paths
-    :return: sorted list of keys which can be overridden by the
-            device dictionary or, if not specified in the device dictionary,
-            by the job context.
-    """
-    path = jinja_template_path(system)
-    base_file = os.path.join(path, 'device-types', base_template)
-    if not os.path.exists(base_file):
-        return None
-    devicetype_file = os.path.join(path, 'device-types', devicetype_template)
-    if not os.path.exists(devicetype_file):
-        return None
-    with open(base_file, 'r') as content:
-        base_data = content.read()
-    with open(devicetype_file, 'r') as content:
-        devicetype_data = content.read()
-    base_keys = []
-    devicetype_keys = []
-    base_pattern = r'{%\s+set\s+(?P<key>\w+)'
-    devicetype_pattern = r'{{\s+(?P<key>\w+)'
-    for line in base_data.split('\n'):
-        match = re.match(base_pattern, line)
-        if match:
-            base_keys.append(match.group('key'))
-    for line in devicetype_data.split('\n'):
-        match = re.search(devicetype_pattern, line)
-        if match:
-            key = match.group('key')
-            if key not in base_keys and key not in devicetype_keys:
-                devicetype_keys.append(match.group('key'))
-    for line in devicetype_data.split('\n'):
-        match = re.match(base_pattern, line)
-        if match:
-            key = match.group('key')
-            if key not in devicetype_keys:
-                devicetype_keys.append(match.group('key'))
-    return sorted(devicetype_keys)
-
-
-def allowed_overrides(device_dict, system=True):
-    """
-    Returns the list of keys which can be overridden in a job context
-    :param device_dict: dict created using DeviceDictionary.to_dict()
-    :param system: unit test support to switch from the default jinja2 path
-    :return: a sorted list of keys which can be overridden in the job context
-    """
-    path = jinja_template_path(system)
-    devicedict_template = device_dict['parameters']['extends']
-    devicetype_file = os.path.join(path, 'device-types', devicedict_template)
-    if not os.path.exists(devicetype_file):
-        return None
-    with open(devicetype_file, 'r') as content:
-        devicetype_data = content.read()
-    extends_pattern = r"{%\s+extends\s+'(?P<key>\S+)'"
-    base_template = None
-    for line in devicetype_data.split('\n'):
-        match = re.search(extends_pattern, line)
-        if match:
-            base_template = match.group('key')
-    override_map = map_context_overrides(base_template, devicedict_template, system)
-    allowed = []
-    for key in override_map:
-        if key is not 'extends' and key not in device_dict['parameters'].keys():
-            allowed.append(key)
-    return sorted(allowed)
 
 
 def _split_multinode_vland(submission, jobs):

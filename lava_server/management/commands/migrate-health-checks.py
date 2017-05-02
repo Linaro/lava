@@ -22,13 +22,13 @@ from django.core.management.base import BaseCommand
 
 from lava_scheduler_app.models import (
     Device,
-    DeviceDictionary,
     DeviceType,
     is_deprecated_json
 )
 
 import errno
 import os
+import re
 
 
 def is_device_type_retired(dt):
@@ -70,6 +70,7 @@ health check will be used for each variant."""
                 return
 
         dt_skipped = []
+        extends_pattern = re.compile(r"^{% extends '([^.]+).jinja2' %}$")
         for dt in DeviceType.objects.order_by('name'):
 
             if not dt.health_check_job or not dt.display or is_device_type_retired(dt):
@@ -104,13 +105,14 @@ health check will be used for each variant."""
 
         self.stdout.write("Checking devices:")
         for device in Device.objects.exclude(status=Device.RETIRED).order_by('hostname'):
-            device_dict = DeviceDictionary.get(device.hostname)
+            device_dict = device.load_configuration(output_format="raw")
             if not device_dict:
                 self.stderr.write("* %s => no device dictionary" % device.hostname)
                 continue
-            device_dict = device_dict.to_dict()
-            extends = device_dict['parameters']['extends']
-            extends = os.path.splitext(extends)[0]
+            extends = device.get_extends()
+            if not extends:
+                self.stderr.write("* %s => no 'extends' found" % device.hostname)
+                continue
 
             filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks",
                                     "%s.yaml" % extends)

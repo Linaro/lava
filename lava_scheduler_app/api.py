@@ -1,6 +1,5 @@
 import xmlrpclib
 import yaml
-import jinja2
 from simplejson import JSONDecodeError
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -13,23 +12,19 @@ from lava_scheduler_app.models import (
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
-    DeviceDictionary,
 )
 from lava_scheduler_app.views import (
     get_restricted_job
 )
-from lava_scheduler_app.dbutils import device_type_summary
-from lava_scheduler_app.utils import (
-    devicedictionary_to_jinja2,
-    jinja2_to_devicedictionary,
-    prepare_jinja_template,
+from lava_scheduler_app.dbutils import (
+    device_type_summary,
+    testjob_submission
 )
 from lava_scheduler_app.schema import (
     validate_submission,
     validate_device,
     SubmissionException,
 )
-from lava_scheduler_app.dbutils import testjob_submission
 
 # functions need to be members to be exposed in the API
 # pylint: disable=no-self-use
@@ -1018,19 +1013,17 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(400, "Bad request: Device hostname was not "
                                   "specified.")
 
-        element = DeviceDictionary.get(device_hostname)
-        if element is None:
+        try:
+            device = Device.objects.get(hostname=device_hostname)
+        except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
 
-        data = devicedictionary_to_jinja2(element.parameters,
-                                          element.parameters['extends'])
-        template = prepare_jinja_template(device_hostname, data, system_path=True)
-        device_configuration = template.render()
+        config = device.load_configuration(output_format="yaml")
 
         # validate against the device schema
-        validate_device(yaml.load(device_configuration))
+        validate_device(yaml.load(config))
 
-        return xmlrpclib.Binary(device_configuration.encode('UTF-8'))
+        return xmlrpclib.Binary(config.encode('UTF-8'))
 
     def import_device_dictionary(self, hostname, jinja_str):
         """
@@ -1043,14 +1036,13 @@ class SchedulerAPI(ExposedAPI):
         [superuser only]
         Import or update the device dictionary key value store for a
         pipeline device.
-        This action will be logged.
 
         Arguments
         ---------
         `device_hostname`: string
             Device hostname to update.
         `jinja_str`: string
-            Jinja2 settings to store in the DeviceDictionary
+            Device configuration as Jinja2
 
         Return value
         ------------
@@ -1068,35 +1060,12 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 404, "Device '%s' was not found." % hostname
             )
-        try:
-            device_data = jinja2_to_devicedictionary(jinja_str)
-        except (ValueError, KeyError, TypeError):
-            raise xmlrpclib.Fault(
-                400, "Unable to parse specified jinja string"
+        if not device.save_configuration(jinja_str):
+            raise xmlrpclib.Faul(
+                400, "Unable to store the configuration for %s on disk" % hostname
             )
-        if not device_data or 'extends' not in device_data:
-            raise xmlrpclib.Fault(
-                400, "Invalid device dictionary content - %s - not updating." % jinja_str
-            )
-        try:
-            template = prepare_jinja_template(hostname, jinja_str, system_path=True)
-        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
-            raise xmlrpclib.Fault(
-                400, "Template error: %s" % exc
-            )
-        if not template:
-            raise xmlrpclib.Fault(400, "Empty template")
-        element = DeviceDictionary.get(hostname)
-        msg = ''
-        if element is None:
-            msg = "Adding new device dictionary for %s\n" % hostname
-            element = DeviceDictionary(hostname=hostname)
-            element.hostname = hostname
-        element.parameters = device_data
-        element.save()
-        msg += "Device dictionary updated for %s\n" % hostname
-        device.log_admin_entry(self.user, msg)
-        return msg
+
+        return "Device dictionary updated for %s" % hostname
 
     def export_device_dictionary(self, hostname):
         """
@@ -1136,14 +1105,14 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Device '%s' is not a pipeline device" % hostname
             )
-        device_dict = DeviceDictionary.get(hostname)
+
+        device_dict = device.load_configuration(output_format="raw")
         if not device_dict:
             raise xmlrpclib.Fault(
                 404, "Device '%s' does not have a device dictionary" % hostname
             )
-        device_dict = device_dict.to_dict()
-        jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
-        return xmlrpclib.Binary(jinja_str.encode('UTF-8'))
+
+        return xmlrpclib.Binary(device_dict.encode('UTF-8'))
 
     def validate_pipeline_devices(self, name=None):
         """
@@ -1203,24 +1172,13 @@ class SchedulerAPI(ExposedAPI):
         results = {}
         for device in devices:
             key = str(device.hostname)
-            element = DeviceDictionary.get(device.hostname)
-            if element is None:
+            config = device.load_configuration(output_format="yaml")
+            if config is None:
                 results[key] = {'Invalid': "Missing device dictionary"}
-                continue
-            data = devicedictionary_to_jinja2(element.parameters,
-                                              element.parameters['extends'])
-            if data is None:
-                results[key] = {'Invalid': 'Unable to convert device dictionary into jinja2'}
-                continue
-            try:
-                template = prepare_jinja_template(device.hostname, data, system_path=True)
-                device_configuration = template.render()
-            except jinja2.TemplateError as exc:
-                results[key] = {'Invalid': exc}
                 continue
             try:
                 # validate against the device schema
-                validate_device(yaml.load(device_configuration))
+                validate_device(yaml.load(config))
             except SubmissionException as exc:
                 results[key] = {'Invalid': exc}
                 continue

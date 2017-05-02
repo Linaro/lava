@@ -33,8 +33,6 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
-from django_kvstore import models as kvmodels
-from django_kvstore import get_kvstore
 
 
 from django_restricted_resource.models import (
@@ -528,64 +526,6 @@ class Worker(models.Model):
             raise ValueError("Worker node unavailable")
 
 
-class DeviceDictionaryTable(models.Model):
-    kee = models.CharField(max_length=255)
-    value = models.TextField()
-
-    def __unicode__(self):
-        return self.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-
-    def lookup_device_dictionary(self):
-        val = self.kee
-        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-        return DeviceDictionary.get(msg)
-
-
-class ExtendedKVStore(kvmodels.Model):
-    """
-    Enhanced kvstore Model which allows to set the kvstore as a class variable
-    """
-    kvstore = None
-
-    def save(self):
-        d = self.to_dict()
-        self.kvstore.set(kvmodels.generate_key(self.__class__, self._get_pk_value()), d)
-
-    def delete(self):
-        self.kvstore.delete(kvmodels.generate_key(self.__class__, self._get_pk_value()))
-
-    @classmethod
-    def get(cls, kvstore_id):
-        fields = cls.kvstore.get(kvmodels.generate_key(cls, kvstore_id))
-        if fields is None:
-            return None
-        return cls.from_dict(fields)
-
-    @classmethod
-    def object_list(cls):
-        """
-        Not quite the same as a Django QuerySet, just a simple list of all entries.
-        Use the to_dict() method on each item in the list to see the key value pairs.
-        """
-        return [kv.lookup_device_dictionary() for kv in DeviceDictionaryTable.objects.all()]
-
-
-class DeviceKVStore(ExtendedKVStore):
-    kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')
-
-
-class DeviceDictionary(DeviceKVStore):
-    """
-    KeyValue store for Pipeline device support
-    Not a RestricedResource - may need a new class based on kvmodels
-    """
-    hostname = kvmodels.Field(pk=True)
-    parameters = kvmodels.Field()
-
-    class Meta:  # pylint: disable=old-style-class,no-init
-        app_label = 'pipeline'
-
-
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -615,6 +555,9 @@ class Device(RestrictedResource):
         (HEALTH_FAIL, 'Fail'),
         (HEALTH_LOOPING, 'Looping'),
     )
+
+    CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
+    HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
 
     hostname = models.CharField(
         verbose_name=_(u"Hostname"),
@@ -800,7 +743,7 @@ class Device(RestrictedResource):
     def is_valid(self, system=True):
         if not self.is_pipeline:
             return False  # V1 config cannot be checked
-        rendered = self.load_device_configuration(system=system)
+        rendered = self.load_configuration()
         try:
             validate_device(rendered)
         except SubmissionException:
@@ -907,67 +850,80 @@ class Device(RestrictedResource):
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
-    def load_device_configuration(self, job_ctx=None, system=True):
+    def load_configuration(self, job_ctx=None, output_format="dict"):
         """
-        Maps the DeviceDictionary to the static templates in /etc/.
-        Use lava-server manage device-dictionary --import <FILE>
-        to update the DeviceDictionary.
+        Maps the device dictionary to the static templates in /etc/.
         raise: this function can raise IOError, jinja2.TemplateError or yaml.YAMLError -
             handling these exceptions may be context-dependent, users will need
             useful messages based on these exceptions.
         """
-        if self.is_pipeline is False:
-            return None
-
         # The job_ctx should not be None while an empty dict is ok
         if job_ctx is None:
             job_ctx = {}
 
-        element = DeviceDictionary.get(self.hostname)
-        if element is None:
+        if output_format == "raw":
+            try:
+                with open(os.path.join(Device.CONFIG_PATH,
+                                       "%s.jinja2" % self.hostname), "r") as f_in:
+                    return f_in.read()
+            except IOError:
+                return None
+
+        # Create the environment
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(
+                [Device.CONFIG_PATH,
+                 os.path.join(os.path.dirname(Device.CONFIG_PATH), "device-types")]),
+            trim_blocks=True)
+
+        try:
+            template = env.get_template("%s.jinja2" % self.hostname)
+            device_template = template.render(**job_ctx)
+        except jinja2.TemplateError:
             return None
-        data = utils.devicedictionary_to_jinja2(
-            element.parameters,
-            element.parameters['extends']
-        )
-        template = utils.prepare_jinja_template(self.hostname, data, system_path=system)
-        return yaml.load(template.render(**job_ctx))
+
+        if output_format == "yaml":
+            return device_template
+        else:
+            return yaml.load(device_template)
+
+    def save_configuration(self, data):
+        try:
+            with open(os.path.join(self.CONFIG_PATH,
+                                   "%s.jinja2" % self.hostname), "w") as f_out:
+                f_out.write(data)
+            return True
+        except IOError:
+            return False
+
+    def get_extends(self):
+        jinja_config = self.load_configuration(output_format="raw")
+        if not jinja_config:
+            return None
+
+        env = jinja2.Environment()
+        ast = env.parse(jinja_config)
+        extends = list(ast.find_all(jinja2.nodes.Extends))
+        if len(extends) != 1:
+            logger = logging.getLogger('lava_scheduler_app')
+            logger.error("Found %d extends for %s", len(extends), self.hostname)
+            return None
+        else:
+            return os.path.splitext(extends[0].template.value)[0]
 
     @property
     def is_exclusive(self):
-        exclusive = False
-        # check the device dictionary if this is exclusively a pipeline device
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            if 'parameters' not in device_dict or device_dict['parameters'] is None:
-                return exclusive
-            if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
-                exclusive = True
-        return exclusive
+        jinja_config = self.load_configuration(output_format="raw")
+        if not jinja_config:
+            return False
 
-    @property
-    def device_dictionary_yaml(self):
-        if not self.is_pipeline:
-            return ''
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            if 'parameters' in device_dict:
-                return yaml.dump(device_dict['parameters'], default_flow_style=False)
-        return ''
+        env = jinja2.Environment()
+        ast = env.parse(jinja_config)
 
-    @property
-    def device_dictionary_jinja(self):
-        jinja_str = ''
-        if not self.is_pipeline:
-            return jinja_str
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            jinja_str = utils.devicedictionary_to_jinja2(
-                device_dict['parameters'], device_dict['parameters']['extends'])
-        return jinja_str
+        for assign in ast.find_all(jinja2.nodes.Assign):
+            if assign.target.name == "exclusive":
+                return bool(assign.node.value)
+        return False
 
     def get_health_check(self):
         # Keep the old behavior for v1 devices
@@ -975,15 +931,12 @@ class Device(RestrictedResource):
             return self.device_type.health_check_job
 
         # Get the device dictionary
-        device_dict = DeviceDictionary.get(self.hostname)
-        if not device_dict:
+        extends = self.get_extends()
+        if not extends:
             # TODO: will be removed in the next release
             return self.device_type.health_check_job
-        device_dict = device_dict.to_dict()
-        extends = device_dict['parameters']['extends']
-        extends = os.path.splitext(extends)[0]
 
-        filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks",
+        filename = os.path.join(Device.HEALTH_CHECK_PATH,
                                 "%s.yaml" % extends)
         try:
             with open(filename, "r") as f_in:
