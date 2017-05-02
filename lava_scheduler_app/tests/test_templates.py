@@ -777,16 +777,16 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(template_dict['usb_product_id'],
                          '0aba')
 
-    def test_d02(self):
-        data = """{% extends 'd02.jinja2' %}
+    def test_d03(self):
+        data = """{% extends 'd03.jinja2' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 07' %}
 {% set grub_installed_device = '(hd2,gpt1)' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 07' %}
 {% set connection_command = 'telnet localhost 7001' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 07' %}
 {% set boot_character_delay = 30 %}"""
-        self.assertTrue(self.validate_data('staging-d02-01', data))
-        test_template = prepare_jinja_template('staging-d02-01',
+        self.assertTrue(self.validate_data('staging-d03-01', data))
+        test_template = prepare_jinja_template('staging-d03-01',
                                                data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
