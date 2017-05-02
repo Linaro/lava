@@ -39,6 +39,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 
 # pylint: disable=protected-access,superfluous-parens
@@ -54,6 +55,8 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         factory = Factory()
         self.client_job = factory.create_kvm_job('sample_jobs/kvm-multinode-client.yaml')
         self.server_job = factory.create_kvm_job('sample_jobs/kvm-multinode-server.yaml')
+        self.client_job.logger = DummyLogger()
+        self.server_job.logger = DummyLogger()
         self.job_id = "100"
         self.coord = TestCoordinator()
 
