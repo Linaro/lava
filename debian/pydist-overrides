@@ -21,4 +21,5 @@ pyzmq python-zmq; PEP386
 django-kvstore python-django-kvstore; PEP386
 jinja2 python-jinja2; PEP386
 ldap python-ldap; PEP386
+voluptuous python-voluptuous; PEP386
 
