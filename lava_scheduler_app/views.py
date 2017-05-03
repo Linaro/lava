@@ -1104,6 +1104,8 @@ def job_submit(request):
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
+                    # Refer to first job in list for job info.
+                    job = job[0]
                 else:
                     response_data["job_id"] = job.id
 
@@ -1113,10 +1115,15 @@ def job_submit(request):
                         user=request.user, test_job=job)
                     testjob_user.is_favorite = True
                     testjob_user.save()
-                template = loader.get_template(
-                    "lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(
-                    response_data, request=request))
+
+                if job.is_pipeline:
+                    return HttpResponseRedirect(
+                        reverse('lava.scheduler.job.detail', args=[job.pk]))
+                else:
+                    template = loader.get_template(
+                        "lava_scheduler_app/job_submit.html")
+                    return HttpResponse(template.render(
+                        response_data, request=request))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -2060,10 +2067,19 @@ def job_resubmit(request, pk):
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
+                    # Refer to first job in list for job info.
+                    job = job[0]
                 else:
                     response_data["job_id"] = job.id
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+
+                if job.is_pipeline:
+                    return HttpResponseRedirect(
+                        reverse('lava.scheduler.job.detail', args=[job.pk]))
+                else:
+                    template = loader.get_template(
+                        "lava_scheduler_app/job_submit.html")
+                    return HttpResponse(
+                        template.render(response_data, request=request))
 
             except Exception as e:
                 response_data["error"] = str(e)
