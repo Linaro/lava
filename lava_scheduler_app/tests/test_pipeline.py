@@ -29,7 +29,6 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     find_device_for_job,
     end_job,
-    cancel_job
 )
 from lava_scheduler_app.schema import validate_submission, validate_device
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -449,6 +448,23 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,nolock ip=dhcp'
         )
+
+    def test_command_list(self):
+        hostname = 'azrael'
+        dt = self.factory.make_device_type(name='hi6220-hikey')
+        device = self.factory.make_device(device_type=dt, hostname=hostname)
+        hikey = DeviceDictionary(hostname=hostname)
+        hikey.parameters = {
+            'extends': 'hi6220-hikey.jinja2',
+            'hard_reset_command': [
+                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 06',
+                'sleep 30',
+                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 06'],
+        }
+        hikey.save()
+        hikey_dict = hikey.to_dict()
+        self.assertIsInstance(hikey_dict['parameters']['hard_reset_command'], list)
+        self.assertTrue(device.is_valid())
 
     def test_visibility(self):
         user = self.factory.make_user()

@@ -322,7 +322,7 @@ def _device_user_commands():
 
 def _device_commands_schema():
     return Schema({
-        All(str): str,
+        All(str): Any(list, str),
         Optional('users'): _device_user_commands()
     })
 
