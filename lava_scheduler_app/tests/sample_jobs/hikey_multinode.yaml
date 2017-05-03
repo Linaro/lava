@@ -1,0 +1,180 @@
+job_name: HiKey multinode
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 10
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: http://git.linaro.org/lava/lava-server.git
+  path: lava_scheduler_app/tests/sample_jobs/hikey_multinode.yaml
+
+# run udhcpc in the hikey OE test shell before accessing the internet
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        count: 1
+        device_type: lxc
+        timeout:
+          minutes: 20
+      server:
+        count: 1
+        device_type: hi6220-hikey
+        timeout:
+          minutes: 20
+  lava-lxc:
+    server:
+      name: lxc-hikey-oe
+      template: debian
+      distribution: debian
+      release: jessie
+      arch: amd64
+      mirror: http://mirror.bytemark.co.uk/debian
+    client:
+      name: pipeline-lxc-test
+      template: debian
+      distribution: debian
+      release: sid
+      arch: amd64
+      mirror: http://ftp.us.debian.org/debian/
+      security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+actions:
+- deploy:
+    role: server
+    namespace: tlxc
+    timeout:
+      minutes: 15
+    to: lxc
+    packages:
+    - android-tools-fastboot
+    os: debian
+
+- boot:
+    role: server
+    namespace: tlxc
+    prompts:
+    - "root@(.*):/#"
+    - "hikey:/"
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    role: server
+    timeout:
+      minutes: 15
+    to: fastboot
+    namespace: hikey-oe
+    connection: lxc
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/bootloader/ptable-linux-8g.img
+      fastboot:
+        url: http://people.linaro.org/~milosz.wasilewski/fip.bin
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/boot-0.0+AUTOINC+06e4def583-4adfdd06f1-r0-hikey-20170411131448-30.uefi.img
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/rpb-console-image-hikey-20170411131448-30.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+        # ensure that this job raises a network interface with DHCP before relying on internet access
+    os: oe
+
+- boot:
+    role: server
+    namespace: hikey-oe
+    auto_login:
+      login_prompt: "login:"
+      username: root
+    prompts:
+    - "root@hikey:~#"
+    timeout:
+      minutes: 5
+    method: uefi-menu
+    commands: fastboot
+    protocols:
+      lava-lxc:
+      # other action could be boot-fastboot
+      - action: uefi-commands
+        request: pre-os-command
+        timeout:
+          minutes: 2
+- deploy:
+    namespace: ssh-services
+    timeout:
+      minutes: 5
+    role:
+    - client
+    to: lxc
+    os: debian
+
+- boot:
+    namespace: ssh-services
+    role:
+    - client
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- test:
+    namespace: ssh-services
+    role:
+    - client
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: common/dmidecode.yaml
+      name: dmidecode
+
+- test:
+    role: server
+    namespace: hikey-oe
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/refactoring.git
+      from: git
+      path: openembedded/smoke-tests-basic.yaml
+      name: smoke-tests-basic-oe
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: network-tests
+          description: "Basic network tests"
+        run:
+          steps:
+          - lava-lxc-device-add
+          # the image does not raise the interface itself
+          # force a DHCP request to avoid avahi using a zero conf address.
+          - udhcpc
+          - netstat
+          - ip a
+          - ifconfig
+          - df
+          - lava-test-case wget --shell wget http://www4.cambridgeshire.gov.uk/contact-us
+          - lava-test-case ping --shell ping -c 4 8.8.8.8
+      name: network-inline
+      path: inline/network.yaml
+
+- test:
+   role: server
+   namespace: tlxc
+   timeout:
+     minutes: 5
+   definitions:
+   - repository: git://git.linaro.org/qa/test-definitions.git
+     from: git
+     path: ubuntu/smoke-tests-basic.yaml
+     name: smoke-tests-basic-ubuntu

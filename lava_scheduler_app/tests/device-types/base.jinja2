@@ -146,20 +146,25 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
 
 {% block vland %}
 parameters:
-{% if interfaces %}
+{% if interfaces or device_ip or device_mac%}
   interfaces:
+{% if device_ip or device_mac %}
+    target:
+      ip: {{ device_ip|default('') }}
+      mac: '{{ device_mac|default('') }}'
+{% endif %}
 {% for interface in interfaces %}
-   {{ interface }}:
-     sysfs: "{{ sysfs.get(interface) }}"
-     mac: "{{ mac_addr.get(interface) }}"
+    {{ interface }}:
+      sysfs: "{{ sysfs.get(interface) }}"
+      mac: "{{ mac_addr.get(interface) }}"
 {% for switch, port in map.get(interface).items() %}
-     switch: "{{ switch }}"
-     port: {{ port }}
+      switch: "{{ switch }}"
+      port: {{ port }}
 {% endfor %}
-     tags:
+      tags:
 {% if tags.get(interface) %}
 {% for tag in tags.get(interface) %}
-     - {{ tag }}
+      - {{ tag }}
 {% endfor %}
 {% endif %}
 {% endfor %}

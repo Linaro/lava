@@ -389,6 +389,21 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('system', order)
         self.assertIn('userdata', order)
 
+        # test support for retreiving MAC from device.
+        data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('parameters', template_dict)
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('target', template_dict['parameters']['interfaces'])
+        self.assertIn('mac', template_dict['parameters']['interfaces']['target'])
+        self.assertIn('ip', template_dict['parameters']['interfaces']['target'])
+        self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertNotEqual('', template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
+
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')

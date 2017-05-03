@@ -975,6 +975,33 @@ class TestYamlMultinode(TestCaseWithFactory):
             else:
                 self.fail('Unrecognised role: %s' % role)
 
+    def test_multinode_hikey(self):
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'hikey_multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        client_protocol_data = {
+            'lava-lxc': {
+                'name': 'pipeline-lxc-test', 'template': 'debian',
+                'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+        }
+        server_protocol_data = {
+            'lava-lxc': {
+                'arch': 'amd64', 'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
+                'name': 'lxc-hikey-oe', 'release': 'jessie', 'template': 'debian'}
+        }
+        for role, _ in jobs.iteritems():
+            if role == 'server':
+                self.assertIn('lava-lxc', jobs[role][0]['protocols'])
+                self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], server_protocol_data['lava-lxc'])
+            elif role == 'client':
+                self.assertIn('lava-lxc', jobs[role][0]['protocols'])
+                self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], client_protocol_data['lava-lxc'])
+            else:
+                self.fail('Unrecognised role: %s' % role)
+
     def test_multinode_protocols(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()

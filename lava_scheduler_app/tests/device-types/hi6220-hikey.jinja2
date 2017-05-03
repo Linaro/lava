@@ -7,10 +7,6 @@ fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
 fastboot_options: {{ fastboot_options|default([]) }}
 flash_cmds_order: ['ptable', 'fastboot', 'nvme', 'boot', 'cache', 'system', 'userdata']
 
-{% block vland %}
-{#  #}
-{% endblock %}
-
 actions:
   deploy:
     methods:

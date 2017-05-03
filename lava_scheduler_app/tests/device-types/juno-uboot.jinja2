@@ -34,7 +34,7 @@ parameters:
 {% if device_ip or device_mac %}
     target:
       ip: {{ device_ip|default('') }}
-      mac: {{ device_mac|default('') }}
+      mac: '{{ device_mac|default('') }}'
 {% endif %}
 {% if interfaces %}
 {% for interface in interfaces %}
