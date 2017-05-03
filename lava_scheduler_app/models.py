@@ -1682,11 +1682,14 @@ class TestJob(RestrictedResource):
 
     @property
     def output_dir(self):
-        return os.path.join(settings.MEDIA_ROOT, 'job-output',
-                            "%02d" % self.submit_time.year,
-                            "%02d" % self.submit_time.month,
-                            "%02d" % self.submit_time.day,
-                            str(self.id))
+        date_path = os.path.join(settings.MEDIA_ROOT, 'job-output',
+                                 "%02d" % self.submit_time.year,
+                                 "%02d" % self.submit_time.month,
+                                 "%02d" % self.submit_time.day,
+                                 str(self.id))
+        if os.path.exists(date_path):
+            return date_path
+        return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 
     def output_file(self):
         filename = 'output.yaml' if self.is_pipeline else 'output.txt'
