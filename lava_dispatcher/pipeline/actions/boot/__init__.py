@@ -329,7 +329,7 @@ class BootloaderCommandOverlay(Action):
             elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
                 self.errors = "No commands found in parameters"
             self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
-        # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
+        # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if 'use_bootscript' in self.parameters:
             self.use_bootscript = self.parameters['use_bootscript']
         if 'lava_mac' in self.parameters:

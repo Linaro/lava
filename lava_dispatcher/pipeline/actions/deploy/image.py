@@ -210,11 +210,11 @@ class DeployImages(Deployment):
     Does not boot the device.
     Requires guestfs instead of loopback support.
     Prepares the following actions and pipelines:
-        retry_pipeline
-            download_action
-        report_checksum_action
-        customisation_action
-        test_definitions_action
+        retry-pipeline
+            download-action
+        report-checksum-action
+        customisation-action
+        test-definitions-action
     """
     compatibility = 4
 

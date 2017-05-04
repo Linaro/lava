@@ -107,7 +107,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, key, path, url):
         super(DownloadHandler, self).__init__()
-        self.name = "download_action"
+        self.name = "download-action"
         self.description = "download action"
         self.summary = "download-action"
 
