@@ -59,6 +59,8 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         super(TestSchedulerAPI, self).setUp()
         logger = logging.getLogger('dispatcher-master')
         logger.disabled = True
+        logger = logging.getLogger('lava_scheduler_app')
+        logger.disabled = True
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpclib.ServerProxy(

@@ -1,4 +1,4 @@
-import datetime
+import logging
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -24,6 +24,15 @@ from lava_scheduler_app.views import job_cancel
 
 # noinspection PyAttributeOutsideInit
 class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
+
+    def setUp(self):
+        super(DatabaseJobSourceTest, self).setUp()
+        logger = logging.getLogger('lava_scheduler_daemon.dbjobsource.DatabaseJobSource')
+        logger.disabled = True
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
+        logger = logging.getLogger('lava_scheduler_app')
+        logger.disabled = True
 
     def restart(self, who):
         self.report_start(who)
@@ -847,7 +856,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
             ]
         )
         # master_jobs = self.scheduler_tick(master)
-        worker_jobs = self.scheduler_tick(worker)
+        self.scheduler_tick(worker)
         # self.scheduler_tick()
         job1 = TestJob.objects.get(id=job1.id)  # reload
         job1.status = TestJob.INCOMPLETE
@@ -858,11 +867,11 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.panda01.save(update_fields=['status', 'current_job'])
 
         # master_jobs = self.scheduler_tick(master)
-        worker_jobs = self.scheduler_tick(worker)
+        self.scheduler_tick(worker)
         # self.scheduler_tick()
         job2 = TestJob.objects.get(id=job2.id)  # reload
         job2.cancel(self.user)
-        master_jobs = self.scheduler_tick(master)
+        self.scheduler_tick(master)
         # worker_jobs = self.scheduler_tick(worker)
         # self.scheduler_tick()
 
@@ -884,8 +893,8 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         job3 = TestJob.objects.get(id=job3.id)  # reload
         self.assertFalse(job4.is_ready_to_start)
 
-        master_jobs = self.scheduler_tick(master)
-        worker_jobs = self.scheduler_tick(worker)
+        self.scheduler_tick(master)
+        self.scheduler_tick(worker)
         # self.scheduler_tick()
 
         job3 = TestJob.objects.get(id=job3.id)  # reload
