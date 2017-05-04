@@ -91,6 +91,19 @@ To run the tests, use the ``ci-run`` script::
 
 See also :ref:`testing_pipeline_code` and :ref:`developer_preparations`
 
+Static code analysis
+====================
+
+It is essential to run ``pep8 --ignore E501`` routinely on your local
+changes as ``./ci-run`` will fail on any PEP8 errors.
+
+.. note:: There can be differences in behaviour between ``pep8`` in Jessie
+   and in Stretch or unstable. All reviews are tested using Jessie.
+
+It is important to run tools like :ref:`pylint <pylint_tool>`, particularly
+when adding new files, to check for missing or unused imports. Other analysis
+tools should also be used, for example from within your IDE.
+
 Functional testing
 ==================
 
@@ -166,6 +179,34 @@ Changes to files in ``./etc/`` will require restarting the relevant service.
 Changes to files in ``./lava/dispatcher/`` will need the ``lava-slave``
 service to be restarted.
 
+* When adding or modifying ``run``, ``validate``, ``populate`` or ``cleanup``
+  functions, **always** ensure that ``super`` is called appropriately, for example:
+
+  .. code-block:: python
+
+    super(ThisClass, self).validate()
+
+    connection = super(ThisClass, self).run(connection, max_end_time, args)
+
+* When adding or modifying ``run`` functions in subclasses of ``Action``,
+  **always** ensure that each return point out of the ``run`` function returns
+  the ``connection`` object:
+
+  .. code-block:: python
+
+    return connection
+
+* When adding new classes, use **hyphens**, ``-``, as separators in
+  ``self.name``, *not underscores*,  ``_``. The function will fail if
+  underscore or whitespace is used. Action names need to all be lowercase
+  and describe something about what the action does at runtime. More
+  information then needs to be added to the ``self.summary`` and an extended
+  sentence in ``self.description``.
+
+  .. code-block:: python
+
+    self.name = 'do-something-at-runtime'
+
 lava-server
 -----------
 
@@ -227,7 +268,7 @@ Documentation is written in RST, so the `RST Primer
 <http://www.sphinx-doc.org/en/stable/rest.html>`_ is essential reading when
 modifying the documentation.
 
-#. Keep all documentation paragraphs wrapped to 80 lines.
+#. Keep all documentation paragraphs wrapped to 80 columns.
 
 #. Use ``en_GB`` unless referring to elements of code which use ``en_US``.
 

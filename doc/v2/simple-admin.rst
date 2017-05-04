@@ -804,7 +804,7 @@ recognize during boot time.
 This uses the ``shutdown_message`` and ``boot_message`` keys in the
 ``constants`` section of the device config:
 
-.. code-block:: yaml
+.. code-block:: jinja
 
  {% extends 'my-device.jinja2' %}
  {% set shutdown_message = "reboot: Restarting system" %}

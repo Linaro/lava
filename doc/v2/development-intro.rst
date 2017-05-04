@@ -25,7 +25,7 @@ for how LAVA is developed, tested, deployed and used.
 
 .. index:: git branches, development branches
 
-.. __lava_git_branches:
+.. _lava_git_branches:
 
 LAVA and git branches
 =====================
@@ -552,12 +552,15 @@ check-list:
 
     $ git review
 
-#. If successful, you will get a link to a review.
-#. Login to gerrit and add the ``lava-team`` as reviewers.
+#. If successful, you will get a link to a review with the ``lava-team``
+   already added as reviewers.
+
 #. The unit tests will automatically start and you will be notified by email
    of the results and a link to the output which is useful if the tests fail.
 
-.. seealso:: :ref:`development_workflow` for detailed information.
+.. seealso:: :ref:`development_workflow` for detailed information on running
+   the unit tests and other static code analysis tools before submitting the
+   review.
 
 Contributing via your distribution
 ----------------------------------
