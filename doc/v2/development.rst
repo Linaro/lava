@@ -308,6 +308,26 @@ It's OK to send multiple commits from the same branch, but note that:
    acceptable as separate reviews, so don't be tempted to make another commit
    at the top of the branch.
 
+#. It is common for reviews to go through repeated cycles of comments and
+   updates. This is not a reflection on the usefulness of the change or on
+   any particular contributors, it is a natural evolution of the code. Comments
+   may reflect changes being made in other parallel reviews or reviews merged
+   whilst this change was being reviewed. Contributors may be added to other
+   reviews where the team consider this to be useful for feedback or where the
+   documentation is being updated in areas which relate to your change. The
+   number of comments per review is no indication of the quality of that review
+   and does not affect when the review would be merged.
+
+#. It is common for changes to develop merge conflicts during the review process
+   as other reviews are merged. Unfortunately, gerrit does **not** email reviewers
+   when a review gains a merge conflict. The team will usually *ping* the review if
+   it looks like the reviewer has not noticed a merge conflict when the review is
+   considered ready to be merged.
+
+#. If a review has been given ``-1`` by ``lava-bot``, a reviewer or the author,
+   the team will generally ignore that review unless it relates to parallel work on
+   a bug fix or other feature.
+
 Therefore the recommentations are:
 
 #. **Always** use a separate local branch per commit
@@ -320,6 +340,12 @@ Therefore the recommentations are:
 #. Keep all your branches up to date with master **regularly**. It is much
    better to resolve merge conflicts one change at a time instead of having
    multiple merge commits all in the one rebase operation.
+
+#. Check gerrit intermittently and ensure that you address **all** comments on
+   the review. LAVA software releases tend to be within the first week of the
+   month. Towards the end of each month, pay particular attention to comments
+   made in gerrit and check if your review has gained a merge conflict. Resolving
+   these problems will make it easier to get your change into the next LAVA release.
 
 .. _developer_adding_reviewers:
 
