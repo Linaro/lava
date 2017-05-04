@@ -246,7 +246,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             yaml_data['commands']['connect'])
         ramdisk_args = yaml_data['actions']['boot']['methods']['u-boot']['ramdisk']
         self.assertIn('commands', ramdisk_args)
-        self.assertIn('boot', ramdisk_args['commands'])
+        self.assertIn('run bootcmd', ramdisk_args['commands'])
         self.assertIn(
             "setenv bootargs 'console=ttyfake1,56n8 root=/dev/ram0  ip=dhcp'",
             ramdisk_args['commands'])

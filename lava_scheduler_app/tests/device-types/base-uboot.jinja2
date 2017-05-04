@@ -14,15 +14,15 @@
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default(
 "          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
 {% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
 {% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default(
 "          - usb start") -%}
