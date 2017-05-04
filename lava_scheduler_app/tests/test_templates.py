@@ -259,6 +259,14 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet localhost 7333' %}
 {% set exclusive = 'True' %}"""))
 
+    def test_b2260_template(self):
+        data = """{% extends 'b2260.jinja2' %}"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual({'seconds': 15}, template_dict['timeouts']['actions']['power-off'])
+
     def test_qemu_template(self):
         data = """{% extends 'qemu.jinja2' %}
 {% set exclusive = 'True' %}
