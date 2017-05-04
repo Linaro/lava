@@ -2,6 +2,7 @@ import os
 import sys
 import yaml
 import json
+import logging
 import cStringIO
 import xmlrpclib
 import unittest
@@ -53,6 +54,11 @@ class TestTransport(xmlrpclib.Transport, object):
 
 
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
+
+    def setUp(self):
+        super(TestSchedulerAPI, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpclib.ServerProxy(
@@ -327,13 +333,13 @@ actions:
         device_type.aliases.add(alias)
         aliases = DeviceType.objects.filter(aliases__name__contains='black')
         retval = {
-            'black': [device_type.name for device_type in aliases]
+            'black': [dt.name for dt in aliases]
         }
         self.assertEqual(retval, {'black': ['beaglebone-black']})
         alias.delete()
         aliases = DeviceType.objects.filter(aliases__name__contains='black')
         retval = {
-            'black': [device_type.name for device_type in aliases]
+            'black': [dt.name for dt in aliases]
         }
         self.assertEqual(retval, {'black': []})
 

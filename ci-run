@@ -7,7 +7,7 @@ pep8 --ignore E501 .
 
 if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
   echo "If it exists, a broken test database will be deleted without prompting."
-  NOINPUT='--noinput -v1'
+  NOINPUT='--noinput -v2'
 fi
 
 if [[ (-z "$1") || (("$1" == -v*) && ($# -eq 1)) ]]; then

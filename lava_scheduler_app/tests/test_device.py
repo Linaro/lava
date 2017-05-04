@@ -3,6 +3,7 @@
 import os
 import yaml
 import jinja2
+import logging
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry
 from lava_scheduler_app.models import (
@@ -59,6 +60,11 @@ class TestCaseWithFactory(TestCase):
 
 
 class DeviceTest(TestCaseWithFactory):
+
+    def setUp(self):
+        super(DeviceTest, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def test_put_into_looping_mode(self):
         foo = DeviceType(name='foo')
@@ -503,6 +509,11 @@ class DeviceTypeTest(TestCaseWithFactory):
 
 
 class TestLogEntry(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestLogEntry, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def test_create_logentry(self):
         foo = DeviceType(name='foo')
