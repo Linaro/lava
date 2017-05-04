@@ -328,7 +328,7 @@ It's OK to send multiple commits from the same branch, but note that:
    the team will generally ignore that review unless it relates to parallel work on
    a bug fix or other feature.
 
-Therefore the recommentations are:
+Therefore the recommendations are:
 
 #. **Always** use a separate local branch per commit
 
@@ -363,7 +363,7 @@ that review. All reviewers need to :ref:`register`, email will go to the
 
 If you know that there are still problems to fix in the review, please use the
 Gerrit interface to reply to the review and give the review a score of ``-1``
-and sumamrise your concerns in the comment. This indicates to the software team
+and summarize your concerns in the comment. This indicates to the software team
 that this review should not be considered for merging into master at this time.
 You may still get comments.
 
@@ -392,7 +392,7 @@ For example::
     * my-feature
     $ git show-branch master my-feature
     ! [master] Last commit on master
-     ! [my-feature] address revier comments
+     ! [my-feature] address reviewer comments
     --
      + [my-feature] address reviewer comments
      + [my-feature^] New feature or bug fix
@@ -407,7 +407,7 @@ like this::
     pick yyyyyyy address reviewer comments
 
 You want the last commit to be combined with the first and keep the first
-commit message, so you change ``pick`` to ``fixup`` ending up with somehting
+commit message, so you change ``pick`` to ``fixup`` ending up with something
 like this::
 
     pick xxxxxxx New feature or bug fix
@@ -675,7 +675,7 @@ recommended::
 
   $ pep8 --ignore E501
 
-`pep8` can be installed in debian based systems as follows::
+`pep8` can be installed in Debian based systems as follows::
 
   $ apt install pep8
 
@@ -709,7 +709,7 @@ LAVA database model visualization
 *********************************
 
 LAVA database models can be visualized with the help of `django_extensions`_
-along with tools such as `pydot`_. In debian based systems install the
+along with tools such as `pydot`_. In Debian based systems install the
 following packages to get the visualization of LAVA database models:
 
 .. code-block:: shell
