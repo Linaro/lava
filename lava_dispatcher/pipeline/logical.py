@@ -52,6 +52,7 @@ class RetryAction(Action):
             raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 
     def run(self, connection, max_end_time, args=None):
+        has_failed = False
         while self.retries < self.max_retries:
             try:
                 connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
@@ -60,21 +61,18 @@ class RetryAction(Action):
                     return connection
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
+                has_failed = True
                 # Print the error message
                 self.retries += 1
                 msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries,
                                                               self.max_retries, exc)
                 self.logger.error(msg)
-                self.errors = msg
                 # Cleanup the action to allow for a safe restart
                 self.cleanup(connection)
 
                 # re-raise if this is the last loop
                 if self.retries == self.max_retries:
                     self.errors = "%s retries failed for %s" % (self.retries, self.name)
-                    res = 'failed' if self.errors else 'success'
-                    self.set_namespace_data(action='boot', label='shared',
-                                            key='boot-result', value=res)
                     self.set_namespace_data(action='shared', label='shared',
                                             key='connection', value=connection)
                     raise
@@ -83,13 +81,9 @@ class RetryAction(Action):
                 time.sleep(self.sleep)
 
         # If we are repeating, check that all repeat were a success.
-        if not self.valid:
-            self.errors = "%s retries failed for %s" % (self.retries, self.name)
-            res = 'failed' if self.errors else 'success'
-            self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+        if has_failed:
             # tried and failed
-            # TODO: raise the right exception
-            raise JobError(self.errors)
+            raise JobError("%s retries failed for %s" % (self.retries, self.name))
         return connection
 
 

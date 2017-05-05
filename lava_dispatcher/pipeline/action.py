@@ -290,20 +290,17 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
             except LAVAError as exc:
-                exc_message = str(exc)
-                action.errors = exc_message
                 # set results including retries
+                # TODO: needed?
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
-                action.logger.error(exc_message)
+                action.logger.error(str(exc))
                 self._diagnose(connection)
                 raise
             except Exception as exc:
-                exc_message = str(exc)
                 action.logger.exception(traceback.format_exc())
-                action.errors = exc_message
                 # Raise a LAVABug that will be correctly classified later
-                raise LAVABug(exc_message)
+                raise LAVABug(str(exc))
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
