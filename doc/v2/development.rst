@@ -66,7 +66,7 @@ for each logically distinct change you work on.
    commit on a branch, this means making a fresh branch for each change with
    **one commit** per branch.
 
-   .. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
+.. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
 
 Before you start, make sure your master branch is up to date::
 
@@ -89,7 +89,7 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-See also :ref:`testing_pipeline_code` and :ref:`developer_preparations`
+..seealso:: :ref:`testing_pipeline_code` and :ref:`developer_preparations`
 
 Static code analysis
 ====================
@@ -123,7 +123,6 @@ Make your changes
 
   * `A note about git commit messages`_
   * `5 useful tips for a better commit message`_
-
 
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
@@ -206,6 +205,20 @@ service to be restarted.
   .. code-block:: python
 
     self.name = 'do-something-at-runtime'
+
+  .. seealso:: :ref:`developing_new_classes`
+
+* Use **namespaces** for all dynamic data. Parameters of actions are immutable.
+  Use the namespace functions when an action needs to store dynamic data, for
+  example the location of files which have been downloaded to temporary directories,
+  Do not access ``self.data`` directly (except for use in iterators). Use the
+  get and set primitives, for example:
+
+  .. code-block:: python
+
+   set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+
+   image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
 
 lava-server
 -----------

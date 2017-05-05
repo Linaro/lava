@@ -61,7 +61,7 @@ following links from the Debian package trackers for `lava-dispatcher
 <https://tracker.debian.org/pkg/lava-dispatcher>`_ and `lava-server
 <https://tracker.debian.org/pkg/lava-server>`_.
 
-.. index:: lava repository
+.. index:: lava repository, staging-repo, production-repo
 
 .. _lava_repositories:
 

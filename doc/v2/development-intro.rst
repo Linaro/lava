@@ -360,6 +360,8 @@ will be tidied up.
   top level ``lava_test_shell`` directory with overrides in
   ``pipeline/lava_test_shell``.
 
+  .. seealso:: :ref:`developing_new_classes`
+
 There are also locations which provide device configurations to support the
 unit tests. Only the Jinja2 support is used by the installed packages,
 
