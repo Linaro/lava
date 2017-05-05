@@ -127,7 +127,6 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_lxc_api(self):
         job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
                                             mkdtemp())
-        job.logger = DummyLogger()
         description_ref = pipeline_reference('hikey-oe.yaml')
         job.validate()
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -150,7 +149,6 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
-        job.logger = DummyLogger()
         description_ref = pipeline_reference('hi6220-hikey.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
