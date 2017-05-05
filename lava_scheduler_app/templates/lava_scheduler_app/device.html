@@ -14,7 +14,7 @@
   </li>
 </ul>
 
-{% if user.is_staff and device.device_type.name != 'dynamic-vm' and not device.get_health_check %}
+{% if user.is_staff and device.device_type.name != 'dynamic-vm' and not device.get_health_check and not device.device_type.disable_health_check %}
   <div class="alert alert-warning">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <strong>The device has no
