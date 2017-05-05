@@ -119,6 +119,10 @@ class Scp(ConnectSsh):
         if not self.primary and len(
                 self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)) != 1:
             self.errors = "Invalid number of host_keys"
+        if self.primary:
+            host_address = self.job.device['actions']['deploy']['methods']['ssh']['host']
+            if not host_address:
+                self.errors = "Unable to retrieve ssh_host address for primary connection."
         if 'port' in self.job.device['actions']['deploy']['methods']['ssh']:
             port = str(self.job.device['actions']['deploy']['methods']['ssh']['port'])
             if not port.isdigit():
