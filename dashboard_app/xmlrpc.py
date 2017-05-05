@@ -21,7 +21,6 @@ XMP-RPC API
 """
 
 import datetime
-import decimal
 import logging
 import re
 import urllib2
@@ -86,6 +85,10 @@ class DashboardAPI(ExposedAPI):
         ----
         `version` ()
 
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
+
         Description
         -----------
         Return lava server version. The version is a string, which is the
@@ -140,6 +143,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `put` (`content`, `content_filename`, `pathname`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -197,6 +204,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `put` (`content`, `content_filename`, `pathname`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -257,6 +268,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `put_pending` (`content`, `pathname`, `group_name`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -336,6 +351,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `put_group` (`content`, `content_filename`, `pathname`, `group_name`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -441,6 +460,10 @@ class DashboardAPI(ExposedAPI):
         ----
         `get` (`content_sha1`)
 
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
+
         Description
         -----------
         Download a bundle from the server.
@@ -491,6 +514,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `streams` ()
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -550,6 +577,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `bundles` (`pathname`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -638,6 +669,10 @@ class DashboardAPI(ExposedAPI):
         ----
         `get_test_names` ([`device_type`]])
 
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
+
         Description
         -----------
         Get the name of all the tests that have run on a particular device type.
@@ -667,6 +702,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `deserialize` (`content_sha1`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -708,6 +747,10 @@ class DashboardAPI(ExposedAPI):
         Name
         ----
         `make_stream` (`pathname`, `name`)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------
@@ -827,6 +870,10 @@ class DashboardAPI(ExposedAPI):
 
           get_filter_results(filter_name, count=10, offset=0)
 
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
+
         Description
         -----------
 
@@ -882,6 +929,10 @@ class DashboardAPI(ExposedAPI):
          ::
 
           get_filter_results_since(filter_name, since=None)
+
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
 
         Description
         -----------

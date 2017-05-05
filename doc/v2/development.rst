@@ -66,7 +66,7 @@ for each logically distinct change you work on.
    commit on a branch, this means making a fresh branch for each change with
    **one commit** per branch.
 
-   .. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
+.. seealso:: :ref:`developer_submitting_new_version` and :ref:`developer_submitting_new_version`
 
 Before you start, make sure your master branch is up to date::
 
@@ -89,7 +89,20 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-See also :ref:`testing_pipeline_code`.
+..seealso:: :ref:`testing_pipeline_code` and :ref:`developer_preparations`
+
+Static code analysis
+====================
+
+It is essential to run ``pep8 --ignore E501`` routinely on your local
+changes as ``./ci-run`` will fail on any PEP8 errors.
+
+.. note:: There can be differences in behaviour between ``pep8`` in Jessie
+   and in Stretch or unstable. All reviews are tested using Jessie.
+
+It is important to run tools like :ref:`pylint <pylint_tool>`, particularly
+when adding new files, to check for missing or unused imports. Other analysis
+tools should also be used, for example from within your IDE.
 
 Functional testing
 ==================
@@ -110,7 +123,6 @@ Make your changes
 
   * `A note about git commit messages`_
   * `5 useful tips for a better commit message`_
-
 
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
@@ -165,6 +177,48 @@ Changes to files in ``./etc/`` will require restarting the relevant service.
 
 Changes to files in ``./lava/dispatcher/`` will need the ``lava-slave``
 service to be restarted.
+
+* When adding or modifying ``run``, ``validate``, ``populate`` or ``cleanup``
+  functions, **always** ensure that ``super`` is called appropriately, for example:
+
+  .. code-block:: python
+
+    super(ThisClass, self).validate()
+
+    connection = super(ThisClass, self).run(connection, max_end_time, args)
+
+* When adding or modifying ``run`` functions in subclasses of ``Action``,
+  **always** ensure that each return point out of the ``run`` function returns
+  the ``connection`` object:
+
+  .. code-block:: python
+
+    return connection
+
+* When adding new classes, use **hyphens**, ``-``, as separators in
+  ``self.name``, *not underscores*,  ``_``. The function will fail if
+  underscore or whitespace is used. Action names need to all be lowercase
+  and describe something about what the action does at runtime. More
+  information then needs to be added to the ``self.summary`` and an extended
+  sentence in ``self.description``.
+
+  .. code-block:: python
+
+    self.name = 'do-something-at-runtime'
+
+  .. seealso:: :ref:`developing_new_classes`
+
+* Use **namespaces** for all dynamic data. Parameters of actions are immutable.
+  Use the namespace functions when an action needs to store dynamic data, for
+  example the location of files which have been downloaded to temporary directories,
+  Do not access ``self.data`` directly (except for use in iterators). Use the
+  get and set primitives, for example:
+
+  .. code-block:: python
+
+   set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
+
+   image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
 
 lava-server
 -----------
@@ -227,7 +281,7 @@ Documentation is written in RST, so the `RST Primer
 <http://www.sphinx-doc.org/en/stable/rest.html>`_ is essential reading when
 modifying the documentation.
 
-#. Keep all documentation paragraphs wrapped to 80 lines.
+#. Keep all documentation paragraphs wrapped to 80 columns.
 
 #. Use ``en_GB`` unless referring to elements of code which use ``en_US``.
 
@@ -267,7 +321,27 @@ It's OK to send multiple commits from the same branch, but note that:
    acceptable as separate reviews, so don't be tempted to make another commit
    at the top of the branch.
 
-Therefore the recommentations are:
+#. It is common for reviews to go through repeated cycles of comments and
+   updates. This is not a reflection on the usefulness of the change or on
+   any particular contributors, it is a natural evolution of the code. Comments
+   may reflect changes being made in other parallel reviews or reviews merged
+   whilst this change was being reviewed. Contributors may be added to other
+   reviews where the team consider this to be useful for feedback or where the
+   documentation is being updated in areas which relate to your change. The
+   number of comments per review is no indication of the quality of that review
+   and does not affect when the review would be merged.
+
+#. It is common for changes to develop merge conflicts during the review process
+   as other reviews are merged. Unfortunately, gerrit does **not** email reviewers
+   when a review gains a merge conflict. The team will usually *ping* the review if
+   it looks like the reviewer has not noticed a merge conflict when the review is
+   considered ready to be merged.
+
+#. If a review has been given ``-1`` by ``lava-bot``, a reviewer or the author,
+   the team will generally ignore that review unless it relates to parallel work on
+   a bug fix or other feature.
+
+Therefore the recommendations are:
 
 #. **Always** use a separate local branch per commit
 
@@ -279,6 +353,12 @@ Therefore the recommentations are:
 #. Keep all your branches up to date with master **regularly**. It is much
    better to resolve merge conflicts one change at a time instead of having
    multiple merge commits all in the one rebase operation.
+
+#. Check gerrit intermittently and ensure that you address **all** comments on
+   the review. LAVA software releases tend to be within the first week of the
+   month. Towards the end of each month, pay particular attention to comments
+   made in gerrit and check if your review has gained a merge conflict. Resolving
+   these problems will make it easier to get your change into the next LAVA release.
 
 .. _developer_adding_reviewers:
 
@@ -296,7 +376,7 @@ that review. All reviewers need to :ref:`register`, email will go to the
 
 If you know that there are still problems to fix in the review, please use the
 Gerrit interface to reply to the review and give the review a score of ``-1``
-and sumamrise your concerns in the comment. This indicates to the software team
+and summarize your concerns in the comment. This indicates to the software team
 that this review should not be considered for merging into master at this time.
 You may still get comments.
 
@@ -325,7 +405,7 @@ For example::
     * my-feature
     $ git show-branch master my-feature
     ! [master] Last commit on master
-     ! [my-feature] address revier comments
+     ! [my-feature] address reviewer comments
     --
      + [my-feature] address reviewer comments
      + [my-feature^] New feature or bug fix
@@ -340,7 +420,7 @@ like this::
     pick yyyyyyy address reviewer comments
 
 You want the last commit to be combined with the first and keep the first
-commit message, so you change ``pick`` to ``fixup`` ending up with somehting
+commit message, so you change ``pick`` to ``fixup`` ending up with something
 like this::
 
     pick xxxxxxx New feature or bug fix
@@ -608,7 +688,7 @@ recommended::
 
   $ pep8 --ignore E501
 
-`pep8` can be installed in debian based systems as follows::
+`pep8` can be installed in Debian based systems as follows::
 
   $ apt install pep8
 
@@ -634,14 +714,15 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
-.. seealso:: :ref:`testing_pipeline_code` for examples of how to run
-   individual unit tests or all unit tests within a class or module.
+.. seealso:: :ref:`developer_preparations` and :ref:`testing_pipeline_code` for
+   examples of how to run individual unit tests or all unit tests within a
+   class or module.
 
 LAVA database model visualization
 *********************************
 
 LAVA database models can be visualized with the help of `django_extensions`_
-along with tools such as `pydot`_. In debian based systems install the
+along with tools such as `pydot`_. In Debian based systems install the
 following packages to get the visualization of LAVA database models:
 
 .. code-block:: shell

@@ -58,7 +58,8 @@ optionally into test sets and finally into test cases.
 Test Suite
 ----------
 
-The name of the Test Suite is determined by the test job definition.
+The name of the Test Suite is determined by the test job definition. The Test
+Suite is created when results are generated in the running test job.
 
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml
@@ -71,6 +72,9 @@ element is then appended to create the test suite name.
 
 * ``0_smoke-tests``
 * ``1_singlenode-advanced``
+
+Results are only generated when the Lava Test Shell Definition makes at least
+one call to ``lava-test-case``.
 
 The test suite can then be appended to the REST API URL for the results to
 limit the results to just that test suite:

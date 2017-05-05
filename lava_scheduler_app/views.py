@@ -78,9 +78,6 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
-    TestSet,
-    TestSuite,
-    TestCase
 )
 
 from lava_scheduler_app.template_helper import expand_template
@@ -676,6 +673,12 @@ class PipelineDeviceView(DeviceTableView):
                              .order_by("hostname")
 
 
+class DeviceHealthView(DeviceTableView):
+
+    def get_queryset(self):
+        return super(DeviceHealthView, self).get_queryset().exclude(status=Device.RETIRED)
+
+
 class DeviceTypeOverView(JobTableView):
 
     def get_queryset(self):
@@ -925,7 +928,7 @@ def device_dictionary_plain(request, pk):
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
-    data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)
+    data = DeviceHealthView(request, model=Device, table_class=DeviceHealthTable)
     ptable = DeviceHealthTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     template = loader.get_template("lava_scheduler_app/labhealth.html")
@@ -979,7 +982,7 @@ def health_job_list(request, pk):
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
-                device.get_health_check() != "",
+                device.get_health_check(),
             'can_admin': device.can_admin(request.user),
             'show_maintenance':
                 device.can_admin(request.user) and
@@ -1107,6 +1110,8 @@ def job_submit(request):
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
+                    # Refer to first job in list for job info.
+                    job = job[0]
                 else:
                     response_data["job_id"] = job.id
 
@@ -1116,10 +1121,15 @@ def job_submit(request):
                         user=request.user, test_job=job)
                     testjob_user.is_favorite = True
                     testjob_user.save()
-                template = loader.get_template(
-                    "lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(
-                    response_data, request=request))
+
+                if job.is_pipeline:
+                    return HttpResponseRedirect(
+                        reverse('lava.scheduler.job.detail', args=[job.pk]))
+                else:
+                    template = loader.get_template(
+                        "lava_scheduler_app/job_submit.html")
+                    return HttpResponse(template.render(
+                        response_data, request=request))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -1333,7 +1343,7 @@ def job_detail(request, pk):
         ),
     }
     if job.is_pipeline:
-        description = description_data(job.id)
+        description = description_data(job)
         job_data = description.get('job', {})
         action_list = job_data.get('actions', [])
         pipeline = description.get('pipeline', {})
@@ -1368,6 +1378,8 @@ def job_detail(request, pk):
 
             except IOError:
                 log_data = []
+            except yaml.YAMLError:
+                log_data = None
 
         data.update({
             'device_data': description.get('device', {}),
@@ -1376,7 +1388,9 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'log_data': log_data,
+            'log_data': log_data if log_data else [],
+            'invalid_log_data': log_data is None,
+            'job_tags': job.tags.all(),
             'default_section': default_section,
         })
 
@@ -1439,7 +1453,7 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    description = description_data(job.id) if job.is_pipeline else {}
+    description = description_data(job) if job.is_pipeline else {}
     template = loader.get_template("lava_scheduler_app/job_definition.html")
     return HttpResponse(template.render(
         {
@@ -1456,7 +1470,7 @@ def job_description_yaml(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404()
-    filename = description_filename(job.id)
+    filename = description_filename(job)
     if not filename:
         raise Http404()
     with open(filename, 'r') as desc:
@@ -1550,7 +1564,7 @@ def vmgroup_job_definition_plain(request, pk):
 
 @BreadCrumb("My Jobs", parent=index)
 def myjobs(request):
-    user = get_object_or_404(User, pk=request.user.id)
+    get_object_or_404(User, pk=request.user.id)
     data = MyJobsView(request, model=TestJob, table_class=JobTable)
     ptable = JobTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -1621,7 +1635,7 @@ def job_complete_log(request, pk):
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
 
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:
@@ -1718,7 +1732,7 @@ def job_pipeline_sections(request, pk):
     job = get_restricted_job(request.user, pk)
     if not job.is_pipeline:
         raise Http404
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:
@@ -1823,7 +1837,7 @@ def job_pipeline_incremental(request, pk):
     # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
     job = get_restricted_job(request.user, pk)
     summary = int(request.GET.get('summary', 0)) == 1
-    description = description_data(job.id)
+    description = description_data(job)
     pipeline = description.get('pipeline', {})
     sections = []
     for action in pipeline:
@@ -2059,10 +2073,19 @@ def job_resubmit(request, pk):
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
+                    # Refer to first job in list for job info.
+                    job = job[0]
                 else:
                     response_data["job_id"] = job.id
-                template = loader.get_template("lava_scheduler_app/job_submit.html")
-                return HttpResponse(template.render(response_data, request=request))
+
+                if job.is_pipeline:
+                    return HttpResponseRedirect(
+                        reverse('lava.scheduler.job.detail', args=[job.pk]))
+                else:
+                    template = loader.get_template(
+                        "lava_scheduler_app/job_submit.html")
+                    return HttpResponse(
+                        template.render(response_data, request=request))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -2447,7 +2470,7 @@ def device_detail(request, pk):
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
-                device.get_health_check() != "",
+                device.get_health_check(),
             'can_admin': device.can_admin(request.user),
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
@@ -2967,7 +2990,7 @@ def migration(request):
         hc = dev.get_health_check()
         # even if hc contains data, check for a database entry
         # need migration if either db has entry or hc is empty
-        if hc == '' or dev.device_type.health_check_job not in ['', None]:
+        if not hc or dev.device_type.health_check_job:
             no_healthcheck[dev.hostname] = dev.get_absolute_url()
 
     if active_count:

@@ -107,6 +107,13 @@ pairs are in a single dictionary within the list of dictionaries::
 
  {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
 
+.. note:: Devices which include a forward slash ``/`` in the serial number will have
+   that replaced by an underscore when processed through ``pyudev``. e.g.::
+
+    udev: ATTRS{serial}=="S/NO44440001"
+    pydev: S_NO44440001
+    device_info: {% set device_info = [{'board_id': 'S_NO44440001'}] %}
+
 Configuration: Persistent Containers
 ------------------------------------
 A test job can request a persistent container which will not get destroyed after
@@ -135,7 +142,8 @@ Configuration: Unprivileged containers as root
 ----------------------------------------------
 
 This is the recommended configuration for running your LXC devices within a
-LAVA dispatcher. In this configuration the containers will run as unprivileged
+LAVA dispatcher, provided your container does not access any devices attached
+to the host. In this configuration the containers will run as unprivileged
 user started by root user.
 
 Allocate additional uids and gids to root::
@@ -150,6 +158,9 @@ Then edit ``/etc/lxc/default.conf`` and append lxc.uidmap entry like below::
 
 With the above in place any container created as root will be an unprivileged
 container.
+
+.. warning:: Do not use unprivileged containers when your container has to
+             interact with a :term:`DUT` that is attached to the host machine.
 
 .. note:: To apply configurations system wide for all LXC devices attached to
   the dispatcher use ``/etc/lxc/default.conf`` file.

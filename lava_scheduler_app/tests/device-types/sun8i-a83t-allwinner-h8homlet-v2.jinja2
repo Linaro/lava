@@ -1,0 +1,14 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "sun8i-a83t-allwinner-h8homlet-v2" %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set bootz_kernel_addr = '0x42000000' %}
+{% set bootz_ramdisk_addr = '0x43300000' %}
+{% set bootz_dtb_addr = '0x43000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_needs_usb = true %}
+{% set uboot_usb_commands = (
+"          - usb start
+          - setenv ethact 'asix_eth'") -%}

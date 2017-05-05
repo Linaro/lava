@@ -29,7 +29,6 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     find_device_for_job,
     end_job,
-    cancel_job
 )
 from lava_scheduler_app.schema import validate_submission, validate_device
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -449,6 +448,23 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,nolock ip=dhcp'
         )
+
+    def test_command_list(self):
+        hostname = 'azrael'
+        dt = self.factory.make_device_type(name='hi6220-hikey')
+        device = self.factory.make_device(device_type=dt, hostname=hostname)
+        hikey = DeviceDictionary(hostname=hostname)
+        hikey.parameters = {
+            'extends': 'hi6220-hikey.jinja2',
+            'hard_reset_command': [
+                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 06',
+                'sleep 30',
+                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 06'],
+        }
+        hikey.save()
+        hikey_dict = hikey.to_dict()
+        self.assertIsInstance(hikey_dict['parameters']['hard_reset_command'], list)
+        self.assertTrue(device.is_valid())
 
     def test_visibility(self):
         user = self.factory.make_user()
@@ -956,6 +972,33 @@ class TestYamlMultinode(TestCaseWithFactory):
             elif role == 'client':
                 self.assertIn('lava-lxc', jobs[role][0]['protocols'])
                 self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], protocol_data['lava-lxc'])
+            else:
+                self.fail('Unrecognised role: %s' % role)
+
+    def test_multinode_hikey(self):
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'hikey_multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        client_protocol_data = {
+            'lava-lxc': {
+                'name': 'pipeline-lxc-test', 'template': 'debian',
+                'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+        }
+        server_protocol_data = {
+            'lava-lxc': {
+                'arch': 'amd64', 'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
+                'name': 'lxc-hikey-oe', 'release': 'jessie', 'template': 'debian'}
+        }
+        for role, _ in jobs.iteritems():
+            if role == 'server':
+                self.assertIn('lava-lxc', jobs[role][0]['protocols'])
+                self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], server_protocol_data['lava-lxc'])
+            elif role == 'client':
+                self.assertIn('lava-lxc', jobs[role][0]['protocols'])
+                self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], client_protocol_data['lava-lxc'])
             else:
                 self.fail('Unrecognised role: %s' % role)
 

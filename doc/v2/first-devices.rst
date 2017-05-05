@@ -347,8 +347,8 @@ LAVA encourages new device type templates to be :ref:`contributed upstream
 <community_contributions>` to LAVA.
 
 .. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`. Also
-   :ref:`developing_device_type_templates` and
-   :ref:`migrating_known_device_example`
+   :ref:`developing_device_type_templates`, :ref:`developing_new_classes`
+   and :ref:`migrating_known_device_example`
 
 Hints
 =====

@@ -1,5 +1,6 @@
 import os
 import yaml
+import logging
 import tempfile
 from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.dbutils import match_vlan_interface
@@ -87,6 +88,8 @@ class TestVlandDevices(TestCaseWithFactory):
         super(TestVlandDevices, self).setUp()
         self.factory = VlandFactory()
         self.factory.setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def test_match_devices_without_map(self):
         """
@@ -426,6 +429,7 @@ class TestVlandDevices(TestCaseWithFactory):
         self.factory.cubie1.save()
         device_dict = DeviceDictionary(hostname=self.factory.bbb1.hostname)
         device_dict.parameters = {
+            'extends': 'beaglebone-black.jinja2',
             'interfaces': ['eth0', 'eth1'],
             'sysfs': {
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
@@ -437,6 +441,7 @@ class TestVlandDevices(TestCaseWithFactory):
         device_dict.save()
         device_dict = DeviceDictionary(hostname=self.factory.cubie1.hostname)
         device_dict.parameters = {
+            'extends': 'cubietruck.jinja2',
             'interfaces': ['eth0', 'eth1'],
             'sysfs': {
                 'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",

@@ -1,0 +1,15 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "armada-xp-gp" %}
+{% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
+{% set bootz_kernel_addr = '0x02100000' %}
+{% set bootz_ramdisk_addr = '0x02880000' %}
+{% set bootz_dtb_addr = '0x01000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_bootx_cmd = "bootz {KERNEL_ADDR}" %}
+{% set append_dtb = true %}
+{% set uboot_tftp_commands = ("          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd ''
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}

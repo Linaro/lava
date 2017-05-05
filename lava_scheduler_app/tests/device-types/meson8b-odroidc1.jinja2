@@ -1,0 +1,15 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttyAML0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "meson8b-odroidc1" %}
+{% set bootloader_prompt = bootloader_prompt|default('odroidc#') %}
+{% set interrupt_prompt = interrupt_prompt|default('stop autoboot') %}
+{% set interrupt_char = interrupt_char|default('\n') %}
+
+{% set bootm_kernel_addr = '0x21000000' %}
+{% set bootm_ramdisk_addr = '0x22000000' %}
+{% set bootm_dtb_addr = '0x21f00000' %}
+{% set text_offset = '0x00208000' %}
+
+{% set uboot_mkimage_arch = 'arm' %}

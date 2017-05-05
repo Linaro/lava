@@ -247,7 +247,7 @@ def check_device_and_job(job, device):
         logger.warning("Refusing to reserve %s for %s - current job is %s",
                        device, job, bad_job)
         return None
-    if job.is_pipeline and device.is_pipeline and not device.is_valid:
+    if job.is_pipeline and device.is_pipeline and not device.is_valid():
         # check for invalid templates from local admin changes
         logger.warning("[%d] Refusing to reserve for broken V2 device %s", job.id, device.hostname)
         return None
@@ -301,6 +301,8 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 device = check_device_and_job(job, device)
+                if not device:
+                    continue
                 if job.is_pipeline:
                     job_dict = yaml.load(job.definition)
                     if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:

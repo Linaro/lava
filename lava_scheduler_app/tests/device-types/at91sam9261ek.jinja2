@@ -1,0 +1,13 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0,115200 console=ttyAT0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "at91sam9261ek" %}
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
+{% set bootm_kernel_addr = '0x20008000' %}
+{% set bootm_ramdisk_addr = '0x21100000' %}
+{% set bootm_dtb_addr = '0x21000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set append_dtb = true %}
+{% set use_xip = true %}
+

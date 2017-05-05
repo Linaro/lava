@@ -1,3 +1,5 @@
+.. index:: developer: design
+
 .. _dispatcher_design:
 
 Lava Dispatcher Design
@@ -284,6 +286,8 @@ the pipeline moves on to processing level 1.3 or 2::
 .. _FIFO: https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)
 .. _tree walk: https://en.wikipedia.org/wiki/Tree_traversal
 
+.. index:: developer: strategy classes
+
 .. _using_strategy_classes:
 
 Using strategy classes
@@ -421,6 +425,8 @@ will allow bundles to be uploaded to a different instance using :ref:`lava-tool
 results could provide a link back to the original job log file and other data -
 if the original server is visible to users of the server to which the bundle
 was later uploaded.
+
+.. index:: developer: review criteria
 
 .. _criteria:
 

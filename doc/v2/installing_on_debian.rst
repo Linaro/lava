@@ -61,7 +61,7 @@ following links from the Debian package trackers for `lava-dispatcher
 <https://tracker.debian.org/pkg/lava-dispatcher>`_ and `lava-server
 <https://tracker.debian.org/pkg/lava-server>`_.
 
-.. index:: lava repository
+.. index:: lava repository, staging-repo, production-repo
 
 .. _lava_repositories:
 
@@ -128,6 +128,9 @@ apt::
 Then update to locate the required dependencies::
 
  $ sudo apt update
+
+.. note:: The above repositories use `https` hence install the package
+          `apt-transport-https` if it is not already installed.
 
 .. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
 

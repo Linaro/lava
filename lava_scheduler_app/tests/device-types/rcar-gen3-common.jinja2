@@ -1,0 +1,8 @@
+# Common Renesas R-Car gen3 configuration
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttySC0') %}
+{% set booti_kernel_addr = '0x48080000' %}
+{% set booti_ramdisk_addr = '0x49100000' %}
+{% set booti_dtb_addr = '0x48000000' %}
+{% set uboot_mkimage_arch = 'arm64' %}

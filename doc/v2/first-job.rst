@@ -186,12 +186,8 @@ is shown below,
    YAML file will be fetched and displayed in the text box for submission. Make
    sure that the link is to the raw content of the YAML file, not HTML.
 
-Once the job is successfully submitted, the following screen appears, from
-which the user can navigate to the job details or the list of jobs page.
-
-.. image:: images/web-ui-job-submission-success.png
-
-Viewing the submitted job will show the same screen as other submission methods.
+Once the job is successfully submitted, the job details are displayed. (If a list of
+jobs was created, the first job in the list will be displayed.)
 
 .. image:: images/first-job-submitted.png
 

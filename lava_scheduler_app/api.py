@@ -320,6 +320,169 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def get_recent_jobs_for_device_type(self, device_type, count=1, restrict_to_user=False):
+        """
+        Name
+        ----
+
+        `get_recent_jobs_for_device_type` (`device_type`, `count=1`, `restrict_to_user=False`)
+
+        Description
+        -----------
+        Get details of recently finished jobs for a given device_type. Limits the list
+        to test jobs submitted by the user making the query if restrict_to_user is set to
+        True. Get only the most recent job by default, but count can be set higher to
+        get for example the last 10 jobs.
+
+        Arguments
+        ---------
+        `device_type`: string
+            Name of the device_type for which you want the jobs
+        `count`: integer (Optional, default=1)
+            Number of last jobs you want
+        `restrict_to_user`: boolean (Optional, default=False)
+            Fetch only the jobs submitted by the user making the query if set to True
+
+        Return value
+        ------------
+        This function returns a list of dictionaries, which correspond to the
+        list of recently finished jobs informations (Complete or Incomplete)
+        for this device, ordered from youngest to oldest.
+
+        [
+            {
+                'description': 'ramdisk health check',
+                'id': 359828,
+                'status': 'Complete',
+                'device': 'black01'
+            },
+            {
+                'description': 'standard ARMMP NFS',
+                'id': 359827
+                'status': 'Incomplete',
+                'device': 'black02'
+            }
+        ]
+        """
+        if not device_type:
+            raise xmlrpclib.Fault(
+                400, "Bad request: device_type was not specified."
+            )
+        if count < 0:
+            raise xmlrpclib.Fault(
+                400, "Bad request: count must not be negative."
+            )
+        try:
+            dt = DeviceType.objects.get(name=device_type, display=True)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "DeviceType '%s' was not found." % device_type
+            )
+
+        if not dt.some_devices_visible_to(self.user):
+            raise xmlrpclib.Fault(
+                403, "DeviceType '%s' not available to user '%s'." %
+                (device_type, self.user)
+            )
+        job_qs = TestJob.objects.filter(
+            status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE),
+            requested_device_type=dt)\
+            .order_by('-id')
+        if restrict_to_user:
+            job_qs = job_qs.filter(submitter=self.user)
+        job_list = []
+        for job in job_qs.all()[:count]:
+            job_dict = {
+                "id": job.id,
+                "description": job.description,
+                "status": job.get_status_display(),
+                "device": job.actual_device.hostname,
+            }
+            if not job.can_view(self.user):
+                job_dict["id"] = None
+            job_list.append(job_dict)
+        return job_list
+
+    def get_recent_jobs_for_device(self, device, count=1, restrict_to_user=False):
+        """
+        Name
+        ----
+
+        `get_recent_jobs_for_device` (`device`, `count=1`, `restrict_to_user=False`)
+
+        Description
+        -----------
+        Get details of recently finished jobs for a given device. Limits the list
+        to test jobs submitted by the user making the query if restrict_to_user is set to
+        True. Get only the most recent job by default, but count can be set higher to
+        get for example the last 10 jobs.
+
+        Arguments
+        ---------
+        `device`: string
+            Name of the device for which you want the jobs
+        `count`: integer (Optional, default=1)
+            Number of last jobs you want
+        `restrict_to_user`: boolean (Optional, default=False)
+            Fetch only the jobs submitted by the user making the query if set to True
+
+        Return value
+        ------------
+        This function returns a list of dictionaries, which correspond to the
+        list of recently finished jobs informations (Complete or Incomplete)
+        for this device, ordered from youngest to oldest.
+
+        [
+            {
+                'description': 'mainline--armada-370-db--multi_v7_defconfig--network',
+                'id': 359828,
+                'status': 'Complete'
+            },
+            {
+                'description': 'mainline--armada-370-db--multi_v7_defconfig--sata',
+                'id': 359827
+                'status': 'Incomplete'
+            }
+        ]
+        """
+        if not device:
+            raise xmlrpclib.Fault(
+                400, "Bad request: device was not specified."
+            )
+        if count < 0:
+            raise xmlrpclib.Fault(
+                400, "Bad request: count must not be negative."
+            )
+        try:
+            device_obj = Device.objects.get(hostname=device)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % device
+            )
+
+        if not device_obj.is_visible_to(self.user):
+            raise xmlrpclib.Fault(
+                403, "Device '%s' not available to user '%s'." %
+                (device, self.user)
+            )
+        job_qs = TestJob.objects.filter(
+            status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE),
+            actual_device=device_obj)\
+            .order_by('-id')
+        if restrict_to_user:
+            job_qs = job_qs.filter(submitter=self.user)
+        job_list = []
+        for job in job_qs.all()[:count]:
+            job_dict = {
+                "id": job.id,
+                "description": job.description,
+                "status": job.get_status_display(),
+            }
+            if not job.can_view(self.user):
+                job_dict["id"] = None
+            job_list.append(job_dict)
+        return job_list
+
     def get_device_type_by_alias(self, alias):
         """
         Name
@@ -407,6 +570,7 @@ class SchedulerAPI(ExposedAPI):
             device_dict["job"] = None
             device_dict["offline_since"] = None
             device_dict["offline_by"] = None
+            device_dict["is_pipeline"] = device.is_pipeline
 
             if device.current_job:
                 device_dict["job"] = device.current_job.pk

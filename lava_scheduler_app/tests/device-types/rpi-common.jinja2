@@ -1,0 +1,15 @@
+# Common parameters for Raspberry pi boards, load address are the same for A,
+# A+, B, B+, Compute Module, Zero, 2 and 3 running u-boot.
+{% extends 'base-uboot.jinja2' %}
+
+{% set bootm_kernel_addr = '0x01000000' %}
+{% set bootm_ramdisk_addr = '0x02100000' %}
+{% set bootm_dtb_addr = '0x00000100' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
+
+{% set uboot_needs_usb = true %}
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
+{% set console_device = console_device|default('ttyAMA0') %}

@@ -128,6 +128,10 @@ class LavaSystemAPI(SystemAPI):
         Administrators only:
         user_can_view_bundles (`bundle_list`, `username`)
 
+        Deprecated
+        ----------
+        This function will cease to operate when V1 is disabled.
+
         Description
         -----------
         Check the access permissions on a list of bundles.

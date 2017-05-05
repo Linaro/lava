@@ -1,0 +1,13 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "armada-388-clearfog" %}
+{% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
+{% set bootm_kernel_addr = '0x02100000' %}
+{% set bootm_ramdisk_addr = '0x03000000' %}
+{% set bootm_dtb_addr = '0x02000000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
