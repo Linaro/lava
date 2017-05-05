@@ -518,6 +518,5 @@ class BootloaderCommandsAction(Action):
                                   "failed to load the required file into "
                                   "memory correctly so the bootloader reset "
                                   "the CPU.")
-                self.errors = "Bootloader reset detected"
                 raise InfrastructureError("Bootloader reset detected")
         return connection

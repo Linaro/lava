@@ -139,8 +139,7 @@ class FastbootBootAction(Action):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
@@ -202,8 +201,7 @@ class FastbootRebootAction(Action):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']

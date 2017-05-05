@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.power import (
 from lava_dispatcher.pipeline.action import (
     ConfigurationError,
     InfrastructureError,
+    JobError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -197,8 +198,8 @@ class EnterFastbootAction(DeployAction):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
+
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
         fastboot_serial_number = self.job.device['fastboot_serial_number']
 
@@ -269,8 +270,8 @@ class FastbootFlashAction(DeployAction):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
+
         # Order flash commands so that some commands take priority over others
         flash_cmds_order = self.job.device['flash_cmds_order']
         namespace = self.parameters.get('namespace', 'common')

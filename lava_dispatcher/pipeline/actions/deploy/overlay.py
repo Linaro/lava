@@ -463,7 +463,6 @@ class CompressOverlay(Action):
                 if os.path.exists('./root/'):
                     tar.add(".%s" % '/root/')
         except tarfile.TarError as exc:
-            self.errors = "Unable to create lava overlay tarball: %s" % exc
             raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
         os.chdir(cur_dir)
         self.set_namespace_data(action=self.name, label='output', key='file', value=output)
