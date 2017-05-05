@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -82,6 +81,7 @@ class ConnectDevice(Action):
         connection.connected = True
         connection = super(ConnectDevice, self).run(connection, max_end_time, args)
         if not connection.prompt_str:
-            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+            connection.prompt_str = [self.job.device.get_constant(
+                'default-shell-prompt')]
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

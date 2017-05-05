@@ -78,7 +78,7 @@ class BootQEMUImageAction(BootAction):
 
     def __init__(self):
         super(BootQEMUImageAction, self).__init__()
-        self.name = 'boot_image_retry'
+        self.name = 'boot-image-retry'
         self.description = "boot image with retry"
         self.summary = "boot with retry"
 
@@ -98,7 +98,7 @@ class BootQemuRetry(RetryAction):
 
     def __init__(self):
         super(BootQemuRetry, self).__init__()
-        self.name = 'boot_qemu_image'
+        self.name = 'boot-qemu-image'
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
 
@@ -162,11 +162,11 @@ class CallQemuAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         namespace = self.parameters.get('namespace', 'common')
-        for label in self.data[namespace]['download_action'].keys():
+        for label in self.data[namespace]['download-action'].keys():
             if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
                 continue
-            image_arg = self.get_namespace_data(action='download_action', label=label, key='image_arg')
-            action_arg = self.get_namespace_data(action='download_action', label=label, key='file')
+            image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
+            action_arg = self.get_namespace_data(action='download-action', label=label, key='file')
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % label
                 continue
@@ -181,6 +181,10 @@ class CallQemuAction(Action):
             self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
         # Check for enable-kvm command line option in device configuration.
+        if method not in self.job.device['actions']['boot']['methods']:
+            self.errors = "Unknown boot method '%s'" % method
+            return
+
         options = self.job.device['actions']['boot']['methods'][method]['parameters']['options']
         if "-enable-kvm" in options:
             # Check if the worker has kvm enabled.
@@ -201,7 +205,7 @@ class CallQemuAction(Action):
         # initialise the first Connection object, a command line shell into the running QEMU.
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
-        if 'qemu-nfs' in self.methods and self.parameters['media'] == 'nfs':
+        if 'qemu-nfs' in self.methods and self.parameters.get('media', None) == 'nfs':
             self.logger.debug("Adding NFS arguments to kernel command line.")
             root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             self.substitutions["{NFSROOTFS}"] = root_dir

@@ -177,7 +177,7 @@ class IsoPullInstaller(Action):
         """
         # need download location
         iso_download = self.get_namespace_data(
-            action='download_action',
+            action='download-action',
             label='iso',
             key='file'
         )

@@ -446,9 +446,10 @@ class VlandProtocol(Protocol):
             self._set_port_onto_vlan(self.vlans[friendly_name], port_id)
             self.ports.append(port_id)
 
-    def __call__(self, args):
+    def __call__(self, *args, **kwargs):
+        # only the first argument is used.
         try:
-            return self._api_select(args)
+            return self._api_select(args[0])
         except (ValueError, TypeError) as exc:
             msg = "Invalid call to %s %s" % (self.name, exc)
             self.logger.exception(msg)

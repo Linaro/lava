@@ -103,7 +103,7 @@ class ApplyOverlayImage(Action):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
-            decompressed_image = self.get_namespace_data(action='download_action', label='image', key='file')
+            decompressed_image = self.get_namespace_data(action='download-action', label='image', key='file')
             self.logger.debug("Image: %s", decompressed_image)
             root_partition = self.parameters['image']['root_partition']
             self.logger.debug("root_partition: %s", root_partition)
@@ -135,7 +135,7 @@ class ApplyOverlaySparseImage(Action):
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
             decompressed_image = self.get_namespace_data(
-                action='download_action', label=self.image_key, key='file')
+                action='download-action', label=self.image_key, key='file')
             self.logger.debug("Image: %s", decompressed_image)
             copy_overlay_to_sparse_fs(decompressed_image, overlay_file)
         else:
@@ -168,7 +168,7 @@ class PrepareOverlayTftp(Action):
     def run(self, connection, max_end_time, args=None):
         connection = super(PrepareOverlayTftp, self).run(connection, max_end_time, args)
         ramdisk = self.get_namespace_data(
-            action='download_action',
+            action='download-action',
             label='file',
             key='ramdisk'
         )
@@ -252,7 +252,7 @@ class ApplyOverlayTftp(Action):
             # centos installer ramdisk doesnt like having anything other
             # than the kickstart config being inserted. Instead, make the
             # overlay accessible through tftp. Yuck.
-            tftp_dir = os.path.dirname(self.get_namespace_data(action='download_action', label='ramdisk', key='file'))
+            tftp_dir = os.path.dirname(self.get_namespace_data(action='download-action', label='ramdisk', key='file'))
             shutil.copy(overlay_file, tftp_dir)
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
             if not suffix:
@@ -286,7 +286,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
         connection = super(ExtractRootfs, self).run(connection, max_end_time, args)
-        root = self.get_namespace_data(action='download_action', label=self.param_key, key='file')
+        root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
         self.set_namespace_data(action='extract-rootfs', label='file', key=self.file_key, value=root_dir)
@@ -311,7 +311,7 @@ class ExtractNfsRootfs(ExtractRootfs):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return
         if not self.get_namespace_data(
-                action='download_action', label=self.param_key, key='file'):
+                action='download-action', label=self.param_key, key='file'):
             self.errors = "no file specified extract as %s" % self.param_key
         if not os.path.exists('/usr/sbin/exportfs'):
             raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
@@ -360,7 +360,7 @@ class ExtractModules(Action):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
         connection = super(ExtractModules, self).run(connection, max_end_time, args)
-        modules = self.get_namespace_data(action='download_action', label='modules', key='file')
+        modules = self.get_namespace_data(action='download-action', label='modules', key='file')
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
                 raise JobError("Unable to identify a location for the unpacked modules")
@@ -420,7 +420,7 @@ class ExtractRamdisk(Action):
     def run(self, connection, max_end_time, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
-        ramdisk = self.get_namespace_data(action='download_action', label='ramdisk', key='file')
+        ramdisk = self.get_namespace_data(action='download-action', label='ramdisk', key='file')
         if self.skip:
             self.logger.info("Not extracting ramdisk.")
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
@@ -516,7 +516,7 @@ class CompressRamdisk(Action):
                 filename = self.parameters["deployment_data"]["preseed_to_ramdisk"]
                 self.logger.info("Copying preseed file into ramdisk: %s", filename)
                 shutil.copy(self.get_namespace_data(
-                    action='download_action', label='preseed',
+                    action='download-action', label='preseed',
                     key='file'), os.path.join(ramdisk_dir, filename))
                 self.set_namespace_data(action=self.name, label='file', key='preseed_local', value=filename)
         pwd = os.getcwd()
@@ -537,7 +537,7 @@ class CompressRamdisk(Action):
         final_file = compress_file(ramdisk_data, compression)
         os.chdir(pwd)
         tftp_dir = os.path.dirname(self.get_namespace_data(
-            action='download_action', label='ramdisk', key='file'))
+            action='download-action', label='ramdisk', key='file'))
 
         if self.add_header == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
@@ -626,15 +626,15 @@ class ConfigurePreseedFile(Action):
             return connection
         if self.parameters["deployment_data"].get('installer_extra_cmd', None):
             if self.parameters.get('os', None) == "debian_installer":
-                add_late_command(self.get_namespace_data(action='download_action', label='preseed', key='file'),
+                add_late_command(self.get_namespace_data(action='download-action', label='preseed', key='file'),
                                  self.parameters["deployment_data"]["installer_extra_cmd"])
             if self.parameters.get('os', None) == "centos_installer":
                 ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
                 overlay = self.get_namespace_data(
-                    action='download_action', label='file', key='overlay')
+                    action='download-action', label='file', key='overlay')
                 substitutions = {
                     '{OVERLAY_URL}': 'tftp://' + ip_addr + '/' + overlay
                 }
                 post_command = substitute([self.parameters["deployment_data"]["installer_extra_cmd"]], substitutions)
-                add_to_kickstart(self.get_namespace_data(action='download_action', label='preseed', key='file'), post_command[0])
+                add_to_kickstart(self.get_namespace_data(action='download-action', label='preseed', key='file'), post_command[0])
         return connection

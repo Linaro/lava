@@ -33,10 +33,6 @@ from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnviro
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
-from lava_dispatcher.pipeline.utils.constants import (
-    UBOOT_AUTOBOOT_PROMPT,
-    BOOT_MESSAGE,
-)
 
 
 def default_accepts(device, parameters):
@@ -107,11 +103,13 @@ class MonitorBootloaderAutoBoot(Action):
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(MonitorBootloaderAutoBoot, self).run(connection, max_end_time, args)
         params = self.job.device['actions']['boot']['methods']['bootloader-defaults']['parameters']
-        connection.prompt_str = params.get('autoboot_prompt', UBOOT_AUTOBOOT_PROMPT)
+        connection.prompt_str = params.get('autoboot_prompt', self.job.device.get_constant('uboot-autoboot-prompt'))
         self.logger.debug("Waiting for prompt: %s", connection.prompt_str)
         self.wait(connection)
         # allow for auto_login
-        connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
+        connection.prompt_str = params.get(
+            'boot_message',
+            self.job.device.get_constant('boot-message'))
         self.logger.debug("Waiting for prompt: %s", connection.prompt_str)
         self.wait(connection)
         return connection

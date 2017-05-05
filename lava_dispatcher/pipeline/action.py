@@ -492,6 +492,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         if ' ' in self.name:  # pylint: disable=unsupported-membership-test
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
+        if '_' in self.name:
+            self.errors = "Use - instead of _ in action names: %s" % self.name
+
         if not self.summary:
             self.errors = "action %s (%s) lacks a summary" % (self.name, self)
 
@@ -499,7 +502,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             self.errors = "action %s (%s) lacks a description" % (self.name, self)
 
         if not self.section:
-            self.errors = "%s action has no section set" % self
+            self.errors = "action %s (%s) has no section set" % (self.name, self)
 
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
@@ -539,7 +542,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             raise LAVABug("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
-        command_list.insert(0, 'nice')
+        command_list = ['nice'] + [str(s) for s in command_list]
         self.logger.debug("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)

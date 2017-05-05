@@ -139,21 +139,26 @@ class Job(object):
 
     def create_environ(self):
         """Generate the env variables for the job."""
-        conf = yaml.load(self.env)
-        if conf.get("purge", False):
-            environ = {}
+        conf = None
+        environ = {}
+        # env is optional parameter and there is a possibility to get empty
+        # string, if there was an IOError.
+        if self.env:
+            conf = yaml.load(self.env)
         else:
             environ = dict(os.environ)
 
-        # Remove some variables (that might not exist)
-        for var in conf.get("removes", {}):
-            try:
-                del environ[var]
-            except KeyError:
-                pass
-
-        # Override
-        environ.update(conf.get("overrides", {}))
+        if conf:
+            if conf.get("purge", False):
+                environ = {}
+            # Remove some variables (that might not exist)
+            for var in conf.get("removes", {}):
+                try:
+                    del environ[var]
+                except KeyError:
+                    pass
+            # Override
+            environ.update(conf.get("overrides", {}))
         return environ
 
     def errors(self):

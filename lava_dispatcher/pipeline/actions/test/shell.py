@@ -50,12 +50,11 @@ from lava_dispatcher.pipeline.connection import (
 )
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
-    DEFAULT_SHELL_PROMPT,
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
 from lava_dispatcher.pipeline.utils.udev import (
-    get_usb_devices,
+    get_udev_devices,
     usb_device_wait,
 )
 if sys.version > '3':
@@ -231,9 +230,12 @@ class TestShellAction(TestAction):
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
+        if self.character_delay > 0:
+            self.logger.debug("Using a character delay of %i (ms)", self.character_delay)
 
         if not connection.prompt_str:
-            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+            connection.prompt_str = [self.job.device.get_constant(
+                'default-shell-prompt')]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         connection.timeout = self.connection_timeout
@@ -243,48 +245,47 @@ class TestShellAction(TestAction):
 
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
-        stage = self.get_namespace_data(action='test-definition', label='lava-test-shell', key='stages')
+        running = self.parameters['stage']
         pre_command_list = self.get_namespace_data(action='test', label="lava-test-shell", key='pre-command-list')
         lava_test_results_dir = self.get_namespace_data(
             action='test', label='results', key='lava_test_results_dir')
         lava_test_sh_cmd = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
 
-        for running in xrange(stage + 1):
-            if pre_command_list and running == 0:
-                for command in pre_command_list:
-                    connection.sendline(command)
+        if pre_command_list and running == 0:
+            for command in pre_command_list:
+                connection.sendline(command, delay=self.character_delay)
 
-            self.logger.debug("Using %s" % lava_test_results_dir)
-            connection.sendline('ls -l %s/' % lava_test_results_dir)
-            if lava_test_sh_cmd:
-                connection.sendline('export SHELL=%s' % lava_test_sh_cmd)
+        self.logger.debug("Using %s" % lava_test_results_dir)
+        connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
+        if lava_test_sh_cmd:
+            connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
-            try:
-                with connection.test_connection() as test_connection:
-                    # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                    test_connection.sendline(
-                        "%s/bin/lava-test-runner %s/%s" % (
-                            lava_test_results_dir,
-                            lava_test_results_dir,
-                            running),
-                        delay=self.character_delay)
+        try:
+            with connection.test_connection() as test_connection:
+                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                test_connection.sendline(
+                    "%s/bin/lava-test-runner %s/%s" % (
+                        lava_test_results_dir,
+                        lava_test_results_dir,
+                        running),
+                    delay=self.character_delay)
 
-                    self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
-                    if self.timeout.duration > self.connection_timeout.duration:
-                        self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
-                        test_connection.timeout = self.timeout.duration
-                    else:
-                        self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
-                        test_connection.timeout = self.connection_timeout.duration
+                self.logger.info("Test shell will use the higher of the action timeout and connection timeout.")
+                if self.timeout.duration > self.connection_timeout.duration:
+                    self.logger.info("Setting action timeout: %.0f seconds" % self.timeout.duration)
+                    test_connection.timeout = self.timeout.duration
+                else:
+                    self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
+                    test_connection.timeout = self.connection_timeout.duration
 
-                    while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                        pass
-            finally:
-                if self.current_run is not None:
-                    self.logger.error("Marking unfinished test run as failed")
-                    self.current_run["duration"] = "%.02f" % (time.time() - self.start)
-                    self.logger.results(self.current_run)  # pylint: disable=no-member
-                    self.current_run = None
+                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                    pass
+        finally:
+            if self.current_run is not None:
+                self.logger.error("Marking unfinished test run as failed")
+                self.current_run["duration"] = "%.02f" % (time.time() - self.start)
+                self.logger.results(self.current_run)  # pylint: disable=no-member
+                self.current_run = None
 
         # Only print if the report is not empty
         if self.report:
@@ -365,6 +366,7 @@ class TestShellAction(TestAction):
         }
         revision = self.get_namespace_data(action='test', label=uuid, key='revision')
         res['revision'] = revision if revision else 'unspecified'
+        res['namespace'] = self.parameters['namespace']
         commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
         if commit_id:
             res['commit_id'] = commit_id
@@ -372,10 +374,21 @@ class TestShellAction(TestAction):
         self.logger.results(res)  # pylint: disable=no-member
         self.start = None
 
+    def _replace_invalid_url_characters(self, slug):
+        new_slug = re.sub('[^0-9a-zA-Z-_]+', '_', slug)
+        if new_slug != slug:
+            self.logger.warning("'%s' contains invalid slug characters and will be replaced with '%s'" % (slug, new_slug))
+        return new_slug
+
     @nottest
     def signal_test_case(self, params):
         try:
             data = handle_testcase(params)
+            if "test_case_id" in data:
+                # Replace invalid characters in test_case_id with '_'.
+                data["test_case_id"] = self._replace_invalid_url_characters(
+                    data["test_case_id"])
+
             # get the fixup from the pattern_dict
             res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
         except (JobError, TestError) as exc:
@@ -468,7 +481,7 @@ class TestShellAction(TestAction):
             "Get USB device(s) using: %s",
             yaml.dump(self.job.device.get('device_info', [])).strip()
         )
-        device_paths = get_usb_devices(self.job, self.logger)
+        device_paths = get_udev_devices(self.job, self.logger)
         if device_paths:
             self.logger.debug("Adding %s", ', '.join(device_paths))
         else:

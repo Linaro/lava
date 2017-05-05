@@ -70,27 +70,24 @@ class Removable(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        job_device = None
-        media = None
-        if 'to' in parameters:
-            # connection support
-            # Which deployment method to use?
-            if parameters['to'] == 'usb':
-                if 'device' in parameters:
-                    job_device = parameters['device']
-                    media = 'usb'
-            if parameters['to'] == 'sata':
-                if 'device' in parameters:
-                    job_device = parameters['device']
-                    media = 'sata'
-        # Matching a method ?
+        media = parameters.get('to', None)
+        job_device = parameters.get('device', None)
+
+        # Is the media supported?
+        if media not in ['sata', 'sd', 'usb']:
+            return False
+        # Matching a method?
         if job_device is None:
             return False
-        # Is the device allowing this method ?
-        if job_device not in device['parameters']['media'][media]:
+        # "parameters.media" is not defined for every devices
+        if 'parameters' not in device or 'media' not in device['parameters']:
             return False
-        # TODO: what if the key does not exist for this device configuration?
-        if 'uuid' in device['parameters']['media'][media][job_device]:
+
+        # Is the device allowing this method?
+        if job_device not in device['parameters']['media'].get(media, {}):
+            return False
+        # Is the configuration correct?
+        if 'uuid' in device['parameters']['media'][media].get(job_device, {}):
             return True
         return False
 
@@ -121,14 +118,17 @@ class DDAction(Action):
             self.errors = "missing prompt for download tool"
         if not os.path.isabs(self.parameters['download']['tool']):
             self.errors = "download tool parameter needs to be an absolute path"
-        uuid_required = False
+
+        if self.parameters['to'] not in self.job.device['parameters'].get('media', {}):
+            self.errors = "media '%s' unavailable for this device" % self.parameters['to']
+
+        # No need to go further if an error was already detected
+        if not self.valid:
+            return
+
         self.boot_params = self.job.device['parameters']['media'][self.parameters['to']]
-        if 'media' in self.job.device:
-            media_params = self.job.device['parameters']['media']
-            interface_params = [
-                interface for interface in media_params if interface == self.parameters['to']
-            ]
-            uuid_required = media_params[interface_params[0]]['UUID-required']
+        uuid_required = self.boot_params.get('UUID-required', False)
+
         if uuid_required:  # FIXME unit test required
             if 'uuid' not in self.boot_params[self.parameters['device']]:
                 self.errors = "A UUID is required for %s on %s" % (
@@ -150,7 +150,7 @@ class DDAction(Action):
         device to write directly to the secondary media, without needing to cache on the device.
         """
         connection = super(DDAction, self).run(connection, max_end_time, args)
-        d_file = self.get_namespace_data(action='download_action', label='image', key='file')
+        d_file = self.get_namespace_data(action='download-action', label='image', key='file')
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
@@ -224,11 +224,12 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
             self.errors = "No device specified for mass storage deployment"
         if not self.valid:
             return
+
         if self.test_needs_deployment(self.parameters):
             lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
             self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
-        if 'device' in self.parameters:
-            self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
+
+        self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
         suffix = os.path.join(suffix, "image")
         self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)

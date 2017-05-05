@@ -22,7 +22,6 @@
 import os
 import re
 import logging
-import unittest
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser

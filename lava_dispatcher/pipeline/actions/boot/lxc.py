@@ -64,7 +64,7 @@ class BootLxcAction(BootAction):
     """
     def __init__(self):
         super(BootLxcAction, self).__init__()
-        self.name = "lxc_boot"
+        self.name = "lxc-boot"
         self.summary = "lxc boot"
         self.description = "lxc boot into the system"
 

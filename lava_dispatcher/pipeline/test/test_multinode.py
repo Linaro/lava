@@ -23,6 +23,7 @@ import os
 import yaml
 import uuid
 import json
+import logging
 from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
@@ -39,6 +40,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 
 # pylint: disable=protected-access,superfluous-parens
@@ -54,6 +56,8 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         factory = Factory()
         self.client_job = factory.create_kvm_job('sample_jobs/kvm-multinode-client.yaml')
         self.server_job = factory.create_kvm_job('sample_jobs/kvm-multinode-server.yaml')
+        self.client_job.logger = DummyLogger()
+        self.server_job.logger = DummyLogger()
         self.job_id = "100"
         self.coord = TestCoordinator()
 
@@ -234,18 +238,21 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsInstance(testshell.signal_director.protocol, MultinodeProtocol)
 
     def test_empty_poll(self):
-        """ Check that an empty message gives an empty response
+        """
+        Check that an empty message gives an empty response
         """
         self.assertIsNone(self.coord.dataReceived({}))
 
     def test_empty_receive(self):
-        """ Explicitly expect an empty response with an empty message
+        """
+        Explicitly expect an empty response with an empty message
         """
         self.assertIsNone(self.coord.expectResponse(None))
         self.coord.dataReceived({})
 
     def test_start_group_incomplete(self):
-        """ Create a group but fail to populate it with enough devices and cleanup
+        """
+        Create a group but fail to populate it with enough devices and cleanup
         """
         self.coord.group_name = str(uuid.uuid4())
         self.coord.group_size = 2
@@ -264,7 +271,8 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self._cleanup()
 
     def test_start_group_complete(self):
-        """ Create a group with enough devices and check for no errors.
+        """
+        Create a group with enough devices and check for no errors.
         """
         self.coord.newGroup(2)
         ret = self.coord.addClient("completing")
@@ -273,6 +281,8 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(ret == "completed")
 
     def test_client(self):
+        logger = logging.getLogger()
+        logger.disabled = True
         client = TestMultinode.TestClient(self.coord,
                                           self.client_job.parameters,
                                           self.job_id)

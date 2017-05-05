@@ -30,8 +30,6 @@ from lava_dispatcher.pipeline.action import (
     TestError,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
-from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class ResetDevice(Action):
@@ -82,7 +80,7 @@ class RebootDevice(Action):
             self.results = {"success": self.job.device.power_state}
         else:
             connection = super(RebootDevice, self).run(connection, max_end_time, args)
-            connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+            connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', self.job.device.get_constant('shutdown-message'))
             connection.timeout = self.connection_timeout
             connection.sendline("reboot")
             # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
@@ -125,7 +123,7 @@ class PDUReboot(AdjuvantAction):
 
     @classmethod
     def key(cls):
-        return 'pdu_reboot'
+        return 'pdu-reboot'
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PDUReboot, self).run(connection, max_end_time, args)
@@ -157,7 +155,7 @@ class PowerOn(Action):
     """
     def __init__(self):
         super(PowerOn, self).__init__()
-        self.name = "power_on"
+        self.name = "power-on"
         self.summary = "send power_on command"
         self.description = "supply power to device"
 
@@ -195,7 +193,7 @@ class PowerOff(Action):
     """
     def __init__(self):
         super(PowerOff, self).__init__()
-        self.name = "power_off"
+        self.name = "power-off"
         self.summary = "send power_off command"
         self.description = "discontinue power to device"
 

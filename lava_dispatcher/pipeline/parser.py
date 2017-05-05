@@ -38,14 +38,14 @@ from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.connection import Protocol
 # Bring in the strategy subclass lists, ignore pylint warnings.
 # pylint: disable=unused-import,too-many-arguments,too-many-nested-blocks,too-many-branches
-from lava_dispatcher.pipeline.actions.commands import CommandsAction
+from lava_dispatcher.pipeline.actions.commands import CommandAction
 import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies
 import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
 
 
-def parse_action(job_data, name, device, pipeline, test_info, count):
+def parse_action(job_data, name, device, pipeline, test_info, test_count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -59,7 +59,7 @@ def parse_action(job_data, name, device, pipeline, test_info, count):
         Boot.select(device, parameters)(pipeline, parameters)
     elif name == 'test':
         # stage starts at 0
-        parameters['stage'] = count - 1
+        parameters['stage'] = test_count - 1
         LavaTest.select(device, parameters)(pipeline, parameters)
     elif name == 'deploy':
         if parameters['namespace'] in test_info:
@@ -141,7 +141,7 @@ class JobParser(object):
         self.context['default_test_duration'] = Timeout.default_duration()
         self.context['default_connection_duration'] = Timeout.default_duration()
         job = Job(job_id, data, zmq_config)
-        counts = {}
+        test_counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
@@ -182,10 +182,13 @@ class JobParser(object):
             for name in action_data:
                 if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update(self._map_context_defaults())
-                counts.setdefault(name, 1)
+                namespace = action_data[name].get('namespace', 'common')
+                test_counts.setdefault(namespace, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     parse_action(action_data, name, device, pipeline,
-                                 test_info, counts[name])
+                                 test_info, test_counts[namespace])
+                    if name == 'test':
+                        test_counts[namespace] += 1
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
@@ -195,28 +198,20 @@ class JobParser(object):
                                 if repeat_action == 'yaml_line':
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
+                                namespace = repeating[repeat_action].get('namespace', 'common')
+                                test_counts.setdefault(namespace, 1)
                                 parse_action(repeating, repeat_action, device,
-                                             pipeline, test_info, counts[name])
+                                             pipeline, test_info, test_counts[namespace])
+                                if repeat_action == 'test':
+                                    test_counts[namespace] += 1
+
+                elif name == 'command':
+                    action = CommandAction()
+                    action.parameters = action_data[name]
+                    pipeline.add_action(action)
 
                 else:
-                    # May only end up being used for submit as other actions all need strategy method objects
-                    # select the specific action of this class for this job
-                    action = Action.select(name)()
-                    action.job = job
-                    # put parameters (like rootfs_type, results_dir) into the actions.
-                    if isinstance(action_data[name], dict):
-                        action.parameters = action_data[name]
-                    elif name == "commands":
-                        # FIXME
-                        pass
-                    elif isinstance(action_data[name], list):
-                        for param in action_data[name]:
-                            action.parameters = param
-                    action.summary = name
-                    action.timeout = Timeout(action.name, self.context['default_action_duration'])
-                    action.connection_timeout = Timeout(action.name, self.context['default_connection_duration'])
-                    pipeline.add_action(action)
-                counts[name] += 1
+                    raise JobError("Unknown action name '%'" % name)
 
         # there's always going to need to be a finalize_process action
         finalize = FinalizeAction()

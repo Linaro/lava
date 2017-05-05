@@ -33,7 +33,6 @@ def add_to_kickstart(preseedfile, extra_command):
 
 def add_late_command(preseedfile, extra_command):
     added = False
-    append_line = " ; " + extra_command + "\n"
     with open(preseedfile, "r") as pf:
         lines = pf.readlines()
         pf.close()
@@ -46,9 +45,11 @@ def add_late_command(preseedfile, extra_command):
     for linenum, data in enumerate(lines):
         if re.match("d-i preseed/late_command string(.*)", data):
             # late_command already exists, append to it
-            lines[linenum] = lines[linenum].rstrip() + append_line
+            append_line = "; " + extra_command + "\n"
+            lines[linenum] = lines[linenum].rstrip(' ;\n') + append_line
             added = True
     if not added:
+        append_line = extra_command + "\n"
         lines.append("d-i preseed/late_command string " + append_line)
 
     with open(preseedfile, "w") as pf:

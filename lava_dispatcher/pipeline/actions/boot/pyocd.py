@@ -103,10 +103,10 @@ class FlashPyOCDAction(Action):
         substitutions = {}
         self.base_command.extend(['--board', self.job.device['board_id']])
         namespace = self.parameters['namespace']
-        for action in self.data[namespace]['download_action'].keys():
+        for action in self.data[namespace]['download-action'].keys():
             pyocd_full_command = []
-            image_arg = self.get_namespace_data(action='download_action', label=action, key='image_arg')
-            action_arg = self.get_namespace_data(action='download_action', label=action, key='file')
+            image_arg = self.get_namespace_data(action='download-action', label=action, key='image_arg')
+            action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
             if image_arg:
                 if not isinstance(image_arg, str):
                     self.errors = "image_arg is not a string (try quoting it)"

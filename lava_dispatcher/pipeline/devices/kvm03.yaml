@@ -6,6 +6,14 @@ available_architectures:
 - x86_64
 - i386
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   boot:
     connections: {serial: null, ssh: null}
@@ -39,8 +47,8 @@ timeouts:
     bootloader-interrupt: {seconds: 30}
     bootloader-retry: {minutes: 3}
     dd-image: {minutes: 10}
-    download_retry: {minutes: 5}
-    http_download: {minutes: 5}
+    download-retry: {minutes: 5}
+    http-download: {minutes: 5}
     lava-test-shell: {minutes: 3}
     nfs-deploy: {minutes: 10}
     power_off: {seconds: 5}

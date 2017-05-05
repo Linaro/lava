@@ -53,19 +53,19 @@ actions:
         url: http://images.validation.linaro.org/hikey/debian/boot-fat.uefi.img.gz
         compression: gz
       boot:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/boot.img.tar.xz
+        url: http://images.validation.linaro.org/functional-test-images/hikey/boot.img.xz
         compression: xz
         archive: tar
       cache:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/cache.img.tar.xz
+        url: http://images.validation.linaro.org/functional-test-images/hikey/cache.img.xz
         compression: xz
         archive: tar
       userdata:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/userdata.img.tar.xz
+        url: http://images.validation.linaro.org/functional-test-images/hikey/userdata.img.xz
         compression: xz
         archive: tar
       system:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/system.img.tar.xz
+        url: http://images.validation.linaro.org/functional-test-images/hikey/system.img.xz
         compression: xz
         archive: tar
     os: debian

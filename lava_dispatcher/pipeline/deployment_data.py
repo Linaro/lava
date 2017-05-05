@@ -195,7 +195,7 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
     'line_separator': '\n',
-    'installer_extra_cmd': 'cp -r /lava-* /target/ || true ;',
+    'installer_extra_cmd': 'cp -r /lava-* /target/ || true',
 
     # DEBIAN_INSTALLER preseeeding
     'locale': 'debian-installer/locale=en_US',

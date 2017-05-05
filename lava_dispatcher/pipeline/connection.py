@@ -241,14 +241,15 @@ class Protocol(object):
             return None
         raise LAVABug("'_api_select' not implemented")
 
-    def __call__(self, args):  # pylint: disable=no-self-use
+    def __call__(self, *args, **kwargs):  # pylint: disable=no-self-use
         """ Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
         :param args: arguments of the API call to make
         :return: A Python object containing the reply dict from the API call
         """
-        return self._api_select(args)
+        # implementations will usually need a try: except: block around _api.select()
+        return self._api_select(args, action=None)
 
     def collate(self, reply_dict, params_dict):  # pylint: disable=unused-argument,no-self-use
         return None

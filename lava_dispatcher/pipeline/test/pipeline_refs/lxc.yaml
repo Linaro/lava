@@ -19,7 +19,7 @@
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyLxcOverlay, name: apply-lxc-overlay}
 - class: actions.boot.lxc.BootLxcAction
-  name: lxc_boot
+  name: lxc-boot
   pipeline:
   - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
   - {class: connections.lxc.ConnectLxc, name: connect-lxc}
@@ -32,4 +32,4 @@
 - class: power.FinalizeAction
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power_off}
+  - {class: power.PowerOff, name: power-off}

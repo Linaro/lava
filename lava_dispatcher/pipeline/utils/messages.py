@@ -39,7 +39,7 @@ class LinuxKernelMessages(Action):
     Adds prompt strings to the boot operation
     to monitor for kernel panics and error strings.
     Previous actions are expected to complete at the
-    BOOT_MESSAGE and following actions are expected to
+    boot-message and following actions are expected to
     start at the job-specified login prompt.
     Init can generate kernel messages but these cannot
     be tracked by this Action as init has no reliable

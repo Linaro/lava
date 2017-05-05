@@ -36,6 +36,13 @@ commands:
   power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
   power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
 
 actions:
   deploy:

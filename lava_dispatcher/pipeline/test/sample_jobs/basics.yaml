@@ -17,20 +17,18 @@ context:
 
 actions:
 
-    - commands:
-        # list of pre-defined scripts installed by the server administrator at
-        # /etc/lava-server/commands.d/* to be invoked
-        #
-        # Each called script will have the data in the job definition (+ plus
-        # the actual device where the test is running) passed in by environment
-        # variables
-        - power-off
+    #- commands:
+    #    # list of pre-defined scripts installed by the server administrator at
+    #    # /etc/lava-server/commands.d/* to be invoked
+    #    #
+    #    # Each called script will have the data in the job definition (+ plus
+    #    # the actual device where the test is running) passed in by environment
+    #    # variables
+    #    - power-off
 
     - deploy:
         timeout:  # passed into the python datetime.timedelta class
-          hours: 0
           minutes: 20
-          seconds: 0
         to: sata
         images:
           rootfs:
@@ -136,48 +134,48 @@ actions:
               - 'root@debian:~#'
 
 
-    # includes other YAML test definitions at this point
-    # Only the list of actions will be included.
-    - include:
-        - from: url
-          path: http:///url.to/testdef.yaml
-        - from: git
-          repository: git://url.ro/repo.git
-          path: testdef.yaml
+    ## includes other YAML test definitions at this point
+    ## Only the list of actions will be included.
+    #- include:
+    #    - from: url
+    #      path: http:///url.to/testdef.yaml
+    #    - from: git
+    #      repository: git://url.ro/repo.git
+    #      path: testdef.yaml
 
-    - if:
-        condition: ... # ← DEFINING THIS IS THE REAL PROBLEM
-        true:
-            # just a list of commands
-            - boot:
-                method: block
-                media: sata
-        false:
-            # just a list of commands
-            - test:
-                commands:
-                    - ls -l
+    #- if:
+    #    condition: ... # ← DEFINING THIS IS THE REAL PROBLEM
+    #    true:
+    #        # just a list of commands
+    #        - boot:
+    #            method: block
+    #            media: sata
+    #    false:
+    #        # just a list of commands
+    #        - test:
+    #            commands:
+    #                - ls -l
 
-    # TODO: implementing this, try to implement TI's requirement with other
-    # existing features.
-    - in_parallel:
-        # a list of other commands that will run in parallel
-        - sequence:
-            - connection: serial2
-            - test:
-                commands:
-                    - ls -l
-                    - sleep 30m
-                    - ls -l
-            - sync: foobar # will wait for the sync in the sequence below
-            - test:
-                commands:
-                    - something else
-        - sequence:
-            - connection: ssh
-            - sync: foobar # will wait for the sync in the sequence above
-            - test:
-                commands:
-                    - suspend
-            - test:
-                commands:
+    ## TODO: implementing this, try to implement TI's requirement with other
+    ## existing features.
+    #- in_parallel:
+    #    # a list of other commands that will run in parallel
+    #    - sequence:
+    #        - connection: serial2
+    #        - test:
+    #            commands:
+    #                - ls -l
+    #                - sleep 30m
+    #                - ls -l
+    #        - sync: foobar # will wait for the sync in the sequence below
+    #        - test:
+    #            commands:
+    #                - something else
+    #    - sequence:
+    #        - connection: ssh
+    #        - sync: foobar # will wait for the sync in the sequence above
+    #        - test:
+    #            commands:
+    #                - suspend
+    #        - test:
+    #            commands:

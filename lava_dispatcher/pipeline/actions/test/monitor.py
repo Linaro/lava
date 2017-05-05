@@ -102,9 +102,6 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         self.fixupdict = {}
         self.patterns = {}
 
-    def validate(self):
-        super(TestMonitorAction, self).validate()
-
     def run(self, connection, max_end_time, args=None):
         # Sanity test: could be a missing deployment for some actions
         res = self.get_namespace_data(action='boot', label='shared', key='boot-result')

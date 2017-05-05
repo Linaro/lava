@@ -59,7 +59,7 @@ def identify_test_definitions(test_info, namespace):
     if namespace in test_info:
         for test in test_info[namespace]:
             if test['class'].needs_overlay() and ('definitions' in test['parameters']):
-                test_list.extend(test['parameters']['definitions'])
+                test_list.append(test['parameters']['definitions'])
     return test_list
 
 
@@ -598,56 +598,54 @@ class TestDefinitionAction(TestAction):
         self.test_list = identify_test_definitions(parameters['test_info'], parameters['namespace'])
         if self.test_list:
             self.set_namespace_data(action=self.name, label=self.name, key='test_list', value=self.test_list, parameters=parameters)
-        for testdef in self.test_list:
-            # namespace support allows only running the install steps for the relevant
-            # deployment as the next deployment could be a different OS.
-            handler = RepoAction.select(testdef['from'])()
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                # namespace support allows only running the install steps for the relevant
+                # deployment as the next deployment could be a different OS.
+                handler = RepoAction.select(testdef['from'])()
 
-            # set the full set of job YAML parameters for this handler as handler parameters.
-            handler.job = self.job
-            handler.parameters = testdef
-            # store the correct test_name before appending to the local index
-            handler.parameters['test_name'] = "%s_%s" % (len(index), handler.parameters['name'])
-            self.internal_pipeline.add_action(handler)
-            # a genuinely unique ID based on the *database* JobID and
-            # pipeline level for reproducibility and tracking -
-            # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
-            handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
-            handler.stage = self.stages
-            self.run_levels[testdef['name']] = self.stages
-            self.set_namespace_data(
-                action='test-definition', label='lava-test-shell',
-                key='stages', value=self.stages, parameters=parameters)
+                # set the full set of job YAML parameters for this handler as handler parameters.
+                handler.job = self.job
+                handler.parameters = testdef
+                # store the correct test_name before appending to the local index
+                handler.parameters['test_name'] = "%s_%s" % (len(index), handler.parameters['name'])
+                self.internal_pipeline.add_action(handler)
+                # a genuinely unique ID based on the *database* JobID and
+                # pipeline level for reproducibility and tracking -
+                # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
+                handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
+                handler.stage = self.stages
+                self.run_levels[testdef['name']] = self.stages
 
-            # copy details into the overlay, one per handler but the same class each time.
-            overlay = TestOverlayAction()
-            overlay.job = self.job
-            overlay.parameters = testdef
-            overlay.parameters['test_name'] = handler.parameters['test_name']
-            overlay.test_uuid = handler.uuid
+                # copy details into the overlay, one per handler but the same class each time.
+                overlay = TestOverlayAction()
+                overlay.job = self.job
+                overlay.parameters = testdef
+                overlay.parameters['test_name'] = handler.parameters['test_name']
+                overlay.test_uuid = handler.uuid
 
-            # add install handler - uses job parameters
-            installer = TestInstallAction()
-            installer.job = self.job
-            installer.parameters = testdef
-            installer.parameters['test_name'] = handler.parameters['test_name']
-            installer.test_uuid = handler.uuid
+                # add install handler - uses job parameters
+                installer = TestInstallAction()
+                installer.job = self.job
+                installer.parameters = testdef
+                installer.parameters['test_name'] = handler.parameters['test_name']
+                installer.test_uuid = handler.uuid
 
-            # add runsh handler - uses job parameters
-            runsh = TestRunnerAction()
-            runsh.job = self.job
-            runsh.parameters = testdef
-            runsh.parameters['test_name'] = handler.parameters['test_name']
-            runsh.test_uuid = handler.uuid
+                # add runsh handler - uses job parameters
+                runsh = TestRunnerAction()
+                runsh.job = self.job
+                runsh.parameters = testdef
+                runsh.parameters['test_name'] = handler.parameters['test_name']
+                runsh.test_uuid = handler.uuid
 
-            index.append(handler.parameters['name'])
+                index.append(handler.parameters['name'])
 
-            # add overlay handlers to the pipeline
-            self.internal_pipeline.add_action(overlay)
-            self.internal_pipeline.add_action(installer)
-            self.internal_pipeline.add_action(runsh)
-            self.set_namespace_data(
-                action='test-definition', label='test-definition', key='testdef_index', value=index, parameters=parameters)
+                # add overlay handlers to the pipeline
+                self.internal_pipeline.add_action(overlay)
+                self.internal_pipeline.add_action(installer)
+                self.internal_pipeline.add_action(runsh)
+                self.set_namespace_data(
+                    action='test-definition', label='test-definition', key='testdef_index', value=index, parameters=parameters)
             self.stages += 1
 
     def validate(self):
@@ -666,18 +664,19 @@ class TestDefinitionAction(TestAction):
             return
 
         exp = re.compile(DEFAULT_TESTDEF_NAME_CLASS)
-        for testdef in self.test_list:
-            if 'parameters' in testdef:  # optional
-                if not isinstance(testdef['parameters'], dict):
-                    self.errors = "Invalid test definition parameters"
-            if 'from' not in testdef:
-                self.errors = "missing 'from' field in test definition %s" % testdef
-            if 'name' not in testdef:
-                self.errors = "missing 'name' field in test definition %s" % testdef
-            else:
-                res = exp.match(testdef['name'])
-                if not res:
-                    self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                if 'parameters' in testdef:  # optional
+                    if not isinstance(testdef['parameters'], dict):
+                        self.errors = "Invalid test definition parameters"
+                if 'from' not in testdef:
+                    self.errors = "missing 'from' field in test definition %s" % testdef
+                if 'name' not in testdef:
+                    self.errors = "missing 'name' field in test definition %s" % testdef
+                else:
+                    res = exp.match(testdef['name'])
+                    if not res:
+                        self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
         super(TestDefinitionAction, self).validate()
 
     def run(self, connection, max_end_time, args=None):
@@ -707,14 +706,14 @@ class TestDefinitionAction(TestAction):
 
         connection = super(TestDefinitionAction, self).run(connection, max_end_time, args)
 
-        for name, stage in self.run_levels.items():
-            self.logger.debug("lava-test-runner.conf name %s stage %s", name, stage)
+        self.logger.info("Creating lava-test-runner.conf files")
+        for stage in range(self.stages):
             path = '%s/%s' % (overlay_base, stage)
-            self.logger.debug("Using lava-test-runner path: %s", path)
+            self.logger.debug("Using lava-test-runner path: %s for stage %d", path, stage)
             with open('%s/%s/lava-test-runner.conf' % (overlay_base, stage), 'a') as runner_conf:
                 for handler in self.internal_pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
-                        self.logger.debug("Writing to runner_conf %s %s", self.name, stage)
+                        self.logger.debug("- %s", handler.parameters['test_name'])
                         runner_conf.write(handler.runner)
 
         return connection

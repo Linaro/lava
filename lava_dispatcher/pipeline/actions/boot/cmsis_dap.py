@@ -111,8 +111,8 @@ class FlashCMSISAction(Action):
         if not os.path.exists(self.usb_mass_device):
             self.errors = "usb_mass_device does not exist %s" % self.usb_mass_device
         namespace = self.parameters['namespace']
-        for action in self.data[namespace]['download_action'].keys():
-            action_arg = self.get_namespace_data(action='download_action', label=action, key='file')
+        for action in self.data[namespace]['download-action'].keys():
+            action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
             self.filelist.extend([action_arg])
 
     def run(self, connection, max_end_time, args=None):

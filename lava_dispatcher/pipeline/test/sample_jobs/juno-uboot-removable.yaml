@@ -17,7 +17,7 @@ timeouts:
       seconds: 180
     dd-image:
       seconds: 900
-    http_download:
+    http-download:
       seconds: 600
   connections:
     u-boot-interrupt:
@@ -30,7 +30,7 @@ timeouts:
       seconds: 180
     dd-image:
       seconds: 900
-    http_download:
+    http-download:
       seconds: 600
 priority: medium
 visibility: public
