@@ -246,7 +246,7 @@ class TestTemplates(unittest.TestCase):
                 self.assertNotIn('dhcp net0', value['commands'])
 
     def test_beaglebone_black_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
+        data = """{% extends 'beaglebone-black.jinja2' %}
 {% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
 {% set tags = {'eth0': ['1G', '100M'], 'eth1': ['100M']} %}
@@ -257,7 +257,20 @@ class TestTemplates(unittest.TestCase):
 {% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
 {% set connection_command = 'telnet localhost 7333' %}
-{% set exclusive = 'True' %}"""))
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-bbb-01', data))
+        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertEqual('', template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertNotEqual('None', template_dict['actions']['deploy']['methods']['ssh']['host'])
+        data += "{% set ssh_host = '192.168.0.10' %}"
+        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertEqual('192.168.0.10', template_dict['actions']['deploy']['methods']['ssh']['host'])
 
     def test_b2260_template(self):
         data = """{% extends 'b2260.jinja2' %}"""
