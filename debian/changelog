@@ -1,3 +1,86 @@
+lava-server (2017.5-1) unstable; urgency=medium
+
+  * New production release
+    8ec2d6736 Fix jinja2 templates for default string handling
+    eb39ec0fd Extend bbb template check for ssh_host support.
+    55a251b87 Fix documentation example test job and remove unused
+    7769be718 Update docs for change in submit behaviour.
+    c10bf6197 Add more index items and detail on namespaces
+    b9686e5b1 Mark V1 XML-RPC functions as deprecated.
+    a0ac9894b Prevent health check warning when disabled
+    78f796eee more silencing of unit test logging
+    064bfabb9 Add a template for frdm-kw41z and delete a duplicate for k64f
+    a08df108d Silence logging in more unit tests
+    97dbd95b1 Extend power-off timeout for b2260
+    0e39966d4 device-types: add Hardkernel meson8b-odroidc1 board
+    b6151b003 Add support for aliases in device-type management
+    15589b8d1 Fix some typos in development documentation.
+    f476a351c device-types: base-uboot: use run bootcmd
+    6911b8502 Expand notes on reviews
+    cbbdcfcf4 Expand notes on code analysis around reviews
+    970e52230 Drop confirmation page on job submit for V2 jobs.
+    4a5050691 Device commands are allowed to be lists
+    cc60805db Adjust hikey template to allow target_mac and ip support
+    9d4878c40 Avoid forcing the date path immediately
+    68497b557 Remove the character_delay block override for d03
+    5aeed4aef Tags: fix HTML syntax errors
+    a0ae8a62d Update doc for adding a pipeline worker.
+    2f6287e71 Add Raspberry pi devices
+    69a8f40c4 Add collection of Exynos 4 and 5 devices
+    e31953519 Add more Tegra124 based devices
+    b843bfaec Add more r-car generation 3 devices
+    24d21cdb0 Add a note on https repositories and apt-transport-https package.
+    c3b852798 Expand notes on portability
+    c57c9f111 Fix doc to explain unprivileged containers and DUT interaction.
+    2018f705c Show the requested device tags in the job log page
+    96999537e Fix Action names (use - instead of _)
+    f0a272b4b Extend recent job support to requested device type
+    9040de9ca Add XML-RPC call to obtain job level metadata
+    a04086dd7 api: add get_recent_jobs_for_device
+    8bbd298f7 Set the documented flash_cmds_order for hikey
+    c9b9453d1 Migrate many U-boot devices to v2 configuration
+    613d17fb5 Tweak the developer workflow to skip devices/
+    c59cc6c31 Add a unit test for some of the new UBoot support.
+    e43e244b0 Remove unused imports and unused variables.
+    e2b3784f4 Fix pep8 error
+    af3cc6d42 Schema: Allow boolean variables in parameters
+    4d5861607 Allow is_valid check to operate correctly.
+    294bb62bd ensure device_type is checked
+    b8ce5ba49 Add a note on developer branches
+    11725bc3e doc: fix a small gap about test suites
+    6280b94d7 Add "sd" for removable media
+    21a5ecf6e Add "command" action to schema and device template
+    8db43278a Add schema validation for test/monitor/name in job definition.
+    0a5b1eaa3 tweak gitignore
+    e3f003f63 templates: remove duplicated blocks
+    f1331ef2e Exclude retired devices from Device Health table
+    790b39b9d master: use yaml.CLoader that is way faster
+    749a1081c Add notes on load balancing different bootloaders
+    26b822d67 Add note on how pyudev replaces / with _
+    cc9e4ea2c Allow to override U-boot bootcmd command
+    9a007665c Fix 500 when output.yaml is invalid
+    b3c2d162b Make it easier to spot incomplete test jobs
+    fe6af63a7 Improve job and device schema validation
+    4a568e261 Fix directory and file permissions
+    f33661ae4 env: fix comments about default values
+    fd6fe12b6 Fix scheduling when putting a device into looping
+    99b35ba79 Export the full lava-server version
+    da87efaa6 base-uboot.jinja2: add support for append_dtb and use_xip
+    babaef51d lava_scheduler_app: api: Add pipeline information to get_device_status
+    abe787872 Add a note on installing lava-dev
+    2b6ff1dca MASTER_CERT of lava-master should use secret key
+    d9e7e2c08 add recipients in notifications.yaml
+    44eb1b75b Move job outputs to sub-dirs based on submit-time
+    839b3ff19 Create directories with 0o755 by default
+    9459aae36 lava-master: call job.output_dir to get the path
+    8c9af4897 Fix description for devices and workers
+    541478930 Fix health-check tests by testing None and ''
+    68b33d572 Use job.output_dir whenever possible
+    d93df5f4f Add a management command to remove old jobs
+    bfd57121d Move unnecessary constants into base jinja template.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 May 2017 10:33:39 +0100
+
 lava-server (2017.4-1) unstable; urgency=medium
 
   * New production release
