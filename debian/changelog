@@ -1,3 +1,78 @@
+lava-dispatcher (2017.5-1) unstable; urgency=medium
+
+  * New production release
+    3be27df4 lxc protocol: simplify the tests
+    a5d9ebad Fix detection of missing ssh_host value in validate
+    234eef91 Fix calling of protocols after LXC change
+    477a36b7 tests: make ShellCommand.logger a DummyLogger
+    62867f49 Use images.validation.linaro.org files for unit tests
+    1868936c Silence logging in more unit tests
+    609c783c Fix download action name
+    b1701978 More tweaks to silence messages from the unit tests
+    29efa263 Adjust for pep8 checks in jessie
+    0733f89f Make sure the test_character_delay is used for all
+    commands in test shell
+    78d2509f Account for empty environment string.
+    ea09b19a Take namespace into account when counting test stages
+    734688c5 Declare namespace of the test suite in results
+    49a6b92c Drop noisy info log message.
+    4fd5d4af Drop unused imports and unused variables
+    678b216c Rework the removable action to allow sd cards
+    3b42122a Fix bug #2975 after qemu-nfs introduction
+    7462ea62 Expand LXC support to add devices from all sybsystems
+    b853865f Fix missing check for u-boot commands parameters
+    8293693c Replace invalid characters in test_case_id.
+    a94e0f24 Fix preseed/late_command appending
+    db03483a Fix Action names (use - instead of _)
+    9e836e64 Add a Command Action
+    bbd4ba25 Make the parser stricter about the block names
+    65b3a563 Allow to pass integers to run_command
+    b41326bc Raise JobError instead of NotImplementedError
+    073f3b34 update gitignore
+    00f5d33f log: limit the length of lines send other zmq
+    5b2b0746 LAVA-889 Fix handling of multiple test blocks
+    3bfdcdb6 Add support for use_xip
+    8df17dd7 Add support for append_dtb
+    3c110cae Remove unused imports
+    176a4d49 Add new utility function infrastructure_error_multi_paths
+    dc008eb5 Export the full version string.
+    daebfad1 Extend secondary connection fix to support primary
+    fae0ced5 Move unnecessary constants into base jinja template.
+    18f745bc device-types: add kirkwood-db-88f6282.conf
+    815e518d device-types: add at91sam9m10g45ek.conf
+    6ca0731f device-types: add at91rm9200ek.conf
+    003b53dc device-types: add at91-sama5d4_xplained.conf
+    9b2371cf device-types: add armada-3720-db.conf
+    5a767331 device-types: add armada-xp-gp.conf
+    8b050938 device-types: add kirkwood-openblocks_a7.conf
+    f5801d38 device-types: add alpine-v2-evp.conf
+    19e20276 device-types: add sama5d34ek.conf
+    49da704f device-types: add armada-385-db-ap.conf
+    ed7aa6b1 device-types: add armada-370-db.conf
+    9a104327 device-types: add at91-sama5d2_xplained.conf
+    ddb34cea device-types: add alpine-db.conf
+    f7642f58 device-types: add armada-375-db.conf
+    0d70c7dd device-types: add at91sam9x35ek.conf
+    a642d451 device-types: add armada-xp-db.conf
+    2a5ff9e4 device-types: add armada-7040-db.conf
+    1a439995 device-types: add orion5x-rd88f5182-nas.conf
+    ad855a62 device-types: add armada-xp-linksys-mamba.conf
+    58308ca1 device-types: add armada-388-gp.conf
+    6a2898bf device-types: add armada-370-rd.conf
+    cd1b4f47 device-types: add armada-398-db.conf
+    51925fb1 device-types: add sun8i-a83t-allwinner-h8homlet-v2.conf
+    4976d068 device-types: add sun8i-a33-sinlinx-sina33.conf
+    681480d5 device-types: add sama5d35ek.conf
+    db74d60e device-types: add sun5i-r8-chip.conf
+    40736b95 device-types: add sama5d36ek.conf
+    433be0a6 device-types: add imx6q-nitrogen6x.conf
+    ed4c82e6 device-types: add at91sam9x25ek.conf
+    ce7a488e device-types: add at91sam9261ek.conf
+    f87cdb49 device-types: add armada-xp-openblocks-ax3-4.conf
+    634442ca device-types: add armada-388-clearfog.conf
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 May 2017 10:33:45 +0100
+
 lava-dispatcher (2017.4.post1-1) unstable; urgency=medium
 
   * Production hotfix release for LKFT support.
