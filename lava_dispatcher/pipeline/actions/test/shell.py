@@ -482,9 +482,7 @@ class TestShellAction(TestAction):
             yaml.dump(self.job.device.get('device_info', [])).strip()
         )
         device_paths = get_udev_devices(self.job, self.logger)
-        if device_paths:
-            self.logger.debug("Adding %s", ', '.join(device_paths))
-        else:
+        if not device_paths:
             self.logger.warning("No USB devices added to the LXC.")
             return False
         for device in device_paths:
