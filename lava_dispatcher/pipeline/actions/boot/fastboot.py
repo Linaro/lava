@@ -162,7 +162,7 @@ class FastbootBootAction(Action):
         res = 'failed' if self.errors else 'success'
         self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
+        lxc_active = any([pc for pc in self.job.protocols if pc.name == LxcProtocol.name])
         if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command

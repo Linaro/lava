@@ -62,6 +62,16 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -250,3 +260,15 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('item_class', menu.params)
         grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
         self.assertEqual('pxe-grub', grub_efi.commands)
+
+    def test_hikey_grub_efi(self):
+        job = self.factory.create_hikey_job('sample_jobs/hikey-grub-lxc.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('hikey-grub-efi.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
+        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
+        self.assertIn('item_class', menu.params)
+        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
+        self.assertEqual('fastboot', grub_efi.commands)

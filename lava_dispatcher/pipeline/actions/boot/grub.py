@@ -94,7 +94,14 @@ class GrubMainAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(ResetDevice())
+        # FIXME: reset_device is a hikey hack due to fastboot/OTG issues
+        # remove as part of LAVA-940
+        reset_device = self.job.device['actions']['boot']['methods'].get('grub-efi', {}).get('reset_device', True)
+        if parameters['method'] == 'grub-efi' and reset_device:
+            # added unless the device specifies not to reset the device in grub.
+            self.internal_pipeline.add_action(ResetDevice())
+        elif parameters['method'] == 'grub':
+            self.internal_pipeline.add_action(ResetDevice())
         if parameters['method'] == 'grub-efi':
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(GrubMenuSelector())
@@ -181,6 +188,14 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
             return
         self.commands = self.params['menu_options']
         super(GrubMenuSelector, self).validate()
+
+    def run(self, connection, max_end_time, args=None):
+        self.logger.debug("Adding '%s' to prompt", GRUB_BOOT_PROMPT)
+        connection.prompt_str = GRUB_BOOT_PROMPT
+        # override base class behaviour to interact with grub.
+        self.boot_message = None
+        connection = super(GrubMenuSelector, self).run(connection, max_end_time, args)
+        return connection
 
 
 class InstallerWait(Action):
