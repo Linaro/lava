@@ -32,6 +32,9 @@ class DummyLogger(object):
     def error(self, *args, **kwargs):
         pass
 
+    def warning(self, *args, **kwargs):
+        pass
+
     def results(self, *args, **kwargs):
         pass
 

@@ -28,10 +28,9 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
-from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import InfrastructureError, Action
-from lava_dispatcher.pipeline.utils import vcs
+from lava_dispatcher.pipeline.utils import vcs, installers
 
 
 class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -208,31 +207,31 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
         uboot = self.job.pipeline.actions[1]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
-            uboot.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+            uboot.parameters.get('parameters', {}).get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
         self.assertIsInstance(uboot, UBootAction)
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
-            retry.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+            retry.parameters['parameters'].get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
         self.assertIsInstance(retry, UBootRetry)
         reset = retry.internal_pipeline.actions[0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
-            reset.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+            reset.parameters['parameters'].get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
         self.assertIsInstance(reset, ResetDevice)
         reboot = reset.internal_pipeline.actions[0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
-            reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+            reboot.parameters['parameters'].get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
         self.assertIsInstance(reboot, RebootDevice)
         self.assertIsNotNone(reboot.parameters.get('parameters'))
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
-            reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+            reboot.parameters['parameters'].get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
 
 
@@ -262,3 +261,42 @@ class TestClasses(StdoutTestCase):
                 continue
             if not hasattr(subclass, 'description') and subclass.name not in self.allowed:
                 self.fail(subclass)
+
+
+class TestInstallers(StdoutTestCase):
+
+    def setUp(self):
+        super(TestInstallers, self).setUp()
+        self.cwd = os.getcwd()
+        self.tmpdir = tempfile.mkdtemp()
+        os.chdir(self.tmpdir)
+
+    def tearDown(self):
+        os.chdir(self.cwd)
+        shutil.rmtree(self.tmpdir)
+
+    def test_add_late_command(self):
+        # Create preseed file with a few lines.
+        with open('preseed.cfg', 'w') as preseedfile:
+            preseedfile.write('d-i netcfg/dhcp_timeout string 60\n')
+            preseedfile.write('d-i pkgsel/include string openssh-server build-essential\n')
+            preseedfile.write('d-i finish-install/reboot_in_progress note\n')
+        preseedfile = 'preseed.cfg'
+
+        # Test adding new preseed/late_command line.
+        extra_command = 'cmd1'
+        installers.add_late_command(preseedfile, extra_command)
+        file_content = open('preseed.cfg').read()
+        self.assertTrue('d-i preseed/late_command string cmd1' in file_content)
+
+        # Test appending the second command to existing presseed/late_command line.
+        extra_command = 'cmd2 ;'
+        installers.add_late_command(preseedfile, extra_command)
+        file_content = open('preseed.cfg').read()
+        self.assertTrue('d-i preseed/late_command string cmd1; cmd2 ;' in file_content)
+
+        # Test if it strips off extra space and semi-colon.
+        extra_command = 'cmd3'
+        installers.add_late_command(preseedfile, extra_command)
+        file_content = open('preseed.cfg').read()
+        self.assertTrue('d-i preseed/late_command string cmd1; cmd2; cmd3' in file_content)

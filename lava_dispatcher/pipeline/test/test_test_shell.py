@@ -109,6 +109,21 @@ class TestPatterns(StdoutTestCase):
         params = ['STOP']
         self.assertEqual('testset_stop', self.test_shell.signal_test_set(params))
 
+    def test_case_invalid_characters(self):
+
+        test_case_id = 'singlenode03_basic'
+        new_test_case_id = self.test_shell._replace_invalid_url_characters(
+            test_case_id)
+        self.assertEqual(test_case_id, new_test_case_id)
+        test_case_id = 'singlenode03/basic'
+        new_test_case_id = self.test_shell._replace_invalid_url_characters(
+            test_case_id)
+        self.assertNotEqual(test_case_id, new_test_case_id)
+        test_case_id = 'singlenode03 basic'
+        new_test_case_id = self.test_shell._replace_invalid_url_characters(
+            test_case_id)
+        self.assertNotEqual(test_case_id, new_test_case_id)
+
     def test_reference(self):
         params = ['case', 'pass']
         with self.assertRaises(TestError):

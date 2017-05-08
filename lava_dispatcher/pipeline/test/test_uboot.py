@@ -41,10 +41,6 @@ from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import (
-    SHUTDOWN_MESSAGE,
-    BOOT_MESSAGE,
-)
 
 
 class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -93,7 +89,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download_retry', 'download_retry', 'download_retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -122,7 +118,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         params = job.device['actions']['deploy']['parameters']
         self.assertIn('mkimage_arch', params)
-        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        boot_message = params.get('boot_message',
+                                  job.device.get_constant('boot-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
@@ -131,7 +128,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 self.assertEqual('u-boot', action.parameters['method'])
                 self.assertEqual(
                     'reboot: Restarting system',
-                    action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+                    action.parameters.get('parameters', {}).get('shutdown-message', job.device.get_constant('shutdown-message'))
                 )
             if isinstance(action, TftpAction):
                 self.assertIn('ramdisk', action.parameters)
@@ -298,8 +295,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 reset_action = action
         names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
         self.assertIn('soft-reboot', names)
-        self.assertIn('pdu_reboot', names)
-        self.assertIn('power_on', names)
+        self.assertIn('pdu-reboot', names)
+        self.assertIn('power-on', names)
 
     def test_secondary_media(self):
         """

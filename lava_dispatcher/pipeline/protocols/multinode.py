@@ -384,9 +384,10 @@ class MultinodeProtocol(Protocol):
         else:
             return reply['response']
 
-    def __call__(self, args):
+    def __call__(self, *args, **kwargs):
+        # only the first argument is used.
         try:
-            return self._api_select(json.dumps(args))
+            return self._api_select(json.dumps(args[0]))
         except (ValueError, TypeError) as exc:
             msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
             logger = logging.getLogger("dispatcher")

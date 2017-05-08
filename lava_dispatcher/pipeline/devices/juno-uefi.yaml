@@ -17,6 +17,14 @@ commands:
 character-delays:
   boot: 50
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     # list of deployment methods which this device supports

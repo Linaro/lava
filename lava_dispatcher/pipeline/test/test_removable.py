@@ -164,7 +164,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertNotIn('deployment_data', second_deploy.parameters)
         storage_deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
         download_action = [
-            action for action in storage_deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
+            action for action in storage_deploy_action.internal_pipeline.actions if action.name == 'download-retry'][0]
         self.assertIsNotNone(download_action)
         self.assertEqual('android', storage_deploy_action.parameters['namespace'])
 

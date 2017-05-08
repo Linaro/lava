@@ -91,7 +91,7 @@ class TestMultiDeploy(StdoutTestCase):
 
         def __init__(self):
             super(TestMultiDeploy.TestDeployAction, self).__init__()
-            self.name = "fake_deploy"
+            self.name = "fake-deploy"
             self.summary = "fake deployment"
             self.description = "fake for tests only"
 
@@ -143,10 +143,10 @@ class TestMultiDeploy(StdoutTestCase):
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         self.assertEqual(job.run(), 0)
-        self.assertNotEqual(pipeline.actions[0].data, {'fake_deploy': pipeline.actions[0].parameters})
-        self.assertEqual(pipeline.actions[1].data, {'fake_deploy': pipeline.actions[2].parameters})
+        self.assertNotEqual(pipeline.actions[0].data, {'fake-deploy': pipeline.actions[0].parameters})
+        self.assertEqual(pipeline.actions[1].data, {'fake-deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared
-        self.assertEqual(pipeline.actions[2].data, {'fake_deploy': pipeline.actions[2].parameters})
+        self.assertEqual(pipeline.actions[2].data, {'fake-deploy': pipeline.actions[2].parameters})
 
 
 class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-methods

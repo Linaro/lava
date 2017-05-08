@@ -63,7 +63,7 @@ class BootIsoInstallerAction(BootAction):
 
     def __init__(self):
         super(BootIsoInstallerAction, self).__init__()
-        self.name = 'boot_installer_iso'
+        self.name = 'boot-installer-iso'
         self.description = "boot installer with preseed"
         self.summary = "boot installer iso image"
 
@@ -103,13 +103,13 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
 
         commands = []
         # get the download args in run()
-        image_arg = self.get_namespace_data(action='download_action', label='iso', key='image_arg')
-        action_arg = self.get_namespace_data(action='download_action', label='iso', key='file')
+        image_arg = self.get_namespace_data(action='download-action', label='iso', key='image_arg')
+        action_arg = self.get_namespace_data(action='download-action', label='iso', key='file')
         substitutions["{%s}" % 'iso'] = action_arg
         commands.append(image_arg)
         command_line += ' '.join(substitute(commands, substitutions))
 
-        preseed_file = self.get_namespace_data(action='download_action', label='file', key='preseed')
+        preseed_file = self.get_namespace_data(action='download-action', label='file', key='preseed')
         if not preseed_file:
             raise JobError("Unable to identify downloaded preseed filename.")
         substitutions = {'{preseed}': preseed_file}

@@ -24,7 +24,10 @@ import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.shell import (
+    infrastructure_error,
+    infrastructure_error_multi_paths,
+)
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
@@ -118,11 +121,12 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error('lxc-info') or infrastructure_error('img2simg'), "lxc and img2simg not installed")
+    @unittest.skipIf(infrastructure_error_multi_paths(
+        ['lxc-info', 'img2simg', 'simg2img']),
+        "lxc or img2simg or simg2img not installed")
     def test_lxc_api(self):
         job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
                                             mkdtemp())
-        job.logger = DummyLogger()
         description_ref = pipeline_reference('hikey-oe.yaml')
         job.validate()
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -145,7 +149,6 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
-        job.logger = DummyLogger()
         description_ref = pipeline_reference('hi6220-hikey.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
@@ -166,7 +169,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 '1.7.3.8': '1_android-meminfo',
                 '1.7.3.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
-        for testdef in testdef.test_list:
+        for testdef in testdef.test_list[0]:
             self.assertEqual('git', testdef['from'])
 
     @unittest.skipIf(infrastructure_error('lxc-create'),
@@ -221,12 +224,9 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         job = self.factory.create_db410c_job('sample_jobs/db410c.yaml', mkdtemp())
         self.assertTrue(job.device.get('fastboot_via_uboot', True))
         self.assertEqual('', self.job.device.power_command)
-        import yaml
-        with open('/tmp/test.yaml', 'w') as describe:
-            yaml.dump(job.pipeline.describe(False), describe)
         description_ref = pipeline_reference('db410c.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        boot = [action for action in job.pipeline.actions if action.name == 'fastboot_boot'][0]
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
         self.assertEqual(wait.device_actions, ['remove'])
 

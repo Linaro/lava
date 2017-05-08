@@ -218,7 +218,7 @@ class Deployment(object):
         willing = [c for c in candidates if c.accepts(device, parameters)]
 
         if len(willing) == 0:
-            raise NotImplementedError(
+            raise JobError(
                 "No deployment strategy available for the given "
                 "device '%s'. %s" % (device['hostname'], cls))
 
@@ -257,7 +257,7 @@ class Boot(object):
         candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(device, parameters)]
         if len(willing) == 0:
-            raise NotImplementedError(
+            raise JobError(
                 "No boot strategy available for the device "
                 "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
             )
@@ -303,7 +303,7 @@ class LavaTest(object):
                       "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
             else:
                 msg = "No test strategy available for the device. %s" % cls
-            raise NotImplementedError(msg)
+            raise JobError(msg)
 
         # higher priority first
         willing.sort(key=lambda x: x.priority, reverse=True)

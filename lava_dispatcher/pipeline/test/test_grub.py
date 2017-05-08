@@ -34,9 +34,6 @@ from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import (
-    BOOT_MESSAGE
-)
 
 
 class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -95,7 +92,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download_retry', 'download_retry', 'download_retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -120,7 +117,8 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('grub', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['grub']['parameters']
-        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        boot_message = params.get('boot_message',
+                                  job.device.get_constant('boot-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()

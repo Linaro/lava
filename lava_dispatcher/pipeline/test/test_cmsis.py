@@ -20,10 +20,8 @@
 
 
 import os
-import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger

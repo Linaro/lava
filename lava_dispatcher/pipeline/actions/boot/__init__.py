@@ -29,13 +29,10 @@ from lava_dispatcher.pipeline.action import (
     LAVABug)
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
-    DEFAULT_SHELL_PROMPT,
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
-    BOOT_MESSAGE,
-    CPU_RESET_MESSAGE,
     LOGIN_INCORRECT_MSG,
     LOGIN_TIMED_OUT_MSG
 )
@@ -240,9 +237,11 @@ class AutoLoginAction(Action):
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
-        connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
+        connection.prompt_str.extend([self.job.device.get_constant(
+            'default-shell-prompt')])
         self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
-        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
+        connection.sendline('export PS1="%s"' % self.job.device.get_constant(
+            'default-shell-prompt'), delay=self.character_delay)
 
         return connection
 
@@ -330,7 +329,7 @@ class BootloaderCommandOverlay(Action):
             elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
                 self.errors = "No commands found in parameters"
             self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
-        # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
+        # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if 'use_bootscript' in self.parameters:
             self.use_bootscript = self.parameters['use_bootscript']
         if 'lava_mac' in self.parameters:
@@ -352,11 +351,11 @@ class BootloaderCommandOverlay(Action):
 
         substitutions = {
             '{SERVER_IP}': ip_addr,
-            '{PRESEED_CONFIG}': self.get_namespace_data(action='download_action', label='file', key='preseed'),
+            '{PRESEED_CONFIG}': self.get_namespace_data(action='download-action', label='file', key='preseed'),
             '{PRESEED_LOCAL}': self.get_namespace_data(action='compress-ramdisk', label='file', key='preseed_local'),
-            '{DTB}': self.get_namespace_data(action='download_action', label='file', key='dtb'),
+            '{DTB}': self.get_namespace_data(action='download-action', label='file', key='dtb'),
             '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
-            '{KERNEL}': self.get_namespace_data(action='download_action', label='file', key='kernel'),
+            '{KERNEL}': self.get_namespace_data(action='download-action', label='file', key='kernel'),
             '{LAVA_MAC}': self.lava_mac
         }
         self.bootcommand = self.get_namespace_data(action='uboot-prepare-kernel', label='bootcommand', key='bootcommand')
@@ -375,7 +374,7 @@ class BootloaderCommandOverlay(Action):
             ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
-                    and not self.get_namespace_data(action='download_action', label='file', key='ramdisk'):
+                    and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
                 ramdisk_addr = '-'
 
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
@@ -390,7 +389,7 @@ class BootloaderCommandOverlay(Action):
             }
 
         nfs_address = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
-        nfs_root = self.get_namespace_data(action='download_action', label='file', key='nfsrootfs')
+        nfs_root = self.get_namespace_data(action='download-action', label='file', key='nfsrootfs')
         if nfs_root:
             substitutions['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             substitutions['{NFS_SERVER_IP}'] = ip_addr
@@ -507,13 +506,14 @@ class BootloaderCommandsAction(Action):
         # allow for auto_login
         if self.parameters.get('prompts', None):
             connection.prompt_str = [
-                self.params.get('boot_message', BOOT_MESSAGE),
-                CPU_RESET_MESSAGE
+                self.params.get('boot_message',
+                                self.job.device.get_constant('boot-message')),
+                self.job.device.get_constant('cpu-reset-message')
             ]
             self.logger.debug("Changing prompt to boot_message %s",
                               connection.prompt_str)
             index = self.wait(connection)
-            if connection.prompt_str[index] == CPU_RESET_MESSAGE:
+            if connection.prompt_str[index] == self.job.device.get_constant('cpu-reset-message'):
                 self.logger.error("Bootloader reset detected: Bootloader "
                                   "failed to load the required file into "
                                   "memory correctly so the bootloader reset "

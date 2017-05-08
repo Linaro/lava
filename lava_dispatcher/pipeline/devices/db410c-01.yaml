@@ -12,6 +12,14 @@ adb_serial_number: c2e02318
 fastboot_serial_number: c2e02318
 fastboot_options: []
 
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
 actions:
   deploy:
     methods:
@@ -40,9 +48,9 @@ timeouts:
       minutes: 2
     dd-image:
       minutes: 10
-    download_retry:
+    download-retry:
       minutes: 5
-    http_download:
+    http-download:
       minutes: 5
     lava-test-shell:
       minutes: 3

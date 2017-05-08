@@ -23,7 +23,6 @@ from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
-    InfrastructureError,
     JobError,
     LAVABug,
     Pipeline,
@@ -43,7 +42,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_TEMPLATE_WITH_MIRROR,
     LXC_DEFAULT_PACKAGES,
 )
-from lava_dispatcher.pipeline.utils.udev import get_usb_devices
+from lava_dispatcher.pipeline.utils.udev import get_udev_devices
 from lava_dispatcher.pipeline.utils.filesystem import (
     debian_package_version,
     lxc_path,
@@ -321,7 +320,7 @@ class LxcAddDeviceAction(Action):
             return connection
 
         self.logger.info("Get USB device(s) ...")
-        device_paths = get_usb_devices(self.job, logger=self.logger)
+        device_paths = get_udev_devices(self.job, logger=self.logger)
         for device in device_paths:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
                        os.path.realpath(device)]

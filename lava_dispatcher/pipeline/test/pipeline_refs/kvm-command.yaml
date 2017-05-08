@@ -1,0 +1,47 @@
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
+  - class: actions.deploy.overlay.OverlayAction
+    name: lava-overlay
+    pipeline:
+    - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
+    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+    - class: actions.deploy.testdef.TestDefinitionAction
+      name: test-definition
+      pipeline:
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+  - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+- {class: actions.commands.CommandAction, name: user-command}
+- class: actions.boot.qemu.BootQEMUImageAction
+  name: boot-image-retry
+  pipeline:
+  - class: actions.boot.qemu.BootQemuRetry
+    name: boot-qemu-image
+    pipeline:
+    - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}

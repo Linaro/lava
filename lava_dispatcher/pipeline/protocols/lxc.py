@@ -110,10 +110,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                     raise InfrastructureError("%s failed" % command)
 
     def __call__(self, *args, **kwargs):
-        action = None
-        if kwargs is not None:
-            if 'action' in kwargs:
-                action = kwargs['action']
+        action = kwargs.get('action', None)
         logger = action.logger if action else logging.getLogger("dispatcher")
         try:
             return self._api_select(args, action=action)

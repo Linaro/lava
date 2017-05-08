@@ -161,7 +161,7 @@ class ExtractNfsAction(Action):
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
             return
         if not self.get_namespace_data(
-                action='download_action', label=self.param_key, key='file'):
+                action='download-action', label=self.param_key, key='file'):
             self.errors = "no file specified extract as %s" % self.param_key
         if not os.path.exists('/usr/sbin/exportfs'):
             raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
@@ -176,7 +176,7 @@ class ExtractNfsAction(Action):
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
             return connection
         connection = super(ExtractNfsAction, self).run(connection, max_end_time, args)
-        root = self.get_namespace_data(action='download_action', label=self.param_key, key='file')
+        root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
         self.set_namespace_data(action='extract-rootfs', label='file', key=self.file_key, value=root_dir)
@@ -210,11 +210,11 @@ class DeployImages(Deployment):
     Does not boot the device.
     Requires guestfs instead of loopback support.
     Prepares the following actions and pipelines:
-        retry_pipeline
-            download_action
-        report_checksum_action
-        customisation_action
-        test_definitions_action
+        retry-pipeline
+            download-action
+        report-checksum-action
+        customisation-action
+        test-definitions-action
     """
     compatibility = 4
 

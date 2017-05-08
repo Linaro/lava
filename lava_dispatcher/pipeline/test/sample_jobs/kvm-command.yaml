@@ -1,0 +1,57 @@
+device_type: qemu
+
+job_name: kvm command
+timeouts:
+  job:
+    minutes: 5
+
+priority: medium
+visibility: public
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        os: debian
+        images:
+          disk1:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            compression: gz
+            image_arg: -drive format=raw,file={disk1}
+
+    - command:
+        name: user_command_to_run
+        timeout:
+          minutes: 1
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        connection: serial
+        failure_retry: 2
+        auto_login: {login_prompt: 'login:', username: root}
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
+
+    - test:
+        timeout:
+           minutes: 3
+        failure_retry: 3
+        timeout:
+          minutes: 10
+        name: kvm-basic-singlenode
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
+              revision: 441b61
+
+context:
+  arch: amd64
