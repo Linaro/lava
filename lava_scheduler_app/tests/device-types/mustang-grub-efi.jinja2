@@ -38,10 +38,8 @@ actions:
       ssh:
         options:
 {{ ssh_options }}
-{% if ssh_host %}
-        host: {{ ssh_host }}
-{% endif %}
-        user: {{ ssh_user|default(root) }}
+        host: '{{ ssh_host|default('') }}'
+        user: {{ ssh_user|default('root') }}
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
   boot:

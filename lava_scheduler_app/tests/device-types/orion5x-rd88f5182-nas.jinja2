@@ -1,0 +1,19 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "orion5x-rd88f5182-nas" %}
+{% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
+{% set bootm_kernel_addr = '0x02000000' %}
+{% set bootm_ramdisk_addr = '0x02880000' %}
+{% set bootm_dtb_addr = '0x01000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{# This board has no `tftp` command available in U-boot, and no `run` command either. #}
+{% set uboot_tftp_commands = ("") %}
+{% set uboot_nfs_bootcmd = ("          - " + uboot_ipaddr_cmd|default("dhcp") + "
+          - setenv serverip {SERVER_IP}
+          - setenv bootargs 'console=ttyS0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
+          - tftpboot {KERNEL_ADDR} {KERNEL}
+          - bootm {KERNEL_ADDR}") %}
+{% set append_dtb = true %}
+{% set use_xip = true %}

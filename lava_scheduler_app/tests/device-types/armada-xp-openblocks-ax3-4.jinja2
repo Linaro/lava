@@ -1,0 +1,12 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "armada-xp-openblocks-ax3-4" %}
+{% set bootloader_prompt = bootloader_prompt|default('openblocks>') %}
+{% set bootm_kernel_addr = '0x02000000' %}
+{% set bootm_ramdisk_addr = '0x03000000' %}
+{% set bootm_dtb_addr = '0x04000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set append_dtb = true %}
+{% set use_xip = true %}

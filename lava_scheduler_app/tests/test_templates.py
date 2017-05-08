@@ -99,6 +99,40 @@ class TestTemplates(unittest.TestCase):
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
 """))
 
+    def test_armada375_template(self):
+        """
+        Test the armada-375 template as if it was a device dictionary
+        """
+        data = """
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "armada-375-db" %}
+{% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
+{% set bootm_kernel_addr = '0x02080000' %}
+{% set bootm_ramdisk_addr = '0x02880000' %}
+{% set bootm_dtb_addr = '0x02000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set append_dtb = true %}
+{% set use_xip = true %}
+{% set uboot_bootx_cmd = "bootm {KERNEL_ADDR} {RAMDISK_ADDR}" %}
+        """
+        self.assertTrue(self.validate_data('armada-375-01', data))
+        test_template = prepare_jinja_template('armada-375-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        params = template_dict['actions']['deploy']['parameters']
+        self.assertIsNotNone(params)
+        self.assertIn('use_xip', params)
+        self.assertIn('append_dtb', params)
+        self.assertTrue(params['use_xip'])
+        self.assertTrue(params['append_dtb'])
+        params = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        for line in params:
+            if 'run loadkernel' in line:
+                self.assertIn('bootm', line)
+
     def test_nexus10_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
@@ -212,7 +246,7 @@ class TestTemplates(unittest.TestCase):
                 self.assertNotIn('dhcp net0', value['commands'])
 
     def test_beaglebone_black_template(self):
-        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
+        data = """{% extends 'beaglebone-black.jinja2' %}
 {% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
 {% set tags = {'eth0': ['1G', '100M'], 'eth1': ['100M']} %}
@@ -223,7 +257,28 @@ class TestTemplates(unittest.TestCase):
 {% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
 {% set connection_command = 'telnet localhost 7333' %}
-{% set exclusive = 'True' %}"""))
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-bbb-01', data))
+        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertEqual('', template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertNotEqual('None', template_dict['actions']['deploy']['methods']['ssh']['host'])
+        data += "{% set ssh_host = '192.168.0.10' %}"
+        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
+        self.assertEqual('192.168.0.10', template_dict['actions']['deploy']['methods']['ssh']['host'])
+
+    def test_b2260_template(self):
+        data = """{% extends 'b2260.jinja2' %}"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual({'seconds': 15}, template_dict['timeouts']['actions']['power-off'])
 
     def test_qemu_template(self):
         data = """{% extends 'qemu.jinja2' %}
@@ -340,6 +395,27 @@ class TestTemplates(unittest.TestCase):
                          '0123456789')
         self.assertIsInstance(template_dict['fastboot_options'], list)
         self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
+        order = template_dict['flash_cmds_order']
+        self.assertEqual(0, order.index('ptable'))
+        self.assertEqual(1, order.index('fastboot'))
+        self.assertIn('cache', order)
+        self.assertIn('system', order)
+        self.assertIn('userdata', order)
+
+        # test support for retreiving MAC from device.
+        data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('parameters', template_dict)
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('target', template_dict['parameters']['interfaces'])
+        self.assertIn('mac', template_dict['parameters']['interfaces']['target'])
+        self.assertIn('ip', template_dict['parameters']['interfaces']['target'])
+        self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertNotEqual('', template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -356,6 +432,7 @@ class TestTemplates(unittest.TestCase):
         test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
+        self.assertEqual('panda', (template_dict['device_type']))
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
@@ -736,16 +813,16 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(template_dict['usb_product_id'],
                          '0aba')
 
-    def test_d02(self):
-        data = """{% extends 'd02.jinja2' %}
+    def test_d03(self):
+        data = """{% extends 'd03.jinja2' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 07' %}
 {% set grub_installed_device = '(hd2,gpt1)' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 07' %}
 {% set connection_command = 'telnet localhost 7001' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 07' %}
 {% set boot_character_delay = 30 %}"""
-        self.assertTrue(self.validate_data('staging-d02-01', data))
-        test_template = prepare_jinja_template('staging-d02-01',
+        self.assertTrue(self.validate_data('staging-d03-01', data))
+        test_template = prepare_jinja_template('staging-d03-01',
                                                data, system_path=self.system)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)

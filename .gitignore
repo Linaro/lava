@@ -15,3 +15,6 @@ lava_server/precious
 django.log
 *~
 *.min.js
+*.e4p
+.eric6project/
+

@@ -34,7 +34,7 @@ parameters:
 {% if device_ip or device_mac %}
     target:
       ip: {{ device_ip|default('') }}
-      mac: {{ device_mac|default('') }}
+      mac: '{{ device_mac|default('') }}'
 {% endif %}
 {% if interfaces %}
 {% for interface in interfaces %}
@@ -75,10 +75,8 @@ actions:
       ssh:
         options:
 {{ ssh_options }}
-{% if ssh_host %}
-        host: {{ ssh_host }}
-{% endif %}
-        user: {{ ssh_user|default(root) }}
+        host: '{{ ssh_host|default('') }}'
+        user: {{ ssh_user|default('root') }}
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
       vemsd:
@@ -181,15 +179,15 @@ timeouts:
       minutes: {{ action_timeout_apply_overlay_image | default(2) }}
     dd-image:
       minutes: {{ action_timeout_dd_image | default(20) }}
-    download_retry:
+    download-retry:
       minutes: {{ action_timeout_download_retry | default(5) }}
-    http_download:
+    http-download:
       minutes: {{ action_timeout_http_download | default(10) }} # large due to android images etc
     lava-test-shell:
       minutes: {{ action_timeout_lava_test_shell | default(3) }}
     nfs-deploy:
       minutes: {{ action_timeout_nfs_deploy | default(10) }}
-    power_off:
+    power-off:
       seconds: {{ action_timeout_power_off | default(5) }}
     bootloader-commands:
       minutes: {{ action_timeout_bootloader_commands | default(3) }}
@@ -211,9 +209,9 @@ timeouts:
       minutes: {{ action_timeout_uboot_retry | default(3)}}
     bootloader-retry:
       minutes: {{ action_timeout_bootloader_retry | default(3)}}
-    boot_qemu_image:
+    boot-qemu-image:
       minutes: {{ action_timeout_boot_qemu_image | default(2) }}
-    boot_image_retry:
+    boot-image-retry:
       minutes: {{ action_timeout_boot_image_retry | default(2) }}
   connections:
     dd-image:
@@ -230,9 +228,8 @@ timeouts:
       minutes: {{ connection_timeout_auto_login | default(5) }}
     bootloader-interrupt:
       seconds: {{ connection_timeout_bootloader_interrupt | default(30) }}
-    http_download:
+    http-download:
       minutes: {{ action_timeout_http_download | default(10) }} # large due to android images etc
     u-boot-interrupt:
       minutes: {{ connection_timeout_u_boot_interrupt | default(2) }}
 {% endblock -%}
-

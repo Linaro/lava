@@ -3,6 +3,7 @@
 import os
 import yaml
 import jinja2
+import logging
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry
 from lava_scheduler_app.models import (
@@ -59,6 +60,11 @@ class TestCaseWithFactory(TestCase):
 
 
 class DeviceTest(TestCaseWithFactory):
+
+    def setUp(self):
+        super(DeviceTest, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def test_put_into_looping_mode(self):
         foo = DeviceType(name='foo')
@@ -246,7 +252,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             yaml_data['commands']['connect'])
         ramdisk_args = yaml_data['actions']['boot']['methods']['u-boot']['ramdisk']
         self.assertIn('commands', ramdisk_args)
-        self.assertIn('boot', ramdisk_args['commands'])
+        self.assertIn('run bootcmd', ramdisk_args['commands'])
         self.assertIn(
             "setenv bootargs 'console=ttyfake1,56n8 root=/dev/ram0  ip=dhcp'",
             ramdisk_args['commands'])
@@ -503,6 +509,11 @@ class DeviceTypeTest(TestCaseWithFactory):
 
 
 class TestLogEntry(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestLogEntry, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
 
     def test_create_logentry(self):
         foo = DeviceType(name='foo')

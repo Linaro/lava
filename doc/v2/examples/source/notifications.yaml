@@ -1,5 +1,6 @@
 # notify recipients block
 notify:
+  recipients:
   - to:
      method: irc
      user: neil.williams
@@ -16,6 +17,7 @@ notify:
 
 # notify compare block
 notify:
+  recipients:
   - to:
      method: email
      user: neil.williams
@@ -30,6 +32,7 @@ notify:
 
 # notify compare custom block
 notify:
+  recipients:
   - to:
      method: email
      user: neil.williams

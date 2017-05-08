@@ -1,0 +1,15 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "alpine-db" %}
+{% set bootloader_prompt = bootloader_prompt|default('ALPINE_DB>') %}
+{% set bootz_kernel_addr = '0x04000000' %}
+{% set bootz_ramdisk_addr = '0x05000000' %}
+{% set bootz_dtb_addr = '0x04f00000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_tftp_commands = (
+"          - setenv loadkernel 'tftpboot {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftpboot {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftpboot {DTB_ADDR} {DTB}; fdt addr {DTB_ADDR}; fdt resize; fdt set /soc/uart@fd883000 clock-frequency <375000000>;'") -%}
+

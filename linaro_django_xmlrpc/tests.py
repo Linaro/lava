@@ -20,6 +20,7 @@
 Unit tests for Linaro Django XML-RPC Application
 """
 import re
+import logging
 import xmlrpclib
 
 from django.contrib.auth.models import User
@@ -70,6 +71,13 @@ class ExampleAPI(ExposedAPI):
 
 
 class CallContextTests(TestCase):
+
+    def setUp(self):
+        super(CallContextTests, self).setUp()
+        logger = logging.getLogger('linaro-django-xmlrpc-mapper')
+        logger.disabled = True
+        logger = logging.getLogger('linaro-django-xmlrpc-dispatcher')
+        logger.disabled = True
 
     def test_unauthenticated_users_are_ignored(self):
         user = MockUser(is_authenticated=False, is_active=True)

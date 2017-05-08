@@ -3,6 +3,7 @@ import os
 import re
 import yaml
 import shutil
+import logging
 import decimal
 import django
 from django.core.exceptions import MultipleObjectsReturned
@@ -39,6 +40,12 @@ class TestMetaTypes(TestCaseWithFactory):
     """
     MetaType and ActionData generation
     """
+
+    def setUp(self):
+        super(TestMetaTypes, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
+
     def test_job(self):
         MetaType.objects.all().delete()
         TestJob.objects.all().delete()

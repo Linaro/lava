@@ -1,0 +1,6 @@
+# Tegra 124 Jetson TK1
+{% extends 'tegra124-common.jinja2' %}
+
+{% set device_type = "jetson-tk1" %}
+{% set bootloader_prompt = bootloader_prompt|default('Jetson TK1') %}
+

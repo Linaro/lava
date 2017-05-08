@@ -1,18 +1,11 @@
-from contextlib import contextmanager
-import datetime
-import os
-from django_testscenarios.ubertest import TestCase
-
+import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     TestJob,
     Tag,
-    DevicesUnavailableException,
 )
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
-from lava_scheduler_app.dbutils import find_device_for_job
 from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
 
 
@@ -20,6 +13,12 @@ class DatabaseJobTest(DatabaseJobSourceTestEngine):
 
     def setUp(self):
         super(DatabaseJobTest, self).setUp()
+        logger = logging.getLogger('lava_scheduler_daemon.dbjobsource.DatabaseJobSource')
+        logger.disabled = True
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
+        logger = logging.getLogger('lava_scheduler_app')
+        logger.disabled = True
 
         DeviceType.objects.all().delete()
 

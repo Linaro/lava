@@ -59,10 +59,41 @@ character_delays:
 {% endif -%}
 {% endblock -%}
 
+{% block constants %}
+constants:
+     # OS shutdown message
+     # Override: set as the shutdown-message parameter of an Action.
+     # SHUTDOWN_MESSAGE
+     shutdown-message: '{{ shutdown_message | default("The system is going down for reboot NOW") }}'
+
+     # Kernel starting message
+     # BOOT_MESSAGE
+     boot-message: '{{ boot_message | default("Booting Linux") }}'
+
+     # CPU reset message
+     # CPU_RESET_MESSAGE
+     cpu-reset-message: '{{ cpu_reset_message | default("Resetting CPU") }}'
+
+     # Default shell prompt for AutoLogin
+     # DEFAULT_SHELL_PROMPT
+     default-shell-prompt: '{{ default_shell_prompt | default("lava-test: # ") }}'
+
+     # u-boot auto boot prompt
+     # UBOOT_AUTOBOOT_PROMPT
+     uboot-autoboot-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
+
+     # u-boot interrupt character
+     # UBOOT_INTERRUPT_CHARACTER = ' '
+     uboot-interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
+
+{% endblock -%}
+
 {% block commands %}
-{% if connection_command %}
+{% if connection_command or user_commands %}
 commands:
+{% if connection_command %}
     connect: {{ connection_command }}
+{% endif -%}
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
 {% endif -%}
@@ -84,6 +115,17 @@ commands:
 {% if pre_os_command %}
     pre_os_command: {{ pre_os_command }}
 {% endif -%}
+{% if user_commands %}
+    users:
+{% for name, command in user_commands.items() %}
+      {{ name }}:
+        do: {{ command['do'] }}
+{% if 'undo' in command %}
+        undo: {{ command['undo'] }}
+{% endif %}
+{% endfor %}
+
+{% endif %}
 {% endif %}
 {% endblock -%}
 
@@ -104,20 +146,25 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
 
 {% block vland %}
 parameters:
-{% if interfaces %}
+{% if interfaces or device_ip or device_mac%}
   interfaces:
+{% if device_ip or device_mac %}
+    target:
+      ip: {{ device_ip|default('') }}
+      mac: '{{ device_mac|default('') }}'
+{% endif %}
 {% for interface in interfaces %}
-   {{ interface }}:
-     sysfs: "{{ sysfs.get(interface) }}"
-     mac: "{{ mac_addr.get(interface) }}"
+    {{ interface }}:
+      sysfs: "{{ sysfs.get(interface) }}"
+      mac: "{{ mac_addr.get(interface) }}"
 {% for switch, port in map.get(interface).items() %}
-     switch: "{{ switch }}"
-     port: {{ port }}
+      switch: "{{ switch }}"
+      port: {{ port }}
 {% endfor %}
-     tags:
+      tags:
 {% if tags.get(interface) %}
 {% for tag in tags.get(interface) %}
-     - {{ tag }}
+      - {{ tag }}
 {% endfor %}
 {% endif %}
 {% endfor %}
@@ -135,15 +182,15 @@ timeouts:
       minutes: {{ action_timeout_apply_overlay_image | default(2) }}
     dd-image:
       minutes: {{ action_timeout_dd_image | default(10) }}
-    download_retry:
+    download-retry:
       minutes: {{ action_timeout_download_retry | default(5) }}
-    http_download:
+    http-download:
       minutes: {{ action_timeout_http_download | default(5) }}
     lava-test-shell:
       minutes: {{ action_timeout_lava_test_shell | default(3) }}
     nfs-deploy:
       minutes: {{ action_timeout_nfs_deploy | default(10) }}
-    power_off:
+    power-off:
       seconds: {{ action_timeout_power_off | default(5) }}
     bootloader-commands:
       minutes: {{ action_timeout_bootloader_commands | default(3) }}
@@ -163,9 +210,9 @@ timeouts:
       minutes: {{ action_timeout_uboot_retry | default(3)}}
     bootloader-retry:
       minutes: {{ action_timeout_bootloader_retry | default(3)}}
-    boot_qemu_image:
+    boot-qemu-image:
       minutes: {{ action_timeout_boot_qemu_image | default(2) }}
-    boot_image_retry:
+    boot-image-retry:
       minutes: {{ action_timeout_boot_image_retry | default(2) }}
   connections:
     dd-image:

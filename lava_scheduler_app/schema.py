@@ -1,8 +1,19 @@
 import re
 from voluptuous import (
-    Schema, Required, All, Length,
-    Any, Invalid, Optional, MultipleInvalid
+    All,
+    Any,
+    Exclusive,
+    Invalid,
+    Length,
+    Match,
+    MultipleInvalid,
+    Optional,
+    Required,
+    Schema
 )
+
+
+INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 
 
 class SubmissionException(UserWarning):
@@ -11,32 +22,37 @@ class SubmissionException(UserWarning):
 
 def _timeout_schema():
     return Schema({
-        'days': int, 'hours': int, 'minutes': int, 'seconds': int
+        Exclusive('days', 'timeout_unit'): int,
+        Exclusive('hours', 'timeout_unit'): int,
+        Exclusive('minutes', 'timeout_unit'): int,
+        Exclusive('seconds', 'timeout_unit'): int
     })
 
 
 def _deploy_tftp_schema():
     return Schema({
         Required('to'): 'tftp',
+        Optional('timeout'): _timeout_schema(),
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
         Optional('nbdroot'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
+        Optional('modules'): {Required('url'): str},
     }, extra=True)
 
 
 def _job_deploy_schema():
     return Schema({
         Required('to'): str,
-        Optional('timeouts'): _timeout_schema(),
+        Optional('timeout'): _timeout_schema(),
     }, extra=True)
 
 
 def _auto_login_schema():
     return Schema({
-        Optional('login_prompt'): str,
-        Optional('username'): str,
+        Required('login_prompt'): str,
+        Required('username'): str,
         Optional('password_prompt'): str,
         Optional('password'): str
     })
@@ -44,7 +60,7 @@ def _auto_login_schema():
 
 def _simple_params():
     return Schema({
-        Any(str): str
+        Any(str): Any(str, bool)
     })
 
 
@@ -60,7 +76,7 @@ def _context_schema():
 def _job_boot_schema():
     return Schema({
         Required('method'): str,
-        Optional('timeouts'): _timeout_schema(),
+        Optional('timeout'): _timeout_schema(),
         Optional('auto_login'): _auto_login_schema(),
         Optional('parameters'): _simple_params(),
     }, extra=True)
@@ -75,12 +91,13 @@ def _inline_schema():
     })
 
 
-def _job_definition_schema():
+def _test_definition_schema():
     return Schema([
         {
             Required('repository'): Any(_inline_schema(), str),
             Required('from'): str,
-            Required('name'): str,
+            Required('name'): Match(r'^[a-zA-Z0-9-_]+$',
+                                    msg=INVALID_CHARACTER_ERROR_MSG),
             Required('path'): str,
             Optional('parameters'): dict,
         }
@@ -89,28 +106,36 @@ def _job_definition_schema():
 
 def _job_test_schema():
     return Schema({
-        Required('definitions'): _job_definition_schema(),
-        Optional('timeouts'): _timeout_schema(),
+        Required('definitions'): _test_definition_schema(),
+        Optional('timeout'): _timeout_schema(),
     }, extra=True)
 
 
 def _job_monitor_schema():
     return Schema({
         Required('monitors'): _monitor_def_schema(),
-        Optional('timeouts'): _timeout_schema()
+        Optional('timeout'): _timeout_schema()
     }, extra=True)
 
 
 def _monitor_def_schema():
     return Schema([
         {
-            Required('name'): str,
+            Required('name'): Match(r'^[a-zA-Z0-9-_]+$',
+                                    msg=INVALID_CHARACTER_ERROR_MSG),
             Required('start'): str,
             Required('end'): str,
             Required('pattern'): str,
             Optional('fixupdict'): dict
         }
     ])
+
+
+def _job_command_schema():
+    return Schema({
+        Required('name'): str,
+        Optional('timeout'): _timeout_schema()
+    })
 
 
 def _job_actions_schema():
@@ -121,7 +146,8 @@ def _job_actions_schema():
                 _job_deploy_schema()),
             'boot': _job_boot_schema(),
             'test': Any(_job_monitor_schema(),
-                        _job_test_schema())
+                        _job_test_schema()),
+            'command': _job_command_schema()
         }
     ])
 
@@ -206,12 +232,25 @@ def _job_protocols_schema():
     })
 
 
+def action_name(value):
+    if re.match(r'^[a-z-]+$', str(value)):
+        return str(value)
+    else:
+        raise Invalid(value)
+
+
 def _job_timeout_schema():
     return Schema({
         Required('job'): _timeout_schema(),
-        Required('action'): _timeout_schema(),
-        'connection': _timeout_schema(),
-    }, extra=True)
+        Optional('action'): _timeout_schema(),
+        Optional('connection'): _timeout_schema(),
+        Optional('actions'): {
+            All(action_name): _timeout_schema()
+        },
+        Optional('connections'): {
+            All(action_name): _timeout_schema()
+        },
+    })
 
 
 def visibility_schema():
@@ -224,17 +263,17 @@ def _job_schema():
         {
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
             Required('job_name'): All(str, Length(min=1, max=200)),
-            'priority': Any('high', 'medium', 'low'),
-            'protocols': _job_protocols_schema(),
-            'context': _context_schema(),
-            'metadata': dict,
-            'secrets': dict,
-            'tags': [str],
+            Optional('priority'): Any('high', 'medium', 'low'),
+            Optional('protocols'): _job_protocols_schema(),
+            Optional('context'): _context_schema(),
+            Optional('metadata'): dict,
+            Optional('secrets'): dict,
+            Optional('tags'): [str],
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema(),
-            'notify': _job_notify_schema(),
-            'reboot_to_fastboot': bool
+            Optional('notify'): _job_notify_schema(),
+            Optional('reboot_to_fastboot'): bool
         }
     )
 
@@ -263,13 +302,29 @@ def _device_actions_schema():
 
 def _device_timeouts_schema():
     return Schema({
-        'actions': {
-            All(str): _timeout_schema()
+        Optional('actions'): {
+            All(action_name): _timeout_schema()
         },
-        'connections': {
-            All(str): _timeout_schema()
-        },
-    }, extra=True)
+        Optional('connections'): {
+            All(action_name): _timeout_schema()
+        }
+    })
+
+
+def _device_user_commands():
+    return Schema({
+        All(str): {
+            Required('do'): str,
+            Optional('undo'): str
+        }
+    })
+
+
+def _device_commands_schema():
+    return Schema({
+        All(str): Any(list, str),
+        Optional('users'): _device_user_commands()
+    })
 
 
 def _device_schema():
@@ -278,7 +333,8 @@ def _device_schema():
     """
     return Schema({
         'character_delays': dict,
-        'commands': dict,
+        'commands': _device_commands_schema(),
+        'constants': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
         'fastboot_options': [str],

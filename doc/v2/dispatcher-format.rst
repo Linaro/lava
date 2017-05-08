@@ -458,6 +458,8 @@ As Admin
 #. See :ref:`viewing_device_dictionary_content`
 #. See also :ref:`updating_device_dictionary_using_xmlrpc`
 
+.. index:: developer: mapping actions
+
 .. _mapping_dispatcher_actions:
 
 Dispatcher actions
@@ -559,9 +561,6 @@ Supported methods
 
 Test actions
 ============
-
-Currently, there is only one Test strategy and the method for distinguishing
-between this and any later strategy has not been finalised.
 
 Example code block:
 

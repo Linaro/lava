@@ -1,9 +1,10 @@
 {% extends 'base.jinja2' %}
-{% block body %}
-device_type: qemu
 
 {% block vland %}
 {% endblock %}
+
+{% block body %}
+device_type: qemu
 
 # allow job context override - use a different variable name, undefined if not in job context
 {% set base_guest_fs_size = guestfs_size | default(512) %}

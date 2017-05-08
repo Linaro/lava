@@ -202,15 +202,15 @@ the worker.
 
 To add a new pipeline worker::
 
- $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME>
+ $ sudo lava-server manage workers add <HOSTNAME>
 
 To add a pipeline worker with a description::
 
- $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME> --description <DESC>
+ $ sudo lava-server manage workers add --description <DESC> <HOSTNAME>
 
 To add a pipeline worker in a disabled state::
 
- $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME> --disable
+ $ sudo lava-server manage workers add --description <DESC> --disabled <HOSTNAME>
 
 Pipeline workers are enabled or disabled in the Django admin interface by
 changing the ``display`` field of the worker. Jobs submitted to devices on that
@@ -323,7 +323,7 @@ If you have changed the name or location of the master certificate or the
 location of the slave certificates, specify those locations and names
 explicitly::
 
- # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
+ # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
  # SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d"
 
 .. note:: Each master needs to find the **secret** key for that master and the

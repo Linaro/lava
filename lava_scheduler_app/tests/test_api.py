@@ -2,6 +2,7 @@ import os
 import sys
 import yaml
 import json
+import logging
 import cStringIO
 import xmlrpclib
 import unittest
@@ -53,6 +54,13 @@ class TestTransport(xmlrpclib.Transport, object):
 
 
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
+
+    def setUp(self):
+        super(TestSchedulerAPI, self).setUp()
+        logger = logging.getLogger('dispatcher-master')
+        logger.disabled = True
+        logger = logging.getLogger('lava_scheduler_app')
+        logger.disabled = True
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpclib.ServerProxy(
@@ -305,12 +313,14 @@ actions:
         device.save()
         server = self.server_proxy('test', 'test')
         self.assertEqual(
-            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01', 'offline_by': None},
+            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
+                'offline_by': None, 'is_pipeline': False},
             server.scheduler.get_device_status('black01'))
         offline_device = self.factory.make_device(device_type=device_type, hostname="black02", status=Device.OFFLINE)
         offline_device.save()
         self.assertEqual(
-            {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02', 'offline_by': ''},
+            {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02',
+                'offline_by': '', 'is_pipeline': False},
             server.scheduler.get_device_status('black02')
         )
 
@@ -325,13 +335,13 @@ actions:
         device_type.aliases.add(alias)
         aliases = DeviceType.objects.filter(aliases__name__contains='black')
         retval = {
-            'black': [device_type.name for device_type in aliases]
+            'black': [dt.name for dt in aliases]
         }
         self.assertEqual(retval, {'black': ['beaglebone-black']})
         alias.delete()
         aliases = DeviceType.objects.filter(aliases__name__contains='black')
         retval = {
-            'black': [device_type.name for device_type in aliases]
+            'black': [dt.name for dt in aliases]
         }
         self.assertEqual(retval, {'black': []})
 
@@ -543,6 +553,84 @@ notify:
         """
         self.assertRaises(SubmissionException, validate_yaml,
                           yaml.load(bad_submission))
+
+        invalid_test_name_char_yaml_def = """
+# Sample JOB definition for a KVM
+device_type: qemu
+job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+actions:
+
+    - deploy:
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+
+    - test:
+        name: kvm-advanced-singlenode
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke/tests
+"""
+
+        self.assertRaises(SubmissionException, validate_submission,
+                          yaml.load(invalid_test_name_char_yaml_def))
+
+        invalid_monitors_name_char_yaml_def = """
+# Zephyr JOB definition
+device_type: 'arduino101'
+job_name: 'zephyr-upstream master drivers/spi/spi_basic_api/test_spi'
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 2
+  actions:
+    wait-usb-device:
+      seconds: 40
+priority: medium
+visibility: public
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    type: monitor
+    images:
+        app:
+          image_arg: --alt x86_app --download {app}
+          url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/arduino_101/722/tests/drivers/spi/spi_basic_api/test_spi/zephyr.bin'
+- boot:
+    method: dfu
+    timeout:
+      minutes: 10
+- test:
+    monitors:
+    - name: drivers/spi/spi_basic_api/test_spi
+      start: tc_start()
+      end: PROJECT EXECUTION
+      pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)\.
+      fixupdict:
+        PASS: pass
+        FAIL: fail
+"""
+
+        self.assertRaises(SubmissionException, validate_submission,
+                          yaml.load(invalid_monitors_name_char_yaml_def))
 
     def test_compression_change(self):
 

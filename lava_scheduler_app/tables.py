@@ -3,7 +3,6 @@ import json
 import logging
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
@@ -43,7 +42,6 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
     def render(self, record, table=None):
         user = table.context.get('request').user
-        device_type = record.job_device_type()
         if record.can_view(user):
             return pklink(record)
         else:
@@ -52,8 +50,6 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 def pklink(record):
     job_id = record.pk
-    complete = ''
-    button = ''
     if isinstance(record, TestJob):
         if record.sub_jobs_list:
             job_id = record.sub_id
@@ -158,8 +154,23 @@ class JobTable(LavaTable):
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = tables.DateColumn(format="Nd, g:ia")
-    end_time = tables.DateColumn(format="Nd, g:ia")
+    submit_time = tables.DateColumn(format=u"Nd, g:ia")
+    end_time = tables.DateColumn(format=u"Nd, g:ia")
+
+    def render_status(self, record):
+        text = 'text-default'
+        if record.status == TestJob.COMPLETE:
+            text = 'text-success'
+        elif record.status == TestJob.RUNNING:
+            text = 'text-info'
+        elif record.status == TestJob.INCOMPLETE:
+            text = 'text-danger'
+        elif record.status in [TestJob.CANCELING, TestJob.CANCELED]:
+            text = 'text-warning'
+        elif record.status == TestJob.SUBMITTED:
+            text = 'text-muted'
+        return mark_safe('<span class="%s"><strong>%s</strong></span>' %
+                         (text, TestJob.STATUS_CHOICES[record.status][1]))
 
     def render_device(self, record):
         if record.actual_device:
@@ -235,7 +246,6 @@ class JobTable(LavaTable):
         times = {
             'submit_time': 'hours',
             'end_time': 'hours',
-            # 'duration': 'minutes' FIXME: needs a function call
         }
 
 
@@ -274,7 +284,7 @@ class TagsColumn(tables.Column):
         if len(values) > 0:
             tags = '<p class="collapse" id="%s">' % tag_id
             tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in values)
-            tags += '</p><p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></p></a></p>' % tag_id
+            tags += '</p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></a>' % tag_id
         return mark_safe(tags)
 
 
@@ -816,7 +826,7 @@ class RunningTable(LavaTable):
         super(RunningTable, self).__init__(*args, **kwargs)
         self.length = 50
 
-    # FIXME: dynamic connections are TestJob without a device, add extra column
+    # deprecated: dynamic connections are TestJob without a device
 
     def render_jobs(self, record):  # pylint: disable=no-self-use
         count = TestJob.objects.filter(

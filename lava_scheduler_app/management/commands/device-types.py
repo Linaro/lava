@@ -25,7 +25,7 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from lava_scheduler_app.models import DeviceType
+from lava_scheduler_app.models import DeviceType, Alias
 # pylint: disable=invalid-name,no-self-use
 
 
@@ -52,6 +52,9 @@ class Command(BaseCommand):
         add_parser.add_argument("device-type",
                                 help="The device type name. "
                                      "Passing '*' will add all known V2 device types.")
+        alias = add_parser.add_argument_group("alias",
+                                              "Only supported when creating a single device-type")
+        alias.add_argument("--alias", default='', help='Name of an alias for this device-type.')
         health = add_parser.add_argument_group("health check",
                                                "Only supported when creating a single device-type")
         health.add_argument("--health-frequency",
@@ -61,6 +64,12 @@ class Command(BaseCommand):
                             default="hours",
                             choices=["hours", "jobs"],
                             help="Initiate health checks by hours or by jobs.")
+
+        # "update" sub-command
+        update_parser = sub.add_parser("update", help="Update an existing V2 device type in the database.")
+        update_parser.add_argument("device-type", help="The device type name.")
+        update_alias = update_parser.add_argument_group("alias")
+        update_alias.add_argument("--alias", default='', help='Name of an alias for this device-type.')
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device-type")
@@ -93,16 +102,31 @@ class Command(BaseCommand):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
             self.handle_add(options["device-type"],
+                            options['alias'],
                             options["health_denominator"],
                             options["health_frequency"])
         elif options["sub_command"] == "details":
             self.handle_details(options["name"], options["devices"])
+        elif options["sub_command"] == "update":
+            self.handle_update(options['device-type'], options['alias'])
         else:
             self.handle_list(options["show_all"], options["csv"])
 
-    def handle_add(self, device_type, health_denominator,
+    def handle_update(self, device_type, alias):
+        """Update an existing device type"""
+        try:
+            dt = device_type = DeviceType.objects.get(name=device_type)
+        except DeviceType.DoesNotExist:
+            self.stderr.write("Unable to find device-type '%s'" % device_type)
+            sys.exit(1)
+        if alias:
+            alias_item, _ = Alias.objects.get_or_create(name=alias)
+        dt.aliases.add(alias_item)
+
+    def handle_add(self, device_type, alias, health_denominator,
                    health_frequency):
         """ Add a device type """
+        aliases = []
         if device_type == "*":
             self.stdout.write("Adding all known device types")
             available_types = self.available_device_types()
@@ -114,15 +138,19 @@ class Command(BaseCommand):
                 self.stdout.write("* %s" % dt_name)
                 DeviceType.objects.create(name=dt_name)
         else:
+            if alias:
+                aliases.append(alias)
+                alias_item, _ = Alias.objects.get_or_create(name=alias)
             if health_denominator == "hours":
                 health_denominator = DeviceType.HEALTH_PER_HOUR
             else:
                 health_denominator = DeviceType.HEALTH_PER_JOB
 
-            DeviceType.objects.create(
+            dt = DeviceType.objects.create(
                 name=device_type,
                 health_frequency=health_frequency,
                 health_denominator=health_denominator)
+            dt.aliases.add(alias_item)
 
     def handle_details(self, name, devices):
         """ Print some details about the device-type """
@@ -132,11 +160,13 @@ class Command(BaseCommand):
             self.stderr.write("Unable to find device-type '%s'" % name)
             sys.exit(1)
 
+        aliases = [str(alias.name) for alias in device_type.aliases.all()]
         self.stdout.write("device_type    : %s" % name)
         self.stdout.write("description    : %s" % device_type.description)
         self.stdout.write("display        : %s" % device_type.display)
         self.stdout.write("owners_only    : %s" % device_type.owners_only)
         self.stdout.write("health disabled: %s" % device_type.disable_health_check)
+        self.stdout.write("aliases        : %s" % aliases)
         if not devices:
             self.stdout.write("devices        : %d" % device_type.device_set.count())
         else:

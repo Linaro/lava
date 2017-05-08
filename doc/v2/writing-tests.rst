@@ -250,6 +250,96 @@ or installed before being called in the inline test definition.
 
 `Download or view inline example <examples/test-jobs/inline-test-definition-example.yaml>`_
 
+.. index:: terminology - test writer
+
+.. _portability_terminology:
+
+Terminology reference
+*********************
+
+LAVA Test Job
+=============
+
+The test job provides test shell definitions (and inline definitions), as well
+as describing the steps needed to deploy code and boot a device to a command
+prompt. These steps will not be portable between devices or operating system
+deployments.
+
+This design is quite different from LAVA V1 because V1 used to perform *magic*
+implicit steps. In V2 test jobs need to be explicit about all steps required.
+
+Inline definitions are often used for prototyping test definitions. They are
+also the recommended choice for MultiNode synchronisation primitives, inserted
+between the other LAVA Test Shell Definitions which do the bulk of the work.
+
+The test job definition is what is submitted to LAVA to generate a test job.
+
+LAVA Test Shell Definition
+==========================
+
+The LAVA Test Shell Definition is a YAML file, normally stored in a git
+repository alongside test writer scripts. Again, this will normally not be
+portable between operating system deployments.
+
+It is possible to use different scripts, with the test job selecting which
+scripts to use for a particular deployment as it runs.
+
+Each line in the definition must be a single line of shell, with no redirects,
+functions or pipes. Ideally, the Test Shell Definition will consist of a
+single ``run`` step which simply calls the appropriate test writer script.
+
+LAVA Test Helpers
+=================
+
+The LAVA Test Helpers are scripts maintained in the LAVA codebase, like
+``lava-test-case``. These are designed to work using only the barest
+minimum of operating system support, to make them portable to all deployments.
+Where necessary they will use ``deployment_data`` to customise content.
+
+The helpers have two main uses:
+
+* to embed information from LAVA into the test shell and
+
+* to support communication with LAVA during test jobs.
+
+Helpers which are too closely tied to any one operating system are likely to
+be deprecated and removed after LAVA V1 is dropped, along with helpers which
+duplicate standard operating system support.
+
+.. _test_writer_scripts:
+
+Test Writer Scripts
+===================
+
+Test writer scripts are scripts written by test writers, designed to be run
+both by LAVA and by developers. They do not need to be portable to different
+operating system deployments, as the choice of script to run is up to the
+developer or test writer. This means that the test writer has a free choice of
+languages, methods and tools in these scripts - whatever is available within
+the particular operating system deployment. This can even include building
+custom tools from source if so desired.
+
+The key feature of these scripts is that they should **not** depend on any
+LAVA features or helpers for their basic functionality. That way, developers
+can run exactly the same scripts both inside and outside of LAVA, to help
+reproduce problems.
+
+When running inside LAVA, scripts should check for the presence of
+``lava-test-case`` in the PATH environment variable and behave accordingly,
+using ``lava-test-case`` to report results to LAVA if it is available.
+Otherwise, report results to the user in whatever way makes most sense.
+
+Test writers are strongly encouraged to make their scripts verbose: add
+progress messages, debug statements, error handling, logging and other
+support to allow developers to see what is actually happening when a test is
+running. This will aid debugging greatly.
+
+Finally, scripts are commonly shared amongst test writers. It is a good idea
+to keep them self-contained as much as possible, as this will aid reuse.
+Also, try to stick to the common Unix model: one script doing one task.
+
+.. seealso:: The next section on :ref:`custom_scripts`.
+
 .. _custom_scripts:
 
 Writing custom scripts to support tests
@@ -336,6 +426,9 @@ To use the exit value, simply precede the command with a call to
       steps:
           - lava-test-case test-ls-command --shell ls /usr/bin/sort
           - lava-test-case test-ls-fail --shell ls /user/somewhere/else/
+
+.. seealso:: :ref:`best_practices`, :ref:`custom_scripts` and
+   :ref:`test_writer_scripts` for recommended ways to use this in practice.
 
 Use subshells instead of backticks to execute a command as an argument to
 another command:
@@ -629,6 +722,9 @@ Results from any test suite can be tracked using :term:`queries <query>`,
    and the test cases change, the easier it will be to track those test cases
    over time.
 
+.. seealso:: :ref:`best_practices`, :ref:`custom_scripts` and
+   :ref:`test_writer_scripts` for recommended ways to use this in practice.
+
 .. _best_practices:
 
 Best practices for writing a LAVA test job
@@ -679,7 +775,7 @@ results - that's about all it should be doing outside of the
    simplistic and are **not** intended to be examples of how to write test
    definitions, just how to prepare test jobs.
 
-.. seealso:: :ref:`custom_scripts`
+.. seealso:: :ref:`custom_scripts` and :ref:`portability_terminology`
 
 Rely less on install: steps
 ===========================

@@ -1,0 +1,7 @@
+# Hardkernel Odroid X2
+{% extends 'exynos4-5-common.jinja2' %}
+
+{% set device_type = "odroid-x2" %}
+
+{% set bootloader_prompt = bootloader_prompt|default('Odroid') %}
+{% set console_device = console_device|default('ttySAC1') %}

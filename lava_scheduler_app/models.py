@@ -26,10 +26,7 @@ from django.core.exceptions import (
 )
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import (
-    validate_email,
-    validate_comma_separated_integer_list
-)
+from django.core.validators import validate_email
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -493,7 +490,7 @@ class Worker(models.Model):
         return ("lava.scheduler.worker.detail", [self.pk])
 
     def get_description(self):
-        return mark_safe(self.description)
+        return mark_safe(self.description) if self.description else None
 
     def update_description(self, description):
         self.description = description
@@ -751,7 +748,7 @@ class Device(RestrictedResource):
         return ("lava.scheduler.labhealth.detail", [self.pk])
 
     def get_description(self):
-        return mark_safe(self.description)
+        return mark_safe(self.description) if self.description else None
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
@@ -892,7 +889,7 @@ class Device(RestrictedResource):
         return True
 
     def put_into_looping_mode(self, user, reason):
-        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+        if self.status != Device.OFFLINE:
             return
         logger = logging.getLogger('dispatcher-master')
         self.health_status = Device.HEALTH_LOOPING
@@ -1685,6 +1682,13 @@ class TestJob(RestrictedResource):
 
     @property
     def output_dir(self):
+        date_path = os.path.join(settings.MEDIA_ROOT, 'job-output',
+                                 "%02d" % self.submit_time.year,
+                                 "%02d" % self.submit_time.month,
+                                 "%02d" % self.submit_time.day,
+                                 str(self.id))
+        if os.path.exists(date_path):
+            return date_path
         return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 
     def output_file(self):

@@ -6,8 +6,6 @@ timeouts:
     minutes: 5
   action:
     minutes: 1
-  test:
-    minutes: 3
 
 visibility: public
 

@@ -12,17 +12,17 @@
           - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 
-{% set base_uboot_bootcmd = (
+{% set base_uboot_bootcmd = uboot_bootcmd|default(
 "          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
-{% set base_uboot_tftp_bootcmd = (
+{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
-{% set base_uboot_nfs_bootcmd = (
+{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
 "          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - boot") -%}
+          - run bootcmd") -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default(
 "          - usb start") -%}
@@ -38,19 +38,9 @@
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
-{% block body %}
-device_type: {{ device_type|default('uboot') }}
-
-{% set console_device = console_device | default('ttyS0') %}
-{% set baud_rate = baud_rate | default(115200) %}
-{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
-{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
-{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
-
 {# adds the parameters: top level block #}
 {% block vland %}
-{{ super() }}
-{% endblock %}
+{{ super() -}}
 {% if text_offset %}
   text_offset: '{{text_offset}}'
 {% endif %}
@@ -84,14 +74,8 @@ device_type: {{ device_type|default('uboot') }}
     ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
 {% endif %}
-{%- if usb_uuid or sata_uuid %}
+{%- if sata_uuid or sd_uuid or usb_uuid %}
   media:
-{% if usb_uuid %}
-    usb:
-      {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
-        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
-{% endif %}
 {% if sata_uuid %}
     sata:
       UUID-required: False
@@ -99,14 +83,38 @@ device_type: {{ device_type|default('uboot') }}
         uuid: {{ sata_uuid }}
         device_id: {{ sata_id|default(0) }}
         uboot_interface: {{ sata_interface|default('scsi') }}
+{% endif %}
+{% if sd_uuid %}
+    sd:
+      {{ sd_label }}:
+        uuid: {{ sd_uuid }}
+        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
+{% endif %}
+{% if usb_uuid %}
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
+{% endif %}
 {%- endif %}
-{%- endif %}
+{% endblock %}
+
+{% block body %}
+device_type: {{ device_type|default('uboot') }}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
 
 actions:
   deploy:
     parameters:
       add_header: u-boot
       mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+      append_dtb: {{ append_dtb|default(false) }}
+      use_xip: {{ use_xip|default(false) }}
     connections:
       lxc:
       serial:
@@ -116,9 +124,9 @@ actions:
       ssh:
         options:
 {{ ssh_options }}
-        host: {{ ssh_host|default(localhost) }}
-        port: '{{ ssh_port|default(22) }}'
-        user: {{ ssh_user|default(root) }}
+        host: '{{ ssh_host|default('') }}'
+        port: {{ ssh_port|default(22) }}
+        user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
 
   boot:
@@ -187,8 +195,4 @@ actions:
           - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_bootcmd }}
-{% endblock %}
-
-{% block timeouts %}
-{{ super() }}
 {% endblock %}

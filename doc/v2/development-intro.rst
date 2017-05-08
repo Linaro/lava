@@ -23,6 +23,22 @@ modifications.
 LAVA is complex and works to solve complex problems. This has implications
 for how LAVA is developed, tested, deployed and used.
 
+.. index:: git branches, development branches
+
+.. _lava_git_branches:
+
+LAVA and git branches
+=====================
+
+Development occurs on the ``master`` branch, testing of each release happens on
+the ``staging`` branch and releases are made from the ``release`` branch. Git
+tags are also based on the ``release`` branch. All reviews need to be made
+against the ``master`` branch.
+
+.. note:: It is worth checking if someone already has a review which relates to
+   your proposed changes. Check for open reviews on gerrit, e.g.
+   ``https://review.linaro.org/#/q/status:open+lava-dispatcher``
+
 Other elements involved in LAVA development
 ===========================================
 
@@ -136,6 +152,11 @@ As code, device-type templates need to develop alongside the rest of the
 codebase. The best way to maintain support is to :ref:`contribute_upstream` so
 that new features can be tested against your templates and new releases can
 automatically include updates to your templates.
+
+Some individual device files exist in the codebase in
+``lava_scheduler_app/tests/devices`` but these are only for use in the
+existing unit tests. There is no need to contribute individual device dictionaries
+unless there are new unit tests which use those device dictionaries.
 
 .. index:: developer workflow
 
@@ -339,6 +360,8 @@ will be tidied up.
   top level ``lava_test_shell`` directory with overrides in
   ``pipeline/lava_test_shell``.
 
+  .. seealso:: :ref:`developing_new_classes`
+
 There are also locations which provide device configurations to support the
 unit tests. Only the Jinja2 support is used by the installed packages,
 
@@ -531,12 +554,15 @@ check-list:
 
     $ git review
 
-#. If successful, you will get a link to a review.
-#. Login to gerrit and add the ``lava-team`` as reviewers.
+#. If successful, you will get a link to a review with the ``lava-team``
+   already added as reviewers.
+
 #. The unit tests will automatically start and you will be notified by email
    of the results and a link to the output which is useful if the tests fail.
 
-.. seealso:: :ref:`development_workflow` for detailed information.
+.. seealso:: :ref:`development_workflow` for detailed information on running
+   the unit tests and other static code analysis tools before submitting the
+   review.
 
 Contributing via your distribution
 ----------------------------------
