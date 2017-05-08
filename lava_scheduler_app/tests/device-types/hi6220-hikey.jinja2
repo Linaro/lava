@@ -1,5 +1,9 @@
 {% extends 'base.jinja2' %}
-{% set boot_character_delay = 10 %}
+{% set root_device = root_device | default('/dev/mmcblk0p9') %}
+{% set base_kernel_args = base_kernel_args|default('efi=noruntime backend=ramoops ramoops.mem_address=0x30000000 ramoops.mem_size=0x10000') %}
+{% set console_device = console_device|default('ttyAMA3') %}
+{% set baud_rate = baud_rate|default('115200') %}
+{% set boot_character_delay = boot_character_delay|default(300) %}
 {% block body %}
 device_type: hi6220-hikey
 adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
@@ -27,6 +31,21 @@ actions:
         - auto-login
         - shell-session
         - export-env
+      grub-efi:
+        reset_device: False
+        line_separator: unix
+        menu_options: fastboot
+        parameters:
+          bootloader_prompt: {{ grub_efi_bootloader_prompt|default('grub>') }}
+        installed:
+          parameters:
+            interrupt_prompt: "Android Fastboot mode"
+            interrupt_string: ' '
+          commands:
+            - search.fs_label {{fs_label|default('rootfs')}} root
+            - linux ($root)/boot/{{kernel}} console=tty0 console={{console_device}},{{baud_rate}} root={{root_device}} rootwait rw {{base_kernel_args}} {{extra_kernel_args}}
+            - devicetree ($root)/boot/{{devicetree}}
+            - boot
       uefi-menu:
         parameters:
           interrupt_prompt: {{ interrupt_prompt|default("The default boot selection will start in") }}

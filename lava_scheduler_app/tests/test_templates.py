@@ -427,6 +427,37 @@ class TestTemplates(unittest.TestCase):
         self.assertNotEqual('', template_dict['parameters']['interfaces']['target']['mac'])
         self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
 
+    def test_hikey_grub_efi(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {
+            'kernel': 'Image',
+            'devicetree': 'hi6220-hikey.dtb'
+        }
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsNotNone(template_dict['actions']['boot']['methods'])
+        self.assertIn('grub-efi', template_dict['actions']['boot']['methods'])
+        self.assertEqual('fastboot', template_dict['actions']['boot']['methods']['grub-efi']['menu_options'])
+        params = template_dict['actions']['boot']['methods']['grub-efi']
+        self.assertEqual(params['parameters']['bootloader_prompt'], 'grub>')
+        for command in params['installed']['commands']:
+            if command.startswith('search'):
+                self.assertIn('rootfs', command)
+            elif command.startswith('linux'):
+                self.assertIn('/boot/Image', command)
+            elif command.startswith('devicetree'):
+                self.assertIn('hi6220-hikey.dtb', command)
+            elif 'root=' in command:
+                self.assertIn('/dev/mmcblk0p9', command)
+                self.assertIn('ttyAMA3', command)
+            else:
+                self.assertEqual('boot', command)
+
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
