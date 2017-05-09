@@ -161,15 +161,8 @@ class BootloaderInterrupt(Action):
     def validate(self):
         super(BootloaderInterrupt, self).validate()
         hostname = self.job.device['hostname']
-        # boards which are reset manually can be supported but errors have to handled manually too.
-        if self.job.device.power_state in ['on', 'off']:
-            # to enable power to a device, either power_on or hard_reset are needed.
-            if self.job.device.power_command is '':
-                self.errors = "Unable to power on or reset the device %s" % hostname
-            if self.job.device.connect_command is '':
-                self.errors = "Unable to connect to device %s" % hostname
-        else:
-            self.logger.debug("%s may need manual intervention to reboot", hostname)
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s" % hostname
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"

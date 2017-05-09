@@ -476,10 +476,12 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
 
-    class FakeDevice(object):
+    class FakeDevice(dict):
         def __init__(self):
-            self.parameters = {}
-            self.power_state = ''
+            self.update({'parameters': {}, 'commands': {}})
+
+        def __get_item__(self):
+            return {}
 
     class FakePipeline(Pipeline):
 

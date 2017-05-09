@@ -139,3 +139,6 @@ VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '
 
 # sys class kvm path
 SYS_CLASS_KVM = '/sys/class/misc/kvm'
+
+# default reboot commands
+REBOOT_COMMAND_LIST = ['reboot', 'reboot -n', 'reboot -nf']

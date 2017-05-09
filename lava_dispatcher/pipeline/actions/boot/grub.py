@@ -138,15 +138,8 @@ class BootloaderInterrupt(Action):
     def validate(self):
         super(BootloaderInterrupt, self).validate()
         hostname = self.job.device['hostname']
-        # boards which are reset manually can be supported but errors have to handled manually too.
-        if self.job.device.power_state in ['on', 'off']:
-            # to enable power to a device, either power_on or hard_reset are needed.
-            if self.job.device.power_command is '':
-                self.errors = "Unable to power on or reset the device %s" % hostname
-            if self.job.device.connect_command is '':
-                self.errors = "Unable to connect to device %s" % hostname
-        else:
-            self.logger.debug("%s may need manual intervention to reboot", hostname)
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s" % hostname
         device_methods = self.job.device['actions']['boot']['methods']
         if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
             self.type = 'grub-efi'
@@ -165,10 +158,10 @@ class BootloaderInterrupt(Action):
         return connection
 
 
-class GrubMenuSelector(UefiMenuSelector):
+class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
-        super(UefiMenuSelector, self).__init__()
+        super(GrubMenuSelector, self).__init__()
         self.name = 'grub-efi-menu-selector'
         self.summary = 'select grub options in the efi menu'
         self.description = 'select specified grub-efi menu items'

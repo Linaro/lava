@@ -117,14 +117,8 @@ class MenuConnect(ConnectDevice):
 
     def validate(self):
         hostname = self.job.device['hostname']
-        if self.job.device.power_state in ['on', 'off']:
-            # to enable power to a device, either power_on or hard_reset are needed.
-            if self.job.device.power_command is '':
-                self.errors = "Unable to power on or reset the device %s" % hostname
-            if self.job.device.connect_command is '':
-                self.errors = "Unable to connect to device %s" % hostname
-        else:
-            self.logger.warning("%s may need manual intervention to reboot", hostname)
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s" % hostname
 
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuConnect, self).run(connection, max_end_time, args)

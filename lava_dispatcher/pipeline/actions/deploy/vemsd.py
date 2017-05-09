@@ -118,11 +118,9 @@ class VExpressMsdAction(DeployAction):
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         self.internal_pipeline.add_action(LxcAddDeviceAction())
-        if hasattr(self.job.device, 'power_state'):
-            if self.job.device.power_state in ['on', 'off']:
-                self.force_prompt = True
-                self.internal_pipeline.add_action(ConnectDevice())
-                self.internal_pipeline.add_action(PowerOn())
+        self.force_prompt = True
+        self.internal_pipeline.add_action(ConnectDevice())
+        self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
         self.internal_pipeline.add_action(EnterVExpressMCC())
         self.internal_pipeline.add_action(EnableVExpressMassStorage())
