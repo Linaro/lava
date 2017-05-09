@@ -42,7 +42,11 @@ from django_restricted_resource.models import (
     RestrictedResourceManager
 )
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
-from lava_scheduler_app.schema import validate_submission, SubmissionException
+from lava_scheduler_app.schema import (
+    validate_submission,
+    handle_include_option,
+    SubmissionException
+)
 from dashboard_app.models import (
     Bundle,
     BundleStream,
@@ -1261,7 +1265,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
 
     if not orig:
         orig = yaml.dump(job_data)
-    job = TestJob(definition=orig, original_definition=orig,
+    job = TestJob(definition=yaml.dump(job_data), original_definition=orig,
                   submitter=user,
                   requested_device=device,
                   requested_device_type=device_type,
@@ -1840,6 +1844,9 @@ class TestJob(RestrictedResource):
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.load(yaml_data)
+
+        # Unpack include value if present.
+        job_data = handle_include_option(job_data)
 
         # visibility checks
         if 'visibility' not in job_data:

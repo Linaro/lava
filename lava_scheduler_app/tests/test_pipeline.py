@@ -30,7 +30,12 @@ from lava_scheduler_app.dbutils import (
     find_device_for_job,
     end_job,
 )
-from lava_scheduler_app.schema import validate_submission, validate_device
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+    include_yaml,
+    SubmissionException
+)
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_defs import check_missing_path
@@ -739,6 +744,41 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIsNone(device1.current_job)
         self.assertEqual(device1.status, Device.OFFLINE)
         self.assertEqual(job.status, TestJob.CANCELED)
+
+    def test_include_yaml_non_dict(self):
+        include_data = ['value1', 'value2']
+        self.assertRaises(
+            SubmissionException,
+            include_yaml,
+            self.factory.make_job_data(),
+            include_data)
+
+    def test_include_yaml_overwrite(self):
+        # Test overwrite of values.
+        job_data = self.factory.make_job_data()
+        include_data = {'priority': 'high'}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['priority'], 'high')
+
+        # Test in-depth overwrite.
+        include_data = {'timeouts': {'action': {'minutes': 10}}}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['timeouts']['action']['minutes'], 10)
+        self.assertEqual(job_data['timeouts']['job']['minutes'], 15)
+
+    def test_include_yaml_list_append(self):
+        job_data = self.factory.make_job_data()
+        include_data = {'actions': [
+            {'deploy': {'to': 'tmpfs', 'compression': 'gz', 'images': {}}}]}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(len(job_data['actions']), 4)
+        self.assertEqual(job_data['actions'][3], include_data['actions'][0])
+
+    def test_include_yaml(self):
+        job_data = self.factory.make_job_data()
+        include_data = {'key': 'value'}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['key'], 'value')
 
 
 class TestPipelineStore(TestCaseWithFactory):

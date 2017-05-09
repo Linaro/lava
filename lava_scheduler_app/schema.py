@@ -1,4 +1,6 @@
 import re
+import urllib2
+import yaml
 from voluptuous import (
     All,
     Any,
@@ -14,6 +16,7 @@ from voluptuous import (
 
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
+INCLUDE_URL_TIMEOUT = 10
 
 
 class SubmissionException(UserWarning):
@@ -263,6 +266,7 @@ def _job_schema():
         {
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
             Required('job_name'): All(str, Length(min=1, max=200)),
+            Optional('include'): str,
             Optional('priority'): Any('high', 'medium', 'low'),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
@@ -360,6 +364,45 @@ def _validate_secrets(data_object):
             raise SubmissionException("When 'secrets' is used, 'visibility' shouldn't be 'public'")
 
 
+def _download_raw_yaml(url):
+    try:
+        data = yaml.load(
+            urllib2.urlopen(url, timeout=INCLUDE_URL_TIMEOUT).read())
+        return data
+    except urllib2.URLError as e:
+        raise SubmissionException(
+            "Section 'include' must contain valid URL: %s" % e)
+    except yaml.YAMLError as e:
+        raise SubmissionException("Section 'include' must contain URL to a raw file in valid YAML format: %s" % e)
+
+
+def include_yaml(data_object, include_data):
+
+    if not isinstance(include_data, dict):
+        raise SubmissionException("Include section must be a dictionary.")
+
+    for key in include_data:
+        if key not in data_object:
+            data_object[key] = include_data[key]
+        else:
+            if isinstance(data_object[key], dict):
+                data_object[key].update(include_data[key])
+            elif isinstance(data_object[key], list):
+                data_object[key] += include_data[key]
+            elif isinstance(data_object[key], str):
+                data_object[key] = include_data[key]
+
+    return data_object
+
+
+def handle_include_option(data_object):
+    if 'include' in data_object:
+        include_data = _download_raw_yaml(data_object['include'])
+        include_yaml(data_object, include_data)
+
+    return data_object
+
+
 def validate_submission(data_object):
     """
     Validates a python object as a TestJob submission
@@ -367,6 +410,7 @@ def validate_submission(data_object):
     :return: True if valid, else raises SubmissionException
     """
     try:
+        data_object = handle_include_option(data_object)
         schema = _job_schema()
         schema(data_object)
     except MultipleInvalid as exc:
