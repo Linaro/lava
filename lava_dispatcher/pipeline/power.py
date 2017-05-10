@@ -254,5 +254,6 @@ class FinalizeAction(Action):
             protocol.finalise_protocol(self.job.device)
 
     def cleanup(self, connection):
-        if not self.ran:
+        # avoid running Finalize in validate or unit tests
+        if not self.ran and self.job.started:
             self.run(connection, None, None)
