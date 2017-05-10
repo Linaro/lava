@@ -161,7 +161,7 @@ class BootloaderInterrupt(Action):
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = GRUB_BOOT_PROMPT
         self.wait(connection)
-        connection.sendline("c")
+        connection.raw_connection.send("c")
         return connection
 
 

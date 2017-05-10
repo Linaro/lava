@@ -166,6 +166,7 @@ class SelectorMenuAction(Action):
         self.description = 'select specified menu items'
         self.selector = SelectorMenu()
         self.items = []
+        self.line_sep = None
 
     def validate(self):
         super(SelectorMenuAction, self).validate()
