@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import JobError, Pipeline
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
@@ -75,7 +75,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
-        description_ref = pipeline_reference('grub.yaml')
+        description_ref = self.pipeline_reference('grub.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
@@ -236,14 +236,14 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_grub_with_monitor(self):
         job = self.factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
         job.validate()
-        description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
+        description_ref = self.pipeline_reference('grub-ramdisk-monitor.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_grub_via_efi(self):
         job = self.factory.create_mustang_job('sample_jobs/mustang-grub-efi-nfs.yaml')
         self.assertIsNotNone(job)
         job.validate()
-        description_ref = pipeline_reference('mustang-grub-efi-nfs.yaml')
+        description_ref = self.pipeline_reference('mustang-grub-efi-nfs.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
         menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]

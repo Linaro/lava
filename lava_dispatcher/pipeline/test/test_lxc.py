@@ -26,7 +26,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateAction
@@ -77,7 +77,7 @@ class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('lxc.yaml')
+        description_ref = self.pipeline_reference('lxc.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error('lxc-create'),

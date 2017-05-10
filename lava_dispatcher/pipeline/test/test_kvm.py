@@ -33,7 +33,7 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     InfrastructureError,
 )
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
@@ -168,7 +168,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('kvm.yaml')
+        description_ref = self.pipeline_reference('kvm.yaml')
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
         overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
@@ -236,7 +236,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('kvm-qcow2.yaml')
+        description_ref = self.pipeline_reference('kvm-qcow2.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_validate(self):
@@ -262,7 +262,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):  # pylint: disable=too-many-pu
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('kvm-local.yaml')
+        description_ref = self.pipeline_reference('kvm-local.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
@@ -327,7 +327,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
         self.assertNotIn(1, qemu.sub_command)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('kvm-inline.yaml')
+        description_ref = self.pipeline_reference('kvm-inline.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -708,7 +708,7 @@ class TestQemuNFS(StdoutTestCase):
                      'qemu-system-arm not installed')
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
-        description_ref = pipeline_reference('qemu-nfs.yaml')
+        description_ref = self.pipeline_reference('qemu-nfs.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         boot = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
