@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # Add LAVA applications
+    'lava_server',
     'dashboard_app',
     'lava_results_app',
     'lava_scheduler_daemon',
