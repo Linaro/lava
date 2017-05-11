@@ -103,8 +103,9 @@ class AutoLoginAction(Action):
 
             if 'login_prompt' not in params:
                 self.errors = "'login_prompt' is mandatory for auto_login"
-            if not params['login_prompt']:
+            elif not params['login_prompt']:
                 self.errors = "Value for 'login_prompt' cannot be empty"
+
             if 'username' not in params:
                 self.errors = "'username' is mandatory for auto_login"
 
