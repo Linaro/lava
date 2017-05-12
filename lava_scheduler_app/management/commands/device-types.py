@@ -127,6 +127,7 @@ class Command(BaseCommand):
                    health_frequency):
         """ Add a device type """
         aliases = []
+        alias_item = None
         if device_type == "*":
             self.stdout.write("Adding all known device types")
             available_types = self.available_device_types()
@@ -150,7 +151,8 @@ class Command(BaseCommand):
                 name=device_type,
                 health_frequency=health_frequency,
                 health_denominator=health_denominator)
-            dt.aliases.add(alias_item)
+            if alias_item:
+                dt.aliases.add(alias_item)
 
     def handle_details(self, name, devices):
         """ Print some details about the device-type """
