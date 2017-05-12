@@ -50,7 +50,7 @@ actions:
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
           - boot
-{% endblock %}
+{% endblock body %}
 
 {% block timeouts %}
 timeouts:
@@ -68,4 +68,4 @@ timeouts:
       minutes: 5
     bootloader-commands:
       minutes: 5
-{% endblock %}
+{% endblock timeouts %}

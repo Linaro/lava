@@ -46,5 +46,5 @@ actions:
           - -cpu host
           - -net nic,model=virtio,macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
           - -m {{ memory|default(512) }}
-{% endblock %}
-{% endblock %}
+{% endblock qemu_options %}
+{% endblock body %}

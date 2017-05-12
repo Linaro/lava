@@ -57,7 +57,7 @@ character_delays:
       test: {{ test_character_delay }}
 {% endif -%}
 {% endif -%}
-{% endblock -%}
+{% endblock character_delays -%}
 
 {% block constants %}
 constants:
@@ -86,7 +86,7 @@ constants:
      # UBOOT_INTERRUPT_CHARACTER = ' '
      uboot-interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
 
-{% endblock -%}
+{% endblock constants -%}
 
 {% block commands %}
 {% if connection_command or user_commands %}
@@ -127,7 +127,7 @@ commands:
 
 {% endif %}
 {% endif %}
-{% endblock -%}
+{% endblock commands -%}
 
 {% if device_info %}
 {# LXC support for adding energy probes, usb devices etc. #}
@@ -142,7 +142,7 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
                      'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor',
                      'system', 'cache', 'userdata']) }}
 {% endif -%}
-{% endblock -%}
+{% endblock fastboot -%}
 
 {% block vland %}
 parameters:
@@ -171,9 +171,9 @@ parameters:
 {% else %}
   pass:
 {% endif %}
-{% endblock -%}
+{% endblock vland -%}
 
-{% block body %}{% endblock -%}
+{% block body %}{% endblock body -%}
 
 {% block timeouts %}
 timeouts:
@@ -227,4 +227,4 @@ timeouts:
       seconds: {{ connection_timeout_bootloader_interrupt | default(30) }}
     u-boot-interrupt:
       seconds: {{ connection_timeout_u_boot_interrupt | default(30) }}
-{% endblock -%}
+{% endblock timeouts -%}

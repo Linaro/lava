@@ -24,12 +24,12 @@
 {% set base_menu_dictionary =  menu_dictionary | default(base_menu_dictionary) -%}
 {% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
 
+{% block vland %}
+{% endblock vland %}
+
 {% block body %}
 
 device_type: mustang
-
-{% block vland %}
-{% endblock %}
 
 actions:
   deploy:
@@ -105,4 +105,4 @@ actions:
             items:
             - '{{ grub_efi_grub_menu_item|default('Local ERP Grub') }}'
 {% endif %}
-{% endblock %}
+{% endblock body %}

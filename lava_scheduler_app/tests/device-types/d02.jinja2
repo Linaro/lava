@@ -7,7 +7,7 @@ device_type: d02
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 
 {% block vland %}
-{% endblock %}
+{% endblock vland %}
 
 actions:
   deploy:
@@ -64,7 +64,7 @@ actions:
           - sleep 10
           - boot
 
-{% endblock %}
+{% endblock body %}
 
 {% block timeouts %}
 timeouts:
@@ -100,4 +100,4 @@ timeouts:
       seconds: 300
     bootloader-commands:
       seconds: 600
-{% endblock %}
+{% endblock timeouts %}

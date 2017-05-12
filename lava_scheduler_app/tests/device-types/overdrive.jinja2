@@ -59,7 +59,7 @@ actions:
           - initrd (tftp)/{RAMDISK}
           - devicetree (tftp)/{DTB}
           - boot
-{% endblock %}
+{% endblock body %}
 
 {% block timeouts %}
 timeouts:
@@ -91,4 +91,4 @@ timeouts:
       seconds: 300
     bootloader-commands:
       seconds: 600
-{% endblock %}
+{% endblock timeouts %}
