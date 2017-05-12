@@ -18,11 +18,10 @@
 
 
 import os
-import sys
 import csv
 import ldap
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from lava_server.settings.getsettings import Settings
 
 
@@ -70,13 +69,13 @@ class Command(BaseCommand):
         server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
         self.stdout.write("Trying to access %s ..." % server_uri)
         if LDAP_SERVER_HOST not in server_uri:
-            self.stderr.write("This is a very rarely used management command, "
-                              "hence many parameters within this command are "
-                              "harcoded. The best way to use this command is"
-                              " to copy and edit the python script '%s' to "
-                              "work with other LDAP systems."
-                              % _get_script_path())
-            sys.exit(1)
+            raise CommandError("This is a very rarely used management command, "
+                               "hence many parameters within this command are "
+                               "harcoded. The best way to use this command is"
+                               " to copy and edit the python script '%s' to "
+                               "work with other LDAP systems."
+                               % _get_script_path())
+
         bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
         bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
 

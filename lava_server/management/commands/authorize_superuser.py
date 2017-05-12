@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
 
-
-import sys
-
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -33,8 +30,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         username = options['username']
         if username is None:
-            self.stderr.write("Username not specified.")
-            sys.exit(2)
+            raise CommandError("Username not specified.")
 
         try:
             user = User.objects.get(username=username)

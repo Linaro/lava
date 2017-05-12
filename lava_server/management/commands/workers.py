@@ -19,9 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import csv
-import sys
 
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from lava_scheduler_app.models import Worker
 
@@ -93,8 +92,7 @@ class Command(BaseCommand):
         """ Create a worker """
         try:
             Worker.objects.get(hostname=hostname)
-            self.stderr.write("Worker already exists with hostname %s" % hostname)
-            sys.exit(1)
+            raise CommandError("Worker already exists with hostname %s" % hostname)
         except Worker.DoesNotExist:
             pass
         Worker.objects.create(hostname=hostname,
@@ -105,8 +103,7 @@ class Command(BaseCommand):
         try:
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            self.stderr.write("Unable to find worker '%s'" % hostname)
-            sys.exit(1)
+            raise CommandError("Unable to find worker '%s'" % hostname)
 
         self.stdout.write("hostname   : %s" % hostname)
         self.stdout.write("master     : %s" % worker.is_master)
@@ -150,8 +147,7 @@ class Command(BaseCommand):
         try:
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            self.stderr.write("No worker exists with hostname %s" % hostname)
-            sys.exit(1)
+            raise CommandError("No worker exists with hostname %s" % hostname)
 
         if description is not None:
             worker.description = description

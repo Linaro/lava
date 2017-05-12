@@ -20,8 +20,7 @@
 
 # pylint: disable=invalid-name,no-member
 
-import sys
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from lava_scheduler_app.models import Worker
 
 
@@ -49,16 +48,13 @@ class Command(BaseCommand):
 
         hostname = options['hostname']
         if hostname is None:
-            self.stderr.write("Please specify a hostname")
-            sys.exit(2)
+            raise CommandError("Please specify a hostname")
 
         new_worker, created = Worker.objects.get_or_create(hostname=hostname)
         if not created:
             if new_worker.is_master:
-                self.stderr.write("Error: %s is the master worker." % options['hostname'])
-                sys.exit(1)
-            self.stderr.write("Worker already exists with hostname %s" % options['hostname'])
-            sys.exit(2)
+                raise CommandError("Error: %s is the master worker." % options['hostname'])
+            raise CommandError("Worker already exists with hostname %s" % options['hostname'])
         if options['description']:
             new_worker.description = options['description']
             new_worker.save(update_fields=['description'])

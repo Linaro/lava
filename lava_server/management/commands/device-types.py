@@ -21,9 +21,8 @@
 import csv
 import glob
 import os
-import sys
 
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from lava_scheduler_app.models import DeviceType, Alias
 # pylint: disable=invalid-name,no-self-use
@@ -117,8 +116,7 @@ class Command(BaseCommand):
         try:
             dt = device_type = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
-            self.stderr.write("Unable to find device-type '%s'" % device_type)
-            sys.exit(1)
+            raise CommandError("Unable to find device-type '%s'" % device_type)
         if alias:
             alias_item, _ = Alias.objects.get_or_create(name=alias)
         dt.aliases.add(alias_item)
@@ -159,8 +157,7 @@ class Command(BaseCommand):
         try:
             device_type = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            self.stderr.write("Unable to find device-type '%s'" % name)
-            sys.exit(1)
+            raise CommandError("Unable to find device-type '%s'" % name)
 
         aliases = [str(alias.name) for alias in device_type.aliases.all()]
         self.stdout.write("device_type    : %s" % name)

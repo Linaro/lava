@@ -17,11 +17,10 @@
 # along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys
 import ldap
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from dashboard_app.helpers import get_ldap_user_properties
 
 
@@ -38,8 +37,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         username = options['username']
         if username is None:
-            self.stderr.write("Username not specified.")
-            sys.exit(2)
+            raise CommandError("Username not specified.")
 
         try:
             user_properties = get_ldap_user_properties(username)

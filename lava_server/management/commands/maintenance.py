@@ -19,10 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
-import sys
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from lava_scheduler_app.models import Device, TestJob
@@ -47,9 +46,8 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(username=options["user"])
         except User.DoesNotExist:
-            self.stderr.write("User '%s' does not exist" % options["user"])
             self.stdout.write("A valid user is needed to store the state transitions")
-            sys.exit(1)
+            raise CommandError("User '%s' does not exist" % options["user"])
         # Use an explicit transaction that we can rollback if needed
         transaction.set_autocommit(False)
 
