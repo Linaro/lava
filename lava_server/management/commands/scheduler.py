@@ -17,7 +17,7 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from lava_scheduler_app.management.commands import SchedulerCommand
+from lava_server.management.commands import SchedulerCommand
 
 
 class Command(SchedulerCommand):

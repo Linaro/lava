@@ -19,7 +19,7 @@
 import simplejson
 
 
-from lava_scheduler_app.management.commands import SchedulerCommand
+from lava_server.management.commands import SchedulerCommand
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 
