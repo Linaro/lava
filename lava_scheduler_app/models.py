@@ -975,9 +975,9 @@ class Device(RestrictedResource):
         return False
 
     def get_health_check(self):
-        # Keep the old behavior for v1 devices
+        # Do not submit any new v1 job
         if not self.is_pipeline:
-            return self.device_type.health_check_job
+            return None
 
         # Get the device dictionary
         extends = self.get_extends()
