@@ -205,6 +205,11 @@ class EnterFastbootAction(DeployAction):
 
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device['adb_serial_number']
+        # start the adb daemon
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
+        command_output = self.run_command(adb_cmd, allow_fail=True)
+        if command_output and 'successfully' in command_output:
+            self.logger.debug("adb daemon started: %s", command_output)
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
                    adb_serial_number, 'devices']
         command_output = self.run_command(adb_cmd, allow_fail=True)
