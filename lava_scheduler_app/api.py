@@ -1196,8 +1196,4 @@ class SchedulerAPI(ExposedAPI):
         This function exposes the EVENT_SOCKET from the settings file which is
         used for the lava-publisher daemon.
         """
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
         return settings.EVENT_SOCKET
