@@ -1,34 +1,37 @@
-LAVA makes the test results available directly from the instance, without
-needing to go through ``lava-tool``. The results for any test job which the
-user can view can be downloaded as :abbr:`CSV (comma-separated value)` and YAML
-format.
+LAVA makes the test results available directly from the instance,
+without needing to go through ``lava-tool``. The results for any test
+job which the user can view can be downloaded in :abbr:`CSV
+(comma-separated value)` or YAML format.
 
-For example, the results for test job number 123 are available as CSV using:
-``https://validation.linaro.org/results/123/csv``. The same results for job
-number 123 are available as YAML using:
+For example, the results for test job number 123 are available in CSV
+format using: ``https://validation.linaro.org/results/123/csv``. The
+same results for job number 123 are available in YAML format using:
 ``https://validation.linaro.org/results/123/yaml``
 
-If you know the test definition name, you can download the results for that
-specific test definition only in the same way.
-``https://validation.linaro.org/results/123/singlenode-advanced/csv`` for the
-data in CSV format and
-``https://validation.linaro.org/results/123/singlenode-advanced/yaml`` for the
-YAML format.
+If you know the test definition name, you can also download the
+results for that specific test definition only in a similar way:
+``https://validation.linaro.org/results/123/singlenode-advanced/csv``
+for the data in CSV format and
+``https://validation.linaro.org/results/123/singlenode-advanced/yaml``
+for the YAML format.
 
-Some test jobs can be restricted to particular users or groups of users. The
-results of these test jobs are restricted in the same way. To download these
-results, you will need to specify your username and one of your
-:ref:`authentication_tokens` - remember to quote the URL if using it on the
-command line or the & will likely be interpreted by your shell::
+Some test jobs can be restricted to particular users or groups of
+users. The results of these test jobs will be restricted in the same
+way. To download these results, you will need to specify your username
+and one of your :ref:`authentication_tokens` when using the REST
+API. Remember to quote the URL if using it on the command line, to
+avoid the & character being mis-interpreted by your shell, for
+example:
 
- 'https://validation.linaro.org/results/123/csv?user=user.name&token=yourtokentextgoeshereononeverylongline'
+.. code-block:: shell
 
- $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
+    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
 
 Use the **Username** as specified in `your Profile </me>`_ - this may
-differ from the username you use when logging in with LDAP.
+differ from the username you use if logging in via LDAP.
 
 .. caution:: Take care of your tokens - avoid using personal tokens in
-   scripts and test definitions or other files that end up in public
-   git repositories. Wherever supported, use ``https://`` when using a
-   token.
+   scripts and test definitions, or any other files that end up in
+   public git repositories. Wherever supported, use ``https://`` when
+   using a token to avoid it being sent in plain-text.
+
