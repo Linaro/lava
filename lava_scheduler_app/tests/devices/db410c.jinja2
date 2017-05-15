@@ -1,0 +1,28 @@
+{% extends 'dragonboard-410c.jinja2' %}
+{% set exclusive = 'True' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu09 --command reboot --port 05 --delay 20' %}
+{% set pre_os_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m off -u 7' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu09 --command off --port 05 --delay 20' %}
+{% set fastboot_serial_number = '1bc92320' %}
+{% set device_info = [{'board_id': '1bc92320'}] %}
+{% set adb_serial_number = '1bc92320' %}
+{% set connection_command = 'telnet localhost 7205' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu09 --command on --port 05 --delay 20' %}
+{% set flash_cmds_order = ['update',
+'ptable',
+'partition',
+'hyp',
+'modem',
+'rpm',
+'sbl1',
+'sbl2',
+'sec',
+'tz',
+'aboot',
+'boot',
+'rootfs',
+'vendor',
+'system',
+'cache',
+'userdata'] %}
+{% set pre_power_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 7' %}

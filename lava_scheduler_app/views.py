@@ -2519,7 +2519,8 @@ def device_dictionary(request, pk):
     ast = env.parse(raw_device_dict)
     device_dict = {}
     for node in ast.find_all(jinja2.nodes.Assign):
-        device_dict[node.target.name] = node.node.value
+        if isinstance(node.node, jinja2.nodes.Const):
+            device_dict[node.target.name] = node.node.value
 
     dictionary = OrderedDict()
     vland = OrderedDict()

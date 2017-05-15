@@ -9,7 +9,6 @@ import tempfile
 # pylint: disable=superfluous-parens,ungrouped-imports
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import NewDevice
-from lava_scheduler_app.models import Device
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -19,9 +18,15 @@ from lava_dispatcher.pipeline.test.utils import DummyLogger
 # pylint: disable=too-many-nested-blocks
 
 
+CONFIG_PATH = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__), "..", "..",
+        "lava_scheduler_app", "tests", "devices"))
+
+
 def prepare_jinja_template(hostname, jinja_data):
     string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
-    path = os.path.dirname(Device.CONFIG_PATH)
+    path = os.path.dirname(CONFIG_PATH)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
     env = jinja2.Environment(
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
@@ -68,7 +73,7 @@ class TestTemplates(unittest.TestCase):
         return ret
 
     def test_all_templates(self):
-        path = os.path.dirname(Device.CONFIG_PATH)
+        path = os.path.dirname(CONFIG_PATH)
         templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
         self.assertNotEqual([], templates)
         for template in templates:
@@ -77,6 +82,23 @@ class TestTemplates(unittest.TestCase):
                 self.validate_data('device', data)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
+
+    def test_rendering(self):
+        self.assertFalse(CONFIG_PATH.startswith('/etc/'))
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'db410c.jinja2')) as hikey:
+            data = hikey.read()
+        env = jinja2.Environment()
+        ast = env.parse(data)
+        device_dict = {}
+        count = 0
+        for node in ast.find_all(jinja2.nodes.Assign):
+            count += 1
+            if isinstance(node.node, jinja2.nodes.Const):
+                device_dict[node.target.name] = node.node.value
+        self.assertIsNotNone(device_dict)
+        # FIXME: recurse through the jinja2 nodes without rendering
+        # then change this to assertEqual
+        self.assertNotEqual(count, len(device_dict.keys()))
 
     def test_x15_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}

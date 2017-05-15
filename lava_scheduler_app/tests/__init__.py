@@ -1,7 +1,4 @@
-import os
 import unittest
-
-from lava_scheduler_app.models import Device
 
 
 def suite():
@@ -10,8 +7,3 @@ def suite():
         pattern="*.py",
         top_level_dir="lava_scheduler_app"
     )
-
-
-Device.CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                  "..", "..", "lava_scheduler_app",
-                                                  "tests", "devices"))
