@@ -980,8 +980,7 @@ class Device(RestrictedResource):
         # Get the device dictionary
         extends = self.get_extends()
         if not extends:
-            # TODO: will be removed in the next release
-            return self.device_type.health_check_job
+            return None
 
         filename = os.path.join(Device.HEALTH_CHECK_PATH,
                                 "%s.yaml" % extends)
@@ -989,8 +988,7 @@ class Device(RestrictedResource):
             with open(filename, "r") as f_in:
                 return f_in.read()
         except IOError:
-            # TODO: will be removed in the next release
-            return self.device_type.health_check_job
+            return None
 
 
 class TemporaryDevice(Device):
