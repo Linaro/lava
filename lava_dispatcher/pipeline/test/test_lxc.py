@@ -62,6 +62,17 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_adb_nuc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__),
+                                        '../devices/adb-nuc-01.yaml'))
+        job_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(job_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4577, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -182,3 +193,10 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
         self.assertIsNotNone(runner.testdef_levels)
+
+    def test_adb_nuc_job(self):
+        self.factory = LxcFactory()
+        job = self.factory.create_adb_nuc_job('sample_jobs/adb-nuc.yaml',
+                                              mkdtemp())
+        description_ref = self.pipeline_reference('adb-nuc.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))

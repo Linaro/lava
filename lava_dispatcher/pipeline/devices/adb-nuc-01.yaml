@@ -1,0 +1,94 @@
+
+constants:
+     # OS shutdown message
+     # Override: set as the shutdown-message parameter of an Action.
+     # SHUTDOWN_MESSAGE
+     shutdown-message: 'The system is going down for reboot NOW'
+
+     # Kernel starting message
+     # BOOT_MESSAGE
+     boot-message: 'Booting Linux'
+
+     # CPU reset message
+     # CPU_RESET_MESSAGE
+     cpu-reset-message: 'Resetting CPU'
+
+     # Default shell prompt for AutoLogin
+     # DEFAULT_SHELL_PROMPT
+     default-shell-prompt: 'lava-test: # '
+
+     # u-boot auto boot prompt
+     # UBOOT_AUTOBOOT_PROMPT
+     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
+
+     # u-boot interrupt character
+     # UBOOT_INTERRUPT_CHARACTER = ' '
+     uboot-interrupt-character: ' '
+
+parameters:
+  interfaces:
+    target:
+      ip: 192.168.1.11
+      mac: ''
+device_type: adb-nuc
+
+actions:
+  deploy:
+    methods:
+      lxc:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
