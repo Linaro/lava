@@ -917,7 +917,7 @@ def device_type_reports(request, pk):
 
 def device_dictionary_plain(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    device_configuration = device.load_configuration()
+    device_configuration = device.load_configuration(output_format="yaml")
     response = HttpResponse(device_configuration, content_type='text/yaml')
     response['Content-Disposition'] = "attachment; filename=%s.yaml" % pk
     return response
