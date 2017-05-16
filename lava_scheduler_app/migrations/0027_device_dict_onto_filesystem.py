@@ -29,6 +29,10 @@ def devicedictionary_to_jinja2(data_dict, extends):
     return data
 
 
+def revert_migrate_device_dict_to_filesystem(apps, schema_editor):
+    pass
+
+
 def migrate_device_dict_to_filesystem(apps, schema_editor):
     # Get the right version of the models
     Device = apps.get_model("lava_scheduler_app", "Device")
@@ -69,7 +73,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_device_dict_to_filesystem),
+        migrations.RunPython(migrate_device_dict_to_filesystem, revert_migrate_device_dict_to_filesystem),
         migrations.DeleteModel(
             name='PipelineStore',
         ),
