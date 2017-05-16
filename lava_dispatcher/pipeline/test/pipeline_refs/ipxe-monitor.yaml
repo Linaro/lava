@@ -39,7 +39,10 @@
       - {class: power.PowerOn, name: power-on}
     - {class: actions.boot.ipxe.BootloaderInterrupt, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
-- {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: actions.test.monitor.TestMonitorRetry
+  name: lava-test-monitor-retry
+  pipeline:
+  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
 - class: power.FinalizeAction
   name: finalize
   pipeline:
