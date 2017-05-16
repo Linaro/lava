@@ -131,10 +131,17 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         if 'commands' not in self.parameters and not self.commands:
             self.errors = "Missing commands in action parameters"
             return
-        commands = self.commands if self.commands else self.parameters['commands']
+        # UEFI menu cannot support command lists (due to renumbering issues)
+        # but needs to ignore those which may exist for use with Grub later.
+        if not self.commands and isinstance(self.parameters['commands'], str):
+            if self.parameters['commands'] not in self.job.device['actions']['boot']['methods'][self.method_name]:
+                self.errors = "Missing commands for %s" % self.parameters['commands']
+                return
+            self.commands = self.parameters['commands']
+        if not self.commands:
+            # ignore self.parameters['commands'][]
+            return
         # pick up the commands for the specific menu
-        if self.parameters['commands'] not in self.job.device['actions']['boot']['methods'][self.method_name]:
-            self.errors = "Missing commands for %s" % self.parameters['commands']
         self.selector.item_markup = params['item_markup']
         self.selector.item_class = params['item_class']
         self.selector.separator = params['separator']
@@ -147,7 +154,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         if 'boot_message' in params:
             self.boot_message = params['boot_message']  # final prompt
         # pick up the commands specific to the menu implementation
-        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][commands]
+        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.commands]
         # set the line separator for the UEFI on this device
         uefi_type = self.job.device['actions']['boot']['methods'][self.method_name].get('line_separator', 'dos')
         if uefi_type == 'dos':
