@@ -245,7 +245,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     def test_pixel_job(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_nexus5x_job('sample_jobs/pixel.yaml',
-                                              mkdtemp())
+        job = self.factory.create_pixel_job('sample_jobs/pixel.yaml',
+                                            mkdtemp())
         description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
