@@ -71,7 +71,7 @@ actions:
           - net_bootp
 {% endif %}
           - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug
-            root=/dev/sda2 rw {{ base_ip_args }} {{ extra_kernel_args }}
+            root={{ root_uuid|default('/dev/sda2') }} rw {{ base_ip_args }} {{ extra_kernel_args }}
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
         nfs:
