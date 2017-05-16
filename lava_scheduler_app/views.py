@@ -2494,7 +2494,6 @@ def device_detail(request, pk):
 
 @BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
 def device_dictionary(request, pk):
-    # FIXME: not working well now
     # Find the device and raise 404 if we are not allowed to see it
     try:
         device = Device.objects.select_related('device_type', 'user').get(pk=pk)
@@ -2517,10 +2516,7 @@ def device_dictionary(request, pk):
     # Parse the template
     env = jinja2.Environment()
     ast = env.parse(raw_device_dict)
-    device_dict = {}
-    for node in ast.find_all(jinja2.nodes.Assign):
-        if isinstance(node.node, jinja2.nodes.Const):
-            device_dict[node.target.name] = node.node.value
+    device_dict = utils.device_dictionary_to_dict(ast)
 
     dictionary = OrderedDict()
     vland = OrderedDict()

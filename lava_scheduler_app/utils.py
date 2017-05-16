@@ -17,17 +17,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
+import datetime
+import errno
+import jinja2
+import logging
+import netifaces
 import os
 import re
-import copy
-import errno
-import yaml
 import socket
-import logging
-import urlparse
 import subprocess
-import datetime
-import netifaces
+import urlparse
+import yaml
 
 from collections import OrderedDict
 
@@ -647,10 +648,34 @@ def send_irc_notification(nick, recipient, message,
     proc.wait()
 
 
+def _dump_value(node):
+    if isinstance(node, jinja2.nodes.Const):
+        return node.as_const()
+
+    elif isinstance(node, jinja2.nodes.Dict):
+        ret = {}
+        for n in node.iter_child_nodes():
+            ret[n.key.as_const()] = _dump_value(n.value)
+        return ret
+
+    elif isinstance(node, (jinja2.nodes.List, jinja2.nodes.Tuple)):
+        ret = []
+        for n in node.iter_child_nodes():
+            ret.append(_dump_value(n))
+        return ret if isinstance(node, jinja2.nodes.List) else tuple(ret)
+
+
+def device_dictionary_to_dict(ast):
+    ret = {}
+
+    for node in ast.find_all(jinja2.nodes.Assign):
+        ret[node.target.name] = _dump_value(node.node)
+
+    return ret
+
+
 def device_dictionary_sequence():
     return [
-        'extends',
-        'exclusive',
         'connection_command',
         'power_on_command',
         'power_off_command',
