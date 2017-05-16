@@ -46,6 +46,7 @@
     - {class: actions.deploy.prepare.PrepareKernelAction, name: prepare-kernel}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action

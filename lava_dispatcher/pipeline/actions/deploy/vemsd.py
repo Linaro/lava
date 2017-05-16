@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import PowerOn
@@ -116,6 +117,7 @@ class VExpressMsdAction(DeployAction):
             download = DownloaderAction('recovery_image', path=download_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         if hasattr(self.job.device, 'power_state'):
             if self.job.device.power_state in ['on', 'off']:
                 self.force_prompt = True

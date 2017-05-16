@@ -122,6 +122,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
         self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        if not protocol:
+            self.errors = "No LXC device requested"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

@@ -316,7 +316,7 @@ class LxcAddDeviceAction(Action):
             lxc_name = protocol.lxc_name
         if not lxc_name:
             self.logger.debug("No LXC device requested")
-            raise JobError("Unable to use fastboot")
+            return connection
 
         self.logger.info("Get USB device(s) ...")
         device_paths = get_udev_devices(self.job, logger=self.logger)

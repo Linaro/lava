@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
@@ -136,5 +137,6 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
