@@ -854,3 +854,9 @@ class TestTemplates(unittest.TestCase):
 {% set fastboot_serial_number = 'FDAC1231DAD' %}
 {% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
 """))
+
+    def test_nuc_template(self):
+        self.assertTrue(self.validate_data('staging-nuc-01', """{% extends 'adb-nuc.jinja2' %}
+{% set device_ip = '192.168.1.11' %}
+{% set exclusive = 'True' %}
+"""))
