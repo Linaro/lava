@@ -313,14 +313,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 connection = new_connection
         return connection
 
-    def prepare_actions(self):
-        for action in self.actions:
-            action.prepare()
-
-    def post_process_actions(self):
-        for action in self.actions:
-            action.post_process()
-
 
 class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
