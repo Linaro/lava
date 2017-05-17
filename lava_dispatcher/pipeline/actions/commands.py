@@ -35,6 +35,7 @@ class CommandAction(Action):
         self.summary = "execute commands"
         self.section = "command"
         self.cmd = None
+        self.ran = False
 
     def validate(self):
         super(CommandAction, self).validate()
@@ -59,10 +60,15 @@ class CommandAction(Action):
         connection = super(CommandAction, self).run(connection, max_end_time, args)
 
         self.logger.debug("Running user command '%s'", self.parameters['name'])
+        self.ran = True
         self.run_command(self.cmd['do'].split(' '), allow_silent=True)
         return connection
 
     def cleanup(self, connection):
+        if not self.ran:
+            self.logger.debug("Skipping %s 'undo' as 'do' was not called", self.name)
+            return
+
         if self.cmd is not None and 'undo' in self.cmd:
             self.logger.debug("Running cleanup for user command '%s'", self.parameters['name'])
             if not isinstance(self.cmd['undo'], str):
