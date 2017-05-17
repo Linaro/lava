@@ -2531,6 +2531,9 @@ def device_dictionary(request, pk):
             vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
     for item in set(device_dict.keys()) - set(sequence) - set(vlan_sequence):
         extra[item] = device_dict[item]
+    # Exclusive is already handled
+    if 'exclusive' in extra:
+        del extra['exclusive']
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
     return HttpResponse(template.render(
         {
