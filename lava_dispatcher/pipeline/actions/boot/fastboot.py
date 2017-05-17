@@ -159,8 +159,6 @@ class FastbootBootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         lxc_active = any([pc for pc in self.job.protocols if pc.name == LxcProtocol.name])
         if self.job.device.pre_os_command and not lxc_active:
@@ -215,7 +213,5 @@ class FastbootRebootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

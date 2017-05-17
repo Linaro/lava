@@ -287,10 +287,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
             except LAVAError as exc:
-                # set results including retries
-                # TODO: needed?
-                if "boot-result" not in action.data:
-                    action.data['boot-result'] = 'failed'
                 action.logger.error(str(exc))
                 self._diagnose(connection)
                 raise
@@ -307,6 +303,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
+                # set results including retries and failed actions
                 action.log_action_results()
 
             if new_connection:

@@ -43,7 +43,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
                 testshell = action.pipeline.actions[0]
                 break
         self.assertIsInstance(testshell, TestShellAction)
-        self.assertNotIn('boot-result', testshell.data)
         self.assertTrue(testshell.valid)
 
         if 'timeout' in testshell.parameters:

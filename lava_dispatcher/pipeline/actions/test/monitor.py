@@ -103,16 +103,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         self.patterns = {}
 
     def run(self, connection, max_end_time, args=None):
-        # Sanity test: could be a missing deployment for some actions
-        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
-        if res != 'success':
-            raise LAVABug("No boot action result found")
         connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
-        if res != "success":
-            self.logger.debug("Skipping test monitoring - previous boot attempt was not successful.")
-            self.results.update({self.name: "skipped"})
-            # FIXME: with predictable UID, could set each test definition metadata to "skipped"
-            return connection
 
         if not connection:
             raise InfrastructureError("Connection closed")

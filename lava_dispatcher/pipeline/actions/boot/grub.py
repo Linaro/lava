@@ -122,8 +122,6 @@ class GrubMainAction(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(GrubMainAction, self).run(connection, max_end_time, args)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -223,7 +221,5 @@ class InstallerWait(Action):
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)
         connection.prompt_str = wait_string
         self.wait(connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

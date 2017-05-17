@@ -141,8 +141,6 @@ class BootloaderRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 

@@ -247,9 +247,6 @@ class CallQemuAction(Action):
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super(CallQemuAction, self).run(shell_connection, max_end_time, args)
 
-        # FIXME: tests with multiple boots need to be handled too.
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection
 

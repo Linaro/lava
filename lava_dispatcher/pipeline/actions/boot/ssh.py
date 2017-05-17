@@ -171,8 +171,6 @@ class Scp(ConnectSsh):
         connection = super(Scp, self).run(connection, max_end_time, args)
         self.results = {'success': 'ssh deployment'}
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -230,9 +228,6 @@ class ScpOverlayUnpack(Action):
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 

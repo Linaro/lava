@@ -184,8 +184,6 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             self.logger.debug("Looking for %s", self.boot_message)
             connection.prompt_str = self.boot_message
             self.wait(connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 

@@ -208,8 +208,5 @@ class IsoRebootAction(Action):
         shell_connection = super(IsoRebootAction, self).run(shell_connection, max_end_time, args)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
-        self.logger.debug("boot-result: %s", res)
         return shell_connection
