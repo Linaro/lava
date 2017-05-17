@@ -38,7 +38,6 @@ class RetryAction(Action):
 
     def __init__(self):
         super(RetryAction, self).__init__()
-        self.retries = 0
         self.sleep = 1
 
     def validate(self):
@@ -52,8 +51,9 @@ class RetryAction(Action):
             raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 
     def run(self, connection, max_end_time, args=None):
+        retries = 0
         has_failed = False
-        while self.retries < self.max_retries:
+        while retries < self.max_retries:
             try:
                 connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
                 if 'repeat' not in self.parameters:
@@ -63,27 +63,28 @@ class RetryAction(Action):
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
                 # Print the error message
-                self.retries += 1
-                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries,
+                retries += 1
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, retries,
                                                               self.max_retries, exc)
                 self.logger.error(msg)
                 # Cleanup the action to allow for a safe restart
                 self.cleanup(connection)
 
                 # re-raise if this is the last loop
-                if self.retries == self.max_retries:
-                    self.errors = "%s retries failed for %s" % (self.retries, self.name)
+                if retries == self.max_retries:
+                    self.errors = "%s retries failed for %s" % (retries, self.name)
                     self.set_namespace_data(action='shared', label='shared',
                                             key='connection', value=connection)
                     raise
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
+                self.logger.warning("Retrying: %s %s", self.level, self.name)
 
         # If we are repeating, check that all repeat were a success.
         if has_failed:
             # tried and failed
-            raise JobError("%s retries failed for %s" % (self.retries, self.name))
+            raise JobError("%s retries failed for %s" % (retries, self.name))
         return connection
 
 
