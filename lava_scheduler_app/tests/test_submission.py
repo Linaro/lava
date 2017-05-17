@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name,logging-not-lazy
 import logging
-import os
 import sys
 import warnings
 import yaml
@@ -172,6 +171,15 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
         self.factory.cleanup()
+
+    def test_from_json_and_user_sets_outputdir(self):
+        definition = self.factory.make_job_json()
+        job = TestJob.from_json_and_user(definition, self.factory.make_user())
+        dir_list = job.output_dir.split('/')
+        self.assertIn("%02d" % job.submit_time.year, dir_list)
+        self.assertIn("%02d" % job.submit_time.month, dir_list)
+        self.assertIn("%02d" % job.submit_time.day, dir_list)
+        self.assertIn(str(job.id), dir_list)
 
     def test_user_permission(self):
         self.assertIn(
