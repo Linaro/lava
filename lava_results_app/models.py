@@ -582,7 +582,7 @@ class MetaType(models.Model):
         data = definition['actions'][level][section]
         if section in MetaType.TYPE_MAP:
             section_type = MetaType.get_section_type(name, section)
-            if section_type:
+            if section_type and section_type in data:
                 retval = data[section_type]
             if isinstance(retval, list):
                 return section_type
