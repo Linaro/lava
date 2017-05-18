@@ -114,9 +114,7 @@ class VExpressMsdAction(DeployAction):
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'recovery_image' in parameters:
-            download = DownloaderAction('recovery_image', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('recovery_image', path=download_dir))
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())

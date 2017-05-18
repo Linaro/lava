@@ -102,13 +102,9 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'nfsrootfs' in parameters:
-            download = DownloaderAction('nfsrootfs', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('nfsrootfs', path=download_dir))
         if 'modules' in parameters:
-            download = DownloaderAction('modules', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('modules', path=download_dir))
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
         self.internal_pipeline.add_action(ExtractNfsRootfs())
         self.internal_pipeline.add_action(OverlayAction())

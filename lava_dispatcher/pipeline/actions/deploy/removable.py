@@ -249,9 +249,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         if 'image' in parameters:
-            download = DownloaderAction('image', path=self.image_path)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('image', path=self.image_path))
             if self.test_needs_overlay(parameters):
                 self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())

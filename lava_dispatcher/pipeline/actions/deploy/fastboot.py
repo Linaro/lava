@@ -150,9 +150,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         image_keys.sort()
         for image in image_keys:
             if image != 'yaml_line':
-                download = DownloaderAction(image, fastboot_dir)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
                 if parameters['images'][image].get('apply-overlay', False):
                     if self.test_needs_overlay(parameters):
                         self.internal_pipeline.add_action(

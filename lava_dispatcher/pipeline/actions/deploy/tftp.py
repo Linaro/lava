@@ -129,9 +129,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         for key in ['ramdisk', 'kernel', 'dtb', 'nfsrootfs', 'modules', 'preseed']:
             if key in parameters:
-                download = DownloaderAction(key, path=self.tftp_dir)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(key, path=self.tftp_dir))
                 if key == 'ramdisk':
                     self.set_namespace_data(action=self.name, label='tftp', key='ramdisk', value=True, parameters=parameters)
 

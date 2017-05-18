@@ -97,9 +97,8 @@ class ScpOverlay(DeployAction):
         self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
-                download = DownloaderAction(item, path=self.mkdtemp())
-                download.max_retries = 3
-                self.internal_pipeline.add_action(download, parameters)
+                self.internal_pipeline.add_action(DownloaderAction(item, path=self.mkdtemp()),
+                                                  parameters)
                 self.set_namespace_data(action=self.name, label='scp', key=item, value=True, parameters=parameters)
         # we might not have anything to download, just the overlay to push
         self.internal_pipeline.add_action(PrepareOverlayScp())

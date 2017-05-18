@@ -72,6 +72,7 @@ class DownloaderAction(RetryAction):
         self.name = "download-retry"
         self.description = "download with retry"
         self.summary = "download-retry"
+        self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
 
