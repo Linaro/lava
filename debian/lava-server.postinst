@@ -246,8 +246,8 @@ case "$1" in
             mkdir -p $LAVA_SYS_MOUNTDIR/media/bundles/
             adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
             find $LAVA_SYS_MOUNTDIR -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \;
-            # fixup bug from date based subdirectories
-            find $LAVA_SYS_MOUNTDIR/media/job-output/2017 -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \;
+            # fixup bug from date based subdirectories - allowed to be missing.
+            find $LAVA_SYS_MOUNTDIR/media/job-output/2017 -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
         fi
         # user may not have been removed but the directory has, after purge.
         if [ ! -d $LAVA_SYS_HOME ]; then
