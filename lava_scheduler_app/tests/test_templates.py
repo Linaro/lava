@@ -576,6 +576,33 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('options', params)
         self.assertIn('identity_file', params)
 
+    def test_hikey960_grub(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi960-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {
+            'kernel': 'Image',
+            'devicetree': 'hi960-hikey.dtb'
+        }
+        # self.assertTrue(self.validate_data('hi960-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsNotNone(template_dict['actions']['boot']['methods'])
+        self.assertNotIn('menu_options', template_dict['actions']['boot']['methods']['grub'])
+        self.assertIn('grub', template_dict['actions']['boot']['methods'])
+        params = template_dict['actions']['boot']['methods']['grub']
+        for command in params['installed']['commands']:
+            self.assertEqual('boot', command)
+        self.assertIn('ssh', template_dict['actions']['deploy']['methods'])
+        params = template_dict['actions']['deploy']['methods']['ssh']
+        self.assertIsNotNone(params)
+        self.assertIn('port', params)
+        self.assertIn('user', params)
+        self.assertIn('options', params)
+        self.assertIn('identity_file', params)
+
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
