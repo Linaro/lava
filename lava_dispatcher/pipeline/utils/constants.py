@@ -84,8 +84,6 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
-GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
-
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string
 KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'

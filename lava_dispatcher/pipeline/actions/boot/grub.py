@@ -46,9 +46,6 @@ from lava_dispatcher.pipeline.power import (
     ResetDevice,
     PowerOff
 )
-from lava_dispatcher.pipeline.utils.constants import (
-    GRUB_BOOT_PROMPT,
-)
 
 
 def bootloader_accepts(device, parameters):
@@ -150,11 +147,14 @@ class BootloaderInterrupt(Action):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
-        self.logger.debug("Changing prompt to '%s'", GRUB_BOOT_PROMPT)
+        device_methods = self.job.device['actions']['boot']['methods']
+        interrupt_prompt = device_methods[self.type]['parameters'].get('interrupt_prompt', self.job.device.get_constant('grub-autoboot-prompt'))
+        # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
+        interrupt_char = device_methods[self.type]['parameters'].get('interrupt_char', self.job.device.get_constant('grub-interrupt-character'))
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = GRUB_BOOT_PROMPT
+        connection.prompt_str = interrupt_prompt
         self.wait(connection)
-        connection.raw_connection.send("c")
+        connection.raw_connection.send(interrupt_char)
         return connection
 
 
