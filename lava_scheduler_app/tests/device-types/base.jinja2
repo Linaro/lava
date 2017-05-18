@@ -86,6 +86,10 @@ constants:
      # UBOOT_INTERRUPT_CHARACTER = ' '
      uboot-interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
 
+     # GRUB_BOOT_PROMPT
+     grub-autoboot-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
+     grub-interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
+
 {% endblock constants -%}
 
 {% block commands %}
