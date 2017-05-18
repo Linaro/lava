@@ -2265,11 +2265,9 @@ class TestJob(RestrictedResource):
         elif self.visibility == self.VISIBLE_PERSONAL:
             return user == self.submitter
         elif self.visibility == self.VISIBLE_GROUP:
-            # only one group allowed, only first group matters.
-            if len(self.viewing_groups.all()) > 1:
-                logger.exception("job [%s] is %s but has multiple groups %s",
-                                 self.id, self.VISIBLE_CHOICES[self.visibility], self.viewing_groups.all())
-            return self.viewing_groups.all()[0] in user.groups.all()
+            # The user should be member of every groups
+            user_groups = user.groups.all()
+            return all([g in user_groups for g in self.viewing_groups.all()])
 
         return False
 

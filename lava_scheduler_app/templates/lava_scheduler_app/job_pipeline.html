@@ -93,6 +93,8 @@
       <dd title="{{ job.submit_time }}">{{ job.submit_time|naturaltime }}</dd>
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
+      <dt>Visibility</dt>
+      <dd>{{ job.get_visibility_display }}{% if job.visibility == job.VISIBLE_GROUP %} ({{ job.viewing_groups.all|join:', ' }}){% endif %}</dd>
       {% if job_tags %}
       <dt>Required Tags</dt>
       <dd>
