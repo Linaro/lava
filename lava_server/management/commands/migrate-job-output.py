@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from lava_scheduler_app.models import TestJob
@@ -36,11 +37,20 @@ class Command(BaseCommand):
 
         self.stdout.write("Browsing all jobs")
         for job in jobs:
-            self.stdout.write("* %d {%s => %s}" % (job.id, "job-%d" % job.id,
-                                                   job.output_dir[len_base_dir:]))
-            mkdir(os.path.dirname(job.output_dir))
-            old_dir = base_dir + "job-%d" % job.id
-            if not os.path.exists(old_dir):
+            old_path = os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % job.id)
+            date_path = os.path.join(settings.MEDIA_ROOT, 'job-output',
+                                     "%02d" % job.submit_time.year,
+                                     "%02d" % job.submit_time.month,
+                                     "%02d" % job.submit_time.day,
+                                     str(job.id))
+            if not os.path.exists(old_path):
+                continue
+
+            self.stdout.write("* %d {%s => %s}" % (job.id,
+                                                   old_path[len_base_dir:],
+                                                   date_path[len_base_dir:]))
+            mkdir(os.path.dirname(date_path))
+            if not os.path.exists(old_path):
                 self.stdout.write("  -> no output directory")
                 continue
-            os.rename(old_dir, job.output_dir)
+            os.rename(old_path, date_path)
