@@ -190,8 +190,10 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         super(GrubMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
-        self.logger.debug("Adding '%s' to prompt", GRUB_BOOT_PROMPT)
-        connection.prompt_str = GRUB_BOOT_PROMPT
+        interrupt_prompt = self.params['parameters'].get(
+            'interrupt_prompt', self.job.device.get_constant('grub-autoboot-prompt'))
+        self.logger.debug("Adding '%s' to prompt", interrupt_prompt)
+        connection.prompt_str = interrupt_prompt
         # override base class behaviour to interact with grub.
         self.boot_message = None
         connection = super(GrubMenuSelector, self).run(connection, max_end_time, args)
