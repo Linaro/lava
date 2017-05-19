@@ -436,7 +436,7 @@ class TestTemplates(unittest.TestCase):
             'devicetree': 'hi6220-hikey.dtb'
         }
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
-        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-hikey-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
