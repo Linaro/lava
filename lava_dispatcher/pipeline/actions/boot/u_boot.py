@@ -145,10 +145,7 @@ class UBootRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
-        # Log an error only when needed
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        if self.errors:
-            self.logger.error(self.errors)
         return connection
 
 
@@ -283,6 +280,4 @@ class UBootEnterFastbootAction(BootAction):
                 self.wait(connection)
                 i += 1
 
-        if self.errors:
-            self.logger.error(self.errors)
         return connection

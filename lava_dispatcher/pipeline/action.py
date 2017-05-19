@@ -441,7 +441,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         # only unit tests should have actions without a pointer to the job.
         if 'failure_retry' in self.parameters and 'repeat' in self.parameters:
-            self.errors = "Unable to use repeat and failure_retry, use a repeat block"
+            raise JobError("Unable to use repeat and failure_retry, use a repeat block")
         if 'failure_retry' in self.parameters:
             self.max_retries = self.parameters['failure_retry']
         if 'repeat' in self.parameters:
@@ -738,7 +738,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         params = parameters if parameters else self.parameters
         namespace = params['namespace']
         if not label or not key:
-            self.errors = "Invalid call to set_namespace_data: %s" % action
+            raise LAVABug("Invalid call to set_namespace_data: %s" % action)
         self.data.setdefault(namespace, {})  # pylint: disable=no-member
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})

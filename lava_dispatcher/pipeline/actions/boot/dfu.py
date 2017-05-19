@@ -21,6 +21,7 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
+    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
@@ -150,11 +151,9 @@ class FlashDFUAction(Action):
             output = self.run_command(dfu.split(' '))
             if output:
                 if not ("No error condition is present\nDone!\n" in output):
-                    error = "command failed: %s" % dfu
-                    self.errors = error
+                    raise InfrastructureError("command failed: %s" % dfu)
             else:
-                error = "command failed: %s" % dfu
-                self.errors = error
+                raise InfrastructureError("command failed: %s" % dfu)
             count += 1
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
