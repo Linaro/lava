@@ -459,6 +459,49 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('insmod efinet', nfs_commands)
         self.assertIn('net_bootp', nfs_commands)
 
+    def test_mustang_secondary_media(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set sata_label = 'ST500DM002' %}
+{% set sata_uuid = 'ata-ST500DM002-1BD142_S2AKYFSN' %}
+{% set grub_efi_method = 'pxe-grub' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        parameters = {
+            'parameters': {
+                'media': {
+                    'sata': {
+                        'ST500DM002': {
+                            'boot_part': 1,
+                            'device_id': 0,
+                            'grub_interface': 'hd0',
+                            'uboot_interface': 'scsi',
+                            'uuid': 'ata-ST500DM002-1BD142_S2AKYFSN'
+                        },
+                        'UUID-required': True
+                    }
+                }
+            }
+        }
+        self.assertTrue(template_dict['parameters'] == parameters['parameters'])
+        self.assertIn('sata', template_dict['actions']['boot']['methods']['grub-efi'])
+        commands = {
+            'commands': [
+                'insmod gzio',
+                'linux (hd0,gpt1)/{KERNEL} console=ttyS0,115200n8 debug root=/dev/sda2 rw ip=:::::eth0:dhcp',
+                'initrd (hd0,gpt1/{RAMDISK}',
+                'boot']}
+        self.assertEqual(
+            commands,
+            template_dict['actions']['boot']['methods']['grub-efi']['sata']
+        )
+
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
@@ -590,6 +633,7 @@ class TestTemplates(unittest.TestCase):
         data = """{% extends 'cubietruck.jinja2' %}
 {% set usb_label = 'SanDisk_Ultra' %}
 {% set sata_label = 'ST160LM003' %}
+{% set uuid_required = False %}
 {% set usb_uuid = "usb-SanDisk_Ultra_20060775320F43006019-0:0" %}
 {% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
 {% set connection_command = 'telnet localhost 6002' %}

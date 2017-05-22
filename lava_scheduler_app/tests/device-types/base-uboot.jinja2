@@ -48,7 +48,7 @@
 
 {# adds the parameters: top level block #}
 {% block vland %}
-{{ super() -}}
+{{ super() }}
 {% if text_offset %}
   text_offset: '{{text_offset}}'
 {% endif %}
@@ -82,29 +82,6 @@
     ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
 {% endif %}
-{%- if sata_uuid or sd_uuid or usb_uuid %}
-  media:
-{% if sata_uuid %}
-    sata:
-      UUID-required: False
-      {{ sata_label|default('ST160LM003') }}:
-        uuid: {{ sata_uuid }}
-        device_id: {{ sata_id|default(0) }}
-        uboot_interface: {{ sata_interface|default('scsi') }}
-{% endif %}
-{% if sd_uuid %}
-    sd:
-      {{ sd_label }}:
-        uuid: {{ sd_uuid }}
-        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
-{% endif %}
-{% if usb_uuid %}
-    usb:
-      {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
-        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
-{% endif %}
-{%- endif %}
 {% endblock vland %}
 
 {% block body %}
