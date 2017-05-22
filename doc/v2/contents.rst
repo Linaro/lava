@@ -124,6 +124,7 @@ Writing tests for LAVA
    healthchecks
    hacking-session
    qemu_options
+   secondary-media
    dispatcher-actions
    deploy-lxc
    multinode
@@ -159,6 +160,7 @@ LAVA administration guide
    simple-admin
    admin-backups
    advanced-installation
+   admin-secondary-media
    growing_your_lab
    pipeline-server
    pipeline-admin
