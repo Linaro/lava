@@ -94,9 +94,10 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             return
         if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -110,4 +111,5 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ExtractModules())
         self.internal_pipeline.add_action(ApplyOverlayTftp())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(self.parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())
