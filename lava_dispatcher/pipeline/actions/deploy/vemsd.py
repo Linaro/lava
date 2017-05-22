@@ -280,14 +280,19 @@ class MountVExpressMassStorageDevice(Action):
         device_path = "/dev/disk/by-label/%s" % self.microsd_fs_label
         try:
             os.path.realpath(device_path)
-        except:
+        except OSError:
             raise InfrastructureError("Unable to find disk by label %s" % device_path)
 
         mount_point = "/mnt/%s" % self.microsd_fs_label
+        if not os.path.exists(mount_point):
+            try:
+                self.logger.debug("Creating mount point '%s'", mount_point)
+                os.makedirs(mount_point, 0o755)
+            except OSError:
+                raise InfrastructureError("Failed to create mount point %s", mount_point)
+
         mount_cmd = ['mount', device_path, mount_point]
-        try:
-            self.run_command(mount_cmd)
-        except:
+        if not self.run_command(mount_cmd, allow_silent=True):
             raise InfrastructureError("Failed to mount device %s to %s" % (device_path, mount_point))
         self.set_namespace_data(action=self.name, label='vexpress-fw', key='mount-point', value=mount_point)
         return connection
@@ -351,10 +356,8 @@ class UnmountVExpressMassStorageDevice(Action):
         connection = super(UnmountVExpressMassStorageDevice, self).run(connection, max_end_time, args)
 
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
-        try:
-            self.run_command(["umount", mount_point])
-        except:
-            raise JobError("Failed to unmount device %s" % mount_point)
+        if not self.run_command(["umount", mount_point], allow_silent=True):
+            raise InfrastructureError("Failed to unmount device %s" % mount_point)
         return connection
 
 
