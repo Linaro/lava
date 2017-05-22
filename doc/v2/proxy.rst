@@ -4,7 +4,7 @@ Cache Proxy Setting Up
 ======================
 
 Before, it used to use an internal cache mechanism for downloaded images and
-hwpacks to avoid downloading repeatly, which could save time and bandwidth.
+hwpacks to avoid downloading repeatedly, which could save time and bandwidth.
 
 lava-dispatcher switches to use cache proxy for managing cache files
 automatically. The recommended proxy is Squid.
@@ -22,7 +22,7 @@ install manually: http://wiki.squid-cache.org/SquidFaq/CompilingSquid
 Configure Squid
 ^^^^^^^^^^^^^^^
 
-You will need to customize accroding to your server, like disk layout, space.
+You will need to customize according to your server, like disk layout, space.
 
 Need to analyse and tune by collecting information when squid running with real
 cases, like cache policy, file system.
