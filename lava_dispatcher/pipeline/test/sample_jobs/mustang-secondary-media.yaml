@@ -1,0 +1,108 @@
+device_type: mustang
+
+job_name: test secondary media commands
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    namespace: nfsdeploy
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/vmlinuz-4.9.0-2-arm64
+      type: zimage
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64
+      compression: gz
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz
+      sha256sum: be163cf08119f8f1b8cb44fa4bf1b4a6e10873ac92df6872645535751ad92154
+      compression: gz
+    os: debian
+    timeout:
+      minutes: 5
+    to: tftp
+
+- boot:
+     namespace: nfsdeploy
+     timeout:
+       minutes: 4
+     method: grub-efi
+     auto_login: {login_prompt: 'login:', username: root}
+     commands: nfs
+     prompts:
+     - 'root@stretch:'
+     parameters:
+       shutdown-message: "reboot: Restarting system"
+
+- test:
+     namespace: nfsdeploy
+     timeout:
+       minutes: 2
+     definitions:
+     - repository:
+         metadata:
+           format: Lava-Test Test Definition 1.0
+           name: extra_deps
+           description: "extra dependency installation"
+           os:
+           - debian
+           scope:
+           - functional
+         install:
+           deps:
+           - procps
+           - net-tools
+           - lsb-release
+           - ca-certificates
+       from: inline
+       name: installdeps
+       path: inline/deps.yaml
+     - repository: git://git.linaro.org/qa/test-definitions.git
+       from: git
+       path: ubuntu/smoke-tests-basic.yaml
+       name: smoke-tests
+     - from: git
+       repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       path: lava-test-shell/params/nfs.yaml
+       name: nfs-dns
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode02.yaml
+       name: singlenode-intermediate
+
+- deploy:
+    namespace: satadeploy
+    # secondary media - use the first deploy to get to a system which can deploy the next
+    # in testing, assumed to already be deployed
+    timeout:
+      minutes: 30
+    to: sata
+    os: debian
+    device: ST500DM002 # needs to be exposed in the device-specific UI
+
+- boot:
+    namespace: satadeploy
+    method: grub-efi
+    timeout:
+      minutes: 3
+    commands: sata
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    # these files are part of the image already deployed and are known to the test writer
+    kernel: /boot/vmlinuz-4.9.0-3-arm64
+    ramdisk: /boot/initrd.img-4.9.0-3-arm64
+    root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
+    boot_part: (hd0,gpt1)
+    auto_login:
+      login_prompt: "login:"
+      username: root

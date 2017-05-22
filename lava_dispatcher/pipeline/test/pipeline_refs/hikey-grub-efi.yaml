@@ -55,6 +55,7 @@
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action
   pipeline:
+  - {class: actions.boot.BootloaderSecondaryMedia, name: bootloader-from-media}
   - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}

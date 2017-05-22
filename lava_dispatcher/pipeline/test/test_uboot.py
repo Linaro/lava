@@ -309,18 +309,20 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
-        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
+        uboot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action' and action.parameters['namespace'] == 'boot2'][0]
+        u_boot_media = [action for action in uboot_action.internal_pipeline.actions if action.name == 'uboot-from-media' and action.parameters['namespace'] == 'boot2'][0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
         self.assertEqual(u_boot_media.parameters['kernel'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='kernel'))
+            action='download-action', label='file', key='kernel'))
         self.assertEqual(u_boot_media.parameters['ramdisk'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='ramdisk'))
+            action='compress-ramdisk', label='file', key='ramdisk'))
         self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='dtb'))
+            action='download-action', label='file', key='dtb'))
+        # use the base class name so that uboot-from-media can pick up the value reliably.
         self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='uuid', key='root'))
+            action='bootloader-from-media', label='uuid', key='root'))
         device = u_boot_media.get_namespace_data(action='storage-deploy', label='u-boot', key='device')
         self.assertIsNotNone(device)
         part_reference = '%s:%s' % (

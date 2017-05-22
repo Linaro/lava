@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.actions.boot import (
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
+    BootloaderSecondaryMedia,
     OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
@@ -40,6 +41,7 @@ from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.utils.strings import map_kernel_uboot
 
 
 def uboot_accepts(device, parameters):
@@ -190,7 +192,7 @@ class UBootInterrupt(Action):
         return connection
 
 
-class UBootSecondaryMedia(Action):
+class UBootSecondaryMedia(BootloaderSecondaryMedia):
     """
     Idempotent action which sets the static data only used when this is a boot of secondary media
     already deployed.
@@ -202,30 +204,23 @@ class UBootSecondaryMedia(Action):
         self.description = "let uboot know where to find the kernel in the image on secondary media"
 
     def validate(self):
-        super(UBootSecondaryMedia, self).validate()
-        if 'media' not in self.job.device['parameters']:
+        if 'media' not in self.job.device.get('parameters', []):
             return
         media_keys = self.job.device['parameters']['media'].keys()
         if self.parameters['commands'] not in list(media_keys):
             return
-        if 'kernel' not in self.parameters:
-            self.errors = "Missing kernel location"
+        super(UBootSecondaryMedia, self).validate()
         if 'kernel_type' not in self.parameters:
             self.errors = "Missing kernel_type for secondary media boot"
-        # ramdisk does not have to be specified, nor dtb
-        if 'root_uuid' not in self.parameters:
-            # FIXME: root_node also needs to be supported
-            self.errors = "Missing UUID of the roofs inside the deployed image"
-        if 'boot_part' not in self.parameters:
-            self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+        self.logger.debug("Mapping kernel_type: %s", self.parameters['kernel_type'])
+        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters', None))
+        self.logger.debug("Using bootcommand: %s", bootcommand)
         self.set_namespace_data(
             action='uboot-prepare-kernel', label='kernel-type',
             key='kernel-type', value=self.parameters.get('kernel_type', ''))
+        self.set_namespace_data(
+            action='uboot-prepare-kernel', label='bootcommand', key='bootcommand', value=bootcommand)
 
-        self.set_namespace_data(action=self.name, label='file', key='kernel', value=self.parameters.get('kernel', ''))
-        self.set_namespace_data(action=self.name, label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
-        self.set_namespace_data(action=self.name, label='file', key='dtb', value=self.parameters.get('dtb', ''))
-        self.set_namespace_data(action=self.name, label='uuid', key='root', value=self.parameters['root_uuid'])
         media_params = self.job.device['parameters']['media'][self.parameters['commands']]
         if self.get_namespace_data(action='storage-deploy', label='u-boot', key='device') not in media_params:
             self.errors = "%s does not match requested media type %s" % (

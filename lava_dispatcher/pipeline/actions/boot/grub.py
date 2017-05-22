@@ -32,6 +32,7 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
+    BootloaderSecondaryMedia,
     BootloaderCommandsAction,
     OverlayUnpack,
 )
@@ -92,6 +93,7 @@ class GrubMainAction(BootAction):
     def populate(self, parameters):
         self.expect_shell = parameters.get('expect_shell', True)
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(BootloaderSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         # FIXME: reset_device is a hikey hack due to fastboot/OTG issues

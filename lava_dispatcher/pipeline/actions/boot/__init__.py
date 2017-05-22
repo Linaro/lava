@@ -23,7 +23,6 @@ import re
 import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
-    InfrastructureError,
     JobError,
     Timeout,
     LAVABug)
@@ -419,8 +418,8 @@ class BootloaderCommandOverlay(Action):
             substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
                 action='persistent-nfs-overlay', label='nfs_address', key='serverip')
 
-        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
+        substitutions['{ROOT}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='root')  # UUID label, not a file
+        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='boot_part')
         if self.use_bootscript:
             script = "/script.ipxe"
             bootscript = self.get_namespace_data(action='tftp-deploy', label='tftp', key='tftp_dir') + script
@@ -434,6 +433,39 @@ class BootloaderCommandOverlay(Action):
         self.set_namespace_data(action='bootloader-overlay', label=self.method, key='commands', value=subs)
         self.logger.info("Parsed boot commands: %s", '; '.join(subs))
         return connection
+
+
+class BootloaderSecondaryMedia(Action):
+    """
+    Generic class for secondary media substitutions
+    """
+    def __init__(self):
+        super(BootloaderSecondaryMedia, self).__init__()
+        self.name = "bootloader-from-media"
+        self.summary = "set bootloader strings for deployed media"
+        self.description = "let bootloader know where to find the kernel in the image on secondary media"
+
+    def validate(self):
+        super(BootloaderSecondaryMedia, self).validate()
+        if 'media' not in self.job.device.get('parameters', []):
+            return
+        media_keys = self.job.device['parameters']['media'].keys()
+        if self.parameters['commands'] not in media_keys:
+            return
+        if 'kernel' not in self.parameters:
+            self.errors = "Missing kernel location"
+        # ramdisk does not have to be specified, nor dtb
+        if 'root_uuid' not in self.parameters:
+            # FIXME: root_node also needs to be supported
+            self.errors = "Missing UUID of the roofs inside the deployed image"
+        if 'boot_part' not in self.parameters:
+            self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+        self.set_namespace_data(action='download-action', label='file', key='kernel', value=self.parameters.get('kernel', ''))
+        self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
+        self.set_namespace_data(action='download-action', label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
+        self.set_namespace_data(action='download-action', label='file', key='dtb', value=self.parameters.get('dtb', ''))
+        self.set_namespace_data(action='bootloader-from-media', label='uuid', key='root', value=self.parameters.get('root_uuid', ''))
+        self.set_namespace_data(action='bootloader-from-media', label='uuid', key='boot_part', value=str(self.parameters.get('boot_part')))
 
 
 class OverlayUnpack(Action):
