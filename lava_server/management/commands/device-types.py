@@ -186,6 +186,7 @@ class Command(BaseCommand):
             raise CommandError("Unable to find device-type '%s'" % name)
 
         aliases = [str(alias.name) for alias in device_type.aliases.all()]
+        devices = [str(d.hostname) for d in device_type.device_set.all()]
         self.stdout.write("device_type    : %s" % name)
         self.stdout.write("description    : %s" % device_type.description)
         self.stdout.write("display        : %s" % device_type.display)
@@ -194,9 +195,7 @@ class Command(BaseCommand):
         if not devices:
             self.stdout.write("devices        : %d" % device_type.device_set.count())
         else:
-            self.stdout.write("devices        :")
-            for device in device_type.device_set.all():
-                self.stdout.write("- %s" % device.hostname)
+            self.stdout.write("devices        : %s" % devices)
 
     def handle_list(self, show_all, format_as_csv):
         """ List the device types """
@@ -205,7 +204,6 @@ class Command(BaseCommand):
         device_types = DeviceType.objects.all().order_by("name")
         if show_all:
             device_type_names = [dt.name for dt in device_types]
-            available_types = self.available_device_types()
 
         if format_as_csv:
             fields = ["name", "devices", "installed", "template"]

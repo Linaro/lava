@@ -136,7 +136,7 @@ class Command(BaseCommand):
         )
 
         # "details" sub-command
-        details_parser = sub.add_parser("details", help="Details about a device")
+        details_parser = sub.add_parser("details", help="Details of a device")
         details_parser.add_argument("hostname", help="Hostname of the device")
 
         # "list" sub-command

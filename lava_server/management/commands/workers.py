@@ -41,7 +41,7 @@ class Command(BaseCommand):
         add_parser = sub.add_parser("add", help="Create a worker")
         add_parser.add_argument("hostname", type=str, help="Hostname of the worker")
         add_parser.add_argument(
-            "--description", type=str, default="", help="Worker description"
+            "--description", type=str, default=None, help="Worker description"
         )
         add_parser.add_argument(
             "--health",
