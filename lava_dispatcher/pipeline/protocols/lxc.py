@@ -162,8 +162,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 self.logger.debug("%s protocol: issue stop, to persist",
                                   self.name)
                 cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
-                self.logger.debug("%s protocol: executing '%s'", self.name,
-                                  cmd)
             else:
                 self.logger.debug("%s protocol: destroy", self.name)
                 if self.custom_lxc_path:
@@ -173,8 +171,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                         self.lxc_name, os.path.dirname(abs_path))
                 else:
                     cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
-                self.logger.debug("%s protocol: executing '%s'", self.name,
-                                  cmd)
+            self.logger.debug("%s protocol: executing '%s'", self.name, cmd)
             shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                                  logger=self.logger)
             # execute the command.
