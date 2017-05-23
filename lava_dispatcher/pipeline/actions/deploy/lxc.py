@@ -181,9 +181,7 @@ class LxcCreateAction(DeployAction):
             lxc_cmd = lxc_create + [verbose, '-t',
                                     self.lxc_data['lxc_template'], '-n',
                                     self.lxc_data['lxc_name'], '--',
-                                    '--release',
-                                    self.lxc_data['lxc_release'], '--arch',
-                                    self.lxc_data['lxc_arch']]
+                                    '--release', self.lxc_data['lxc_release']]
             if self.lxc_data['lxc_mirror']:
                 lxc_cmd += ['--mirror', self.lxc_data['lxc_mirror']]
             if self.lxc_data['lxc_security_mirror']:
@@ -197,9 +195,9 @@ class LxcCreateAction(DeployAction):
                                     self.lxc_data['lxc_template'], '-n',
                                     self.lxc_data['lxc_name'], '--', '--dist',
                                     self.lxc_data['lxc_distribution'],
-                                    '--release',
-                                    self.lxc_data['lxc_release'], '--arch',
-                                    self.lxc_data['lxc_arch']]
+                                    '--release', self.lxc_data['lxc_release']]
+        if self.lxc_data['lxc_arch']:
+            lxc_cmd += ['--arch', self.lxc_data['lxc_arch']]
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
         if isinstance(cmd_out, str):
             if 'exists' in cmd_out and self.lxc_data['lxc_persist']:

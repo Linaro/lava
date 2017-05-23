@@ -15,7 +15,6 @@ protocols:
     template: debian
     distribution: debian
     release: sid
-    arch: amd64
 
 actions:
   - deploy:

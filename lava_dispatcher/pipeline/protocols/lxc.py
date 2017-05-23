@@ -59,7 +59,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 [parameters['protocols'][self.name]['name'], str(job_id)])
         self.lxc_dist = parameters['protocols'][self.name]['distribution']
         self.lxc_release = parameters['protocols'][self.name]['release']
-        self.lxc_arch = parameters['protocols'][self.name]['arch']
+        self.lxc_arch = parameters['protocols'][self.name].get('arch', None)
         self.lxc_template = parameters['protocols'][self.name].get(
             'template', 'download')
         self.lxc_mirror = parameters['protocols'][self.name].get('mirror',
@@ -84,8 +84,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         if 'distribution' not in parameters['protocols']['lava-lxc']:
             return False
         if 'release' not in parameters['protocols']['lava-lxc']:
-            return False
-        if 'arch' not in parameters['protocols']['lava-lxc']:
             return False
         return True
 

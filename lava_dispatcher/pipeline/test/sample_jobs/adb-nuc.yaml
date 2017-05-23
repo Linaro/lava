@@ -14,7 +14,6 @@ protocols:
     template: debian
     distribution: debian
     release: jessie
-    arch: amd64
     mirror: http://ftp.us.debian.org/debian/
     security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
 
