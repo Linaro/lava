@@ -427,6 +427,31 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIsInstance(device_dict['commands']['hard_reset'], list)
         self.assertTrue(device.is_valid())
 
+    def test_auto_login(self):
+        data = yaml.load(self.factory.make_job_yaml())
+        validate_submission(data)
+
+        boot_params = None
+        for name, params in ((x, d[x])
+                             for x, d in ((d.keys()[0], d)
+                                          for d in data['actions'])):
+            if name == 'boot':
+                boot_params = params
+                break
+        self.assertIsNotNone(boot_params)
+
+        auto_login = {}
+        boot_params['auto_login'] = auto_login
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login['login_prompt'] = "login:"
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login.update({
+            'username': "bob",
+            'password_prompt': "Password:",
+            'password': "hello"
+        })
+        validate_submission(data)
+
     def test_visibility(self):
         user = self.factory.make_user()
         user2 = self.factory.make_user()
