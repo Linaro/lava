@@ -305,7 +305,7 @@ class Mapper(object):
         registered entity.
         """
         if "." in name:
-            api_name, meth_name = name.split('.', 1)
+            api_name, meth_name = name.rsplit('.', 1)
         else:
             meth_name = name
             api_name = ''
