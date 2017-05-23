@@ -858,7 +858,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             'lava-lxc': {
                 'name': 'pipeline-lxc-test', 'template': 'debian',
                 'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
-                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/'}
         }
         for role, _ in jobs.iteritems():
             if role == 'server':
@@ -879,11 +879,11 @@ class TestYamlMultinode(TestCaseWithFactory):
             'lava-lxc': {
                 'name': 'pipeline-lxc-test', 'template': 'debian',
                 'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
-                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/'}
         }
         server_protocol_data = {
             'lava-lxc': {
-                'arch': 'amd64', 'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
+                'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
                 'name': 'lxc-hikey-oe', 'release': 'jessie', 'template': 'debian'}
         }
         for role, _ in jobs.iteritems():

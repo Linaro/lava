@@ -46,7 +46,6 @@ Protocol elements
      name: lxc-device
      distribution: fedora
      release: '23'
-     arch: amd64
 
   actions:
   - deploy:
@@ -162,7 +161,6 @@ Protocol elements
      template: debian
      distribution: debian
      release: sid
-     arch: amd64
      mirror: http://ftp.us.debian.org/debian/
      security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
 
