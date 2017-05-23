@@ -1061,7 +1061,7 @@ class SchedulerAPI(ExposedAPI):
                 404, "Device '%s' was not found." % hostname
             )
         if not device.save_configuration(jinja_str):
-            raise xmlrpclib.Faul(
+            raise xmlrpclib.Fault(
                 400, "Unable to store the configuration for %s on disk" % hostname
             )
 
