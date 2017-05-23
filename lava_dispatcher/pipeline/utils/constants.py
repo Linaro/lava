@@ -66,7 +66,7 @@ ANDROID_TMP_DIR = '/data/local/tmp'
 LXC_PATH = "/var/lib/lxc"
 
 # LXC finalize timeout
-LAVA_LXC_TIMEOUT = 30
+LAVA_LXC_TIMEOUT = 90
 
 # LXC templates with mirror option
 LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
