@@ -81,6 +81,8 @@ TMP_DIR = "/var/lib/lava/dispatcher/slave/tmp"
 
 # Create the logger that will be configured after arguments parsing
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+# Set logging timezone to UTC
+logging.Formatter.converter = time.gmtime
 LOG = logging.getLogger("dispatcher-slave")
 
 
