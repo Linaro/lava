@@ -8,8 +8,8 @@ The job with ID # {{ job.id }} is now in status {{ job.get_status_display() }}. 
 
 Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 
-{# Send verbose emails only if the job is finished. #}
-{%- if job.status > 1 %}
+{# Send verbose emails only if the job is finished as complete or incomplete. #}
+{%- if job.status == 2 or job.status == 3 %}
 {%- if job.notification.verbosity < 2 %}
 
 Device details:
