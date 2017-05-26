@@ -54,6 +54,11 @@ class AutoLoginTestCase(StdoutTestCase):
                                 'username': 'bob',
                             }},
                            ["Value for 'login_prompt' cannot be empty"])
+        self._check_valid({'prompts': 'hello',
+                           'auto_login': {
+                               'login_prompt': 'login:',
+                               'username': 'bob',
+                           }})
 
     def test_password_prompt(self):
         self._check_errors({'prompts': 'hello',
