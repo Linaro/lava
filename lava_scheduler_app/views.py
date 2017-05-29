@@ -2107,6 +2107,12 @@ def job_resubmit(request, pk):
             else:
                 definition = job.display_definition
 
+            # Add old job absolute url to metadata for pipeline jobs.
+            if job.is_pipeline:
+                obj = yaml.load(definition)
+                obj.setdefault("metadata", {})["old_job"] = str(job.get_absolute_url())
+                definition = yaml.dump(obj, default_flow_style=False)
+
             if request.user != job.owner and not request.user.is_superuser \
                and not utils.is_member(request.user, job.owner):
                 obj = simplejson.loads(definition)
