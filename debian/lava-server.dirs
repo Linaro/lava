@@ -2,6 +2,7 @@
 /etc/lava-server/reports/
 /etc/lava-server/views/
 /etc/lava-server/templates
+/etc/lava-server/dispatcher-config/devices/
 /etc/lava-server/dispatcher-config/health-checks/
 /etc/lava-server/dispatcher.d
 /var/log/lava-server/
