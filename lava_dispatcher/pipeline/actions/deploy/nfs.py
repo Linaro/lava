@@ -111,5 +111,5 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ExtractModules())
         self.internal_pipeline.add_action(ApplyOverlayTftp())
-        if self.test_needs_deployment(self.parameters):
+        if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
