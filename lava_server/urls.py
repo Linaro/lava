@@ -21,7 +21,6 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
-from linaro_django_xmlrpc import urls as api_urls
 from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
@@ -67,25 +66,22 @@ urlpatterns = [
     url(r'^admin/jsi18n', javascript_catalog),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
         include(admin.site.urls)),
+
+    # RPC endpoints
     url(r'^{mount_point}RPC2/?'.format(mount_point=settings.MOUNT_POINT),
         linaro_django_xmlrpc_views_handler,
         name='lava.api_handler',
-        kwargs={
-            'mapper': mapper,
-            'help_view': 'lava.api_help'}),
+        kwargs={'mapper': mapper,
+                'help_view': 'lava.api_help'}),
     url(r'^{mount_point}api/help/$'.format(mount_point=settings.MOUNT_POINT),
         linaro_django_xmlrpc_views_help,
         name='lava.api_help',
-        kwargs={
-            'mapper': mapper}),
-    url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
-        include(api_urls.token_urlpatterns)),
-    # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
-    url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
-        include(api_urls.default_mapper_urlpatterns)),
+        kwargs={'mapper': mapper}),
 
     url(r'^{mount_point}dashboard/'.format(mount_point=settings.MOUNT_POINT),
         include('dashboard_app.urls')),
+    url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
+        include('linaro_django_xmlrpc.urls')),
     url(r'^{mount_point}results/'.format(mount_point=settings.MOUNT_POINT),
         include('lava_results_app.urls')),
     url(r'^{mount_point}scheduler/'.format(mount_point=settings.MOUNT_POINT),

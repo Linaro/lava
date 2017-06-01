@@ -19,28 +19,13 @@
 
 from django.conf.urls import url
 
-from linaro_django_xmlrpc.globals import mapper
 from linaro_django_xmlrpc.views import (
-    handler, create_token, delete_token,
+    create_token, delete_token,
     delete_unused_tokens, edit_token, tokens,
 )
 
 
-default_mapper_urlpatterns = [
-    url(r'^help/$', help,
-        name='linaro_django_xmlrpc.views.default_help',
-        kwargs={
-            'mapper': mapper,
-        }),
-    url(r'^RPC2/$', handler,
-        name='linaro_django_xmlrpc.views.default_handler',
-        kwargs={
-            'mapper': mapper,
-            'help_view': 'linaro_django_xmlrpc.views.default_help'
-        })]
-
-
-token_urlpatterns = [
+urlpatterns = [
     url(r'^tokens/$', tokens, name='linaro_django_xmlrpc_tokens'),
     url(r'^tokens/create/$', create_token, name='linaro_django_xmlrpc.views.create_token'),
     url(r'^tokens/(?P<object_id>\d+)/delete/$', delete_token,
@@ -49,5 +34,3 @@ token_urlpatterns = [
         name='linaro_django_xmlrpc.views.delete_unused_tokens'),
     url(r'^tokens/(?P<object_id>\d+)/edit/$', edit_token,
         name='linaro_django_xmlrpc.views.edit_token')]
-
-urlpatterns = default_mapper_urlpatterns + token_urlpatterns

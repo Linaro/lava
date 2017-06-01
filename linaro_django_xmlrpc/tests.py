@@ -563,49 +563,6 @@ class SystemAPITest(TestCase):
         self.assertIn("introspect", self.system_api.getCapabilities())
 
 
-class HandlerAuthTests(TestCaseWithScenarios):
-
-    scenarios = [
-        ('no_space_in_http_authorization', {
-            'HTTP_AUTHORIZATION': "no_space_here",
-            'text': "Invalid HTTP_AUTHORIZATION header",
-            'status_code': 400,
-        }),
-        ('not_basic_auth', {
-            'HTTP_AUTHORIZATION': "Bogus foobar",
-            'text': "Unsupported HTTP_AUTHORIZATION header, only Basic scheme is supported",
-            'status_code': 400,
-        }),
-        ('bad_base64_header', {
-            'HTTP_AUTHORIZATION': "Basic XNlcjp0b2tlbg==",  # 'user:token' encoded, first character removed ('d')
-            'text': "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding",
-            'status_code': 400,
-        }),
-        ('no_user_colon_pass', {
-            'HTTP_AUTHORIZATION': "Basic dXNlcnRva2Vu",  # 'usertoken' encoded
-            'text': "Corrupted HTTP_AUTHORIZATION header, no user:pass",
-            'status_code': 400,
-        }),
-        ('invalid_token', {
-            'HTTP_AUTHORIZATION': "Basic dXNlcjp0b2tlbg==",  # 'user:token' encoded
-            'text': "Invalid token",
-            'status_code': 401,
-        }),
-    ]
-
-    def setUp(self):
-        super(HandlerAuthTests, self).setUp()
-        self.request_data = xmlrpclib.dumps((), methodname="system.listMethods")
-        self.url = reverse("linaro_django_xmlrpc.views.default_handler")
-
-    def test_invalid_http_authorization_header(self):
-        response = self.client.post(
-            self.url, data=self.request_data,
-            content_type="text/xml",
-            HTTP_AUTHORIZATION=self.HTTP_AUTHORIZATION)
-        self.assertContains(response, text=self.text, status_code=self.status_code)
-
-
 class AuthTokenTests(TestCase):
 
     _USER = "user"
