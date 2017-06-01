@@ -26,7 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, loader, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
 from linaro_django_xmlrpc.models import (
@@ -139,14 +139,12 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pyl
             }
             for method in system_methods
         ]}
-    template = loader.get_template(template_name)
-    return HttpResponse(template.render({
-        'methods': methods,
-        'context_help': ['data-export'],
-        'site_url': "{scheme}://{domain}".format(
-            scheme=scheme,
-            domain=Site.objects.get_current().domain)
-    }, request=request))
+    domain = Site.objects.get_current().domain
+    return render(request, template_name,
+                  {'methods': methods,
+                   'context_help': ['data-export'],
+                   'site_url': "{scheme}://{domain}".format(scheme=scheme,
+                                                            domain=domain)})
 
 
 @login_required
@@ -157,14 +155,10 @@ def tokens(request):
     token_list = AuthToken.objects.filter(user=request.user).order_by(
         "last_used_on")
     unused = AuthToken.objects.filter(user=request.user, last_used_on__isnull=True).count()
-    template = loader.get_template("linaro_django_xmlrpc/tokens.html")
-    return HttpResponse(template.render(
-        {
-            "token_list": token_list,
-            "unused": unused,
-            "context_help": ["first_steps"],
-        },
-        request=request))
+    return render(request, "linaro_django_xmlrpc/tokens.html",
+                  {"token_list": token_list,
+                   "unused": unused,
+                   "context_help": ["first_steps"]})
 
 
 @login_required
@@ -182,12 +176,8 @@ def create_token(request):
                 reverse("linaro_django_xmlrpc_tokens"))
     else:
         form = AuthTokenForm()
-    template = loader.get_template("linaro_django_xmlrpc/create_token.html")
-    return HttpResponse(template.render(
-        {
-            "form": form,
-        },
-        request=request))
+    return render(request, "linaro_django_xmlrpc/create_token.html",
+                  {"form": form})
 
 
 @login_required
@@ -197,12 +187,8 @@ def delete_token(request, object_id):
         token.delete()
         return HttpResponseRedirect(
             reverse("linaro_django_xmlrpc_tokens"))
-    template = loader.get_template("linaro_django_xmlrpc/authtoken_confirm_delete.html")
-    return HttpResponse(template.render(
-        {
-            'token': token,
-        },
-        request=request))
+    return render(request, "linaro_django_xmlrpc/authtoken_confirm_delete.html",
+                  {"token": token})
 
 
 @login_required
@@ -216,13 +202,8 @@ def edit_token(request, object_id):
                 reverse("linaro_django_xmlrpc_tokens"))
     else:
         form = AuthTokenForm(instance=token)
-    template = loader.get_template("linaro_django_xmlrpc/edit_token.html")
-    return HttpResponse(template.render(
-        {
-            "token": token,
-            "form": form,
-        },
-        request=request))
+    return render(request, "linaro_django_xmlrpc/edit_token.html",
+                  {"token": token, "form": form})
 
 
 @login_required
@@ -234,10 +215,5 @@ def delete_unused_tokens(request):
         return HttpResponseRedirect(
             reverse("linaro_django_xmlrpc_tokens")
         )
-    template = loader.get_template("linaro_django_xmlrpc/tokens.html")
-    return HttpResponse(template.render(
-        {
-            "token_list": token_list,
-            "context_help": ["lava-tool"],
-        },
-        request=request))
+    return render(request, "linaro_django_xmlrpc/tokens.html",
+                  {"token_list": token_list, "context_help": ["lava-tool"]})
