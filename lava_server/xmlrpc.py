@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import subprocess
 import yaml
 import xmlrpclib
+
 from django.http import Http404
+
 from dashboard_app.models import Bundle
 from dashboard_app.xmlrpc import errors
 from django.core.exceptions import PermissionDenied
@@ -55,6 +59,33 @@ class LavaSystemAPI(SystemAPI):
             return self.user.username
         else:
             return None
+
+    def version(self):
+        """
+        Name
+        ----
+        `system.version` ()
+
+        Description
+        -----------
+        Return the lava-server version string
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        lava-server version string
+        """
+
+        changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
+        if os.path.exists(changelog):
+            deb_version = subprocess.check_output((
+                'dpkg-query', '-W', "-f=${Version}\n",
+                "lava-server")).strip().decode('utf-8')
+            return deb_version
+        return ''
 
     def user_can_view_jobs(self, job_list, username=None):
         """
