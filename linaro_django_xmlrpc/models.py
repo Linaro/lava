@@ -22,8 +22,10 @@ Empty module for Django to pick up this package as Django application
 
 import inspect
 import logging
+import pydoc
 import random
 import xmlrpclib
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -148,54 +150,12 @@ class CallContext(object):
 
     def __init__(self, user, mapper, dispatcher, request=None):
         if user is not None and user.is_authenticated() and user.is_active:
-            self._user = user
+            self.user = user
         else:
-            self._user = None
-        self._mapper = mapper
-        self._dispatcher = dispatcher
-        self._request = request
-
-    @property
-    def user(self):
-        """
-        Return the user making the request.
-
-        The use of authentication tokens means that this can be different to
-        request.user.
-        """
-        return self._user
-
-    @property
-    def mapper(self):
-        """
-        Return the XML-RPC mapper.
-
-        Mapper provides a binding between method names and ExposedAPI classes.
-        It is normally only needed in special situations, such as when
-        implementing SystemAPI class.
-        """
-        return self._mapper
-
-    @property
-    def dispatcher(self):
-        """
-        Return the XML-RPC dispatcher object.
-
-        Dispatcher provides a mechanism for invoking XML-RPC methods. It is
-        normally only needed in special situations, such as when implementing
-        SystemAPI class.
-        """
-        return self._dispatcher
-
-    @property
-    def request(self):
-        """
-        Return the HttpRequest object.
-
-        Generally, you won't need to look at this -- the dispatcher will have
-        interpreted the post data and so on.  But sometimes it's essential.
-        """
-        return self._request
+            self.user = None
+        self.mapper = mapper
+        self.dispatcher = dispatcher
+        self.request = request
 
 
 class ExposedAPI(object):
@@ -278,17 +238,13 @@ class Mapper(object):
         logging.basicConfig()
         self.logger = logging.getLogger("linaro-django-xmlrpc-mapper")
 
-    def register(self, cls, name=None):
+    def register(self, cls, name):
         """
         Expose specified object or class under specified name
-
-        Name defaults to the name of the class.
         """
         if not isinstance(cls, type) or not issubclass(cls, ExposedAPI):
             raise TypeError(
                 "Only ExposedAPI subclasses can be registered with the mapper")
-        if name is None:
-            name = cls.__name__
         if name in self.registered:
             raise ValueError(
                 "Name %r is already registered with this mapper" % name)
@@ -319,7 +275,7 @@ class Mapper(object):
         except:
             # TODO: Perhaps this should be an APPLICATION_ERROR?
             self.logger.exception("unable to instantiate API class %r", cls)
-            obj = None
+            return
         meth = getattr(obj, meth_name, None)
         if not inspect.ismethod(meth):
             return
@@ -556,7 +512,6 @@ class SystemAPI(ExposedAPI):
         if impl is None:
             return ""
         else:
-            import pydoc
             return pydoc.getdoc(impl)
 
     def _multicall_dispatch_one(self, subcall):
