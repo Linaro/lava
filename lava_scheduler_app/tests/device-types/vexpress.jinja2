@@ -1,0 +1,228 @@
+{% extends 'base.jinja2' %}
+
+{% set vexpress_supports_vemsd = vexpress_supports_vemsd|default(true) %}
+{% set vexpress_supports_uboot = vexpress_supports_uboot|default(true) %}
+{% set vexpress_supports_uefi = vexpress_supports_uefi|default(true) %}
+
+{% set base_high_limits = base_high_limits|default(true) %}
+{% set base_uboot_commands = (
+"          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0") -%}
+
+{% set base_uboot_high_limits =(
+"          - setenv initrd_high " + vexpress_uboot_initrd_high|default('0xffffffff') + "
+          - setenv fdt_high " + vexpress_uboot_fdt_high|default('0xffffffff') ) -%}
+
+{% set base_uboot_tftp_commands = uboot_tftp_commands|default(
+"          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
+
+{% set base_uboot_bootcmd = uboot_bootcmd|default(
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
+
+{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
+
+{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
+
+{% set base_uboot_usb_commands = uboot_usb_commands|default(
+"          - usb start") -%}
+
+{% set uboot_needs_usb = uboot_needs_usb|default(false) %}
+
+{% set usb_uuid = usb_uuid|default('') %}
+{% set usb_device_id = usb_device_id|default(0) %}
+
+{% set uboot_mac_addr = uboot_mac_addr|default('') %}
+{% set base_uboot_set_mac = (
+"          - setenv ethaddr " + uboot_mac_addr) -%}
+
+{% set uboot_set_mac = uboot_set_mac|default(false) %}
+
+{# adds the parameters: top level block #}
+{% block vland %}
+{{ super() -}}
+{% if text_offset %}
+  text_offset: '{{text_offset}}'
+{% endif %}
+{% if vexpress_booti_kernel_addr %}
+  image:
+    kernel: '{{ booti_kernel_addr|default(vexpress_booti_kernel_addr) }}'
+    ramdisk: '{{ booti_ramdisk_addr|default(vexpress_booti_ramdisk_addr) }}'
+    dtb: '{{ booti_dtb_addr|default(vexpress_booti_dtb_addr) }}'
+  booti:
+    kernel: '{{ booti_kernel_addr|default(vexpress_booti_kernel_addr) }}'
+    ramdisk: '{{ booti_ramdisk_addr|default(vexpress_booti_ramdisk_addr) }}'
+    dtb: '{{ booti_dtb_addr|default(vexpress_booti_dtb_addr) }}'
+{% endif %}
+{% if vexpress_bootm_kernel_addr %}
+  uimage:
+    kernel: '{{ bootm_kernel_addr|default(vexpress_bootm_kernel_addr) }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default(vexpress_bootm_ramdisk_addr) }}'
+    dtb: '{{ bootm_dtb_addr|default(vexpress_bootm_dtb_addr) }}'
+  bootm:
+    kernel: '{{ bootm_kernel_addr|default(vexpress_bootm_kernel_addr) }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default(vexpress_bootm_ramdisk_addr) }}'
+    dtb: '{{ bootm_dtb_addr|default(vexpress_bootm_dtb_addr) }}'
+{% endif %}
+{% if vexpress_bootz_kernel_addr %}
+  zimage:
+    kernel: '{{ bootz_kernel_addr|default(vexpress_bootz_kernel_addr) }}'
+    ramdisk: '{{ bootz_ramdisk_addr|default(vexpress_bootz_ramdisk_addr) }}'
+    dtb: '{{ bootz_dtb_addr|default(vexpress_bootz_dtb_addr) }}'
+  bootz:
+    kernel: '{{ bootz_kernel_addr|default(vexpress_bootz_kernel_addr) }}'
+    ramdisk: '{{ bootz_ramdisk_addr|default(vexpress_bootz_ramdisk_addr) }}'
+    dtb: '{{ bootz_dtb_addr|default(vexpress_bootz_dtb_addr) }}'
+{% endif %}
+{%- if sata_uuid or sd_uuid or usb_uuid %}
+  media:
+{% if sata_uuid %}
+    sata:
+      UUID-required: False
+      {{ sata_label|default('ST160LM003') }}:
+        uuid: {{ sata_uuid }}
+        device_id: {{ sata_id|default(0) }}
+        uboot_interface: {{ sata_interface|default('scsi') }}
+{% endif %}
+{% if sd_uuid %}
+    sd:
+      {{ sd_label }}:
+        uuid: {{ sd_uuid }}
+        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
+{% endif %}
+{% if usb_uuid %}
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
+{% endif %}
+{%- endif %}
+{% endblock vland %}
+
+{% block body %}
+device_type: {{ device_type|default('vexpress') }}
+
+usb_filesystem_label: '{{ usb_filesystem_label|default('VEMSD') }}'
+
+{% set console_device = console_device | default('ttyAMA0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set base_kernel_args = extra_kernel_args | default(vexpress_kernel_args) %}
+{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
+
+{% if vexpress_sky2_mac %}
+{% set base_kernel_args = base_kernel_args + ' sky2.mac_address=' + vexpress_sky2_mac %}
+{% endif %}
+
+actions:
+  deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+      append_dtb: {{ append_dtb|default(false) }}
+      use_xip: {{ use_xip|default(false) }}
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      nfs:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: '{{ ssh_host|default('') }}'
+        port: {{ ssh_port|default(22) }}
+        user: {{ ssh_user|default('root') }}
+        identity_file: {{ ssh_identity_file }}
+      tftp:
+{% if vexpress_supports_vemsd %}
+      vemsd:
+        parameters:
+          mcc_prompt: '{{ mcc_prompt|default('Cmd>') }}'
+          msd_mount_cmd: '{{ msd_mount_cmd|default('usb_on') }}'
+          flash_prompt: '{{ flash_prompt|default('Flash>') }}'
+          flash_enter_cmd: '{{ flash_enter_cmd|default('flash') }}'
+          flash_erase_cmd: '{{ flash_erase_cmd|default('eraseall') }}'
+          flash_erase_msg: '{{ flash_erase_msg|default('Erasing Flash') }}'
+          flash_exit_cmd: '{{ flash_exit_cmd|default('exit') }}'
+          autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
+{% endif %}
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      minimal:
+      ssh:
+{% if vexpress_supports_uboot %}
+      u-boot:
+        parameters:
+          mkimage_arch: {{ uboot_mkimage_arch|default('arm') }}
+          bootloader_prompt: {{ bootloader_prompt|default('VExpress64') }}
+          interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
+          interrupt_char: "{{ interrupt_char|default('') }}"
+          boot_message: {{ boot_message|default('Booting Linux') }}
+        nfs:
+          commands:
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
+{{ base_uboot_tftp_commands }}
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
+            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_nfs_bootcmd }}
+        norflash:
+          commands:
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
+            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "boot"
+        ramdisk:
+          commands:
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
+{{ base_uboot_tftp_commands }}
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_tftp_bootcmd }}
+        sata:
+          commands:
+          - scsi scan
+{{ base_uboot_commands }}
+          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
+        usb:
+          commands:
+{{ base_uboot_usb_commands }}
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+          - "setenv loadkernel 'load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
+{% endif %}
+{% endblock body %}

@@ -1,0 +1,9 @@
+{% extends 'vexpress.jinja2' %}
+
+{% set device_type = 'juno' %}
+{% set vexpress_kernel_args = 'rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9' %}
+{% set vexpress_uboot_initrd_high = uboot_initrd_high|default('0xffffffffffffffff') %}
+{% set vexpress_uboot_fdt_high = uboot_fdt_high|default('0xffffffffffffffff') %}
+{% set vexpress_booti_kernel_addr = '0x80080000' %}
+{% set vexpress_booti_ramdisk_addr = '0x84000000' %}
+{% set vexpress_booti_dtb_addr = '0x83000000' %}
