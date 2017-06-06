@@ -29,6 +29,8 @@ from dashboard_app.xmlrpc import DashboardAPI
 from lava_results_app.xmlrpc import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
+from lava_scheduler_app.api.tags import SchedulerTagsAPI
+from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 
 from lava_server.views import index, me, update_irc_settings
 from lava_server.xmlrpc import LavaMapper
@@ -47,6 +49,8 @@ mapper.register(ResultsAPI, 'results')
 mapper.register(SchedulerAPI, 'scheduler')
 mapper.register(SchedulerDevicesAPI, 'scheduler.devices')
 mapper.register(SchedulerDevicesTagsAPI, 'scheduler.devices.tags')
+mapper.register(SchedulerTagsAPI, 'scheduler.tags')
+mapper.register(SchedulerWorkersAPI, 'scheduler.workers')
 
 
 # Root URL patterns
