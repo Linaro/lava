@@ -112,11 +112,18 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if LxcProtocol.name not in [protocol.name for protocol in self.job.protocols]:
             self.errors = "Invalid job - missing protocol"
         self.errors = infrastructure_error('lxc-create')
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
-        self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data'][
+                'lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+            self.set_namespace_data(action='test', label='results',
+                                    key='lava_test_results_dir',
+                                    value=lava_test_results_dir)
+            lava_test_sh_cmd = self.parameters['deployment_data'][
+                'lava_test_sh_cmd']
+            self.set_namespace_data(action=self.name, label='shared',
+                                    key='lava_test_sh_cmd',
+                                    value=lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
@@ -127,10 +134,11 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.internal_pipeline.add_action(LxcAptUpdateAction())
             self.internal_pipeline.add_action(LxcAptInstallAction())
             self.internal_pipeline.add_action(LxcStopAction())
-        # needed if export device environment is also to be used
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(OverlayAction())
-        self.internal_pipeline.add_action(ApplyLxcOverlay())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())
+            self.internal_pipeline.add_action(ApplyLxcOverlay())
 
 
 class LxcCreateAction(DeployAction):

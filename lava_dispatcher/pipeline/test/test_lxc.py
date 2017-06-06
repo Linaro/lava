@@ -194,6 +194,44 @@ class TestLxcWithDevices(StdoutTestCase):
         runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
         self.assertIsNotNone(runner.testdef_levels)
 
+    def test_lxc_without_lxctest(self):  # pylint: disable=too-many-locals
+        lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc-notest.yaml')
+        with open(lxc_yaml) as sample_job_data:
+            data = yaml.load(sample_job_data)
+        parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__),
+                                        '../devices/bbb-01.yaml'))
+        job = parser.parse(yaml.dump(data), device, 4577, None, "",
+                           output_dir=mkdtemp())
+        job.logger = DummyLogger()
+        job.validate()
+        lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        names = [action.name for action in lxc_deploy.internal_pipeline.actions]
+        self.assertNotIn('prepare-tftp-overlay', names)
+        namespace1 = lxc_deploy.parameters.get('namespace', None)
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        namespace = test_def.parameters.get('namespace', None)
+        self.assertIsNotNone(namespace)
+        self.assertIsNotNone(namespace1)
+        self.assertNotEqual(namespace, namespace1)
+        self.assertNotEqual(self.job.pipeline.describe(False), job.pipeline.describe(False))
+        test_actions = [action for action in job.parameters['actions'] if 'test' in action]
+        for action in test_actions:
+            if 'namespace' in action['test']:
+                if action['test']['namespace'] == namespace:
+                    self.assertEqual(action['test']['definitions'][0]['name'], 'smoke-tests-bbb')
+            else:
+                self.fail("Found a test action not from the tftp boot")
+        namespace_tests = [action['test']['definitions'] for action in test_actions
+                           if 'namespace' in action['test'] and action['test']['namespace'] == namespace]
+        self.assertEqual(len(namespace_tests), 1)
+        self.assertEqual(len(test_actions), 1)
+        description_ref = self.pipeline_reference('bbb-lxc-notest.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
     def test_adb_nuc_job(self):
         self.factory = LxcFactory()
         job = self.factory.create_adb_nuc_job('sample_jobs/adb-nuc.yaml',
