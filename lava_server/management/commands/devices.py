@@ -36,22 +36,6 @@ from lava_scheduler_app.models import (
 class Command(BaseCommand):
     help = "Manage devices"
 
-    device_status = {
-        "OFFLINE": Device.OFFLINE,
-        "IDLE": Device.IDLE,
-        "RUNNING": Device.RUNNING,
-        "OFFLINING": Device.OFFLINING,
-        "RETIRED": Device.RETIRED,
-        "RESERVED": Device.RESERVED,
-    }
-
-    health_status = {
-        "UNKNOWN": Device.HEALTH_UNKNOWN,
-        "PASS": Device.HEALTH_PASS,
-        "FAIL": Device.HEALTH_FAIL,
-        "LOOPING": Device.HEALTH_LOOPING,
-    }
-
     def add_arguments(self, parser):
         cmd = self
 
@@ -188,7 +172,7 @@ class Command(BaseCommand):
         """ Print devices list """
         devices = Device.objects.all().order_by("hostname")
         if status is not None:
-            devices = devices.filter(status=self.device_status[status])
+            devices = devices.filter(status=Device.STATUS_REVERSE[status])
         elif not show_all:
             devices = devices.exclude(status=Device.RETIRED)
 
@@ -219,11 +203,11 @@ class Command(BaseCommand):
 
         status = options["status"]
         if status is not None:
-            device.status = self.device_status[status]
+            device.status = Device.STATUS_REVERSE[status]
 
         health = options["health"]
         if health is not None:
-            device.health_status = self.health_status[health]
+            device.health_status = Device.HEALTH_REVERSE[health]
 
         description = options["description"]
         if description is not None:

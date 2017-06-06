@@ -551,6 +551,15 @@ class Device(RestrictedResource):
         (RESERVED, 'Reserved')
     )
 
+    STATUS_REVERSE = {
+        "OFFLINE": OFFLINE,
+        "IDLE": IDLE,
+        "RUNNING": RUNNING,
+        "OFFLINING": OFFLINING,
+        "RETIRED": RETIRED,
+        "RESERVED": RESERVED
+    }
+
     # A device health shows a device is ready to test or not
     HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL, HEALTH_LOOPING = range(4)
     HEALTH_CHOICES = (
@@ -559,6 +568,13 @@ class Device(RestrictedResource):
         (HEALTH_FAIL, 'Fail'),
         (HEALTH_LOOPING, 'Looping'),
     )
+
+    HEALTH_REVERSE = {
+        "UNKNOWN": HEALTH_UNKNOWN,
+        "PASS": HEALTH_PASS,
+        "FAIL": HEALTH_FAIL,
+        "LOOPING": HEALTH_LOOPING
+    }
 
     CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
     HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
