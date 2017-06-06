@@ -81,7 +81,7 @@ class DownloaderAction(RetryAction):
     The retry pipeline for downloads.
     To allow any deploy action to work with multinode, each call *must* set a unique path.
     """
-    def __init__(self, key, path):
+    def __init__(self, key, path, uniquify=True):
         super(DownloaderAction, self).__init__()
         self.name = "download-retry"
         self.description = "download with retry"
@@ -89,6 +89,7 @@ class DownloaderAction(RetryAction):
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
+        self.uniquify = uniquify
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -99,11 +100,11 @@ class DownloaderAction(RetryAction):
         else:
             url = lavaurl.urlparse(parameters[self.key]['url'])
         if url.scheme == 'scp':
-            action = ScpDownloadAction(self.key, self.path, url)
+            action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'http' or url.scheme == 'https':
-            action = HttpDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
+            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
         elif url.scheme == 'file':
-            action = FileDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
+            action = FileDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
         elif url.scheme == 'lxc':
             action = LxcDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
         else:
@@ -122,7 +123,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     as possible.
     """
 
-    def __init__(self, key, path, url):
+    def __init__(self, key, path, url, uniquify=True):
         super(DownloadHandler, self).__init__()
         self.name = "download-action"
         self.description = "download action"
@@ -130,8 +131,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         self.url = url
         self.key = key
-        # Store the files in a sub-directory to keep the path unique
-        self.path = os.path.join(path, key)
+        # If uniquify is True, store the files in a sub-directory to keep the
+        # path unique.
+        self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
 
     def reader(self):
@@ -400,8 +402,8 @@ class FileDownloadAction(DownloadHandler):
     Download a resource from file (copy)
     """
 
-    def __init__(self, key, path, url):
-        super(FileDownloadAction, self).__init__(key, path, url)
+    def __init__(self, *args, **kwargs):
+        super(FileDownloadAction, self).__init__(*args, **kwargs)
         self.name = "file-download"
         self.description = "copy a local file"
         self.summary = "local file copy"
@@ -433,8 +435,8 @@ class HttpDownloadAction(DownloadHandler):
     Download a resource over http or https using requests module
     """
 
-    def __init__(self, key, path, url):
-        super(HttpDownloadAction, self).__init__(key, path, url)
+    def __init__(self, *args, **kwargs):
+        super(HttpDownloadAction, self).__init__(*args, **kwargs)
         self.name = "http-download"
         self.description = "use http to download the file"
         self.summary = "http download"
@@ -488,8 +490,8 @@ class ScpDownloadAction(DownloadHandler):
     Download a resource over scp
     """
 
-    def __init__(self, key, path, url):
-        super(ScpDownloadAction, self).__init__(key, path, url)
+    def __init__(self, *args, **kwargs):
+        super(ScpDownloadAction, self).__init__(*args, **kwargs)
         self.name = "scp-download"
         self.description = "Use scp to copy the file"
         self.summary = "scp download"
