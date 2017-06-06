@@ -84,6 +84,8 @@ class Command(BaseCommand):
                                 help="Make the device private (public by default)")
         add_parser.add_argument("--worker", required=True,
                                 help="The name of the worker")
+        add_parser.add_argument("--tags", nargs="*", required=False,
+                                help="List of tags to add to the device")
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device")
@@ -130,7 +132,7 @@ class Command(BaseCommand):
             self.handle_add(options["hostname"], options["device_type"],
                             options["worker"], options["description"],
                             options["pipeline"], options["public"],
-                            options["online"])
+                            options["online"], options["tags"])
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
@@ -140,7 +142,7 @@ class Command(BaseCommand):
             self.handle_set(options)
 
     def handle_add(self, hostname, device_type, worker_name,
-                   description, pipeline, public, online):
+                   description, pipeline, public, online, tags):
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
@@ -152,10 +154,14 @@ class Command(BaseCommand):
             raise CommandError("Unable to find worker '%s'" % worker_name)
 
         status = Device.IDLE if online else Device.OFFLINE
-        Device.objects.create(hostname=hostname, device_type=dt,
-                              description=description, worker_host=worker,
-                              is_pipeline=pipeline, status=status,
-                              is_public=public)
+        device = Device.objects.create(hostname=hostname, device_type=dt,
+                                       description=description,
+                                       worker_host=worker, is_pipeline=pipeline,
+                                       status=status, is_public=public)
+
+        if tags is not None:
+            for tag in tags:
+                device.tags.add(Tag.objects.get_or_create(name=tag)[0])
 
     def handle_details(self, hostname):
         """ Print device details """
