@@ -263,6 +263,8 @@ case "$1" in
         # Allow lava user to write the secret key
         touch /etc/lava-server/secret_key.conf
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
+        # Allow lavaserver to write device dictionary files
+        chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/dispatcher-config/devices/
         # setup SSHFS - master has empty dir, worker has key
         SSHDIR="$LAVA_SYS_HOME/.ssh"
         if [ ! -d $SSHDIR ]; then
