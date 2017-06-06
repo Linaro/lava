@@ -91,14 +91,15 @@ class Removable(Deployment):
 
 class DDAction(Action):
     """
-    Runs dd against the realpath of the symlink provided by the static device information:
-    device['parameters']['media'] (e.g. usb-SanDisk_Ultra_20060775320F43006019-0:0)
-    in /dev/disk/by-id/ of the initial deployment, on device.
+    Runs dd or a configurable writer against the realpath of the symlink
+    provided by the static device information: device['parameters']['media']
+    (e.g. usb-SanDisk_Ultra_20060775320F43006019-0:0) in /dev/disk/by-id/ of
+    the initial deployment, on device.
     """
     def __init__(self):
         super(DDAction, self).__init__()
         self.name = "dd-image"
-        self.summary = "dd image to drive"
+        self.summary = "write image to drive"
         self.description = "deploy image to drive"
         self.timeout = Timeout(self.name, 600)
         self.boot_params = None
@@ -109,17 +110,43 @@ class DDAction(Action):
         super(DDAction, self).validate()
         if 'device' not in self.parameters:
             self.errors = "missing device for deployment"
-        if 'tool' not in self.parameters['download']:
-            self.errors = "missing download tool for deployment"
-        if 'options' not in self.parameters['download']:
-            self.errors = "missing options for download tool"
-        if 'prompt' not in self.parameters['download']:
-            self.errors = "missing prompt for download tool"
-        if not os.path.isabs(self.parameters['download']['tool']):
-            self.errors = "download tool parameter needs to be an absolute path"
+
+        download_params = self.parameters.get('download')
+        writer_params = self.parameters.get('writer')
+        if not download_params and not writer_params:
+            self.errors = "Neither a download nor a write tool found in parameters"
+
+        if download_params:
+            if 'tool' not in download_params:
+                self.errors = "missing download or writer tool for deployment"
+            if 'options' not in download_params:
+                self.errors = "missing options for download tool"
+            if 'prompt' not in download_params:
+                self.errors = "missing prompt for download tool"
+            if not os.path.isabs(download_params['tool']):
+                self.errors = "download tool parameter needs to be an absolute path"
+
+        if writer_params:
+            if 'tool' not in writer_params:
+                self.errors = "missing writer tool for deployment"
+            if 'options' not in writer_params:
+                self.errors = "missing options for writer tool"
+            if 'download' not in self.parameters:
+                if 'prompt' not in writer_params:
+                    self.errors = "missing prompt for writer tool"
+            if not os.path.isabs(writer_params['tool']):
+                self.errors = "writer tool parameter needs to be an absolute path"
 
         if self.parameters['to'] not in self.job.device['parameters'].get('media', {}):
             self.errors = "media '%s' unavailable for this device" % self.parameters['to']
+
+        # The `image' parameter can be either directly in the Action parameters
+        # if there is a single image file, or within `images' if there are
+        # multiple image files.  In either case, there needs to be one `image'
+        # parameter.
+        img_params = self.parameters.get('images', self.parameters)
+        if 'image' not in img_params:
+            self.errors = "Missing image parameter"
 
         # No need to go further if an error was already detected
         if not self.valid:
@@ -127,8 +154,8 @@ class DDAction(Action):
 
         dd_params = self.parameters.get('dd', None)
         if dd_params:
-            self.dd_prompts = self.parameters['dd'].get('prompts', DD_PROMPTS)
-            self.dd_flags = self.parameters['dd'].get('flags', None)
+            self.dd_prompts = dd_params.get('prompts', DD_PROMPTS)
+            self.dd_flags = dd_params.get('flags')
         else:
             self.dd_prompts = DD_PROMPTS
 
@@ -189,21 +216,36 @@ class DDAction(Action):
             ip_addr, suffix, decompressed_image
         )
         substitutions = {
-            '{DOWNLOAD_URL}': download_url
+            '{DOWNLOAD_URL}': download_url,
+            '{DEVICE}': device_path
         }
-        download_options = substitute([self.parameters['download']['options']], substitutions)[0]
-        download_cmd = "%s %s" % (
-            self.parameters['download']['tool'], download_options
-        )
-        dd_cmd = "dd of='%s' bs=4M" % device_path  # busybox dd does not support other flags
-        if self.dd_flags:
-            dd_cmd = "%s %s" % (dd_cmd, self.dd_flags)
 
-        # set prompt to download prompt to ensure that the secondary deployment has started
+        download_cmd = None
+        download_params = self.parameters.get('download')
+        if download_params:
+            download_options = substitute([download_params['options']], substitutions)[0]
+            download_cmd = ' '.join([download_params['tool'], download_options])
+
+        writer_params = self.parameters.get('writer')
+        if writer_params:
+            dd_options = substitute([writer_params['options']], substitutions)[0]
+            dd_cmd = [writer_params['tool'], dd_options]
+        else:
+            dd_cmd = ["dd of='{}' bs=4M".format(device_path)]  # busybox dd does not support other flags
+        if self.dd_flags:
+            dd_cmd.append(self.dd_flags)
+        cmd = ' '.join(dd_cmd)
+
+        cmd_line = ' '.join([download_cmd, '|', cmd]) if download_cmd else cmd
+
+        # set prompt to either `download' or `writer' prompt to ensure that the
+        # secondary deployment has started
         prompt_string = connection.prompt_str
-        connection.prompt_str = self.parameters['download']['prompt']
+        prompt_param = download_params or writer_params
+        connection.prompt_str = prompt_param['prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        connection.sendline("%s | %s" % (download_cmd, dd_cmd))
+
+        connection.sendline(cmd_line)
         self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
@@ -262,12 +304,23 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         uniquify = parameters.get('uniquify', True)
-        if 'image' in parameters:
+        if 'images' in parameters:
+            for k in parameters['images']:
+                if k == 'yaml_line':
+                    continue
+                self.internal_pipeline.add_action(DownloaderAction(
+                    k, path=self.image_path, uniquify=uniquify))
+                if parameters['images'][k].get('apply-overlay', False):
+                    if self.test_needs_overlay(parameters):
+                        self.internal_pipeline.add_action(ApplyOverlayImage(k))
+            self.internal_pipeline.add_action(DDAction())
+        elif 'image' in parameters:
             self.internal_pipeline.add_action(DownloaderAction(
                 'image', path=self.image_path, uniquify=uniquify))
             if self.test_needs_overlay(parameters):
                 self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())
+
         # FIXME: could support tarballs too
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
