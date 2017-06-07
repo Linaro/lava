@@ -22,11 +22,13 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Tag
 
 
 class SchedulerTagsAPI(ExposedAPI):
 
+    @check_superuser
     def add(self, name, description=None):
         """
         Name
@@ -49,19 +51,13 @@ class SchedulerTagsAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             Tag.objects.create(name=name, description=description)
         except IntegrityError as exc:
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)
 
+    @check_superuser
     def delete(self, name):
         """
         Name

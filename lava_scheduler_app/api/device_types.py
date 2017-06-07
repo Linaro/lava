@@ -23,6 +23,7 @@ import xmlrpclib
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Alias, DeviceType
 
 
@@ -38,6 +39,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         available_types.sort()
         return available_types
 
+    @check_superuser
     def add(self, name, description, display, owners_only,
             health_frequency, health_denominator):
         """
@@ -71,13 +73,6 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         if health_denominator == "hours":
             health_denominator = DeviceType.HEALTH_PER_HOUR
         elif health_denominator == "jobs":
@@ -95,6 +90,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: device-type name is already used.")
 
+    @check_superuser
     def get_template(self, name):
         """
         Name
@@ -115,13 +111,6 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         ------------
         The device-type configuration
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         if name not in self._available_device_types():
             raise xmlrpclib.Fault(
                 404, "Device-type '%s' was not found." % name)
@@ -135,6 +124,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Unable to read device-type configuration: %s" % exc.strerror)
 
+    @check_superuser
     def set_template(self, name, config):
         """
         Name
@@ -157,13 +147,6 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         # Validate the name (should not be a path)
         if name != os.path.basename(name):
             raise xmlrpclib.Fault(
@@ -259,6 +242,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
 
         return dt_dict
 
+    @check_superuser
     def update(self, name, description, display, owners_only, health_frequency,
                health_denominator, health_disabled):
         """
@@ -296,13 +280,6 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
@@ -340,6 +317,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
 
 class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
 
+    @check_superuser
     def add(self, name, alias):
         """
         Name
@@ -362,13 +340,6 @@ class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
@@ -410,6 +381,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
 
         return [a.name for a in dt.aliases.all().order_by("name")]
 
+    @check_superuser
     def delete(self, name, alias):
         """
         Name
@@ -431,13 +403,6 @@ class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:

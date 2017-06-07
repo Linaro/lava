@@ -1,6 +1,8 @@
+from functools import wraps
+from simplejson import JSONDecodeError
 import xmlrpclib
 import yaml
-from simplejson import JSONDecodeError
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
@@ -31,6 +33,20 @@ from lava_scheduler_app.schema import (
 
 # to make a function visible in the API, it must be a member of SchedulerAPI
 # pylint: disable=no-self-use
+
+
+def check_superuser(f):
+    """ decorator to check that the caller is a super-user """
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpclib.Fault(
+                403,
+                "User '%s' is not superuser." % self.user.username
+            )
+        return f(self, *args, **kwargs)
+    return wrapper
 
 
 class SchedulerAPI(ExposedAPI):

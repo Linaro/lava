@@ -23,6 +23,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -34,6 +35,7 @@ from lava_scheduler_app.models import (
 
 class SchedulerDevicesAPI(ExposedAPI):
 
+    @check_superuser
     def add(self, hostname, type_name, worker_hostname,
             user_name=None, group_name=None, public=True,
             status=None, health_status=None, description=None):
@@ -79,13 +81,6 @@ class SchedulerDevicesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         user = group = None
         try:
             device_type = DeviceType.objects.get(name=type_name)
@@ -129,6 +124,7 @@ class SchedulerDevicesAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)
 
+    @check_superuser
     def get_dictionary(self, hostname, render=False):
         """
         Name
@@ -151,13 +147,6 @@ class SchedulerDevicesAPI(ExposedAPI):
         ------------
         The device dictionary
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
@@ -172,9 +161,10 @@ class SchedulerDevicesAPI(ExposedAPI):
         config = device.load_configuration(output_format="raw" if not render else "yaml")
         if config is None:
             raise xmlrpclib.Fault(
-                404, "Device '%s' does not have a confguration" % hostname)
+                404, "Device '%s' does not have a configuration" % hostname)
         return xmlrpclib.Binary(config.encode('utf-8'))
 
+    @check_superuser
     def set_dictionary(self, hostname, dictionary):
         """
         Name
@@ -197,13 +187,6 @@ class SchedulerDevicesAPI(ExposedAPI):
         ------------
         True if the dictionary was saved to file, False otherwise.
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
@@ -232,9 +215,10 @@ class SchedulerDevicesAPI(ExposedAPI):
         This function returns an XML-RPC array in which each item is a
         dictionary with device information
         """
-        devices = Device.objects.all().order_by("hostname")
+        devices = Device.objects.all()
         if not show_all:
             devices = Device.objects.exclude(status=Device.RETIRED)
+        devices = devices.order_by("hostname")
 
         ret = []
         for device in devices:
@@ -307,6 +291,7 @@ class SchedulerDevicesAPI(ExposedAPI):
 
         return device_dict
 
+    @check_superuser
     def update(self, hostname, worker_hostname=None, user_name=None,
                group_name=None, public=True, status=None, health_status=None,
                description=None):
@@ -348,13 +333,6 @@ class SchedulerDevicesAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
@@ -416,6 +394,7 @@ class SchedulerDevicesAPI(ExposedAPI):
 
 class SchedulerDevicesTagsAPI(ExposedAPI):
 
+    @check_superuser
     def add(self, hostname, name):
         """
         Name
@@ -438,13 +417,6 @@ class SchedulerDevicesTagsAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
@@ -482,6 +454,7 @@ class SchedulerDevicesTagsAPI(ExposedAPI):
 
         return [t.name for t in device.tags.all()]
 
+    @check_superuser
     def delete(self, hostname, name):
         """
         Name
@@ -503,13 +476,6 @@ class SchedulerDevicesTagsAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:

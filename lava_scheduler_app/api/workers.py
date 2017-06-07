@@ -22,11 +22,13 @@ import xmlrpclib
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Worker
 
 
 class SchedulerWorkersAPI(ExposedAPI):
 
+    @check_superuser
     def add(self, hostname, description=None, disabled=False):
         """
         Name
@@ -51,13 +53,6 @@ class SchedulerWorkersAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             Worker.objects.create(hostname=hostname,
                                   description=description,
@@ -100,6 +95,7 @@ class SchedulerWorkersAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 404, "Worker '%s' does not have a configuration" % hostname)
 
+    @check_superuser
     def set_config(self, hostname, config):
         """
         Name
@@ -122,13 +118,6 @@ class SchedulerWorkersAPI(ExposedAPI):
         ------------
         True if the configuration was saved to file, False otherwise.
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
@@ -197,6 +186,7 @@ class SchedulerWorkersAPI(ExposedAPI):
                 "hidden": not worker.display,
                 "devices": worker.device_set.count()}
 
+    @check_superuser
     def update(self, hostname, description=None, disabled=None):
         """
         Name
@@ -221,13 +211,6 @@ class SchedulerWorkersAPI(ExposedAPI):
         ------------
         None
         """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-
         try:
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
