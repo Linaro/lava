@@ -30,6 +30,7 @@ from lava_results_app.xmlrpc import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
 from lava_scheduler_app.api.device_types import SchedulerDeviceTypesAPI, SchedulerDeviceTypesAliasesAPI
+from lava_scheduler_app.api.jobs import SchedulerJobsAPI
 from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 
@@ -52,6 +53,7 @@ mapper.register(SchedulerDevicesAPI, 'scheduler.devices')
 mapper.register(SchedulerDevicesTagsAPI, 'scheduler.devices.tags')
 mapper.register(SchedulerDeviceTypesAPI, 'scheduler.device_types')
 mapper.register(SchedulerDeviceTypesAliasesAPI, 'scheduler.device_types.aliases')
+mapper.register(SchedulerJobsAPI, 'scheduler.jobs')
 mapper.register(SchedulerTagsAPI, 'scheduler.tags')
 mapper.register(SchedulerWorkersAPI, 'scheduler.workers')
 
