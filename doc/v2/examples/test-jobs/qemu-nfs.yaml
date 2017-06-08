@@ -35,12 +35,12 @@ actions:
         sha256sum: 21af3cae4a665972dd78b0d0748a8ada3a3001c25e605929054960d2bfee015c
         compression: gz
       kernel:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
-        sha256sum: 714e9669883f4705f3358d11a61cd601e4c938006cbfef0f785a65f3f8f74896
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/vmlinuz-4.9.0-2-arm64
+        sha256sum: 4dc0363bafc93f48e5b60ada3502394f61d9f1cfbf9059ceed30533aca16d706
         image_arg: -kernel {kernel}
       initrd:
-        url: http://snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
-        sha256sum: 4fb2e63d796729e03b6c5ed3f8e5c0ee2ffe94ea5ded800c508d53c303591972
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/initrd.img-4.9.0-2-arm64
+        sha256sum: 4dfdcf9053bea72d7bc1c37f77f43c4447422c68f4ea8b99c6690de2e7f6e3e4
         image_arg: -initrd {initrd}
 
 # BOOT_BLOCK
