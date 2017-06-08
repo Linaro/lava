@@ -34,9 +34,9 @@ from lava_dispatcher.pipeline.actions.test import (
     handle_testcase
 )
 from lava_dispatcher.pipeline.action import (
-    InfrastructureError,
     Pipeline,
     JobError,
+    InfrastructureError,
     TestError,
     LAVABug,
 )
@@ -244,6 +244,18 @@ class TestShellAction(TestAction):
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
         try:
+            feedbacks = []
+            for feedback_ns in self.data.keys():
+                if feedback_ns == self.parameters.get('namespace'):
+                    continue
+                feedback_connection = self.get_namespace_data(
+                    action='shared', label='shared', key='connection',
+                    deepcopy=False, parameters={"namespace": feedback_ns})
+                if feedback_connection:
+                    self.logger.debug("Will listen to feedbacks from '%s'",
+                                      feedback_ns)
+                    feedbacks.append((feedback_ns, feedback_connection))
+
             with connection.test_connection() as test_connection:
                 # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
                 test_connection.sendline(
@@ -261,8 +273,12 @@ class TestShellAction(TestAction):
                     self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
                     test_connection.timeout = self.connection_timeout.duration
 
+                # TODO: when using feedbacks, might be a good idea to loop with shorter timeouts
                 while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                    pass
+                    for feedback in feedbacks:
+                        self.logger.debug("Listening to namespace '%s'", feedback[0])
+                        feedback[1].listen_feedback(timeout=3)
+                        self.logger.debug("Listening to namespace '%s' done", feedback[0])
         finally:
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
