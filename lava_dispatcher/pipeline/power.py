@@ -186,6 +186,7 @@ class FinalizeAction(Action):
         self.summary = "finalize the job"
         self.description = "finish the process and cleanup"
         self.ran = False
+        self.parameters['namespace'] = 'common'
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)

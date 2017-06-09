@@ -210,6 +210,21 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             # output the content and then any validation errors (python3 compatible)
             print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
 
+        # Check that namespaces are used in all actions or none
+        namespaces = set()
+        for action in self.parameters["actions"]:
+            action_name = list(action.keys())[0]
+            namespaces.add(action[action_name]["namespace"])
+
+        # 'common' is a reserved namespace that should not be present with
+        # other namespaces.
+        if len(namespaces) > 1 and 'common' in namespaces:
+            msg = "'common' is a reserved namespace that should not be present with other namespaces"
+            self.logger.error(msg)
+            self.logger.debug("Namespaces: %s", ", ".join(namespaces))
+            raise JobError(msg)
+
+        # validate the pipeline
         try:
             self.pipeline.validate_actions()
         except KeyboardInterrupt:

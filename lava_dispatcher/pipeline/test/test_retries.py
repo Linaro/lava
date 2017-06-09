@@ -101,6 +101,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.section = 'internal'
             self.summary = "fake trigger action for unit tests"
             self.description = "fake, do not use outside unit tests"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             self.count += 1
@@ -161,12 +162,15 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "actions": [
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'failure_retry': 3
                     },
                     'boot': {
+                        'namespace': 'common',
                         'failure_retry': 4
                     },
                     'test': {
+                        'namespace': 'common',
                         'failure_retry': 5
                     }
                 }
@@ -252,6 +256,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAction.FakeTriggerAction()
         pipeline.add_action(action)
+        print(action.parameters)
         action.set_namespace_data(action='test', label="fake", key="string value", value="test string")
         self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
         test_string = action.get_namespace_data(action='test', label='fake', key='string value')
@@ -337,6 +342,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.name = "passing-action"
             self.summary = "fake action without adjuvant"
             self.description = "fake action runs without calling adjuvant"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -353,6 +359,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.name = "long-action"
             self.summary = "fake action with overly long sleep"
             self.description = "fake action"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -410,12 +417,15 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "actions": [
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'failure_retry': 3
                     },
                     'boot': {
+                        'namespace': 'common',
                         'failure_retry': 4
                     },
                     'test': {
+                        'namespace': 'common',
                         'failure_retry': 5
                     }
                 }
@@ -461,7 +471,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.LongAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         # run() returns 2 for JobError
@@ -473,7 +485,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.SafeAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         # run() returns 0 in case of success
@@ -490,7 +504,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.FakeSafeAction())
         pipeline.add_action(TestTimeout.FakeSafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         self.assertEqual(self.fakejob.run(), 0)

@@ -51,18 +51,21 @@ class TestMultiDeploy(StdoutTestCase):
             'actions': [
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'to': 'fake_to',
                         'example': 'nowhere'
                     }
                 },
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'to': 'destination',
                         'parameters': 'faked'
                     }
                 },
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'to': 'tftp',
                         'parameters': 'valid'
                     }
