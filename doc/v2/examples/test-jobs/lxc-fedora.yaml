@@ -17,6 +17,7 @@ protocols:
     name: pipeline-lxc-test
     distribution: fedora
     release: '23'
+    arch: amd64
 
 actions:
 - deploy:
