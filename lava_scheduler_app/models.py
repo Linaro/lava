@@ -913,7 +913,10 @@ class Device(RestrictedResource):
                                    "%s.jinja2" % self.hostname), "w") as f_out:
                 f_out.write(data)
             return True
-        except IOError:
+        except IOError as exc:
+            logger = logging.getLogger("lava_scheduler_app")
+            logger.error("Error saving device configuration for %s: %s",
+                         self.hostname, str(exc))
             return False
 
     def get_extends(self):
