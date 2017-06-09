@@ -1961,7 +1961,7 @@ def job_log_pipeline_incremental(request, pk):
                 for line in data:
                     remove_broken_string(line)
 
-    except (IOError, StopIteration):
+    except (IOError, StopIteration, yaml.YAMLError):
         data = []
 
     response = HttpResponse(
