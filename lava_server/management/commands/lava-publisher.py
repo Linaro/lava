@@ -80,8 +80,8 @@ class Command(BaseCommand):
                               user, group)
             return False
 
-        # Set a restrictive umask (rw-rw-r--)
-        os.umask(0o113)
+        # Set a restrictive umask (rwxr-xr-x)
+        os.umask(0o022)
 
         return True
 
