@@ -2064,9 +2064,10 @@ def job_resubmit(request, pk):
         response_data["is_authorized"] = True
 
         if is_resubmit:
+            original = job
             try:
                 job = testjob_submission(request.POST.get("definition-input"),
-                                         request.user)
+                                         request.user, original_job=original)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -2106,12 +2107,6 @@ def job_resubmit(request, pk):
                 definition = job.vmgroup_definition
             else:
                 definition = job.display_definition
-
-            # Add old job absolute url to metadata for pipeline jobs.
-            if job.is_pipeline:
-                obj = yaml.load(definition)
-                obj.setdefault("metadata", {})["old_job"] = str(job.get_absolute_url())
-                definition = yaml.dump(obj, default_flow_style=False)
 
             if request.user != job.owner and not request.user.is_superuser \
                and not utils.is_member(request.user, job.owner):

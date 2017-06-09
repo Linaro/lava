@@ -161,7 +161,7 @@ def submit_health_check_jobs():
                 pass
 
 
-def testjob_submission(job_definition, user, check_device=None):
+def testjob_submission(job_definition, user, check_device=None, original_job=None):
     """
     Single submission frontend for JSON or YAML
     :param job_definition: string of the job submission
@@ -208,7 +208,7 @@ def testjob_submission(job_definition, user, check_device=None):
     else:
         validate_job(job_definition)
         # returns a single job or a list (not a QuerySet) of job objects.
-        job = TestJob.from_yaml_and_user(job_definition, user)
+        job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
         if check_device and isinstance(check_device, Device) and not isinstance(job, list):
             # the slave must neither know nor care if this is a health check,
             # only the master cares and that has the database connection.

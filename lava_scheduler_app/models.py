@@ -1761,7 +1761,7 @@ class TestJob(RestrictedResource):
         return ("lava.scheduler.job.detail", [self.display_id])
 
     @classmethod
-    def from_yaml_and_user(cls, yaml_data, user):
+    def from_yaml_and_user(cls, yaml_data, user, original_job=None):
         """
         Runs the submission checks on incoming pipeline jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
@@ -1798,6 +1798,17 @@ class TestJob(RestrictedResource):
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
+        if original_job and original_job.is_pipeline:
+            # Add old job absolute url to metadata for pipeline jobs.
+            job_url = str(original_job.get_absolute_url())
+            try:
+                site = Site.objects.get_current()
+            except (Site.DoesNotExist, ImproperlyConfigured):
+                pass
+            else:
+                job_url = "http://%s%s" % (site.domain, job_url)
+
+            job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
         return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
 
