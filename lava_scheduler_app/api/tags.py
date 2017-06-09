@@ -107,3 +107,33 @@ class SchedulerTagsAPI(ExposedAPI):
             ret.append({"name": tag.name,
                         "description": tag.description})
         return ret
+
+    def show(self, name):
+        """
+        Name
+        ----
+        `scheduler.tags.show` (`name`)
+
+        Description
+        -----------
+        Show some details about the given device tag.
+
+        Arguments
+        ---------
+        `name`: string
+          Name of the device tag
+
+        Return value
+        ------------
+        This function returns an XML-RPC dictionary with device tag details
+        """
+        try:
+            tag = Tag.objects.get(name=name)
+        except Tag.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Tag '%s' was not found." % name)
+
+        devices = [d.hostname for d in tag.device_set.all() if d.is_visible_to(self.user)]
+        return {"name": name,
+                "description": tag.description,
+                "devices": devices}
