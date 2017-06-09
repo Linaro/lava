@@ -2,8 +2,8 @@
 
 .. _debian_installation:
 
-Installing on a Debian-based distribution
-*****************************************
+Installing on a Debian system
+*****************************
 
 These instructions cover installation on Debian. The supported versions are:
 
