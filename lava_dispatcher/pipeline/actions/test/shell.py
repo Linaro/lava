@@ -36,7 +36,6 @@ from lava_dispatcher.pipeline.actions.test import (
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
-    InfrastructureError,
     TestError,
     LAVABug,
 )
@@ -273,11 +272,11 @@ class TestShellAction(TestAction):
                     self.logger.info("Setting connection timeout: %.0f seconds" % self.connection_timeout.duration)
                     test_connection.timeout = self.connection_timeout.duration
 
-                # TODO: when using feedbacks, might be a good idea to loop with shorter timeouts
                 while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                    partial = int(self.connection_timeout.duration / 2)
                     for feedback in feedbacks:
                         self.logger.debug("Listening to namespace '%s'", feedback[0])
-                        feedback[1].listen_feedback(timeout=3)
+                        feedback[1].listen_feedback(timeout=partial)
                         self.logger.debug("Listening to namespace '%s' done", feedback[0])
         finally:
             if self.current_run is not None:
@@ -555,9 +554,8 @@ class TestShellAction(TestAction):
             self.testset_name = None
 
         elif event == "timeout":
-            self.logger.warning("err: lava_test_shell has timed out")
-            self.errors = "lava_test_shell has timed out"
-            self.testset_name = None
+            # allow feedback in long runs
+            ret_val = True
 
         elif event == "signal":
             name, params = test_connection.match.groups()
@@ -591,9 +589,10 @@ class TestShellAction(TestAction):
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
+        partial = int(self.connection_timeout.duration / 2)
         if 'test_case_results' in self.patterns:
             self.logger.info("Test case result pattern: %r" % self.patterns['test_case_results'])
-        retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
+        retval = test_connection.expect(list(self.patterns.values()), timeout=partial)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
 
     class SignalDirector(object):

@@ -64,7 +64,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns('exit', None, ''))
         self.assertFalse(testshell.check_patterns('eof', None, ''))
-        self.assertFalse(testshell.check_patterns('timeout', None, ''))
+        self.assertTrue(testshell.check_patterns('timeout', None, ''))
 
 
 class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
