@@ -28,6 +28,7 @@ from django.views.i18n import javascript_catalog
 from dashboard_app.xmlrpc import DashboardAPI
 from lava_results_app.xmlrpc import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
+from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
 from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
 from lava_scheduler_app.api.device_types import SchedulerDeviceTypesAPI, SchedulerDeviceTypesAliasesAPI
 from lava_scheduler_app.api.jobs import SchedulerJobsAPI
@@ -49,6 +50,7 @@ mapper.register_introspection_methods()
 mapper.register(DashboardAPI, 'dashboard')
 mapper.register(ResultsAPI, 'results')
 mapper.register(SchedulerAPI, 'scheduler')
+mapper.register(SchedulerAliasesAPI, 'scheduler.aliases')
 mapper.register(SchedulerDevicesAPI, 'scheduler.devices')
 mapper.register(SchedulerDevicesTagsAPI, 'scheduler.devices.tags')
 mapper.register(SchedulerDeviceTypesAPI, 'scheduler.device_types')

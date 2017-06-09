@@ -398,7 +398,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
         `hostname`: string
           Device hostname
         `name`: string
-          Tag name to remove
+          Alias to remove
         Return value
         ------------
         None
