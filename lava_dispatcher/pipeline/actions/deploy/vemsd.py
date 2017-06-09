@@ -43,6 +43,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import (
     decompress_file,
+    untar_file,
     copy_directory_contents,
     remove_directory_contents,
 )
@@ -163,7 +164,12 @@ class ExtractVExpressRecoveryImage(Action):
         tmp_recovery_image = os.path.join(recovery_image_dir, os.path.basename(recovery_image))
 
         if os.path.isfile(tmp_recovery_image):
-            decompress_file(tmp_recovery_image, self.compression)
+            if self.compression == "zip":
+                decompress_file(tmp_recovery_image, self.compression)
+            elif self.compression == "gz":
+                untar_file(tmp_recovery_image, recovery_image_dir)
+            else:
+                raise InfrastructureError("Unsupported compression for VExpress recovery: %s" % self.compression)
             os.remove(tmp_recovery_image)
             self.set_namespace_data(action='extract-vexpress-recovery-image', label='file', key=self.file_key, value=recovery_image_dir)
             self.logger.debug("Extracted %s to %s", self.file_key, recovery_image_dir)
