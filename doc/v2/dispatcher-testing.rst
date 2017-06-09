@@ -565,44 +565,6 @@ is taken on by the internal SignalDirector within each Connection. Unlike the
 old model, Connections have their own directors which takes the multinode and
 LMP workload out of the singlenode operations.
 
-.. _detecting_power_state:
-
-Detecting power state
-=====================
-
-Devices on your desk can behave differently to those in the lab under full
-automation. Under automation, the ``hard_reset`` and ``power_off`` support
-means that the device is likely to be powered off when the first connection
-atttempt is made. On the desk, the device may spend more time powered on (even
-if the device is not running a usable system, for example the NFS location will
-be deleted when the previous job ends). So when writing connection classes and
-actions which initiate connections, check the power state of the device first.
-
-#. An Action initiating a connection needs to know if it should wait for a
-   prompt. In the run function, add::
-
-     if self.job.device.power_state not in ['on', 'off']:
-         self.wait(connection)
-
-#. The next Action should be a ResetDevice action which understands the power
-   state and determines whether to call the ``hard_reset`` commands or to
-   attempt a soft reboot. In the populate function, ensure the correct ordering
-   is in place::
-
-     self.internal_pipeline.add_action(MenuConnect())
-     self.internal_pipeline.add_action(ResetDevice())
-
-#. Warn if the device has no automation support in the validate function::
-
-    if self.job.device.power_state in ['on', 'off']:
-        # to enable power to a device, either power_on or hard_reset are needed.
-        if self.job.device.power_command is '':
-            self.errors = "Unable to power on or reset the device %s" % hostname
-        if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s" % hostname
-    else:
-        self.logger.warning("%s may need manual intervention to reboot" % hostname)
-
 .. index:: power commands
 
 .. _power_commands:
