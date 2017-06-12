@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
@@ -128,13 +129,12 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         for key in ['ramdisk', 'kernel', 'dtb', 'nfsrootfs', 'modules', 'preseed']:
             if key in parameters:
-                download = DownloaderAction(key, path=self.tftp_dir)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(key, path=self.tftp_dir))
                 if key == 'ramdisk':
                     self.set_namespace_data(action=self.name, label='tftp', key='ramdisk', value=True, parameters=parameters)
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())

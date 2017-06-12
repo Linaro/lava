@@ -163,9 +163,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
         action.populate(parameters)
-        if 'default_connection_timeout' in parameters:
-            # some action handlers do not need to pass all parameters to their children.
-            action.connection_timeout.duration = parameters['default_connection_timeout']
 
         # Compute the timeout
         timeouts = []
@@ -290,20 +287,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
             except LAVAError as exc:
-                exc_message = str(exc)
-                action.errors = exc_message
-                # set results including retries
-                if "boot-result" not in action.data:
-                    action.data['boot-result'] = 'failed'
-                action.logger.error(exc_message)
+                action.logger.error(str(exc))
                 self._diagnose(connection)
                 raise
             except Exception as exc:
-                exc_message = str(exc)
                 action.logger.exception(traceback.format_exc())
-                action.errors = exc_message
                 # Raise a LAVABug that will be correctly classified later
-                raise LAVABug(exc_message)
+                raise LAVABug(str(exc))
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
@@ -313,19 +303,12 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
+                # set results including retries and failed actions
                 action.log_action_results()
 
             if new_connection:
                 connection = new_connection
         return connection
-
-    def prepare_actions(self):
-        for action in self.actions:
-            action.prepare()
-
-    def post_process_actions(self):
-        for action in self.actions:
-            action.post_process()
 
 
 class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -492,7 +475,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         if ' ' in self.name:  # pylint: disable=unsupported-membership-test
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
-        if '_' in self.name:
+        if '_' in self.name:  # pylint: disable=unsupported-membership-test
             self.errors = "Use - instead of _ in action names: %s" % self.name
 
         if not self.summary:

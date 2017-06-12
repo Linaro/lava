@@ -94,24 +94,22 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             return
         if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'nfsrootfs' in parameters:
-            download = DownloaderAction('nfsrootfs', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('nfsrootfs', path=download_dir))
         if 'modules' in parameters:
-            download = DownloaderAction('modules', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('modules', path=download_dir))
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
         self.internal_pipeline.add_action(ExtractNfsRootfs())
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ExtractModules())
         self.internal_pipeline.add_action(ApplyOverlayTftp())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())

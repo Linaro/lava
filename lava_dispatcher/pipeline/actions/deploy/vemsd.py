@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import PowerOn
@@ -113,14 +114,11 @@ class VExpressMsdAction(DeployAction):
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'recovery_image' in parameters:
-            download = DownloaderAction('recovery_image', path=download_dir)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-        if hasattr(self.job.device, 'power_state'):
-            if self.job.device.power_state in ['on', 'off']:
-                self.force_prompt = True
-                self.internal_pipeline.add_action(ConnectDevice())
-                self.internal_pipeline.add_action(PowerOn())
+            self.internal_pipeline.add_action(DownloaderAction('recovery_image', path=download_dir))
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        self.force_prompt = True
+        self.internal_pipeline.add_action(ConnectDevice())
+        self.internal_pipeline.add_action(PowerOn())
         self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
         self.internal_pipeline.add_action(EnterVExpressMCC())
         self.internal_pipeline.add_action(EnableVExpressMassStorage())
@@ -282,14 +280,19 @@ class MountVExpressMassStorageDevice(Action):
         device_path = "/dev/disk/by-label/%s" % self.microsd_fs_label
         try:
             os.path.realpath(device_path)
-        except:
+        except OSError:
             raise InfrastructureError("Unable to find disk by label %s" % device_path)
 
         mount_point = "/mnt/%s" % self.microsd_fs_label
+        if not os.path.exists(mount_point):
+            try:
+                self.logger.debug("Creating mount point '%s'", mount_point)
+                os.makedirs(mount_point, 0o755)
+            except OSError:
+                raise InfrastructureError("Failed to create mount point %s", mount_point)
+
         mount_cmd = ['mount', device_path, mount_point]
-        try:
-            self.run_command(mount_cmd)
-        except:
+        if not self.run_command(mount_cmd, allow_silent=True):
             raise InfrastructureError("Failed to mount device %s to %s" % (device_path, mount_point))
         self.set_namespace_data(action=self.name, label='vexpress-fw', key='mount-point', value=mount_point)
         return connection
@@ -353,10 +356,8 @@ class UnmountVExpressMassStorageDevice(Action):
         connection = super(UnmountVExpressMassStorageDevice, self).run(connection, max_end_time, args)
 
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
-        try:
-            self.run_command(["umount", mount_point])
-        except:
-            raise JobError("Failed to unmount device %s" % mount_point)
+        if not self.run_command(["umount", mount_point], allow_silent=True):
+            raise InfrastructureError("Failed to unmount device %s" % mount_point)
         return connection
 
 

@@ -130,5 +130,8 @@ class YAMLLogger(logging.Logger):
     def target(self, message, *args, **kwargs):
         self.log_message(logging.INFO, 'target', message, *args, **kwargs)
 
+    def feedback(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'feedback', message, *args, **kwargs)
+
     def results(self, results, *args, **kwargs):
         self.log_message(logging.INFO, 'results', results, *args, **kwargs)

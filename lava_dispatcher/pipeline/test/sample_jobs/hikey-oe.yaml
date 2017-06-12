@@ -28,7 +28,6 @@ protocols:
     template: debian
     distribution: debian
     release: jessie
-    arch: amd64
 
 actions:
 - deploy:

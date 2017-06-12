@@ -51,17 +51,13 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
         path = self.mkdtemp()
         if 'uefi' in parameters:
             uefi_path = self.mkdtemp()
-            download = DownloaderAction('uefi', uefi_path)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('uefi', uefi_path))
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(action=self.name, label='image', key='uefi_dir', value=uefi_path, parameters=parameters)
             # alternatively use the -bios option and standard image args
         for image in parameters['images'].keys():
             if image != 'yaml_line':
-                download = DownloaderAction(image, path)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(image, path))
                 if parameters['images'][image].get('format', '') == 'qcow2':
                     self.internal_pipeline.add_action(QCowConversionAction(image))
         if self.test_needs_overlay(parameters):
@@ -119,17 +115,13 @@ class DeployQemuNfsAction(DeployAction):
         path = self.mkdtemp()
         if 'uefi' in parameters:
             uefi_path = self.mkdtemp()
-            download = DownloaderAction('uefi', uefi_path)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('uefi', uefi_path))
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(action=self.name, label='image', key='uefi_dir', value=uefi_path, parameters=parameters)
             # alternatively use the -bios option and standard image args
         for image in parameters['images'].keys():
             if image != 'yaml_line':
-                download = DownloaderAction(image, path)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(image, path))
                 if parameters['images'][image].get('format', '') == 'qcow2':
                     self.internal_pipeline.add_action(QCowConversionAction(image))
         self.internal_pipeline.add_action(ExtractNfsAction())

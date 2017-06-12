@@ -34,7 +34,6 @@ from lava_dispatcher.pipeline.actions.test import (
     handle_testcase
 )
 from lava_dispatcher.pipeline.action import (
-    InfrastructureError,
     Pipeline,
     JobError,
     TestError,
@@ -199,14 +198,7 @@ class TestShellAction(TestAction):
     def run(self, connection, max_end_time, args=None):
         """
         Common run function for subclasses which define custom patterns
-        boot-result is a simple sanity test and only supports the most recent boot
-        just to allow the test action to know if something has booted. Failed boots will timeout.
-        A missing boot-result could be a missing deployment for some actions.
         """
-        # Sanity test: could be a missing deployment for some actions
-        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
-        if not res:
-            raise LAVABug("No boot action result found")
         super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
@@ -214,16 +206,6 @@ class TestShellAction(TestAction):
             action='shared', label='shared', key='connection', deepcopy=False)
         if not connection:
             raise LAVABug("No connection retrieved from namespace data")
-
-        res = self.get_namespace_data(action='boot', label='shared', key='boot-result')
-        if res != "success":
-            self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
-            self.results.update({self.name: "skipped"})
-            # FIXME: with predictable UID, could set each test definition metadata to "skipped"
-            return connection
-
-        if not connection:
-            raise InfrastructureError("Connection closed")
 
         self.signal_director.connection = connection
 
@@ -261,6 +243,18 @@ class TestShellAction(TestAction):
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
         try:
+            feedbacks = []
+            for feedback_ns in self.data.keys():
+                if feedback_ns == self.parameters.get('namespace'):
+                    continue
+                feedback_connection = self.get_namespace_data(
+                    action='shared', label='shared', key='connection',
+                    deepcopy=False, parameters={"namespace": feedback_ns})
+                if feedback_connection:
+                    self.logger.debug("Will listen to feedbacks from '%s'",
+                                      feedback_ns)
+                    feedbacks.append((feedback_ns, feedback_connection))
+
             with connection.test_connection() as test_connection:
                 # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
                 test_connection.sendline(
@@ -279,7 +273,11 @@ class TestShellAction(TestAction):
                     test_connection.timeout = self.connection_timeout.duration
 
                 while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                    pass
+                    partial = int(self.connection_timeout.duration / 2)
+                    for feedback in feedbacks:
+                        self.logger.debug("Listening to namespace '%s'", feedback[0])
+                        feedback[1].listen_feedback(timeout=partial)
+                        self.logger.debug("Listening to namespace '%s' done", feedback[0])
         finally:
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
@@ -482,9 +480,7 @@ class TestShellAction(TestAction):
             yaml.dump(self.job.device.get('device_info', [])).strip()
         )
         device_paths = get_udev_devices(self.job, self.logger)
-        if device_paths:
-            self.logger.debug("Adding %s", ', '.join(device_paths))
-        else:
+        if not device_paths:
             self.logger.warning("No USB devices added to the LXC.")
             return False
         for device in device_paths:
@@ -558,9 +554,8 @@ class TestShellAction(TestAction):
             self.testset_name = None
 
         elif event == "timeout":
-            self.logger.warning("err: lava_test_shell has timed out")
-            self.errors = "lava_test_shell has timed out"
-            self.testset_name = None
+            # allow feedback in long runs
+            ret_val = True
 
         elif event == "signal":
             name, params = test_connection.match.groups()
@@ -594,9 +589,10 @@ class TestShellAction(TestAction):
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
+        partial = int(self.connection_timeout.duration / 2)
         if 'test_case_results' in self.patterns:
             self.logger.info("Test case result pattern: %r" % self.patterns['test_case_results'])
-        retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
+        retval = test_connection.expect(list(self.patterns.values()), timeout=partial)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
 
     class SignalDirector(object):

@@ -19,10 +19,6 @@
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyLxcOverlay, name: apply-lxc-overlay}
@@ -37,23 +33,8 @@
   name: fastboot-deploy
   pipeline:
   - {class: connections.serial.ConnectDevice, name: connect-device}
-  - class: actions.boot.u_boot.UBootEnterFastbootAction
-    name: uboot-enter-fastboot
-    pipeline:
-    - class: power.ResetDevice
-      name: reboot-device
-      pipeline:
-      - {class: power.RebootDevice, name: soft-reboot}
-      - {class: power.PDUReboot, name: pdu-reboot}
-      - {class: power.SoftReboot, name: send-reboot-command}
-      - {class: power.PowerOn, name: power-on}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
-    - {class: connections.lxc.ConnectLxc, name: connect-lxc}
+  - {class: power.PowerOn, name: power-on}
   - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
-  - class: actions.deploy.download.DownloaderAction
-    name: download-retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
     pipeline:
@@ -68,15 +49,16 @@
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
-- class: actions.boot.fastboot.BootFastbootAction
-  name: fastboot-boot
+- class: actions.boot.grub.GrubMainAction
+  name: grub-main-action
   pipeline:
-  - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
-  - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
-  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
+  - {class: actions.boot.grub.GrubMenuSelector, name: grub-efi-menu-selector}
+  - {class: actions.boot.grub.BootloaderInterrupt, name: bootloader-interrupt}
+  - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: shell.ExpectShellSession, name: expect-shell-connection}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

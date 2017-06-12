@@ -12,11 +12,11 @@ parameters:
         uuid: "usb-SanDisk_Ultra_20060775320F43006019-0:0"  # /dev/disk/by-id/
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
     sata:
+      UUID-required: True
       ST160LM003:
         uuid: ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184
         device_id: 0
         uboot_interface: scsi
-        UUID-required: True
 
 commands:
   connect: telnet localhost 6002

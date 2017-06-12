@@ -22,7 +22,7 @@
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.deploy.testdef import get_deployment_testdefs
 from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
 
@@ -40,7 +40,7 @@ class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(self.job)
         allow_missing_path(self.job.validate, self, 'qemu-system-x86_64')
         self.assertEqual([], self.job.pipeline.errors)
-        description_ref = pipeline_reference('kvm-repeat.yaml')
+        description_ref = self.pipeline_reference('kvm-repeat.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_deploy_norepeat(self):
@@ -58,7 +58,7 @@ class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIn('test', repeat_block['actions'][1])
         self.assertIn('boot', repeat_block['actions'][2])
         self.assertIn('test', repeat_block['actions'][3])
-        self.assertEqual(len(params), 5)
+        self.assertEqual(len(params), 2)
 
     def test_nested_structure(self):
         self.assertIn(['repeat'], [list(actions.keys()) for actions in self.job.parameters['actions']])

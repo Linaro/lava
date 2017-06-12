@@ -178,15 +178,21 @@ def get_udev_devices(job, logger=None):
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
                    and (device.get('ID_MODEL_ID') == usb_product_id):
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
             elif board_id and usb_vendor_id and not usb_product_id:
                 # try with parameters such as board id, usb_vendor_id
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id):
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
                 if device.get('ID_SERIAL_SHORT') == board_id:
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
     if logger and device_paths:
         logger.debug("Adding %s", ', '.join(device_paths))
     return list(device_paths)

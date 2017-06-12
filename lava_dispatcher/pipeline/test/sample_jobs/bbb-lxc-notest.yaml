@@ -82,17 +82,6 @@ actions:
       minutes: 3
 
 - test:
-    namespace: probe
-    connection: lxc
-    timeout:
-      minutes: 5
-    definitions:
-    - repository: git://git.linaro.org/qa/test-definitions.git
-      from: git
-      path: ubuntu/smoke-tests-basic.yaml
-      name: smoke-tests-lxc
-
-- test:
     namespace: testdevice
     connection: serial
     timeout:

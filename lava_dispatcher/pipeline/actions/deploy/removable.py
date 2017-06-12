@@ -227,7 +227,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
 
         if self.test_needs_deployment(self.parameters):
             lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-            self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
 
         self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
@@ -249,9 +249,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         if 'image' in parameters:
-            download = DownloaderAction('image', path=self.image_path)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('image', path=self.image_path))
             if self.test_needs_overlay(parameters):
                 self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())

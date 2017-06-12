@@ -23,7 +23,6 @@ import sys
 import time
 import unittest
 import logging
-import simplejson
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
@@ -44,6 +43,20 @@ class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-meth
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
+        # set to True to update pipeline_references automatically.
+        self.update_ref = False
+        self.job = None
+
+    def pipeline_reference(self, filename, job=None):
+        y_file = os.path.join(os.path.dirname(__file__), 'pipeline_refs', filename)
+        if self.update_ref:
+            if not job:
+                job = self.job
+            sys.stderr.write('WARNING: modifying pipeline references!')
+            with open(y_file, 'w') as describe:
+                yaml.dump(job.pipeline.describe(False), describe)
+        with open(y_file, 'r') as f_ref:
+            return yaml.load(f_ref)
 
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -70,13 +83,15 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
             raise NotImplementedError("invalid")
 
     def setUp(self):
-        super(StdoutTestCase, self).setUp()
+        super(TestPipelineInit, self).setUp()
         self.sub0 = TestPipelineInit.FakeAction()
         self.sub1 = TestPipelineInit.FakeAction()
 
     def test_pipeline_init(self):
         self.assertIsNotNone(self.sub0)
         self.assertIsNotNone(self.sub1)
+        # prevent reviews leaving update_ref set to True.
+        self.assertFalse(self.update_ref)
 
 
 class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -96,12 +111,6 @@ class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
         if not self.job:
             return unittest.skip("not all deployments have been implemented")
         self.assertTrue(self.job.actions > 1)  # pylint: disable=no-member
-
-
-def pipeline_reference(filename):
-    y_file = os.path.join(os.path.dirname(__file__), 'pipeline_refs', filename)
-    with open(y_file, 'r') as f_ref:
-        return yaml.load(f_ref)
 
 
 class TestValidation(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -210,7 +219,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(action.level, "1")
         try:
             description = pipe.describe()
-        except Exception as exc:  # pylint: disable=bare-except
+        except Exception as exc:  # pylint: disable=broad-except
             self.fail(exc)
         self.assertIsNotNone(description)
         self.assertIsInstance(description, list)

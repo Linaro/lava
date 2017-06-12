@@ -85,7 +85,5 @@ class ConnectLxc(Action):
         connection.connected = True
         connection = super(ConnectLxc, self).run(connection, max_end_time, args)
         connection.prompt_str = self.parameters['prompts']
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

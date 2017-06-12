@@ -32,7 +32,7 @@ from lava_dispatcher.pipeline.actions.boot import (
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -68,7 +68,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         self.assertIsNotNone(job)
 
-        description_ref = pipeline_reference('ipxe.yaml')
+        description_ref = self.pipeline_reference('ipxe.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
@@ -85,7 +85,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'lxc-add-device-action', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -286,5 +286,5 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
     def test_ipxe_with_monitor(self):
         job = self.factory.create_job('sample_jobs/ipxe-monitor.yaml')
         job.validate()
-        description_ref = pipeline_reference('ipxe-monitor.yaml')
+        description_ref = self.pipeline_reference('ipxe-monitor.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

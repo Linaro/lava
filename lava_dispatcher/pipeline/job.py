@@ -90,6 +90,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         self.tmp_dir = None
         # override in use
         self.base_overrides = {}
+        self.started = False
 
     @property
     def context(self):
@@ -268,6 +269,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         signal.signal(signal.SIGINT, self.cancelling_handler)
         signal.signal(signal.SIGTERM, self.cancelling_handler)
 
+        self.started = True
+
         # Setup the protocols
         for protocol in self.protocols:
             try:
@@ -348,6 +351,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     def cleanup(self, connection):
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
+            return
 
         # exit out of the pipeline & run the Finalize action to close the
         # connection and poweroff the device (the cleanup action will do that

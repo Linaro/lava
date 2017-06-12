@@ -23,7 +23,7 @@ import os
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 
@@ -65,5 +65,5 @@ class TestCMSISAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job = factory.create_k64f_job('sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml')
         job.device['actions']['boot']['methods']['cmsis-dap']['parameters']['usb_mass_device'] = '/dev/null'
         job.validate()
-        description_ref = pipeline_reference('cmsis.yaml')
+        description_ref = self.pipeline_reference('cmsis.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

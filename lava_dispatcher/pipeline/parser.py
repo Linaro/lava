@@ -24,7 +24,6 @@ from yaml.constructor import Constructor
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import (
     Pipeline,
-    Action,
     Timeout,
     JobError,
 )
@@ -92,7 +91,6 @@ class JobParser(object):
     # FIXME: needs a Schema and a check routine
 
     loader = None
-    context = {}
 
     # annotate every object in data with line numbers so we can use
     # them is user-friendly validation messages, combined with the action.level
@@ -112,23 +110,10 @@ class JobParser(object):
         return mapping
 
     def _timeouts(self, data, job):
-        if 'timeouts' in data and data['timeouts']:
+        if data.get('timeouts', None) is not None:
             if 'job' in data['timeouts']:
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
-            if 'action' in data['timeouts']:
-                self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
-            if 'connection' in data['timeouts']:
-                self.context['default_connection_duration'] = Timeout.parse(data['timeouts']['connection'])
-            if 'test' in data['timeouts']:
-                self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
-
-    def _map_context_defaults(self):
-        return {
-            'default_action_timeout': self.context['default_action_duration'],
-            'default_test_timeout': self.context['default_test_duration'],
-            'default_connection_timeout': self.context['default_connection_duration']
-        }
 
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, zmq_config, dispatcher_config,
@@ -137,9 +122,6 @@ class JobParser(object):
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
-        self.context['default_action_duration'] = Timeout.default_duration()
-        self.context['default_test_duration'] = Timeout.default_duration()
-        self.context['default_connection_duration'] = Timeout.default_duration()
         job = Job(job_id, data, zmq_config)
         test_counts = {}
         job.device = device
@@ -180,8 +162,6 @@ class JobParser(object):
         for action_data in data['actions']:
             action_data.pop('yaml_line', None)
             for name in action_data:
-                if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
-                    action_data[name].update(self._map_context_defaults())
                 namespace = action_data[name].get('namespace', 'common')
                 test_counts.setdefault(namespace, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
@@ -216,7 +196,7 @@ class JobParser(object):
         # there's always going to need to be a finalize_process action
         finalize = FinalizeAction()
         pipeline.add_action(finalize)
-        finalize.populate(self._map_context_defaults())
+        finalize.populate(None)
         data['output_dir'] = output_dir
         job.pipeline = pipeline
         if 'compatibility' in data:

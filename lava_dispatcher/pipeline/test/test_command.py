@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
@@ -30,10 +30,7 @@ class TestCommand(StdoutTestCase):
         self.job = factory.create_kvm_job('sample_jobs/kvm-command.yaml', mkdtemp())
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('kvm-command.yaml')
-        import yaml
-        with open('/tmp/test.yaml', 'w') as describe:
-            yaml.dump(self.job.pipeline.describe(False), describe)
+        description_ref = self.pipeline_reference('kvm-command.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         command = [action for action in self.job.pipeline.actions if action.name == 'user-command'][0]

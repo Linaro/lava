@@ -103,14 +103,22 @@ class AutoLoginAction(Action):
 
             if 'login_prompt' not in params:
                 self.errors = "'login_prompt' is mandatory for auto_login"
-            if not params['login_prompt']:
+            elif not params['login_prompt']:
                 self.errors = "Value for 'login_prompt' cannot be empty"
+
             if 'username' not in params:
                 self.errors = "'username' is mandatory for auto_login"
 
             if 'password_prompt' in params:
                 if 'password' not in params:
                     self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
+
+            if 'login_commands' in params:
+                login_commands = params['login_commands']
+                if not isinstance(login_commands, list):
+                    self.errors = "'login_commands' must be a list"
+                if not login_commands:
+                    self.errors = "'login_commands' must not be empty"
 
         prompts = self.parameters.get('prompts', None)
         if prompts is None:
@@ -236,6 +244,12 @@ class AutoLoginAction(Action):
                 if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
+
+            login_commands = params.get('login_commands', None)
+            if login_commands is not None:
+                self.logger.debug("Running login commands")
+                for command in login_commands:
+                    connection.sendline(command)
 
         connection.prompt_str.extend([self.job.device.get_constant(
             'default-shell-prompt')])
@@ -500,8 +514,6 @@ class BootloaderCommandsAction(Action):
                 self.wait(connection)
                 i += 1
 
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         # allow for auto_login
         if self.parameters.get('prompts', None):
@@ -518,6 +530,5 @@ class BootloaderCommandsAction(Action):
                                   "failed to load the required file into "
                                   "memory correctly so the bootloader reset "
                                   "the CPU.")
-                self.errors = "Bootloader reset detected"
                 raise InfrastructureError("Bootloader reset detected")
         return connection

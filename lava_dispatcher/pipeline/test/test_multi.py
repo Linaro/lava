@@ -21,7 +21,7 @@
 
 import os
 import yaml
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, Timeout
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -192,5 +192,5 @@ class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)
-        description_ref = pipeline_reference('uboot-multiple.yaml')
+        description_ref = self.pipeline_reference('uboot-multiple.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))

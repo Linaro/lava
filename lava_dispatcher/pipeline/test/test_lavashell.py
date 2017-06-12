@@ -43,7 +43,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
                 testshell = action.pipeline.actions[0]
                 break
         self.assertIsInstance(testshell, TestShellAction)
-        self.assertNotIn('boot-result', testshell.data)
         self.assertTrue(testshell.valid)
 
         if 'timeout' in testshell.parameters:
@@ -52,10 +51,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             time_int = Timeout.default_duration()
         self.assertEqual(
             datetime.timedelta(seconds=time_int).total_seconds(),
-            testshell.timeout.duration
-        )
-        self.assertNotEqual(
-            testshell.parameters['default_action_timeout'],
             testshell.timeout.duration
         )
 
@@ -69,7 +64,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns('exit', None, ''))
         self.assertFalse(testshell.check_patterns('eof', None, ''))
-        self.assertFalse(testshell.check_patterns('timeout', None, ''))
+        self.assertTrue(testshell.check_patterns('timeout', None, ''))
 
 
 class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods

@@ -105,7 +105,9 @@ class ApplyOverlayImage(Action):
             self.logger.debug("Overlay: %s", overlay_file)
             decompressed_image = self.get_namespace_data(action='download-action', label='image', key='file')
             self.logger.debug("Image: %s", decompressed_image)
-            root_partition = self.parameters['image']['root_partition']
+            root_partition = self.parameters['image'].get('root_partition')
+            if root_partition is None:
+                raise JobError("Unable to apply the overlay image without 'root_partition'")
             self.logger.debug("root_partition: %s", root_partition)
             copy_in_overlay(decompressed_image, root_partition, overlay_file)
         else:

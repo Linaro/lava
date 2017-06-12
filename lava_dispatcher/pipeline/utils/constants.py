@@ -66,7 +66,7 @@ ANDROID_TMP_DIR = '/data/local/tmp'
 LXC_PATH = "/var/lib/lxc"
 
 # LXC finalize timeout
-LAVA_LXC_TIMEOUT = 30
+LAVA_LXC_TIMEOUT = 90
 
 # LXC templates with mirror option
 LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
@@ -83,8 +83,6 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
-
-GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
 
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string
@@ -139,3 +137,6 @@ VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '
 
 # sys class kvm path
 SYS_CLASS_KVM = '/sys/class/misc/kvm'
+
+# default reboot commands
+REBOOT_COMMAND_LIST = ['reboot', 'reboot -n', 'reboot -nf']

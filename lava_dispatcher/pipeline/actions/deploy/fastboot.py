@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.power import (
 from lava_dispatcher.pipeline.action import (
     ConfigurationError,
     InfrastructureError,
+    JobError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -41,7 +42,10 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
-from lava_dispatcher.pipeline.utils.udev import get_udev_devices
+from lava_dispatcher.pipeline.utils.udev import (
+    get_udev_devices,
+    usb_device_wait,
+)
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
@@ -118,6 +122,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
         self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        if not protocol:
+            self.errors = "No LXC device requested"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -143,9 +150,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         image_keys.sort()
         for image in image_keys:
             if image != 'yaml_line':
-                download = DownloaderAction(image, fastboot_dir)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
                 if parameters['images'][image].get('apply-overlay', False):
                     if self.test_needs_overlay(parameters):
                         self.internal_pipeline.add_action(
@@ -194,13 +199,18 @@ class EnterFastbootAction(DeployAction):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
+
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
         fastboot_serial_number = self.job.device['fastboot_serial_number']
 
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device['adb_serial_number']
+        # start the adb daemon
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
+        command_output = self.run_command(adb_cmd, allow_fail=True)
+        if command_output and 'successfully' in command_output:
+            self.logger.debug("adb daemon started: %s", command_output)
         adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
                    adb_serial_number, 'devices']
         command_output = self.run_command(adb_cmd, allow_fail=True)
@@ -266,8 +276,8 @@ class FastbootFlashAction(DeployAction):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
+
         # Order flash commands so that some commands take priority over others
         flash_cmds_order = self.job.device['flash_cmds_order']
         namespace = self.parameters.get('namespace', 'common')
@@ -293,39 +303,41 @@ class FastbootFlashAction(DeployAction):
             if command_output and 'error' in command_output:
                 raise InfrastructureError("Unable to flash %s using fastboot: %s" %
                                           (flash_cmd, command_output))
-            # See: https://projects.linaro.org/browse/LAVA-920
-            # NOTE: Though the following appears as a workaround for HiKey
-            #       firmware, it is always safe to reboot to bootloader after
-            #       flashing the ptable (partition table) for any device,
-            #       provided the device enters fastboot mode after a
-            #       'fastboot reboot-bootloader' command
-            if flash_cmd in ['ptable']:
-                self.logger.info("Rebooting device to refresh ptable.")
+            reboot = self.parameters['images'][flash_cmd].get('reboot', False)
+            if reboot == 'fastboot-reboot':
+                self.logger.info("fastboot rebooting device.")
+                fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
+                                'fastboot', '-s', serial_number,
+                                'reboot'] + fastboot_opts
+                command_output = self.run_command(fastboot_cmd)
+                if command_output and 'error' in command_output:
+                    raise InfrastructureError("Unable to reboot: %s"
+                                              % (command_output))
+            if reboot == 'fastboot-reboot-bootloader':
+                self.logger.info("fastboot reboot device to bootloader.")
+                fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
+                                'fastboot', '-s', serial_number,
+                                'reboot-bootloader'] + fastboot_opts
+                command_output = self.run_command(fastboot_cmd)
+                if command_output and 'error' in command_output:
+                    raise InfrastructureError(
+                        "Unable to reboot to bootloader: %s"
+                        % (command_output))
+            if reboot == 'hard-reset':
                 if self.job.device.hard_reset_command:
-                    # It is more reliable in some devices (like HiKey) to hard
-                    # reset, than to issue 'fastboot reboot-bootloader' which
-                    # sometimes hungs the device in UEFI startup.
+                    self.logger.info("Hard resetting device.")
                     command = self.job.device.hard_reset_command
-                    # FIXME: run_command should handle commands that are string
-                    #        or list properly.
-                    if isinstance(command, list):
-                        for cmd in command:
-                            if not self.run_command(cmd.split(' '),
-                                                    allow_silent=True):
-                                raise InfrastructureError("%s failed" % cmd)
-                    else:
-                        if not self.run_command(command.split(' '),
+                    if not isinstance(command, list):
+                        command = [command]
+                    for cmd in command:
+                        if not self.run_command(cmd.split(' '),
                                                 allow_silent=True):
-                            raise InfrastructureError("%s failed" % command)
+                            raise InfrastructureError("%s failed" % cmd)
                 else:
-                    fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
-                                    'fastboot', '-s', serial_number,
-                                    'reboot-bootloader'] + fastboot_opts
-                    command_output = self.run_command(fastboot_cmd)
-                    if command_output and 'error' in command_output:
-                        raise InfrastructureError(
-                            "Unable to reboot-bootloader: %s"
-                            % (command_output))
+                    self.logger.info("Device does not have hard reset command")
+            if reboot:
+                self.logger.info("Waiting for USB device addition ...")
+                usb_device_wait(self.job, device_actions=['add'])
                 self.logger.info("Get USB device(s) ...")
                 device_paths = []
                 while True:

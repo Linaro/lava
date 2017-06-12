@@ -59,7 +59,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 [parameters['protocols'][self.name]['name'], str(job_id)])
         self.lxc_dist = parameters['protocols'][self.name]['distribution']
         self.lxc_release = parameters['protocols'][self.name]['release']
-        self.lxc_arch = parameters['protocols'][self.name]['arch']
+        self.lxc_arch = parameters['protocols'][self.name].get('arch', None)
         self.lxc_template = parameters['protocols'][self.name].get(
             'template', 'download')
         self.lxc_mirror = parameters['protocols'][self.name].get('mirror',
@@ -84,8 +84,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         if 'distribution' not in parameters['protocols']['lava-lxc']:
             return False
         if 'release' not in parameters['protocols']['lava-lxc']:
-            return False
-        if 'arch' not in parameters['protocols']['lava-lxc']:
             return False
         return True
 
@@ -157,13 +155,21 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         if not shell.exitstatus:
             self.logger.info("%s protocol: %s exists", self.name,
                              self.lxc_name)
-            # Check if the container should persist
+            # Stop the container.
+            self.logger.debug("%s protocol: issue stop", self.name)
+            cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
+            shell = ShellCommand("%s\n" % cmd, self.system_timeout,
+                                 logger=self.logger)
+            # execute the command.
+            shell.expect(pexpect.EOF)
+            if shell.exitstatus:
+                raise InfrastructureError(
+                    "%s command exited %d: %s" % (cmd, shell.exitstatus,
+                                                  shell.readlines()))
+            # Check if the container should persist and skip destroying it.
             if self.persistence:
-                self.logger.debug("%s protocol: issue stop, to persist",
+                self.logger.debug("%s protocol: persistence requested",
                                   self.name)
-                cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
-                self.logger.debug("%s protocol: executing '%s'", self.name,
-                                  cmd)
             else:
                 self.logger.debug("%s protocol: destroy", self.name)
                 if self.custom_lxc_path:
@@ -173,16 +179,16 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                         self.lxc_name, os.path.dirname(abs_path))
                 else:
                     cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
-                self.logger.debug("%s protocol: executing '%s'", self.name,
-                                  cmd)
-            shell = ShellCommand("%s\n" % cmd, self.system_timeout,
-                                 logger=self.logger)
-            # execute the command.
-            shell.expect(pexpect.EOF)
-            if shell.exitstatus:
-                raise InfrastructureError(
-                    "%s command exited %d: %s" % (cmd, shell.exitstatus,
-                                                  shell.readlines()))
+                    self.logger.debug("%s protocol: executing '%s'",
+                                      self.name, cmd)
+                shell = ShellCommand("%s\n" % cmd, self.system_timeout,
+                                     logger=self.logger)
+                # execute the command.
+                shell.expect(pexpect.EOF)
+                if shell.exitstatus:
+                    raise InfrastructureError(
+                        "%s command exited %d: %s" % (cmd, shell.exitstatus,
+                                                      shell.readlines()))
             if self.custom_lxc_path and not self.persistence:
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
         self.logger.debug("%s protocol finalised.", self.name)

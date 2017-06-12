@@ -35,7 +35,7 @@ from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdis
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, JobError
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
@@ -72,7 +72,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
-        description_ref = pipeline_reference('uboot.yaml')
+        description_ref = self.pipeline_reference('uboot.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
@@ -89,7 +89,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'lxc-add-device-action', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -233,7 +233,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         """
         job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk-inline-commands.yaml')
         job.validate()
-        description_ref = pipeline_reference('uboot-ramdisk-inline-commands.yaml')
+        description_ref = self.pipeline_reference('uboot-ramdisk-inline-commands.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]

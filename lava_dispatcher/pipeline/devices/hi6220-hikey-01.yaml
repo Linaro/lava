@@ -34,6 +34,20 @@ actions:
       lxc:
       serial:
     methods:
+      grub-efi:
+        installed:
+          parameters:
+            interrupt_prompt: "Android Fastboot mode"
+            interrupt_string: ' '
+          commands:
+          - search.fs_label rootfs root
+          - 'linux ($root)/boot/Image console=tty0 console=ttyAMA3,115200 root=/dev/mmcblk0p9 rootwait rw'
+          - devicetree ($root)/boot/hi6220-hikey.dtb
+          - boot
+        menu_options: fastboot
+        reset_device: False  # default is True
+        parameters:
+          bootloader_prompt: 'grub>'
       uefi-menu:
         parameters:
           interrupt_prompt: "Android Fastboot mode"
