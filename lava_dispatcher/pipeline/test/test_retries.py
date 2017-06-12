@@ -309,7 +309,8 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
             connection = super(TestAdjuvant.FakeAdjuvant, self).run(connection, max_end_time, args)
             if not self.valid:
                 raise LAVABug("fakeadjuvant should be valid")
-            if self.data[self.key()]:
+            adjuvant = self.get_namespace_data(action=self.key(), label=self.key(), key=self.key())
+            if adjuvant:
                 self.data[self.key()] = 'triggered'
             if self.adjuvant:
                 self.data[self.key()] = 'base class trigger'
@@ -337,7 +338,8 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
             connection = TestAdjuvant.FakeConnection()
             self.count += 1
             self.results = {'status': "failed"}
-            self.data[TestAdjuvant.FakeAdjuvant.key()] = True
+            key = TestAdjuvant.FakeAdjuvant.key()
+            self.set_namespace_data(action=key, label=key, key=key, value=True)
             return connection
 
     class SafeAction(Action):
@@ -359,7 +361,8 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 raise LAVABug("Fake action not meant to have a real connection")
             connection = TestAdjuvant.FakeConnection()
             self.results = {'status': "passed"}
-            self.data[TestAdjuvant.FakeAdjuvant.key()] = False
+            key = TestAdjuvant.FakeAdjuvant.key()
+            self.set_namespace_data(action=key, label=key, key=key, value=False)
             return connection
 
     def setUp(self):
@@ -412,7 +415,6 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.assertEqual(self.fakejob.run(), 0)
-        self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
 
     def test_run_action(self):
         pipeline = TestAction.FakePipeline(job=self.fakejob)
@@ -423,7 +425,6 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(self.fakejob.run(), 0)
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
-        self.assertEqual(self.fakejob.context, {'fake-key': False})
 
     def test_namespace_data(self):
         """

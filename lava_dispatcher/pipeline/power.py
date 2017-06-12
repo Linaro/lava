@@ -68,8 +68,8 @@ class RebootDevice(Action):
         if not connection:
             raise LAVABug("Called %s without an active Connection" % self.name)
         connection = super(RebootDevice, self).run(connection, max_end_time, args)
-        self.data[PDUReboot.key()] = True
-        self.data[SoftReboot.key()] = True
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=True)
         if self.job.device.soft_reset_command is '':
             return connection
         command = self.job.device['commands']['soft_reset']
@@ -79,8 +79,8 @@ class RebootDevice(Action):
             if not self.run_command(cmd.split(' '), allow_silent=True):
                 raise InfrastructureError("%s failed" % cmd)
         self.results = {"success": connection.prompt_str}
-        self.data[PDUReboot.key()] = False
-        self.data[SoftReboot.key()] = False
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
         # FIXME: this should not be just based on UBoot, use shared action
         reboot_prompt = self.get_namespace_data(
             action='uboot-retry',
@@ -94,7 +94,7 @@ class RebootDevice(Action):
         except TestError:
             self.logger.info("Wait for prompt after soft reboot command failed")
             self.results = {'status': "failed"}
-            self.data[PDUReboot.key()] = True
+            self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
             connection.prompt_str = self.reboot_prompt
         return connection
 
@@ -132,7 +132,7 @@ class SoftReboot(AdjuvantAction):
             self.wait(connection)
         except TestError:
             raise JobError("Soft reboot failed.")
-        self.data[SoftReboot.key()] = False
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
         self.results = {'commands': reboot_commands}
         return connection
 
@@ -162,7 +162,7 @@ class PDUReboot(AdjuvantAction):
         if not self.adjuvant:
             return connection
         if not self.job.device.hard_reset_command:
-            self.logger.warning("Hard reset required but not defined for %s.", self.job.device['hostname'])
+            self.logger.warning("Hard reset required but not defined.")
             return connection
         command = self.job.device.hard_reset_command
         if not isinstance(command, list):
@@ -171,8 +171,8 @@ class PDUReboot(AdjuvantAction):
             if not self.run_command(cmd.split(' '), allow_silent=True):
                 raise InfrastructureError("%s failed" % cmd)
         # the next prompt has to be determined by the boot method, so don't wait here.
-        self.data[PDUReboot.key()] = False
-        self.data[SoftReboot.key()] = False
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
         self.results = {'status': 'success'}
         return connection
 
@@ -189,9 +189,8 @@ class PowerOn(Action):
 
     def run(self, connection, max_end_time, args=None):
         # to enable power to a device, either power_on or hard_reset are needed.
-        hostname = self.job.device['hostname']
         if self.job.device.power_command is '':
-            self.logger.warning("Unable to power on the device %s", hostname)
+            self.logger.warning("Unable to power on the device")
             return connection
         connection = super(PowerOn, self).run(connection, max_end_time, args)
         if self.job.device.pre_power_command:
