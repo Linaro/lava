@@ -146,6 +146,8 @@ class Command(BaseCommand):
         parser.add_argument('--log-socket',
                             default='tcp://*:5555',
                             help="Socket waiting for logs. Default: tcp://*:5555")
+        parser.add_argument('--ipv6', default=False, action='store_true',
+                            help="Enable IPv6 on the listening sockets")
         parser.add_argument('--encrypt', default=False, action='store_true',
                             help="Encrypt messages")
         parser.add_argument('--master-cert',
@@ -624,6 +626,11 @@ class Command(BaseCommand):
         context = zmq.Context()
         self.pull_socket = context.socket(zmq.PULL)
         self.controler = context.socket(zmq.ROUTER)
+
+        if options['ipv6']:
+            self.logger.info("Enabling IPv6")
+            self.pull_socket.setsockopt(zmq.IPV6, 1)
+            self.controler.setsockopt(zmq.IPV6, 1)
 
         if options['encrypt']:
             self.logger.info("Starting encryption")

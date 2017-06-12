@@ -19,6 +19,7 @@ INST_TMPL="--instance-template=/etc/lava-server/{filename}.conf"
 MASTER_SOCKET=""
 LOGGER_SOCKET=""
 LOGLEVEL="DEBUG"
+IPV6=""
 ENCRYPT=""
 MASTER_CERT=""
 SLAVES_CERTS=""
@@ -37,7 +38,7 @@ SCRIPTNAME=/etc/init.d/lava-master
 [ -r /etc/lava-server/$NAME ] && . /etc/lava-server/$NAME
 
 # Build the command line
-OPTIONS="$MASTER_SOCKET $LOGGER_SOCKET $ENCRYPT $MASTER_CERT $SLAVES_CERTS"
+OPTIONS="$MASTER_SOCKET $LOGGER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS"
 DAEMON_ARGS="manage ${INST_TMPL} dispatcher-master --level $LOGLEVEL $OPTIONS"  # Arguments to run the daemon with
 
 # Exit if the package is not installed
