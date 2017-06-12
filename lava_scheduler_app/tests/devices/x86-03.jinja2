@@ -1,0 +1,16 @@
+{% extends 'x86.jinja2' %}
+{% set connection_command = "telnet bumblebee 8003" %}
+{% set hard_reset_command = (
+"/usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command reboot --delay 5") %}
+{% set power_off_command = (
+"/usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command off") %}
+{% set power_on_command = (
+"/usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command on") %}
+
+{% set interfaces = ['eth0', 'eth1', 'eth2'] %}
+{% set sysfs = {'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1",
+                'eth2': "/sys/devices/pci0000:00/0000:00:1c.2/0000:04:00.0/net/eth2"} %}
+{% set mac_addr = {'eth0': "f0:de:f1:46:8c:22", 'eth1': "00:24:d7:9b:d0:8b", 'eth2': "00:24:d7:9b:d0:8c"} %}
+{% set tags = {'eth0': [], 'eth1': ['RJ45', '10M', '100M', '1G'], 'eth2': ['QSFP+', '40G']} %}
+{% set map = {'eth0': {'192.168.0.2': 15}, 'eth1': {'192.168.0.2': 16}, 'eth2': {'192.168.0.2': 20}} %}

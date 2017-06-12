@@ -20,7 +20,7 @@ Glossary of terms
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
 [ :term:`device tag` ] [ :term:`device type` ] [ :term:`developer image` ]
-[ :term:`dispatcher` ] [ :term:`distributed deployment`] [ :term:`DTB` ]
+[ :term:`dispatcher` ] [ :term:`distributed deployment` ] [ :term:`DTB` ]
 [ :term:`DUT` ]
 
 **E** [ :term:`exclusive` ]
@@ -32,7 +32,7 @@ Glossary of terms
 
 **I** [ :term:`inline` ] [ :term:`interface tag` ]
 
-**J** [ :term:`jinja2`] [ :term:`job context` ] [ :term:`job definition` ]
+**J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
 **L** [ :term:`lxc` ]
 

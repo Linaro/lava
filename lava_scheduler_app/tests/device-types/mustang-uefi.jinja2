@@ -1,5 +1,9 @@
 {% extends 'base.jinja2' %}
 {% set boot_character_delay = 10 %}
+
+{% block vland %}
+{% endblock vland %}
+
 {% block body %}
 
 device_type: mustang-uefi
@@ -66,9 +70,6 @@ see http://jinja.pocoo.org/docs/dev/templates/#other-operators
 
 {% set mustang_menu_list = mustang_menu_list | default(menu_action_list) -%}
 
-{% block vland %}
-{% endblock %}
-
 actions:
   deploy:
     methods:
@@ -133,4 +134,4 @@ actions:
 {% endif %}
 {% endfor %}
 {% endfor %}
-{% endblock %}
+{% endblock body %}

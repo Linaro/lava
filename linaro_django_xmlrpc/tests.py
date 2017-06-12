@@ -125,7 +125,7 @@ class MapperTests(TestCase):
         self.assertRaises(TypeError, self.mapper.register, object)
 
     def test_register_guesses_class_name(self):
-        self.mapper.register(ExampleAPI)
+        self.mapper.register(ExampleAPI, "ExampleAPI")
         self.assertTrue("ExampleAPI" in self.mapper.registered)
 
     def test_register_respects_explicit_class_name(self):
@@ -144,7 +144,7 @@ class MapperTests(TestCase):
         self.assertTrue(self.mapper.registered['API'] is TestAPI1)
 
     def test_lookup_finds_method(self):
-        self.mapper.register(ExampleAPI)
+        self.mapper.register(ExampleAPI, "ExampleAPI")
         foo = self.mapper.lookup("ExampleAPI.foo")
         # Calling the method is easier than doing some other magic here
         self.assertEqual(foo(), "bar")
@@ -156,7 +156,7 @@ class MapperTests(TestCase):
         self.assertEqual(foo(), "bar")
 
     def test_lookup_returns_none_if_method_not_found(self):
-        self.mapper.register(ExampleAPI)
+        self.mapper.register(ExampleAPI, "ExampleAPI")
         retval = self.mapper.lookup("ExampleAPI.missing_method")
         self.assertEqual(retval, None)
 
@@ -178,7 +178,7 @@ class MapperTests(TestCase):
     def test_list_methods_without_methods(self):
         class TestAPI(ExposedAPI):
             pass
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.mapper.list_methods()
         self.assertEqual(retval, [])
 
@@ -206,7 +206,7 @@ class MapperTests(TestCase):
 
             def c(self):
                 pass
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.mapper.list_methods()
         self.assertEqual(retval, ['TestAPI.a', 'TestAPI.b', 'TestAPI.c'])
 
@@ -218,8 +218,8 @@ class MapperTests(TestCase):
         class SourceB(ExposedAPI):
             def a(self):
                 pass
-        self.mapper.register(SourceA)
-        self.mapper.register(SourceB)
+        self.mapper.register(SourceA, "SourceA")
+        self.mapper.register(SourceB, "SourceB")
         retval = self.mapper.list_methods()
         self.assertEqual(retval, ['SourceA.a', 'SourceB.a'])
 
@@ -351,7 +351,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 pass
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "")
 
@@ -359,7 +359,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 """docstring"""
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "docstring")
 
@@ -370,7 +370,7 @@ class SystemAPITest(TestCase):
                 line 1
                 line 2
                 """
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "line 1\nline 2")
 
@@ -378,7 +378,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 pass
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodSignature("TestAPI.method")
         self.assertEqual(retval, 'undef')
 
@@ -387,7 +387,7 @@ class SystemAPITest(TestCase):
             @xml_rpc_signature('str', 'int')
             def int_to_str(value):
                 return "%s" % value
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodSignature("TestAPI.int_to_str")
         self.assertEqual(retval, ['str', 'int'])
 
@@ -403,7 +403,7 @@ class SystemAPITest(TestCase):
 
             def foo(self):
                 return 1
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.foo", "params": []},
         ]
@@ -419,7 +419,7 @@ class SystemAPITest(TestCase):
 
             def bar(self, arg):
                 return arg
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.foo", "params": []},
             {"methodName": "TestAPI.bar", "params": ["bar-result"]},
@@ -438,7 +438,7 @@ class SystemAPITest(TestCase):
 
             def boom(self):
                 raise xmlrpclib.Fault(1, "boom")
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.boom", "params": []},
         ]
@@ -455,7 +455,7 @@ class SystemAPITest(TestCase):
 
             def echo(self, arg):
                 return arg
-        self.mapper.register(TestAPI)
+        self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.echo", "params": ["before"]},
             {"methodName": "TestAPI.boom", "params": []},
@@ -561,49 +561,6 @@ class SystemAPITest(TestCase):
 
     def test_introspect_capability_supported(self):
         self.assertIn("introspect", self.system_api.getCapabilities())
-
-
-class HandlerAuthTests(TestCaseWithScenarios):
-
-    scenarios = [
-        ('no_space_in_http_authorization', {
-            'HTTP_AUTHORIZATION': "no_space_here",
-            'text': "Invalid HTTP_AUTHORIZATION header",
-            'status_code': 400,
-        }),
-        ('not_basic_auth', {
-            'HTTP_AUTHORIZATION': "Bogus foobar",
-            'text': "Unsupported HTTP_AUTHORIZATION header, only Basic scheme is supported",
-            'status_code': 400,
-        }),
-        ('bad_base64_header', {
-            'HTTP_AUTHORIZATION': "Basic XNlcjp0b2tlbg==",  # 'user:token' encoded, first character removed ('d')
-            'text': "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding",
-            'status_code': 400,
-        }),
-        ('no_user_colon_pass', {
-            'HTTP_AUTHORIZATION': "Basic dXNlcnRva2Vu",  # 'usertoken' encoded
-            'text': "Corrupted HTTP_AUTHORIZATION header, no user:pass",
-            'status_code': 400,
-        }),
-        ('invalid_token', {
-            'HTTP_AUTHORIZATION': "Basic dXNlcjp0b2tlbg==",  # 'user:token' encoded
-            'text': "Invalid token",
-            'status_code': 401,
-        }),
-    ]
-
-    def setUp(self):
-        super(HandlerAuthTests, self).setUp()
-        self.request_data = xmlrpclib.dumps((), methodname="system.listMethods")
-        self.url = reverse("linaro_django_xmlrpc.views.default_handler")
-
-    def test_invalid_http_authorization_header(self):
-        response = self.client.post(
-            self.url, data=self.request_data,
-            content_type="text/xml",
-            HTTP_AUTHORIZATION=self.HTTP_AUTHORIZATION)
-        self.assertContains(response, text=self.text, status_code=self.status_code)
 
 
 class AuthTokenTests(TestCase):

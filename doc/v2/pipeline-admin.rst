@@ -60,17 +60,14 @@ The device dictionary is a file. In the early stages, it can be very simple:
 
  {% extends 'mytemplate.jinja2' %}
 
-Comments may be used in device dictionary files but will not be stored in the
-form of the dictionary created in the database. To use comments, use the jinja
-syntax:
+Comments may be used in device dictionary files, using the jinja syntax:
 
 .. code-block:: jinja
 
  {# comment goes here #}
 
 To remove a variable from a device dictionary, simply remove or comment out the
-variable in the file. When the file is uploaded, the complete device dictionary
-for that device is replaced with the content of the file.
+variable in the file.
 
 It is recommended to keep device dictionary files in version control of some
 kind to make it easier to track changes. The :ref:`administrative interface
@@ -408,8 +405,6 @@ Create the device using the device type and ensure that the device has the
 hostname to be set manually in the database, ensure this is correct, then save
 the changes.
 
-(A helper for this step will be prepared, in time.)
-
 .. _create_device_dictionary:
 
 Creating a device dictionary for the device
@@ -432,8 +427,7 @@ database of the instance you want to use to schedule the jobs. These values are
 stored as a :term:`device dictionary`.
 
 Compare with the existing device dictionary for the device. (If you do not have
-access, ask the admins for an export of the dictionary - a helper for this step
-will be available in time.)::
+access, ask the admins for an export of the dictionary)::
 
  $ lava-server manage device-dictionary --hostname black01 --export
  {% extends 'beaglebone-black.jinja2' %}
@@ -452,12 +446,9 @@ Now modify the dictionary (`Jinja2 child template`_ format) to set the values re
  {% set connection_command = 'telnet playgroundmaster 7018' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 04' %}
 
-.. warning:: the device dictionary parameters are **replaced** when the
-   dictionary is updated, which is why the ``extends`` field is required. Be
-   sure to merge any existing dictionary with the settings you need to change
-   or the existing settings will be lost. LAVA does not preserve history of a
-   device dictionary, it is recommended that the files used to create the
-   dictionaries are kept under version control.
+.. warning:: LAVA does not preserve history of a device dictionary, it is
+   recommended that the files used to create the dictionaries are kept under
+   version control.
 
 .. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
@@ -480,11 +471,8 @@ and the Jinja2 formatting used to update the device dictionary.
 
 .. note:: The device dictionary is **not** editable in the Django admin
    interface due to constraints of the key value store and the django admin
-   forms. This means that the device configuration for pipeline devices is
-   managed using external files updating the details in the database using
-   hooks. However, this does provide a simple mechanism to have version control
-   over the device configuration with a simple mechanism to update the database
-   and verify the database content.
+   forms. The device configuration for pipeline devices is managed using
+   external files, allowing version control of the device configuration.
 
 .. index:: device dictionary update
 
@@ -493,21 +481,18 @@ and the Jinja2 formatting used to update the device dictionary.
 Updating a device dictionary
 ****************************
 
-The populated dictionary now needs to be updated in the database of the
+The populated dictionary now needs to be updated on the filesystem of the
 instance.
 
 All operations to update a device dictionary need to be done by a superuser.
 The specified device must already exist in the database **and** be marked as a
-pipeline device -
+pipeline device for the dictionary to be active -
 
 .. seealso:: :ref:`create_entry_known_type`
 
 * :ref:`updating_device_dictionary_with_lava_tool`
 * :ref:`updating_device_dictionary_using_xmlrpc`
 * :ref:`updating_device_dictionary_on_command_line`
-
-Developers can use :ref:`developer_access_to_django_shell` to update the
-dictionary on the command line.
 
 .. _updating_device_dictionary_with_lava_tool:
 
@@ -543,9 +528,6 @@ dictionary)::
  $ lava-tool device-dictionary SERVER HOSTNAME --update file.jinja2
  Please enter password for encrypted keyring:
  Device dictionary updated for black01
-
-Any line not included in the updated device dictionary will be removed from the
-database for that device.
 
 .. _updating_device_dictionary_using_xmlrpc:
 
@@ -584,21 +566,6 @@ be edited and used to update the device dictionary information.
 Using the command line
 ======================
 
-::
-
- $ lava-server manage device-dictionary --hostname black01 --import black01.txt
-
-If the dictionary did not exist for this hostname, you should see output::
-
- Adding new device dictionary for black01
-
-If the dictionary does exist and the file is valid, you should see output::
-
- Device dictionary updated for black01
-
-.. note:: The file itself has no particular need for an extension,
-   :file:`.txt`, :file:`.jinja2`, :file:`.conf` and :file:`.yaml` are common,
-   depending on your preferred editor / syntax / highlighting configuration.
-
-Updating the device dictionary replaces any previous device dictionary
-for the specified device.
+The device dictionary exists as a ``jinja2`` file in
+``/etc/lava-server/dispatcher-config/devices`` and can be updated by admins
+with the necessary access.

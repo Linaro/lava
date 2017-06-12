@@ -17,7 +17,7 @@ images
 Fastboot deployments support a range of images to be downloaded and deployed to
 the device. The list of images will depend on the test job and the test device.
 The available elements determine the command arguments passed to ``fastboot``
-inside the LXC.
+inside the LXC i.e., the partition to be flashed.
 
 * :ref:`deploy_to_fastboot_images_boot`
 * :ref:`deploy_to_fastboot_images_cache`
@@ -25,6 +25,7 @@ inside the LXC.
 * :ref:`deploy_to_fastboot_images_system`
 * :ref:`deploy_to_fastboot_images_userdata`
 * :ref:`deploy_to_fastboot_images_vendor`
+* :ref:`deploy_to_fastboot_images_rootfs`
 
 .. index:: deploy to fastboot images boot
 
@@ -54,6 +55,33 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``https://``
  * ``file://``
 
+.. _deploy_to_fastboot_images_boot_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_fastboot_images_boot_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing boot
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
+
 .. _deploy_to_fastboot_images_cache:
 
 cache
@@ -79,6 +107,33 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+
+.. _deploy_to_fastboot_images_cache_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_fastboot_images_cache_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing cache
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
 
 .. _deploy_to_fastboot_images_ptable:
 
@@ -106,6 +161,33 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``https://``
  * ``file://``
 
+.. _deploy_to_fastboot_images_ptable_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_fastboot_images_ptable_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing ptable
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
+
 .. index:: deploy to fastboot images system
 
 .. _deploy_to_fastboot_images_system:
@@ -122,6 +204,19 @@ need the ``archive`` option specified to unpack the system image correctly.
 ::
 
    archive: tar
+
+.. _deploy_to_fastboot_images_system_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
 
 .. index:: deploy to fastboot images system url
 
@@ -143,6 +238,36 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+
+.. _deploy_to_fastboot_images_system_apply-overlay:
+
+apply-overlay
+^^^^^^^^^^^^^
+
+Some system images are shipped as sparse images which needs special handling
+with tools such as `simg2img` and `img2simg`, in order to apply LAVA specific
+overlays to it. This should be explicitly mentioned, so that LAVA will take
+necessary action to handle these type of images.
+
+::
+
+   apply-overlay: true
+
+.. seealso:: The sparse image format is defined in `sparse_format.h`_
+
+.. _deploy_to_fastboot_images_system_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing system
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
 
 .. index:: deploy to fastboot images userdata
 
@@ -170,6 +295,33 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+
+.. _deploy_to_fastboot_images_userdata_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_fastboot_images_userdata_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing userdata
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
 
 .. index:: deploy to fastboot images vendor
 
@@ -199,3 +351,114 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``https://``
  * ``file://``
 
+.. _deploy_to_fastboot_images_vendor_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_fastboot_images_vendor_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing vendor
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``
+
+.. index:: deploy to fastboot images rootfs
+
+.. _deploy_to_fastboot_images_rootfs:
+
+rootfs
+------
+
+archive
+^^^^^^^
+
+Some rootfs images are compressed as a tarball (``.tar.gz``), these images
+need the ``archive`` option specified to unpack the rootfs image correctly.
+
+::
+
+   archive: tar
+
+.. _deploy_to_fastboot_images_rootfs_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. index:: deploy to fastboot images rootfs url
+
+.. _deploy_to_fastboot_images_rootfs_url:
+
+url
+^^^
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+
+.. index:: deploy to fastboot images rootfs apply-overlay
+
+.. _deploy_to_fastboot_images_rootfs_apply-overlay:
+
+apply-overlay
+^^^^^^^^^^^^^
+
+Some rootfs images are shipped as sparse images which needs special handling
+with tools such as `simg2img` and `img2simg`, in order to apply LAVA specific
+overlays to it. This should be explicitly mentioned, so that LAVA will take
+necessary action to handle these type of images.
+
+::
+
+   apply-overlay: true
+
+.. seealso:: The sparse image format is defined in `sparse_format.h`_
+
+.. _sparse_format.h: https://android.googlesource.com/platform/system/core/+/master/libsparse/sparse_format.h
+
+.. _deploy_to_fastboot_images_rootfs_reboot:
+
+reboot
+^^^^^^
+
+If there is a need to restart or reboot the :term:`DUT` after flashing rootfs
+image, then the method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``hard-reset``
+ * ``fastboot-reboot``
+ * ``fastboot-reboot-bootloader``

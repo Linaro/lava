@@ -62,3 +62,12 @@ actions:
       from: git
       path: ubuntu/smoke-tests-basic.yaml
       name: smoke-tests
+    - from: git
+      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/params/nfs.yaml
+      name: nfs-dns
+    - from: git
+      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/single-node/singlenode02.yaml
+      name: singlenode-intermediate
+

@@ -97,7 +97,7 @@
         device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
 {% endif %}
 {%- endif %}
-{% endblock %}
+{% endblock vland %}
 
 {% block body %}
 device_type: {{ device_type|default('uboot') }}
@@ -134,6 +134,7 @@ actions:
       lxc:
       serial:
     methods:
+      minimal:
       ssh:
       u-boot:
         parameters:
@@ -195,4 +196,4 @@ actions:
           - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_bootcmd }}
-{% endblock %}
+{% endblock body %}

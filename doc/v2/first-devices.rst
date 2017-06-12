@@ -185,14 +185,14 @@ types:
 
 .. code-block:: none
 
-  lava-server manage add-device --list
+  lava-server manage device-types list -a
 
 On the command line, you can add device types (for instance a QEMU type device
 with a hostname ``qemu01``) using::
 
-  lava-server manage add-device --device-type qemu qemu01
+  lava-server manage devices add --device-type qemu --worker <worker> qemu01
 
-See ``lava-server manage help add-device`` for more options, including initial
+See ``lava-server manage help devices`` for more options, including initial
 states of the device in the database.
 
 Adding a dictionary to the first QEMU device

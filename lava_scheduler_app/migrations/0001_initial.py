@@ -1,10 +1,24 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import models, migrations, DEFAULT_DB_ALIAS, connections
+from django.db.migrations.recorder import MigrationRecorder
 import django.db.models.deletion
 from django.conf import settings
 import lava_scheduler_app.models
+
+
+connection = connections[DEFAULT_DB_ALIAS]
+recorder = MigrationRecorder(connection)
+linaro_django_xmlrpc_applied = False
+lava_scheduler_app_applied = False
+for app, name in recorder.applied_migrations():
+    if app == 'linaro_django_xmlrpc' and name == '0001_initial':
+        linaro_django_xmlrpc_applied = True
+    if app == 'lava_scheduler_app' and name == '0001_initial':
+        lava_scheduler_app_applied = True
+if not linaro_django_xmlrpc_applied and lava_scheduler_app_applied:
+    recorder.record_applied('linaro_django_xmlrpc', '0001_initial')
 
 
 class Migration(migrations.Migration):

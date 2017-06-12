@@ -272,4 +272,30 @@ provide a ramdisk instead of an nfsrootfs:
    header on the ramdisk would be mangled when the test definitions are
    applied, resulting in an invalid ramdisk.
 
+.. index writing test job - advanced
 
+.. _test_job_yaml_advanced:
+
+Submissions using advanced features
+***********************************
+
+Templating
+==========
+
+Not all test jobs are written by hand and many :ref:`continuous_integration`
+systems will generate test jobs for submission to LAVA using a templating
+system. For example, :ref:`kernelci_org` uses :term:`jinja2` to convert the
+data used to build the kernel artifacts into test job submissions for LAVA V2.
+
+Including YAML
+==============
+
+It is also possible to include YAML directly into a V2 test job submission
+using the ``include:`` dictionary which takes3 a single string as the URL of a
+remote YAML file. This file will be downloaded and inserted into the test job
+YAML. Any existing values at this point of the file will be updated. Any new
+values from the included file will be added.
+
+This feature can be used to include generic boilerplate into YAML files or to
+help insert metadata or other elements. The URL provided **must** be publicly
+accessible to the master during submission.

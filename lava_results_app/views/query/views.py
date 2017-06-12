@@ -26,15 +26,18 @@ import tempfile
 from django.db import IntegrityError
 from django.db.models import Q
 from django.db.utils import ProgrammingError
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import (
     PermissionDenied,
+    FieldDoesNotExist,
     FieldError
 )
 from django.core.urlresolvers import reverse
 from django.http import (
+    Http404,
     HttpResponse,
     HttpResponseRedirect
 )
@@ -274,14 +277,25 @@ def query_display(request, username, name):
 @login_required
 def query_custom(request):
 
-    content_type = Query.get_content_type(request.GET.get("entity"))
+    try:
+        content_type = Query.get_content_type(request.GET.get("entity"))
+    except InvalidContentTypeError as e:
+        messages.error(request, e)
+        raise Http404()
 
     if content_type.model_class() not in QueryCondition.RELATION_MAP:
-        raise InvalidContentTypeError(
+        messages.error(
+            request,
             "Wrong table name in entity param. Please refer to query docs.")
+        raise Http404()
 
-    conditions = Query.parse_conditions(content_type,
-                                        request.GET.get("conditions"))
+    try:
+        conditions = Query.parse_conditions(content_type,
+                                            request.GET.get("conditions"))
+    except InvalidConditionsError as e:
+        messages.error(request, e)
+        raise Http404()
+
     view = QueryCustomResultView(
         content_type=content_type,
         conditions=conditions,
@@ -296,9 +310,9 @@ def query_custom(request):
             request.user,
             view.get_table_data()
         )
-    except FieldError:
-        raise InvalidConditionsError("Conditions URL incorrect: Field does "
-                                     "not exist. Please refer to query docs.")
+    except (FieldDoesNotExist, FieldError) as e:
+        messages.error(request, e)
+        raise Http404()
 
     config = RequestConfig(request, paginate={"per_page": table.length})
     config.configure(table)
@@ -401,25 +415,31 @@ def query_export_custom(request):
 
     try:
         content_type = Query.get_content_type(request.GET.get("entity"))
-    except ContentType.DoesNotExist:
-        raise InvalidContentTypeError(
-            "Wrong table name in entity param. Please refer to query docs.")
+    except InvalidContentTypeError as e:
+        messages.error(request, e)
+        raise Http404()
 
     if content_type.model_class() not in QueryCondition.RELATION_MAP:
-        raise InvalidContentTypeError(
+        messages.error(
+            request,
             "Wrong table name in entity param. Please refer to query docs.")
+        raise Http404()
 
-    conditions = Query.parse_conditions(
-        content_type, request.GET.get("conditions"))
+    try:
+        conditions = Query.parse_conditions(
+            content_type, request.GET.get("conditions"))
+    except InvalidConditionsError as e:
+        messages.error(request, e)
+        raise Http404()
 
     filename = "query_%s_export" % (content_type)
 
     try:
         results = Query.get_queryset(content_type, conditions).visible_by_user(
             request.user)
-    except FieldError:
-        raise InvalidConditionsError("Conditions URL incorrect: Field does "
-                                     "not exist. Please refer to query docs.")
+    except (FieldDoesNotExist, FieldError) as e:
+        messages.error(request, e)
+        raise Http404()
 
     return _export_query(results, content_type, filename)
 

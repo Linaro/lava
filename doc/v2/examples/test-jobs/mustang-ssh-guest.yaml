@@ -142,6 +142,10 @@ actions:
       name: smoke-tests
       path: ubuntu/smoke-tests-basic.yaml
       repository: http://git.linaro.org/qa/test-definitions.git
+    - from: git
+      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/params/nfs.yaml
+      name: nfs-dns
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
       path: lava-test-shell/single-node/singlenode03.yaml

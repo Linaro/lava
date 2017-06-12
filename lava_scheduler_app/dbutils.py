@@ -18,7 +18,6 @@ from django.utils import timezone
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.models import (
     Device,
-    DeviceDictionary,
     DevicesUnavailableException,
     DeviceType,
     is_deprecated_json,
@@ -40,23 +39,25 @@ def match_vlan_interface(device, job_def):
         return False
     interfaces = []
     logger = logging.getLogger('dispatcher-master')
-    device_dict = DeviceDictionary.get(device.hostname).to_dict()
-    if 'tags' not in device_dict['parameters']:
-        logger.error("%s has no tags in the device dictionary parameters", device.hostname)
+    device_dict = device.load_configuration()
+    if not device_dict or device_dict.get('parameters', {}).get('interfaces', None) is None:
         return False
+
     for vlan_name in job_def['protocols']['lava-vland']:
         tag_list = job_def['protocols']['lava-vland'][vlan_name]['tags']
-        for interface, tags in device_dict['parameters']['tags'].iteritems():
+        for interface in device_dict['parameters']['interfaces']:
+            tags = device_dict['parameters']['interfaces'][interface]['tags']
+            if not tags:
+                continue
             logger.info(
                 "Job requests %s for %s, device %s provides %s for %s",
                 tag_list, vlan_name, device.hostname, tags, interface)
-            # tags & job tags must equal job tags
-            # device therefore must support all job tags, not all job tags available on the device need to be specified
             if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
                 logger.info("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
                 break
+
     logger.info("Matched: %s", (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
     return len(interfaces) == len(job_def['protocols']['lava-vland'].keys())
 
@@ -160,7 +161,7 @@ def submit_health_check_jobs():
                 pass
 
 
-def testjob_submission(job_definition, user, check_device=None):
+def testjob_submission(job_definition, user, check_device=None, original_job=None):
     """
     Single submission frontend for JSON or YAML
     :param job_definition: string of the job submission
@@ -207,7 +208,7 @@ def testjob_submission(job_definition, user, check_device=None):
     else:
         validate_job(job_definition)
         # returns a single job or a list (not a QuerySet) of job objects.
-        job = TestJob.from_yaml_and_user(job_definition, user)
+        job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
         if check_device and isinstance(check_device, Device) and not isinstance(job, list):
             # the slave must neither know nor care if this is a health check,
             # only the master cares and that has the database connection.
@@ -764,7 +765,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         device = job.actual_device
 
         try:
-            device_config = device.load_device_configuration(job_ctx)  # raw dict
+            device_config = device.load_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             logger.error("[%d] jinja2 error: %s", job.id, exc)
             msg = "Administrative error. Unable to parse device configuration: '%s'" % exc
@@ -856,3 +857,28 @@ def device_type_summary(visible=None):
                     )
                 ),).order_by('device_type')
     return devices
+
+
+def load_devicetype_template(device_type_name):
+    """
+    Loads the bare device-type template as a python dictionary object for
+    representation within the device_type templates.
+    No device-specific details are parsed - default values only, so some
+    parts of the dictionary may be unexpectedly empty. Not to be used when
+    rendering device configuration for a testjob.
+    :param device_type_name: DeviceType.name (string)
+    :param path: optional alternative path to templates
+    :return: None or a dictionary of the device type template.
+    """
+    path = os.path.dirname(Device.CONFIG_PATH)
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    env = jinja2.Environment(
+        loader=jinja2.ChoiceLoader([type_loader]),
+        trim_blocks=True)
+    try:
+        template = env.get_template("%s.jinja2" % device_type_name)
+    except jinja2.TemplateNotFound:
+        return None
+    if not template:
+        return None
+    return yaml.load(template.render())

@@ -249,7 +249,7 @@ type of file(s) updated:
 ====================== ==============================================
 templates/\*/\*.html     next browser refresh (F5/Ctrl-R)
 device-types/\*.jinja2   next testjob submission
-device dictionary        next testjob submission
+devices/\*.jinja2        next testjob submission
 \*_app/\*.py             ``$ sudo apache2ctl restart``
 \*_daemon/\*.py          ``$ sudo service lava-server restart``
 ====================== ==============================================

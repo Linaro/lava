@@ -14,10 +14,10 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     JSONDataError,
+    Notification,
     Tag,
     TestJob,
     DevicesUnavailableException,
-    DeviceDictionary,
     _check_exclusivity,
     is_deprecated_json,
 )
@@ -29,6 +29,7 @@ LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 # filter out warnings from django sub systems like httpresponse
 warnings.filterwarnings('ignore', r"Using mimetype keyword argument is deprecated")
 warnings.filterwarnings('ignore', r"StrAndUnicode is deprecated")
+
 
 # pylint gets confused with TestCase
 # pylint: disable=no-self-use,invalid-name,too-many-ancestors,too-many-public-methods
@@ -54,7 +55,6 @@ class ModelFactory(object):
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
         TestJob.objects.all().delete()
-        [item.delete() for item in DeviceDictionary.object_list()]  # pylint: disable=expression-not-assigned
         User.objects.all().delete()
         Group.objects.all().delete()
 
@@ -148,7 +148,7 @@ class ModelFactory(object):
 
     def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
-            definition = self.make_job_json()
+            definition = self.make_job_json(**kwargs)
         if submitter is None:
             submitter = self.make_user()
         if 'user' not in kwargs:
@@ -156,6 +156,19 @@ class ModelFactory(object):
         testjob = TestJob.from_json_and_user(definition, submitter)
         testjob.save()
         return testjob
+
+    def make_notification(self, job):
+        notification = Notification()
+        notification.test_job = job
+        notification.verbosity = Notification.QUIET
+
+        notification.callback_url = "http://localhost/"
+        notification.callback_token = "token"
+        notification.callback_method = Notification.POST
+        notification.callback_dataset = Notification.MINIMAL
+        notification.save()
+
+        return notification
 
 
 class TestCaseWithFactory(TestCase):  # pylint: disable=too-many-ancestors
@@ -172,6 +185,15 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
         self.factory.cleanup()
+
+    def test_from_json_and_user_sets_outputdir(self):
+        definition = self.factory.make_job_json()
+        job = TestJob.from_json_and_user(definition, self.factory.make_user())
+        dir_list = job.output_dir.split('/')
+        self.assertIn("%02d" % job.submit_time.year, dir_list)
+        self.assertIn("%02d" % job.submit_time.month, dir_list)
+        self.assertIn("%02d" % job.submit_time.day, dir_list)
+        self.assertIn(str(job.id), dir_list)
 
     def test_user_permission(self):
         self.assertIn(
@@ -213,18 +235,18 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.factory.cleanup()
 
     def test_from_json_and_user_sets_target(self):
-        panda_board = self.factory.make_device(hostname='panda01')
+        panda_board = self.factory.make_device(hostname='panda02')
         job = TestJob.from_json_and_user(
-            self.factory.make_job_json(target='panda01'),
+            self.factory.make_job_json(target='panda02'),
             self.factory.make_user())
         self.assertEqual(panda_board, job.requested_device)
         self.factory.cleanup()
 
     def test_from_json_and_user_does_not_set_device_type_from_target(self):
         panda_type = self.factory.ensure_device_type(name='panda')
-        self.factory.make_device(device_type=panda_type, hostname='panda01')
+        self.factory.make_device(device_type=panda_type, hostname='panda02')
         job = TestJob.from_json_and_user(
-            self.factory.make_job_json(target='panda01'),
+            self.factory.make_job_json(target='panda02'),
             self.factory.make_user())
         self.assertEqual(None, job.requested_device_type)
         self.factory.cleanup()
@@ -365,17 +387,11 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
 
     def test_from_json_rejects_exclusive(self):
         panda_type = self.factory.ensure_device_type(name='panda')
-        panda_board = self.factory.make_device(device_type=panda_type, hostname='panda01')
-        self.assertFalse(panda_board.is_exclusive)
+        panda_board = self.factory.make_device(device_type=panda_type, hostname='panda03')
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(device_type='panda'),
             self.factory.make_user())
         self.assertEqual(panda_type, job.requested_device_type)
-        device_dict = DeviceDictionary.get(panda_board.hostname)
-        self.assertIsNone(device_dict)
-        device_dict = DeviceDictionary(hostname=panda_board.hostname)
-        device_dict.parameters = {'exclusive': 'True'}
-        device_dict.save()
         self.assertTrue(panda_board.is_exclusive)
         self.assertRaises(
             DevicesUnavailableException, _check_exclusivity, [panda_board], pipeline=False
@@ -702,6 +718,35 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
 
         invalid_job_data = self.factory.make_invalid_job_json()
         self.assertFalse(is_deprecated_json(invalid_job_data))
+
+    def test_get_callback_data(self):
+
+        device_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(device_type=device_type, hostname="panda3")
+        user = self.factory.ensure_user(username='notification-user', email='', password='test', )
+        job = self.factory.make_testjob(device_type='panda', submitter=user)
+        notification = self.factory.make_notification(job)
+
+        test_callback_data = {
+            'actual_device_id': None,
+            'definition': '{\n    "actions": [],\n    "device_type": "panda",\n    "health_check": false,\n    "timeout": 1\n}',
+            'description': '',
+            'end_time': 'None',
+            'failure_comment': None,
+            'is_pipeline': False,
+            'metadata': [],
+            'priority': 50,
+            'start_time': 'None',
+            'status': 0,
+            'status_string': 'submitted',
+            'submitter_username': u'notification-user',
+            'token': 'token'
+        }
+        notification_callback_data = notification.get_callback_data()
+        del notification_callback_data['submit_time']
+        del notification_callback_data['id']
+
+        self.assertEqual(test_callback_data, notification_callback_data)
 
 
 class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors

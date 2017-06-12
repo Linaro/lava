@@ -598,10 +598,9 @@ can disable V1 test jobs on that worker.
 
    This list may include ``lava-coordinator``, ``lava-server-doc``,
    ``libapache2-mod-uwsgi``, ``libapache2-mod-wsgi``, ``postgresql``,
-   ``python-django-auth-ldap``, ``python-django-kvstore``,
-   ``python-django-restricted-resource``, ``python-django-tables2``,
-   ``python-ldap``, ``python-markdown``, ``uwsgi-core`` but may also remove
-   others. Check the list carefully.
+   ``python-django-auth-ldap``, ``python-django-restricted-resource``,
+   ``python-django-tables2``, ``python-ldap``, ``python-markdown``,
+   ``uwsgi-core`` but may also remove others. Check the list carefully.
 
 #. Check lava-slave is still pinging the master correctly.
 

@@ -91,7 +91,6 @@ setup(
         'markupsafe',
         'mocker >= 1.0',
         'netifaces >= 0.10.4',
-        'django-kvstore',
         'pyzmq',
         'jinja2',
         'django-auth-ldap >= 1.1.8',

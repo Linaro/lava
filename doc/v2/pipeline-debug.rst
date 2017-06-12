@@ -136,3 +136,7 @@ Configuration files
     dictionary content, use::
 
      $ lava-tool get-pipeline-device-config --stdout SERVER DEVICE_HOSTNAME
+
+* **device dictionaries** - ``/etc/lava-server/dispatcher-config/devices``
+  These files are specific to each instance and need to be named according to
+  the ``hostname``.jinja2 of the device as configured on the same instance.

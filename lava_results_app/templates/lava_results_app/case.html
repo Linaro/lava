@@ -60,7 +60,7 @@
   <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
       <h4><a
       title="view test job output for this passed test"
-      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.result_code }}">
+      href="{{ job.get_absolute_url }}#results_{{ suite.name }}_{{ testcase.name }}_{{ testcase.action_metadata.level }}">
       Log entry: {{ job.id }}</a></h4>
   {% endif %}
   {% if testcase.test_set %}

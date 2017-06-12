@@ -5,7 +5,7 @@
 	delaycompress
 	missingok
 	notifempty
-	create 644 root root
+	create 644 lavaserver lavaserver
   postrotate
     if /etc/init.d/lava-master status > /dev/null ; then \
       /etc/init.d/lava-master reload > /dev/null; \
