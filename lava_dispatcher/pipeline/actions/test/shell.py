@@ -242,6 +242,7 @@ class TestShellAction(TestAction):
         if lava_test_sh_cmd:
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
+        partial = int(self.connection_timeout.duration / 2)
         try:
             feedbacks = []
             for feedback_ns in self.data.keys():
@@ -251,8 +252,8 @@ class TestShellAction(TestAction):
                     action='shared', label='shared', key='connection',
                     deepcopy=False, parameters={"namespace": feedback_ns})
                 if feedback_connection:
-                    self.logger.debug("Will listen to feedbacks from '%s'",
-                                      feedback_ns)
+                    self.logger.debug("Will listen to feedbacks from '%s' for %d seconds",
+                                      feedback_ns, partial)
                     feedbacks.append((feedback_ns, feedback_connection))
 
             with connection.test_connection() as test_connection:
@@ -273,7 +274,6 @@ class TestShellAction(TestAction):
                     test_connection.timeout = self.connection_timeout.duration
 
                 while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
-                    partial = int(self.connection_timeout.duration / 2)
                     for feedback in feedbacks:
                         self.logger.debug("Listening to namespace '%s'", feedback[0])
                         feedback[1].listen_feedback(timeout=partial)
