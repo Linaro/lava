@@ -9,6 +9,9 @@ timeouts:
     minutes: 5
   connection:
     minutes: 3
+  connections:
+    lava-test-shell:
+      seconds: 10
 priority: medium
 visibility: public
 

@@ -140,6 +140,15 @@ class TestLxcWithDevices(StdoutTestCase):
         factory = LxcFactory()
         self.job = factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
 
+    def test_lxc_feedback(self):  # pylint: disable=too-many-locals
+        self.assertIsNotNone(self.job)
+        # validate with two test actions, lxc and device
+        self.job.validate()
+        drone_test = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        self.assertNotEqual(10, drone_test.connection_timeout.duration)
+        drone_shell = [action for action in drone_test.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+        self.assertEqual(10, drone_shell.connection_timeout.duration)
+
     def test_lxc_with_device(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
