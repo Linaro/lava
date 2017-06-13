@@ -18,7 +18,6 @@
 
 import xmlrpclib
 
-from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
