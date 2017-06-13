@@ -90,16 +90,14 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: device-type name is already used.")
 
-    @check_superuser
     def get_template(self, name):
         """
         Name
         ----
-        `scheduler.device_types.get_template` (`tname`)
+        `scheduler.device_types.get_template` (`name`)
 
         Description
         -----------
-        [superuser only]
         Return the device-type configuration
 
         Arguments

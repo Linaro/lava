@@ -124,7 +124,6 @@ class SchedulerDevicesAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)
 
-    @check_superuser
     def get_dictionary(self, hostname, render=False):
         """
         Name
@@ -133,7 +132,6 @@ class SchedulerDevicesAPI(ExposedAPI):
 
         Description
         -----------
-        [superuser only]
         Return the device configuration
 
         Arguments
