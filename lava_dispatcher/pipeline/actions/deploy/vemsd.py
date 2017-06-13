@@ -36,7 +36,7 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.power import PowerOn
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.udev import WaitUSBMassStorageDeviceAction
 from lava_dispatcher.pipeline.utils.constants import (
     VEXPRESS_AUTORUN_INTERRUPT_CHARACTER,
@@ -119,7 +119,7 @@ class VExpressMsdAction(DeployAction):
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(PowerOn())
+        self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
         self.internal_pipeline.add_action(EnterVExpressMCC())
         self.internal_pipeline.add_action(EnableVExpressMassStorage())
