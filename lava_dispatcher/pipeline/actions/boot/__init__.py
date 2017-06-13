@@ -390,6 +390,10 @@ class BootloaderCommandOverlay(Action):
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
                     and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
                 ramdisk_addr = '-'
+            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            if self.method == 'u-boot' and not add_header == "u-boot":
+                self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
+                ramdisk_addr = '-'
 
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
                 self.bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
