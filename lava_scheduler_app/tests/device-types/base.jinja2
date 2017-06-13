@@ -231,4 +231,6 @@ timeouts:
       seconds: {{ connection_timeout_bootloader_interrupt | default(30) }}
     u-boot-interrupt:
       seconds: {{ connection_timeout_u_boot_interrupt | default(30) }}
+    lava-test-shell:
+      seconds: {{ connection_timeout_feedback | default(10) }}
 {% endblock timeouts -%}
