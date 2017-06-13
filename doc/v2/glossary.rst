@@ -306,6 +306,9 @@ Glossary of terms
     selected device nodes can also be made available, depending on admin
     configuration of the devices.
 
+    .. seealso:: :ref:`deploy_using_lxc`, :ref:`lxc_deploy`,
+      :ref:`feedback_using_lxc` and :ref:`lxc_protocol_reference`
+
   master
     The master is a server machine with ``lava-server`` installed and it
     optionally supports one or more :term:`remote workers <remote worker>`
