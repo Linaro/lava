@@ -576,7 +576,7 @@ class MetaType(models.Model):
         if not data:
             logger.debug('get_type_name: skipping %s' % section)
             return None
-        if level > len(definition['actions']) or section not in definition['actions'][level]:
+        if level >= len(definition['actions']) or section not in definition['actions'][level]:
             logger.warning('get_type_name: unrecognised level %s for section %s', level, section)
             return None
         data = definition['actions'][level][section]
