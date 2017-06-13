@@ -484,8 +484,7 @@ class TestShellAction(TestAction):
             self.logger.warning("No USB devices added to the LXC.")
             return False
         for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
-                       os.path.realpath(device)]
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
             log = self.run_command(lxc_cmd)
             self.logger.debug(log)
             self.logger.debug("%s: device %s added", lxc_name,
