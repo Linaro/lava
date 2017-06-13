@@ -229,7 +229,7 @@ class RepoAction(Action):
         revision = self.parameters.get('revision', None)
         if revision:
             self.set_namespace_data(
-                action='test', label=self.uuid, key='branch', value=revision)
+                action='test', label=self.uuid, key='revision', value=revision)
 
         # FIXME - is this needed? - the issue here is that the new model does not use fs.tgz
         # therefore, there may not be the same need to collate the dependent testdefs, all of the
