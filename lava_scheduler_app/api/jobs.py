@@ -19,10 +19,11 @@
 import os
 import xmlrpclib
 
-from linaro_django_xmlrpc.models import ExposedAPI
-from lava_scheduler_app.models import TestJob
+from django.contrib.auth.models import AnonymousUser
 
+from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.api import SchedulerAPI
+from lava_scheduler_app.models import TestJob
 
 
 class SchedulerJobsAPI(ExposedAPI):
@@ -109,7 +110,10 @@ class SchedulerJobsAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 404, "Job '%s' was not found." % job_id)
 
-        if not job.can_view(self.user):
+        user = self.user
+        if self.user is None:
+            user = AnonymousUser()
+        if not job.can_view(user):
             raise xmlrpclib.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
@@ -151,7 +155,10 @@ class SchedulerJobsAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 404, "Job '%s' was not found." % job_id)
 
-        if not job.can_view(self.user):
+        user = self.user
+        if self.user is None:
+            user = AnonymousUser()
+        if not job.can_view(user):
             raise xmlrpclib.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
