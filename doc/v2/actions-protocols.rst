@@ -427,3 +427,5 @@ elements that are accepted by the LXC protocol:
   same `name` is used again, the persistent container from the previous test job
   will be used, instead of creating a fresh container. By default the value is
   `false`.
+
+.. seealso:: :ref:`feedback_using_lxc`

@@ -177,6 +177,30 @@ Protocol elements
     - systemd-sysv
     os: debian
 
+.. index:: LXC - feedback, feedback output
+
+.. _feedback_using_lxc:
+
+Feedback from the device
+========================
+
+Actions within the LXC can cause the device to emit messages on the serial
+console. Some devices can have problems maintaining the serial connection if
+this data is not flushed and the data itself can be useful to test writers to
+debug issues and failures.
+
+LAVA automatically reads from all other :term:`namespaces <namespace>` whilst
+processing the test shell in another namespace and outputs this as ``feedback``
+data. When viewing a test job log file, feedback can be turned on or off using
+the buttons at the top of the log file.
+
+To support feedback, the ``lava-test-shell``
+:ref:`individual_connection_timeout_overrides` is set to 10 seconds by default.
+(There are no suitable prompts to match, so reading feedback continues until
+the connection timeout is reached, without failing the test shell itself.)
+
+.. seealso:: :ref:`timeouts`
+
 Differences between LXC releases
 ================================
 
