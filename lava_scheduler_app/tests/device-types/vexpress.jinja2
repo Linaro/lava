@@ -141,6 +141,9 @@ actions:
         port: {{ ssh_port|default(22) }}
         user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
+{% if usb_uuid %}
+      usb:
+{% endif %}
       tftp:
 {% if vexpress_supports_vemsd %}
       vemsd:
