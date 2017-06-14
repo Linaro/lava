@@ -18,23 +18,26 @@
 MASTER_URL="tcp://localhost:5556"
 LOGGER_URL="tcp://localhost:5555"
 LOGLEVEL="DEBUG"
+HOSTNAME=""
 ENCRYPT=""
 MASTER_CERT=""
 SLAVE_CERT=""
-
-# Read configuration variable files if present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
-# This script fragment can overwrite the variables defined above
-[ -r /etc/lava-dispatcher/lava-slave ] && . /etc/lava-dispatcher/lava-slave
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-slave"                            # short description
 NAME=lava-slave                              # short server's name
 DAEMON="/usr/bin/lava-slave"                 # server's location
-DAEMON_ARGS="--master $MASTER_URL --socket-addr $LOGGER_URL --level $LOGLEVEL $ENCRYPT $MASTER_CERT $SLAVE_CERT"  # Arguments to run the daemon with
 PIDFILE=/var/run/lava-slave.pid
 SCRIPTNAME=/etc/init.d/lava-slave
+
+# Read configuration variable files if present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+# This script fragment can overwrite the variables defined above
+[ -r /etc/lava-dispatcher/$NAME ] && . /etc/lava-dispatcher/$NAME
+
+# Build the command line
+DAEMON_ARGS="--master $MASTER_URL --socket-addr $LOGGER_URL --level $LOGLEVEL $ENCRYPT $MASTER_CERT $SLAVE_CERT $HOSTNAME"
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
