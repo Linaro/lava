@@ -58,7 +58,7 @@ def migrate_device_dict_to_filesystem(apps, schema_editor):
     # Dump the device dictionaries to file system
     for device in Device.objects.filter(is_pipeline=True).order_by('hostname'):
         if device.hostname not in DDT:
-            print("Skip %s" % hostname)
+            print("Skip %s" % device.hostname)
             continue
 
         device_dict = DDT[device.hostname]
