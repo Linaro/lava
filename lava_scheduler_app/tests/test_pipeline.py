@@ -15,7 +15,6 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import match_vlan_interface
 from django.db.models import Q
 from django.contrib.auth.models import Group, Permission, User
-from collections import OrderedDict
 from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
@@ -426,6 +425,24 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device_dict = device.load_configuration()
         self.assertIsInstance(device_dict['commands']['hard_reset'], list)
         self.assertTrue(device.is_valid())
+
+    def test_minimal_config(self):
+        hostname = 'bbb-02'
+        dt = self.factory.make_device_type(name='beaglebone-black')
+        device = self.factory.make_device(device_type=dt, hostname=hostname)
+        device_dict = device.load_configuration()
+        self.assertIsNotNone(device_dict)
+        self.assertTrue(device.is_valid())
+        self.assertIn('commands', device_dict)
+        self.assertIn('parameters', device_dict)
+        self.assertIn('timeouts', device_dict)
+        self.assertIn('actions', device_dict)
+        device_dict = device.minimise_configuration(device_dict)
+        self.assertIsNotNone(device_dict)
+        self.assertNotIn('commands', device_dict)
+        self.assertNotIn('parameters', device_dict)
+        self.assertIn('actions', device_dict)
+        self.assertIn('timeouts', device_dict)
 
     def test_auto_login(self):
         data = yaml.load(self.factory.make_job_yaml())
@@ -1339,9 +1356,9 @@ class VlanInterfaces(TestCaseWithFactory):
             Permission.objects.get(codename='add_testjob'))
         user.save()
         bbb_type = self.factory.make_device_type('beaglebone-black')
-        bbb_1 = self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         ct_type = self.factory.make_device_type('cubietruck')
-        cubie = self.factory.make_device(hostname='ct-01', device_type=ct_type)
+        self.factory.make_device(hostname='ct-01', device_type=ct_type)
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
 
     def test_vlan_interface(self):  # pylint: disable=too-many-locals
@@ -1371,7 +1388,7 @@ class VlanInterfaces(TestCaseWithFactory):
         self.assertIn('10M', client_job['protocols']['lava-vland']['vlan_one']['tags'])
         self.assertIn('vlan_two', server_job['protocols']['lava-vland'])
         self.assertIn('100M', server_job['protocols']['lava-vland']['vlan_two']['tags'])
-        client_tags = client_job['protocols']['lava-vland']['vlan_one']
+        client_job['protocols']['lava-vland']['vlan_one']
         bbb_01 = Device.objects.get(hostname='bbb-01')
         client_config = bbb_01.load_configuration()
         self.assertIn('eth0', client_config['parameters']['interfaces'])

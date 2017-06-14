@@ -907,6 +907,28 @@ class Device(RestrictedResource):
         else:
             return yaml.load(device_template)
 
+    def minimise_configuration(self, data):
+        """
+        Support for dynamic connections which only require
+        critical elements of device configuration.
+        Principally drop top level parameters and commands
+        like power.
+        """
+        device_configuration = {
+            'hostname': self.hostname,
+            'constants': data['constants'],
+            'timeouts': data['timeouts'],
+            'actions': {
+                'deploy': {
+                    'methods': data['actions']['deploy']['methods']
+                },
+                'boot': {
+                    'methods': data['actions']['boot']['methods']
+                }
+            }
+        }
+        return device_configuration
+
     def save_configuration(self, data):
         try:
             with open(os.path.join(self.CONFIG_PATH,
