@@ -172,6 +172,9 @@ actions:
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           interrupt_char: "{{ interrupt_char|default('') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
+        defaults:
+          commands:
+          - "boot"
         nfs:
           commands:
 {% if uboot_needs_usb %}
