@@ -11,10 +11,8 @@ from lava_scheduler_app.models import (
     DeviceType,
 )
 from lava_scheduler_app.dbutils import load_devicetype_template
-from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User
-from lava_dispatcher.pipeline.device import PipelineDevice
 
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
 # python3 needs print to be a function, so disable pylint
