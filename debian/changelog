@@ -1,3 +1,147 @@
+lava-dispatcher (2017.6-1) unstable; urgency=medium
+
+  * New production release
+    38da5d8 LAVA-974: Fix init script and allow to set hostname
+    0fd687e Don't use os.path.realpath() on device names
+    d84dab7 Modifying vemsd deploy action to use ResetDevice
+    d21385e testdef: get 'revision' from the right variable
+    5ea16fe Rework test shell feedback timeouts
+    510c4e5 Declare the feedback timeout
+    b994757 Use pyudev device links as well as device nodes
+    e609c22 Fix namespace usage in power commands.
+    39e2e7e Read from feedback connection during long operations
+    7be926a Allow tar.gz firmware bundles
+    20e66c1 overlay: Raise JobError if root_partition is None
+    4e27fcd LAVA-935 - Provide feedback output from connections
+    831c71c Fix bug #3032 - Running an LXC/Hikey job without a test action ...
+    84e7378 Fix namespace issue in NFS deployment action
+    f1f8d71 Add login_prompt valid test case
+    7dc48aa Issue lxc-stop before destroying a container.
+    3e1cb07 Changing udev checks to only look for FS label
+    d08db39 Fix #3010: set logging timezone to UTC
+    1b664e5 LAVA-955 - Remove 'arch' parameter from lxc protocol.
+    8a4dbc7 Increase LXC finalize timeout to 90 seconds similar to multinode.
+    3823c49 Use one debug log call to log the same kind of message in lxc protocol.
+    5db313c Creating vemsd mount points
+    ea03ef1 Fixing boot test issues using NFS deploy action
+    d1f4a30 Fix rebase error with grub prompt constant
+    b2aef8b device-types: add sun6i-a31-app4-evb1
+    8ceca07 Make grub use interrupt prompt and character from constants
+    b495a35 device-types: add ttyAT0 to Atmel devices to support multiv7_defconfig
+    3a89027 device-types: fix at91sam9x25ek to use bootz
+    9e00895 Set download max_retries in the constructor
+    959480c Add minimal boot action
+    31fd021 User command: do not clean if it was not executed
+    26572a2 Fix keys and label that were outdated
+    67dd60e Remove unused functions
+    0c100ff Remove boot-result common data
+    342039a Fix RetryAction inside a RetryAction
+    9ce430f Fix check on LXC for default usage.
+    0576754 Fix typo: Use pixel job create function for testing pixel device.
+    e7a4422 Fix typo: remove visibility added twice.
+    9e67b6d LAVA-855 - ART CI: Intel NUC device integration for LAVA v2
+    dd5d874 Ensure all deployments can add LXC devices except QEMU
+    e72d490 Fix pipeline refs for change in monitor retry
+    cb57d2b LAVA-942 UEFI Menu and command lists
+    e57013b Start adb daemon before attempting adb commands.
+    ac389ad lava-slave: remove tmp dir when END_OK is received
+    632a0ff Fix device configuration
+    0cffce4 Fix validation of boot auto_login parameters and add a unit test
+    7e40701 Allow unix line separators for some UEFI devices
+    095798a Avoid calling cleanup in validate
+    f98dade Allow updating all pipeline_refs at a time.
+    31b62dd LAVA-928 - HiKey issue when switching between AOSP and OE
+    51f40ef Make soft reboot optional LAVA-846
+    4d43d02 HiKey Grub EFI support
+    874f889 Avoid logging the same message twice.
+    3be27df lxc protocol: simplify the tests
+    75126ff Do not set self.errors when Action.run fail
+    ce32bfb Do not use self.errors in Action.run()
+    a5d9eba Fix detection of missing ssh_host value in validate
+    234eef9 Fix calling of protocols after LXC change
+    477a36b tests: make ShellCommand.logger a DummyLogger
+    62867f4 Use images.validation.linaro.org files for unit tests
+    1868936 Silence logging in more unit tests
+    609c783 Fix download action name
+    b170197 More tweaks to silence messages from the unit tests
+    29efa26 Adjust for pep8 checks in jessie
+    0733f89 Make sure the test_character_delay is used for all commands in test shell
+    78d2509 Account for empty environment string.
+    ea09b19 Take namespace into account when counting test stages
+    734688c Declare namespace of the test suite in results
+    60561c2 Parser: remove unused context
+    49a6b92 Drop noisy info log message.
+    8ed8467 lava-test-monitor: use TestMonitorRetry action
+    4fd5d4a Drop unused imports and unused variables
+    678b216 Rework the removable action to allow sd cards
+    3b42122 Fix bug #2975 after qemu-nfs introduction
+    7462ea6 Expand LXC support to add devices from all sybsystems
+    b853865 Fix missing check for u-boot commands parameters
+    8293693 Replace invalid characters in test_case_id.
+    a94e0f2 Fix preseed/late_command appending
+    9647d55 Run login_commands if provided in auto_login
+    db03483 Fix Action names (use - instead of _)
+    9e836e6 Add a Command Action
+    bbd4ba2 Make the parser stricter about the block names
+    65b3a56 Allow to pass integers to run_command
+    b41326b Raise JobError instead of NotImplementedError
+    073f3b3 update gitignore
+    00f5d33 log: limit the length of lines send other zmq
+    3f99cc3 Add missing super call to WaitUSBDeviceAction
+    5b2b074 LAVA-889 Fix handling of multiple test blocks
+    5436658 Fix indent typo
+    3bfdcdb Add support for use_xip
+    8df17dd Add support for append_dtb
+    3c110ca Remove unused imports
+    4847bf1 Put device rebooting info message at the correct place.
+    6b85382 Fix call to lava-lxc protocol for pre-os-command
+    176a4d4 Add new utility function infrastructure_error_multi_paths
+    bdb4d12 Fix test_lxc_api unit test
+    dc008eb Export the full version string.
+    e9df320 LAVA-920 - Workaround ptable issue in firmware
+    7b4096c Allow LXC protocol to call pre-os-command
+    b33d04b Fix OE image support for HiKey.
+    d714a9b Add missing test shell helpers
+    daebfad Extend secondary connection fix to support primary
+    9518e74 Add missing import
+    e97801d Add optional deployment complete message list to secondary media deployments
+    fae0ced Move unnecessary constants into base jinja template.
+    18f745b device-types: add kirkwood-db-88f6282.conf
+    815e518 device-types: add at91sam9m10g45ek.conf
+    6ca0731 device-types: add at91rm9200ek.conf
+    003b53d device-types: add at91-sama5d4_xplained.conf
+    9b2371c device-types: add armada-3720-db.conf
+    5a76733 device-types: add armada-xp-gp.conf
+    8b05093 device-types: add kirkwood-openblocks_a7.conf
+    f5801d3 device-types: add alpine-v2-evp.conf
+    19e2027 device-types: add sama5d34ek.conf
+    49da704 device-types: add armada-385-db-ap.conf
+    ed7aa6b device-types: add armada-370-db.conf
+    9a10432 device-types: add at91-sama5d2_xplained.conf
+    ddb34ce device-types: add alpine-db.conf
+    f7642f5 device-types: add armada-375-db.conf
+    0d70c7d device-types: add at91sam9x35ek.conf
+    a642d45 device-types: add armada-xp-db.conf
+    2a5ff9e device-types: add armada-7040-db.conf
+    1a43999 device-types: add orion5x-rd88f5182-nas.conf
+    ad855a6 device-types: add armada-xp-linksys-mamba.conf
+    58308ca device-types: add armada-388-gp.conf
+    6a2898b device-types: add armada-370-rd.conf
+    cd1b4f4 device-types: add armada-398-db.conf
+    51925fb device-types: add sun8i-a83t-allwinner-h8homlet-v2.conf
+    4976d06 device-types: add sun8i-a33-sinlinx-sina33.conf
+    681480d device-types: add sama5d35ek.conf
+    db74d60 device-types: add sun5i-r8-chip.conf
+    40736b9 device-types: add sama5d36ek.conf
+    433be0a device-types: add imx6q-nitrogen6x.conf
+    ed4c82e device-types: add at91sam9x25ek.conf
+    ce7a488 device-types: add at91sam9261ek.conf
+    f87cdb4 device-types: add armada-xp-openblocks-ax3-4.conf
+    634442c device-types: add armada-388-clearfog.conf
+
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 15 Jun 2017 12:47:33 +0100
+
 lava-dispatcher (2017.5-1) unstable; urgency=medium
 
   * New production release
