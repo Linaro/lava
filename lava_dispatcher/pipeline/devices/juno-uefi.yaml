@@ -30,12 +30,41 @@ actions:
     # list of deployment methods which this device supports
     methods:
       tftp:
+      nfs:
   boot:
     # list of connection methods which this device supports
     connections:
       serial:
     # list of boot methods which this device supports.
     methods:
+      uefi:
+        parameters:
+           bootloader_prompt: 'Shell>'
+           shell_interrupt_prompt: 'any other key to continue'
+           shell_interrupt_string: ' '
+           boot_message: 'Linux version'
+           # shell_menu=shell refers to actions.boot.methods.uefi.shell
+           shell_menu: shell
+           # Menu options
+           interrupt_prompt: The default boot selection will start in
+           interrupt_string: ' '
+           menu_boot_message: 'UEFI Interactive Shell'
+           menu_prompt: 'Start:' # Or 'Shutdown' if Start never appears, some firmware doesn't have this
+           item_markup:
+           - '['
+           - ']'
+           item_class: '0-9'
+           separator: ' '
+           line_separator: 'dos'
+           label_class: 'a-zA-Z0-9\s\:'
+        # Default menu commands to drop to shell
+        shell:
+        - select:
+            items:
+            - 'Shell'
+        nfs:
+           commands:
+           - norkern console=ttyAMA0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{ROOTFS},tcp,hard,intr rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 sky2.mac_address=0x00,0x02,0xf7,0x00,0x68,0x03 ip=dhcp
       uefi-menu:
         parameters:
           character_delay: 300 

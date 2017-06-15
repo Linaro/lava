@@ -27,25 +27,25 @@ from lava_dispatcher.pipeline.action import (
     LAVABug,
     Pipeline
 )
-from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction,
     OverlayUnpack,
 )
+from lava_dispatcher.pipeline.actions.boot.bootloader_defaults import BootloaderCommandsAction
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.actions.boot.uefi_menu import (
     UEFIMenuInterrupt,
     UefiMenuSelector
 )
-from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
+from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import (
     ResetDevice,
     PowerOff
 )
+from lava_dispatcher.pipeline.shell import ExpectShellSession
 
 
 def bootloader_accepts(device, parameters):
@@ -132,9 +132,9 @@ class BootloaderInterrupt(Action):
     """
     def __init__(self):
         super(BootloaderInterrupt, self).__init__()
-        self.name = "bootloader-interrupt"
-        self.description = "interrupt bootloader"
-        self.summary = "interrupt bootloader to get a prompt"
+        self.name = "grub-bootloader-interrupt"
+        self.description = "interrupt grub bootloader"
+        self.summary = "interrupt Grub bootloader to get a prompt"
         self.type = "grub"
 
     def validate(self):

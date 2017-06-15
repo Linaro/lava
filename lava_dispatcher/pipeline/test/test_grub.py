@@ -239,7 +239,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         names = [r_action.name for r_action in grub_action.internal_pipeline.actions]
         self.assertIn('connect-device', names)
         self.assertIn('reboot-device', names)
-        self.assertIn('bootloader-interrupt', names)
+        self.assertIn('grub-bootloader-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
 

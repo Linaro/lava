@@ -79,7 +79,7 @@
       - {class: power.SoftReboot, name: send-reboot-command}
       - {class: power.PowerOn, name: power-on}
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
-    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+    - {class: actions.boot.bootloader_defaults.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

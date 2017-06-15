@@ -1,0 +1,50 @@
+# Sample JOB definition for a juno uefi nfs job
+
+device_type: juno
+
+job_name: juno-uefi-nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+     timeout:
+       minutes: 5
+     to: nfs
+     nfsrootfs:
+       url: https://releases.linaro.org/openembedded/images/minimal-armv8/15.12/linaro-image-minimal-genericarmv8-20151214-782.rootfs.tar.gz
+       compression: gz
+     os: debian
+
+  - boot:
+     timeout:
+       minutes: 4
+     method: uefi
+     # Skip the menu
+     shell_menu: ''
+     commands: nfs
+     auto_login: {login_prompt: 'login:', username: root}
+     prompts:
+       - 'root@(.*):~#'
+
+  - test:
+     failure_retry: 3
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode02.yaml
+           name: singlenode-intermediate

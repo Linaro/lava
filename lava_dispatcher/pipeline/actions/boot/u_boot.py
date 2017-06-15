@@ -32,9 +32,10 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
-    BootloaderCommandsAction,
     OverlayUnpack,
 )
+
+from lava_dispatcher.pipeline.actions.boot.bootloader_defaults import BootloaderCommandsAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.lxc import ConnectLxc

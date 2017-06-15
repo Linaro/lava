@@ -51,6 +51,15 @@ actions:
         menu_options: pxe-grub
         parameters:
           bootloader_prompt: grub>
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+        pxe-grub:
+        - select:
+            items:
+            - 'test pxe'
         ramdisk:
           commands:
           - insmod gzio
