@@ -85,10 +85,11 @@ class UEFIMenuInterrupt(MenuInterrupt):
         self.summary = 'interrupt for uefi menu'
         self.description = 'interrupt for uefi menu'
         self.params = None
+        self.method = 'uefi-menu'
 
     def validate(self):
         super(UEFIMenuInterrupt, self).validate()
-        self.params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
+        self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
         if 'interrupt_prompt' not in self.params:
             self.errors = "Missing interrupt prompt"
         if 'interrupt_string' not in self.params:
@@ -123,7 +124,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         specific action, then let the base class complete the validation.
         """
         # pick up the uefi-menu structure
-        params = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']
+        params = self.job.device['actions']['boot']['methods'][self.method_name]['parameters']
         if ('item_markup' not in params or
                 'item_class' not in params or 'separator' not in params):
             self.errors = "Missing device parameters for UEFI menu operations"
@@ -151,12 +152,22 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             # label_class is problematic via jinja and yaml templating.
             self.selector.label_class = DEFAULT_UEFI_LABEL_CLASS
         self.selector.prompt = params['bootloader_prompt']  # initial uefi menu prompt
-        if 'boot_message' in params:
+        if 'boot_message' in params and not self.boot_message:
             self.boot_message = params['boot_message']  # final prompt
-        # pick up the commands specific to the menu implementation
-        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.commands]
+        if not self.items:
+            # pick up the commands specific to the menu implementation
+            if self.commands not in self.job.device['actions']['boot']['methods'][self.method_name]:
+                self.errors = "No boot configuration called '%s' for boot method '%s'" % (
+                    self.commands,
+                    self.method_name
+                )
+                return
+            self.items = self.job.device['actions']['boot']['methods'][self.method_name][self.commands]
         # set the line separator for the UEFI on this device
-        uefi_type = self.job.device['actions']['boot']['methods'][self.method_name].get('line_separator', 'dos')
+        if 'line_separator' in self.parameters:
+            uefi_type = self.parameters['line_separator']
+        else:
+            uefi_type = self.job.device['actions']['boot']['methods'][self.method_name].get('line_separator', 'dos')
         if uefi_type == 'dos':
             self.line_sep = UEFI_LINE_SEPARATOR
         elif uefi_type == 'unix':
@@ -216,9 +227,15 @@ class UefiSubstituteCommands(Action):
             '{DTB}': self.get_namespace_data(action='download-action', label='file', key='dtb'),
             'TEST_MENU_NAME': "LAVA %s test image" % self.parameters['commands']
         }
-        nfs_root = self.get_namespace_data(action='download-action', label='file', key='nfsroot')
+        nfs_address = self.get_namespace_data(action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
+        nfs_root = self.get_namespace_data(action='download-action', label='file', key='nfsrootfs')
         if nfs_root:
-            substitution_dictionary['{NFSROOTFS}'] = nfs_root
+            substitution_dictionary['{NFSROOTFS}'] = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
+            substitution_dictionary['{NFS_SERVER_IP}'] = ip_addr
+        elif nfs_address:
+            substitution_dictionary['{NFSROOTFS}'] = nfs_address
+            substitution_dictionary['{NFS_SERVER_IP}'] = self.get_namespace_data(
+                action='persistent-nfs-overlay', label='nfs_address', key='serverip')
         for item in self.items:
             if 'enter' in item['select']:
                 item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)[0]
@@ -235,6 +252,7 @@ class UefiMenuAction(BootAction):
         self.name = 'uefi-menu-action'
         self.summary = 'interact with uefi menu'
         self.description = 'interrupt and select uefi menu items'
+        self.method = 'uefi-menu'
 
     def validate(self):
         super(UefiMenuAction, self).validate()
@@ -242,7 +260,7 @@ class UefiMenuAction(BootAction):
             action=self.name,
             label='bootloader_prompt',
             key='prompt',
-            value=self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt']
+            value=self.job.device['actions']['boot']['methods'][self.method]['parameters']['bootloader_prompt']
         )
 
     def populate(self, parameters):
