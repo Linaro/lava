@@ -46,6 +46,7 @@
     - {class: actions.deploy.prepare.PrepareKernelAction, name: prepare-kernel}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action
@@ -57,6 +58,7 @@
     pipeline:
     - {class: power.RebootDevice, name: soft-reboot}
     - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: power.SoftReboot, name: send-reboot-command}
     - {class: power.PowerOn, name: power-on}
   - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
   - {class: actions.boot.grub.GrubMenuSelector, name: grub-efi-menu-selector}

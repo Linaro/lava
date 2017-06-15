@@ -135,9 +135,10 @@ class Scp(ConnectSsh):
     def run(self, connection, max_end_time, args=None):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
         if not path:
-            self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
-            self.logger.error("%s: could not find details of '%s'", self.name, self.key)
-            return connection
+            error_msg = "%s: could not find details of '%s'" % (self.name, self.key)
+            self.logger.error(error_msg)
+            raise JobError(error_msg)
+
         overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
         if self.primary:
             host_address = self.job.device['actions']['deploy']['methods']['ssh']['host']
@@ -146,9 +147,10 @@ class Scp(ConnectSsh):
             host_address = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
             self.logger.debug("Using common data for host: %s", host_address)
         if not host_address:
-            self.errors = "%s: could not find host for deployment" % self.name
-            self.logger.error("%s: could not find host for deployment using %s", self.name, self.key)
-            return connection
+            error_msg = "%s: could not find host for deployment using %s" % (self.name, self.key)
+            self.logger.error(error_msg)
+            raise JobError(error_msg)
+
         destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
@@ -169,8 +171,6 @@ class Scp(ConnectSsh):
         connection = super(Scp, self).run(connection, max_end_time, args)
         self.results = {'success': 'ssh deployment'}
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -228,9 +228,6 @@ class ScpOverlayUnpack(Action):
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 

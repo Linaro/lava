@@ -30,7 +30,7 @@ from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
@@ -79,7 +79,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
         # Check Pipeline
-        description_ref = pipeline_reference('ssh-deploy.yaml')
+        description_ref = self.pipeline_reference('ssh-deploy.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
@@ -201,7 +201,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_guest_ssh(self):  # pylint: disable=too-many-locals,too-many-statements
         self.assertIsNotNone(self.guest_job)
-        description_ref = pipeline_reference('bbb-ssh-guest.yaml')
+        description_ref = self.pipeline_reference('bbb-ssh-guest.yaml', job=self.guest_job)
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
         self.guest_job.validate()
         multinode = [protocol for protocol in self.guest_job.protocols if protocol.name == MultinodeProtocol.name][0]
@@ -279,7 +279,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         multinode = [item for item in overlay[0].internal_pipeline.actions if item.name == 'lava-multinode-overlay']
         self.assertEqual(len(multinode), 1)
         # Check Pipeline
-        description_ref = pipeline_reference('ssh-guest.yaml')
+        description_ref = self.pipeline_reference('ssh-guest.yaml', job=self.guest_job)
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
 
 

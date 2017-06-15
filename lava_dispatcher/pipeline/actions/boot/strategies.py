@@ -36,4 +36,4 @@ from lava_dispatcher.pipeline.actions.boot.lxc import BootLxc
 from lava_dispatcher.pipeline.actions.boot.ipxe import IPXE
 from lava_dispatcher.pipeline.actions.boot.grub import Grub
 from lava_dispatcher.pipeline.actions.boot.iso import BootIsoInstaller
-from lava_dispatcher.pipeline.actions.boot.bootloader_defaults import BootloaderDefaults
+from lava_dispatcher.pipeline.actions.boot.minimal import Minimal

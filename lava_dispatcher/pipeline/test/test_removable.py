@@ -20,7 +20,7 @@
 
 import os
 import unittest
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -87,7 +87,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         except JobError:
             self.fail(job.pipeline.errors)
         sample_job_data.close()
-        description_ref = pipeline_reference('cubietruck-removable.yaml')
+        description_ref = self.pipeline_reference('cubietruck-removable.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         mass_storage = None  # deploy

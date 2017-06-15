@@ -46,6 +46,7 @@ actions:
   - boot:
      method: u-boot
      commands: ramdisk
+     soft_reboot: reboot -nf
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

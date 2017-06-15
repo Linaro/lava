@@ -139,8 +139,7 @@ class FastbootBootAction(Action):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
@@ -160,10 +159,8 @@ class FastbootBootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
+        lxc_active = any([pc for pc in self.job.protocols if pc.name == LxcProtocol.name])
         if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
@@ -202,8 +199,7 @@ class FastbootRebootAction(Action):
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            self.errors = "Unable to use fastboot"
-            return connection
+            raise JobError("Unable to use fastboot")
         self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
                           lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
@@ -217,7 +213,5 @@ class FastbootRebootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

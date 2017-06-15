@@ -1,6 +1,18 @@
+- class: actions.deploy.lxc.LxcAction
+  name: lxc-deploy
+  pipeline:
+  - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: actions.deploy.lxc.LxcAptUpdateAction, name: lxc-apt-update}
+  - {class: actions.deploy.lxc.LxcAptInstallAction, name: lxc-apt-install}
+  - {class: actions.boot.lxc.LxcStopAction, name: lxc-stop}
 - class: actions.deploy.tftp.TftpAction
   name: tftp-deploy
   pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
     pipeline:
@@ -30,10 +42,6 @@
         - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
         - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
         - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-        - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-        - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-        - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-        - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
       - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
       - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
@@ -47,6 +55,13 @@
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+- class: actions.boot.lxc.BootLxcAction
+  name: lxc-boot
+  pipeline:
+  - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: connections.lxc.ConnectLxc, name: connect-lxc}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
@@ -67,7 +82,6 @@
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
-    - {class: actions.boot.OverlayUnpack, name: overlay-unpack}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry

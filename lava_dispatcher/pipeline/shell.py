@@ -45,6 +45,7 @@ class ShellLogger(object):
     def __init__(self, logger):
         self.line = ''
         self.logger = logger
+        self.is_feedback = False
 
     def write(self, new_line):
         replacements = {
@@ -63,7 +64,10 @@ class ShellLogger(object):
             self.line = lines[last_ret + 1:]
             lines = lines[:last_ret]
             for line in lines.split('\n'):
-                self.logger.target(line)
+                if self.is_feedback:
+                    self.logger.feedback(line)
+                else:
+                    self.logger.target(line)
         else:
             self.line = lines
         return
@@ -249,6 +253,21 @@ class ShellSession(Connection):
             raise JobError("wait for prompt timed out")
         except KeyboardInterrupt:
             raise
+
+    def listen_feedback(self, timeout):
+        """
+        Listen to output and log as feedback
+        """
+        if timeout < 0:
+            raise LAVABug("Invalid timeout value passed to listen_feedback()")
+        try:
+            self.raw_connection.logfile.is_feedback = True
+            return self.raw_connection.expect([pexpect.EOF, pexpect.TIMEOUT],
+                                              timeout=timeout)
+        except KeyboardInterrupt:
+            raise
+        finally:
+            self.raw_connection.logfile.is_feedback = False
 
 
 class ExpectShellSession(Action):

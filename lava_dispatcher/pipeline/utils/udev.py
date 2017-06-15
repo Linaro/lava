@@ -98,22 +98,10 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def validate(self):
         super(WaitUSBMassStorageDeviceAction, self).validate()
-        board_id = self.job.device.get('board_id', '')
-        usb_vendor_id = self.job.device.get('usb_vendor_id', '')
-        usb_product_id = self.job.device.get('usb_product_id', '')
         usb_fs_label = self.job.device.get('usb_filesystem_label', None)
-        if board_id == '0000000000':
-            self.errors = "board_id unset"
-        if usb_vendor_id == '0000':
-            self.errors = 'usb_vendor_id unset'
-        if usb_product_id == '0000':
-            self.errors = 'usb_product_id unset'
         if not isinstance(usb_fs_label, str):
             self.errors = 'usb_fs_label unset'
-        self.ms_device = {'ID_SERIAL_SHORT': str(board_id),
-                          'ID_VENDOR_ID': str(usb_vendor_id),
-                          'ID_MODEL_ID': str(usb_product_id),
-                          'ID_FS_LABEL': str(usb_fs_label)}
+        self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
 
     def run(self, connection, max_end_time, args=None):
         connection = super(WaitUSBMassStorageDeviceAction, self).run(connection, max_end_time, args)
@@ -178,15 +166,21 @@ def get_udev_devices(job, logger=None):
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
                    and (device.get('ID_MODEL_ID') == usb_product_id):
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
             elif board_id and usb_vendor_id and not usb_product_id:
                 # try with parameters such as board id, usb_vendor_id
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id):
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
                 if device.get('ID_SERIAL_SHORT') == board_id:
                     device_paths.add(device.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
     if logger and device_paths:
         logger.debug("Adding %s", ', '.join(device_paths))
     return list(device_paths)

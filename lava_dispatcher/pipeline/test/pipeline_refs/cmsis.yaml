@@ -14,7 +14,10 @@
     - {class: actions.boot.cmsis_dap.FlashCMSISAction, name: flash-cmsis}
     - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
     - {class: connections.serial.ConnectDevice, name: connect-device}
-- {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: actions.test.monitor.TestMonitorRetry
+  name: lava-test-monitor-retry
+  pipeline:
+  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

@@ -28,7 +28,7 @@ from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 
 # pylint: disable=superfluous-parens
@@ -180,7 +180,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             job = parser.parse(sample_job_data, self.device, 4212, None, "",
                                output_dir='/tmp/')
         job.logger = DummyLogger()
-        description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
+        description_ref = self.pipeline_reference('bbb-group-vland-alpha.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         job.validate()
         self.assertNotEqual([], [protocol.name for protocol in job.protocols if protocol.name == MultinodeProtocol.name])

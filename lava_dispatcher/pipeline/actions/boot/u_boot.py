@@ -144,8 +144,6 @@ class UBootRetry(BootAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
         # Log an error only when needed
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         if self.errors:
             self.logger.error(self.errors)
@@ -165,15 +163,8 @@ class UBootInterrupt(Action):
     def validate(self):
         super(UBootInterrupt, self).validate()
         hostname = self.job.device['hostname']
-        # boards which are reset manually can be supported but errors have to handled manually too.
-        if self.job.device.power_state in ['on', 'off']:
-            # to enable power to a device, either power_on or hard_reset are needed.
-            if self.job.device.power_command is '':
-                self.errors = "Unable to power on or reset the device %s" % hostname
-            if self.job.device.connect_command is '':
-                self.errors = "Unable to connect to device %s" % hostname
-        else:
-            self.logger.debug("%s may need manual intervention to reboot", hostname)
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s" % hostname
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
             self.errors = "Missing bootloader prompt for device"

@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.utils.strings import substitute
 
@@ -49,6 +49,7 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestIsoJob(StdoutTestCase):
 
     def setUp(self):
+        super(TestIsoJob, self).setUp()
         factory = InstallerFactory()
         self.job = factory.create_qemu_installer_job(mkdtemp())
         self.assertIsNotNone(self.job)
@@ -56,7 +57,7 @@ class TestIsoJob(StdoutTestCase):
         self.assertIsInstance(self.job.pipeline, Pipeline)
 
     def test_job_reference(self):
-        description_ref = pipeline_reference('qemu-debian-installer.yaml')
+        description_ref = self.pipeline_reference('qemu-debian-installer.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_iso_preparation(self):

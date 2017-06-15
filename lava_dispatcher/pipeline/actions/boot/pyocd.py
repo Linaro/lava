@@ -129,7 +129,5 @@ class FlashPyOCDAction(Action):
             self.logger.info("PyOCD command: %s", pyocd)
             if not self.run_command(pyocd.split(' ')):
                 raise JobError("%s command failed" % (pyocd.split(' ')))
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

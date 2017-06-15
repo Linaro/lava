@@ -30,7 +30,7 @@ from lava_dispatcher.pipeline.utils.shell import (
 )
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootAction
@@ -118,7 +118,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = pipeline_reference('fastboot.yaml')
+        description_ref = self.pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error_multi_paths(
@@ -127,7 +127,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_lxc_api(self):
         job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
                                             mkdtemp())
-        description_ref = pipeline_reference('hikey-oe.yaml')
+        description_ref = self.pipeline_reference('hikey-oe.yaml', job=job)
         job.validate()
         self.assertEqual(description_ref, job.pipeline.describe(False))
         self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
@@ -149,7 +149,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
                                             mkdtemp())
-        description_ref = pipeline_reference('hi6220-hikey.yaml')
+        description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
         self.assertIn('commands', uefi_menu.parameters)
@@ -224,7 +224,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         job = self.factory.create_db410c_job('sample_jobs/db410c.yaml', mkdtemp())
         self.assertTrue(job.device.get('fastboot_via_uboot', True))
         self.assertEqual('', self.job.device.power_command)
-        description_ref = pipeline_reference('db410c.yaml')
+        description_ref = self.pipeline_reference('db410c.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]
         wait = [action for action in boot.internal_pipeline.actions if action.name == 'wait-usb-device'][0]
@@ -233,19 +233,19 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_x15_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
-        description_ref = pipeline_reference('x15.yaml')
+        description_ref = self.pipeline_reference('x15.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml',
                                               mkdtemp())
-        description_ref = pipeline_reference('nexus5x.yaml')
+        description_ref = self.pipeline_reference('nexus5x.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_pixel_job(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_nexus5x_job('sample_jobs/pixel.yaml',
-                                              mkdtemp())
-        description_ref = pipeline_reference('pixel.yaml')
+        job = self.factory.create_pixel_job('sample_jobs/pixel.yaml',
+                                            mkdtemp())
+        description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

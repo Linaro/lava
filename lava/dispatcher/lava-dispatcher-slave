@@ -38,6 +38,7 @@ import logging
 import lzma
 import os
 import re
+import shutil
 import signal
 import socket
 import subprocess
@@ -80,6 +81,8 @@ TMP_DIR = "/var/lib/lava/dispatcher/slave/tmp"
 
 # Create the logger that will be configured after arguments parsing
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+# Set logging timezone to UTC
+logging.Formatter.converter = time.gmtime
 LOG = logging.getLogger("dispatcher-slave")
 
 
@@ -477,6 +480,11 @@ def handle_end_ok(msg, jobs):
         del jobs[job_id]
     else:
         LOG.debug("[%d] Unknown job END acked", job_id)
+
+    # Remove the tmp directory without checking for errors
+    job_dir = os.path.join(TMP_DIR, str(job_id))
+    LOG.debug("[%d] Removing %s", job_id, job_dir)
+    shutil.rmtree(job_dir, ignore_errors=True)
 
     # Do not mark the master as alive. In fact we are not sending
     # back any data so the master will not be able to mark the

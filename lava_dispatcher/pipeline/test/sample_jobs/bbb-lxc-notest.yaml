@@ -9,9 +9,6 @@ timeouts:
     minutes: 5
   connection:
     minutes: 3
-  connections:
-    lava-test-shell:
-      seconds: 10
 priority: medium
 visibility: public
 
@@ -83,17 +80,6 @@ actions:
     - '\(initramfs\)'
     timeout:
       minutes: 3
-
-- test:
-    namespace: probe
-    connection: lxc
-    timeout:
-      minutes: 5
-    definitions:
-    - repository: git://git.linaro.org/qa/test-definitions.git
-      from: git
-      path: ubuntu/smoke-tests-basic.yaml
-      name: smoke-tests-lxc
 
 - test:
     namespace: testdevice

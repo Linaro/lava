@@ -66,7 +66,7 @@ ANDROID_TMP_DIR = '/data/local/tmp'
 LXC_PATH = "/var/lib/lxc"
 
 # LXC finalize timeout
-LAVA_LXC_TIMEOUT = 30
+LAVA_LXC_TIMEOUT = 90
 
 # LXC templates with mirror option
 LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
@@ -83,8 +83,6 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
-
-GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
 
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string
@@ -116,8 +114,8 @@ INSTALLER_QUIET_MSG = 'Loading initial ramdisk'
 DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
 DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
 
-# Message for notifying completion of secondary deployment
-SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"
+# List of DD output prompts for notifying completion of secondary deployment
+DD_PROMPTS = ['[0-9]+\+[0-9]+ records out', '[0-9]+ bytes \(.*\) copied']
 
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
@@ -139,3 +137,6 @@ VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = ' '
 
 # sys class kvm path
 SYS_CLASS_KVM = '/sys/class/misc/kvm'
+
+# default reboot commands
+REBOOT_COMMAND_LIST = ['reboot', 'reboot -n', 'reboot -nf']

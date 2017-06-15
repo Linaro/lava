@@ -42,7 +42,7 @@ from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvi
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
-    SECONDARY_DEPLOYMENT_MSG,
+    DD_PROMPTS,
 )
 
 
@@ -105,6 +105,8 @@ class DDAction(Action):
         self.description = "deploy image to drive"
         self.timeout = Timeout(self.name, 600)
         self.boot_params = None
+        self.dd_prompts = None
+        self.dd_flags = None
 
     def validate(self):
         super(DDAction, self).validate()
@@ -126,6 +128,21 @@ class DDAction(Action):
         if not self.valid:
             return
 
+        dd_params = self.parameters.get('dd', None)
+        if dd_params:
+            self.dd_prompts = self.parameters['dd'].get('prompts', DD_PROMPTS)
+            self.dd_flags = self.parameters['dd'].get('flags', None)
+        else:
+            self.dd_prompts = DD_PROMPTS
+
+        if not isinstance(self.dd_prompts, list):
+            self.errors = "'dd prompts' should be a list"
+        else:
+            for msg in self.dd_prompts:
+                if not msg:
+                    self.errors = "items of 'dd prompts' cannot be empty"
+
+        uuid_required = False
         self.boot_params = self.job.device['parameters']['media'][self.parameters['to']]
         uuid_required = self.boot_params.get('UUID-required', False)
 
@@ -182,20 +199,20 @@ class DDAction(Action):
             self.parameters['download']['tool'], download_options
         )
         dd_cmd = "dd of='%s' bs=4M" % device_path  # busybox dd does not support other flags
+        if self.dd_flags:
+            dd_cmd = "%s %s" % (dd_cmd, self.dd_flags)
 
         # set prompt to download prompt to ensure that the secondary deployment has started
         prompt_string = connection.prompt_str
         connection.prompt_str = self.parameters['download']['prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        connection.sendline("%s | %s ; echo %s" % (download_cmd, dd_cmd, SECONDARY_DEPLOYMENT_MSG))
+        connection.sendline("%s | %s" % (download_cmd, dd_cmd))
         self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
 
-        # We must ensure that the secondary media deployment has completed before handing over
-        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
-        # always have a constant string to match against
-        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        # change prompt string to list of dd outputs
+        connection.prompt_str = self.dd_prompts
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
 
@@ -227,7 +244,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
 
         if self.test_needs_deployment(self.parameters):
             lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-            self.set_namespace_data(action='lava-test-shell', label='shared', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
+            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
 
         self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
@@ -249,9 +266,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         if 'image' in parameters:
-            download = DownloaderAction('image', path=self.image_path)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(DownloaderAction('image', path=self.image_path))
             if self.test_needs_overlay(parameters):
                 self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())

@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import JobError, Pipeline
-from lava_dispatcher.pipeline.test.test_basic import pipeline_reference, Factory, StdoutTestCase
+from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
@@ -62,6 +62,16 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -75,7 +85,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
-        description_ref = pipeline_reference('grub.yaml')
+        description_ref = self.pipeline_reference('grub.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
@@ -92,7 +102,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'lxc-add-device-action', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
@@ -236,17 +246,29 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_grub_with_monitor(self):
         job = self.factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
         job.validate()
-        description_ref = pipeline_reference('grub-ramdisk-monitor.yaml')
+        description_ref = self.pipeline_reference('grub-ramdisk-monitor.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_grub_via_efi(self):
         job = self.factory.create_mustang_job('sample_jobs/mustang-grub-efi-nfs.yaml')
         self.assertIsNotNone(job)
         job.validate()
-        description_ref = pipeline_reference('mustang-grub-efi-nfs.yaml')
+        description_ref = self.pipeline_reference('mustang-grub-efi-nfs.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
         menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
         self.assertIn('item_class', menu.params)
         grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
         self.assertEqual('pxe-grub', grub_efi.commands)
+
+    def test_hikey_grub_efi(self):
+        job = self.factory.create_hikey_job('sample_jobs/hikey-grub-lxc.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('hikey-grub-efi.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
+        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
+        self.assertIn('item_class', menu.params)
+        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
+        self.assertEqual('fastboot', grub_efi.commands)

@@ -41,7 +41,8 @@ from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnviro
 from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_UEFI_LABEL_CLASS,
-    UEFI_LINE_SEPARATOR
+    LINE_SEPARATOR,
+    UEFI_LINE_SEPARATOR,
 )
 
 
@@ -130,10 +131,17 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         if 'commands' not in self.parameters and not self.commands:
             self.errors = "Missing commands in action parameters"
             return
-        commands = self.commands if self.commands else self.parameters['commands']
+        # UEFI menu cannot support command lists (due to renumbering issues)
+        # but needs to ignore those which may exist for use with Grub later.
+        if not self.commands and isinstance(self.parameters['commands'], str):
+            if self.parameters['commands'] not in self.job.device['actions']['boot']['methods'][self.method_name]:
+                self.errors = "Missing commands for %s" % self.parameters['commands']
+                return
+            self.commands = self.parameters['commands']
+        if not self.commands:
+            # ignore self.parameters['commands'][]
+            return
         # pick up the commands for the specific menu
-        if self.parameters['commands'] not in self.job.device['actions']['boot']['methods'][self.method_name]:
-            self.errors = "Missing commands for %s" % self.parameters['commands']
         self.selector.item_markup = params['item_markup']
         self.selector.item_class = params['item_class']
         self.selector.separator = params['separator']
@@ -146,7 +154,15 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         if 'boot_message' in params:
             self.boot_message = params['boot_message']  # final prompt
         # pick up the commands specific to the menu implementation
-        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][commands]
+        self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.commands]
+        # set the line separator for the UEFI on this device
+        uefi_type = self.job.device['actions']['boot']['methods'][self.method_name].get('line_separator', 'dos')
+        if uefi_type == 'dos':
+            self.line_sep = UEFI_LINE_SEPARATOR
+        elif uefi_type == 'unix':
+            self.line_sep = LINE_SEPARATOR
+        else:
+            self.errors = "Unrecognised line separator configuration."
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
@@ -160,7 +176,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             self.logger.debug("Existing connection in %s", self.name)
             return connection
         connection.prompt_str = self.selector.prompt
-        connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
+        connection.raw_connection.linesep = self.line_sep
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
         connection = super(UefiMenuSelector, self).run(connection, max_end_time, args)
@@ -168,8 +184,6 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             self.logger.debug("Looking for %s", self.boot_message)
             connection.prompt_str = self.boot_message
             self.wait(connection)
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 

@@ -112,11 +112,18 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if LxcProtocol.name not in [protocol.name for protocol in self.job.protocols]:
             self.errors = "Invalid job - missing protocol"
         self.errors = infrastructure_error('lxc-create')
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
-        self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
+        if self.test_needs_deployment(self.parameters):
+            lava_test_results_dir = self.parameters['deployment_data'][
+                'lava_test_results_dir']
+            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+            self.set_namespace_data(action='test', label='results',
+                                    key='lava_test_results_dir',
+                                    value=lava_test_results_dir)
+            lava_test_sh_cmd = self.parameters['deployment_data'][
+                'lava_test_sh_cmd']
+            self.set_namespace_data(action=self.name, label='shared',
+                                    key='lava_test_sh_cmd',
+                                    value=lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
@@ -127,10 +134,11 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.internal_pipeline.add_action(LxcAptUpdateAction())
             self.internal_pipeline.add_action(LxcAptInstallAction())
             self.internal_pipeline.add_action(LxcStopAction())
-        # needed if export device environment is also to be used
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(OverlayAction())
-        self.internal_pipeline.add_action(ApplyLxcOverlay())
+        if self.test_needs_deployment(parameters):
+            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())
+            self.internal_pipeline.add_action(ApplyLxcOverlay())
 
 
 class LxcCreateAction(DeployAction):
@@ -181,9 +189,7 @@ class LxcCreateAction(DeployAction):
             lxc_cmd = lxc_create + [verbose, '-t',
                                     self.lxc_data['lxc_template'], '-n',
                                     self.lxc_data['lxc_name'], '--',
-                                    '--release',
-                                    self.lxc_data['lxc_release'], '--arch',
-                                    self.lxc_data['lxc_arch']]
+                                    '--release', self.lxc_data['lxc_release']]
             if self.lxc_data['lxc_mirror']:
                 lxc_cmd += ['--mirror', self.lxc_data['lxc_mirror']]
             if self.lxc_data['lxc_security_mirror']:
@@ -197,9 +203,9 @@ class LxcCreateAction(DeployAction):
                                     self.lxc_data['lxc_template'], '-n',
                                     self.lxc_data['lxc_name'], '--', '--dist',
                                     self.lxc_data['lxc_distribution'],
-                                    '--release',
-                                    self.lxc_data['lxc_release'], '--arch',
-                                    self.lxc_data['lxc_arch']]
+                                    '--release', self.lxc_data['lxc_release']]
+        if self.lxc_data['lxc_arch']:
+            lxc_cmd += ['--arch', self.lxc_data['lxc_arch']]
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
         if isinstance(cmd_out, str):
             if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
@@ -311,19 +317,17 @@ class LxcAddDeviceAction(Action):
         connection = super(LxcAddDeviceAction, self).run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
+        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        if protocols:
+            lxc_name = protocols[0].lxc_name
         if not lxc_name:
             self.logger.debug("No LXC device requested")
-            self.errors = "Unable to use fastboot"
             return connection
 
         self.logger.info("Get USB device(s) ...")
         device_paths = get_udev_devices(self.job, logger=self.logger)
         for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
-                       os.path.realpath(device)]
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
             log = self.run_command(lxc_cmd)
             self.logger.debug(log)
             self.logger.debug("%s: device %s added", lxc_name, device)

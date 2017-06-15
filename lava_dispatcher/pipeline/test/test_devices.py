@@ -71,8 +71,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
         job_parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         self.assertIn('power_state', device)
-        self.assertEqual(device.power_state, 'off')
-        self.assertTrue(hasattr(device, 'power_state'))
+        self.assertFalse(hasattr(device, 'power_state'))
         self.assertFalse(hasattr(device, 'hostname'))
         self.assertIn('hostname', device)
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
@@ -116,18 +115,11 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
 
     def test_device_power(self):
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        self.assertEqual(device.power_state, 'off')
         self.assertNotEqual(device.hard_reset_command, '')
         self.assertNotEqual(device.power_command, '')
         self.assertIn('on', device.power_command)
-        device.power_state = 'on'
-        self.assertEqual(device.power_state, 'on')
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
-        self.assertEqual(device.power_state, '')
         self.assertEqual(device.hard_reset_command, '')
-        self.assertEqual(device.power_command, '')
-        with self.assertRaises(ConfigurationError):
-            device.power_state = ''
         self.assertEqual(device.power_command, '')
 
     def test_device_constants(self):

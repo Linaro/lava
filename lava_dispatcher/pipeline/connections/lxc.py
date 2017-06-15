@@ -61,8 +61,7 @@ class ConnectLxc(Action):
         self.logger.info("Get USB device(s) ...")
         device_paths = get_udev_devices(self.job, logger=self.logger)
         for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add',
-                       os.path.realpath(device)]
+            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
             log = self.run_command(lxc_cmd)
             self.logger.debug(log)
             self.logger.debug("%s: device %s added", lxc_name, device)
@@ -85,7 +84,5 @@ class ConnectLxc(Action):
         connection.connected = True
         connection = super(ConnectLxc, self).run(connection, max_end_time, args)
         connection.prompt_str = self.parameters['prompts']
-        res = 'failed' if self.errors else 'success'
-        self.set_namespace_data(action='boot', label='shared', key='boot-result', value=res)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

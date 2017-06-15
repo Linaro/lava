@@ -27,17 +27,17 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     LAVABug,
     Pipeline,
+    JobError,
     TestError,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
+from lava_dispatcher.pipeline.utils.constants import REBOOT_COMMAND_LIST
 
 
 class ResetDevice(Action):
     """
     Used within a RetryAction - first tries 'reboot' then
-    tries PDU. If the device supports power_state, the
-    internal pipeline actions will use the value to skip
-    waiting for certain prompts.
+    tries PDU.
     """
     def __init__(self):
         super(ResetDevice, self).__init__()
@@ -47,8 +47,9 @@ class ResetDevice(Action):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(RebootDevice())  # skipped if power is off
+        self.internal_pipeline.add_action(RebootDevice())  # uses soft_reset_command, if set
         self.internal_pipeline.add_action(PDUReboot())  # adjuvant, only if RebootDevice acts and fails
+        self.internal_pipeline.add_action(SoftReboot())  # adjuvant, replaces PDUReboot if no power commands
         self.internal_pipeline.add_action(PowerOn())
 
 
@@ -59,35 +60,28 @@ class RebootDevice(Action):
     def __init__(self):
         super(RebootDevice, self).__init__()
         self.name = "soft-reboot"
-        self.summary = "reboot command sent to device"
-        self.description = "attempt to reboot the running device"
+        self.summary = "configured reboot command sent to device"
+        self.description = "attempt to reboot the running device using device-specific command."
         self.reboot_prompt = None
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
             raise LAVABug("Called %s without an active Connection" % self.name)
-        if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
+        connection = super(RebootDevice, self).run(connection, max_end_time, args)
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=True)
+        if self.job.device.soft_reset_command is '':
             return connection
-        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
-            command = self.job.device['commands']['soft_reset']
-            if isinstance(command, list):
-                for cmd in command:
-                    if not self.run_command(cmd.split(' '), allow_silent=True):
-                        raise InfrastructureError("%s failed" % cmd)
-            else:
-                if not self.run_command(command.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % command)
-            self.results = {"success": self.job.device.power_state}
-        else:
-            connection = super(RebootDevice, self).run(connection, max_end_time, args)
-            connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', self.job.device.get_constant('shutdown-message'))
-            connection.timeout = self.connection_timeout
-            connection.sendline("reboot")
-            # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
-            connection.sendline("reboot -n")  # initramfs may require -n for *now*
-            connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
+        command = self.job.device['commands']['soft_reset']
+        if not isinstance(command, list):
+            command = [command]
+        for cmd in command:
+            if not self.run_command(cmd.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % cmd)
         self.results = {"success": connection.prompt_str}
-        self.data[PDUReboot.key()] = False
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
+        # FIXME: this should not be just based on UBoot, use shared action
         reboot_prompt = self.get_namespace_data(
             action='uboot-retry',
             label='bootloader_prompt',
@@ -98,10 +92,48 @@ class RebootDevice(Action):
         try:
             self.wait(connection)
         except TestError:
-            self.logger.info("Wait for prompt after soft reboot failed")
+            self.logger.info("Wait for prompt after soft reboot command failed")
             self.results = {'status': "failed"}
-            self.data[PDUReboot.key()] = True
+            self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
             connection.prompt_str = self.reboot_prompt
+        return connection
+
+
+class SoftReboot(AdjuvantAction):
+    """
+    If no remote power commands are available, trigger an attempt
+    at a soft reboot using job level commands.
+    """
+
+    def __init__(self):
+        self.name = SoftReboot.key()
+        super(SoftReboot, self).__init__()
+        self.summary = 'Issue a reboot command'
+        self.description = 'Attempt a pre-defined soft reboot command.'
+
+    @classmethod
+    def key(cls):
+        return 'send-reboot-command'
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(SoftReboot, self).run(connection, max_end_time, args)
+        reboot_commands = self.parameters.get('soft_reboot', [])  # list
+        if not self.adjuvant:
+            return connection
+        if not self.parameters.get('soft_reboot', None):  # unit test
+            self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
+            reboot_commands = REBOOT_COMMAND_LIST
+        connection.prompt_str = self.parameters.get(
+            'parameters', {}).get('shutdown-message', self.job.device.get_constant('shutdown-message'))
+        connection.timeout = self.connection_timeout
+        for cmd in reboot_commands:
+            connection.sendline(cmd)
+        try:
+            self.wait(connection)
+        except TestError:
+            raise JobError("Soft reboot failed.")
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
+        self.results = {'commands': reboot_commands}
         return connection
 
 
@@ -130,22 +162,18 @@ class PDUReboot(AdjuvantAction):
         if not self.adjuvant:
             return connection
         if not self.job.device.hard_reset_command:
-            raise InfrastructureError("Hard reset required but not defined for %s." % self.job.device['hostname'])
+            self.logger.warning("Hard reset required but not defined.")
+            return connection
         command = self.job.device.hard_reset_command
-        if isinstance(command, list):
-            for cmd in command:
-                if not self.run_command(cmd.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % cmd)
-        else:
-            if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s failed" % command)
-        try:
-            self.wait(connection)
-        except TestError:
-            raise InfrastructureError("%s failed to reset device" % self.key())
-        self.data[PDUReboot.key()] = False
+        if not isinstance(command, list):
+            command = [command]
+        for cmd in command:
+            if not self.run_command(cmd.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % cmd)
+        # the next prompt has to be determined by the boot method, so don't wait here.
+        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
+        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
         self.results = {'status': 'success'}
-        self.job.device.power_state = 'on'
         return connection
 
 
@@ -160,30 +188,28 @@ class PowerOn(Action):
         self.description = "supply power to device"
 
     def run(self, connection, max_end_time, args=None):
+        # to enable power to a device, either power_on or hard_reset are needed.
+        if self.job.device.power_command is '':
+            self.logger.warning("Unable to power on the device")
+            return connection
         connection = super(PowerOn, self).run(connection, max_end_time, args)
-        if self.job.device.power_state is 'off':
-            if self.job.device.pre_power_command:
-                command = self.job.device.pre_power_command
-                self.logger.info("Running pre power command")
-                if isinstance(command, list):
-                    for cmd in command:
-                        if not self.run_command(cmd.split(' '), allow_silent=True):
-                            raise InfrastructureError("%s failed" % cmd)
-                else:
-                    if not self.run_command(command.split(' '), allow_silent=True):
-                        raise InfrastructureError("%s failed" % command)
-            command = self.job.device.power_command
-            if not command:
-                return connection
-            if isinstance(command, list):
-                for cmd in command:
-                    if not self.run_command(cmd.split(' '), allow_silent=True):
-                        raise InfrastructureError("%s failed" % cmd)
-            else:
-                if not self.run_command(command.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % command)
-            self.results = {'success': self.name}
-            self.job.device.power_state = 'on'
+        if self.job.device.pre_power_command:
+            command = self.job.device.pre_power_command
+            self.logger.info("Running pre power command")
+            if not isinstance(command, list):
+                command = [command]
+            for cmd in command:
+                if not self.run_command(cmd.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % cmd)
+        command = self.job.device.power_command
+        if not command:
+            return connection
+        if not isinstance(command, list):
+            command = [command]
+        for cmd in command:
+            if not self.run_command(cmd.split(' '), allow_silent=True):  # pylint: disable=no-member
+                raise InfrastructureError("%s failed" % cmd)
+        self.results = {'success': self.name}
         return connection
 
 
@@ -199,19 +225,15 @@ class PowerOff(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PowerOff, self).run(connection, max_end_time, args)
-        if not hasattr(self.job.device, 'power_state'):
+        if not self.job.device.get('commands', None):
             return connection
-        if self.job.device.power_state is 'on':  # allow for '' and skip
-            command = self.job.device['commands']['power_off']
-            if isinstance(command, list):
-                for cmd in command:
-                    if not self.run_command(cmd.split(' '), allow_silent=True):
-                        raise InfrastructureError("%s failed" % cmd)
-            else:
-                if not self.run_command(command.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % command)
-            self.results = {'status': 'success'}
-            self.job.device.power_state = 'off'
+        command = self.job.device['commands'].get('power_off', [])
+        if not isinstance(command, list):
+            command = [command]
+        for cmd in command:
+            if not self.run_command(cmd.split(' '), allow_silent=True):
+                raise InfrastructureError("%s failed" % cmd)
+        self.results = {'status': 'success'}
         return connection
 
 
@@ -254,5 +276,6 @@ class FinalizeAction(Action):
             protocol.finalise_protocol(self.job.device)
 
     def cleanup(self, connection):
-        if not self.ran:
+        # avoid running Finalize in validate or unit tests
+        if not self.ran and self.job.started:
             self.run(connection, None, None)
