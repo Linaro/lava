@@ -169,7 +169,12 @@ class Command(LAVADaemonCommand):
         self.dispatchers[hostname].alive()
 
     def controler_socket(self):
-        msg = self.controler.recv_multipart()
+        try:
+            # We need here to use the zmq.NOBLOCK flag, otherwise we could block
+            # the whole main loop where this function is called.
+            msg = self.controler.recv_multipart(zmq.NOBLOCK)
+        except zmq.error.Again:
+            return False
         # This is way to verbose for production and should only be activated
         # by (and for) developers
         # self.logger.debug("[CC] Receiving: %s", msg)
@@ -183,7 +188,7 @@ class Command(LAVADaemonCommand):
         if hostname == "lava-logs" and action != "PING":
             self.logger.error("%s => %s Invalid action from log daemon",
                               hostname, action)
-            return False
+            return True
 
         # Handle the actions
         if action == 'HELLO' or action == 'HELLO_RETRY':
@@ -194,11 +199,11 @@ class Command(LAVADaemonCommand):
                 slave_version = int(msg[2])
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return False
+                return True
             if slave_version != PROTOCOL_VERSION:
                 self.logger.error("<%s> using protocol v%d while master is using v%d",
                                   hostname, slave_version, PROTOCOL_VERSION)
-                return False
+                return True
 
             self.controler.send_multipart([hostname, 'HELLO_OK'])
             # If the dispatcher is known and sent an HELLO, means that
@@ -239,7 +244,7 @@ class Command(LAVADaemonCommand):
                 compressed_description = msg[4]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return False
+                return True
 
             try:
                 job = TestJob.objects.get(id=job_id)
@@ -291,7 +296,7 @@ class Command(LAVADaemonCommand):
                 job_id = int(msg[2])
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return False
+                return True
             self.logger.info("[%d] %s => START_OK", job_id, hostname)
             try:
                 with transaction.atomic():
@@ -532,8 +537,8 @@ class Command(LAVADaemonCommand):
 
                 # Command socket
                 if sockets.get(self.controler) == zmq.POLLIN:
-                    if not self.controler_socket():
-                        continue
+                    while self.controler_socket():  # Unqueue all the pending messages
+                        pass
 
                 # Check dispatchers status
                 now = time.time()
