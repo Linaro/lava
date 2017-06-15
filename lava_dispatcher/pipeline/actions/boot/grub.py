@@ -171,7 +171,6 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         self.summary = 'select grub options in the efi menu'
         self.description = 'select specified grub-efi menu items'
         self.selector.prompt = "Start:"
-        self.method_name = 'grub-efi'
         self.commands = []
         self.boot_message = None
         self.params = None

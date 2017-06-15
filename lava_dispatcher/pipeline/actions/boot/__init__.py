@@ -262,11 +262,13 @@ class AutoLoginAction(Action):
 
 class WaitUSBDeviceAction(Action):
 
-    def __init__(self, device_actions):
+    def __init__(self, device_actions=None):
         super(WaitUSBDeviceAction, self).__init__()
         self.name = "wait-usb-device"
         self.description = "wait for udev to see USB device"
         self.summary = self.description
+        if not device_actions:
+            device_actions = []
         self.device_actions = device_actions
 
     def validate(self):
@@ -503,10 +505,14 @@ class BootloaderCommandsAction(Action):
         self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
 
+    def line_separator(self):
+        return LINE_SEPARATOR
+
     def run(self, connection, max_end_time, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
+        connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
         self.wait(connection)

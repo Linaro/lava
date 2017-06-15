@@ -1,0 +1,51 @@
+# Sample job to show uefi behaviour, where no menu is available, input shell commands.
+
+# This won't work as newer UEFI Juno firmware doesn't come bundled with a kernel,
+# it just has a 0 byte placeholder for Image, so this just shows the UEFI behaviour
+
+device_type: juno
+job_name: juno-uefi-shell-nfs
+timeouts:
+  job:
+    minutes: 40
+  action:
+    minutes: 6
+  connection:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+- deploy:
+    namespace: recovery
+    timeout:
+      minutes: 10
+    to: vemsd
+    recovery_image:
+      # If this was updated to have SOFTWARE/Image and SOFTWARE/juno.dtb with valid
+      # Kernel and DTBs, then this should boot.
+      url: https://releases.linaro.org/members/arm/platforms/17.04/juno-uefi.zip
+      compression: zip
+
+- deploy:
+     namespace: oe
+     timeout:
+       minutes: 2
+     to: nfs
+     os: oe
+     nfsrootfs:
+       url: https://releases.linaro.org/openembedded/images/minimal-armv8/15.12/linaro-image-minimal-genericarmv8-20151214-782.rootfs.tar.gz
+       compression: gz
+
+- boot:
+    namespace: oe
+    connection-namespace: recovery
+    method: uefi
+    commands: nfs
+    # No menu
+    shell_menu: ''
+    parameters:
+      shutdown-message: 'reboot: Restarting system'
+    prompts:
+    - root@genericarmv8:~#
