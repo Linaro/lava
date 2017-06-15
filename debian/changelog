@@ -1,3 +1,95 @@
+lava-server (2017.6-1) unstable; urgency=medium
+
+  * New production release
+    daf1e2a lava-master: fix init script
+    b6b5fe7 Reduce device configuration dynamic connections
+    ebf4463 Fix a crash in the migration when the db is empty
+    cdfeb12 Fix index out of range exception
+    33092ef Adding usb deployment method to vexpress device template
+    3257ee2 XML-RPC: remove unused imports
+    55dd014 XML-RPC: fix crash when called by anonymous users
+    a3d4718 XML-RPC: allow every user to get templates/dict
+    ddaf693 Add documentation of feedback support.
+    eaae89a Set a default connection timeout for lava-test-shell
+    f305e47 publisher: fix umask
+    c25686f logrotate: lava-master should be owned by lavaserver
+    2da8e74 logs: except more exceptions
+    14f5f6c Update docs for changes in 2017.6
+    a486d12 Tidy up of debian support docs
+    b05712d Preserve original comments when resubmitting
+    19bd2db XML-RPC: add an api to manage aliases
+    30973a0 Log an error when saving device configuration fails
+    763239d Use --arch for fedora LXC example
+    8f26102 XML-RPC: add a method to show tag details
+    19a69f7 fix location of example test job files
+    480a6f6 XML-RPC: add an api for handling jobs
+    356667d Update installation docs for Stretch release
+    da74ae5 XML-RPC: add a decorator for is_superuser check
+    49f370c XML-RPC: add a clean api for device-types and aliases
+    c6d503d commands/devices: extend devices command to add tags
+    1655dbf Move set commands outside body block
+    87b8c01 XML-RPC: add a clean api for workers and tags
+    351c16b XML-RPC: add a clean api for devices
+    c4dec1f device-types: add bcm2837-rpi-3-b
+    9ca0e0d Adding combined vexpress device template
+    67f531f Make lava_scheduler_app.api a module
+    d3021a3 xmlrpc: add a system.version function
+    3ef0157 linaro_django_xmlrpc: remove unused properties
+    e994852 Use render shortcut instead of the loader
+    e51ca21 linaro_django_xmlrpc: rework the application
+    4bbe17c LAVA-959 run lava-master as lavaserver user
+    b283288 Fix migrations from Debian Jessie to Stretch and ensure smooth upgrade.
+    bc25204 LAVA 329 - Add old job URL to metadata when resubmitting a job.
+    271723d LAVA-782 - Change error type for incorrect handling of custom queries.
+    368903e notify: Don't send verbose mails when the job is cancelled
+    71c514d Fix broken link in unit test.
+    1f48674 LAVA-955 - Remove 'arch' parameter from lxc protocol.
+    3b36ba0 Add auto_login test case in test_pipeline unit test
+    e23bb17 Fix typo which causes XML-RPC error when saving device dict
+    9a82aee XML-RPC: allow to have sub_modules
+    b0c7a5b Document reboot and apply-overlay elements for fastboot deploy method.
+    8a93049 LAVA-935 - Provide feedback output from connections
+    d71f267 Fix typos in proxy configuration documentation.
+    c7227b3 Fix rebase error in grub hikey test
+    9253497 Only the master should create log directories
+    1ee736b Allow every u-boot devices to use minimal boot
+    e816c17 LAVA-832 allow to manage users from the command line
+    eb83cbe Add grub interrupt prompt and interrupt character to constants
+    ee79de2 LAVA-937 show job visibility and fix group visibility
+    73b6d86 Prevent key error in metadata handling.
+    f89e840 Improve job output migration helper
+    eb1ad02 device dict: do not show exclusive flag
+    3900276 Restore date-based subdirectories
+    1faa9f0 LAVA-855 - ART CI: Intel NUC device integration for LAVA v2
+    d195b01 Allow to revert (dummy) the migration
+    35f0802 Fix device dict export
+    da7ebe2 device dict: fix web rendering
+    4a3daa9 Allow override of root for installed mustang.
+    12c0508 Expand zmq_client to handle publisher socket
+    34f3625 Trivial whitespace changes in glossary
+    6246a5d Improve data export docs
+    2af8e72 Allow for non-Const values in device dictionary
+    59742fe Extend examples to use the DNS support for NFS
+    c514296 Fix change in import paths for V1 and V2 scheduling
+    765901e Add notes on advanced features for submission
+    fd0905c Remove deprecated commands
+    0237b85 Use CommandError whenever possible
+    a1cc08b Improve device-type templates
+    05123cc Missing conditional in device-type alias handling
+    17af14e Move commands to lava_server app
+    5bab54d Remove reference to unavailable boot method 'fastboot-boot-image'.
+    78e9048 Add mediatek dt for v2
+    49f27fa Allow in-place YAML include in V2 job submission.
+    c2be83f Grub support for HiKey
+    ae4d477 LAVA-757 Move device dictionaries to file system
+    52eb1e1 Remove unused model JobPipeline
+    9d0a5ae results: make the link unique
+    55bf39f Add a callback_url functionality to notification schema.
+    0324915 Add login_commands to the auto_login schema
+    ce6d0f7 Don't reload template from disk on each access
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 15 Jun 2017 12:47:20 +0100
+
 lava-server (2017.5-1) unstable; urgency=medium
 
   * New production release
