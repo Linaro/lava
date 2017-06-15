@@ -55,7 +55,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
@@ -183,7 +183,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
@@ -236,7 +236,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
@@ -269,7 +269,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
@@ -309,7 +309,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')

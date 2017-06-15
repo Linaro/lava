@@ -2,13 +2,11 @@
 import os
 import yaml
 from lava_scheduler_app.models import (
-    DeviceDictionary,
     TestJob,
     DevicesUnavailableException,
     SubmissionException,
 )
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
 
@@ -30,14 +28,7 @@ class SecondaryConnections(TestCaseWithFactory):
     def setUp(self):
         super(SecondaryConnections, self).setUp()
         self.factory = YamlSshFactory()
-        jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type()
-        self.conf = {
-            'arch': 'amd64',
-            'extends': 'qemu.jinja2',
-            'mac_addr': '52:54:00:12:34:59',
-            'memory': '256',
-        }
 
     def test_ssh_job_data(self):
         data = yaml.load(self.factory.make_job_yaml())
@@ -48,9 +39,6 @@ class SecondaryConnections(TestCaseWithFactory):
 
     def test_make_ssh_guest_yaml(self):
         hostname = 'fakeqemu3'
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         device = self.factory.make_device(self.device_type, hostname)
         try:
             jobs = TestJob.from_yaml_and_user(
@@ -113,9 +101,6 @@ class SecondaryConnections(TestCaseWithFactory):
         # need a full job to properly test the multinode YAML split
         hostname = 'fakeqemu3'
         self.factory.make_device(self.device_type, hostname)
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = 'fakeqemu4'
         self.factory.make_device(self.device_type, hostname)
@@ -128,9 +113,6 @@ class SecondaryConnections(TestCaseWithFactory):
     def test_broken_link_yaml(self):
         hostname = 'fakeqemu3'
         self.factory.make_device(self.device_type, hostname)
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = 'fakeqemu4'
         self.factory.make_device(self.device_type, hostname)

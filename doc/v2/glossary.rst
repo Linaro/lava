@@ -20,7 +20,7 @@ Glossary of terms
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
 [ :term:`device owner` ] [:term:`device status transition` ]
 [ :term:`device tag` ] [ :term:`device type` ] [ :term:`developer image` ]
-[ :term:`dispatcher` ] [ :term:`distributed deployment`] [ :term:`DTB` ]
+[ :term:`dispatcher` ] [ :term:`distributed deployment` ] [ :term:`DTB` ]
 [ :term:`DUT` ]
 
 **E** [ :term:`exclusive` ]
@@ -32,7 +32,7 @@ Glossary of terms
 
 **I** [ :term:`inline` ] [ :term:`interface tag` ]
 
-**J** [ :term:`jinja2`] [ :term:`job context` ] [ :term:`job definition` ]
+**J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
 **L** [ :term:`lxc` ]
 
@@ -305,6 +305,9 @@ Glossary of terms
     utilities or services are transparently available to the pipeline code and
     selected device nodes can also be made available, depending on admin
     configuration of the devices.
+
+    .. seealso:: :ref:`deploy_using_lxc`, :ref:`lxc_deploy`,
+      :ref:`feedback_using_lxc` and :ref:`lxc_protocol_reference`
 
   master
     The master is a server machine with ``lava-server`` installed and it

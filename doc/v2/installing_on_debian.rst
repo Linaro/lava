@@ -2,8 +2,8 @@
 
 .. _debian_installation:
 
-Installing on a Debian-based distribution
-*****************************************
+Installing on a Debian system
+*****************************
 
 These instructions cover installation on Debian. The supported versions are:
 
@@ -14,16 +14,18 @@ These instructions cover installation on Debian. The supported versions are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Sid (unstable)         | n/a    | Yes                  |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Stretch (testing)      | n/a    | Yes [#f2]_           |
+| Debian        | Buster (testing)       | n/a    | Yes [#f4]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Jessie (stable)        | 8.0    | Yes [#f3]_           |
+| Debian        | Stretch (stable)       | 9.0    | Yes [#f2]_           |
++---------------+------------------------+--------+----------------------+
+| Debian        | Jessie (oldstable)     | 8.0    | Yes [#f3]_           |
 +---------------+------------------------+--------+----------------------+
 
-Debian uses codenames for releases (Jessie, wheezy, squeeze) and names for
-`suites`_ (unstable, testing, stable & oldstable). When a new Debian major
-release is made, the packages in "testing" are frozen and become the new
-"stable". A new codename is chosen for the new "testing" suite, and that will
-be the name for the next major release in the cycle.
+Debian uses codenames for releases (stretch, buster, jessie, wheezy, squeeze)
+and names for `suites`_ (unstable, testing, stable & oldstable). When a new
+Debian major release is made, the packages in "testing" are frozen and become
+the new "stable". A new codename is chosen for the new "testing" suite, and
+that will be the name for the next major release in the cycle.
 
 To allow the table to refer to the same package versions consistently over
 time, codenames are used here. When a Debian release is made, a new codename is
@@ -41,8 +43,14 @@ that codename in the table.
          the current testing) during times when testing is frozen ahead of a
          release of Debian stable. Experimental will typically have no LAVA
          packages outside of a Debian release freeze.
-.. [#f2] `stretch` is the name of the next Debian release after Jessie, which
-         is supported automatically via uploads to Sid (unstable).
+
+.. [#f2] `stretch` is due for release on 17th June 2017. All updates to LAVA
+         packages for Stretch will be made using `stretch-backports`_ once this
+         becomes available. Systems using Debian Stretch are recommended to
+         enable stretch-backports. LAVA packages and dependencies which are
+         installed using stretch-backports are **fully supported** by upstream
+         and are the same codebase as the relevant production release available
+         from the :ref:`lava_repositories`.
 
 .. [#f3] Jessie was released on April 25th, 2015. All updates to LAVA packages
          for Jessie will be made using `jessie-backports`_. Systems using
@@ -52,9 +60,15 @@ that codename in the table.
          relevant production release available from the
          :ref:`lava_repositories`.
 
+.. [#f4] `buster` is the name of the next Debian release after Stretch, which
+         is supported automatically via uploads to Sid (unstable).
+
+
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
 .. _jessie-backports: http://backports.debian.org/
+
+.. _stretch-backports: http://backports.debian.org/
 
 You can track the versions of LAVA packages in the various Debian suites by
 following links from the Debian package trackers for `lava-dispatcher
@@ -75,31 +89,44 @@ repository.
 
 .. _production-repo: https://images.validation.linaro.org/production-repo/
 
-In times when the current production release has not made it into
-``jessie-backports`` (e.g. due to a migration issue or a pre-release package
-freeze in Debian), this repository can be used instead. The **only** apt source
-to use with Debian Jessie, Stretch or Sid is the `production-repo`_ for ``sid``
-because the same LAVA packages are used on Jessie and Stretch as on Sid::
+In times when the current production release has not made it into either
+``stretch-backports`` or  ``jessie-backports`` (e.g. due to a migration issue
+or a pre-release package freeze in Debian), this repository can be used
+instead.
 
- deb https://images.validation.linaro.org/production-repo sid main
+There are differences in how the packages are built between
+``jessie-backports`` and ``stretch-backports`` but the contents are otherwise
+the same for the same upstream version.
 
-.. note:: There are no packages currently in the repository
-   except in ``sid``.
+Stretch users
+-------------
 
-The codename ``sid`` is used simply as that is the codename for ``unstable``
-which is where all Debian uploads arrive. To allow the production repo to
-include precisely the same upload as was made to Debian, we use ``sid``. It
-makes no difference to how the packages are installed on Jessie, Stretch or
-Sid.
+::
+
+ deb https://images.validation.linaro.org/production-repo stretch-backports main
+
+Jessie users
+-------------
+
+::
+
+ deb https://images.validation.linaro.org/production-repo jessie-backports main
+
+.. note:: The packages formerly in the ``sid`` suite in the repository are
+   not being updated after 2017.6.
 
 The :file:`services-trace.txt` file in the repository shows the latest update
 timestamp and is accompanied by a GnuPG signature of the trace file, signed
 using the :ref:`lava_archive_signing_key`.
 
 Interim builds (including release candidates) are available in the staging
-repository::
+repository, using the same suites::
 
  deb https://images.validation.linaro.org/staging-repo sid main
+
+ deb https://images.validation.linaro.org/staging-repo stretch-backports main
+
+ deb https://images.validation.linaro.org/staging-repo jessie-backports main
 
 This repository uses the same key as the production repository and uses ``sid``
 in the same way.
@@ -221,6 +248,62 @@ Extra dependencies
 The ``lava`` metapackage brings in extra dependencies which may be
 useful on some instances.
 
+.. index:: stretch, install on stretch
+
+.. _install_debian_stretch:
+
+Installing on Debian Stretch
+============================
+
+Debian Stretch is due to be released on June 17th, 2017, containing a full set
+of packages to install LAVA at version 2016.12. Debian stable releases of LAVA
+do not receive updates to LAVA directly, so a simple install on Stretch will
+only get you ``2016.12``. All admins of LAVA instances are **strongly** advised
+to update all software on the instance on a regular basis to receive security
+updates to the base system.
+
+For packages which need larger changes, the official Debian method is to
+provide those updates using ``backports``. Backports **do not install
+automatically** even after the apt source is added - this is because backports
+are rebuilt from the current ``testing`` suite, so automatic upgrades would
+move the base system to testing as well. Instead, the admin selects which
+backported packages to add to the base stable system. Only those packages (and
+dependencies, if not available in stable already) will then be installed from
+backports.
+
+The ``lava-server`` backports and dependencies are **fully supported** by the
+LAVA software team and admins of **all** LAVA instances need to update the base
+``2016.12`` to the version available in current backports. Subscribe to the
+:ref:`lava_announce` mailing list for details of when new releases are made.
+Backports will be available about a week after the initial release.
+
+Updates for LAVA on Debian Stretch will be uploaded to `stretch-backports
+<http://backports.debian.org/>`_ once this becomes available.
+
+Create an apt source for backports, either by editing ``/etc/apt/sources.list``
+or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.
+Create a line like the one below (using your preferred Debian mirror)::
+
+ deb http://http.debian.net/debian stretch-backports main
+
+Remember to update your apt cache whenever add a new apt source::
+
+ $ sudo apt update
+
+Then install ``lava-server`` from ``stretch-backports`` using the ``-t`` option::
+
+ $ sudo apt -t stretch-backports install lava-server
+ $ sudo a2dissite 000-default
+ $ sudo a2enmod proxy
+ $ sudo a2enmod proxy_http
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+Once backports are enabled, the packages which the admin has selected from
+backports (using the ``-t`` switch) will continue to upgrade using backports.
+Other packages will only be added from backports if the existing backports
+require updates from backports.
+
 .. index:: backports, jessie-backports, install using backports
 
 .. _install_debian_jessie:
@@ -281,7 +364,7 @@ backports automatically bring in Django1.8 and associated support, also from
 backports.
 
 Installing just lava-server
----------------------------
+===========================
 
 The ``lava-server`` package is the main LAVA scheduler and frontend.
 
@@ -313,7 +396,7 @@ Other packages to consider:
    V1 devices on the worker.
 
 Installing the full lava set
-----------------------------
+============================
 
 Production installs of LAVA will rarely use the full ``lava`` set as it
 includes tools more commonly used by developers and test labs. These tools mean

@@ -196,12 +196,8 @@ class ResultsAPI(ExposedAPI):
                     401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
-        retval = []
-        data = TestData.objects.filter(testjob=job)
-        for datum in data:
-            for attribute in datum.attributes.all():
-                retval.append({attribute.name: attribute.value})
-        return retval
+
+        return job.get_metadata_dict()
 
     def get_testjob_results_csv(self, job_id):
         """

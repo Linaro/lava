@@ -18,28 +18,20 @@ from lava_dispatcher.pipeline.test.utils import DummyLogger
 # pylint: disable=too-many-nested-blocks
 
 
-def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
+CONFIG_PATH = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__), "..", "..",
+        "lava_scheduler_app", "tests", "devices"))
+
+
+def prepare_jinja_template(hostname, jinja_data):
     string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
-    if not path:
-        path = jinja_template_path(system=system_path)
+    path = os.path.dirname(CONFIG_PATH)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
     env = jinja2.Environment(
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True)
     return env.get_template("%s.jinja2" % hostname)
-
-
-def jinja_template_path(system=True):
-    """
-    Use the source code for jinja2 templates, e.g. for unit tests
-    """
-    path = '/etc/lava-server/dispatcher-config/'
-    if os.path.exists(path) and system:
-        return path
-    path = os.path.realpath(os.path.join(os.path.dirname(__file__)))
-    if not os.path.exists(path):
-        raise RuntimeError("Misconfiguration of jinja templates")
-    return path
 
 
 class TestTemplates(unittest.TestCase):
@@ -65,7 +57,7 @@ class TestTemplates(unittest.TestCase):
     def validate_data(self, hostname, data, job_ctx=None):
         if not job_ctx:
             job_ctx = {}
-        test_template = prepare_jinja_template(hostname, data, system_path=self.system)
+        test_template = prepare_jinja_template(hostname, data)
         rendered = test_template.render(**job_ctx)
         if self.debug:
             print('#######')
@@ -81,7 +73,8 @@ class TestTemplates(unittest.TestCase):
         return ret
 
     def test_all_templates(self):
-        templates = glob.glob(os.path.join(jinja_template_path(system=self.system), 'device-types', '*.jinja2'))
+        path = os.path.dirname(CONFIG_PATH)
+        templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
         self.assertNotEqual([], templates)
         for template in templates:
             data = "{%% extends '%s' %%}" % os.path.basename(template)
@@ -89,6 +82,23 @@ class TestTemplates(unittest.TestCase):
                 self.validate_data('device', data)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
+
+    def test_rendering(self):
+        self.assertFalse(CONFIG_PATH.startswith('/etc/'))
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'db410c.jinja2')) as hikey:
+            data = hikey.read()
+        env = jinja2.Environment()
+        ast = env.parse(data)
+        device_dict = {}
+        count = 0
+        for node in ast.find_all(jinja2.nodes.Assign):
+            count += 1
+            if isinstance(node.node, jinja2.nodes.Const):
+                device_dict[node.target.name] = node.node.value
+        self.assertIsNotNone(device_dict)
+        # FIXME: recurse through the jinja2 nodes without rendering
+        # then change this to assertEqual
+        self.assertNotEqual(count, len(device_dict.keys()))
 
     def test_x15_template(self):
         self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}
@@ -119,7 +129,7 @@ class TestTemplates(unittest.TestCase):
 {% set uboot_bootx_cmd = "bootm {KERNEL_ADDR} {RAMDISK_ADDR}" %}
         """
         self.assertTrue(self.validate_data('armada-375-01', data))
-        test_template = prepare_jinja_template('armada-375-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('armada-375-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         params = template_dict['actions']['deploy']['parameters']
@@ -149,7 +159,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -179,7 +189,7 @@ class TestTemplates(unittest.TestCase):
                                             if item.endswith(','):
                                                 self.fail("%s ends with a comma" % item)
         self.assertEqual(depth, 8)
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         job_ctx = {}
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
@@ -201,7 +211,7 @@ class TestTemplates(unittest.TestCase):
         # add device dictionary override
         # overrides the template default
         data += """{% set boot_character_delay = 400 %}"""
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         job_ctx = {}
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
@@ -222,7 +232,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -237,7 +247,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -259,14 +269,14 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet localhost 7333' %}
 {% set exclusive = 'True' %}"""
         self.assertTrue(self.validate_data('staging-bbb-01', data))
-        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-bbb-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
         self.assertEqual('', template_dict['actions']['deploy']['methods']['ssh']['host'])
         self.assertNotEqual('None', template_dict['actions']['deploy']['methods']['ssh']['host'])
         data += "{% set ssh_host = '192.168.0.10' %}"
-        test_template = prepare_jinja_template('staging-bbb-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-bbb-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict['actions']['deploy']['methods']['ssh']['host'])
@@ -275,7 +285,7 @@ class TestTemplates(unittest.TestCase):
     def test_b2260_template(self):
         data = """{% extends 'b2260.jinja2' %}"""
         self.assertTrue(self.validate_data('staging-b2260-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertEqual({'seconds': 15}, template_dict['timeouts']['actions']['power-off'])
@@ -287,7 +297,7 @@ class TestTemplates(unittest.TestCase):
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64', 'no_kvm': True}
         self.assertTrue(self.validate_data('staging-x86-01', data, job_ctx))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
@@ -304,7 +314,7 @@ class TestTemplates(unittest.TestCase):
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         self.assertEqual(
@@ -319,7 +329,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-mustang-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsInstance(template_dict['parameters']['text_offset'], str)
@@ -338,7 +348,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-mustang-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
@@ -366,7 +376,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-mustang-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
@@ -386,7 +396,7 @@ class TestTemplates(unittest.TestCase):
             data = hikey.read()
         self.assertIsNotNone(data)
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
-        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-hikey-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -405,7 +415,7 @@ class TestTemplates(unittest.TestCase):
         # test support for retreiving MAC from device.
         data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
-        test_template = prepare_jinja_template('staging-hikey-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-hikey-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('parameters', template_dict)
@@ -416,6 +426,37 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
         self.assertNotEqual('', template_dict['parameters']['interfaces']['target']['mac'])
         self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
+
+    def test_hikey_grub_efi(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {
+            'kernel': 'Image',
+            'devicetree': 'hi6220-hikey.dtb'
+        }
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsNotNone(template_dict['actions']['boot']['methods'])
+        self.assertIn('grub-efi', template_dict['actions']['boot']['methods'])
+        self.assertEqual('fastboot', template_dict['actions']['boot']['methods']['grub-efi']['menu_options'])
+        params = template_dict['actions']['boot']['methods']['grub-efi']
+        self.assertEqual(params['parameters']['bootloader_prompt'], 'grub>')
+        for command in params['installed']['commands']:
+            if command.startswith('search'):
+                self.assertIn('rootfs', command)
+            elif command.startswith('linux'):
+                self.assertIn('/boot/Image', command)
+            elif command.startswith('devicetree'):
+                self.assertIn('hi6220-hikey.dtb', command)
+            elif 'root=' in command:
+                self.assertIn('/dev/mmcblk0p9', command)
+                self.assertIn('ttyAMA3', command)
+            else:
+                self.assertEqual('boot', command)
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -429,7 +470,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         self.assertTrue(self.validate_data('staging-panda-01', data))
         context = {'extra_kernel_args': 'intel_mmio=on mmio=on'}
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
         self.assertEqual('panda', (template_dict['device_type']))
@@ -465,7 +506,7 @@ class TestTemplates(unittest.TestCase):
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
           - boot") %}"""
         self.assertTrue(self.validate_data('staging-juno-01', data))
-        test_template = prepare_jinja_template('staging-juno-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-juno-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -479,7 +520,7 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet localhost 6002' %}
 {% set console_device = 'ttyfake1' %}"""
         self.assertTrue(self.validate_data('staging-cubietruck-01', data))
-        test_template = prepare_jinja_template('staging-cubietruck-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-cubietruck-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -509,7 +550,7 @@ class TestTemplates(unittest.TestCase):
             'extra_options': ['-global', 'virtio-blk-device.scsi=off', '-smp', 1, '-device', 'virtio-scsi-device,id=scsi']
         }
         self.assertTrue(self.validate_data('staging-qemu-01', data))
-        test_template = prepare_jinja_template('staging-juno-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-juno-01', data)
         rendered = test_template.render(**job_ctx)
         self.assertIsNotNone(rendered)
         template_dict = yaml.load(rendered)
@@ -537,7 +578,7 @@ class TestTemplates(unittest.TestCase):
             'extra_options': ['-smp', 1]
         }
         self.assertTrue(self.validate_data('staging-qemu-01', data))
-        test_template = prepare_jinja_template('staging-juno-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-juno-01', data)
         rendered = test_template.render(**job_ctx)
         self.assertIsNotNone(rendered)
         template_dict = yaml.load(rendered)
@@ -570,7 +611,7 @@ class TestTemplates(unittest.TestCase):
 'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
 {% set boot_character_delay = 100 %}"""
         self.assertTrue(self.validate_data('staging-overdrive-01', data))
-        test_template = prepare_jinja_template('staging-overdrive-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-overdrive-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -600,7 +641,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}
 {% set hard_reset_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power off; sleep 20; ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}"""
         self.assertTrue(self.validate_data('highbank-07', data))
-        test_template = prepare_jinja_template('highbank-07', data, system_path=self.system)
+        test_template = prepare_jinja_template('highbank-07', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -656,7 +697,7 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet localhost 7301' %}
 {% set lava_mac = 'd8:9d:67:26:ae:e8' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn(
@@ -676,14 +717,14 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         job_ctx = {}
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
                 self.assertIn(',tcp,hard,intr ', line)
         job_ctx = {'extra_nfsroot_args': ',nolock'}
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
@@ -711,7 +752,7 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet localhost 7333' %}
 {% set exclusive = 'True' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('interfaces', template_dict['parameters'])
@@ -738,7 +779,7 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet serial4 7010' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
         self.assertTrue(self.validate_data('staging-panda-01', data))
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         fdesc, device_yaml = tempfile.mkstemp()
@@ -764,7 +805,7 @@ class TestTemplates(unittest.TestCase):
 {% set uboot_mac_addr = '00:80:e1:12:81:30' %}
 {% set exclusive = 'True' %}"""
         self.assertTrue(self.validate_data('staging-b2260-01', data))
-        test_template = prepare_jinja_template('staging-b2260-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-b2260-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         ethaddr = False
@@ -787,7 +828,7 @@ class TestTemplates(unittest.TestCase):
 {% set connection_command = 'telnet serial4 7010' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
         self.assertTrue(self.validate_data('staging-arndale-01', data))
-        test_template = prepare_jinja_template('staging-panda-01', data, system_path=self.system)
+        test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for line in template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']:
@@ -802,7 +843,7 @@ class TestTemplates(unittest.TestCase):
 {% set board_id = 'AE6642EK61804EZ' %}"""
         self.assertTrue(self.validate_data('staging-arduino101-01', data))
         test_template = prepare_jinja_template('staging-arduino101-01',
-                                               data, system_path=self.system)
+                                               data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
@@ -823,7 +864,7 @@ class TestTemplates(unittest.TestCase):
 {% set boot_character_delay = 30 %}"""
         self.assertTrue(self.validate_data('staging-d03-01', data))
         test_template = prepare_jinja_template('staging-d03-01',
-                                               data, system_path=self.system)
+                                               data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertIn('character_delays', template_dict)
@@ -843,4 +884,10 @@ class TestTemplates(unittest.TestCase):
 {% set adb_serial_number = 'FDAC1231DAD' %}
 {% set fastboot_serial_number = 'FDAC1231DAD' %}
 {% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
+"""))
+
+    def test_nuc_template(self):
+        self.assertTrue(self.validate_data('staging-nuc-01', """{% extends 'adb-nuc.jinja2' %}
+{% set device_ip = '192.168.1.11' %}
+{% set exclusive = 'True' %}
 """))

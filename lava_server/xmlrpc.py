@@ -17,14 +17,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import subprocess
 import yaml
 import xmlrpclib
+
 from django.http import Http404
+
 from dashboard_app.models import Bundle
 from dashboard_app.xmlrpc import errors
 from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
-from lava_scheduler_app.models import Device, DeviceType, DeviceDictionary
+from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import Mapper, SystemAPI
 
 
@@ -55,6 +59,33 @@ class LavaSystemAPI(SystemAPI):
             return self.user.username
         else:
             return None
+
+    def version(self):
+        """
+        Name
+        ----
+        `system.version` ()
+
+        Description
+        -----------
+        Return the lava-server version string
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        lava-server version string
+        """
+
+        changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
+        if os.path.exists(changelog):
+            deb_version = subprocess.check_output((
+                'dpkg-query', '-W', "-f=${Version}\n",
+                "lava-server")).strip().decode('utf-8')
+            return deb_version
+        return ''
 
     def user_can_view_jobs(self, job_list, username=None):
         """
@@ -416,12 +447,10 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         # get all device dictionaries, build the entire map.
         dictionaries = [
-            DeviceDictionary.get(device.hostname).to_dict() for device in Device.objects.filter(is_pipeline=True)
+            (device.hostname, device.load_configuration()) for device in Device.objects.filter(is_pipeline=True)
         ]
         network_map = {'switches': {}}
-        for device_dict in dictionaries:
-            params = device_dict['parameters']
-            hostname = device_dict['hostname']
+        for (hostname, params) in dictionaries:
             if 'interfaces' not in params:
                 continue
             for interface in params['interfaces']:

@@ -432,3 +432,50 @@ endpoints, and will retry to deliver those messages as necessary. No
 messages will be lost until the queue overflows.
 
 .. seealso:: :ref:`publishing_events`
+
+LAVA server performances
+************************
+
+If the load on the master becomes an issue, there may be some optimisations
+which can help.
+
+The default settings should work out of the box. This might not be the case for
+some optimisations that should be tested carefully.
+
+Caching
+=======
+
+The different assets (CSS, js, images, etc.) are already handled directly by
+apache but without any caching.
+
+To add browser caching, update the apache2 configuration to add Expires header
+for every static assets.
+
+.. code-block:: apache
+
+  <location /static>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+  </location>
+
+.. note:: For the complete documentation see the `apache documentation
+   <https://httpd.apache.org/docs/2.4/mod/mod_expires.html>`__
+
+Template caching
+================
+
+Django does also provide a way to store in memory the compiled version of the
+templates using the `cached loader
+<https://docs.djangoproject.com/en/1.10/ref/templates/api/#django.template.loaders.cached.Loader>`__.
+
+To enable the cached loader, in */etc/lava-server/settings.conf* add:
+
+.. code-block:: json
+
+  "USE_TEMPLATE_CACHE": true
+
+You should then restart *lava-server-gunicorn*.
+
+.. code-block:: shell
+
+  $ sudo service lava-server-gunicorn restart

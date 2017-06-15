@@ -6,4 +6,11 @@
 
 {% block content %}
 <h1>404 Not found</h1>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 {% endblock %}

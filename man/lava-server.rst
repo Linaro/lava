@@ -100,6 +100,7 @@ lava_scheduler_app
               --offline             Create the device offline (online by default)
               --private             Make the device private (public by default)
               --worker WORKER       The name of the worker
+              --tags TAG1 TAG2      List of tags for the device
 
           details             Details about a device
 

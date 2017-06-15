@@ -23,13 +23,18 @@ Requirements to Consider Before Installing LAVA
 Software Requirements
 =====================
 
-See :ref:`debian_installation` for instructions.
+.. note:: LAVA is developed using Debian packaging to ensure that daemons and
+   system-wide configuration is correctly updated with changes in the codebase.
+   There is **no support for pypi or python virtual environments or installing
+   directly from a git directory**. See :ref:`debian_installation` for
+   detailed instructions.
 
 We currently recommend installing LAVA on `Debian`_ jessie, stretch or
 unstable. Installations using jessie (the current Debian stable release) should
 use updates available in ``jessie-backports``.
 
-Contributions to support other distributions are welcome.
+Contributions to support other distributions are welcome as long as there is a
+commitment to maintain LAVA on those distributions.
 
 .. _Debian: https://www.debian.org/
 

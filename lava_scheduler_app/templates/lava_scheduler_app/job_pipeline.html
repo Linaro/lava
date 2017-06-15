@@ -29,6 +29,12 @@
       word-wrap: break-word;
     }
 
+    .feedback {
+      color: #555;
+      background-color: #e7f0e6;
+      border-right: 1px solid grey;
+    }
+
     .btn-keyboard {
       color: #fff;
       background-color: #333;
@@ -43,6 +49,21 @@
 
     .btn-keyboard.focus {
       color: #fff;
+    }
+
+    .btn-feedback {
+      color: #555;
+      background-color: #e7f0e6;
+    }
+
+    .btn-feedback:hover {
+      color: #555;
+      background-color: #e0f0d9;
+    }
+
+    .btn-feedback.focus {
+      color: #444;
+      background-color: #e0f0d9;
     }
 
     .affix {
@@ -76,6 +97,13 @@
     .tickLabel {
       transform: rotate(-30deg);
     }
+
+    .text-white {
+      color: white;
+    }
+    .text-white:hover {
+      color: white;
+    }
   </style>
 {% endblock %}
 
@@ -93,6 +121,8 @@
       <dd title="{{ job.submit_time }}">{{ job.submit_time|naturaltime }}</dd>
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
+      <dt>Visibility</dt>
+      <dd>{{ job.get_visibility_display }}{% if job.visibility == job.VISIBLE_GROUP %} ({{ job.viewing_groups.all|join:', ' }}){% endif %}</dd>
       {% if job_tags %}
       <dt>Required Tags</dt>
       <dd>
@@ -203,6 +233,7 @@
       <label class="btn btn-danger" id="error_label" for="error"><input type="checkbox" id="error" autocomplete="off">error</label>
       <label class="btn btn-keyboard" id="keyboard_label" for="keyboard"><input type="checkbox" id="keyboard" autocomplete="off">input</label>
       <label class="btn btn-success" id="target_label" for="target"><input type="checkbox" id="target" autocomplete="off">output</label>
+      <label class="btn btn-feedback" id="feedback_label" for="feedback"><input type="checkbox" id="feedback" autocomplete="off">feedback</label>
       <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
     </div>
 
@@ -257,13 +288,16 @@
           {% endif %}
         {% elif line.lvl == "target" %}
       <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+        {% elif line.lvl == "feedback" %}
+      <code class="feedback" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% elif line.lvl == "results" %}
             {% if line.msg.set %}
               {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
             {% else %}
               {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
             {% endif %}
-      <a href="{{ result_url|default:"#invalid_test_name" }}"><code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.result }}">
+      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.level }}">
+        <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
         {% for key, value in line.msg.items|sort_items %}
           {% if value.items %}
             {% if key == "extra" %}
@@ -277,7 +311,7 @@
               {{ key }}: {{ value }}<br />
           {% endif %}
         {% endfor %}
-      </code></a>
+        </a></code>
         {% elif line.lvl == "error" or line.lvl == "exception" %}
       <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% else %}
@@ -545,6 +579,7 @@
         'error': sheet.insertRule('.error { display: block }', 4),
         'target': sheet.insertRule('.target { display: block }', 5),
         'results': sheet.insertRule('.results { display: block }', 6),
+        'feedback': sheet.insertRule('.feedback { display: block }', 7),
       };
 
       // Handle click events on buttons
@@ -713,6 +748,10 @@
                 }
               } else if(level == 'target') {
                 $('<code class="target bg-success" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
+              } else if(level == 'feedback') {
+                $('<code class="feedback" id="' + id + '"></code>')
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else if(level == 'results') {

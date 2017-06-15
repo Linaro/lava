@@ -570,13 +570,23 @@ for more information.
 Python 3.x
 **********
 
+Python3 support in LAVA is related to a number of factors:
+
+* Forthcoming LTS releases of django which will remove support for python2.7
+
+* Completion of the migration to V2 and the removal of the V1 codebase.
+
+* Transition within Debian to full python3 support.
+
+https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
+
 LAVA dispatcher now supports python3 testing but **only** for the pipeline unit
 tests. Code changes to the V2 dispatcher code (i.e. in the
 ``lava_dispatcher/pipeline`` tree) **must** be sufficiently aware of Python3 to
 not break the unit tests when run using python3.
 
 LAVA is not yet ready to use python 3.x support at runtime, particularly in
-lava-server, due to the lack of python 3.x migrations in dependencies. However
+lava-server, due to the lack of python 3.x support in the V1 code. However
 it is good to take python 3.x support into account in ``lava-server``, when
 writing new code for LAVA v2, so that it makes it easy during the move anytime
 in the future.
@@ -600,8 +610,10 @@ From time to time, reviews may add more python dependencies - check on the
 :ref:`mailing_lists` if your tests start to fail after rebasing on current
 master or if you want to help with more python3 support in LAVA V2.
 
-Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is going to
-support python3.
+.. warning:: Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
+   going to support python3. Also note that as django wil be dropping python2.7
+   support with the 2.2LTS release, *frozen* instances of LAVA will not be able
+   to use django updates after that point.
 
 XML-RPC changes
 ***************

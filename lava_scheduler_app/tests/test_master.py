@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import unittest
@@ -6,13 +7,9 @@ from lava_scheduler_app.dbutils import (
     select_device,
 )
 from lava_scheduler_app.tests.test_pipeline import YamlFactory, TestCaseWithFactory
-from lava_scheduler_app.utils import (
-    jinja_template_path,
-)
 from lava_scheduler_app.models import (
     Device,
     Tag,
-    DeviceDictionary,
     TestJob,
     Worker
 )
@@ -24,14 +21,7 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
     def setUp(self):
         super(MasterTest, self).setUp()
         self.factory = YamlFactory()
-        jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type()
-        self.conf = {
-            'arch': 'amd64',
-            'extends': 'qemu.jinja2',
-            'mac_addr': '52:54:00:12:34:59',
-            'memory': '256',
-        }
         self.worker, _ = Worker.objects.get_or_create(hostname='localhost')
         self.remote, _ = Worker.objects.get_or_create(hostname='remote')
         # exclude remote from the list
@@ -56,9 +46,6 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
     def test_select_device(self):
         self.restart()
         hostname = 'fakeqemu3'
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         device = self.factory.make_device(self.device_type, hostname)
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(),
@@ -87,9 +74,6 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
     def test_job_handlers(self):
         self.restart()
         hostname = 'fakeqemu3'
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         device = self.factory.make_device(self.device_type, hostname)
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(),
@@ -108,10 +92,7 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
     def test_dispatcher_restart(self):
         self.restart()
-        hostname = 'fakeqemu4'
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
+        hostname = 'fakeqemu3'
         device = self.factory.make_device(self.device_type, hostname)
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(),

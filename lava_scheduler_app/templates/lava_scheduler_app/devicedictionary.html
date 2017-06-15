@@ -10,7 +10,8 @@
 </div>
 {% endif %}
 
-<h2>Device Dictionary for {{ device.hostname }} - {{ device.device_type }} {{ device.device_type.architecture|default:'' }}
+<h2>Device Dictionary for {{ device.hostname }}
+
   <a class="btn btn-xs btn-info"
      href="{% url 'lava.scheduler.device.dictionary.plain' device.hostname %}"
      title="Download full device configuration (YAML).
@@ -20,6 +21,26 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
     download
   </a>
 </h2>
+
+<div class="row">
+  <div class="col-md-6">
+    <dl class="dl-horizontal">
+      <dt>Hostname</dt>
+      <dd>{{ device.hostname }}</dd>
+      <dt>Device type</dt>
+      <dd>{{ device.device_type }}</dd>
+    </dl>
+  </div>
+  <div class="col-md-6">
+    <dl class="dl-horizontal">
+      <dt>Exclusive</dt>
+      <dd>{{ device.is_exclusive }}</dd>
+      <dt>Extends</dt>
+      <dd>{{ device.get_extends }}</dd>
+    </dl>
+  </div>
+</div>
+
 
 <div class="container-fluid">
 <div class="row">

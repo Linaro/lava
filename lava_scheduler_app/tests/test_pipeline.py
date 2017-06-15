@@ -6,8 +6,6 @@ import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    DeviceDictionary,
-    JobPipeline,
     TestJob,
     Tag,
     DevicesUnavailableException,
@@ -17,11 +15,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import match_vlan_interface
 from django.db.models import Q
 from django.contrib.auth.models import Group, Permission, User
-from collections import OrderedDict
 from lava_scheduler_app.utils import (
-    jinja_template_path,
-    map_context_overrides,
-    allowed_overrides,
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
@@ -30,7 +24,12 @@ from lava_scheduler_app.dbutils import (
     find_device_for_job,
     end_job,
 )
-from lava_scheduler_app.schema import validate_submission, validate_device
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+    include_yaml,
+    SubmissionException
+)
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.test.test_defs import check_missing_path
@@ -65,11 +64,6 @@ class YamlFactory(ModelFactory):
         logger.disabled = True
         logger.propagate = False
 
-    def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
-        qemu = DeviceDictionary(hostname=hostname)
-        qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
-        qemu.save()
-
     def make_device_type(self, name='qemu'):
 
         device_type = DeviceType.objects.get_or_create(name=name)[0]
@@ -85,7 +79,6 @@ class YamlFactory(ModelFactory):
             tags = []
         # a hidden device type will override is_public
         device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
-        self.make_fake_qemu_device(hostname)
         if tags:
             device.tags = tags
         if DEBUG:
@@ -116,7 +109,6 @@ class PipelineDeviceTags(TestCaseWithFactory):
     def setUp(self):
         super(PipelineDeviceTags, self).setUp()
         self.factory = YamlFactory()
-        jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type()
         self.conf = {
             'arch': 'amd64',
@@ -137,9 +129,6 @@ class PipelineDeviceTags(TestCaseWithFactory):
 
     def test_make_device(self):
         hostname = 'fakeqemu3'
-        device_dict = DeviceDictionary(hostname=hostname)
-        device_dict.parameters = self.conf
-        device_dict.save()
         device = self.factory.make_device(self.device_type, hostname)
         self.assertEqual(device.device_type.name, 'qemu')
         job = self.factory.make_job_yaml()
@@ -168,7 +157,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         validate_submission(data)
         device = self.factory.make_device(self.device_type, 'fakeqemu4', tags=tag_list)
         job_ctx = data.get('context', {})
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         validate_device(device_config)
         self.assertTrue(device.is_valid(system=False))
         self.assertIn('tags', data)
@@ -254,6 +243,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type()
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu3")
 
     def test_from_yaml_and_user_sets_definition(self):
         definition = self.factory.make_job_json()
@@ -283,13 +273,10 @@ class TestPipelineSubmit(TestCaseWithFactory):
     def test_pipeline_health_assignment(self):
         user = self.factory.make_user()
         device1 = Device.objects.get(hostname='fakeqemu1')
-        self.factory.make_fake_qemu_device(hostname="fakeqemu1")
         self.assertTrue(device1.is_pipeline)
         device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
-        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
         self.assertTrue(device2.is_pipeline)
         device3 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu3')
-        self.factory.make_fake_qemu_device(hostname="fakeqemu3")
         self.assertTrue(device3.is_pipeline)
         job1 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device1)
         job2 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device2)
@@ -325,7 +312,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.factory.ensure_tag('testtag')
         ]
         device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2', tags=server_tag_list)
-        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
         self.assertTrue(device2.is_pipeline)
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
@@ -357,16 +343,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = Device.objects.get(hostname="fakeqemu1")
         self.assertTrue(device.is_pipeline)
         self.assertFalse(device.is_exclusive)
-        self.assertIsNotNone(DeviceDictionary.get(device.hostname))
-        device_dict = DeviceDictionary(hostname=device.hostname)
-        device_dict.save()
-        device_dict = DeviceDictionary.get(device.hostname)
-        self.assertTrue(device.is_pipeline)
-        self.assertFalse(device.is_exclusive)
-        update = device_dict.to_dict()
-        update.update({'exclusive': 'True'})
-        device_dict.parameters = update
-        device_dict.save()
+        device = Device.objects.get(hostname="fakeqemu3")
         self.assertTrue(device.is_pipeline)
         self.assertTrue(device.is_exclusive)
 
@@ -384,7 +361,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.factory.make_job_json(), user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         self.assertTrue(device.is_valid(system=False))
         self.assertEqual(
             device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
@@ -394,23 +371,15 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job_data = yaml.load(self.factory.make_job_yaml())
         job_data['context'].update({'netdevice': 'tap'})
         job_ctx = job_data.get('context', {})
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         opts = ' '.join(device_config['actions']['boot']['methods']['qemu']['parameters']['options'])
         self.assertIn('-net tap', opts)
 
-        hostname = "fakemustang"
+        hostname = "fakemustang1"
         mustang_type = self.factory.make_device_type('mustang-uefi')
         # this sets a qemu device dictionary, so replace it
         self.factory.make_device(device_type=mustang_type, hostname=hostname)
-        mustang = DeviceDictionary(hostname=hostname)
-        mustang.parameters = {
-            'extends': 'mustang-uefi.jinja2',
-            'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
-            'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
-        }
-        mustang.save()
-
-        device = Device.objects.get(hostname="fakemustang")
+        device = Device.objects.get(hostname="fakemustang1")
         self.assertEqual('mustang-uefi', device.device_type.name)
         self.assertTrue(device.is_pipeline)
         job_ctx = {
@@ -419,7 +388,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'console_device': 'ttyAMX0',
             'base_ip_args': 'ip=dhcp'
         }
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         self.assertTrue(device.is_valid(system=False))
         self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
         self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
@@ -450,21 +419,59 @@ class TestPipelineSubmit(TestCaseWithFactory):
         )
 
     def test_command_list(self):
-        hostname = 'azrael'
-        dt = self.factory.make_device_type(name='hi6220-hikey')
+        hostname = 'bbb-02'
+        dt = self.factory.make_device_type(name='beaglebone-black')
         device = self.factory.make_device(device_type=dt, hostname=hostname)
-        hikey = DeviceDictionary(hostname=hostname)
-        hikey.parameters = {
-            'extends': 'hi6220-hikey.jinja2',
-            'hard_reset_command': [
-                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 06',
-                'sleep 30',
-                '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 06'],
-        }
-        hikey.save()
-        hikey_dict = hikey.to_dict()
-        self.assertIsInstance(hikey_dict['parameters']['hard_reset_command'], list)
+        device_dict = device.load_configuration()
+        self.assertIsInstance(device_dict['commands']['hard_reset'], list)
         self.assertTrue(device.is_valid())
+
+    def test_minimal_config(self):
+        hostname = 'bbb-02'
+        dt = self.factory.make_device_type(name='beaglebone-black')
+        device = self.factory.make_device(device_type=dt, hostname=hostname)
+        device_dict = device.load_configuration()
+        self.assertIsNotNone(device_dict)
+        self.assertTrue(device.is_valid())
+        self.assertIn('commands', device_dict)
+        self.assertIn('parameters', device_dict)
+        self.assertIn('timeouts', device_dict)
+        self.assertIn('actions', device_dict)
+        device_dict = device.minimise_configuration(device_dict)
+        self.assertIsNotNone(device_dict)
+        self.assertNotIn('commands', device_dict)
+        self.assertNotIn('parameters', device_dict)
+        self.assertIn('actions', device_dict)
+        self.assertIn('timeouts', device_dict)
+
+    def test_auto_login(self):
+        data = yaml.load(self.factory.make_job_yaml())
+        validate_submission(data)
+
+        boot_params = None
+        for name, params in ((x, d[x])
+                             for x, d in ((d.keys()[0], d)
+                                          for d in data['actions'])):
+            if name == 'boot':
+                boot_params = params
+                break
+        self.assertIsNotNone(boot_params)
+
+        auto_login = {}
+        boot_params['auto_login'] = auto_login
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login['login_prompt'] = "login:"
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login.update({
+            'username': "bob",
+            'password_prompt': "Password:",
+            'password': "hello"
+        })
+        validate_submission(data)
+        auto_login['login_commands'] = True
+        self.assertRaises(SubmissionException, validate_submission, data)
+        auto_login['login_commands'] = ['whoami', 'sudo su']
+        validate_submission(data)
 
     def test_visibility(self):
         user = self.factory.make_user()
@@ -543,7 +550,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = job.actual_device
 
         try:
-            device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+            device_config = device.load_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (job.id, exc))
@@ -570,51 +577,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         description = pipeline_job.describe()
         self.assertIn('compatibility', description)
         self.assertGreaterEqual(description['compatibility'], BootQEMU.compatibility)
-
-    def test_identify_context(self):
-        hostname = "fakebbb"
-        mustang_type = self.factory.make_device_type('beaglebone-black')
-        # this sets a qemu device dictionary, so replace it
-        self.factory.make_device(device_type=mustang_type, hostname=hostname)
-        mustang = DeviceDictionary(hostname=hostname)
-        mustang.parameters = {
-            'extends': 'beaglebone-black.jinja2',
-            'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
-            'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
-        }
-        mustang.save()
-        mustang_dict = mustang.to_dict()
-        device = Device.objects.get(hostname="fakebbb")
-        self.assertEqual('beaglebone-black', device.device_type.name)
-        self.assertTrue(device.is_pipeline)
-        context_overrides = map_context_overrides('base-uboot.jinja2', 'beaglebone-black.jinja2', system=False)
-        job_ctx = {
-            'base_uboot_commands': 'dummy commands',
-            'usb_uuid': 'dummy usb uuid',
-            'console_device': 'ttyAMA0',
-            'usb_device_id': 1111111111111111
-        }
-        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
-        self.assertIsNotNone(device_config)
-        self.assertTrue(device.is_valid(system=False))
-        devicetype_blocks = []
-        devicedict_blocks = []
-        allowed = []
-        for key, _ in job_ctx.items():
-            if key in context_overrides:
-                if key is not 'extends' and key not in mustang_dict['parameters'].keys():
-                    allowed.append(key)
-                else:
-                    devicedict_blocks.append(key)
-            else:
-                devicetype_blocks.append(key)
-        # only values set in job_ctx are checked
-        self.assertEqual(set(allowed), {'usb_device_id', 'usb_uuid'})
-        self.assertEqual(set(devicedict_blocks), {'console_device'})
-        self.assertEqual(set(devicetype_blocks), {'base_uboot_commands'})
-        full_list = allowed_overrides(mustang_dict, system=False)
-        for key in allowed:
-            self.assertIn(key, full_list)
 
     def test_device_maintenance_with_jobs(self):
         user = self.factory.make_user()
@@ -740,85 +702,40 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(device1.status, Device.OFFLINE)
         self.assertEqual(job.status, TestJob.CANCELED)
 
+    def test_include_yaml_non_dict(self):
+        include_data = ['value1', 'value2']
+        self.assertRaises(
+            SubmissionException,
+            include_yaml,
+            self.factory.make_job_data(),
+            include_data)
 
-class TestPipelineStore(TestCaseWithFactory):
+    def test_include_yaml_overwrite(self):
+        # Test overwrite of values.
+        job_data = self.factory.make_job_data()
+        include_data = {'priority': 'high'}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['priority'], 'high')
 
-    def setUp(self):
-        super(TestPipelineStore, self).setUp()
-        self.factory = YamlFactory()
-        self.device_type = self.factory.make_device_type()
-        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
+        # Test in-depth overwrite.
+        include_data = {'timeouts': {'action': {'minutes': 10}}}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['timeouts']['action']['minutes'], 10)
+        self.assertEqual(job_data['timeouts']['job']['minutes'], 15)
 
-    def test_new_pipeline_store(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        store = JobPipeline.get('foo')
-        self.assertIsNone(store)
-        store = JobPipeline.get(job.id)
-        self.assertIsNotNone(store)
-        self.assertIsInstance(store, JobPipeline)
-        self.assertIs(type(store.pipeline), dict)
+    def test_include_yaml_list_append(self):
+        job_data = self.factory.make_job_data()
+        include_data = {'actions': [
+            {'deploy': {'to': 'tmpfs', 'compression': 'gz', 'images': {}}}]}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(len(job_data['actions']), 4)
+        self.assertEqual(job_data['actions'][3], include_data['actions'][0])
 
-    def test_pipeline_results(self):
-        result_sample = """
-- results: !!python/object/apply:collections.OrderedDict
-  - - [linux-linaro-ubuntu-pwd, pass]
-    - [linux-linaro-ubuntu-uname, pass]
-    - [linux-linaro-ubuntu-vmstat, pass]
-    - [linux-linaro-ubuntu-ifconfig, pass]
-    - [linux-linaro-ubuntu-lscpu, pass]
-    - [linux-linaro-ubuntu-lsb_release, pass]
-    - [linux-linaro-ubuntu-netstat, pass]
-    - [linux-linaro-ubuntu-ifconfig-dump, pass]
-    - [linux-linaro-ubuntu-route-dump-a, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up-lo, pass]
-    - [linux-linaro-ubuntu-route-dump-b, pass]
-    - [linux-linaro-ubuntu-route-ifconfig-up, pass]
-    - [ping-test, fail]
-    - [realpath-check, fail]
-    - [ntpdate-check, pass]
-    - [curl-ftp, pass]
-    - [tar-tgz, pass]
-    - [remove-tgz, pass]
-        """
-        result_store = {
-            'result_sample': OrderedDict([
-                ('linux-linaro-ubuntu-pwd', 'pass'),
-                ('linux-linaro-ubuntu-uname', 'pass'),
-                ('linux-linaro-ubuntu-vmstat', 'pass'),
-                ('linux-linaro-ubuntu-ifconfig', 'pass'),
-                ('linux-linaro-ubuntu-lscpu', 'pass'),
-                ('linux-linaro-ubuntu-lsb_release', 'pass'),
-                ('linux-linaro-ubuntu-netstat', 'pass'),
-                ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
-                ('linux-linaro-ubuntu-route-dump-a', 'pass'),
-                ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
-                ('linux-linaro-ubuntu-route-dump-b', 'pass'),
-                ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
-                ('ping-test', 'fail'),
-                ('realpath-check', 'fail'),
-                ('ntpdate-check', 'pass'),
-                ('curl-ftp', 'pass'),
-                ('tar-tgz', 'pass'),
-                ('remove-tgz', 'pass')])}
-        name = "result_sample"
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
-        store = JobPipeline.get(job.id)
-        scanned = yaml.load(result_sample)
-        if isinstance(scanned, list) and len(scanned) == 1:
-            if 'results' in scanned[0] and isinstance(scanned[0], dict):
-                store.pipeline.update({name: scanned[0]['results']})
-                # too often to save the results?
-                store.save()
-        self.assertIsNotNone(store.pipeline)
-        self.assertIsNot({}, store.pipeline)
-        self.assertIs(type(store.pipeline), dict)
-        self.assertIn('result_sample', store.pipeline)
-        self.assertIs(type(store.pipeline['result_sample']), OrderedDict)
-        self.assertEqual(store.pipeline, result_store)
+    def test_include_yaml(self):
+        job_data = self.factory.make_job_data()
+        include_data = {'key': 'value'}
+        job_data = include_yaml(job_data, include_data)
+        self.assertEqual(job_data['key'], 'value')
 
 
 class TestYamlMultinode(TestCaseWithFactory):
@@ -867,12 +784,6 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name='mustang')
         device = self.factory.make_device(device_type, 'mustang1')
-        mustang = DeviceDictionary(hostname=device.hostname)
-        mustang.parameters = {
-            'connection_command': 'telnet serial4 7012',
-            'extends': 'mustang-grub-efi.jinja2',
-        }
-        mustang.save()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'mustang-ssh-multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
@@ -895,7 +806,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         host_job.actual_device = device
 
         try:
-            device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+            device_config = device.load_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (host_job.id, exc))
@@ -964,7 +875,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             'lava-lxc': {
                 'name': 'pipeline-lxc-test', 'template': 'debian',
                 'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
-                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/'}
         }
         for role, _ in jobs.iteritems():
             if role == 'server':
@@ -985,11 +896,11 @@ class TestYamlMultinode(TestCaseWithFactory):
             'lava-lxc': {
                 'name': 'pipeline-lxc-test', 'template': 'debian',
                 'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
-                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/', 'arch': 'amd64'}
+                'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/'}
         }
         server_protocol_data = {
             'lava-lxc': {
-                'arch': 'amd64', 'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
+                'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
                 'name': 'lxc-hikey-oe', 'release': 'jessie', 'template': 'debian'}
         }
         for role, _ in jobs.iteritems():
@@ -1156,7 +1067,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 device = job.actual_device
 
                 try:
-                    device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+                    device_config = device.load_configuration(job_ctx)  # raw dict
                 except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
@@ -1306,7 +1217,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode-client.yaml'), 'r'))
         job_ctx = client_submission.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        device_config = device.load_configuration(job_ctx)  # raw dict
         self.assertTrue(device.is_valid(system=False))
         parser_device = PipelineDevice(device_config, device.hostname)
         parser = JobParser()
@@ -1353,21 +1264,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu2')
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
-        device_dict = DeviceDictionary(hostname='bbb-01')
-        device_dict.parameters = {
-            'bootloader_prompt': '=>',
-            'connection_command': 'telnet localhost 6004',
-            'extends': 'beaglebone-black.jinja2',
-        }
-        device_dict.save()
         self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
-        device_dict = DeviceDictionary(hostname='bbb-02')
-        device_dict.parameters = {
-            'bootloader_prompt': '=>',
-            'connection_command': 'telnet localhost 6005',
-            'extends': 'beaglebone-black.jinja2',
-        }
-        device_dict.save()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-qemu-multinode.yaml'), 'r'))
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
@@ -1391,7 +1288,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 device = job.actual_device
 
                 try:
-                    device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+                    device_config = device.load_configuration(job_ctx)  # raw dict
                 except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
@@ -1431,20 +1328,6 @@ class TestYamlMultinode(TestCaseWithFactory):
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
-        device_dict = DeviceDictionary(hostname='bbb-01')
-        device_dict.parameters = {
-            'bootloader_prompt': '=>',
-            'connection_command': 'telnet localhost 6004',
-            'extends': 'beaglebone-black.jinja2',
-        }
-        device_dict.save()
-        device_dict = DeviceDictionary(hostname='bbb-02')
-        device_dict.parameters = {
-            'bootloader_prompt': '=>',
-            'connection_command': 'telnet localhost 6005',
-            'extends': 'beaglebone-black.jinja2',
-        }
-        device_dict.save()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-qemu-multinode.yaml'), 'r'))
         self.assertIn('protocols', submission)
@@ -1473,52 +1356,12 @@ class VlanInterfaces(TestCaseWithFactory):
             Permission.objects.get(codename='add_testjob'))
         user.save()
         bbb_type = self.factory.make_device_type('beaglebone-black')
-        bbb_1 = self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
-        device_dict = DeviceDictionary.get(bbb_1.hostname)
-        self.assertIsNone(device_dict)
-        device_dict = DeviceDictionary(hostname=bbb_1.hostname)
-        device_dict.parameters = {
-            'interfaces': ['eth0', 'eth1'],
-            'sysfs': {
-                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
-                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
-            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': [], 'eth1': ['RJ45', '10M']},
-            'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
-        }
-        device_dict.save()
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         ct_type = self.factory.make_device_type('cubietruck')
-        cubie = self.factory.make_device(hostname='ct-01', device_type=ct_type)
-        device_dict = DeviceDictionary.get(cubie.hostname)
-        self.assertIsNone(device_dict)
-        device_dict = DeviceDictionary(hostname=cubie.hostname)
-        device_dict.parameters = {
-            'interfaces': ['eth0', 'eth1'],
-            'sysfs': {
-                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
-                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
-            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
-            'tags': {'eth0': [], 'eth1': ['RJ45', '10M', '100M']},
-            'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
-        }
-        device_dict.save()
+        self.factory.make_device(hostname='ct-01', device_type=ct_type)
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
 
     def test_vlan_interface(self):  # pylint: disable=too-many-locals
-        device_dict = DeviceDictionary.get('bbb-01')
-        chk = {
-            'hostname': 'bbb-01',
-            'parameters': {
-                'map': {'eth1': {'192.168.0.2': 7}, 'eth0': {'192.168.0.2': 5}},
-                'interfaces': ['eth0', 'eth1'],
-                'sysfs': {
-                    'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
-                    'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
-                },
-                'mac_addr': {'eth1': '00:24:d7:9b:c0:8c', 'eth0': 'f0:de:f1:46:8c:21'},
-                'tags': {'eth1': ['RJ45', '10M'], 'eth0': []}}
-        }
-        self.assertEqual(chk, device_dict.to_dict())
         submission = yaml.load(open(self.filename, 'r'))
         self.assertIn('protocols', submission)
         self.assertIn('lava-vland', submission['protocols'])
@@ -1545,15 +1388,13 @@ class VlanInterfaces(TestCaseWithFactory):
         self.assertIn('10M', client_job['protocols']['lava-vland']['vlan_one']['tags'])
         self.assertIn('vlan_two', server_job['protocols']['lava-vland'])
         self.assertIn('100M', server_job['protocols']['lava-vland']['vlan_two']['tags'])
-        client_tags = client_job['protocols']['lava-vland']['vlan_one']
-        client_dict = DeviceDictionary.get('bbb-01').to_dict()
-        for interface, tags in client_dict['parameters']['tags'].iteritems():
-            if any(set(tags).intersection(client_tags)):
-                self.assertEqual(interface, 'eth0')
-                self.assertEqual(
-                    client_dict['parameters']['map'][interface],
-                    {'192.168.0.2': 5}
-                )
+        client_job['protocols']['lava-vland']['vlan_one']
+        bbb_01 = Device.objects.get(hostname='bbb-01')
+        client_config = bbb_01.load_configuration()
+        self.assertIn('eth0', client_config['parameters']['interfaces'])
+        self.assertEqual('192.168.0.2', client_config['parameters']['interfaces']['eth0']['switch'])
+        self.assertEqual(5, client_config['parameters']['interfaces']['eth0']['port'])
+
         # find_device_for_job would have a call to match_vlan_interface(device, job.definition) added
         bbb1 = Device.objects.get(hostname='bbb-01')
         self.assertTrue(match_vlan_interface(bbb1, client_job))

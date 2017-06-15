@@ -7,7 +7,7 @@ from django.conf import settings
 from collections import OrderedDict
 from django.utils.safestring import mark_safe
 from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.utils import load_devicetype_template
+from lava_scheduler_app.dbutils import load_devicetype_template
 
 
 register = template.Library()

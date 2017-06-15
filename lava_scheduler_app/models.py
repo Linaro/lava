@@ -1,10 +1,14 @@
 # pylint: disable=too-many-lines
 
 import jinja2
+import json
 import logging
 import os
+import re
 import uuid
 import simplejson
+import urllib
+import urllib2
 import urlparse
 import smtplib
 import socket
@@ -33,8 +37,6 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
-from django_kvstore import models as kvmodels
-from django_kvstore import get_kvstore
 
 
 from django_restricted_resource.models import (
@@ -42,7 +44,11 @@ from django_restricted_resource.models import (
     RestrictedResourceManager
 )
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
-from lava_scheduler_app.schema import validate_submission, SubmissionException
+from lava_scheduler_app.schema import (
+    validate_submission,
+    handle_include_option,
+    SubmissionException
+)
 from dashboard_app.models import (
     Bundle,
     BundleStream,
@@ -524,71 +530,6 @@ class Worker(models.Model):
             raise ValueError("Worker node unavailable")
 
 
-class DeviceDictionaryTable(models.Model):
-    kee = models.CharField(max_length=255)
-    value = models.TextField()
-
-    def __unicode__(self):
-        return self.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-
-    def lookup_device_dictionary(self):
-        val = self.kee
-        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-        return DeviceDictionary.get(msg)
-
-
-class ExtendedKVStore(kvmodels.Model):
-    """
-    Enhanced kvstore Model which allows to set the kvstore as a class variable
-    """
-    kvstore = None
-
-    def save(self):
-        d = self.to_dict()
-        self.kvstore.set(kvmodels.generate_key(self.__class__, self._get_pk_value()), d)
-
-    def delete(self):
-        self.kvstore.delete(kvmodels.generate_key(self.__class__, self._get_pk_value()))
-
-    @classmethod
-    def get(cls, kvstore_id):
-        fields = cls.kvstore.get(kvmodels.generate_key(cls, kvstore_id))
-        if fields is None:
-            return None
-        return cls.from_dict(fields)
-
-    @classmethod
-    def object_list(cls):
-        """
-        Not quite the same as a Django QuerySet, just a simple list of all entries.
-        Use the to_dict() method on each item in the list to see the key value pairs.
-        """
-        return [kv.lookup_device_dictionary() for kv in DeviceDictionaryTable.objects.all()]
-
-
-class DeviceKVStore(ExtendedKVStore):
-    kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')
-
-
-class PipelineKVStore(ExtendedKVStore):
-    """
-    Set a different backend table
-    """
-    kvstore = get_kvstore('db://lava_scheduler_app_pipelinestore')
-
-
-class DeviceDictionary(DeviceKVStore):
-    """
-    KeyValue store for Pipeline device support
-    Not a RestricedResource - may need a new class based on kvmodels
-    """
-    hostname = kvmodels.Field(pk=True)
-    parameters = kvmodels.Field()
-
-    class Meta:  # pylint: disable=old-style-class,no-init
-        app_label = 'pipeline'
-
-
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -610,6 +551,15 @@ class Device(RestrictedResource):
         (RESERVED, 'Reserved')
     )
 
+    STATUS_REVERSE = {
+        "OFFLINE": OFFLINE,
+        "IDLE": IDLE,
+        "RUNNING": RUNNING,
+        "OFFLINING": OFFLINING,
+        "RETIRED": RETIRED,
+        "RESERVED": RESERVED
+    }
+
     # A device health shows a device is ready to test or not
     HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL, HEALTH_LOOPING = range(4)
     HEALTH_CHOICES = (
@@ -618,6 +568,16 @@ class Device(RestrictedResource):
         (HEALTH_FAIL, 'Fail'),
         (HEALTH_LOOPING, 'Looping'),
     )
+
+    HEALTH_REVERSE = {
+        "UNKNOWN": HEALTH_UNKNOWN,
+        "PASS": HEALTH_PASS,
+        "FAIL": HEALTH_FAIL,
+        "LOOPING": HEALTH_LOOPING
+    }
+
+    CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
+    HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
 
     hostname = models.CharField(
         verbose_name=_(u"Hostname"),
@@ -803,7 +763,7 @@ class Device(RestrictedResource):
     def is_valid(self, system=True):
         if not self.is_pipeline:
             return False  # V1 config cannot be checked
-        rendered = self.load_device_configuration(system=system)
+        rendered = self.load_configuration()
         try:
             validate_device(rendered)
         except SubmissionException:
@@ -910,67 +870,105 @@ class Device(RestrictedResource):
         else:
             logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
 
-    def load_device_configuration(self, job_ctx=None, system=True):
+    def load_configuration(self, job_ctx=None, output_format="dict"):
         """
-        Maps the DeviceDictionary to the static templates in /etc/.
-        Use lava-server manage device-dictionary --import <FILE>
-        to update the DeviceDictionary.
+        Maps the device dictionary to the static templates in /etc/.
         raise: this function can raise IOError, jinja2.TemplateError or yaml.YAMLError -
             handling these exceptions may be context-dependent, users will need
             useful messages based on these exceptions.
         """
-        if self.is_pipeline is False:
-            return None
-
         # The job_ctx should not be None while an empty dict is ok
         if job_ctx is None:
             job_ctx = {}
 
-        element = DeviceDictionary.get(self.hostname)
-        if element is None:
+        if output_format == "raw":
+            try:
+                with open(os.path.join(Device.CONFIG_PATH,
+                                       "%s.jinja2" % self.hostname), "r") as f_in:
+                    return f_in.read()
+            except IOError:
+                return None
+
+        # Create the environment
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(
+                [Device.CONFIG_PATH,
+                 os.path.join(os.path.dirname(Device.CONFIG_PATH), "device-types")]),
+            trim_blocks=True)
+
+        try:
+            template = env.get_template("%s.jinja2" % self.hostname)
+            device_template = template.render(**job_ctx)
+        except jinja2.TemplateError:
             return None
-        data = utils.devicedictionary_to_jinja2(
-            element.parameters,
-            element.parameters['extends']
-        )
-        template = utils.prepare_jinja_template(self.hostname, data, system_path=system)
-        return yaml.load(template.render(**job_ctx))
+
+        if output_format == "yaml":
+            return device_template
+        else:
+            return yaml.load(device_template)
+
+    def minimise_configuration(self, data):
+        """
+        Support for dynamic connections which only require
+        critical elements of device configuration.
+        Principally drop top level parameters and commands
+        like power.
+        """
+        device_configuration = {
+            'hostname': self.hostname,
+            'constants': data['constants'],
+            'timeouts': data['timeouts'],
+            'actions': {
+                'deploy': {
+                    'methods': data['actions']['deploy']['methods']
+                },
+                'boot': {
+                    'methods': data['actions']['boot']['methods']
+                }
+            }
+        }
+        return device_configuration
+
+    def save_configuration(self, data):
+        try:
+            with open(os.path.join(self.CONFIG_PATH,
+                                   "%s.jinja2" % self.hostname), "w") as f_out:
+                f_out.write(data)
+            return True
+        except IOError as exc:
+            logger = logging.getLogger("lava_scheduler_app")
+            logger.error("Error saving device configuration for %s: %s",
+                         self.hostname, str(exc))
+            return False
+
+    def get_extends(self):
+        jinja_config = self.load_configuration(output_format="raw")
+        if not jinja_config:
+            return None
+
+        env = jinja2.Environment()
+        ast = env.parse(jinja_config)
+        extends = list(ast.find_all(jinja2.nodes.Extends))
+        if len(extends) != 1:
+            logger = logging.getLogger('lava_scheduler_app')
+            logger.error("Found %d extends for %s", len(extends), self.hostname)
+            return None
+        else:
+            return os.path.splitext(extends[0].template.value)[0]
 
     @property
     def is_exclusive(self):
-        exclusive = False
-        # check the device dictionary if this is exclusively a pipeline device
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            if 'parameters' not in device_dict or device_dict['parameters'] is None:
-                return exclusive
-            if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
-                exclusive = True
-        return exclusive
+        jinja_config = self.load_configuration(output_format="raw")
+        if not jinja_config:
+            return False
 
-    @property
-    def device_dictionary_yaml(self):
-        if not self.is_pipeline:
-            return ''
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            if 'parameters' in device_dict:
-                return yaml.dump(device_dict['parameters'], default_flow_style=False)
-        return ''
+        env = jinja2.Environment()
+        ast = env.parse(jinja_config)
 
-    @property
-    def device_dictionary_jinja(self):
-        jinja_str = ''
-        if not self.is_pipeline:
-            return jinja_str
-        device_dict = DeviceDictionary.get(self.hostname)
-        if device_dict:
-            device_dict = device_dict.to_dict()
-            jinja_str = utils.devicedictionary_to_jinja2(
-                device_dict['parameters'], device_dict['parameters']['extends'])
-        return jinja_str
+        for assign in ast.find_all(jinja2.nodes.Assign):
+            if assign.target.name == "exclusive":
+                return bool(assign.node.value)
+        return False
 
     def get_health_check(self):
         # Keep the old behavior for v1 devices
@@ -978,15 +976,12 @@ class Device(RestrictedResource):
             return self.device_type.health_check_job
 
         # Get the device dictionary
-        device_dict = DeviceDictionary.get(self.hostname)
-        if not device_dict:
+        extends = self.get_extends()
+        if not extends:
             # TODO: will be removed in the next release
             return self.device_type.health_check_job
-        device_dict = device_dict.to_dict()
-        extends = device_dict['parameters']['extends']
-        extends = os.path.splitext(extends)[0]
 
-        filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks",
+        filename = os.path.join(Device.HEALTH_CHECK_PATH,
                                 "%s.yaml" % extends)
         try:
             with open(filename, "r") as f_in:
@@ -1261,7 +1256,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
 
     if not orig:
         orig = yaml.dump(job_data)
-    job = TestJob(definition=orig, original_definition=orig,
+    job = TestJob(definition=yaml.dump(job_data), original_definition=orig,
                   submitter=user,
                   requested_device=device,
                   requested_device_type=device_type,
@@ -1280,15 +1275,6 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     for grp in viewing_groups:
         job.viewing_groups.add(grp)
 
-    # add pipeline to jobpipeline, update with results later - needs the job.id.
-    dupe = JobPipeline.get(job.id)
-    if dupe:
-        # this should be impossible
-        # FIXME: needs a unit test
-        raise RuntimeError("Duplicate job id?")
-    store = JobPipeline(job_id=job.id)
-    store.pipeline = {}
-    store.save()
     return job
 
 
@@ -1409,38 +1395,6 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 job_object_list.append(job)
 
         return job_object_list
-
-
-class PipelineStore(models.Model):
-    kee = models.CharField(max_length=255)
-    value = models.TextField()
-
-    def lookup_job_pipeline(self):
-        """
-        Exports the pipeline as YAML
-        """
-        val = self.kee
-        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
-        data = JobPipeline.get(msg)
-        if isinstance(data.pipeline, str):
-            # if this fails, fix lava_dispatcher.pipeline.actions.explode()
-            data.pipeline = yaml.load(data.pipeline)
-        return data
-
-    def __unicode__(self):
-        return ''
-
-
-class JobPipeline(PipelineKVStore):
-    """
-    KeyValue store for Pipeline device support
-    Not a RestricedResource - may need a new class based on kvmodels
-    """
-    job_id = kvmodels.Field(pk=True)
-    pipeline = kvmodels.Field()
-
-    class Meta:  # pylint: disable=old-style-class,no-init
-        app_label = 'pipeline'
 
 
 class TestJob(RestrictedResource):
@@ -1682,14 +1636,16 @@ class TestJob(RestrictedResource):
 
     @property
     def output_dir(self):
-        date_path = os.path.join(settings.MEDIA_ROOT, 'job-output',
-                                 "%02d" % self.submit_time.year,
-                                 "%02d" % self.submit_time.month,
-                                 "%02d" % self.submit_time.day,
-                                 str(self.id))
-        if os.path.exists(date_path):
-            return date_path
-        return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
+        # Fallback to the old path if it does exist
+        old_path = os.path.join(settings.MEDIA_ROOT, 'job-output',
+                                'job-%s' % self.id)
+        if os.path.exists(old_path):
+            return old_path
+        return os.path.join(settings.MEDIA_ROOT, 'job-output',
+                            "%02d" % self.submit_time.year,
+                            "%02d" % self.submit_time.month,
+                            "%02d" % self.submit_time.day,
+                            str(self.id))
 
     def output_file(self):
         filename = 'output.yaml' if self.is_pipeline else 'output.txt'
@@ -1827,7 +1783,7 @@ class TestJob(RestrictedResource):
         return ("lava.scheduler.job.detail", [self.display_id])
 
     @classmethod
-    def from_yaml_and_user(cls, yaml_data, user):
+    def from_yaml_and_user(cls, yaml_data, user, original_job=None):
         """
         Runs the submission checks on incoming pipeline jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
@@ -1840,6 +1796,9 @@ class TestJob(RestrictedResource):
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.load(yaml_data)
+
+        # Unpack include value if present.
+        job_data = handle_include_option(job_data)
 
         # visibility checks
         if 'visibility' not in job_data:
@@ -1861,6 +1820,17 @@ class TestJob(RestrictedResource):
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
+        if original_job and original_job.is_pipeline:
+            # Add old job absolute url to metadata for pipeline jobs.
+            job_url = str(original_job.get_absolute_url())
+            try:
+                site = Site.objects.get_current()
+            except (Site.DoesNotExist, ImproperlyConfigured):
+                pass
+            else:
+                job_url = "http://%s%s" % (site.domain, job_url)
+
+            job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
         return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
 
@@ -2350,11 +2320,9 @@ class TestJob(RestrictedResource):
         elif self.visibility == self.VISIBLE_PERSONAL:
             return user == self.submitter
         elif self.visibility == self.VISIBLE_GROUP:
-            # only one group allowed, only first group matters.
-            if len(self.viewing_groups.all()) > 1:
-                logger.exception("job [%s] is %s but has multiple groups %s",
-                                 self.id, self.VISIBLE_CHOICES[self.visibility], self.viewing_groups.all())
-            return self.viewing_groups.all()[0] in user.groups.all()
+            # The user should be member of every groups
+            user_groups = user.groups.all()
+            return all([g in user_groups for g in self.viewing_groups.all()])
 
         return False
 
@@ -2717,6 +2685,23 @@ class TestJob(RestrictedResource):
 
         return attribute
 
+    def get_metadata_dict(self):
+
+        from lava_results_app.models import TestData
+        retval = []
+        data = TestData.objects.filter(testjob=self)
+        for datum in data:
+            for attribute in datum.attributes.all():
+                retval.append({attribute.name: attribute.value})
+        return retval
+
+    def get_token_from_description(self, description):
+        from linaro_django_xmlrpc.models import AuthToken
+        tokens = AuthToken.objects.filter(user=self.submitter, description=description)
+        if tokens:
+            return tokens.first().secret
+        return description
+
     def create_notification(self, notify_data):
         # Create notification object.
         notification = Notification()
@@ -2725,8 +2710,18 @@ class TestJob(RestrictedResource):
             notification.verbosity = Notification.VERBOSITY_MAP[
                 notify_data["verbosity"]]
 
-        notification.job_status_trigger = TestJob.STATUS_MAP[
-            notify_data["criteria"]["status"].title()]
+        if "callback" in notify_data:
+            notification.callback_url = self.substitute_callback_url_variables(
+                notify_data["callback"]["url"])
+            if notify_data["callback"].get("token", None):
+                notification.callback_token = self.get_token_from_description(notify_data["callback"]['token'])
+            notification.callback_method = Notification.METHOD_MAP[
+                notify_data["callback"].get("method", "GET")]
+            notification.callback_dataset = Notification.DATASET_MAP[
+                notify_data["callback"].get("dataset", "minimal")]
+            notification.callback_content_type = Notification.CONTENT_TYPE_MAP[
+                notify_data['callback'].get('content-type', 'urlencoded')]
+
         if "type" in notify_data["criteria"]:
             notification.type = Notification.TYPE_MAP[
                 notify_data["criteria"]["type"]]
@@ -2777,13 +2772,14 @@ class TestJob(RestrictedResource):
                     pass
 
         else:
-            try:
-                notification_recipient = NotificationRecipient.objects.create(
-                    user=self.submitter,
-                    notification=notification)
-            except IntegrityError:
-                # Ignore unique constraint violation.
-                pass
+            if "callback" not in notify_data:
+                try:
+                    notification_recipient = NotificationRecipient.objects.create(
+                        user=self.submitter,
+                        notification=notification)
+                except IntegrityError:
+                    # Ignore unique constraint violation.
+                    pass
 
     def send_notifications(self):
         logger = logging.getLogger('lava_scheduler_app')
@@ -2791,6 +2787,8 @@ class TestJob(RestrictedResource):
         # Prep template args.
         kwargs = self.get_notification_args()
         irc_message = self.create_irc_notification()
+        # Process notification callback.
+        notification.invoke_callback()
 
         for recipient in notification.notificationrecipient_set.all():
             if recipient.method == NotificationRecipient.EMAIL:
@@ -2971,6 +2969,16 @@ class TestJob(RestrictedResource):
         return txt_body
 
     def notification_criteria(self, criteria, old_job):
+        # support special status of finished, otherwise skip to normal
+        if criteria["status"] == 'finished':
+            finished_statuses = [TestJob.STATUS_MAP["Complete"],
+                                 TestJob.STATUS_MAP["Incomplete"],
+                                 TestJob.STATUS_MAP["Canceled"]]
+            if self.status in finished_statuses:
+                return True
+            return False
+
+        # use normal notification support
         if self.status == TestJob.STATUS_MAP[criteria["status"].title()]:
             if "type" in criteria:
                 if criteria["type"] == "regression":
@@ -2985,6 +2993,30 @@ class TestJob(RestrictedResource):
                 return True
 
         return False
+
+    @property
+    def status_string(self):
+        return TestJob.STATUS_CHOICES[self.status][1].lower()
+
+    def substitute_callback_url_variables(self, callback_url):
+        # Substitute variables in callback_url with field values from self.
+        # Format: { FIELD_NAME }
+        # If field name is non-existing, return None.
+        logger = logging.getLogger('lava_scheduler_app')
+
+        substitutes = re.findall(r'{\s*[A-Z_-]*\s*}', callback_url)
+        for sub in substitutes:
+
+            attribute_name = sub.replace('{', '').replace('}', '').strip().lower()
+            try:
+                attr = getattr(self, attribute_name)
+            except AttributeError:
+                logger.error("Attribute '%s' does not exist in TestJob." % attribute_name)
+                continue
+
+            callback_url = callback_url.replace(str(sub), str(attr))
+
+        return callback_url
 
 
 class Notification(models.Model):
@@ -3061,6 +3093,85 @@ class Notification(models.Model):
         verbose_name='Template name'
     )
 
+    callback_url = models.CharField(
+        max_length=200,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Callback URL'
+    )
+
+    GET = 0
+    POST = 1
+    METHOD_CHOICES = (
+        (GET, 'GET'),
+        (POST, 'POST'),
+    )
+    METHOD_MAP = {
+        'GET': GET,
+        'POST': POST,
+    }
+
+    callback_method = models.IntegerField(
+        choices=METHOD_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_(u"Callback method"),
+    )
+
+    callback_token = models.CharField(
+        max_length=200,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Callback token'
+    )
+
+    MINIMAL = 0
+    LOGS = 1
+    RESULTS = 2
+    ALL = 3
+    DATASET_CHOICES = (
+        (MINIMAL, 'minimal'),
+        (LOGS, 'logs'),
+        (RESULTS, 'results'),
+        (ALL, 'all')
+    )
+    DATASET_MAP = {
+        'minimal': MINIMAL,
+        'logs': LOGS,
+        'results': RESULTS,
+        'all': ALL,
+    }
+
+    callback_dataset = models.IntegerField(
+        choices=DATASET_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_(u"Callback dataset"),
+    )
+
+    URLENCODED = 0
+    JSON = 1
+    CONTENT_TYPE_CHOICES = (
+        (URLENCODED, 'urlencoded'),
+        (JSON, 'json')
+    )
+    CONTENT_TYPE_MAP = {
+        'urlencoded': URLENCODED,
+        'json': JSON
+    }
+
+    callback_content_type = models.IntegerField(
+        choices=CONTENT_TYPE_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_(u"Callback content-type"),
+    )
+
     blacklist = ArrayField(
         models.CharField(max_length=100, blank=True),
         null=True,
@@ -3129,6 +3240,75 @@ class Notification(models.Model):
                 reverse("lava.results.query_custom"),
                 self.entity.model,
                 self.conditions)
+
+    def invoke_callback(self):
+        logger = logging.getLogger('lava_scheduler_app')
+        callback_data = self.get_callback_data()
+        headers = {}
+
+        if callback_data:
+            headers['Authorization'] = callback_data['token']
+            if self.callback_content_type == Notification.JSON:
+                callback_data = json.dumps(callback_data)
+                headers['Content-Type'] = 'application/json'
+            else:
+                callback_data = urllib.urlencode(callback_data)
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+        if self.callback_url:
+            try:
+                logger.info("Sending request to callback_url %s" % self.callback_url)
+                request = urllib2.Request(self.callback_url, callback_data, headers)
+                urllib2.urlopen(request)
+
+            except Exception as ex:
+                logger.warning("Problem sending request to %s: %s" % (
+                    self.callback_url, ex))
+
+    def get_callback_data(self):
+
+        from lava_results_app.dbutils import export_testcase
+
+        if self.callback_method == Notification.GET:
+            return None
+        else:
+
+            data = {
+                "id": self.test_job.pk,
+                "status": self.test_job.status,
+                "status_string": self.test_job.status_string,
+                "submit_time": str(self.test_job.submit_time),
+                "start_time": str(self.test_job.start_time),
+                "end_time": str(self.test_job.end_time),
+                "submitter_username": self.test_job.submitter.username,
+                "is_pipeline": self.test_job.is_pipeline,
+                "failure_comment": self.test_job.failure_comment,
+                "priority": self.test_job.priority,
+                "description": self.test_job.description,
+                "actual_device_id": self.test_job.actual_device_id,
+                "definition": self.test_job.definition,
+                "metadata": self.test_job.get_metadata_dict(),
+                "token": self.callback_token
+            }
+
+            # Logs.
+            output_file = self.test_job.output_file()
+            if output_file and self.callback_dataset in [Notification.LOGS,
+                                                         Notification.ALL]:
+                data["log"] = self.test_job.output_file().read().encode(
+                    'UTF-8')
+
+            # Results.
+            if self.callback_dataset in [Notification.RESULTS,
+                                         Notification.ALL]:
+                data["results"] = {}
+                for test_suite in self.test_job.testsuite_set.all():
+                    yaml_list = []
+                    for test_case in test_suite.testcase_set.all():
+                        yaml_list.append(export_testcase(test_case))
+                    data["results"][test_suite.name] = yaml.dump(yaml_list)
+
+            return data
 
 
 class NotificationRecipient(models.Model):

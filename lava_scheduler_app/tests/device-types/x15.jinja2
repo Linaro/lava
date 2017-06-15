@@ -1,4 +1,9 @@
 {% extends 'base.jinja2' %}
+
+{% block vland %}
+{#  #}
+{% endblock vland %}
+
 {% block body %}
 device_type: x15
 adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
@@ -8,10 +13,6 @@ fastboot_options: {{ fastboot_options|default([]) }}
 # This attribute identifies whether a device should get into fastboot mode by
 # interrupting uboot and issuing commands at the bootloader prompt.
 fastboot_via_uboot: True
-
-{% block vland %}
-{#  #}
-{% endblock %}
 
 actions:
   deploy:
@@ -39,7 +40,6 @@ actions:
       serial:
     methods:
       lxc:
-      fastboot-boot-image:
       u-boot:
         parameters:
           bootloader_prompt: '=>'
@@ -56,4 +56,4 @@ actions:
         - shell-session
         - export-env
 
-{% endblock %} {# end body block #}
+{% endblock body %}
