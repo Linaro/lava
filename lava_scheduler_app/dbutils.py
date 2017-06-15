@@ -26,6 +26,7 @@ from lava_scheduler_app.models import (
     TemporaryDevice,
     validate_job,
 )
+from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.dbutils import map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
 
@@ -92,7 +93,7 @@ def initiate_health_check_job(device):
             return None
     try:
         job = testjob_submission(job_data, user, check_device=device)
-    except DevicesUnavailableException as exc:
+    except (DevicesUnavailableException, SubmissionException) as exc:
         logger.error("[%s] failed to submit health check - %s", device.device_type.name, exc)
         return None
     return job
