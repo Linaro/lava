@@ -109,8 +109,11 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         super(LxcAction, self).validate()
         self.logger.info("lxc, installed at version: %s" %
                          debian_package_version(pkg='lxc', split=False))
-        if LxcProtocol.name not in [protocol.name for protocol in self.job.protocols]:
-            self.errors = "Invalid job - missing protocol"
+        protocols = [protocol.name for protocol in self.job.protocols]
+        if LxcProtocol.name not in protocols:
+            self.logger.debug("Missing protocol '%s' in %s",
+                              LxcProtocol.name, protocols)
+            self.errors = "Missing protocol '%s'" % LxcProtocol.name
         self.errors = infrastructure_error('lxc-create')
         if self.test_needs_deployment(self.parameters):
             lava_test_results_dir = self.parameters['deployment_data'][
