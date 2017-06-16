@@ -28,6 +28,14 @@ it with the API will aid in debugging the test definition.
    be able to debug problems later **without** needing to resubmit the
    MultiNode test job.
 
+.. note:: It is not recommended to use ``lava-test-case`` command in
+          conjunction with the MultiNode API calls. The first reason is that
+          any errors that might occur withing the API will be ignored by the
+          lava-test-case and it will be seen as successful by
+          ``lava-test-shell``. The second reason is that the job will end up with
+          duplicate test cases for each API call (one from ``lava-test-case``
+          and the other one from API command).
+
 .. seealso:: :ref:`Limitations of hacking sessions <hacking_session_limitations>`
 
 .. index:: lava-self
