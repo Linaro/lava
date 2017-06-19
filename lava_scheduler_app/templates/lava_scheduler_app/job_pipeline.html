@@ -332,7 +332,7 @@
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
       <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
-    <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+    <p><a href="{{ STATIC_URL }}docs/v2/glossary.html#term-pipeline">Pipeline</a> jobs use
      the job definition to generate a descriptive YAML file when the pipeline is validated.
      The file represents the data sent to the dispatcher at the start of the job, including
      details of the device as well as the job parameters and the details of the parameters
