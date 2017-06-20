@@ -87,6 +87,8 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'lava_server.urls'
@@ -158,3 +160,17 @@ ALLOWED_HOSTS = ['*']
 
 # this is a tad ugly but the upstream package still needs something here.
 KEY_VALUE_STORE_BACKEND = 'db://lava_scheduler_app_devicedictionarytable'
+
+# Django System check framework settings for security.* checks.
+# Silence some checks that should be explicitly configured by administrators
+# on need basis.
+SILENCED_SYSTEM_CHECKS = [
+    'security.W004',  # silence SECURE_HSTS_SECONDS
+    'security.W008',  # silence SECURE_SSL_REDIRECT
+]
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+X_FRAME_OPTIONS = 'DENY'
