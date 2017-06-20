@@ -66,7 +66,7 @@ class RebootDevice(Action):
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
-            raise LAVABug("Called %s without an active Connection" % self.name)
+            return connection
         connection = super(RebootDevice, self).run(connection, max_end_time, args)
         self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
         self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=True)
@@ -81,21 +81,12 @@ class RebootDevice(Action):
         self.results = {"success": connection.prompt_str}
         self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
         self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
-        # FIXME: this should not be just based on UBoot, use shared action
-        reboot_prompt = self.get_namespace_data(
-            action='uboot-retry',
-            label='bootloader_prompt',
-            key='prompt'
-        )
-        if reboot_prompt:
-            self.reboot_prompt = reboot_prompt
         try:
             self.wait(connection)
         except TestError:
             self.logger.info("Wait for prompt after soft reboot command failed")
             self.results = {'status': "failed"}
             self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
-            connection.prompt_str = self.reboot_prompt
         return connection
 
 

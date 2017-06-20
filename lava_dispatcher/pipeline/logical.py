@@ -141,8 +141,6 @@ class AdjuvantAction(Action):
             self.errors = "Adjuvant action without a key: %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
-        if not connection:
-            raise LAVABug("Called %s without an active Connection" % self.name)
         if not self.valid:
             return connection
         adjuvant = self.get_namespace_data(action=self.key(), label=self.key(), key=self.key())
