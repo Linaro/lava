@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     JobError,
     TestError,
+    MultinodeProtocolTimeoutError,
     Timeout,
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
@@ -212,7 +213,8 @@ class MultinodeProtocol(Protocol):
             # apply the default timeout to each poll operation.
             if c_iter > timeout:
                 self.finalise_protocol()
-                raise JobError("protocol %s timed out" % self.name)
+                raise MultinodeProtocolTimeoutError(
+                    "protocol %s timed out" % self.name)
         return response
 
     def set_up(self):

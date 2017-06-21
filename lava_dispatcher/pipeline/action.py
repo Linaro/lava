@@ -107,6 +107,13 @@ class ConfigurationError(LAVAError):
     error_type = "Configuration"
 
 
+class MultinodeProtocolTimeoutError(LAVAError):
+    error_code = 6
+    error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
+                 "has timed out."
+    error_type = "MultinodeTimeout"
+
+
 class InternalObject(object):  # pylint: disable=too-few-public-methods
     """
     An object within the dispatcher pipeline which should not be included in
