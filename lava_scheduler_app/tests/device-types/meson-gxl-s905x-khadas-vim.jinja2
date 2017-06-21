@@ -1,0 +1,5 @@
+# Common Amlogic Meson GX configuration
+{% extends 'meson-gx-common.jinja2' %}
+
+{% set device_type = "meson-gxl-s905x-khadas-vim" %}
+{% set bootloader_prompt = bootloader_prompt|default('kvim#') %}
