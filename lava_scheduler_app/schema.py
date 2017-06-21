@@ -282,7 +282,7 @@ def _job_schema():
             Optional('priority'): Any('high', 'medium', 'low'),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
-            Optional('metadata'): dict,
+            Optional('metadata'): All({Any(str, int): Any(str, int)}),
             Optional('secrets'): dict,
             Optional('tags'): [str],
             Required('visibility'): visibility_schema(),
