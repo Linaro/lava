@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import re
 import sys
 import time
@@ -36,6 +35,7 @@ from lava_dispatcher.pipeline.actions.test import (
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
+    InfrastructureError,
     TestError,
     LAVABug,
 )
@@ -554,9 +554,8 @@ class TestShellAction(TestAction):
             ret_val = self.pattern_error(test_connection)
 
         elif event == "eof":
-            self.logger.warning("err: lava_test_shell connection dropped")
-            self.errors = "lava_test_shell connection dropped"
             self.testset_name = None
+            raise InfrastructureError("lava_test_shell connection dropped.")
 
         elif event == "timeout":
             # allow feedback in long runs

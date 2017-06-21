@@ -19,7 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import datetime
-from lava_dispatcher.pipeline.action import Action, Pipeline, JobError, Timeout
+from lava_dispatcher.pipeline.action import (
+    Action,
+    InfrastructureError,
+    Pipeline,
+    JobError,
+    Timeout
+)
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
@@ -63,7 +69,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
                 break
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns('exit', None, ''))
-        self.assertFalse(testshell.check_patterns('eof', None, ''))
+        self.assertRaises(InfrastructureError, testshell.check_patterns, 'eof', None, '')
         self.assertTrue(testshell.check_patterns('timeout', None, ''))
 
 
