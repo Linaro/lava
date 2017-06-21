@@ -415,8 +415,11 @@ def map_metadata(description, job):
     # Add metadata from job submission data.
     if "metadata" in submission_data:
         for key in submission_data["metadata"]:
-            testdata.attributes.create(name=key,
-                                       value=submission_data["metadata"][key])
+            value = submission_data["metadata"][key]
+            if not key or not value:
+                logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
+                continue
+            testdata.attributes.create(name=key, value=value)
 
     walk_actions(description_data['pipeline'], testdata, submission_data)
     return True
