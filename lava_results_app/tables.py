@@ -154,9 +154,18 @@ class ResultsTable(LavaTable):
             )
 
     job_id = tables.Column(verbose_name='Job ID')
-    actions = tables.TemplateColumn(
-        template_name="lava_results_app/suite_actions_field.html")
+
+    actions = tables.TemplateColumn('''
+<div class="text-nowrap">
+  <a href="{{ record.job.results_link }}" class="btn btn-xs btn-success" title="View job results">
+    <span class="glyphicon glyphicon-signal"></span>
+  </a>
+  <a href="{{ record.job.get_absolute_url }}" class="btn btn-xs btn-info" title="View job details">
+    <span class="glyphicon glyphicon-chevron-left"></span>
+</a>
+</div>''')
     actions.orderable = False
+
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')
