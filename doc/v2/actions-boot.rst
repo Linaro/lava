@@ -103,6 +103,30 @@ password
 Whenever a ``password_prompt`` is specified, a ``password`` will also be
 required.
 
+.. index:: auto login login commands, boot auto login login commands
+
+.. _boot_auto_login_login_commands:
+
+login_commands
+==============
+
+A list of arbitrary ``login_commands`` can be run after the initial login and
+before setting the shell prompt. This is typically used to make a regular user
+become root with su. For example:
+
+.. code-block:: yaml
+
+  auto_login:
+    login_prompt: 'login:'
+    username: user
+    password_prompt: 'Password:'
+    password: pass
+    login_commands:
+      - sudo su
+
+.. note:: No interactive input such as a password can be provided with the list
+   of ``login_commands``.
+
 .. index:: prompt list, prompts - test jobs, boot prompt list, boot prompts
 
 .. _boot_prompts:
