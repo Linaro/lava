@@ -12,8 +12,10 @@ def check_health_checks(app_configs, **kwargs):
         ht = device.get_health_check()
         ht_disabled = device.device_type.disable_health_check
 
-        # Every device should have a health check, provided health checks are
-        # not disabled for this device type.
+        # All active devices should have a health check,
+        # provided that health checks are not disabled for this device type.
+        if device.status == Device.RETIRED:
+            continue
         if ht is None and not ht_disabled:
             errors.append(Debug("No health check", obj=device.hostname))
             continue
