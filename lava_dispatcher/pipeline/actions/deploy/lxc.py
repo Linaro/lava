@@ -243,6 +243,9 @@ class LxcAptUpdateAction(DeployAction):
         self.retries = 10
         self.sleep = 10
 
+    def validate(self):
+        super(LxcAptUpdateAction, self).validate()
+
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcAptUpdateAction, self).run(connection,
                                                          max_end_time, args)

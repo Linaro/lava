@@ -68,6 +68,9 @@ class BootLxcAction(BootAction):
         self.summary = "lxc boot"
         self.description = "lxc boot into the system"
 
+    def validate(self):
+        super(BootLxcAction, self).validate()
+
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(LxcStartAction())

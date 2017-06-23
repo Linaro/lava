@@ -152,7 +152,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                              logger=self.logger)
         # execute the command.
         shell.expect(pexpect.EOF)
-        if not shell.exitstatus:
+        if not shell.exitstatus and shell.readlines():
             self.logger.info("%s protocol: %s exists", self.name,
                              self.lxc_name)
             # Stop the container.
