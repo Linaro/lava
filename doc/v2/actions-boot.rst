@@ -19,6 +19,8 @@ expected prompts which will be matched against the output to determine the
 endpoint of the boot process. There are no default prompts, the test writer is
 responsible for providing a list of all possible prompts.
 
+.. seealso:: :ref:`boot_prompts`
+
 .. contents::
    :backlinks: top
 
@@ -142,11 +144,20 @@ Each prompt needs to be unique across the entire boot sequence, so typically
 includes ``:`` and needs to be quoted. If the hostname of the device is
 included in the prompt, this can be included in the ``prompt``:
 
+.. caution:: Take care with the specified prompts. Prompt strings which do not
+   include enough characters can match early, resulting in a failed login. 
+   Prompt strings which include extraneous characters may fail to match for all 
+   test jobs. Avoid prompt elements which are user-specific, e.g. ``$`` 
+   indicates an unprivileged user in some shells and ``#`` indicates the 
+   superuser. ``~`` indicates the home directory in some shells. In general, 
+   the prompt string should **include and usually end with** a colon ``:`` or a 
+   colon and space.
+
 .. code-block:: yaml
 
      - boot:
          prompts:
-           - 'root@debian:~#'
+           - 'root@debian:'
 
 When using the :term:`lxc` :term:`protocol`, the hostname element of the
 prompt will vary:
@@ -155,7 +166,18 @@ prompt will vary:
 
      - boot:
          prompts:
-           - 'root@(.*):/#'
+           - 'root@(.*):'
+
+When using a ramdisk, the prompt is likely to need to contain brackets which
+will need to be escaped:
+
+.. code-block:: yaml
+
+     - boot:
+         prompts:
+         # escape the brackets to ensure that the prompt does not match
+         # kernel debug lines which may mention initramfs
+         - '\(initramfs\)'
 
 .. index:: boot connection
 
