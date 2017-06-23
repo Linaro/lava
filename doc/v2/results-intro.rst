@@ -55,6 +55,10 @@ Accessing specific test results
 Within the results for the entire test job, results are split into test suites,
 optionally into test sets and finally into test cases.
 
+.. index:: test suites in results
+
+.. _results_test_suite:
+
 Test Suite
 ----------
 
@@ -74,7 +78,8 @@ element is then appended to create the test suite name.
 * ``1_singlenode-advanced``
 
 Results are only generated when the Lava Test Shell Definition makes at least
-one call to ``lava-test-case``.
+one call to ``lava-test-case`` (including automatic calls made by the
+:ref:`MultiNode API <multinode_api>`).
 
 The test suite can then be appended to the REST API URL for the results to
 limit the results to just that test suite:

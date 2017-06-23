@@ -281,6 +281,10 @@ Usage:
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed by
 ``lava-wait-all foo``.
 
+A :ref:`lava test result <recording_test_result_data>` is generated within the
+current :ref:`results_test_suite`, recording the completion or failure of the
+synchronisation.
+
 .. seealso:: :ref:`flow_tables`
 
 .. index:: lava-network

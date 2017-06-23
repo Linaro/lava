@@ -31,10 +31,116 @@ If there are not enough idle boards of the relevant types to meet the combined
 requirements of all the roles specified in the job, the job waits in the
 Submitted queue until all devices can be allocated.
 
-Once each board has booted the test image, the MultiNode API will be available
-for use within the test definition in the default PATH.
+Each test job is put into a :term:`MultiNode group <target_group>` and basic
+information about other jobs in that group will be available in each test shell
+using the MultiNode API.
 
-.. index:: multinode timeouts
+.. index:: MultiNode - synchronisation
+
+.. _multinode_synchronisation:
+
+Using LAVA MultiNode synchronisation
+************************************
+
+MultiNode is implemented using a :term:`protocol` which allows test writers to
+access synchronisation calls in any part of a test job by sending a request to
+the :ref:`multinode_protocol`.
+
+.. seealso:: :ref:`delayed_start_multinode` which is used when
+   :ref:`writing_secondary_connection_jobs`
+
+Once each board has booted the test image, the :ref:`MultiNode API
+<multinode_api>` will also be available for use within each test definition
+using scripts placed into the default PATH by the LAVA overlay.
+
+Unless two or more roles use the MultiNode API to synchronise operations at
+some point within the test job submission, the test jobs will start at the same
+time but run independently. Even if the test jobs in a MultiNode group are
+identical, the time taken to download, deploy and boot into the test shell will
+vary. There is no guarantee that a service will be available for another role
+in the MultiNode group unless the test writer uses the synchronisation
+primitives in the MultiNode API. This also applies to tests where one role
+needs to send data (like an IP address) to another role. One of the first tasks
+for many MultiNode test jobs is to synchronise specific roles.
+
+To synchronise all roles within the :term:`MultiNode group <target_group>`, use
+:ref:`lava_sync`. If any role fails to execute this call, the entire group will
+fail the synchronisation.
+
+In **all** roles in this MultiNode group:
+
+.. code-block:: yaml
+
+   - lava-sync server
+
+To synchronise only specific roles, send a specific string using
+:ref:`lava_send` and make the other role use :ref:`lava_wait` with that same
+string. Then send another message from the waiting role and make the first role
+wait for the second message.
+
+In the role acting as a server:
+
+.. code-block:: yaml
+
+   - lava-send server
+   - lava-wait client
+
+In the role acting as a client:
+
+.. code-block:: yaml
+
+   - lava-wait server
+   - lava-send client
+
+If one role is **essential** to all other roles in the test job, for example if
+a role has to install and configure a server which is to be contacted by other
+roles within the group, :ref:`mark that role as essential
+<multinode_essential_roles>`. When the job(s) marked with the essential role
+fail, all test jobs in the MultiNode group will terminate.
+
+To make your test job submissions more portable, it is recommended to use
+:ref:`inline test definitions <inline_test_definitions>` when calling the
+MultiNode API from the test shell. All MultiNode API calls can also be executed
+from :ref:`custom scripts <custom_scripts>` although this can make things
+harder to debug.
+
+MultiNode synchronisation calls will exit non-zero if the attempt times out or
+fails in some other way. The test shell definition will then exit at this
+point.
+
+It is **not** recommended to wrap MultiNode synchronisation calls in calls to
+``lava-test-case`` because if the API call fails, ``lava-test-case`` will
+report a fail result but the test definition itself will continue as if the
+synchronisation succeeded. The sychronisation calls themselves will create
+results based on the operation requested.
+
+.. index:: MultiNode - results
+
+.. _multinode_results:
+
+MultiNode Results
+=================
+
+Each call to :ref:`lava_send`, :ref:`lava_sync`, :ref:`lava_wait` or
+:ref:`lava_wait_all` will generate a :term:`test case` with a ``multinode-``
+prefix in the current :term:`test suite` of the results for this test job. If
+the synchronisation completes within the timeout, the result will be a
+``pass``. If the attempt to synchronise times out, the result will be a
+``fail``.
+
+For example:
+
+.. code-block:: yaml
+
+   - lava-wait server
+   - lava-send client
+
+Would generate test case results like ``multinode-wait-server`` and
+``multinode-send-client``.
+
+.. seealso:: :ref:`test_definition_portability`
+
+.. index:: MultiNode - timeouts
 
 LAVA MultiNode timeout behaviour
 ********************************
@@ -48,6 +154,10 @@ In MultiNode LAVA, this timeout is also applied to individual polling
 operations, so an individual lava-sync or a lava-wait will fail on any node
 which waits longer than the default timeout. The node will receive a failure
 response.
+
+.. seealso:: :ref:`multinode_essential_roles` - if your test job involves a
+   long running server and clients, marking the server as essential allows the
+   client test jobs to fail early instead of waiting for a long timeout.
 
 .. _multinode_timeouts:
 

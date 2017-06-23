@@ -145,12 +145,12 @@ includes ``:`` and needs to be quoted. If the hostname of the device is
 included in the prompt, this can be included in the ``prompt``:
 
 .. caution:: Take care with the specified prompts. Prompt strings which do not
-   include enough characters can match early, resulting in a failed login. 
-   Prompt strings which include extraneous characters may fail to match for all 
-   test jobs. Avoid prompt elements which are user-specific, e.g. ``$`` 
-   indicates an unprivileged user in some shells and ``#`` indicates the 
-   superuser. ``~`` indicates the home directory in some shells. In general, 
-   the prompt string should **include and usually end with** a colon ``:`` or a 
+   include enough characters can match early, resulting in a failed login.
+   Prompt strings which include extraneous characters may fail to match for all
+   test jobs. Avoid prompt elements which are user-specific, e.g. ``$``
+   indicates an unprivileged user in some shells and ``#`` indicates the
+   superuser. ``~`` indicates the home directory in some shells. In general,
+   the prompt string should **include and usually end with** a colon ``:`` or a
    colon and space.
 
 .. code-block:: yaml
@@ -622,10 +622,11 @@ straight away.
 
     transfer_overlay:
       download_command: wget -S --progress=dot:giga
-      unpack_command: tar -C / -xaf
+      unpack_command: tar -C / -xzf
 
 .. note:: The ``-C /`` command to tar is **essential** or the test shell will
-   not be able to start.
+   not be able to start. The overlay will use ``gzip`` compresssion, so pass
+   the ``z`` option to ``tar``.
 
 Deployment differences
 ----------------------
@@ -634,6 +635,10 @@ The ``-S --progress=dot:giga`` options to wget in the example above optimise
 the output for serial console logging to avoid wasting line upon line of
 progress percentage dots. If the system uses ``busybox``, these options may not
 be supported by the version of ``wget`` on the device.
+
+Some systems do not store the current time between boots. The ``--warning
+no-timestamp`` option is a useful addition for ``tar`` for those systems but
+note that ``busybox tar`` does not support this option.
 
 The ``download_command`` and the ``unpack_command`` can include one or more
 shell commands. However, as with the test shell definitions, avoid using
