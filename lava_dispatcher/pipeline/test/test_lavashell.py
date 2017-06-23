@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
+import yaml
 import datetime
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -26,6 +28,9 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     Timeout
 )
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
@@ -59,6 +64,23 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             datetime.timedelta(seconds=time_int).total_seconds(),
             testshell.timeout.duration
         )
+
+    def test_missing_handler(self):
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
+        parser = JobParser()
+        with open(kvm_yaml) as sample_job_data:
+            data = yaml.load(sample_job_data)
+        data['actions'][2]['test']['definitions'][0]['from'] = 'unusable-handler'
+        try:
+            job = parser.parse(yaml.dump(data), device, 4212, None, "", output_dir='/tmp')
+            job.logger = DummyLogger()
+        except JobError:
+            pass
+        except Exception as exc:
+            self.fail(exc)
+        else:
+            self.fail('JobError not raised')
 
     def test_eventpatterns(self):
         testshell = None
