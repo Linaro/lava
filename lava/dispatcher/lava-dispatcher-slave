@@ -518,11 +518,19 @@ def handle_start(msg, jobs, sock, master, zmq_config):
         LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
         return
 
+    env_msg = []
+    for line in env.split('\n'):
+        if line.startswith('#'):
+            continue
+        if not line:
+            continue
+        env_msg.append(line)
+
     LOG.info("[%d] Starting job", job_id)
-    LOG.debug("[%d]         : %s", job_id, job_definition)
+    LOG.debug("[%d]         : %s", job_id, yaml.load(job_definition))
     LOG.debug("[%d] device  : %s", job_id, device_definition)
     LOG.debug("[%d] dispatch: %s", job_id, dispatcher_config)
-    LOG.debug("[%d] env     : %s", job_id, env)
+    LOG.debug("[%d] env     : %s", job_id, env_msg)
     LOG.debug("[%d] env-dut : %s", job_id, env_dut)
 
     # Check if the job is known and started. In this case, send
