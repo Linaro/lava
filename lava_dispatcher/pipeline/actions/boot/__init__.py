@@ -289,7 +289,8 @@ class WaitUSBDeviceAction(Action):
                     if usb_product_id == '0000':
                         self.errors = 'usb_product_id unset'
         except KeyError as exc:
-            raise InfrastructureError(exc)
+            self.errors = exc
+            return
         except (TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
