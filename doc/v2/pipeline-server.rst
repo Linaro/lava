@@ -189,6 +189,34 @@ the serial connection for that device. The slave is responsible for ensuring
 that these ports are only visible to that slave. There is no need for any
 connections to be visible to the master.
 
+.. index:: worker - V2 only apache config
+
+.. _apache2_on_v2_only_worker:
+
+Configuring apache2 on a V2 worker
+==================================
+
+If the worker is only to run V2, then some test job deployments will require a
+working Apache2 server to offer deployment files over the network to the
+device::
+
+    cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
+    $ sudo a2ensite lava-dispatcher
+    $ sudo service apache2 restart
+    $ wget http://localhost/tmp/
+    $ rm index.html
+
+You may also need to disable any existing apache2 configuration if this is a
+default apache2 installation::
+
+    $ sudo a2dissite 000-default
+    $ sudo service apache2 restart
+
+.. note:: If this worker also supports V1, then ``lava-server`` will also need
+   to be supported, so the apache2 configuration is more complex.
+
+.. seealso:: :ref:`disable_v1_worker`
+
 .. _adding_pipeline_workers:
 
 Adding pipeline workers to the master
