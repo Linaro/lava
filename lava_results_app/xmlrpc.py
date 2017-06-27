@@ -106,6 +106,56 @@ class ResultsAPI(ExposedAPI):
                                   "Please refer to query docs.")
         return list(results)
 
+    def run_query(self, query_name, limit=200, username=None):
+        """
+        Name
+        ----
+        `run_query` (`query_name`, `limit=200`, `username=None`)
+
+        Description
+        -----------
+        Run the specified query and return the results of the query.
+
+        Arguments
+        ---------
+        `query_name`: string
+            Query name string.
+        `limit`: integer
+            Add a limit to the number of results returned.
+            Defaults to 200.
+        `username`: string
+            Username of the user which is owner of the query you would like the
+            results.
+            Defaults to None, in which case the method will consider the
+            authenticated user to be the owner.
+            Either way, the authenticated user needs to have special access to
+            this query (being an owner or belonging to the group which has
+            admin access to the query).
+
+        Return value
+        ------------
+        A list of dictionaries containing the query results.
+
+        The user should be authenticated with a username and token.
+        """
+        self._authenticate()
+        if not username:
+            username = self.user.username
+
+        try:
+            query = Query.objects.get(name=query_name,
+                                      owner__username=username)
+        except Query.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Query with name %s owned by user %s does not exist." %
+                (query_name, username))
+
+        if not query.is_accessible_by(self.user):
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to query %s" % query_name)
+
+        return list(query.get_results(self.user, limit=limit))
+
     def refresh_query(self, query_name, username=None):
         """
         Name
