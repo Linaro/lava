@@ -26,12 +26,16 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Pipeline,
     JobError,
+    LAVAError,
     Timeout
 )
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.actions.deploy.testdef import get_test_action_namespaces
 from lava_dispatcher.pipeline.test.utils import DummyLogger
 from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
 
@@ -77,7 +81,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             job.logger = DummyLogger()
         except JobError:
             pass
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-except
             self.fail(exc)
         else:
             self.fail('JobError not raised')
@@ -93,6 +97,58 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertFalse(testshell.check_patterns('exit', None, ''))
         self.assertRaises(InfrastructureError, testshell.check_patterns, 'eof', None, '')
         self.assertTrue(testshell.check_patterns('timeout', None, ''))
+
+
+class X86Factory(Factory):
+
+    def create_x86_job(self, filename, device, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
+        parser = JobParser()
+        try:
+            with open(kvm_yaml) as sample_job_data:
+                job = parser.parse(sample_job_data, device, 4212, None, "",
+                                   output_dir=output_dir)
+            job.logger = DummyLogger()
+        except LAVAError as exc:
+            print(exc)
+            # some deployments listed in basics.yaml are not implemented yet
+            return None
+        return job
+
+
+class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestMultiNodeOverlay, self).setUp()
+        factory = X86Factory()
+        lng1 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-01.yaml'))
+        lng2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-02.yaml'))
+        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', lng1)
+        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', lng2)
+
+    def test_action_namespaces(self):
+        self.assertIsNotNone(self.server_job)
+        self.assertIsNotNone(self.client_job)
+        deploy_server = [action for action in self.server_job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        self.assertIn(MultinodeProtocol.name, deploy_server.parameters.keys())
+        self.assertIn(VlandProtocol.name, deploy_server.parameters.keys())
+        self.assertEqual(['common'], get_test_action_namespaces(self.server_job.parameters))
+        namespace = self.server_job.parameters.get('namespace', None)
+        self.assertIsNone(namespace)
+        namespace = self.client_job.parameters.get('namespace', None)
+        self.assertIsNone(namespace)
+        deploy_client = [action for action in self.client_job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        self.assertIn(MultinodeProtocol.name, deploy_client.parameters.keys())
+        self.assertIn(VlandProtocol.name, deploy_client.parameters.keys())
+        key_list = []
+        for block in self.client_job.parameters['actions']:
+            key_list.extend(block.keys())
+        self.assertEqual(key_list, ['deploy', 'boot', 'test'])  # order is important
+        self.assertEqual(['common'], get_test_action_namespaces(self.client_job.parameters))
+        key_list = []
+        for block in self.server_job.parameters['actions']:
+            key_list.extend(block.keys())
+        self.assertEqual(key_list, ['deploy', 'boot', 'test'])  # order is important
 
 
 class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
