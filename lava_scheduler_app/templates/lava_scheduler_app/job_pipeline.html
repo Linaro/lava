@@ -280,7 +280,7 @@
     <div id="sectionlogs">
       {% for line in log_data %}
         {% if line.lvl == "debug" %}
-          {% if "sending" in line.msg %}
+          {% if "sending" in line.msg.keys %}
       <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
           {% else %}
             {% get_action_id line.msg as act_id %}
