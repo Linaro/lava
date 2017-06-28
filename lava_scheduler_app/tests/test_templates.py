@@ -919,3 +919,23 @@ class TestTemplates(unittest.TestCase):
 {% set device_ip = '192.168.1.11' %}
 {% set exclusive = 'True' %}
 """))
+
+    def test_juno_vexpress_template(self):
+        data = """{% extends 'vexpress.jinja2' %}
+    {% set connection_command = 'telnet serial4 7001' %}
+    {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
+    {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
+    {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
+    {% set usb_label = 'SanDiskCruzerBlade' %}
+    {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
+    {% set usb_device_id = 0 %}
+    {% set nfs_uboot_bootcmd = (
+    "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+              - boot") %}"""
+        self.assertTrue(self.validate_data('staging-juno-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual({'boot': 30}, template_dict['character_delays'])
+        self.assertIn('cpu-reset-message', template_dict['constants'])
