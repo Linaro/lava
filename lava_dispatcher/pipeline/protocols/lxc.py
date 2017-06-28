@@ -144,51 +144,40 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             self.logger.info("%s protocol: device not rebooting to fastboot",
                              self.name)
 
-        # ShellCommand executes the destroy command after checking for the
-        # existance of the container
-        cmd = "lxc-info -p -n {0}".format(self.lxc_name)
-        self.logger.debug("%s protocol: executing '%s'", self.name, cmd)
+        # Stop the container.
+        self.logger.debug("%s protocol: issue stop", self.name)
+        cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
         # execute the command.
         shell.expect(pexpect.EOF)
-        if not shell.exitstatus and shell.readlines():
-            self.logger.info("%s protocol: %s exists", self.name,
-                             self.lxc_name)
-            # Stop the container.
-            self.logger.debug("%s protocol: issue stop", self.name)
-            cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
+        if shell.exitstatus:
+            self.logger.debug(
+                "%s command exited %d: %s" % (cmd, shell.exitstatus,
+                                              shell.readlines()))
+        # Check if the container should persist and skip destroying it.
+        if self.persistence:
+            self.logger.debug("%s protocol: persistence requested",
+                              self.name)
+        else:
+            self.logger.debug("%s protocol: destroy", self.name)
+            if self.custom_lxc_path:
+                abs_path = os.path.realpath(os.path.join(LXC_PATH,
+                                                         self.lxc_name))
+                cmd = "lxc-destroy -n {0} -f -P {1}".format(
+                    self.lxc_name, os.path.dirname(abs_path))
+            else:
+                cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
+                self.logger.debug("%s protocol: executing '%s'",
+                                  self.name, cmd)
             shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                                  logger=self.logger)
             # execute the command.
             shell.expect(pexpect.EOF)
             if shell.exitstatus:
-                raise InfrastructureError(
+                self.logger.debug(
                     "%s command exited %d: %s" % (cmd, shell.exitstatus,
                                                   shell.readlines()))
-            # Check if the container should persist and skip destroying it.
-            if self.persistence:
-                self.logger.debug("%s protocol: persistence requested",
-                                  self.name)
-            else:
-                self.logger.debug("%s protocol: destroy", self.name)
-                if self.custom_lxc_path:
-                    abs_path = os.path.realpath(os.path.join(LXC_PATH,
-                                                             self.lxc_name))
-                    cmd = "lxc-destroy -n {0} -f -P {1}".format(
-                        self.lxc_name, os.path.dirname(abs_path))
-                else:
-                    cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
-                    self.logger.debug("%s protocol: executing '%s'",
-                                      self.name, cmd)
-                shell = ShellCommand("%s\n" % cmd, self.system_timeout,
-                                     logger=self.logger)
-                # execute the command.
-                shell.expect(pexpect.EOF)
-                if shell.exitstatus:
-                    raise InfrastructureError(
-                        "%s command exited %d: %s" % (cmd, shell.exitstatus,
-                                                      shell.readlines()))
             if self.custom_lxc_path and not self.persistence:
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
         self.logger.debug("%s protocol finalised.", self.name)
