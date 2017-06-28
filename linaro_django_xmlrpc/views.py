@@ -79,7 +79,7 @@ def handler(request, mapper, help_view):  # pylint: disable=too-many-return-stat
                 return response
         else:
             user = request.user
-        result = dispatcher.marshalled_dispatch(raw_data, user, request)
+        result = dispatcher.marshalled_dispatch(raw_data, user)
         response = HttpResponse(content_type="application/xml")
         response.write(result)
         response['Content-length'] = str(len(response.content))
