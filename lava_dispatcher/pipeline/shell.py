@@ -114,15 +114,14 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         """
         send_char = False
         if delay > 0:
+            self.logger.debug("Sending with %s millisecond of delay", delay)
             send_char = True
-            self.logger.debug({"sending": s + self.linesep, "delay": "%s millisecond" % delay})
-        else:
-            self.logger.debug({"sending": s + self.linesep})
+        self.logger.input(s + self.linesep)
         self.send(s, delay, send_char)
         self.send(self.linesep, delay)
 
     def sendcontrol(self, char):
-        self.logger.debug("sendcontrol: %s", char)
+        self.logger.input(char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
