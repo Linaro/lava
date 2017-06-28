@@ -54,11 +54,9 @@ class TestUefiShell(StdoutTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_device_juno_uefi(self):
-        job = self.job
-        self.assertIsNotNone(job)
-
-        self.assertIsNone(job.validate(job))
-        self.assertEqual(job.device['device_type'], 'juno')
+        self.assertIsNotNone(self.job)
+        self.assertIsNone(self.job.validate())
+        self.assertEqual(self.job.device['device_type'], 'juno')
 
     def test_shell_prompts(self):
         self.job.validate()
