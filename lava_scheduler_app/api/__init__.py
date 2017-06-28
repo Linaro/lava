@@ -162,6 +162,9 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
+        if job.status > TestJob.RUNNING:
+            # Don't do anything for jobs that ended already
+            return True
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
