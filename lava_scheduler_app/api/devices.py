@@ -24,6 +24,7 @@ from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.dbutils import initiate_health_check_job
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -192,6 +193,44 @@ class SchedulerDevicesAPI(ExposedAPI):
                 404, "Device '%s' was not found." % hostname)
 
         return device.save_configuration(dictionary)
+
+    def force_health_check(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.devices.force_health_check` (`hostname`)
+
+        Description
+        -----------
+        [admin only]
+        Force health check on the specified device
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the device
+
+        Return value
+        ------------
+        The id of the health check job.
+        """
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname)
+
+        if not device.can_admin(self.user):
+            raise xmlrpclib.Faul(
+                403, "Device '%s' is not available to user '%s'." %
+                (hostname, self.user))
+
+        job = initiate_health_check_job(device)
+        if not job:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' does not have health checks" % hostname)
+
+        return job.id
 
     def list(self, show_all=False):
         """
