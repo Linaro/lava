@@ -265,3 +265,19 @@ def set_timeout(connection, **kw):
 
 
 connection_created.connect(set_timeout)
+
+# Allow Django System check framework settings override
+SILENCED_SYSTEM_CHECKS = distro_settings.get_setting("SILENCED_SYSTEM_CHECKS",
+                                                     SILENCED_SYSTEM_CHECKS)
+SECURE_CONTENT_TYPE_NOSNIFF = distro_settings.get_setting(
+    "SECURE_CONTENT_TYPE_NOSNIFF", SECURE_CONTENT_TYPE_NOSNIFF)
+SECURE_BROWSER_XSS_FILTER = distro_settings.get_setting(
+    "SECURE_BROWSER_XSS_FILTER", SECURE_BROWSER_XSS_FILTER)
+SESSION_COOKIE_SECURE = distro_settings.get_setting("SESSION_COOKIE_SECURE",
+                                                    SESSION_COOKIE_SECURE)
+CSRF_COOKIE_SECURE = distro_settings.get_setting("CSRF_COOKIE_SECURE",
+                                                 CSRF_COOKIE_SECURE)
+CSRF_COOKIE_HTTPONLY = distro_settings.get_setting("CSRF_COOKIE_HTTPONLY",
+                                                   CSRF_COOKIE_HTTPONLY)
+X_FRAME_OPTIONS = distro_settings.get_setting("X_FRAME_OPTIONS",
+                                              X_FRAME_OPTIONS)
