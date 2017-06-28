@@ -917,32 +917,6 @@ class SchedulerAPI(ExposedAPI):
             job_status[str(job.display_id)] = job.get_status_display()
         return job_status
 
-    def worker_heartbeat(self, heartbeat_data):
-        """
-        Name
-        ----
-        `worker_heartbeat` (`heartbeat_data`)
-
-        Description
-        -----------
-        Dropped - arguments are ignored.
-
-        Arguments
-        ---------
-        `heartbeat_data`: string
-            Heartbeat data extracted from dispatcher worker node.
-
-        Return value
-        ------------
-        This function returns an XML-RPC boolean output, provided the user is
-        authenticated with an username and token.
-        """
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-        return True
-
     def notify_incomplete_job(self, job_id):
         """
         Name
