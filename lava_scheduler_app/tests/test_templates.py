@@ -100,14 +100,54 @@ class TestTemplates(unittest.TestCase):
         # then change this to assertEqual
         self.assertNotEqual(count, len(device_dict.keys()))
 
-    def test_x15_template(self):
-        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}
+    def test_inclusion(self):
+        data = """{% extends 'nexus4.jinja2' %}
+{% set adb_serial_number = 'R42D300FRYP' %}
+{% set fastboot_serial_number = 'R42D300FRYP' %}
+"""
+        test_template = prepare_jinja_template('nexus4-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual(
+            'adb -s R42D300FRYP shell',
+            template_dict['commands']['connect']
+        )
+        self.assertIn('lxc', template_dict['actions']['boot']['methods'])
+        self.assertIn('fastboot', template_dict['actions']['boot']['methods'])
+        self.assertIn('lxc', template_dict['actions']['deploy']['methods'])
+        self.assertIn('fastboot', template_dict['actions']['deploy']['methods'])
+        self.assertEqual(
+            ['reboot', 'wait-usb-add', 'lxc-add-device'],
+            template_dict['actions']['boot']['methods']['fastboot']
+        )
+
+    def test_nexus4_template(self):
+        data = """{% extends 'nexus4.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
-{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
-{% set connection_command = 'adb -s R32D300FRYP shell' %}
-{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
-"""))
+"""
+        self.assertTrue(self.validate_data('nexus4-01', data))
+        test_template = prepare_jinja_template('nexus4-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('nexus4', template_dict['device_type'])
+        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
+        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+
+    def test_x15_template(self):
+        data = """{% extends 'x15.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+"""
+        self.assertTrue(self.validate_data('x15-01', data))
+        test_template = prepare_jinja_template('x15-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('x15', template_dict['device_type'])
+        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
+        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
 
     def test_armada375_template(self):
         """
