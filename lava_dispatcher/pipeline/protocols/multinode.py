@@ -38,8 +38,10 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
+# pylint: disable=misplaced-comparison-constant,too-many-branches
 
-class MultinodeProtocol(Protocol):
+
+class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     """
     Multinode API protocol - one instance per Multinode job
     """
@@ -216,6 +218,16 @@ class MultinodeProtocol(Protocol):
                 raise MultinodeProtocolTimeoutError(
                     "protocol %s timed out" % self.name)
         return response
+
+    def configure(self, device, job):
+        """
+        Called by job.validate() to populate internal data
+        Returns True if configuration completed.
+        """
+        action_list = [action.section for action in job.pipeline.actions if action.section]
+        self.logger.debug("This MultiNode test job contains "
+                          "top level actions, in order, of: %s", ', '.join(action_list))
+        return True
 
     def set_up(self):
         """

@@ -406,7 +406,11 @@ class VlandProtocol(Protocol):
                     self.params[vlan_name]['iface'] = iface
                     self.nodes_seen.append(' '.join([device_info['switch'], str(device_info['port'])]))
                     break
-        self.logger.debug("[%s] vland params: %s", device['hostname'], self.params)
+        if self.sub_id == 0:
+            self.logger.info("[%s] Job will deploy requested VLANs.", self.name)
+        else:
+            self.logger.info("[%s] Job will wait for VLANs to be deployed.", self.name)
+        self.logger.debug("[%s] parameters: %s", self.name, self.params)
         super(VlandProtocol, self).configure(device, job)
         return True
 
@@ -427,6 +431,7 @@ class VlandProtocol(Protocol):
         # run_admin_command --create_vlan test30 -1 false
         if self.sub_id != 0:
             for friendly_name, _ in self.names.items():
+                self.logger.info("Waiting for vlan %s : %s to be deployed.", friendly_name, self.names[friendly_name])
                 self.vlans[friendly_name], tag = self._wait_on_create(friendly_name)
                 self.logger.debug("vlan name: %s vlan tag: %s", self.vlans[friendly_name], tag)
         else:
