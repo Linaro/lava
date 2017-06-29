@@ -484,6 +484,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         and blocks until that messageID is available for this node
         """
         # use self.target as the node ID
+        self.logger.debug("request_wait %s", message_id)
         wait_msg = {"request": "lava_wait",
                     "messageID": message_id,
                     "nodeID": self.parameters['target']}
@@ -513,6 +514,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         """
         Creates and send a message requesting lava_sync
         """
+        self.logger.debug("request_sync %s", msg)
         sync_msg = {"request": "lava_sync", "messageID": msg}
         return self._send(sync_msg)
 
@@ -521,6 +523,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         Sends a message to the group via the Coordinator. All jobs with the matching role
         will receive the message and can then start the job.
         """
+        self.logger.debug("request_lava_start %s", message)
         send_msg = {"request": "lava_send",
                     "messageID": 'lava_start',
                     "message": message}
