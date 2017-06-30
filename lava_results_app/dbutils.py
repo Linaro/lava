@@ -141,13 +141,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     testset = _check_for_testset(results, suite)
 
     name = results["case"].strip()
-    try:
-        reverse('lava.results.testcase', args=[job.id, suite.name, name])
-    except NoReverseMatch:
-        append_failure_comment(
-            job,
-            "[%d] Unable to parse test case name as URL %s in suite %s" % (job.id, name, suite.name))
-        return False
+
     if suite.name == "lava":
         match_action = None
         if "level" in results:
@@ -433,7 +427,7 @@ def testcase_export_fields():
     return [
         'job', 'suite', 'result', 'measurement', 'unit',
         'duration', 'timeout',
-        'logged', 'level', 'metadata', 'url',
+        'logged', 'level', 'metadata', 'url', 'name', 'id'
     ]
 
 
@@ -472,5 +466,6 @@ def export_testcase(testcase):
         'level': str(level),
         'metadata': metadata,
         'url': str(testcase.get_absolute_url()),
+        'id': str(testcase.id)
     }
     return casedict

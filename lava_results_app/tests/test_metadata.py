@@ -90,6 +90,7 @@ class TestMetaTypes(TestCaseWithFactory):
             self.factory.make_job_yaml(), self.user)
         test_suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
         test_case = TestCase(
+            id=1,
             name='name',
             suite=test_suite,
             result=TestCase.RESULT_FAIL
@@ -132,14 +133,18 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(matches)  # passes
         self.assertEqual(matches.group(0), test_dict['case'])
         suite, _ = TestSuite.objects.get_or_create(name=test_dict["definition"], job=job)
-        self.assertIsNotNone(reverse('lava.results.testcase', args=[job.id, suite.name, test_dict['case']]))
+        case, _ = TestCase.objects.get_or_create(suite=suite,
+                                                 name=test_dict['case'],
+                                                 result=TestCase.RESULT_PASS)
+        self.assertIsNotNone(reverse('lava.results.testcase', args=[case.id]))
+        self.assertIsNotNone(reverse('lava.results.testcase',
+                                     args=[job.id, suite.name, case.id]))
         self.assertTrue(map_scanned_results(test_dict, job, None))
         # now break the reverse pattern
         test_dict['case'] = 'unit test'  # whitespace in the case name
         matches = re.search(pattern, test_dict['case'])
         self.assertIsNotNone(matches)
         self.assertRaises(NoReverseMatch, reverse, 'lava.results.testcase', args=[job.id, suite.name, test_dict['case']])
-        self.assertFalse(map_scanned_results(test_dict, job, None))
 
     def test_metastore(self):
         field = TestCase._meta.get_field('metadata')

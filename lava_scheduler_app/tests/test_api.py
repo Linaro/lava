@@ -554,42 +554,6 @@ notify:
         self.assertRaises(SubmissionException, validate_yaml,
                           yaml.load(bad_submission))
 
-        invalid_test_name_char_yaml_def = """
-# Sample JOB definition for a KVM
-device_type: qemu
-job_name: kvm-pipeline
-timeouts:
-  job:
-    minutes: 15
-  action:
-    minutes: 5
-priority: medium
-visibility: public
-actions:
-
-    - deploy:
-        to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-        compression: gz
-        os: debian
-
-    - boot:
-        method: qemu
-        media: tmpfs
-        failure_retry: 2
-
-    - test:
-        name: kvm-advanced-singlenode
-        definitions:
-            - repository: git://git.linaro.org/qa/test-definitions.git
-              from: git
-              path: ubuntu/smoke-tests-basic.yaml
-              name: smoke/tests
-"""
-
-        self.assertRaises(SubmissionException, validate_submission,
-                          yaml.load(invalid_test_name_char_yaml_def))
-
         invalid_monitors_name_char_yaml_def = """
 # Zephyr JOB definition
 device_type: 'arduino101'

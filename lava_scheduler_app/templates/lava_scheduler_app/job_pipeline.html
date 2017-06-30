@@ -296,9 +296,9 @@
             {% if line.msg.set %}
               {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
             {% else %}
-              {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+              {% url 'lava.results.testcase' line.msg.case_id as result_url %}
             {% endif %}
-      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.level }}">
+      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.case_id }}">
         <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
         {% for key, value in line.msg.items|sort_items %}
           {% if value.items %}
@@ -763,8 +763,8 @@
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else if(level == 'results') {
-                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
-                var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
+                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_F_' + d['msg']['result'];
+                var link = $('<a href="/results/testcase/' + d['msg']['case_id'] + '"></a>');
                 var node;
                 if(d['msg']['result'] == 'fail') {
                   node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
