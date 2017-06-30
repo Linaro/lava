@@ -50,6 +50,41 @@ class SchedulerJobsAPI(ExposedAPI):
         cls = SchedulerAPI(self._context)
         return cls.cancel_job(job_id)
 
+    def definition(self, job_id):
+        """
+        Name
+        ----
+        `scheduler.jobs.definition` (`job_id`)
+
+        Description
+        -----------
+        Return the job definition
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id
+
+        Return value
+        ------------
+        The job definition or and error.
+        """
+        try:
+            job = TestJob.get_by_job_number(job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpclib.Fault(
+                403, "Job '%s' not available to user '%s'." %
+                (job_id, self.user))
+
+        if job.is_multinode:
+            return xmlrpclib.Binary(job.multinode_definition)
+        else:
+            return xmlrpclib.Binary(job.original_definition)
+
     def list(self, limit=25):
         """
         Name
