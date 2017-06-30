@@ -21,27 +21,27 @@
 import os
 import re
 import shutil
-
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
     JobError,
+    Timeout,
     LAVABug)
-from lava_dispatcher.pipeline.connections.ssh import SShSession
 from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
+    BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     LOGIN_INCORRECT_MSG,
     LOGIN_TIMED_OUT_MSG
 )
-from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
-from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
 from lava_dispatcher.pipeline.utils.udev import usb_device_wait
-
+from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
 # pylint: disable=too-many-branches,too-many-statements
@@ -262,13 +262,11 @@ class AutoLoginAction(Action):
 
 class WaitUSBDeviceAction(Action):
 
-    def __init__(self, device_actions=None):
+    def __init__(self, device_actions):
         super(WaitUSBDeviceAction, self).__init__()
         self.name = "wait-usb-device"
         self.description = "wait for udev to see USB device"
         self.summary = self.description
-        if not device_actions:
-            device_actions = []
         self.device_actions = device_actions
 
     def validate(self):
@@ -484,4 +482,58 @@ class OverlayUnpack(Action):
         unpack = self.parameters['transfer_overlay']['unpack_command']
         unpack += ' ' + overlay
         connection.sendline("rm %s; %s && %s" % (overlay, dwnld, unpack))
+        return connection
+
+
+class BootloaderCommandsAction(Action):
+    """
+    Send the boot commands to the bootloader
+    """
+    def __init__(self):
+        super(BootloaderCommandsAction, self).__init__()
+        self.name = "bootloader-commands"
+        self.description = "send commands to bootloader"
+        self.summary = "interactive bootloader"
+        self.params = None
+        self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
+        self.method = ""
+
+    def validate(self):
+        super(BootloaderCommandsAction, self).validate()
+        self.method = self.parameters['method']
+        self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
+
+    def run(self, connection, max_end_time, args=None):
+        if not connection:
+            self.errors = "%s started without a connection already in use" % self.name
+        connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
+        connection.prompt_str = self.params['bootloader_prompt']
+        self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
+        self.wait(connection)
+        i = 1
+        commands = self.get_namespace_data(action='bootloader-overlay', label=self.method, key='commands')
+
+        for line in commands:
+            connection.sendline(line, delay=self.character_delay)
+            if i != (len(commands)):
+                self.wait(connection)
+                i += 1
+
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        # allow for auto_login
+        if self.parameters.get('prompts', None):
+            connection.prompt_str = [
+                self.params.get('boot_message',
+                                self.job.device.get_constant('boot-message')),
+                self.job.device.get_constant('cpu-reset-message')
+            ]
+            self.logger.debug("Changing prompt to boot_message %s",
+                              connection.prompt_str)
+            index = self.wait(connection)
+            if connection.prompt_str[index] == self.job.device.get_constant('cpu-reset-message'):
+                self.logger.error("Bootloader reset detected: Bootloader "
+                                  "failed to load the required file into "
+                                  "memory correctly so the bootloader reset "
+                                  "the CPU.")
+                raise InfrastructureError("Bootloader reset detected")
         return connection

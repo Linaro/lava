@@ -48,16 +48,6 @@ actions:
         reset_device: False  # default is True
         parameters:
           bootloader_prompt: 'grub>'
-          interrupt_string: ' '
-          item_markup:
-          - "["
-          - "]"
-          item_class: '0-9'
-          separator: ' '
-        fastboot:
-        - select:
-            items:
-             - 'boot from eMMC'
       uefi-menu:
         parameters:
           interrupt_prompt: "Android Fastboot mode"

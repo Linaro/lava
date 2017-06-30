@@ -56,8 +56,8 @@
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
   - {class: actions.boot.grub.GrubMenuSelector, name: grub-efi-menu-selector}
-  - {class: actions.boot.grub.BootloaderInterrupt, name: grub-bootloader-interrupt}
-  - {class: actions.boot.bootloader_defaults.BootloaderCommandsAction, name: bootloader-commands}
+  - {class: actions.boot.grub.BootloaderInterrupt, name: bootloader-interrupt}
+  - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry

@@ -37,4 +37,3 @@ from lava_dispatcher.pipeline.actions.boot.ipxe import IPXE
 from lava_dispatcher.pipeline.actions.boot.grub import Grub
 from lava_dispatcher.pipeline.actions.boot.iso import BootIsoInstaller
 from lava_dispatcher.pipeline.actions.boot.minimal import Minimal
-from lava_dispatcher.pipeline.actions.boot.uefi import UefiShell

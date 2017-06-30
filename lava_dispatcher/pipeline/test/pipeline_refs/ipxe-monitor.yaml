@@ -40,7 +40,7 @@
       - {class: power.SoftReboot, name: send-reboot-command}
       - {class: power.PowerOn, name: power-on}
     - {class: actions.boot.ipxe.BootloaderInterrupt, name: bootloader-interrupt}
-    - {class: actions.boot.bootloader_defaults.BootloaderCommandsAction, name: bootloader-commands}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:

@@ -127,7 +127,7 @@ class MenuConnect(ConnectDevice):
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
         connection.prompt_str = self.parameters['prompts']
-        if hasattr(self.job.device, 'power_state') and self.job.device.power_state not in ['on', 'off']:
+        if self.job.device.power_state not in ['on', 'off']:
             self.wait(connection)
         return connection
 
