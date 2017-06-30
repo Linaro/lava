@@ -481,7 +481,7 @@ Then use the following command to make this user a superuser::
 
   $ sudo lava-server manage authorize_superuser --username {username}
 
-.. note:: `{username}` is the username of OpenID or LDAP user.
+.. note:: `{username}` is the username of LDAP user.
 
 Alternatively, the `addldapuser` command can be used to populate a user from
 LDAP and also grant superuser privilege as follows::

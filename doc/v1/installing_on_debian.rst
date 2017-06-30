@@ -411,17 +411,16 @@ recommended setup.
 Superuser
 =========
 
-OpenID or LDAP
---------------
-In LAVA instances that use external authentication mechanisms such as
-OpenID or LDAP, login once with the user account that has to be
-granted superuser privileges on LAVA web UI. After logging in with
-OpenID or LDAP successfully, make use of the following command to make
-this user a superuser::
+External authentication
+-----------------------
+In LAVA instances that use external authentication mechanisms such as LDAP,
+login once with the user account that has to be granted superuser privileges on
+LAVA web UI. After logging in with LDAP successfully, make use of the following
+command to make this user a superuser::
 
   $ sudo lava-server manage authorize_superuser --username {username}
 
-.. note:: `{username}` is the username of OpenID or LDAP user.
+.. note:: `{username}` is the username of LDAP user.
 
 LDAP
 ----
@@ -460,7 +459,7 @@ Select lavaserver and click the `Delete` link at the bottom of the page.
           will be added as a local Django user account, in other words
           the user account lives on the LAVA instance's database, even
           if the LAVA instance uses external authentication mechanisms
-          such as OpenID or LDAP.
+          such as LDAP.
 
 An existing local Django superuser account can be upgraded to an LDAP
 user account without losing data, using the `mergeldapuser` command,

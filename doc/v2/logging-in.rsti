@@ -10,10 +10,6 @@ alternative authentication method:
 
 * :ref:`ldap_authentication`
 
-OpenID is no longer available for all installations of LAVA. Incompatible
-changes in the underlying django support made it impossible to support OpenID
-since the 2015.12 release.
-
 .. seealso:: :ref:`user_authentication` for more information.
 
 LDAP authentication relies on local configuration and may involve obtaining a

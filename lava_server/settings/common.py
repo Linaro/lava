@@ -33,7 +33,7 @@ import imp
 
 # Check for available modules
 available_modules = list()
-for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
+for module_name in ["devserver", "django_extensions", "hijack"]:
     try:
         imp.find_module(module_name)
         available_modules.append(module_name)
@@ -137,21 +137,6 @@ for module_name in available_modules:
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
-
-if "django_openid_auth" in available_modules:
-    AUTHENTICATION_BACKENDS.append('django_openid_auth.auth.OpenIDBackend')
-    MIGRATION_MODULES = {
-        'django_openid_auth': 'django_openid_auth.migrations'
-    }
-
-    OPENID_CREATE_USERS = True
-    OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
-    OPENID_UPDATE_DETAILS_FROM_SREG = True
-    OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
-
-    # python-openid is too noisy, so we silence it.
-    from openid import oidutil
-    oidutil.log = lambda msg, level=0: None
 
 # Add google analytics model.
 GOOGLE_ANALYTICS_MODEL = True

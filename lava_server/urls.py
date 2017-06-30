@@ -112,12 +112,3 @@ try:
     urlpatterns.append(url(r'^hijack/', include(hijack_urlpatterns)))
 except ImportError:
     pass
-
-try:
-    imp.find_module('django_openid_auth')
-    urlpatterns.append(
-        url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
-            include('django_openid_auth.urls')),
-    )
-except ImportError:
-    pass

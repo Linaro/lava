@@ -340,18 +340,6 @@ class Settings(object):
         return self._settings.get("LOGIN_REDIRECT_URL", default)
 
     @property
-    def OPENID_SSO_SERVER_URL(self):
-        """
-        Allow for local preference for Launchpad to support existing
-        groups until OAuth is fully supported. Standard installs
-        default to Google OpenID which is available until September 2014.
-        To use Google+, set the OpenID server in /etc/lava-server/settings.conf :
-        "OPENID_SSO_SERVER_URL": "https://www.google.com/accounts/o8/id"
-        """
-        default = 'https://login.ubuntu.com/'
-        return self._settings.get("OPENID_SSO_SERVER_URL", default)
-
-    @property
     def ARCHIVE_ROOT(self):
         """
         Bridge for the settings file ARCHIVE_ROOT property.

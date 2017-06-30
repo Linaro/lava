@@ -50,17 +50,6 @@ def lava(request):
     }
 
 
-def openid_available(request):
-    openid_enabled = "django_openid_auth.auth.OpenIDBackend" in settings.AUTHENTICATION_BACKENDS
-    # Check if we use generic OpenID or Launchpad.net
-    openid_url = getattr(settings, "OPENID_SSO_SERVER_URL", "")
-    if "ubuntu.com" in openid_url or "launchpad.net" in openid_url:
-        provider = 'Launchpad.net'
-    else:
-        provider = "OpenID"
-    return {"openid_available": openid_enabled, "openid_provider": provider}
-
-
 def ldap_available(request):
     ldap_enabled = "django_auth_ldap.backend.LDAPBackend" in settings.AUTHENTICATION_BACKENDS
     login_message_ldap = getattr(settings, "LOGIN_MESSAGE_LDAP", "")
