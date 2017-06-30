@@ -232,11 +232,11 @@ class SchedulerDevicesAPI(ExposedAPI):
 
         return job.id
 
-    def list(self, show_all=False):
+    def list(self, show_all=False, offline_info=False):
         """
         Name
         ----
-        `scheduler.devices.list` (`show_all=False`)
+        `scheduler.devices.list` (`show_all=False`, `offline_info=False`)
 
         Description
         -----------
@@ -246,6 +246,10 @@ class SchedulerDevicesAPI(ExposedAPI):
         ---------
         `show_all`: boolean
           Show all devices, including retired
+        `offline_info`: boolean
+          Add date from which each of the returned devices is offline (if the
+          device is offline) and the user who put the device offline (if the
+          device is offline) to the returned dictionary.
 
         Return value
         ------------
@@ -260,11 +264,28 @@ class SchedulerDevicesAPI(ExposedAPI):
         ret = []
         for device in devices:
             if device.is_visible_to(self.user):
-                ret.append({"hostname": device.hostname,
-                            "type": device.device_type.name,
-                            "status": device.get_status_display(),
-                            "current_job": device.current_job.pk if device.current_job else None,
-                            "pipeline": device.is_pipeline})
+                device_dict = {"hostname": device.hostname,
+                               "type": device.device_type.name,
+                               "status": device.get_status_display(),
+                               "current_job": device.current_job.pk if device.current_job else None,
+                               "pipeline": device.is_pipeline}
+
+                if device.status == Device.OFFLINE and offline_info:
+                    device_dict["offline_since"] = ""
+                    device_dict["offline_by"] = ""
+                    device_dict["message"] = ""
+                    try:
+                        last_transition = device.transitions.latest("created_on")
+                        if last_transition.new_state == Device.OFFLINE:
+                            device_dict["message"] = str(last_transition.message)
+                            device_dict["offline_since"] = str(last_transition.created_on)
+                            if last_transition.created_by:
+                                device_dict["offline_by"] = last_transition.created_by.username
+                    except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
+                        pass
+
+                ret.append(device_dict)
+
         return ret
 
     def show(self, hostname):
