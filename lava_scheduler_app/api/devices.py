@@ -236,7 +236,7 @@ class SchedulerDevicesAPI(ExposedAPI):
         """
         Name
         ----
-        `scheduler.devices.list` (`show_all=True`)
+        `scheduler.devices.list` (`show_all=False`)
 
         Description
         -----------
