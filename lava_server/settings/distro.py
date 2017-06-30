@@ -10,9 +10,6 @@ from lava_server.settings.config_file import ConfigFile
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
 
-# Use timezone
-USE_TZ = True
-
 # Load the mount point from settings file
 MOUNT_POINT = distro_settings.mount_point
 
@@ -39,6 +36,9 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
 STATIC_URL = distro_settings.STATIC_URL
+
+# Allow only the connection through the reverse proxy
+ALLOWED_HOSTS = ['[::1]', '127.0.0.1', 'localhost']
 
 # List of absolute pathnames used to resolve templates.
 TEMPLATES = distro_settings.TEMPLATES
@@ -250,10 +250,10 @@ connection_created.connect(set_timeout)
 # Allow Django System check framework settings override
 SILENCED_SYSTEM_CHECKS = distro_settings.get_setting("SILENCED_SYSTEM_CHECKS",
                                                      SILENCED_SYSTEM_CHECKS)
-SECURE_CONTENT_TYPE_NOSNIFF = distro_settings.get_setting(
-    "SECURE_CONTENT_TYPE_NOSNIFF", SECURE_CONTENT_TYPE_NOSNIFF)
-SECURE_BROWSER_XSS_FILTER = distro_settings.get_setting(
-    "SECURE_BROWSER_XSS_FILTER", SECURE_BROWSER_XSS_FILTER)
+SECURE_CONTENT_TYPE_NOSNIFF = distro_settings.get_setting("SECURE_CONTENT_TYPE_NOSNIFF",
+                                                          SECURE_CONTENT_TYPE_NOSNIFF)
+SECURE_BROWSER_XSS_FILTER = distro_settings.get_setting("SECURE_BROWSER_XSS_FILTER",
+                                                        SECURE_BROWSER_XSS_FILTER)
 SESSION_COOKIE_SECURE = distro_settings.get_setting("SESSION_COOKIE_SECURE",
                                                     SESSION_COOKIE_SECURE)
 CSRF_COOKIE_SECURE = distro_settings.get_setting("CSRF_COOKIE_SECURE",
