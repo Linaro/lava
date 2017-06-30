@@ -43,9 +43,6 @@ STATIC_URL = distro_settings.STATIC_URL
 # List of absolute pathnames used to resolve templates.
 TEMPLATES = distro_settings.TEMPLATES
 
-# Like TEMPLATE_DIRS but for static files
-STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
-
 # A tuple that lists people who get code error notifications. When DEBUG=False
 # and a view raises an exception, Django will e-mail these people with the
 # full exception information. Each member of the tuple should be a tuple of
@@ -158,7 +155,7 @@ for regex in regexes:
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
-BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/logo.png')
+BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava_server/images/logo.png')
 BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)

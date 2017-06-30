@@ -2,7 +2,7 @@ debian:
   - python_dir: debian/lava-server/usr/lib/python2.7/dist-packages/
   - package: libjs-jquery
     directory: /usr/share/javascript/jquery/
-    lava_directory: lava_server/lava-server/js/
+    lava_directory: lava_server/static/lava_server/js/
     replacements:
       # our name first, external name second
       jquery-1.11.0.js: jquery.js
@@ -28,7 +28,7 @@ debian:
       jquery.flot.stack.js: jquery.flot.stack.js
   - package: libjs-jquery-ui
     directory: /usr/share/javascript/jquery-ui/ui/
-    lava_directory: lava_server/lava-server/js/
+    lava_directory: lava_server/static/lava_server/js/
     replacements:
       jquery-ui-1.10.4.custom.js: jquery-ui.custom.js
       jquery-ui-1.10.4.custom.min.js: jquery-ui.custom.min.js
@@ -58,8 +58,8 @@ debian:
       chart.js: chart.min.js
       bootbox.data.toggle.js: bootbox.data.toggle.min.js
   - uglify:
-    lava_directory: lava_server/lava-server/js/
-    destination: lava_server/lava-server/js/
+    lava_directory: lava_server/static/lava_server/js/
+    destination: lava_server/static/lava_server/js/
     files:
       bootbox.js: bootbox.min.js
       bootstrap-3.3.7.js: bootstrap-3.3.7.min.js

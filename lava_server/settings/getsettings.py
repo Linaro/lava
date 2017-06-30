@@ -264,23 +264,6 @@ class Settings(object):
         return self._settings.get('TEMPLATES', default)
 
     @property
-    def STATICFILES_DIRS(self):
-        """
-        Similar to TEMPLATE_DIRS but only for static files shipped with each application.
-
-        Bridge for the settings file STATICFILES_DIRS property.
-
-        By default it produces one tuple:
-
-            * (appname, ``"/usr/share/{appname}/htdocs/"``)
-
-        """
-        default = (
-            (self._appname, "/usr/share/{appname}/htdocs/".format(appname=self._appname)),
-        )
-        return self._settings.get("STATICFILES_DIRS", default)
-
-    @property
     def ADMINS(self):
         """
         See: https://docs.djangoproject.com/en/1.8/ref/settings/#admins
