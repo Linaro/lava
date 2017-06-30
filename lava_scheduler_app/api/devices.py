@@ -308,13 +308,15 @@ class SchedulerDevicesAPI(ExposedAPI):
                        "public": device.is_public,
                        "pipeline": device.is_pipeline,
                        "has_device_dict": bool(device.load_configuration(output_format="raw")),
-                       "worker": device.worker_host.hostname,
+                       "worker": None,
                        "user": device.user.username if device.user else None,
                        "group": device.group.name if device.group else None,
                        "current_job": device.current_job.pk if device.current_job else None,
                        "offline_since": None,
                        "offline_by": None,
                        "tags": [t.name for t in device.tags.all().order_by("name")]}
+        if device.worker_host is not None:
+            device_dict["worker"] = device.worker_host.hostname
 
         if device.status == Device.OFFLINE:
             try:
