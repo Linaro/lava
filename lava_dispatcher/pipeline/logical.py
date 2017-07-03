@@ -114,44 +114,6 @@ class DiagnosticAction(Action):
         return connection
 
 
-class AdjuvantAction(Action):
-    """
-    Adjuvants are associative actions - partners and helpers which can be executed if
-    the initial Action determines a particular state.
-    Distinct from DiagnosticActions, Adjuvants execute within the normal flow of the
-    pipeline but support being skipped if the functionality is not required.
-    The default is that the Adjuvant is omitted. i.e. Requiring an adjuvant is an
-    indication that the device did not perform entirely as could be expected. One
-    example is when a soft reboot command fails, an Adjuvant can cause a power cycle
-    via the PDU.
-    """
-    def __init__(self):
-        super(AdjuvantAction, self).__init__()
-        self.adjuvant = False
-
-    @classmethod
-    def key(cls):
-        raise NotImplementedError("Base class has no key")
-
-    def validate(self):
-        super(AdjuvantAction, self).validate()
-        try:
-            self.key()
-        except NotImplementedError:
-            self.errors = "Adjuvant action without a key: %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        if not self.valid:
-            return connection
-        adjuvant = self.get_namespace_data(action=self.key(), label=self.key(), key=self.key())
-        if adjuvant:
-            self.adjuvant = True
-            self.logger.warning("Adjuvant %s required", self.name)
-        else:
-            self.logger.debug("Adjuvant %s skipped", self.name)
-        return connection
-
-
 class Deployment(object):
     """
     Deployment is a strategy class which aggregates Actions

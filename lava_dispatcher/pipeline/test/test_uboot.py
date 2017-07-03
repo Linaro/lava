@@ -286,17 +286,15 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             if action.name == 'uboot-retry':
                 uboot_retry = action
         names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
-        self.assertIn('reboot-device', names)
+        self.assertIn('reset-device', names)
         self.assertIn('u-boot-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
         for action in uboot_retry.internal_pipeline.actions:
-            if action.name == 'reboot-device':
+            if action.name == 'reset-device':
                 reset_action = action
         names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
-        self.assertIn('soft-reboot', names)
         self.assertIn('pdu-reboot', names)
-        self.assertIn('power-on', names)
 
     def test_secondary_media(self):
         """

@@ -12,12 +12,9 @@
     name: boot-cmsis-retry
     pipeline:
     - class: power.ResetDevice
-      name: reboot-device
+      name: reset-device
       pipeline:
-      - {class: power.RebootDevice, name: soft-reboot}
       - {class: power.PDUReboot, name: pdu-reboot}
-      - {class: power.SoftReboot, name: send-reboot-command}
-      - {class: power.PowerOn, name: power-on}
     - {class: utils.udev.WaitDevicePathAction, name: wait-device-path}
     - {class: actions.boot.cmsis_dap.FlashCMSISAction, name: flash-cmsis}
     - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}

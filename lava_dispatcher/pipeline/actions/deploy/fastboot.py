@@ -22,7 +22,7 @@ import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import (
-    PowerOn,
+    ResetDevice,
 )
 from lava_dispatcher.pipeline.action import (
     ConfigurationError,
@@ -139,7 +139,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         elif self.job.device.power_command:
             self.force_prompt = True
             self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(PowerOn())
+            self.internal_pipeline.add_action(ResetDevice())
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())
         self.internal_pipeline.add_action(WaitUSBDeviceAction(

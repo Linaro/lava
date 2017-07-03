@@ -27,7 +27,7 @@ import unittest
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
-from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
+from lava_dispatcher.pipeline.power import ResetDevice, PDUReboot
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import InfrastructureError, Action
 from lava_dispatcher.pipeline.utils import vcs, installers
@@ -227,7 +227,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "reboot: Restarting system",  # modified in the job yaml
             reboot.parameters['parameters'].get('shutdown-message', self.job.device.get_constant('shutdown-message'))
         )
-        self.assertIsInstance(reboot, RebootDevice)
+        self.assertIsInstance(reboot, PDUReboot)
         self.assertIsNotNone(reboot.parameters.get('parameters'))
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml

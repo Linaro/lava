@@ -30,7 +30,6 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     TestError,
 )
-from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import REBOOT_COMMAND_LIST
 
 
@@ -41,76 +40,32 @@ class ResetDevice(Action):
     """
     def __init__(self):
         super(ResetDevice, self).__init__()
-        self.name = "reboot-device"
+        self.name = "reset-device"
         self.description = "reboot or power-cycle the device"
         self.summary = "reboot the device"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(RebootDevice())  # uses soft_reset_command, if set
-        self.internal_pipeline.add_action(PDUReboot())  # adjuvant, only if RebootDevice acts and fails
-        self.internal_pipeline.add_action(SoftReboot())  # adjuvant, replaces PDUReboot if no power commands
-        self.internal_pipeline.add_action(PowerOn())
+        if self.job.device.hard_reset_command:
+            self.internal_pipeline.add_action(PDUReboot())
+        else:
+            self.internal_pipeline.add_action(SendRebootCommands())
 
 
-class RebootDevice(Action):
+class SendRebootCommands(Action):
     """
-    Issues the reboot command on the board
-    """
-    def __init__(self):
-        super(RebootDevice, self).__init__()
-        self.name = "soft-reboot"
-        self.summary = "configured reboot command sent to device"
-        self.description = "attempt to reboot the running device using device-specific command."
-        self.reboot_prompt = None
-
-    def run(self, connection, max_end_time, args=None):
-        if not connection:
-            return connection
-        connection = super(RebootDevice, self).run(connection, max_end_time, args)
-        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
-        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=True)
-        if self.job.device.soft_reset_command is '':
-            return connection
-        command = self.job.device['commands']['soft_reset']
-        if not isinstance(command, list):
-            command = [command]
-        for cmd in command:
-            if not self.run_command(cmd.split(' '), allow_silent=True):
-                raise InfrastructureError("%s failed" % cmd)
-        self.results = {"success": connection.prompt_str}
-        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
-        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
-        try:
-            self.wait(connection)
-        except TestError:
-            self.logger.info("Wait for prompt after soft reboot command failed")
-            self.results = {'status': "failed"}
-            self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=True)
-        return connection
-
-
-class SoftReboot(AdjuvantAction):
-    """
-    If no remote power commands are available, trigger an attempt
-    at a soft reboot using job level commands.
+    Send reboot commands to the device
     """
 
     def __init__(self):
-        self.name = SoftReboot.key()
-        super(SoftReboot, self).__init__()
-        self.summary = 'Issue a reboot command'
-        self.description = 'Attempt a pre-defined soft reboot command.'
-
-    @classmethod
-    def key(cls):
-        return 'send-reboot-command'
+        super(SendRebootCommands, self).__init__()
+        self.name = "send-reboot-commands"
+        self.summary = 'Issue a reboot command on the device'
+        self.description = 'Issue a reboot command on the device'
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(SoftReboot, self).run(connection, max_end_time, args)
+        connection = super(SendRebootCommands, self).run(connection, max_end_time, args)
         reboot_commands = self.parameters.get('soft_reboot', [])  # list
-        if not self.adjuvant:
-            return connection
         if not self.parameters.get('soft_reboot', None):  # unit test
             self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
             reboot_commands = REBOOT_COMMAND_LIST
@@ -123,12 +78,11 @@ class SoftReboot(AdjuvantAction):
             self.wait(connection)
         except TestError:
             raise JobError("Soft reboot failed.")
-        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
         self.results = {'commands': reboot_commands}
         return connection
 
 
-class PDUReboot(AdjuvantAction):
+class PDUReboot(Action):
     """
     Issues the PDU power cycle command on the dispatcher
     Raises InfrastructureError if either the command fails
@@ -138,32 +92,22 @@ class PDUReboot(AdjuvantAction):
     soft reboot and a failed hard reset.
     """
     def __init__(self):
-        self.name = PDUReboot.key()
         super(PDUReboot, self).__init__()
-        self.summary = "hard reboot"
+        self.name = "pdu-reboot"
+        self.summary = "hard reboot using PDU"
         self.description = "issue commands to a PDU to power cycle a device"
         self.command = None
 
-    @classmethod
-    def key(cls):
-        return 'pdu-reboot'
-
     def run(self, connection, max_end_time, args=None):
         connection = super(PDUReboot, self).run(connection, max_end_time, args)
-        if not self.adjuvant:
-            return connection
         if not self.job.device.hard_reset_command:
-            self.logger.warning("Hard reset required but not defined.")
-            return connection
+            raise InfrastructureError("Hard reset required but not defined.")
         command = self.job.device.hard_reset_command
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
             if not self.run_command(cmd.split(' '), allow_silent=True):
                 raise InfrastructureError("%s failed" % cmd)
-        # the next prompt has to be determined by the boot method, so don't wait here.
-        self.set_namespace_data(action=SoftReboot.key(), label=SoftReboot.key(), key=SoftReboot.key(), value=False)
-        self.set_namespace_data(action=PDUReboot.key(), label=PDUReboot.key(), key=PDUReboot.key(), value=False)
         self.results = {'status': 'success'}
         return connection
 
