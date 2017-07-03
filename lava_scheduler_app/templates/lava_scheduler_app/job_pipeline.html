@@ -321,7 +321,7 @@
       <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% endif %}
       {% endfor %}
-      {% if job.status <= job.RUNNING %}
+      {% if job.status <= job.RUNNING or job.status == job.CANCELING %}
       <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
       {% endif %}
     </div>
@@ -677,14 +677,14 @@
       })
     });
 
+    {% if job.status > job.RUNNING and job.status != job.CANCELING %}
     // Add the links only for non-running jobs
-    {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
     anchors.add('code');
     {% endif %}
 
+{% if job.status <= job.RUNNING or job.status == job.CANCELING %}
   // Add a timer for the log updates
-{% if job.status <= job.RUNNING %}
   pollTimer = setTimeout(poll, 5000);
 {% endif %}
 
