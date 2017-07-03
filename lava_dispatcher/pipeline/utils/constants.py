@@ -140,3 +140,6 @@ SYS_CLASS_KVM = '/sys/class/misc/kvm'
 
 # default reboot commands
 REBOOT_COMMAND_LIST = ['reboot', 'reboot -n', 'reboot -nf']
+
+# Default size limit for tftp in bytes (4Gb)
+TFTP_SIZE_LIMIT = 4 * 1024 * 1024 * 1024
