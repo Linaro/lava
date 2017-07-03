@@ -59,7 +59,7 @@ Glossary of terms
 **S** [ :term:`scheduler` ]
 
 **T** [ :term:`target_group` ] [ :term:`test run` ] [ :term:`test shell` ]
-[ :term:`test suite` ] [ :term:`tftp` ]
+[ :term:`test suite` ] [ :term:`tftp` ] [ :term:`token` ]
 
 **V** [ :term:`VLANd` ]
 
@@ -517,6 +517,11 @@ Glossary of terms
     <https://tracker.debian.org/pkg/tftp-hpa>`_ and **not** by LAVA directly.
 
     .. seealso:: :ref:`tftp_support`.
+
+  token
+    LAVA uses tokens to authenticate users via the :ref:`xml_rpc` and REST APIs.
+
+    .. seealso:: :ref:`authentication_tokens`
 
   VLANd
     VLANd is a daemon to support virtual local area networks in LAVA. This
