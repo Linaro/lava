@@ -131,7 +131,9 @@ class JobParser(object):
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
         if dispatcher_config is not None:
-            job.parameters['dispatcher'] = yaml.load(dispatcher_config)
+            config = yaml.load(dispatcher_config)
+            if isinstance(config, dict):
+                job.parameters['dispatcher'] = config
 
         # Setup the logging now that we have the parameters
         job.setup_logging()
