@@ -519,20 +519,17 @@ def handle_start(msg, jobs, sock, master, zmq_config):
         LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
         return
 
-    env_msg = []
-    for line in env.split('\n'):
-        if line.startswith('#'):
-            continue
-        if not line:
-            continue
-        env_msg.append(line)
+    # Pretty print configuration
+    dispatcher_str = str(yaml.load(dispatcher_config)) if dispatcher_config else ""
+    env_str = str(yaml.load(env)) if env else ""
+    env_dut_str = str(yaml.load(env_dut)) if env_dut else ""
 
     LOG.info("[%d] Starting job", job_id)
     LOG.debug("[%d]         : %s", job_id, yaml.load(job_definition))
     LOG.debug("[%d] device  : %s", job_id, device_definition)
-    LOG.debug("[%d] dispatch: %s", job_id, dispatcher_config)
-    LOG.debug("[%d] env     : %s", job_id, env_msg)
-    LOG.debug("[%d] env-dut : %s", job_id, env_dut)
+    LOG.debug("[%d] dispatch: %s", job_id, dispatcher_str)
+    LOG.debug("[%d] env     : %s", job_id, env_str)
+    LOG.debug("[%d] env-dut : %s", job_id, env_dut_str)
 
     # Check if the job is known and started. In this case, send
     # back the right signal (ignoring the duplication or signaling
