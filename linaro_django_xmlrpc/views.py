@@ -90,7 +90,7 @@ def handler(request, mapper, help_view):  # pylint: disable=too-many-return-stat
 
 def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pylint: disable=redefined-builtin
     context = CallContext(
-        user=None, mapper=mapper, dispatcher=None, request=request)
+        user=None, mapper=mapper, dispatcher=None)
     system = SystemAPI(context)
     scheme = request.META.get('REQUEST_SCHEME', "http")
     dashboard_methods = []
