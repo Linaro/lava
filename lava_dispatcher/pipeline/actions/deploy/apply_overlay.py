@@ -266,6 +266,7 @@ class ApplyOverlayTftp(Action):
             self.set_namespace_data(action=self.name, label='file', key='overlay',
                                     value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)))
         if overlay_file:
+            self.logger.debug("[%s] Applying overlay %s to directory %s", namespace, overlay_file, directory)
             untar_file(overlay_file, directory)
             if nfs_address:
                 subprocess.check_output(['umount', directory])
