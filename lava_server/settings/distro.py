@@ -263,3 +263,4 @@ CSRF_COOKIE_HTTPONLY = distro_settings.get_setting("CSRF_COOKIE_HTTPONLY",
                                                    CSRF_COOKIE_HTTPONLY)
 X_FRAME_OPTIONS = distro_settings.get_setting("X_FRAME_OPTIONS",
                                               X_FRAME_OPTIONS)
+HTTPS_XML_RPC = distro_settings.get_setting("HTTPS_XML_RPC", HTTPS_XML_RPC)
