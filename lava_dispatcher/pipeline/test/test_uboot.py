@@ -267,7 +267,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(test_dir)
         self.assertIn('/lava-', test_dir)
         self.assertIsNotNone(extract)
-        self.assertEqual(extract.timeout.duration, 120)
+        self.assertEqual(extract.timeout.duration, 240)
 
     def test_reset_actions(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
