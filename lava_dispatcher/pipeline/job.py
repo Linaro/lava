@@ -254,12 +254,12 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                                  "case": "validate",
                                  "result": "fail"})
             self.cleanup(connection=None)
+            self.logger.error(exc.error_help)
             self.logger.results({"definition": "lava",
                                  "case": "job",
                                  "result": "fail",
                                  "error_msg": str(exc),
                                  "error_type": exc.error_type})
-            self.logger.error(exc.error_help)
             raise
         else:
             self.logger.results({"definition": "lava",
@@ -354,12 +354,12 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             result_dict["result"] = "fail"
             result_dict["error_msg"] = error_msg
             result_dict["error_type"] = error_type
-            self.logger.results(result_dict)
             self.logger.error(error_help)
+            self.logger.results(result_dict)
         else:
             result_dict["result"] = "pass"
-            self.logger.results(result_dict)
             self.logger.info("Job finished correctly")
+            self.logger.results(result_dict)
 
         return return_code
 
