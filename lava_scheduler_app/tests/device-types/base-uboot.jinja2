@@ -7,21 +7,29 @@
 "          - setenv initrd_high " + uboot_initrd_high|default('0xffffffff') + "
           - setenv fdt_high " + uboot_fdt_high|default('0xffffffff') ) -%}
 
+{% if append_dtb %}
+    {% set run_load_fdt = "" %}
+    {% set load_fdt = "" %}
+{% else %}
+    {% set run_load_fdt = "run loadfdt; " %}
+    {% set load_fdt = "          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'" %}
+{% endif %}
+
 {% set base_uboot_tftp_commands = uboot_tftp_commands|default(
 "          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
+" + load_fdt) -%}
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default(
-"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
           - run bootcmd") -%}
 
 {% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
           - run bootcmd") -%}
 
 {% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
           - run bootcmd") -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default(
