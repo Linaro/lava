@@ -82,12 +82,12 @@ class CallContextTests(TestCase):
     def test_unauthenticated_users_are_ignored(self):
         user = MockUser(is_authenticated=False, is_active=True)
         context = CallContext(user, None, None)
-        self.assertTrue(context.user.is_anonymous())
+        self.assertEqual(context.user, None)
 
     def test_inactive_users_are_ignored(self):
         user = MockUser(is_authenticated=True, is_active=False)
         context = CallContext(user, None, None)
-        self.assertTrue(context.user.is_anonymous())
+        self.assertEqual(context.user, None)
 
     def test_authenticated_active_users_are_allowed(self):
         user = MockUser(is_authenticated=True, is_active=True)
@@ -104,9 +104,9 @@ class ExposedAPITests(TestCase):
         api = ExposedAPI()
         self.assertIs(api._context, None)
 
-    def test_without_context_user_is_anonymous(self):
+    def test_without_context_user_is_None(self):
         api = ExposedAPI()
-        self.assertTrue(api.user.is_anonymous())
+        self.assertIs(api.user, None)
 
     def test_user_returns_context_user(self):
         user = MockUser(True, True)

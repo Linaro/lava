@@ -112,7 +112,7 @@ class DashboardAPI(ExposedAPI):
     def _put(self, content, content_filename, pathname):
         try:
             self.logger.debug("Getting bundle stream")
-            if self.user.is_superuser:
+            if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
@@ -125,8 +125,7 @@ class DashboardAPI(ExposedAPI):
                 errors.FORBIDDEN, "You cannot upload to this stream")
         try:
             self.logger.debug("Creating bundle object")
-            user = None if self.user.is_anonymous() else self.user
-            bundle = Bundle.objects.create_with_content(bundle_stream, user, content_filename, content)
+            bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
         except (IntegrityError, ValueError) as exc:
             self.logger.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
             raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
@@ -557,7 +556,7 @@ class DashboardAPI(ExposedAPI):
             - personal streams are accessible to owners
             - team streams are accessible to team members
         """
-        if self.user.is_superuser:
+        if self.user and self.user.is_superuser:
             bundle_streams = BundleStream.objects.all()
         else:
             bundle_streams = BundleStream.objects.accessible_by_principal(
@@ -634,7 +633,7 @@ class DashboardAPI(ExposedAPI):
         """
         bundles = []
         try:
-            if self.user.is_superuser:
+            if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
@@ -792,8 +791,9 @@ class DashboardAPI(ExposedAPI):
         user = None
         group = None
         if is_anonymous is False:
-            if not self.user.is_anonymous():
+            if self.user is not None:
                 assert is_anonymous is False
+                assert self.user is not None
                 if user_name is not None:
                     if not self.user.is_superuser:
                         if user_name != self.user.username:
@@ -813,13 +813,14 @@ class DashboardAPI(ExposedAPI):
                             "Only a member of group {group!r} could create this stream".format(group=group_name))
             else:
                 assert is_anonymous is False
+                assert self.user is None
                 raise xmlrpclib.Fault(
                     errors.FORBIDDEN, "Only anonymous streams can be constructed (you are not signed in)")
         else:
             assert is_anonymous is True
             assert user_name is None
             assert group_name is None
-            if not self.user.is_anonymous():
+            if self.user is not None:
                 user = self.user
             else:
                 # Hacky but will suffice for now
@@ -853,7 +854,7 @@ class DashboardAPI(ExposedAPI):
         except TestRunFilter.NotFound:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "filter %s not found" % filter_name)
         if not filter.public and self.user != owner:
-            if not self.user.is_anonymous():
+            if self.user:
                 raise xmlrpclib.Fault(
                     errors.FORBIDDEN, "forbidden")
             else:

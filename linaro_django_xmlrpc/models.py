@@ -26,7 +26,7 @@ import pydoc
 import random
 import xmlrpclib
 
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
@@ -148,13 +148,14 @@ class CallContext(object):
     dispatcher together.
     """
 
-    def __init__(self, user, mapper, dispatcher):
+    def __init__(self, user, mapper, dispatcher, request=None):
         if user is not None and user.is_authenticated() and user.is_active:
             self.user = user
         else:
-            self.user = AnonymousUser()
+            self.user = None
         self.mapper = mapper
         self.dispatcher = dispatcher
+        self.request = request
 
 
 class ExposedAPI(object):
@@ -181,13 +182,13 @@ class ExposedAPI(object):
 
     @property
     def user(self):
-        if self._context is None:
-            return AnonymousUser()
-        else:
+        if self._context is not None:
             return self._context.user
+        else:
+            return None
 
     def _authenticate(self):
-        if self.user.is_anonymous():
+        if self.user is None:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
@@ -362,7 +363,7 @@ class Dispatcher(object):
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
                 "Unable to decode request")
 
-    def marshalled_dispatch(self, data, user=None):
+    def marshalled_dispatch(self, data, user=None, request=None):
         """
         Dispatch marshalled request (encoded with XML-RPC envelope).
 
@@ -371,7 +372,7 @@ class Dispatcher(object):
         Returns the text of the response
         """
         context = CallContext(
-            user, mapper=self.mapper, dispatcher=self)
+            user, mapper=self.mapper, dispatcher=self, request=request)
         try:
             method_name, params = self.decode_request(data)
             response = self.dispatch(method_name, params, context)
@@ -393,7 +394,8 @@ class Dispatcher(object):
             impl = self.mapper.lookup(method_name, context)
             if impl is None:
                 self.logger.error(
-                    'Unable to dispatch unknown method %r', method_name)
+                    'Unable to dispatch unknown method %r', method_name,
+                    extra={'request': context.request})
                 raise xmlrpclib.Fault(FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
                                       "No such method: %r" % method_name)
             # TODO: check parameter types before calling
@@ -407,7 +409,8 @@ class Dispatcher(object):
                 # If there is no better handler we should log the problem
                 self.logger.error(
                     "Internal error in the XML-RPC dispatcher while calling method %r with %r",
-                    method_name, params, exc_info=True)
+                    method_name, params, exc_info=True,
+                    extra={'request': context.request})
             # TODO: figure out a way to get the error id from Raven if that is around
             raise xmlrpclib.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,

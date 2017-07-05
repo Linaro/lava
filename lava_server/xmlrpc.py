@@ -55,10 +55,10 @@ class LavaSystemAPI(SystemAPI):
         ------------
         Name of the authenticated user, if any, or None.
         """
-        if self.user.is_anonymous():
-            return None
-        else:
+        if self.user:
             return self.user.username
+        else:
+            return None
 
     def version(self):
         """
