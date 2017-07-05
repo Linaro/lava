@@ -256,7 +256,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAction.FakeTriggerAction()
         pipeline.add_action(action)
-        print(action.parameters)
+        self.assertEqual({'namespace': 'common'}, action.parameters)
         action.set_namespace_data(action='test', label="fake", key="string value", value="test string")
         self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
         test_string = action.get_namespace_data(action='test', label='fake', key='string value')
