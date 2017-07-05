@@ -6,11 +6,9 @@
 {% set bootm_kernel_addr = '0x71000000' %}
 {% set bootm_ramdisk_addr = '0x73000000' %}
 {% set bootm_dtb_addr = '0x70f00000' %}
-{% set bootz_kernel_addr = bootm_kernel_addr %}
-{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
-{% set bootz_dtb_addr = bootm_dtb_addr %}
 {% set base_ip_args = 'ip=dhcp' %}
 {% set uboot_mkimage_arch = 'arm' %}
 {% set append_dtb = true %}
 {% set use_xip = true %}
+{% set uboot_bootx_cmd = "bootm {KERNEL_ADDR} {RAMDISK_ADDR}" %}
 
