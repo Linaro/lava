@@ -30,13 +30,6 @@ TEST_MODULES = [
 ]
 
 
-try:
-    imp.find_module('django_openid_auth')
-    TEST_MODULES += ['other.test_login']
-except ImportError:
-    pass
-
-
 def load_tests_from_submodules(_locals):
     """
     Load all test classes from sub-modules as if they were here locally.

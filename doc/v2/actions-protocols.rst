@@ -300,6 +300,10 @@ This is a small deviation from how existing MultiNode jobs may be defined but
 the potential benefits are substantial when combined with the other elements of
 the MultiNode Protocol.
 
+.. index:: Multinode - essential roles
+
+.. _multinode_essential_roles:
+
 Marking some roles as essential
 ===============================
 
@@ -340,6 +344,11 @@ device will power-off or the connection can logout.)
           count: 3
           # each ssh connection will attempt to connect to the device of role 'host'
           host_role: host
+
+.. note:: Essential roles activate when the job with that role **terminates**,
+   not when the test shell definition containing the call to :ref:`lava_sync`
+   or :ref:`lava_wait` fails. If there are more test shell definitions after
+   this point, those would attempt to run.
 
 VLANd protocol
 **************

@@ -280,12 +280,14 @@
     <div id="sectionlogs">
       {% for line in log_data %}
         {% if line.lvl == "debug" %}
-          {% if "sending" in line.msg %}
+          {% if "sending" in line.msg.keys %}{% comment %}TODO: Should be removed in 2017.9{% endcomment %}
       <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
           {% else %}
             {% get_action_id line.msg as act_id %}
       <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
           {% endif %}
+        {% elif line.lvl == "input" %}
+      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg }}</kbd></code>
         {% elif line.lvl == "target" %}
       <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% elif line.lvl == "feedback" %}
@@ -294,9 +296,9 @@
             {% if line.msg.set %}
               {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
             {% else %}
-              {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+              {% url 'lava.results.testcase' line.msg.case_id as result_url %}
             {% endif %}
-      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.definition }}_{{ line.msg.case }}_{{ line.msg.level }}">
+      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.case_id }}">
         <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
         {% for key, value in line.msg.items|sort_items %}
           {% if value.items %}
@@ -319,7 +321,7 @@
       <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
         {% endif %}
       {% endfor %}
-      {% if job.status <= job.RUNNING %}
+      {% if job.status <= job.RUNNING or job.status == job.CANCELING %}
       <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
       {% endif %}
     </div>
@@ -332,7 +334,7 @@
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
       <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
-    <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+    <p><a href="{{ STATIC_URL }}docs/v2/glossary.html#term-pipeline">Pipeline</a> jobs use
      the job definition to generate a descriptive YAML file when the pipeline is validated.
      The file represents the data sent to the dispatcher at the start of the job, including
      details of the device as well as the job parameters and the details of the parameters
@@ -675,14 +677,14 @@
       })
     });
 
+    {% if job.status > job.RUNNING and job.status != job.CANCELING %}
     // Add the links only for non-running jobs
-    {% if job.status > job.RUNNING %}
     anchors.options.placement = 'left';
     anchors.add('code');
     {% endif %}
 
+{% if job.status <= job.RUNNING or job.status == job.CANCELING %}
   // Add a timer for the log updates
-{% if job.status <= job.RUNNING %}
   pollTimer = setTimeout(poll, 5000);
 {% endif %}
 
@@ -732,6 +734,7 @@
 
               var node;
               if(level == 'debug') {
+                // TODO: Should be removed in 2017.9
                 if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
                   $('<code class="keyboard" id="' + id + '"></code>')
                     .append($('<kbd></kbd>')
@@ -746,6 +749,11 @@
                     .text(d['msg'])
                     .insertBefore(progressNode);
                 }
+              } else if(level == 'input') {
+                 $('<code class="keyboard" id="' + id + '"></code>')
+                    .append($('<kbd></kbd>')
+                    .text(d['msg']))
+                    .insertBefore(progressNode);
               } else if(level == 'target') {
                 $('<code class="target bg-success" id="' + id + '"></code>')
                   .text(d['msg'])
@@ -755,8 +763,8 @@
                   .text(d['msg'])
                   .insertBefore(progressNode);
               } else if(level == 'results') {
-                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_' + d['msg']['result'];
-                var link = $('<a href="/results/{{ job.id }}/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
+                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_F_' + d['msg']['result'];
+                var link = $('<a href="/results/testcase/' + d['msg']['case_id'] + '"></a>');
                 var node;
                 if(d['msg']['result'] == 'fail') {
                   node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');

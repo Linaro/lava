@@ -3,7 +3,8 @@
 set -x
 set -e
 
-pep8 --ignore E501 .
+echo "Checking pep8"
+pep8 --ignore E501,E722 .
 
 if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
   echo "If it exists, a broken test database will be deleted without prompting."

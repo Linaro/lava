@@ -79,6 +79,7 @@ from lava_results_app.models import (
     NamedTestAttribute,
     Query,
     QueryCondition,
+    TestCase,
 )
 
 from lava_scheduler_app.template_helper import expand_template
@@ -1368,6 +1369,15 @@ def job_detail(request, pk):
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
                     log_data = yaml.load(f_in, Loader=yaml.CLoader)
+                    for line in log_data:
+                        if line["lvl"] == "results":
+                            case_id = TestCase.objects.filter(
+                                suite__job=job,
+                                suite__name=line["msg"]["definition"],
+                                name=line["msg"]["case"]).values_list(
+                                    "id", flat=True)
+                            if case_id:
+                                line["msg"]["case_id"] = case_id[0]
 
                     if sys.version_info < (3, 0):
                         for line in log_data:
@@ -1957,9 +1967,18 @@ def job_log_pipeline_incremental(request, pk):
             # When reaching EOF, yaml.load does return None instead of []
             if not data:
                 data = []
-            if sys.version_info < (3, 0):
+            else:
                 for line in data:
-                    remove_broken_string(line)
+                    if sys.version_info < (3, 0):
+                        remove_broken_string(line)
+                    if line["lvl"] == "results":
+                        case_id = TestCase.objects.filter(
+                            suite__job=job,
+                            suite__name=line["msg"]["definition"],
+                            name=line["msg"]["case"]).values_list(
+                                "id", flat=True)
+                        if case_id:
+                            line["msg"]["case_id"] = case_id[0]
 
     except (IOError, StopIteration, yaml.YAMLError):
         data = []

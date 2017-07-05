@@ -100,8 +100,7 @@ def _test_definition_schema():
         {
             Required('repository'): Any(_inline_schema(), str),
             Required('from'): str,
-            Required('name'): Match(r'^[a-zA-Z0-9-_]+$',
-                                    msg=INVALID_CHARACTER_ERROR_MSG),
+            Required('name'): str,
             Required('path'): str,
             Optional('parameters'): dict,
         }
@@ -282,7 +281,7 @@ def _job_schema():
             Optional('priority'): Any('high', 'medium', 'low'),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
-            Optional('metadata'): dict,
+            Optional('metadata'): All({Any(str, int): Any(str, int)}),
             Optional('secrets'): dict,
             Optional('tags'): [str],
             Required('visibility'): visibility_schema(),

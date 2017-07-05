@@ -171,6 +171,32 @@ lava_scheduler_app
                               types not currently installed.
                   --csv       Print as csv
 
+    device-transitions
+      Export device state transitions in either yaml or csv format.
+      Output can be filtered by old_state and new_state field values.
+
+        positional arguments:
+          {export}            Sub commands
+            export            Export existing device state transitions
+                              Fields exported: created_on, created_by, device,
+                              job, old_state, new_state, message
+                              Available states are: RETIRED, IDLE, RUNNING,
+                              OFFLINING, RESERVED, OFFLINE
+                              Not all combinations of states will exist.
+                              Not all fields are populated for all transitions.
+                              Example: To see transitions where an admin put
+                              the device back online, use: lava-server manage
+                              device-transition export --old-state OFFLINE
+                              --new-state IDLE
+                              Note: exporting all transitions will produce a
+                              lot of output, it is recommended to always
+                              specify --old-state and --new-state.
+                optional arguments:
+                  -h, --help  show this help message and exit
+                  --csv       Print as csv
+                  --old-state Filter output by old device status
+                  --new-state Filter output by new device status
+
     pipeline-worker
 
     LAVA Pipeline worker helper

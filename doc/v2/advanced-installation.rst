@@ -470,7 +470,7 @@ templates using the `cached loader
 
 To enable the cached loader, in */etc/lava-server/settings.conf* add:
 
-.. code-block:: json
+.. code-block:: none
 
   "USE_TEMPLATE_CACHE": true
 

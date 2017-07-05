@@ -30,6 +30,7 @@ from collections import OrderedDict
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, loader
 from lava_server.views import index as lava_index
@@ -321,20 +322,44 @@ def testset(request, job, ts, pk, case):
         }, request=request))
 
 
-@BreadCrumb("Test case {case}", parent=suite, needs=['job', 'pk', 'case'])
-def testcase(request, job, pk, case):
+@BreadCrumb("Test case {case_id}", parent=suite, needs=['job', 'pk', 'case_id'])
+def testcase(request, case_id, job=None, pk=None):
     """
     Each testcase can appear multiple times in the same testsuite and testjob,
     the action_data.action_level distinguishes each testcase.
+    This view supports multiple ways to obtain test case/set. First is by
+    test case ID, second by job ID, suite name and test case name and third by
+    job ID, suite name and test set name.
     :param request: http request object
     :param job: ID of the TestJob
     :param pk: the name of the TestSuite
-    :param case: the name of one or more TestCase objects in the TestSuite
+    :param case_id: the name or ID of one TestCase object in the TestSuite
     """
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
-    job = get_restricted_job(request.user, pk=job, request=request)
-    test_cases = TestCase.objects.filter(name=case, suite=test_suite)
-    test_sets = TestSet.objects.filter(name=case, suite=test_suite)
+    test_sets = None
+    try:
+        case = TestCase.objects.get(pk=case_id)
+    except (TestCase.DoesNotExist, ValueError):
+        case = TestCase.objects.filter(name=case_id, suite__name=pk,
+                                       suite__job__id=job).first()
+        if not case:
+            test_sets = TestSet.objects.filter(name=case_id)
+            if not test_sets:
+                raise Http404(
+                    "No TestCase/TestSet matches the given parameters.")
+    if not job:
+        job = case.suite.job
+    else:
+        job = get_restricted_job(request.user, pk=job, request=request)
+    if not pk:
+        test_suite = case.suite
+    else:
+        test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    if test_sets:
+        # No test case was found.
+        test_sets = test_sets.filter(suite=test_suite)
+        test_cases = TestCase.objects.none()
+    else:
+        test_cases = TestCase.objects.filter(name=case.name, suite=test_suite)
     extra_source = {}
     logger = logging.getLogger('dispatcher-master')
     for extra_case in test_cases:
@@ -352,9 +377,10 @@ def testcase(request, job, pk, case):
                 extra_source.setdefault(extra_case.id, '')
                 extra_source[extra_case.id] += "%s: %s\n" % (key, value)
     template = loader.get_template("lava_results_app/case.html")
+    trail_id = case.id if case else test_sets.first().name
     return HttpResponse(template.render(
         {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(testcase, pk=pk, job=job.id, case=case),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(testcase, pk=test_suite.name, job=job.id, case_id=trail_id),
             'job': job,
             'sets': test_sets,
             'suite': test_suite,

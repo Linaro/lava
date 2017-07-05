@@ -88,6 +88,8 @@ The flow for the job will be:
    file:`lava-sync` operation - the host can continue to do test actions after
    that sync has completed.
 
+.. index:: MultiNode - delay start, delay start, expect_role
+
 .. _delayed_start_multinode:
 
 Delaying the start of a job using Multinode

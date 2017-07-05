@@ -159,7 +159,7 @@
       <h2>Pipeline Description <a
       class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}"
        title="Download YAML description"><span class="glyphicon glyphicon-download"></span> YAML</a></h2>
-       <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+       <p><a href="{{ STATIC_URL }}docs/v2/glossary.html#term-pipeline">Pipeline</a> jobs use
        the job definition to generate a descriptive YAML file when the pipeline is validated.
        The file represents the data sent to the dispatcher at the start of the job, including
        details of the device as well as the job parameters and the details of the parameters
@@ -204,8 +204,6 @@ timeouts:
             <dd>{{ data.description }}</dd>
             <dt>output</dt>
             <dd><a href="{% url 'lava.scheduler.job.detail' job.id %}#action_{{ level|level_replace }}">{{ job.id }}#action_{{ level }}</a></dd>
-            <dt>results</dt>
-            <dd><a href="{% url 'lava.results.testjob' job.id %}/lava/{{ data.name }}">{{ data.name }}</a></dd>
         {% if data.timeout %}
             <dt>timeout</dt>{% comment %}
             add a link to help content of this topic

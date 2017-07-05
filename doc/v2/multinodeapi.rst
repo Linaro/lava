@@ -28,6 +28,14 @@ it with the API will aid in debugging the test definition.
    be able to debug problems later **without** needing to resubmit the
    MultiNode test job.
 
+.. note:: It is not recommended to use ``lava-test-case`` command in
+          conjunction with the MultiNode API calls. The first reason is that
+          any errors that might occur within the API will be ignored by the
+          lava-test-case and it will be seen as successful by
+          ``lava-test-shell``. The second reason is that the job will end up with
+          duplicate test cases for each API call (one from ``lava-test-case``
+          and the other one from API command).
+
 .. seealso:: :ref:`Limitations of hacking sessions <hacking_session_limitations>`
 
 .. index:: lava-self
@@ -272,6 +280,10 @@ Usage:
 
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed by
 ``lava-wait-all foo``.
+
+A :ref:`lava test result <recording_test_result_data>` is generated within the
+current :ref:`results_test_suite`, recording the completion or failure of the
+synchronisation.
 
 .. seealso:: :ref:`flow_tables`
 

@@ -19,7 +19,9 @@ protocols:
     name: lxc-hikey-test
     template: debian
     distribution: debian
-    release: sid
+    release: jessie
+    mirror: http://mirror.bytemark.co.uk/debian
+    verbose: true
 
 actions:
 - deploy:
@@ -30,15 +32,13 @@ actions:
     packages:
     - android-tools-adb
     - android-tools-fastboot
-    - systemd
-    - systemd-sysv
     os: debian
 
 - boot:
     namespace: tlxc
     prompts:
-    - 'root@(.*):/#'
-    - 'hikey:/ $'
+    - 'root@(.*):'
+    - 'hikey: '
     timeout:
       minutes: 5
     method: lxc
@@ -48,42 +48,36 @@ actions:
       minutes: 15
     to: fastboot
     namespace: droid
-    connection: lxc
     images:
       ptable:
-        url: http://builds.96boards.org/snapshots/reference-platform/components/uefi/latest/release/hikey/ptable-aosp-8g.img
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi/latest/release/hikey/ptable-aosp-8g.img
+        reboot: hard-reset
       boot:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/boot.img.tar.xz
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/boot.img.xz
         compression: xz
-        archive: tar
+        reboot: hard-reset
       cache:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/cache.img.tar.xz
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/cache.img.xz
         compression: xz
-        archive: tar
       userdata:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/userdata.img.tar.xz
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/userdata.img.xz
         compression: xz
-        archive: tar
       system:
-        url: http://builds.96boards.org/snapshots/hikey/linaro/aosp-master/147/system.img.tar.xz
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/system.img.xz
         compression: xz
-        archive: tar
     os: debian
 
 - boot:
     namespace: droid
-    connection: serial
     prompts:
     - 'root@(.*):/#'
-    - 'hikey:/ $'
+    - 'hikey:/'
     timeout:
       minutes: 15
-    method: uefi-menu
-    commands: fastboot
+    method: fastboot
 
 - test:
     namespace: tlxc
-    connection: lxc
     timeout:
       minutes: 10
     definitions:
@@ -93,14 +87,9 @@ actions:
           format: Lava-Test Test Definition 1.0
           name: check-devices
           description: "LXC dev list"
-        install:
-          deps:
-          - nmap
-          - gawk
         run:
           steps:
           - /sbin/ifconfig
-          - nmap -n -sn 10.15.63.0/24
       name: lxc-dev-inline
       path: inline/lxc-dev.yaml
     - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git

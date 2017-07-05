@@ -100,14 +100,54 @@ class TestTemplates(unittest.TestCase):
         # then change this to assertEqual
         self.assertNotEqual(count, len(device_dict.keys()))
 
-    def test_x15_template(self):
-        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'x15.jinja2' %}
+    def test_inclusion(self):
+        data = """{% extends 'nexus4.jinja2' %}
+{% set adb_serial_number = 'R42D300FRYP' %}
+{% set fastboot_serial_number = 'R42D300FRYP' %}
+"""
+        test_template = prepare_jinja_template('nexus4-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual(
+            'adb -s R42D300FRYP shell',
+            template_dict['commands']['connect']
+        )
+        self.assertIn('lxc', template_dict['actions']['boot']['methods'])
+        self.assertIn('fastboot', template_dict['actions']['boot']['methods'])
+        self.assertIn('lxc', template_dict['actions']['deploy']['methods'])
+        self.assertIn('fastboot', template_dict['actions']['deploy']['methods'])
+        self.assertEqual(
+            ['reboot', 'wait-usb-add', 'lxc-add-device'],
+            template_dict['actions']['boot']['methods']['fastboot']
+        )
+
+    def test_nexus4_template(self):
+        data = """{% extends 'nexus4.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
-{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
-{% set connection_command = 'adb -s R32D300FRYP shell' %}
-{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
-"""))
+"""
+        self.assertTrue(self.validate_data('nexus4-01', data))
+        test_template = prepare_jinja_template('nexus4-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('nexus4', template_dict['device_type'])
+        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
+        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+
+    def test_x15_template(self):
+        data = """{% extends 'x15.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+"""
+        self.assertTrue(self.validate_data('x15-01', data))
+        test_template = prepare_jinja_template('x15-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('x15', template_dict['device_type'])
+        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
+        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
 
     def test_armada375_template(self):
         """
@@ -254,6 +294,34 @@ class TestTemplates(unittest.TestCase):
             if 'commands' in value:
                 self.assertIn('dhcp net1', value['commands'])
                 self.assertNotIn('dhcp net0', value['commands'])
+
+    def test_thunderx_template(self):
+        data = """{% extends 'thunderx.jinja2' %}
+{% set map = {'iface0': {'lngswitch03': 13}, 'iface1': {'lngswitch03': 1}, 'iface2': {'lngswitch02': 9}, 'iface3': {'lngswitch02': 10}} %}
+{% set tags = {'iface0': [], 'iface1': ['RJ45', '1G', '10G'], 'iface2': ['SFP+', '1G', '10G'], 'iface3': ['SFP+', '1G', '10G']} %}
+{% set mac_addr = {'iface0': '00:00:1a:1b:8b:f6', 'iface1': '00:00:1a:1b:8b:f7', 'iface2': '00:11:0a:68:94:30', 'iface3': '00:11:0a:68:94:31'} %}
+{% set interfaces = ['iface0', 'iface1', 'iface2', 'iface3'] %}
+{% set sysfs = {'iface0': '/sys/devices/platform/AMDI8001:00/net/',
+'iface1': '/sys/devices/platform/AMDI8001:01/net/',
+'iface2': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.0/net/',
+'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
+{% set connection_command = 'telnet localhost 7333' %}
+{% set exclusive = 'True' %}"""
+        self.assertTrue(self.validate_data('staging-thunderx-01', data))
+        test_template = prepare_jinja_template('staging-thunderx-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('character_delays', template_dict)
+        self.assertIn('boot', template_dict['character_delays'])
+        self.assertEqual(150, template_dict['character_delays']['boot'])
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('iface2', template_dict['parameters']['interfaces'])
+        self.assertIn('iface1', template_dict['parameters']['interfaces'])
+        self.assertIn('iface0', template_dict['parameters']['interfaces'])
+        self.assertIn('sysfs', template_dict['parameters']['interfaces']['iface2'])
 
     def test_beaglebone_black_template(self):
         data = """{% extends 'beaglebone-black.jinja2' %}
@@ -891,3 +959,23 @@ class TestTemplates(unittest.TestCase):
 {% set device_ip = '192.168.1.11' %}
 {% set exclusive = 'True' %}
 """))
+
+    def test_juno_vexpress_template(self):
+        data = """{% extends 'vexpress.jinja2' %}
+    {% set connection_command = 'telnet serial4 7001' %}
+    {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
+    {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
+    {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
+    {% set usb_label = 'SanDiskCruzerBlade' %}
+    {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
+    {% set usb_device_id = 0 %}
+    {% set nfs_uboot_bootcmd = (
+    "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+              - boot") %}"""
+        self.assertTrue(self.validate_data('staging-juno-01', data))
+        test_template = prepare_jinja_template('staging-juno-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual({'boot': 30}, template_dict['character_delays'])
+        self.assertIn('cpu-reset-message', template_dict['constants'])

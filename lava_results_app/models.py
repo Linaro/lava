@@ -437,13 +437,9 @@ class TestCase(models.Model, Queryable):
 
         return attribute
 
+    @models.permalink
     def get_absolute_url(self):
-        if self.test_set:
-            return urllib.quote("/results/%s/%s/%s/%s" % (
-                self.suite.job.id, self.suite.name, self.test_set.name, self.name))
-        else:
-            return urllib.quote("/results/%s/%s/%s" % (
-                self.suite.job.id, self.suite.name, self.name))
+        return ("lava.results.testcase", [self.id])
 
     def _get_value(self):
         if self.measurement:

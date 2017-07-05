@@ -842,13 +842,13 @@ def device_type_summary(visible=None):
                 ),
                 busy=Sum(
                     Case(
-                        When(status__in=[Device.RUNNING, Device.RESERVED], then=1),
+                        When(status__in=[Device.RUNNING, Device.RESERVED, Device.OFFLINING], then=1),
                         default=0, output_field=IntegerField()
                     )
                 ),
                 offline=Sum(
                     Case(
-                        When(status__in=[Device.OFFLINE, Device.OFFLINING], then=1),
+                        When(status__in=[Device.OFFLINE], then=1),
                         default=0, output_field=IntegerField()
                     )
                 ),

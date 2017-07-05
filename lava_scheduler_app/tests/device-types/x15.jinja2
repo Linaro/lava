@@ -1,25 +1,9 @@
-{% extends 'base.jinja2' %}
-
-{% block vland %}
-{#  #}
-{% endblock vland %}
-
-{% block body %}
-device_type: x15
-adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
-fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
-fastboot_options: {{ fastboot_options|default([]) }}
-
-# This attribute identifies whether a device should get into fastboot mode by
-# interrupting uboot and issuing commands at the bootloader prompt.
-fastboot_via_uboot: True
-
-actions:
-  deploy:
-    methods:
-      lxc:
-      fastboot:
-      u-boot:
+{% extends 'base-fastboot.jinja2' %}
+{% set device_type = "x15" %}
+{% set fastboot_sequence = [
+    'reboot', 'wait-usb-add', 'lxc-add-device',
+    'auto-login', 'shell-session', 'export-env'] %}
+{% set fastboot_deploy_uboot = "
       u-boot:
         parameters:
           bootloader_prompt: '=>'
@@ -31,15 +15,8 @@ actions:
           fastboot:
             commands:
               - fastboot 1
-    connections:
-      lxc:
-      serial:
-  boot:
-    connections:
-      lxc:
-      serial:
-    methods:
-      lxc:
+"%}
+{% set fastboot_boot_uboot = "
       u-boot:
         parameters:
           bootloader_prompt: '=>'
@@ -48,12 +25,5 @@ actions:
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: " "
           send_char: False
-      fastboot:
-        - reboot
-        - wait-usb-add
-        - lxc-add-device
-        - auto-login
-        - shell-session
-        - export-env
 
-{% endblock body %}
+" %}
