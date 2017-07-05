@@ -27,7 +27,6 @@ from lava_dispatcher.pipeline.action import (
     LAVABug,
 )
 from lava_dispatcher.pipeline.logical import (
-    AdjuvantAction,
     RetryAction,
     DiagnosticAction,
 )
@@ -102,6 +101,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.section = 'internal'
             self.summary = "fake trigger action for unit tests"
             self.description = "fake, do not use outside unit tests"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             self.count += 1
@@ -162,12 +162,15 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "actions": [
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'failure_retry': 3
                     },
                     'boot': {
+                        'namespace': 'common',
                         'failure_retry': 4
                     },
                     'test': {
+                        'namespace': 'common',
                         'failure_retry': 5
                     }
                 }
@@ -244,188 +247,6 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         with self.assertRaises(JobError):
             fakepipeline.run_actions(None, None)
 
-
-class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
-    class FakeJob(Job):
-
-        def __init__(self, parameters):
-            super(TestAdjuvant.FakeJob, self).__init__(4212, parameters, None)
-            self.logger = DummyLogger()
-            self.timeout = Timeout("FakeJob", Timeout.parse({'minutes': 2}))
-
-        def validate(self, simulate=False):
-            self.pipeline.validate_actions()
-
-    class FakeDeploy(object):
-        """
-        Derived from object, *not* Deployment as this confuses python -m unittest discover
-        - leads to the FakeDeploy being called instead.
-        """
-        def __init__(self, parent):
-            self.__parameters__ = {}
-            self.pipeline = parent
-            self.job = parent.job
-            self.action = TestAdjuvant.FakeAction()
-
-    class FakeConnection(object):
-        def __init__(self):
-            self.name = "fake-connect"
-
-    class FakeDevice(object):
-        def __init__(self):
-            self.parameters = {}
-
-    class FakePipeline(Pipeline):
-
-        def __init__(self, parent=None, job=None):
-            super(TestAdjuvant.FakePipeline, self).__init__(parent, job)
-
-    class FailingAdjuvant(AdjuvantAction):  # pylint: disable=abstract-method
-        """
-        Added to the pipeline but only runs if FakeAction sets a suitable key.
-        """
-        def __init__(self):
-            super(TestAdjuvant.FailingAdjuvant, self).__init__()
-            self.name = "fake-adjuvant"
-            self.summary = "fake helper"
-            self.description = "fake adjuvant helper"
-
-    class FakeAdjuvant(AdjuvantAction):
-        """
-        Added to the pipeline but only runs if FakeAction sets a suitable key.
-        """
-        def __init__(self):
-            super(TestAdjuvant.FakeAdjuvant, self).__init__()
-            self.name = "fake-adjuvant"
-            self.summary = "fake helper"
-            self.description = "fake adjuvant helper"
-
-        @classmethod
-        def key(cls):
-            return "fake-key"
-
-        def run(self, connection, max_end_time, args=None):
-            connection = super(TestAdjuvant.FakeAdjuvant, self).run(connection, max_end_time, args)
-            if not self.valid:
-                raise LAVABug("fakeadjuvant should be valid")
-            adjuvant = self.get_namespace_data(action=self.key(), label=self.key(), key=self.key())
-            if adjuvant:
-                self.data[self.key()] = 'triggered'
-            if self.adjuvant:
-                self.data[self.key()] = 'base class trigger'
-            return connection
-
-    class FakeAction(Action):
-        """
-        Isolated Action which can be used to generate artificial exceptions.
-        """
-
-        def __init__(self):
-            super(TestAdjuvant.FakeAction, self).__init__()
-            self.count = 1
-            self.name = "fake-action"
-            self.summary = "fake action for unit tests"
-            self.description = "fake, do not use outside unit tests"
-
-        def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-
-        def run(self, connection, max_end_time, args=None):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            connection = TestAdjuvant.FakeConnection()
-            self.count += 1
-            self.results = {'status': "failed"}
-            key = TestAdjuvant.FakeAdjuvant.key()
-            self.set_namespace_data(action=key, label=key, key=key, value=True)
-            return connection
-
-    class SafeAction(Action):
-        """
-        Isolated test action which does not trigger the adjuvant
-        """
-        def __init__(self):
-            super(TestAdjuvant.SafeAction, self).__init__()
-            self.name = "passing-action"
-            self.summary = "fake action without adjuvant"
-            self.description = "fake action runs without calling adjuvant"
-
-        def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-
-        def run(self, connection, max_end_time, args=None):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            connection = TestAdjuvant.FakeConnection()
-            self.results = {'status': "passed"}
-            key = TestAdjuvant.FakeAdjuvant.key()
-            self.set_namespace_data(action=key, label=key, key=key, value=False)
-            return connection
-
-    def setUp(self):
-        super(TestAdjuvant, self).setUp()
-        self.parameters = {
-            "job_name": "fakejob",
-            'output_dir': mkdtemp(),
-            "actions": [
-                {
-                    'deploy': {
-                        'failure_retry': 3
-                    },
-                    'boot': {
-                        'failure_retry': 4
-                    },
-                    'test': {
-                        'failure_retry': 5
-                    }
-                }
-            ]
-        }
-        self.fakejob = TestAdjuvant.FakeJob(self.parameters)
-
-    def test_adjuvant_key(self):
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        pipeline.add_action(TestAdjuvant.FakeAction())
-        pipeline.add_action(TestAdjuvant.FailingAdjuvant())
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestAdjuvant.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.validate()
-
-    def test_adjuvant(self):
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        pipeline.add_action(TestAdjuvant.FakeAction())
-        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestAdjuvant.FakeDevice()
-        actions = []
-        for action in self.fakejob.pipeline.actions:
-            actions.append(action.name)
-        self.assertIn('fake-action', actions)
-        self.assertIn('fake-adjuvant', actions)
-        self.assertEqual(self.fakejob.pipeline.actions[1].key(), TestAdjuvant.FakeAdjuvant.key())
-
-    def test_run_adjuvant_action(self):
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        pipeline.add_action(TestAdjuvant.FakeAction())
-        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.assertEqual(self.fakejob.run(), 0)
-
-    def test_run_action(self):
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        pipeline.add_action(TestAdjuvant.SafeAction())
-        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestAdjuvant.FakeDevice()
-        self.assertEqual(self.fakejob.run(), 0)
-        self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
-        self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
-
     def test_namespace_data(self):
         """
         namespace data uses copies, not references
@@ -433,8 +254,9 @@ class TestAdjuvant(StdoutTestCase):  # pylint: disable=too-many-public-methods
         This allows actions to refer to the common data and manipulate it without affecting other actions.
         """
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAdjuvant.SafeAction()
+        action = TestAction.FakeTriggerAction()
         pipeline.add_action(action)
+        self.assertEqual({'namespace': 'common'}, action.parameters)
         action.set_namespace_data(action='test', label="fake", key="string value", value="test string")
         self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
         test_string = action.get_namespace_data(action='test', label='fake', key='string value')
@@ -502,7 +324,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+            self.internal_pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -520,6 +342,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.name = "passing-action"
             self.summary = "fake action without adjuvant"
             self.description = "fake action runs without calling adjuvant"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -536,6 +359,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.name = "long-action"
             self.summary = "fake action with overly long sleep"
             self.description = "fake action"
+            self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -571,7 +395,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+            self.internal_pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time, args=None):
             if connection:
@@ -593,12 +417,15 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "actions": [
                 {
                     'deploy': {
+                        'namespace': 'common',
                         'failure_retry': 3
                     },
                     'boot': {
+                        'namespace': 'common',
                         'failure_retry': 4
                     },
                     'test': {
+                        'namespace': 'common',
                         'failure_retry': 5
                     }
                 }
@@ -644,7 +471,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.LongAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         # run() returns 2 for JobError
@@ -656,7 +485,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         action = TestTimeout.SafeAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         # run() returns 0 in case of success
@@ -673,7 +504,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.FakeSafeAction())
         pipeline.add_action(TestTimeout.FakeSafeAction())
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        finalize.parameters['namespace'] = 'common'
+        pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         self.assertEqual(self.fakejob.run(), 0)

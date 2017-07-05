@@ -1,0 +1,51 @@
+actions:
+- deploy:
+    kernel: {url: 'http://people.linaro.org/~anders.roxell/ubuntu-v4.4/vmlinuz-4.4.0-31-generic'}
+    modules: {compression: gz, url: 'http://people.linaro.org/~anders.roxell/ubuntu-v4.4/overlay.tar.gz'}
+    nfsrootfs: {compression: gz, prefix: binary/, url: 'http://images.validation.linaro.org/x86/debian/linaro-jessie-nano-20150123-1.tar.gz'}
+    os: debian
+    protocols:
+      lava-vland:
+      - {action: lava-vland-overlay, request: deploy_vlans}
+    ramdisk: {compression: gz, url: 'http://people.linaro.org/~anders.roxell/bridge-initramfs/initramfs.amd64-new18.cpio.gz'}
+    role: server
+    timeout: {minutes: 30}
+    to: tftp
+- boot:
+    commands: nfs
+    method: ipxe
+    parameters: {shutdown-message: 'reboot: Restarting system'}
+    prompts: [linaro-test, 'root@linaro-nano:']
+    role: server
+    timeout: {minutes: 15}
+- test:
+    definitions:
+    - from: git
+      name: hacking
+      parameters: {IRC_USER: raffe, PUB_KEY: ssh-rsa AAAAB3}
+      path: hacking-session-debian.yaml
+      repository: http://git.linaro.org/lava-team/hacking-session.git
+    role: server
+    timeout: {minutes: 60}
+device_type: x86
+job_name: x86-vland-multinode
+priority: medium
+protocols:
+  lava-multinode:
+    group_size: 2
+    role: server
+    roles: {lng-generator-01: server, lng-generator-02: client}
+    sub_id: 1
+    target_group: 3cfbce7d-056f-4742-bb6d-0144266669d6
+    timeout: {minutes: 30}
+  lava-vland:
+    vlan_one:
+      tags: [10G]
+    vlan_two:
+      tags: [10G]
+timeouts:
+  action: {minutes: 30}
+  connection: {minutes: 30}
+  job: {minutes: 30}
+visibility: public
+

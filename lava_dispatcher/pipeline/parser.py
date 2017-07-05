@@ -49,8 +49,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
     parameters = job_data[name]
-    parameters.update({'namespace': parameters.get('namespace', 'common')})
-    parameters.update({'test_info': test_info})
+    parameters['test_info'] = test_info
     if 'protocols' in pipeline.job.parameters:
         parameters.update(pipeline.job.parameters['protocols'])
 
@@ -131,7 +130,9 @@ class JobParser(object):
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
         if dispatcher_config is not None:
-            job.parameters['dispatcher'] = yaml.load(dispatcher_config)
+            config = yaml.load(dispatcher_config)
+            if isinstance(config, dict):
+                job.parameters['dispatcher'] = config
 
         # Setup the logging now that we have the parameters
         job.setup_logging()
@@ -162,8 +163,10 @@ class JobParser(object):
         for action_data in data['actions']:
             action_data.pop('yaml_line', None)
             for name in action_data:
-                namespace = action_data[name].get('namespace', 'common')
+                # Set a default namespace if needed
+                namespace = action_data[name].setdefault('namespace', 'common')
                 test_counts.setdefault(namespace, 1)
+
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     parse_action(action_data, name, device, pipeline,
                                  test_info, test_counts[namespace])
@@ -178,7 +181,7 @@ class JobParser(object):
                                 if repeat_action == 'yaml_line':
                                     continue
                                 repeating[repeat_action]['repeat-count'] = c_iter
-                                namespace = repeating[repeat_action].get('namespace', 'common')
+                                namespace = repeating[repeat_action].setdefault('namespace', 'common')
                                 test_counts.setdefault(namespace, 1)
                                 parse_action(repeating, repeat_action, device,
                                              pipeline, test_info, test_counts[namespace])

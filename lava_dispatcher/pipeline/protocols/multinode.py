@@ -33,12 +33,15 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     JobError,
     TestError,
+    MultinodeProtocolTimeoutError,
     Timeout,
 )
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
+# pylint: disable=misplaced-comparison-constant,too-many-branches
 
-class MultinodeProtocol(Protocol):
+
+class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     """
     Multinode API protocol - one instance per Multinode job
     """
@@ -212,8 +215,19 @@ class MultinodeProtocol(Protocol):
             # apply the default timeout to each poll operation.
             if c_iter > timeout:
                 self.finalise_protocol()
-                raise JobError("protocol %s timed out" % self.name)
+                raise MultinodeProtocolTimeoutError(
+                    "protocol %s timed out" % self.name)
         return response
+
+    def configure(self, device, job):
+        """
+        Called by job.validate() to populate internal data
+        Returns True if configuration completed.
+        """
+        action_list = [action.section for action in job.pipeline.actions if action.section]
+        self.logger.debug("This MultiNode test job contains "
+                          "top level actions, in order, of: %s", ', '.join(action_list))
+        return True
 
     def set_up(self):
         """
@@ -470,6 +484,7 @@ class MultinodeProtocol(Protocol):
         and blocks until that messageID is available for this node
         """
         # use self.target as the node ID
+        self.logger.debug("request_wait %s", message_id)
         wait_msg = {"request": "lava_wait",
                     "messageID": message_id,
                     "nodeID": self.parameters['target']}
@@ -499,6 +514,7 @@ class MultinodeProtocol(Protocol):
         """
         Creates and send a message requesting lava_sync
         """
+        self.logger.debug("request_sync %s", msg)
         sync_msg = {"request": "lava_sync", "messageID": msg}
         return self._send(sync_msg)
 
@@ -507,6 +523,7 @@ class MultinodeProtocol(Protocol):
         Sends a message to the group via the Coordinator. All jobs with the matching role
         will receive the message and can then start the job.
         """
+        self.logger.debug("request_lava_start %s", message)
         send_msg = {"request": "lava_send",
                     "messageID": 'lava_start',
                     "message": message}

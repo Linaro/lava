@@ -107,6 +107,13 @@ class ConfigurationError(LAVAError):
     error_type = "Configuration"
 
 
+class MultinodeProtocolTimeoutError(LAVAError):
+    error_code = 6
+    error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
+                 "has timed out."
+    error_type = "MultinodeTimeout"
+
+
 class InternalObject(object):  # pylint: disable=too-few-public-methods
     """
     An object within the dispatcher pipeline which should not be included in
@@ -704,7 +711,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             will not have been set in the action at that point.
         """
         params = parameters if parameters else self.parameters
-        namespace = params.get('namespace', 'common')
+        namespace = params['namespace']
         value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)  # pylint: disable=no-member
         if value is None:
             return None
@@ -725,7 +732,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             will not have been set in the action at that point.
         """
         params = parameters if parameters else self.parameters
-        namespace = params.get('namespace', 'common')
+        namespace = params['namespace']
         if not label or not key:
             self.errors = "Invalid call to set_namespace_data: %s" % action
         self.data.setdefault(namespace, {})  # pylint: disable=no-member
@@ -905,15 +912,3 @@ class Timeout(object):
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         self.duration = max(min(OVERRIDE_CLAMP_DURATION, duration), 1)  # FIXME: needs support in /etc/
-
-
-def action_namespaces(parameters=None):
-    """Iterates through the job parameters to identify all the action
-    namespaces."""
-    namespaces = set()
-    for action in parameters['actions']:
-        for name in action:
-            if isinstance(action[name], dict):
-                if action[name].get('namespace', None):
-                    namespaces.add(action[name].get('namespace', None))
-    return namespaces

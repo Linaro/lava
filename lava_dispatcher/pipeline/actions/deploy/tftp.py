@@ -26,6 +26,7 @@ import tempfile
 
 from lava_dispatcher.pipeline.action import (
     ConfigurationError,
+    JobError,
     Pipeline
 )
 from lava_dispatcher.pipeline.logical import Deployment
@@ -34,6 +35,7 @@ from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.pipeline.utils.constants import TFTP_SIZE_LIMIT
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import tftpd_dir
 
@@ -138,3 +140,20 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.internal_pipeline.add_action(LxcAddDeviceAction())
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
+
+    def run(self, connection, max_end_time, args=None):
+        super(TftpAction, self).run(connection, max_end_time, args)
+        tftp_size_limit = self.job.parameters['dispatcher'].get('tftp_size_limit',
+                                                                TFTP_SIZE_LIMIT)
+        self.logger.debug("Checking files for TFTP limit of %s bytes.", tftp_size_limit)
+        for (action, key) in [('compress-ramdisk', 'ramdisk'),
+                              ('download-action', 'kernel'),
+                              ('download-action', 'dtb')]:
+            if key in self.parameters:
+                filename = self.get_namespace_data(action=action, label='file', key=key)
+                filename = os.path.join(tftpd_dir(), filename)
+                fsize = os.stat(filename).st_size
+                if fsize >= tftp_size_limit:
+                    raise JobError("Unable to send '%s' over tftp: file too large (%d > %d)" %
+                                   (os.path.basename(filename), fsize, tftp_size_limit))
+        return connection

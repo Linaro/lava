@@ -127,6 +127,9 @@ class YAMLLogger(logging.Logger):
     def debug(self, message, *args, **kwargs):
         self.log_message(logging.DEBUG, 'debug', message, *args, **kwargs)
 
+    def input(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'input', message, *args, **kwargs)
+
     def target(self, message, *args, **kwargs):
         self.log_message(logging.INFO, 'target', message, *args, **kwargs)
 

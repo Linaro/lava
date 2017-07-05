@@ -153,6 +153,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 compression = self.parameters[self.key].get('compression', False)
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
+        if os.path.isdir(fname):
+            raise JobError("Download '%s' is a directory, not a file" % fname)
         if os.path.exists(fname):
             os.remove(fname)
 

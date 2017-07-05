@@ -51,12 +51,9 @@
     name: bootloader-retry
     pipeline:
     - class: power.ResetDevice
-      name: reboot-device
+      name: reset-device
       pipeline:
-      - {class: power.RebootDevice, name: soft-reboot}
       - {class: power.PDUReboot, name: pdu-reboot}
-      - {class: power.SoftReboot, name: send-reboot-command}
-      - {class: power.PowerOn, name: power-on}
     - {class: actions.boot.ipxe.BootloaderInterrupt, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}

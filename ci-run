@@ -4,7 +4,7 @@ set -x
 set -e
 
 echo "Checking pep8"
-pep8 --ignore E501 --exclude=".eggs/*" .
+pep8 --ignore E501,E722 --exclude=".eggs/*" .
 
 echo "Starting unit tests"
 echo

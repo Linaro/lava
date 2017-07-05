@@ -147,7 +147,7 @@ class OverlayAction(DeployAction):
         namespace = self.parameters.get('namespace', None)
         if namespace:
             if namespace not in get_test_action_namespaces(self.job.parameters):
-                self.logger.debug("skipped %s", self.name)
+                self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
                 return connection
         self.set_namespace_data(action='test', label='shared', key='location', value=tmp_dir)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')

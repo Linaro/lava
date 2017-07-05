@@ -161,7 +161,7 @@ class CallQemuAction(Action):
                 exc, self.job.device['actions']['boot']['methods'][method])
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
-        namespace = self.parameters.get('namespace', 'common')
+        namespace = self.parameters['namespace']
         for label in self.data[namespace]['download-action'].keys():
             if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
                 continue

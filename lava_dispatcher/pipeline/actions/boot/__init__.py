@@ -289,7 +289,8 @@ class WaitUSBDeviceAction(Action):
                     if usb_product_id == '0000':
                         self.errors = 'usb_product_id unset'
         except KeyError as exc:
-            raise InfrastructureError(exc)
+            self.errors = exc
+            return
         except (TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
@@ -389,6 +390,10 @@ class BootloaderCommandOverlay(Action):
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
                     and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
+                ramdisk_addr = '-'
+            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            if self.method == 'u-boot' and not add_header == "u-boot":
+                self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = '-'
 
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
