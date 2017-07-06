@@ -1,0 +1,102 @@
+{% extends 'base.jinja2' %}
+{% set boot_character_delay = 150 %}
+
+
+device_type: thunderx
+{% set console_device = console_device | default('ttyAMA0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set kernel_args = kernel_args | default('acpi=force') %}
+
+{% block vland %}
+{{ super() }}
+{% endblock %}
+{% block body %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      ssh:
+      grub:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
+          boot_message: {{ boot_message|default('Linux version') }}
+          send_char: True
+        ramdisk:
+          commands:
+          - insmod net
+          - insmod efinet
+          - insmod tftp
+          - insmod gzio
+          - insmod part_gpt
+          - insmod efi_gop
+          - net_bootp efinet3
+          - net_ls_addr
+          - net_ls_routes
+          - set net_default_server={SERVER_IP}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} {{ base_ip_args }}'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+        nfs:
+          commands:
+          - insmod net
+          - insmod efinet
+          - insmod tftp
+          - insmod gzio
+          - insmod part_gpt
+          - insmod efi_gop
+          - net_bootp efinet3
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+{% endblock %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    pdu-reboot:
+      seconds: 3000
+  connections:
+    pdu-reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock %}

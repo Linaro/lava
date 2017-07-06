@@ -25,6 +25,7 @@ import base64
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -90,9 +91,12 @@ def handler(request, mapper, help_view):  # pylint: disable=too-many-return-stat
 
 def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pylint: disable=redefined-builtin
     context = CallContext(
-        user=None, mapper=mapper, dispatcher=None, request=request)
+        user=None, mapper=mapper, dispatcher=None)
     system = SystemAPI(context)
-    scheme = request.META.get('REQUEST_SCHEME', "http")
+    if settings.HTTPS_XML_RPC:
+        scheme = "https"
+    else:
+        scheme = request.META.get('REQUEST_SCHEME', "http")
     dashboard_methods = []
     scheduler_methods = []
     results_methods = []

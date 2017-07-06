@@ -1,4 +1,4 @@
-.. index:: using test results, queries
+.. index:: using test results, queries, query conditions, queries in scripts
 
 .. _result_queries:
 
@@ -13,9 +13,7 @@ LAVA result visualization
 LAVA Queries
 ============
 
-This is documentation for the new queries app, still in **development** stage.
-
-It is part of the new :ref:`dispatcher_design`.
+This is documentation for the new queries app to support V2.
 
 Current features include querying following object sets:
 
@@ -74,7 +72,6 @@ Note that this can be done only after the query is published.
 Queries can be organized in 'query groups' which is visible only in the query
 listing page, via 'query group label' option.
 
-
 .. _query_by_url:
 
 Query by URL
@@ -91,7 +88,6 @@ The query string format looks like this::
 .. note:: object_name can be omitted if it's the same as the query object set.
    Operator is one of the following - exact, iexact, contains, gt, lt.
 
-
 `Example Query by URL <https://playground.validation.linaro.org/results/query/+custom?entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
 
 Once the query by URL results are displayed, user can create new query from
@@ -107,7 +103,6 @@ Export Query
 Currently, the only supported format for exporting is CSV.
 
 User can download the query CSV export file from the query display page.
-
 
 Omitting Query Results
 ----------------------
@@ -130,6 +125,61 @@ later point in time. Archived queries are only visible to superusers in the
 admin section of LAVA. If user tries to create a query with the same name and
 owner (himself) which was already archived, system will inform the user that
 it's already in the system.
+
+.. _lava_query_xmlrpc:
+
+Using Queries in XML-RPC scripts
+================================
+
+The :ref:`XML-RPC API <xml_rpc>` can be used to execute a named query and the
+calling script can then process the data to output a summary of the results.
+
+.. note:: This example script relies on the Query using the ``test-job``
+   Content Type as this allows the script to obtain the job ID which can then
+   be used in the second call to ``get_testcase_results_yaml``.
+
+.. include:: examples/source/query-results.py
+   :code: python
+   :start-after: # main_function
+   :end-before: # end main_function
+
+`Download / view <examples/source/query-results.py>`_ the example python
+script.
+
+Configuration
+-------------
+
+The example script needs to be configured to include the :term:`token` as well
+as the ``hostname`` of the instance, the name of the ``query`` and the
+``query_user`` who owns the query as well as the ``user`` running the query.
+
+.. include:: examples/source/query-results.py
+   :code: python
+   :start-after: # configuration
+   :end-before: # end configuration
+
+.. note:: The script uses the recommended ``https`` scheme to protect your
+   token. Most ``localhost`` instances do not support ``https``, so this would
+   need alteration during testing with localhost.
+
+Example output
+--------------
+
+:abbr:`CSV (Comma Separated Values)` format.
+
+* Job - Id of the test job which failed.
+
+* Type - type of the exception logged by the job. ``Infrastructure`` or ``Job``
+
+* Message - the message logged by the exception.
+
+* Time - the time that the exception was logged on the master. (UTC)
+
+.. code-block:: none
+
+ Job, Type, Message, Time
+ 177863, 'Job', 'fastboot-flash-action timed out after 1702 seconds', '2017-07-05 17:38:35.540829+00:00'
+ 177862, 'Job', 'fastboot-flash-action timed out after 1706 seconds', '2017-07-05 17:38:33.267313+00:00'
 
 .. _lava_query_use_cases:
 

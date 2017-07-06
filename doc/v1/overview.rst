@@ -6,8 +6,6 @@ Logging In
 Each LAVA instance offers a :ref:`local_user` and can also be configured
 to offer an alternative authentication method:
 
-* :ref:`launchpad_openid`
-* :ref:`google_openid`
 * :ref:`ldap_authentication`
 
 OpenID is no longer available for all installs of LAVA. The OpenID

@@ -140,3 +140,39 @@ Configuration files
 * **device dictionaries** - ``/etc/lava-server/dispatcher-config/devices``
   These files are specific to each instance and need to be named according to
   the ``hostname``.jinja2 of the device as configured on the same instance.
+
+.. _check_instance:
+
+Check LAVA instance
+===================
+
+Once a LAVA instance is installed admins can check for errors and warnings on the
+deployed instance using::
+
+  $ sudo lava-server manage check --deploy
+
+The ``check --deploy`` command uses the Django system check framework which is a
+set of static checks to detect common problems and provide hints for how to fix
+them.
+
+.. seealso:: https://docs.djangoproject.com/en/dev/ref/checks/ to know more
+             about Django system check framework.
+
+LAVA sets the following values by default::
+
+  SECURE_CONTENT_TYPE_NOSNIFF = True
+  SECURE_BROWSER_XSS_FILTER = True
+  SESSION_COOKIE_SECURE = True
+  CSRF_COOKIE_SECURE = True
+  CSRF_COOKIE_HTTPONLY = True
+  X_FRAME_OPTIONS = 'DENY'
+
+These values can be overridden in ``/etc/lava-server/settings.conf``
+
+The following checks are silenced and does not show any errors or warnings:
+
+* SECURE_HSTS_SECONDS i.e., security.W004 which is documented in https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-seconds
+* SECURE_SSL_REDIRECT i.e., 'security.W008' which is documented in https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
+
+.. note:: Admins should consult the respective Django documentation before changing these
+   values to suit the requirements of each LAVA instance.

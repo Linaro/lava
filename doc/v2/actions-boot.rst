@@ -19,6 +19,8 @@ expected prompts which will be matched against the output to determine the
 endpoint of the boot process. There are no default prompts, the test writer is
 responsible for providing a list of all possible prompts.
 
+.. seealso:: :ref:`boot_prompts`
+
 .. contents::
    :backlinks: top
 
@@ -103,6 +105,30 @@ password
 Whenever a ``password_prompt`` is specified, a ``password`` will also be
 required.
 
+.. index:: auto login login commands, boot auto login login commands
+
+.. _boot_auto_login_login_commands:
+
+login_commands
+==============
+
+A list of arbitrary ``login_commands`` can be run after the initial login and
+before setting the shell prompt. This is typically used to make a regular user
+become root with su. For example:
+
+.. code-block:: yaml
+
+  auto_login:
+    login_prompt: 'login:'
+    username: user
+    password_prompt: 'Password:'
+    password: pass
+    login_commands:
+      - sudo su
+
+.. note:: No interactive input such as a password can be provided with the list
+   of ``login_commands``.
+
 .. index:: prompt list, prompts - test jobs, boot prompt list, boot prompts
 
 .. _boot_prompts:
@@ -118,11 +144,20 @@ Each prompt needs to be unique across the entire boot sequence, so typically
 includes ``:`` and needs to be quoted. If the hostname of the device is
 included in the prompt, this can be included in the ``prompt``:
 
+.. caution:: Take care with the specified prompts. Prompt strings which do not
+   include enough characters can match early, resulting in a failed login.
+   Prompt strings which include extraneous characters may fail to match for all
+   test jobs. Avoid prompt elements which are user-specific, e.g. ``$``
+   indicates an unprivileged user in some shells and ``#`` indicates the
+   superuser. ``~`` indicates the home directory in some shells. In general,
+   the prompt string should **include and usually end with** a colon ``:`` or a
+   colon and space.
+
 .. code-block:: yaml
 
      - boot:
          prompts:
-           - 'root@debian:~#'
+           - 'root@debian:'
 
 When using the :term:`lxc` :term:`protocol`, the hostname element of the
 prompt will vary:
@@ -131,7 +166,18 @@ prompt will vary:
 
      - boot:
          prompts:
-           - 'root@(.*):/#'
+           - 'root@(.*):'
+
+When using a ramdisk, the prompt is likely to need to contain brackets which
+will need to be escaped:
+
+.. code-block:: yaml
+
+     - boot:
+         prompts:
+         # escape the brackets to ensure that the prompt does not match
+         # kernel debug lines which may mention initramfs
+         - '\(initramfs\)'
 
 .. index:: boot connection
 
@@ -540,13 +586,19 @@ transfer_overlay
 ================
 
 An overlay is a tarball of scripts which run the LAVA Test Shell for
-the test job. The tarball also includes the git checkouts of the
-repository specified in the test job submission and the LAVA helper
+the test job. The tarball also includes the git clones of the
+repositories specified in the test job submission and the LAVA helper
 scripts. Normally, this overlay is integrated into the test job
 automatically. In some situations, for example when using a command
 list to specify an alternative rootfs, it is necessary to transfer the
 overlay from the worker to the device using commands within the booted
 system prior to starting to run the test shell.
+
+Some overlay tarballs can be quite large. The LAVA TestShell helpers are tiny
+shell scripts but the git repositories cloned for your test shell definitions
+can become large over time. Additionally, if your test shell definition clones
+the git repo of source code, those clones will also appear in the overlay
+tarball.
 
 .. note:: The situations where ``transfer_overlay`` is useful tend to
    also require restricting the test job to specific devices of a
@@ -570,12 +622,34 @@ straight away.
 
     transfer_overlay:
       download_command: wget -S --progress=dot:giga
-      unpack_command: tar -C / -xaf
+      unpack_command: tar -C / -xzf
 
 .. note:: The ``-C /`` command to tar is **essential** or the test shell will
-   not be able to start. The ``-S --progress=dot:giga`` options to wget simply
-   optimise the output for serial console logging to avoid wasting line upon
-   line of progress percentage dots.
+   not be able to start. The overlay will use ``gzip`` compresssion, so pass
+   the ``z`` option to ``tar``.
+
+Deployment differences
+----------------------
+
+The ``-S --progress=dot:giga`` options to wget in the example above optimise
+the output for serial console logging to avoid wasting line upon line of
+progress percentage dots. If the system uses ``busybox``, these options may not
+be supported by the version of ``wget`` on the device.
+
+Some systems do not store the current time between boots. The ``--warning
+no-timestamp`` option is a useful addition for ``tar`` for those systems but
+note that ``busybox tar`` does not support this option.
+
+The ``download_command`` and the ``unpack_command`` can include one or more
+shell commands. However, as with the test shell definitions, avoid using
+redirects (``>`` or ``>>``) or other complex shell syntax. This example changes
+to ``/tmp`` to ensure there is enough writeable space for the download.
+
+.. code-block:: yaml
+
+    transfer_overlay:
+       download_command: cd /tmp ; wget
+       unpack_command: tar -C / -xzf
 
 .. index:: boot method u-boot
 

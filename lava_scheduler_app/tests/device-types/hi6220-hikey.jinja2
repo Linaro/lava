@@ -47,6 +47,7 @@ actions:
             - devicetree ($root)/boot/{{devicetree}}
             - boot
       uefi-menu:
+        menu_options: fastboot
         parameters:
           interrupt_prompt: {{ interrupt_prompt|default("The default boot selection will start in") }}
           interrupt_string: {{ interrupt_string|default("' '") }}

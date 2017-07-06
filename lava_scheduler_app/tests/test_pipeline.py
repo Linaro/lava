@@ -418,6 +418,26 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,nolock ip=dhcp'
         )
 
+    def test_metadata(self):
+        data = yaml.load(self.factory.make_job_yaml(metadata={15: 'test'}))
+        validate_submission(data)
+        metadata = {
+            'build-url': None,
+            'build-log': '/consoleText',
+            'zephyr-gcc-variant': None,
+            'platform': 'frdm_k64f',
+            'git-url': 'https://git.linaro.org/zephyrproject-org/zephyr.git',
+            'git-commit': 1234
+        }
+        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        self.assertRaises(SubmissionException, validate_submission, data)
+        metadata['build-url'] = 'http://nowhere.com'
+        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        self.assertRaises(SubmissionException, validate_submission, data)
+        metadata['zephyr-gcc-variant'] = '4.9'
+        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        validate_submission(data)
+
     def test_command_list(self):
         hostname = 'bbb-02'
         dt = self.factory.make_device_type(name='beaglebone-black')

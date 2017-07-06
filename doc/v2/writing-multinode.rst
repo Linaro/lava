@@ -35,7 +35,7 @@ Our first example is the simplest possible MultiNode test job - the same job
 runs on two devices of the same type, without using any of the synchronisation
 calls.
 
-.. index:: MultiNode job context, MultiNode roles
+.. index:: MultiNode - job context, MultiNode - roles
 
 .. _multinode_roles:
 

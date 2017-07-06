@@ -86,6 +86,7 @@ actions:
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
       uefi-menu:
+        menu_options: {{ grub_efi_method }}
         parameters:
           interrupt_prompt: {{ base_menu_interrupt_prompt }}
           interrupt_string: '{{ base_menu_interrupt_string }}'

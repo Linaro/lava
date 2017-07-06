@@ -45,6 +45,8 @@
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
+{% set boot_character_delay = 30 %}
+
 {# adds the parameters: top level block #}
 {% block vland %}
 {{ super() -}}
@@ -106,6 +108,19 @@
 {%- endif %}
 {% endblock vland %}
 
+
+{% set action_timeout_auto_login = action_timeout_auto_login | default(5) %}
+{% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set action_timeout_u_boot_interrupt = action_timeout_u_boot_interrupt | default(120) %}
+{% set action_timeout_uboot_retry = action_timeout_uboot_retry | default(4) %}
+{% set action_timeout_uboot_action = action_timeout_uboot_action | default(4) %}
+
+{% set connection_timeout_auto_login = connection_timeout_auto_login | default(5) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
+{% set connection_timeout_u_boot_interrupt = connection_timeout_u_boot_interrupt | default(120) %}
+{% set connection_timeout_uboot_retry = connection_timeout_uboot_retry | default(4) %}
+
+
 {% block body %}
 device_type: {{ device_type|default('vexpress') }}
 
@@ -163,6 +178,117 @@ actions:
       serial:
     methods:
       minimal:
+      uefi-menu:
+        parameters:
+          interrupt_prompt: '{{ interrupt_prompt|default('The default boot selection will start in') }}'
+          interrupt_string: '{{ interrupt_string|default(' ') }}'
+          item_markup:
+            - "["
+            - "]"
+          item_class: '{{ item_class|default('0-9') }}'
+          separator: '{{ separator|default(' ') }}'
+          label_class: '{{ label_class|default('a-zA-Z0-9 \s\:') }}'
+          bootloader_prompt: '{{ bootloader_prompt|default('Start:') }}'
+          boot_message: '{{ boot_message|default('Linux version') }}'
+        tftp:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ device_mac }}'
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: 'Has FDT support?'
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: "Arguments to pass to the binary:"
+        - select:
+            enter: "console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr {{ base_kernel_args }} {{ base_ip_args }}"
+            wait: "Description for this new Entry:"
+        - select:
+            enter: LAVA TEST TFTP
+            wait: "Choice:"
+        - select:
+            items:
+              - "Update FDT path"
+            wait: "Select the Boot Device"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ device_mac }}'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: "y"
+            wait: "Get the TFTP server IP address"
+        - select:
+            enter: "{SERVER_IP}"
+            wait: "File path of the FDT blob :"
+        - select:
+            enter: "{DTB}"
+            wait: "Choice:"
+        - select:
+            items:
+              - "Return to main menu"
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA TEST TFTP
+      uefi:
+        parameters:
+           bootloader_prompt: '{{ bootloader_prompt|default('Shell>') }}'
+           shell_interrupt_prompt: '{{ shell_interrupt_prompt|default('any other key to continue') }}'
+           shell_interrupt_string: '{{ shell_interrupt_string|default(' ') }}'
+           boot_message: '{{ boot_message|default('Linux version') }}'
+           shell_menu: shell
+           # Menu options
+           interrupt_prompt: The default boot selection will start in
+           interrupt_string: '{{ interrupt_string|default(' ') }}'
+           menu_boot_message: '{{ menu_boot_message|default('UEFI Interactive Shell') }}'
+           menu_prompt: '{{ menu_prompt|default('Start:') }}'
+           item_markup:
+           - '['
+           - ']'
+           item_class: '{{ item_class|default('0-9') }}'
+           separator: '{{ separator|default(' ') }}'
+           line_separator: '{{ line_separator|default('dos') }}'
+           label_class: '{{ label_class|default('a-zA-Z0-9\s\:') }}'
+        shell:
+        - select:
+            items:
+            - 'Shell'
+        nfs:
+          commands:
+          - norkern console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }} dtb=board.dtb
+{% if uefi_usb_id %}
+        usb:
+          # This assumes that an image has been dd'ed to the USB device
+          # and that this device then contains two partitions, sda1 and sda2.
+          # The first, is the boot device, which appears in UEFI as <uefi_usb_id>.
+          # The second is the root filesystem.
+          commands:
+          # Go to usb boot partition
+          - "{{ uefi_usb_id }}:"
+          # Launch Image from boot partition, specifying sda2 as the root filesystem.
+          - Image console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }} dtb={{ device_type }}.dtb
+{% endif %}
       ssh:
 {% if vexpress_supports_uboot %}
       u-boot:
@@ -172,6 +298,9 @@ actions:
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           interrupt_char: "{{ interrupt_char|default('') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
+        defaults:
+          commands:
+          - "boot"
         nfs:
           commands:
 {% if uboot_needs_usb %}

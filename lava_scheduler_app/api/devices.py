@@ -24,6 +24,7 @@ from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.dbutils import initiate_health_check_job
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -193,11 +194,49 @@ class SchedulerDevicesAPI(ExposedAPI):
 
         return device.save_configuration(dictionary)
 
-    def list(self, show_all=False):
+    def force_health_check(self, hostname):
         """
         Name
         ----
-        `scheduler.devices.list` (`show_all=True`)
+        `scheduler.devices.force_health_check` (`hostname`)
+
+        Description
+        -----------
+        [admin only]
+        Force health check on the specified device
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the device
+
+        Return value
+        ------------
+        The id of the health check job.
+        """
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname)
+
+        if not device.can_admin(self.user):
+            raise xmlrpclib.Faul(
+                403, "Device '%s' is not available to user '%s'." %
+                (hostname, self.user))
+
+        job = initiate_health_check_job(device)
+        if not job:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' does not have health checks" % hostname)
+
+        return job.id
+
+    def list(self, show_all=False, offline_info=False):
+        """
+        Name
+        ----
+        `scheduler.devices.list` (`show_all=False`, `offline_info=False`)
 
         Description
         -----------
@@ -207,6 +246,10 @@ class SchedulerDevicesAPI(ExposedAPI):
         ---------
         `show_all`: boolean
           Show all devices, including retired
+        `offline_info`: boolean
+          Add date from which each of the returned devices is offline (if the
+          device is offline) and the user who put the device offline (if the
+          device is offline) to the returned dictionary.
 
         Return value
         ------------
@@ -221,11 +264,28 @@ class SchedulerDevicesAPI(ExposedAPI):
         ret = []
         for device in devices:
             if device.is_visible_to(self.user):
-                ret.append({"hostname": device.hostname,
-                            "type": device.device_type.name,
-                            "status": device.get_status_display(),
-                            "current_job": device.current_job.pk if device.current_job else None,
-                            "pipeline": device.is_pipeline})
+                device_dict = {"hostname": device.hostname,
+                               "type": device.device_type.name,
+                               "status": device.get_status_display(),
+                               "current_job": device.current_job.pk if device.current_job else None,
+                               "pipeline": device.is_pipeline}
+
+                if device.status == Device.OFFLINE and offline_info:
+                    device_dict["offline_since"] = ""
+                    device_dict["offline_by"] = ""
+                    device_dict["message"] = ""
+                    try:
+                        last_transition = device.transitions.latest("created_on")
+                        if last_transition.new_state == Device.OFFLINE:
+                            device_dict["message"] = str(last_transition.message)
+                            device_dict["offline_since"] = str(last_transition.created_on)
+                            if last_transition.created_by:
+                                device_dict["offline_by"] = last_transition.created_by.username
+                    except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
+                        pass
+
+                ret.append(device_dict)
+
         return ret
 
     def show(self, hostname):
@@ -269,13 +329,15 @@ class SchedulerDevicesAPI(ExposedAPI):
                        "public": device.is_public,
                        "pipeline": device.is_pipeline,
                        "has_device_dict": bool(device.load_configuration(output_format="raw")),
-                       "worker": device.worker_host.hostname,
+                       "worker": None,
                        "user": device.user.username if device.user else None,
                        "group": device.group.name if device.group else None,
                        "current_job": device.current_job.pk if device.current_job else None,
                        "offline_since": None,
                        "offline_by": None,
                        "tags": [t.name for t in device.tags.all().order_by("name")]}
+        if device.worker_host is not None:
+            device_dict["worker"] = device.worker_host.hostname
 
         if device.status == Device.OFFLINE:
             try:

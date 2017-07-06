@@ -55,6 +55,10 @@ Accessing specific test results
 Within the results for the entire test job, results are split into test suites,
 optionally into test sets and finally into test cases.
 
+.. index:: test suites in results
+
+.. _results_test_suite:
+
 Test Suite
 ----------
 
@@ -74,7 +78,8 @@ element is then appended to create the test suite name.
 * ``1_singlenode-advanced``
 
 Results are only generated when the Lava Test Shell Definition makes at least
-one call to ``lava-test-case``.
+one call to ``lava-test-case`` (including automatic calls made by the
+:ref:`MultiNode API <multinode_api>`).
 
 The test suite can then be appended to the REST API URL for the results to
 limit the results to just that test suite:
@@ -128,19 +133,54 @@ Each test case has a name and a result. Optionally, test cases can have
 measurements and units. The name of the test case **must** be valid as part of
 the REST API so whitespace is not allowed.
 
+If a test case has a measurement, the measurement is represented as a python
+``Decimal`` value as this provides the best way to preserve precision through
+the various export handlers.
+
+.. code-block:: python
+
+    >>> case.measurement
+    Decimal('112.2510000000')
+    >>> import decimal
+    >>> decimal.Decimal(case.measurement)
+    Decimal('112.2510000000')
+    >>> decimal.Decimal(case.measurement).normalize()
+    Decimal('112.251')
+    >>> float(decimal.Decimal(case.measurement).normalize())
+    112.251
+
+Representation of some numbers in Decimal can look a little odd but these
+can be easily converted or compared:
+
+.. code-block:: python
+
+    >>> decimal.Decimal(0E-10) == 0
+    True
+
+.. seealso:: The python documentation on Decimal at
+   https://docs.python.org/2.7/library/decimal.html#module-decimal
+
+
+.. note:: Since test case name can be generated in such ways that no character
+   validation is viable, the test case URL has been changed and is now
+   generated using the test case ID. Old URL behaviour is still supported when
+   looking up the test case in the results but test case URLs with non
+   supported characters will return a Not Found (404) page. Links within test
+   job log files all use the test case ID.
+
+   e.g. http://localhost/results/12020/lava/validate and
+   http://localhost/results/testcase/60534 will both work.
+
 Accessing the test job logs from results
 ****************************************
 
-There is a chevron in the test case detail page, directly after the test case
-name, which links to the point in the log where that test was reported. The
-same URL can also be determined in advance by knowing the job ID, the sequence
-of test definitions in the test job definition and the name of the test case.
+There is a link in the test case detail page, directly after the test case
+name, which links to the point in the log where that test was reported.
 
-Once you know the result and the URL of the testjob, you can generate the URL
-of the point in the test job log where that result was created.
-``https://validation.linaro.org/results/1109234/1_lamp-test/mysql-show-databases``
-links to
-``https://validation.linaro.org/scheduler/job/1109234#results_1_lamp-test_mysql-show-databases_pass``
+.. note:: To prevent problems with test case names which do not map as a URL,
+   the test case ID is used to link the report of the test case in the test job
+   log file to the actual test case and back again. This database ID is
+   reported in the log file and exported as part of the results data.
 
 In the log file this section looks like:
 
@@ -148,6 +188,7 @@ In the log file this section looks like:
 
  Received signal: <TESTCASE> TEST_CASE_ID=mysql-show-databases RESULT=pass
  case: mysql-show-databases
+ case_id: 60551
  definition: 1_lamp-test
  result: pass
 
