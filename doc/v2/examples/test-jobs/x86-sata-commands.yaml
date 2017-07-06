@@ -81,10 +81,3 @@ actions:
       path: ubuntu/smoke-tests-basic.yaml
       from: git
       name: smoke-tests
-    - repository: http://git.linaro.org/lava-team/hacking-session.git
-      from: git
-      path: hacking-session-debian.yaml
-      name: hacking
-      parameters:
-        IRC_USER: "codehelp"
-        PUB_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAknO1c1Ei//49GeBNtmIWUJUvy+f4OBlpqgGf0PetL90S4C+Xk0/el4AKnGHAEBaJKZF71IJmAoDuGF9y9OP4wFi7n60Zgz3cGABJ2UgMuBo5rEfDYUstwS7Yua9gR8iijIv6l3ITz0fibbH3OwK/GJRjOWgL0QOjd5tHEfxoHkk= neil@garfield"
