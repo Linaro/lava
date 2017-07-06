@@ -165,9 +165,21 @@ as the ``hostname`` of the instance, the name of the ``query`` and the
 Example output
 --------------
 
+:abbr:`CSV (Comma Separated Values)` format.
+
+* Job - Id of the test job which failed.
+
+* Type - type of the exception logged by the job. ``Infrastructure`` or ``Job``
+
+* Message - the message logged by the exception.
+
+* Time - the time that the exception was logged on the master. (UTC)
+
 .. code-block:: none
 
- [177672] Infrastructure Connection closed 2017-07-04 04:57:59.457270+00:00
+ Job, Type, Message, Time
+ 177863, 'Job', 'fastboot-flash-action timed out after 1702 seconds', '2017-07-05 17:38:35.540829+00:00'
+ 177862, 'Job', 'fastboot-flash-action timed out after 1706 seconds', '2017-07-05 17:38:33.267313+00:00'
 
 .. _lava_query_use_cases:
 
