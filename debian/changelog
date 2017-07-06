@@ -1,3 +1,40 @@
+lava-dispatcher (2017.7-1) unstable; urgency=medium
+
+  * New production release
+    d8dabe63 Switch the print to a test in unit test
+    d1e22b67 Revert "Replace invalid characters in test_case_id."
+    b3b4f5ac Update the example to a working test job with prompts.
+    504ec2bc LAVA-777 last log line should be lava.job result
+    ad55acb9 Ensure overlay unpacking is clearly logged
+    2e7c9598 Add pipeline_ref update for test skipped by lavabot
+    ed936cd3 Simplify the power control actions
+    78dcc1b0 Fix dispatcher configuration
+    89880ce1 LAVA-96 Check for errors if a tftp file exceeds 4G
+    6fd2702e LAVA-989 add extra logging for actions
+    df86ed30 LAVA-990 add logging for VLANd + MultiNode support
+    bbfb1817 Stop the unit test outputting noise
+    c7839a98 Add a new log level for the DUT inputs
+    2502b8af Destroy LXC containers properly.
+    957734cf Add a unit test for Vland actions
+    68468abe Handle a bad url cleanly.
+    713d4e6e LAVA-645 - summarise slave logging
+    96a5effe Do not raise exceptions in validate
+    f45106fb Catch errors in testdef from handler cleanly
+    f34f41e2 LAVA-984 - LXC protocol timeout to report job result
+    e31722b5 Allow ci-run with updated pep8
+    175d8e84 LAVA-931 - MultiNode lava-sync should report results
+    fd944543 EOF in a test shell is an InfrastructureError
+    429691d9 Support power control for CMSIS devices
+    049c0227 lava-slave: add the right configuration for the host
+    1e92bf38 lxc: improve error message
+    b2f25cf0 Add support for booting from UEFI shell
+    67a1e1c6 ramdisk: only pass to bootx if has u-boot header
+    f4a4abd9 LAVA-967: check namespaces usage
+  * Allow use of /srv/tftp in tftpd-hpa (Closes: #849237)
+  * Move ser2net to Recommends. (Closes: #849229)
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 06 Jul 2017 18:18:03 +0100
+
 lava-dispatcher (2017.6-1) unstable; urgency=medium
 
   * New production release
@@ -21,13 +58,15 @@ lava-dispatcher (2017.6-1) unstable; urgency=medium
     d08db39 Fix #3010: set logging timezone to UTC
     1b664e5 LAVA-955 - Remove 'arch' parameter from lxc protocol.
     8a4dbc7 Increase LXC finalize timeout to 90 seconds similar to multinode.
-    3823c49 Use one debug log call to log the same kind of message in lxc protocol.
+    3823c49 Use one debug log call to log the same kind of message in
+              lxc protocol.
     5db313c Creating vemsd mount points
     ea03ef1 Fixing boot test issues using NFS deploy action
     d1f4a30 Fix rebase error with grub prompt constant
     b2aef8b device-types: add sun6i-a31-app4-evb1
     8ceca07 Make grub use interrupt prompt and character from constants
-    b495a35 device-types: add ttyAT0 to Atmel devices to support multiv7_defconfig
+    b495a35 device-types: add ttyAT0 to Atmel devices to support
+              multiv7_defconfig
     3a89027 device-types: fix at91sam9x25ek to use bootz
     9e00895 Set download max_retries in the constructor
     959480c Add minimal boot action
@@ -65,7 +104,8 @@ lava-dispatcher (2017.6-1) unstable; urgency=medium
     609c783 Fix download action name
     b170197 More tweaks to silence messages from the unit tests
     29efa26 Adjust for pep8 checks in jessie
-    0733f89 Make sure the test_character_delay is used for all commands in test shell
+    0733f89 Make sure the test_character_delay is used for all commands
+              in test shell
     78d2509 Account for empty environment string.
     ea09b19 Take namespace into account when counting test stages
     734688c Declare namespace of the test suite in results
@@ -104,7 +144,8 @@ lava-dispatcher (2017.6-1) unstable; urgency=medium
     d714a9b Add missing test shell helpers
     daebfad Extend secondary connection fix to support primary
     9518e74 Add missing import
-    e97801d Add optional deployment complete message list to secondary media deployments
+    e97801d Add optional deployment complete message list to secondary
+              media deployments
     fae0ced Move unnecessary constants into base jinja template.
     18f745b device-types: add kirkwood-db-88f6282.conf
     815e518 device-types: add at91sam9m10g45ek.conf
@@ -281,7 +322,8 @@ lava-dispatcher (2017.4-1) unstable; urgency=medium
     beccc4da LAVA-215 QEMU NFS support (dispatcher)
     c2e3ee34 Use DummyLogger for grub and add .target()
     ed3519d2 Get uboot header length from utils.constants
-    7df2904d If no kernel type given in deploy, use the boot type until deprecated
+    7df2904d If no kernel type given in deploy, use the boot type
+               until deprecated
     82237860 Ensure the deployment data shell is exported.
     108ef4a3 Add the commit-id to the lava testdef results
     1e3dd3ce run: improve error handling
@@ -293,7 +335,8 @@ lava-dispatcher (2017.4-1) unstable; urgency=medium
     c2df0b20 Remove the message from cleanup()
     78c334c2 Simplify test/shell.py check_patterns signals.
     68f1c822 test-runner: remove redundant functions and files
-    3fe2105e Fix bug #2888 - adb root command from job breaks connection to device
+    3fe2105e Fix bug #2888 - adb root command from job breaks connection
+               to device
     22157cd2 Add a base class for LAVA exceptions
     44af91c3 Support using UEFI Menu to load Grub using PXE
     b667f2fd Use LAVA exceptions
@@ -436,12 +479,14 @@ lava-dispatcher (2016.12-1) unstable; urgency=medium
     a726be8f Allow install-steps to use the git-repo directly
     b0ca553a Create a useful exception message
     077aca26 slave: don't crash when lava-dispatch can't start
-    543ed4af Honor USB device wait timeout and add device before returning connection
+    543ed4af Honor USB device wait timeout and add device before
+               returning connection
     0e07089f Fix problem with duplicate test shells failing
-    f14747c1 Use dnf instead of yum on Fedora version greater than or equal to 22.
+    f14747c1 Use dnf instead of yum on Fedora version greater than or
+               equal to 22.
     efdaabc1 More fix for usage of LXC with a device.
     2d188baa Limit repetitive kernel message log entries
-    c3455a11 Allow newline line separator to be overriden per bootloader
+    c3455a11 Allow newline line separator to be overridden per bootloader
     01a482f6 Fix for Debian reproducible builds.
     62c07465 Indicate that character delay is in milliseconds
     c1f79680 Remove hardcoded character delay in ipxe
