@@ -370,6 +370,14 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             pass
         self.assertIsNotNone(job)
 
+    def test_pipeline_actions(self):
+        factory = Factory()
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.assertEqual(
+            ['deploy', 'boot', 'test', 'finalize'],
+            [action.section for action in job.pipeline.actions]
+        )
+
     def test_namespace_data(self):
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())

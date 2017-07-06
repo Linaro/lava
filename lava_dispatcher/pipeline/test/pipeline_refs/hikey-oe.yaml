@@ -52,7 +52,10 @@
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
-  - {class: power.PowerOn, name: power-on}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry

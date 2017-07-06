@@ -207,27 +207,31 @@ class ApplyOverlayTftp(Action):
         directory = None
         nfs_address = None
         overlay_file = None
+        namespace = self.parameters.get('namespace', None)
         if self.parameters.get('nfsrootfs', None) is not None:
             if not self.parameters['nfsrootfs'].get('install_overlay', True):
-                self.logger.info("Skipping applying overlay to NFS")
+                self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
-            self.logger.info("Applying overlay to NFS")
+            if overlay_file:
+                self.logger.info("[%s] Applying overlay to NFS", namespace)
         elif self.parameters.get('images', {}).get('nfsrootfs', None) is not None:
             if not self.parameters['images']['nfsrootfs'].get('install_overlay', True):
-                self.logger.info("Skipping applying overlay to NFS")
+                self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
-            self.logger.info("Applying overlay to NFS")
+            if overlay_file:
+                self.logger.info("[%s] Applying overlay to NFS", namespace)
         elif self.parameters.get('persistent_nfs', None) is not None:
             if not self.parameters['persistent_nfs'].get('install_overlay', True):
-                self.logger.info("Skipping applying overlay to persistent NFS")
+                self.logger.info("[%s] Skipping applying overlay to persistent NFS", namespace)
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             nfs_address = self.parameters['persistent_nfs'].get('address')
-            self.logger.info("Applying overlay to persistent NFS address %s", nfs_address)
+            if overlay_file:
+                self.logger.info("[%s] Applying overlay to persistent NFS address %s", namespace, nfs_address)
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
@@ -238,17 +242,17 @@ class ApplyOverlayTftp(Action):
                 raise JobError(exc)
         elif self.parameters.get('ramdisk', None) is not None:
             if not self.parameters['ramdisk'].get('install_overlay', True):
-                self.logger.info("Skipping applying overlay to ramdisk")
+                self.logger.info("[%s] Skipping applying overlay to ramdisk", namespace)
                 return connection
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
             if overlay_file:
-                self.logger.info("Applying overlay %s to ramdisk", overlay_file)
+                self.logger.info("[%s] Applying overlay %s to ramdisk", namespace, overlay_file)
         elif self.parameters.get('rootfs', None) is not None:
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='apply-overlay', label='file', key='root')
         else:
-            self.logger.debug("No overlay directory")
+            self.logger.debug("[%s] No overlay directory", namespace)
             self.logger.debug(self.parameters)
         if self.parameters.get('os', None) == "centos_installer":
             # centos installer ramdisk doesnt like having anything other
@@ -262,6 +266,7 @@ class ApplyOverlayTftp(Action):
             self.set_namespace_data(action=self.name, label='file', key='overlay',
                                     value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)))
         if overlay_file:
+            self.logger.debug("[%s] Applying overlay %s to directory %s", namespace, overlay_file, directory)
             untar_file(overlay_file, directory)
             if nfs_address:
                 subprocess.check_output(['umount', directory])

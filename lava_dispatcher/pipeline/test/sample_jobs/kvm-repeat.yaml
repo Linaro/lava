@@ -16,6 +16,8 @@ actions:
         os: debian
 
     - repeat:
+        # TODO: fix this when repeat is implemented
+        namespace: test-repeat
         count: 6
 
         actions:

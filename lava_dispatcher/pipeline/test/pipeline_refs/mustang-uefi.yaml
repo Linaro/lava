@@ -49,12 +49,9 @@
   - {class: actions.boot.uefi_menu.UefiSubstituteCommands, name: uefi-commands}
   - {class: menus.menus.MenuConnect, name: menu-connect}
   - class: power.ResetDevice
-    name: reboot-device
+    name: reset-device
     pipeline:
-    - {class: power.RebootDevice, name: soft-reboot}
-    - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: power.SoftReboot, name: send-reboot-command}
-    - {class: power.PowerOn, name: power-on}
+    - {class: power.SendRebootCommands, name: send-reboot-commands}
   - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
   - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
   - {class: menus.menus.MenuReset, name: menu-reset}

@@ -110,6 +110,27 @@ class WaitUSBMassStorageDeviceAction(Action):
         return connection
 
 
+class WaitDevicePathAction(Action):
+
+    def __init__(self, path=None):
+        super(WaitDevicePathAction, self).__init__()
+        self.name = "wait-device-path"
+        self.description = "wait for udev device path"
+        self.summary = self.description
+        self.devicepath = path
+
+    def validate(self):
+        super(WaitDevicePathAction, self).validate()
+        if not isinstance(self.devicepath, str):
+            self.errors = "invalid device path"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(WaitDevicePathAction, self).run(connection, max_end_time, args)
+        self.logger.debug("Waiting for udev device path: %s", self.devicepath)
+        wait_udev_event(action='add', devicepath=self.devicepath)
+        return connection
+
+
 def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
@@ -117,19 +138,21 @@ def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     return set(o for o in intersect_keys if d1[o] == d2[o])
 
 
-def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None):
-    if action not in ['add', 'remove']:
+def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None, devicepath=None):
+    if action not in ['add', 'remove', 'change']:
         raise LAVABug("Invalid action for udev to wait for: %s, expected 'add' or 'remove'" % action)
     if match_dict:
-        if isinstance(match_dict, dict):
-            if match_dict == {}:
-                raise LAVABug("Trying to match udev event with empty match_dict")
-        else:
+        if not isinstance(match_dict, dict):
             raise LAVABug("match_dict was not a dict")
     else:
-        raise LAVABug("match_dict was None")
+        if devicepath:
+            if not isinstance(devicepath, str):
+                raise LAVABug("devicepath was not a string")
+            match_dict = {}
+        else:
+            raise LAVABug("Neither match_dict nor devicepath were set")
     if devtype and not subsystem:
-        raise LAVABug("Cant filter udev by devtype without a subsystem")
+        raise LAVABug("Cannot filter udev by devtype without a subsystem")
     match_dict['ACTION'] = action
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)
@@ -141,7 +164,12 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None)
     for device in iter(monitor.poll, None):
         same = _dict_compare(dict(device), match_dict)
         if same == set(match_dict.keys()):
-            break
+            if devicepath:
+                if devicepath in dict(device).get('DEVLINKS', '') or \
+                   devicepath in dict(device).get('DEVNAME', ''):
+                    break
+            else:
+                break
 
 
 def get_udev_devices(job, logger=None):

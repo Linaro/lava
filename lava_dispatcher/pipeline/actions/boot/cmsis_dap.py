@@ -25,11 +25,12 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.utils.udev import WaitUSBSerialDeviceAction
+from lava_dispatcher.pipeline.utils.udev import WaitUSBSerialDeviceAction, WaitDevicePathAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 import shutil
 import os
+from lava_dispatcher.pipeline.power import ResetDevice
 
 
 class CMSIS(Boot):
@@ -81,11 +82,23 @@ class BootCMSISRetry(RetryAction):
         self.description = "boot cmsis usb image with retry"
         self.summary = "boot cmsis usb image with retry"
 
+    def validate(self):
+        super(BootCMSISRetry, self).validate()
+        method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
+        usb_mass_device = method_params.get('usb_mass_device', None)
+        if not usb_mass_device:
+            self.errors = "usb_mass_device unset"
+
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
+        usb_mass_device = method_params.get('usb_mass_device', None)
+        resets_after_flash = method_params.get('resets_after_flash', True)
+        if self.job.device.hard_reset_command:
+            self.internal_pipeline.add_action(ResetDevice())
+            self.internal_pipeline.add_action(WaitDevicePathAction(usb_mass_device))
         self.internal_pipeline.add_action(FlashCMSISAction())
-        if method_params.get('resets_after_flash', True):
+        if resets_after_flash:
             self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
         self.internal_pipeline.add_action(ConnectDevice())
 
@@ -108,8 +121,6 @@ class FlashCMSISAction(Action):
         self.usb_mass_device = method_parameters.get('usb_mass_device', None)
         if not self.usb_mass_device:
             self.errors = "usb_mass_device unset"
-        if not os.path.exists(self.usb_mass_device):
-            self.errors = "usb_mass_device does not exist %s" % self.usb_mass_device
         namespace = self.parameters['namespace']
         for action in self.data[namespace]['download-action'].keys():
             action_arg = self.get_namespace_data(action='download-action', label=action, key='file')

@@ -70,6 +70,7 @@ actions:
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
       uefi-menu:
+        menu_options: pxe-grub
         parameters:
           interrupt_prompt: The default boot selection will start in
           interrupt_string: ' '

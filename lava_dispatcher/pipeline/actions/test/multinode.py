@@ -20,7 +20,11 @@
 
 import json
 from lava_dispatcher.pipeline.actions.test.shell import TestShellAction
-from lava_dispatcher.pipeline.action import TestError, JobError, Timeout
+from lava_dispatcher.pipeline.action import (
+    TestError,
+    Timeout,
+    MultinodeProtocolTimeoutError
+)
 from lava_dispatcher.pipeline.actions.test import LavaTest
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
@@ -104,11 +108,22 @@ class MultinodeTestAction(TestShellAction):
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
+            test_case_name = "%s-%s" % (name, params[0])  # use the messageID
+            self.logger.debug("messageID: %s", test_case_name)
+
+            test_case_params = "TEST_CASE_ID=multinode-{} RESULT={}"
             try:
                 ret = self.signal_director.signal(name, params)
-            except JobError as exc:
-                self.logger.exception("Job error in %s signal: %s %s" % (event, exc, name))
+            except MultinodeProtocolTimeoutError as exc:
+                self.logger.warning("Sync error in %s signal: %s %s" % (event, exc, name))
+
+                self.signal_test_case(
+                    test_case_params.format(test_case_name.lower(), "fail").split())
+
                 return False
+
+            self.signal_test_case(
+                test_case_params.format(test_case_name.lower(), "pass").split())
             return ret
         return ret
 

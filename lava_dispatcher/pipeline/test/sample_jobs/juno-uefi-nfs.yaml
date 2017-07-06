@@ -1,10 +1,10 @@
-# Sample job to show juno uefi-menu functionality
+# Sample job to show uefi behaviour, drop from menu to shell, input shell commands.
 
 device_type: juno
-job_name: juno-uefi-menu-tftp
+job_name: juno-uefi-shell-nfs
 timeouts:
   job:
-    minutes: 20
+    minutes: 40
   action:
     minutes: 6
   connection:
@@ -27,22 +27,23 @@ actions:
      namespace: target
      timeout:
        minutes: 2
-     to: tftp
-     kernel:
-         url: http://images.validation.linaro.org/juno/kernel/Image
-     dtb:
-         url: http://images.validation.linaro.org/juno/kernel/juno.dtb
+     to: nfs
+     os: debian
      nfsrootfs:
-         url: http://releases.linaro.org/openembedded/juno-lsk/15.09/linaro-image-minimal-genericarmv8-20150921-770.rootfs.tar.gz
-         compression: gz
-     os: oe
+       url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+       compression: gz
 
 - boot:
     namespace: target
     connection-namespace: recovery
-    method: uefi-menu
-    commands: tftp
+    method: uefi
+    commands: nfs
+    # Drop to shell from menu
+    shell_menu: shell
     parameters:
       shutdown-message: 'reboot: Restarting system'
+    auto_login:
+      login_prompt: 'login:'
+      username: root
     prompts:
-    - root@genericarmv8:~#
+    - root@(.*):~#

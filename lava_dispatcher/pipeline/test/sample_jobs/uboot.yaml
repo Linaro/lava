@@ -5,54 +5,53 @@ device_type: beaglebone-black
 job_name: uboot-pipeline
 timeouts:
   job:
-    minutes: 15            # timeout for the whole job (default: ??h)
+    minutes: 15
   action:
-    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-  actions:
-    extract-nfsrootfs:
-      seconds: 90
+    minutes: 5
+  connection:
+    minutes: 2
 priority: medium
 visibility: public
 
-# example old-style job: https://staging.validation.linaro.org/scheduler/job/113682/definition
+metadata:
+  source: https://git.linaro.org/lava/lava-dispatcher.git
+  path: lava_dispatcher/pipeline/test/sample_jobs/uboot.yaml
 
 actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+      type: zimage
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
-  # needs to be a list of hashes to retain the order
-  - deploy:
-     parameters:
-       mkimage_arch: arm
-     timeout:
-       minutes: 2
-     to: tftp
-     kernel:
-         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs:
-         url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
-         compression: gz
-     os: debian
-     dtb:
-         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+- boot:
+   method: u-boot
+   commands: nfs
+   auto_login:
+     login_prompt: 'login:'
+     username: root
+   prompts:
+   - 'root@jessie:'
+   timeout:
+     minutes: 3
 
-  - boot:
-     method: u-boot
-     commands: nfs
-     prompts:
-       - 'linaro-test'
-       - 'root@debian:~#'
-
-  - test:
-     failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
-     # only s, m & h are supported.
-     timeout:
-       minutes: 5 # uses install:deps, so takes longer than singlenode01
-     definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
-           from: git
-           path: ubuntu/smoke-tests-basic.yaml
-           name: smoke-tests
-         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-           from: git
-           path: lava-test-shell/single-node/singlenode03.yaml
-           name: singlenode-advanced
+- test:
+   timeout:
+     minutes: 5
+   definitions:
+     - repository: git://git.linaro.org/qa/test-definitions.git
+       from: git
+       path: ubuntu/smoke-tests-basic.yaml
+       name: smoke-tests
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode02.yaml
+       name: singlenode-intermediate

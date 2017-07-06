@@ -27,7 +27,7 @@ from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.utils.udev import WaitDFUDeviceAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.power import PowerOn
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
 
@@ -80,7 +80,7 @@ class BootDFURetry(RetryAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(PowerOn())
+        self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitDFUDeviceAction())
         self.internal_pipeline.add_action(FlashDFUAction())
 

@@ -154,8 +154,8 @@ class RepoAction(Action):
         willing = [c for c in candidates if c.accepts(repo_type)]
 
         if len(willing) == 0:
-            raise LAVABug(
-                "No testdef_repo hander is available for the given repository type"
+            raise JobError(
+                "No testdef_repo handler is available for the given repository type"
                 " '%s'." % repo_type)
 
         # higher priority first
@@ -678,6 +678,12 @@ class TestDefinitionAction(TestAction):
                     if not res:
                         self.errors = "Invalid characters found in test definition name: %s" % testdef['name']
         super(TestDefinitionAction, self).validate()
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                try:
+                    RepoAction.select(testdef['from'])()
+                except JobError as exc:
+                    self.errors = str(exc)
 
     def run(self, connection, max_end_time, args=None):
         """

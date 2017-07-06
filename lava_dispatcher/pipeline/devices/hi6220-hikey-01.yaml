@@ -49,6 +49,7 @@ actions:
         parameters:
           bootloader_prompt: 'grub>'
       uefi-menu:
+        menu_options: fastboot
         parameters:
           interrupt_prompt: "Android Fastboot mode"
           interrupt_string: ' '

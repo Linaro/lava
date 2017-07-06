@@ -223,17 +223,15 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
             if action.name == 'bootloader-retry':
                 bootloader_retry = action
         names = [r_action.name for r_action in bootloader_retry.internal_pipeline.actions]
-        self.assertIn('reboot-device', names)
+        self.assertIn('reset-device', names)
         self.assertIn('bootloader-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
         for action in bootloader_retry.internal_pipeline.actions:
-            if action.name == 'reboot-device':
+            if action.name == 'reset-device':
                 reset_action = action
         names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
-        self.assertIn('soft-reboot', names)
         self.assertIn('pdu-reboot', names)
-        self.assertIn('power-on', names)
 
     @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
     def test_prompt_from_job(self):  # pylint: disable=too-many-locals

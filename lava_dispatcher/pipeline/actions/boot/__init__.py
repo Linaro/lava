@@ -262,11 +262,13 @@ class AutoLoginAction(Action):
 
 class WaitUSBDeviceAction(Action):
 
-    def __init__(self, device_actions):
+    def __init__(self, device_actions=None):
         super(WaitUSBDeviceAction, self).__init__()
         self.name = "wait-usb-device"
         self.description = "wait for udev to see USB device"
         self.summary = self.description
+        if not device_actions:
+            device_actions = []
         self.device_actions = device_actions
 
     def validate(self):
@@ -289,7 +291,8 @@ class WaitUSBDeviceAction(Action):
                     if usb_product_id == '0000':
                         self.errors = 'usb_product_id unset'
         except KeyError as exc:
-            raise InfrastructureError(exc)
+            self.errors = exc
+            return
         except (TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
@@ -389,6 +392,10 @@ class BootloaderCommandOverlay(Action):
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
                     and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
+                ramdisk_addr = '-'
+            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            if self.method == 'u-boot' and not add_header == "u-boot":
+                self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = '-'
 
             substitutions['{BOOTX}'] = "%s %s %s %s" % (
@@ -498,10 +505,14 @@ class BootloaderCommandsAction(Action):
         self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
 
+    def line_separator(self):
+        return LINE_SEPARATOR
+
     def run(self, connection, max_end_time, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
+        connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
         self.wait(connection)
