@@ -1,4 +1,7 @@
+import unittest
 import logging
+import django
+from distutils.version import StrictVersion
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -16,12 +19,28 @@ from lava_scheduler_app.dbutils import find_device_for_job
 from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
 from lava_scheduler_app.views import job_cancel
 
+
+def django_lts_after(available, limit):
+    """
+    If the current django version is later than the specified limit,
+    return True.
+    Used to allow unittests to be skipped when the underlying django
+    would otherwise cause the test to fail.
+    *Only* for use with V1 unit tests and for django versions 1.11 or
+    later. V1 must continue working on django 1.7, 1.8 and 1.10
+    :return: boolean
+    """
+    return StrictVersion(available) > StrictVersion(limit)
+
+
+def django_message():
+    return 'django %s is too new for this V1 test.' % django.get_version()
+
 # pylint: disable=attribute-defined-outside-init,superfluous-parens,too-many-ancestors,no-self-use,no-member
 # pylint: disable=invalid-name,too-few-public-methods,too-many-statements,unbalanced-tuple-unpacking
 # pylint: disable=protected-access,too-many-public-methods,unpacking-non-sequence
 
 
-# noinspection PyAttributeOutsideInit
 class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
     def setUp(self):
@@ -153,6 +172,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertEqual([], scheduled_jobs)
         self.assertTrue(all([job.status == TestJob.SUBMITTED for job in TestJob.objects.all()]))
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_multinode_job_across_different_workers(self):
         master = self.master
         # This is not a normal worker, it is just another database view
@@ -312,6 +332,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.panda01, chosen_device)
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_find_nonexclusive_device(self):
         """
         test that exclusive devices are not assigned JSON jobs
@@ -379,6 +400,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
         self.assertEqual(self.panda02.health_status, Device.HEALTH_FAIL)
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_find_device_for_job_with_tag(self):
         """
         test that tags are used to set which device is selected
@@ -411,13 +433,15 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         else:
             self.fail("Offered an arndale when no arndale support the requested tags")
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_find_device_for_job_with_multiple_tags(self):
         """
         test that tags are used to set which device is selected
         choose black02 and never black01 due to the presence
         of both the common tag and the unique tag only with black02.
         """
-
+        print(django.get_version())
+        print(django_lts_after(django.get_version(), '1.11'))
         job = self.submit_job(device_type='beaglebone', tags=[
             self.common_tag.name, self.unique_tag.name
         ])
@@ -441,6 +465,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.black02, chosen_device)
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_find_device_with_single_job_tag(self):
         """
         tests handling of jobs with less tags than supported but still
@@ -784,6 +809,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
         self.cleanup(self.whoami())
 
+    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_failed_reservation(self):
         """
         Test is_ready_to_start
