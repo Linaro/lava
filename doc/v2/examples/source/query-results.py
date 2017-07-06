@@ -25,8 +25,12 @@
 # pylint: disable=superfluous-parens,missing-docstring,line-too-long
 # pylint: disable=wrong-import-order,invalid-name,unused-argument
 
+import sys
 import yaml
-import xmlrpclib
+if sys.version_info < (3, 0):
+    import xmlrpclib
+else:
+    import xmlrpc.client as xmlrpclib
 
 # configuration
 USER = 'neil.williams'
@@ -57,7 +61,10 @@ STATUS_CHOICES = (
 def main(args):
     # change https to http when testing with localhost
     connection = xmlrpclib.ServerProxy("https://%s:%s@%s/RPC2" % (USER, TOKEN, HOSTNAME))
-    data = connection.results.run_query(QUERY, 20)
+    data = connection.results.run_query(QUERY, 20, QUERY_USER)
+    if not data:
+        return 0
+    print("Job, Type, Message, Time")
     for result in data:
         job_lava = yaml.load(connection.results.get_testcase_results_yaml(result['id'], 'lava', 'job'))[0]
         job_id = job_lava['job']
@@ -65,7 +72,7 @@ def main(args):
         if result['status'] == INCOMPLETE:
             error_type = job_lava['metadata']['error_type']
             msg = job_lava['metadata']['error_msg']
-            print("[%s] %s %s %s" % (job_id, error_type, msg, logged))
+            print("%s, '%s', '%s', '%s'" % (job_id, error_type, msg, logged))
             continue
         elif result['status'] == COMPLETE:
             continue
