@@ -22,12 +22,12 @@ import xmlrpclib
 
 from django.db import IntegrityError
 
-from linaro_django_xmlrpc.models import ExposedAPI
+from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Alias, DeviceType
 
 
-class SchedulerDeviceTypesAPI(ExposedAPI):
+class SchedulerDeviceTypesAPI(ExposedV2API):
 
     def _available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
@@ -313,7 +313,7 @@ class SchedulerDeviceTypesAPI(ExposedAPI):
         dt.save()
 
 
-class SchedulerDeviceTypesAliasesAPI(ExposedAPI):
+class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
 
     @check_superuser
     def add(self, name, alias):

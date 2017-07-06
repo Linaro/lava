@@ -21,12 +21,12 @@ import xmlrpclib
 
 from django.db import IntegrityError
 
-from linaro_django_xmlrpc.models import ExposedAPI
+from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Worker
 
 
-class SchedulerWorkersAPI(ExposedAPI):
+class SchedulerWorkersAPI(ExposedV2API):
 
     @check_superuser
     def add(self, hostname, description=None, disabled=False):

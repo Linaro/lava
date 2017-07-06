@@ -26,7 +26,7 @@ import pydoc
 import random
 import xmlrpclib
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
 
@@ -210,6 +210,19 @@ class ExposedAPI(object):
                 401,
                 "Permission denied for user '%s' to query other users" % self.user)
         return username
+
+
+class ExposedV2API(ExposedAPI):
+    @property
+    def user(self):
+        user = super(ExposedV2API, self).user
+        return AnonymousUser() if user is None else user
+
+    def _authenticate(self):
+        if self.user.is_active:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
 
 
 class Mapper(object):

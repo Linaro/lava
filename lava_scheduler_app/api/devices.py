@@ -22,7 +22,7 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from linaro_django_xmlrpc.models import ExposedAPI
+from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.dbutils import initiate_health_check_job
 from lava_scheduler_app.models import (
@@ -34,7 +34,7 @@ from lava_scheduler_app.models import (
 )
 
 
-class SchedulerDevicesAPI(ExposedAPI):
+class SchedulerDevicesAPI(ExposedV2API):
 
     @check_superuser
     def add(self, hostname, type_name, worker_hostname,
@@ -452,7 +452,7 @@ class SchedulerDevicesAPI(ExposedAPI):
                 400, "Bad request: %s" % exc.message)
 
 
-class SchedulerDevicesTagsAPI(ExposedAPI):
+class SchedulerDevicesTagsAPI(ExposedV2API):
 
     @check_superuser
     def add(self, hostname, name):
