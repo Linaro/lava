@@ -114,7 +114,11 @@
       <dt>Description</dt>
       <dd>{{ job.description|default:"<i>not set</i>" }}</dd>
       <dt>Device-type</dt>
+{% if job.requested_device_type %}
       <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+{% else %}
+      <dd>...</dd>
+{% endif %}
       <dt>Submitter</dt>
       <dd><a href="mailto:{{ job.submitter.email }}">{{ job.submitter.get_full_name|default:job.submitter.username }}</a></dd>
       <dt>Created</dt>
