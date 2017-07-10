@@ -270,6 +270,10 @@ so that the NFS can be unpacked.
  * ``bz2``
  * ``xz``
 
+.. note:: Additional NFS mount options can be added via job definition context
+   i.e. ``nfsvers`` argument which specifies which version of the NFS protocol
+   to use.
+
 .. _deploy_to_tftp_persistent_nfs:
 
 persistent_nfs

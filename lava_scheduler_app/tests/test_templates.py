@@ -791,13 +791,14 @@ class TestTemplates(unittest.TestCase):
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
                 self.assertIn(',tcp,hard,intr ', line)
-        job_ctx = {'extra_nfsroot_args': ',nolock'}
+                self.assertNotIn('nfsvers', line)
+        job_ctx = {'extra_nfsroot_args': ',nolock,nfsvers=3'}
         test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
-                self.assertIn(',tcp,hard,intr,nolock ', line)
+                self.assertIn(',tcp,hard,intr,nolock,nfsvers=3 ', line)
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         checked = False
         for line in commands:
