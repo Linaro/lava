@@ -488,7 +488,6 @@ class TestDefinitions(StdoutTestCase):
                     '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'
                 )
 
-    @unittest.skipIf(sys.version > '3', 'pexpect issues in python3')
     def test_defined_pattern(self):
         """
         For python3 support, need to resolve:
@@ -509,10 +508,13 @@ test3a: skip
         match = re.search(re_pat, data)
         if match:
             self.assertEqual(match.groupdict(), {'test_case_id': 'test1a', 'result': 'pass'})
-        child = pexpect.spawn('cat', [self.res_data])
+        if sys.version_info[0] == 2:
+            child = pexpect.spawn('cat', [self.res_data])
+        elif sys.version_info[0] == 3:
+            child = pexpect.spawn('cat', [self.res_data], encoding='utf-8')
         child.expect([re_pat, pexpect.EOF])
-        self.assertEqual(child.after, b'test1a: pass')
+        self.assertEqual(child.after.encode('utf-8'), b'test1a: pass')
         child.expect([re_pat, pexpect.EOF])
-        self.assertEqual(child.after, b'test2a: fail')
+        self.assertEqual(child.after.encode('utf-8'), b'test2a: fail')
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)

@@ -93,7 +93,7 @@ setup(
     install_requires=[
         'json-schema-validator >= 2.3',
         'lava-tool >= 0.4',
-        'pexpect >= 2.3',
+        'pexpect >= 4.2',
         'configglue',
         'PyYAML',
         'pyserial >= 2.6',
