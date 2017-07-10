@@ -31,6 +31,13 @@ Duration: {{ job.duration }}
 {%- endif %}
 {%- if job.notification.verbosity == 0 %}
 
+Metadata:
+{%- for item in job.get_metadata_dict() %}
+{%- for key, value in item.items() %}
+{{ key }}: {{ value }}
+{%- endfor %}
+{%- endfor %}
+
 Results:
 {%- if job.notification.blacklist %}
 {% set blacklisted = job.notification.blacklist %}
