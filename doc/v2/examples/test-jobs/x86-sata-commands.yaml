@@ -77,7 +77,7 @@ actions:
       from: inline
       name: sata
       path: inline/sata.yaml
-    - repository: http://git.linaro.org/qa/test-definitions.git
-      path: ubuntu/smoke-tests-basic.yaml
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests
