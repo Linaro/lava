@@ -189,6 +189,9 @@ LAVA device integration guide
 
    device-integration
    integrate-uboot
+   integrate-fastboot
+   integrate-iot
+   integrate-uefi
    integration-stories
 
 .. _contents_developer_guide:
