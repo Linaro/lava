@@ -14,6 +14,8 @@ A Protocol operates separately from any Connection, generally over a
 predetermined layer, e.g. TCP/IP sockets. Some protocols can access data
 passing over a Connection.
 
+.. _using_protocols_from_actions:
+
 Using protocols from actions
 ****************************
 
