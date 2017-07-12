@@ -144,6 +144,24 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         for calling in select.parameters['protocols'][LxcProtocol.name]:
             self.assertEqual(calling['action'], select.name)
             self.assertEqual(calling['request'], 'pre-os-command')
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        self.assertIn(LxcProtocol.name, deploy.parameters.keys())
+        self.assertIn('protocols', deploy.parameters.keys())
+        self.assertIn(LxcProtocol.name, deploy.parameters['protocols'].keys())
+        self.assertEqual(len(deploy.parameters['protocols'][LxcProtocol.name]), 1)
+        for calling in deploy.parameters['protocols'][LxcProtocol.name]:
+            self.assertEqual(calling['action'], deploy.name)
+            self.assertEqual(calling['request'], 'pre-power-command')
+        pair = ['pre-os-command', 'pre-power-command']
+        action_list = {jaction.keys()[0] for jaction in job.parameters['actions']}
+        block = job.parameters['actions']
+        for action in action_list:
+            for item in block:
+                if action in item:
+                    if 'protocols' in item[action]:
+                        caller = (item[action]['protocols'][LxcProtocol.name])
+                        for call in caller:
+                            self.assertIn(call['request'], pair)
 
     @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):

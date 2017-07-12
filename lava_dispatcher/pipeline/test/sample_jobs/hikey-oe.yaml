@@ -64,6 +64,12 @@ actions:
         compression: gz
         apply-overlay: true
     os: oe
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
 
 - boot:
     namespace: hikey-oe

@@ -95,21 +95,31 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
 
     def _api_select(self, data, action=None):
         if not data:
-            raise TestError("Protocol called without any data")
+            raise TestError("[%s] Protocol called without any data." % self.name)
         if not action:
             raise LAVABug('LXC protocol needs to be called from an action.')
         for item in data:
             if 'request' not in item:
-                raise LAVABug("Malformed protocol request data.")
+                raise LAVABug("[%s] Malformed protocol request data." % self.name)
             if 'pre-os-command' in item['request']:
-                action.logger.info("Running pre OS command via protocol.")
+                action.logger.info("[%s] Running pre OS command via protocol.", self.name)
                 command = action.job.device.pre_os_command
                 if not action.run_command(command.split(' '), allow_silent=True):
                     raise InfrastructureError("%s failed" % command)
+                continue
+            elif 'pre-power-command' in item['request']:
+                action.logger.info("[%s] Running pre-power-command via protocol.", self.name)
+                command = action.job.device.pre_power_command
+                if not action.run_command(command.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % command)
+                continue
+            else:
+                raise JobError("[%s] Unrecognised protocol request: %s" % (self.name, item))
 
     def __call__(self, *args, **kwargs):
         action = kwargs.get('action', None)
         logger = action.logger if action else logging.getLogger("dispatcher")
+        self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:
             return self._api_select(args, action=action)
         except yaml.YAMLError as exc:
