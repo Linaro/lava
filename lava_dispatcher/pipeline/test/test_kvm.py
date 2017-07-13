@@ -267,7 +267,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):  # pylint: disable=too-many-pu
 
 
 def prepare_test_connection():
-    logfile = os.path.join(os.path.dirname(__file__), 'kernel.txt')
+    logfile = os.path.join(os.path.dirname(__file__), 'kernel-1.txt')
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
     child = pexpect.spawn('cat', [logfile])
