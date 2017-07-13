@@ -149,7 +149,7 @@ class AutoLoginAction(Action):
         self.logger.debug(connection.prompt_str)
         parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
         if len(parsed) and 'success' in parsed[0]:
-            self.results = {'success': parsed[0]}
+            self.results = {'success': parsed[0]['success']}
         elif not parsed:
             self.results = {'success': "No kernel warnings or errors detected."}
         else:
@@ -193,7 +193,7 @@ class AutoLoginAction(Action):
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
             if 'success' in self.results:
-                check = self.results['success'].values()
+                check = self.results['success']
                 if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
                     raise JobError("auto_login not enabled but image requested login details.")
             # clear kernel message prompt patterns
@@ -207,7 +207,7 @@ class AutoLoginAction(Action):
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
             if 'success' in self.results:
-                if LOGIN_INCORRECT_MSG in self.results['success'].values():
+                if LOGIN_INCORRECT_MSG in self.results['success']:
                     self.logger.warning("Login incorrect message matched before the login prompt. "
                                         "Please check that the login prompt is correct. Retrying login...")
             self.logger.debug("Sending username %s", params['username'])
