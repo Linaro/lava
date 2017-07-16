@@ -200,7 +200,7 @@ If the worker is only to run V2, then some test job deployments will require a
 working Apache2 server to offer deployment files over the network to the
 device::
 
-    cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
+    $ sudo cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
     $ sudo a2ensite lava-dispatcher
     $ sudo service apache2 restart
     $ wget http://localhost/tmp/
