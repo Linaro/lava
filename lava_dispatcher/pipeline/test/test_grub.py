@@ -72,6 +72,16 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_hikey960_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -272,3 +282,22 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('item_class', menu.params)
         grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
         self.assertEqual('fastboot', grub_efi.commands)
+
+    def test_hikey960_grub(self):
+        job = self.factory.create_hikey960_job('sample_jobs/hikey960-oe.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('hi960-grub-efi.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        flash = [action for action in deploy.internal_pipeline.actions if action.name == 'fastboot-flash-action'][0]
+        self.assertIsNotNone(flash.interrupt_prompt)
+        self.assertEqual('Android Fastboot mode', flash.interrupt_prompt)
+        self.assertIsNotNone(flash.interrupt_string)
+        self.assertEqual(' ', flash.interrupt_string)
+        grub_seq = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
+        self.assertIsNotNone(grub_seq)
+        wait = [action for action in grub_seq.internal_pipeline.actions if action.name == 'wait-fastboot-interrupt'][0]
+        self.assertIsNotNone(wait)
+        login = [action for action in grub_seq.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertIsNotNone(login)

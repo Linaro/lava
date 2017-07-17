@@ -40,6 +40,7 @@ from lava_dispatcher.pipeline.actions.boot.uefi_menu import (
     UEFIMenuInterrupt,
     UefiMenuSelector
 )
+from lava_dispatcher.pipeline.actions.boot.fastboot import WaitFastBootInterrupt
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
@@ -63,6 +64,31 @@ def bootloader_accepts(device, parameters):
     return True
 
 
+class GrubSequence(Boot):
+
+    compatibility = 3
+
+    def __init__(self, parent, parameters):
+        super(GrubSequence, self).__init__(parent)
+        self.action = GrubSequenceAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        if not bootloader_accepts(device, parameters):
+            return False
+        params = device['actions']['boot']['methods']
+        if 'grub' not in params:
+            return False
+        if 'grub-efi' in params:
+            return False
+        if 'sequence' in params['grub']:
+            return True
+        return False
+
+
 class Grub(Boot):
 
     compatibility = 3
@@ -79,7 +105,64 @@ class Grub(Boot):
         if not bootloader_accepts(device, parameters):
             return False
         params = device['actions']['boot']['methods']
+        if 'grub' in params and 'sequence' in params['grub']:
+            return False
         return 'grub' in params or 'grub-efi' in params
+
+
+def _grub_sequence_map(sequence):
+    """Maps grub sequence with corresponding class."""
+    sequence_map = {
+        'wait-fastboot-interrupt': (WaitFastBootInterrupt, 'grub'),
+        'auto-login': (AutoLoginAction, None),
+        'shell-session': (ExpectShellSession, None),
+        'export-env': (ExportDeviceEnvironment, None),
+    }
+    return sequence_map.get(sequence, (None, None))
+
+
+class GrubSequenceAction(BootAction):
+
+    def __init__(self):
+        super(GrubSequenceAction, self).__init__()
+        self.name = "grub-sequence-action"
+        self.description = "grub boot sequence"
+        self.summary = "run grub boot using specified sequence of actions"
+        self.expect_shell = False
+
+    def validate(self):
+        super(GrubSequenceAction, self).validate()
+        sequences = self.job.device['actions']['boot']['methods']['grub'].get(
+            'sequence', [])
+        for sequence in sequences:
+            if not _grub_sequence_map(sequence):
+                self.errors = "Unknown boot sequence '%s'" % sequence
+
+    def populate(self, parameters):
+        super(GrubSequenceAction, self).populate(parameters)
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        sequences = self.job.device['actions']['boot']['methods']['grub'].get(
+            'sequence', [])
+        for sequence in sequences:
+            mapped = _grub_sequence_map(sequence)
+            if mapped[1]:
+                self.internal_pipeline.add_action(
+                    mapped[0](type=mapped[1]))
+            elif mapped[0]:
+                self.internal_pipeline.add_action(mapped[0]())
+        if self.has_prompts(parameters):
+            self.internal_pipeline.add_action(AutoLoginAction())
+            if self.test_has_shell(parameters):
+                self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        else:
+            if self.has_boot_finished(parameters):
+                self.logger.debug("Doing a boot without a shell (installer)")
+                self.internal_pipeline.add_action(InstallerWait())
+                self.internal_pipeline.add_action(PowerOff())
 
 
 class GrubMainAction(BootAction):
@@ -97,7 +180,7 @@ class GrubMainAction(BootAction):
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         # FIXME: reset_device is a hikey hack due to fastboot/OTG issues
-        # remove as part of LAVA-940
+        # remove as part of LAVA-940 - convert to use fastboot-sequence
         reset_device = self.job.device['actions']['boot']['methods'].get('grub-efi', {}).get('reset_device', True)
         if parameters['method'] == 'grub-efi' and reset_device:
             # added unless the device specifies not to reset the device in grub.
@@ -147,7 +230,7 @@ class BootloaderInterrupt(Action):
         if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
             self.type = 'grub-efi'
         if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
-            self.errors = "Missing bootloader prompt for device"
+            self.errors = "[%s] Missing bootloader prompt for device" % self.name
 
     def run(self, connection, max_end_time, args=None):
         if not connection:

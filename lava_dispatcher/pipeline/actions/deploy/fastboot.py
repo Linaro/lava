@@ -169,16 +169,16 @@ class EnterFastbootAction(DeployAction):
         super(EnterFastbootAction, self).validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
+        elif self.job.device['adb_serial_number'] == '0000000000':
+            self.errors = "device adb serial number unset"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
@@ -243,19 +243,25 @@ class FastbootFlashAction(DeployAction):
         self.summary = "fastboot flash"
         self.retries = 3
         self.sleep = 10
+        self.interrupt_prompt = None
+        self.interrupt_string = None
 
     def validate(self):
         super(FastbootFlashAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
+        device_methods = self.job.device['actions']['deploy']['methods']
+        if isinstance(device_methods.get('fastboot'), dict):
+            self.interrupt_prompt = device_methods['fastboot'].get('interrupt_prompt')
+            self.interrupt_string = device_methods['fastboot'].get('interrupt_string')
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
@@ -283,6 +289,15 @@ class FastbootFlashAction(DeployAction):
                 'fastboot', [])
             if 'no-flash-boot' in sequence and flash_cmd in ['boot']:
                 continue
+
+            # each time, read anything from the previous buffer before doing the reset.
+            # cannot happen after the reset or it would be a race condition with the addition
+            # of the device to the LXC.
+            if self.interrupt_prompt:
+                connection.prompt_str = self.interrupt_prompt
+                self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+                self.wait(connection)
+
             serial_number = self.job.device['fastboot_serial_number']
             fastboot_opts = self.job.device['fastboot_options']
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
