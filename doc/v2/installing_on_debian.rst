@@ -465,6 +465,13 @@ Having two different base URLs is more awkward to setup. In this case you will
 have to also setup Apache modules like `Substitute` to alter the HTML content
 on the fly. This is not a recommended setup.
 
+Depending on your setup, you should also have a look at
+`ProxyPassReverseCookieDomain
+<https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#proxypassreversecookiedomain>`_
+and `ProxyPassReverseCookiePath
+<https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#proxypassreversecookiepath>`_
+to set the cookie domain and path correctly.
+
 .. index:: superuser, create superuser
 
 .. _create_superuser:
