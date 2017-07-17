@@ -1,3 +1,24 @@
+# Copyright (C) 2017 Linaro Limited
+#
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
+#
+# This file is part of Lava Server.
+#
+# Lava Server is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License version 3
+# as published by the Free Software Foundation
+#
+# Lava Server is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import subprocess
+
 from django.core.checks import Debug, Error, register
 
 from lava_scheduler_app.models import Device, validate_job
@@ -44,5 +65,39 @@ def check_device_configuration(app_configs, **kwargs):
     for device in Device.objects.filter(is_pipeline=True):
         if not device.is_valid():
             errors.append(Error('Invalid configuration', obj=device.hostname))
+
+    return errors
+
+
+def _package_status(name, errors):
+    try:
+        out = subprocess.check_output(["dpkg-query", "--status", name],
+                                      stderr=subprocess.STDOUT).decode("utf-8").split("\n")
+        if out[1] != "Status: install ok installed":
+            errors.append(Error('not installed correctly', obj=name))
+    except subprocess.CalledProcessError:
+        errors.append(Error('not installed from a Debian package', obj=name))
+
+
+def _package_symlinks(name, errors):
+    dirname = os.path.join("/usr/lib/python2.7/dist-packages/", name)
+    if os.path.islink(dirname):
+        errors.append(Error('symlink to %s' % os.path.realpath(dirname), obj=name))
+
+
+@register(deploy=True)
+def check_packaging(app_configs, **kwargs):
+    errors = []
+
+    _package_status("lava-dispatcher", errors)
+    _package_status("lava-server", errors)
+
+    _package_symlinks("dashboard_app", errors)
+    _package_symlinks("lava_dispatcher", errors)
+    _package_symlinks("lava_results_app", errors)
+    _package_symlinks("lava_scheduler_app", errors)
+    _package_symlinks("lava_scheduler_daemon", errors)
+    _package_symlinks("lava_server", errors)
+    _package_symlinks("", errors)
 
     return errors
