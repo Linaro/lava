@@ -527,7 +527,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                 try:
                     value['role']
                 except (KeyError, TypeError):
-                    raise SubmissionException("Invalid YAML - check for consistent use of whitespace indents.")
+                    raise SubmissionException("Invalid YAML - Did not find a role in action '%s', check for consistent use of whitespace indents." % action.keys()[0])
                 if role in value['role']:
                     actions.setdefault(role, {'actions': []})
                     actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
