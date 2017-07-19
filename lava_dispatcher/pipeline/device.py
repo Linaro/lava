@@ -98,8 +98,11 @@ class NewDevice(PipelineDevice):
         super(NewDevice, self).__init__({})
         # Parse the yaml configuration
         try:
-            with open(target) as f_in:
-                self.update(yaml.load(f_in))
+            if isinstance(target, str):
+                with open(target) as f_in:
+                    self.update(yaml.load(f_in))
+            else:
+                self.update(yaml.load(target.read()))
         except yaml.parser.ParserError:
             raise ConfigurationError("%s could not be parsed" % target)
 

@@ -129,6 +129,7 @@ setup(
     ],
     scripts=[
         'lava-dispatch',
+        'lava/dispatcher/lava-run',
         'lava/dispatcher/lava-dispatcher-slave',
         'lava/dispatcher/lava-slave'
     ],

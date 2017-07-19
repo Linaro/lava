@@ -195,12 +195,12 @@ class Job(object):
             LOG.debug("[%d] START", self.job_id)
             env = self.create_environ()
             args = [
-                "lava-dispatch",
-                "--target=%s" % os.path.join(self.base_dir, "device.yaml"),
+                "lava-run",
+                "--device=%s" % os.path.join(self.base_dir, "device.yaml"),
                 "--dispatcher=%s" % os.path.join(self.base_dir, "dispatcher.yaml"),
                 "--output-dir=%s" % self.base_dir,
                 "--job-id=%s" % self.job_id,
-                "--socket-addr=%s" % self.zmq_config.logging_url,
+                "--logging-url=%s" % self.zmq_config.logging_url,
                 os.path.join(self.base_dir, "job.yaml"),
             ]
             # Use certificates if defined
@@ -209,13 +209,14 @@ class Job(object):
                 args.extend(["--master-cert", self.zmq_config.master_cert,
                              "--slave-cert", self.zmq_config.slave_cert])
             if self.env_dut:
-                args.append("--env-dut-path=%s" % env_dut)
+                args.append("--env-dut=%s" % env_dut)
 
             self.proc = subprocess.Popen(
                 args,
                 stdout=open(out_file, "w"),
                 stderr=open(err_file, "w"), env=env)
         except Exception as exc:  # pylint: disable=broad-except
+            LOG.error("Unable to start %s", args)
             # daemon must always continue running even if the job crashes
             if hasattr(exc, "child_traceback"):
                 LOG.exception(exc.child_traceback)
