@@ -162,9 +162,8 @@ class UBootInterrupt(Action):
 
     def validate(self):
         super(UBootInterrupt, self).validate()
-        hostname = self.job.device['hostname']
         if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s" % hostname
+            self.errors = "Unable to connect to device %s"
         device_methods = self.job.device['actions']['boot']['methods']
         if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
             self.errors = "Missing bootloader prompt for device"

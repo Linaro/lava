@@ -139,9 +139,8 @@ class BootloaderInterrupt(Action):
 
     def validate(self):
         super(BootloaderInterrupt, self).validate()
-        hostname = self.job.device['hostname']
         if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s" % hostname
+            self.errors = "Unable to connect to device"
         device_methods = self.job.device['actions']['boot']['methods']
         if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
             self.type = 'grub-efi'

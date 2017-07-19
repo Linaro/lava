@@ -376,12 +376,12 @@ class VlandProtocol(Protocol):
             if vlan_name == 'yaml_line':
                 continue
             if 'tags' not in self.params[vlan_name]:
-                self.errors = "%s already configured for %s" % (device['hostname'], self.name)
+                self.errors = "device already configured for %s" % self.name
             else:
                 requested.extend(self.params[vlan_name]['tags'])
         if set(available) & set(requested) != set(requested):
-            self.errors = "Requested link speeds %s are not available %s for %s" % (
-                requested, available, device['hostname'])
+            self.errors = "Requested link speeds %s are not available %s for device" % (
+                requested, available)
         if not self.valid:
             return False
 

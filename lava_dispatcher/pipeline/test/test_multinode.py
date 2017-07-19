@@ -328,7 +328,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
             'messageID': 'test'
         })))
         self.assertEqual(
-            {"message": {"kvm01": {"key": "value"}}, "response": "ack"},
+            {"message": {self.job_id: {"key": "value"}}, "response": "ack"},
             reply
         )
 
@@ -517,7 +517,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         # now pretend that another job has called lava-send with the same messageID, this would be the reply to the
         # :lava-wait
-        reply = {"/tmp/lava-dispatcher/slave/8833/device.yaml": {"ipaddr": "10.15.206.133"}}
+        reply = {mn_protocol.job_id: {"ipaddr": "10.15.206.133"}}
         cparams = {'timeout': {'minutes': 5, 'yaml_line': 11}, 'messageID': 'ipv4', 'action': 'prepare-scp-overlay', 'message': {'ipaddr': '$ipaddr'}, 'request': 'lava-wait'}
         self.assertEqual(
             ('ipv4', {'ipaddr': '10.15.206.133'}),
@@ -525,7 +525,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         reply = {
             "message": {
-                "kvm01": {
+                mn_protocol.job_id: {
                     "ipv4": "192.168.0.2"
                 }
             },
@@ -548,7 +548,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
             {
                 'action': 'execute-qemu',
                 'message': {
-                    'ipv4': reply['message'][self.client_job.device.target]['ipv4'],
+                    'ipv4': reply['message'][mn_protocol.job_id]['ipv4'],
                     'yaml_line': 65
                 },
                 'yaml_line': 62,

@@ -163,8 +163,6 @@ class RepoAction(Action):
         return willing[0]
 
     def validate(self):
-        if 'hostname' not in self.job.device:
-            raise ConfigurationError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             self.errors = "Unable to determine test_name"
             return

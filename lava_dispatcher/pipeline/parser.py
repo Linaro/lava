@@ -126,7 +126,6 @@ class JobParser(object):
         job.device = device
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
-        job.parameters['target'] = device.target
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
         if dispatcher_config is not None:

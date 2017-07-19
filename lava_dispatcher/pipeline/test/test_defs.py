@@ -120,7 +120,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
-#        self.assertIsNotNone(testdef.job.device['hostname'])
 
     def test_name(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
