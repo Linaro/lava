@@ -55,7 +55,7 @@ Example 2 - Single device with `board_id` and `usb_vendor_id` ::
 
 Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` ::
 
- {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_vendor_id': 'd109'}] %}
+ {% set device_info = [{'board_id': '0123456789', 'usb_vendor_id': '0451', 'usb_product_id': 'd109'}] %}
 
 .. note:: Do not run `adb daemon` on the dispatcher host, which will grab the
           :term:`DUT` and will hinder exposing it to LXC. Similarly, remove
