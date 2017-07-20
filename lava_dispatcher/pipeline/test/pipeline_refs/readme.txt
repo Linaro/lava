@@ -1,3 +1,7 @@
+See also:
+https://staging.validation.linaro.org/static/docs/v2/dispatcher-testing.html#lava-dispatcher
+or http://localhost/static/docs/v2/dispatcher-testing.html#lava-dispatcher
+
 To rebuild and update a pipeline reference, use:
 
     import yaml
@@ -23,3 +27,14 @@ The name of the pipeline_ref file should match the name of the equivalent file i
 To change multiple pipeline references at the same time, change
 self.update_ref to True in test_basic.StdoutTestCase - always check all changes to
 the pipeline reference files *carefully* before sending for review.
+
+Once you have a new unit test function with the pipeline_reference check in place,
+the pipeline_reference can be updated by adding a temporary line:
+
+    self.update_ref = True
+
+Re-run the unit test and remove the line. Check that the diff for the pipeline
+reference is sane before submitting for review.
+
+For an example of a short unit test using a pipeline_reference, see:
+lava_dispatcher/pipeline/test/test_uboot.py - def test_transfer_media(self):
