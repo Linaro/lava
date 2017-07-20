@@ -750,7 +750,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             if not multinode_job.actual_device:
                 logger.debug("[%s] job has no device yet", multinode_job.sub_id)
                 return None
-            devices[str(multinode_job.actual_device.hostname)] = definition['protocols']['lava-multinode']['role']
+            devices[str(multinode_job.id)] = definition['protocols']['lava-multinode']['role']
         for multinode_job in job.sub_jobs_list:
             # apply the complete list to all jobs in this group
             definition = yaml.load(multinode_job.definition)
@@ -797,7 +797,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.info('[%d] worker-hostname not seen: %s', job.id, msg)
             return None
 
-        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
             device_object.target = device.hostname

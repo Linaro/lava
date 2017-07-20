@@ -580,7 +580,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
 
         self.assertTrue(device.is_valid(system=False))
-        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
             device_object.target = device.hostname
@@ -836,7 +836,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.fail('[%d] device-dictionary error: %s' % (host_job.id, msg))
 
         self.assertTrue(device.is_valid(system=False))
-        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
             device_object.target = device.hostname
@@ -1096,7 +1096,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
                     self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
 
-                device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+                device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
                 # FIXME: drop this nasty hack once 'target' is dropped as a parameter
                 if 'target' not in device_object:
                     device_object.target = device.hostname
@@ -1239,7 +1239,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         self.assertTrue(device.is_valid(system=False))
-        parser_device = PipelineDevice(device_config, device.hostname)
+        parser_device = PipelineDevice(device_config)
         parser = JobParser()
         pipeline_job = parser.parse(
             yaml.dump(client_submission), parser_device,
@@ -1317,7 +1317,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
                     self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
 
-                device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+                device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
                 # FIXME: drop this nasty hack once 'target' is dropped as a parameter
                 if 'target' not in device_object:
                     device_object.target = device.hostname

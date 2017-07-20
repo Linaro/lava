@@ -57,7 +57,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -190,7 +190,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -243,7 +243,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -276,7 +276,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -316,7 +316,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
