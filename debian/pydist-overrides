@@ -1,7 +1,7 @@
 json_schema_validator python-json-schema-validator
 lava_tool lava-tool; PEP386
 lava_utils_interface lava-utils-interface; PEP386
-pexpect python-pexpect
+pexpect python-pexpect; PEP386
 configglue python-configglue
 pyliblzma python-lzma; PEP386
 requests python-requests; PEP386
