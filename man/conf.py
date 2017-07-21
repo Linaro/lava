@@ -50,7 +50,7 @@ copyright = u'2010-2014, Linaro Limited'
 # built documents.
 #
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read()
+version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read().decode('utf-8')
 # The full version, including alpha/beta/rc tags.
 release = version
 
