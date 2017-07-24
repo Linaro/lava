@@ -30,7 +30,6 @@ from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
     Action,
-    ConfigurationError,
     InfrastructureError,
     JobError,
     LAVABug,

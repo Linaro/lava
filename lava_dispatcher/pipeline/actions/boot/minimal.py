@@ -19,8 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.action import (
-    Action,
-    ConfigurationError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.actions.boot import (
@@ -29,7 +27,7 @@ from lava_dispatcher.pipeline.actions.boot import (
     OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.logical import Boot, RetryAction
+from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.shell import ExpectShellSession

@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import (
@@ -146,8 +145,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             device_actions=['add']))
 
         fastboot_dir = self.mkdtemp()
-        image_keys = list(parameters['images'].keys())
-        image_keys.sort()
+        image_keys = sorted(parameters['images'].keys())
         for image in image_keys:
             if image != 'yaml_line':
                 self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))

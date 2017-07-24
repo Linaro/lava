@@ -18,19 +18,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import shutil
+
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     InfrastructureError
 )
-from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.utils.udev import WaitUSBSerialDeviceAction, WaitDevicePathAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-import shutil
-import os
+from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.udev import WaitUSBSerialDeviceAction, WaitDevicePathAction
 
 
 class CMSIS(Boot):

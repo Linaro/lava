@@ -119,7 +119,7 @@ def parse_job_file(options):
             f_describe.write(yaml.dump(description))
 
     except JobError as exc:
-        logging.error("Invalid job submission: %s" % exc)
+        logging.error("Invalid job submission: %s", str(exc))
         return None
 
     return job
@@ -159,7 +159,7 @@ def main():
         job.validate(simulate=options.validate)
         if not options.validate:
             return job.run()
-    except:
+    except BaseException:
         return 1
 
 
