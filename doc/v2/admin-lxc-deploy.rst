@@ -129,7 +129,7 @@ container users. To set a different container creation path on a per dispatcher
 basis `lxc_path` key is used in the dispatcher configuration as described in
 :ref:`dispatcher_configuration`
 
-Once the `lxc_path` key is set in dispatch configuration, both persistent and
+Once the `lxc_path` key is set in dispatcher configuration, both persistent and
 non-persistent containers will get created in this path.
 
 .. note:: LAVA does not have a mechanism to limit the amount of disk space such
