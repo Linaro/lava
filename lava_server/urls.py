@@ -26,7 +26,7 @@ from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
 
 from dashboard_app.xmlrpc import DashboardAPI
-from lava_results_app.xmlrpc import ResultsAPI
+from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
 from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
@@ -35,8 +35,8 @@ from lava_scheduler_app.api.jobs import SchedulerJobsAPI
 from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 
+from lava_server.api import LavaMapper
 from lava_server.views import index, me, update_irc_settings
-from lava_server.xmlrpc import LavaMapper
 
 handler403 = 'lava_server.views.permission_error'
 handler500 = 'lava_server.views.server_error'
