@@ -1436,7 +1436,7 @@ def job_detail(request, pk):
             levels[kl] = 0
         for level, msg, _ in job_log_messages:
             levels[level] += 1
-        levels = sorted(levels.items(), key=lambda (k, v): logging._levelNames.get(k))
+        levels = sorted(levels.items(), key=lambda tup: logging._levelNames.get(tup[0]))
         data.update({
             'job_file_present': True,
             'job_log_messages': job_log_messages,
