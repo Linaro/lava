@@ -16,8 +16,12 @@ actions:
       serial:
       ssh:
     methods:
-      cmsis-dap:
+      pyocd:
         parameters:
-          usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
-          resets_after_flash: False
+          command:
+            pyocd-flashtool
+          options:
+          - -d {{ debug|default('debug') }}
+          - -t kw41z4
+          - -f 3000000
 {% endblock body -%}
