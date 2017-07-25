@@ -525,6 +525,13 @@ class TestTemplates(unittest.TestCase):
                 self.assertIn('ttyAMA3', command)
             else:
                 self.assertEqual('boot', command)
+        self.assertIn('ssh', template_dict['actions']['deploy']['methods'])
+        params = template_dict['actions']['deploy']['methods']['ssh']
+        self.assertIsNotNone(params)
+        self.assertIn('port', params)
+        self.assertIn('user', params)
+        self.assertIn('options', params)
+        self.assertIn('identity_file', params)
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

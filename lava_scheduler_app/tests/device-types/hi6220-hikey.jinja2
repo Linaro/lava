@@ -16,6 +16,13 @@ actions:
     methods:
       lxc:
       fastboot:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: '{{ ssh_host|default('') }}'
+        port: {{ ssh_port|default(22) }}
+        user: {{ ssh_user|default('root') }}
+        identity_file: {{ ssh_identity_file }}
     connections:
       lxc:
       serial:
@@ -24,6 +31,7 @@ actions:
       lxc:
       serial:
     methods:
+      ssh:
       fastboot:
         - boot
         - wait-usb-add
