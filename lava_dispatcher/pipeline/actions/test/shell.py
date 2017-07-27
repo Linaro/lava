@@ -237,6 +237,10 @@ class TestShellAction(TestAction):
             for command in pre_command_list:
                 connection.sendline(command, delay=self.character_delay)
 
+        if lava_test_results_dir is None:
+            raise JobError("Nothing to run. Maybe the 'deploy' stage is missing, "
+                           "otherwise this is a bug which should be reported.")
+
         self.logger.debug("Using %s" % lava_test_results_dir)
         connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
         if lava_test_sh_cmd:
