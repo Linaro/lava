@@ -219,7 +219,7 @@ class ExposedV2API(ExposedAPI):
         return AnonymousUser() if user is None else user
 
     def _authenticate(self):
-        if self.user.is_active:
+        if not self.user.is_active:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
