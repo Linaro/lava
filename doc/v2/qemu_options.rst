@@ -244,7 +244,7 @@ How to specify QEMU environment options
   For obvious security reasons there is **no way** to influence environment
   variables from within a job. But LAVA provides the capability to
   specify (globally at the server level) what environment variables are to be used
-  for jobs in the file ``env.yaml``. See :ref:`simple-admin`.
+  for jobs in the file ``env.yaml``. See :ref:`simple_admin`.
 
 * One example is the use of ``-soundhw hda`` which emulates a soundcard on the target.
   To avoid having any sound output on the host (or worker fwiw), you can specify

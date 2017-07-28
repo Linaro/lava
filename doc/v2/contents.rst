@@ -186,6 +186,7 @@ LAVA device integration guide
    :maxdepth: 1
 
    device-integration
+   integration-stories
 
 .. _contents_developer_guide:
 
