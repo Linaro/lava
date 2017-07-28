@@ -188,6 +188,7 @@ LAVA device integration guide
    :maxdepth: 1
 
    device-integration
+   integrate-uboot
    integration-stories
 
 .. _contents_developer_guide:
