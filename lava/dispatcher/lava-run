@@ -45,6 +45,8 @@ def parser():
                             "This alters process name for easier debugging")
     p_obj.add_argument("--output-dir", required=True, metavar="DIR",
                        help="Directory for temporary ressources")
+    p_obj.add_argument("--ipv6", action="store_true", default=False,
+                       help="Enable IPv6")
 
     group = p_obj.add_argument_group("logging")
     group.add_argument("--logging-url", required=True, metavar="URL",
@@ -103,7 +105,9 @@ def parse_job_file(options):
         if options.logging_url is not None:
             zmq_config = ZMQConfig(options.logging_url,
                                    options.master_cert,
-                                   options.slave_cert)
+                                   options.slave_cert,
+                                   options.ipv6)
+
         # Generate the pipeline
         job = parser.parse(options.definition.read(),
                            device, options.job_id,

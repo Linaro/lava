@@ -203,6 +203,10 @@ class Job(object):
                 "--logging-url=%s" % self.zmq_config.logging_url,
                 os.path.join(self.base_dir, "job.yaml"),
             ]
+
+            if self.zmq_config.ipv6:
+                args.append("--ipv6")
+
             # Use certificates if defined
             if self.zmq_config.master_cert is not None and \
                self.zmq_config.slave_cert is not None:
@@ -280,7 +284,7 @@ def send_end(sock, job_id, job, print_exception=False):
                             job.description()])
 
 
-def create_zmq_context(master_uri, hostname, encrypt,
+def create_zmq_context(master_uri, hostname, ipv6, encrypt,
                        master_cert, slave_cert):
     """Create the ZMQ context and necessary accessories.
 
@@ -302,6 +306,10 @@ def create_zmq_context(master_uri, hostname, encrypt,
     sock = context.socket(zmq.DEALER)
     sock.setsockopt(zmq.IDENTITY, b(hostname))
     sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
+
+    if ipv6:
+        LOG.info("Enabling IPv6")
+        sock.setsockopt(zmq.IPV6, 1)
 
     # If needed, load certificates
     if encrypt:
@@ -738,6 +746,10 @@ def main():
         default=TIMEOUT,
         help="Socket connection timeout in seconds; default to %d" % TIMEOUT,
     )
+    parser.add_argument(
+        "--ipv6", default=False, action="store_true",
+        help="Enable IPv6"
+    )
 
     parser.add_argument(
         "--encrypt", default=False, action="store_true",
@@ -765,7 +777,7 @@ def main():
 
     # Create the zmq context
     context, sock, poller, pipe_r, pipe_w = create_zmq_context(
-        master_uri, host_name, args.encrypt,
+        master_uri, host_name, args.ipv6, args.encrypt,
         args.master_cert, args.slave_cert)
 
     # Register cleanup function to be run at exit.
@@ -794,7 +806,8 @@ def main():
 
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
-    zmq_config = ZMQConfig(args.socket_addr, args.master_cert, args.slave_cert)
+    zmq_config = ZMQConfig(args.socket_addr, args.master_cert, args.slave_cert,
+                           args.ipv6)
     while True:
         listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout)
         last_jobs_check = check_job_status(jobs, sock, last_jobs_check)

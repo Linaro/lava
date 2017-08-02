@@ -19,6 +19,7 @@ MASTER_URL="tcp://localhost:5556"
 LOGGER_URL="tcp://localhost:5555"
 LOGLEVEL="DEBUG"
 HOSTNAME=""
+IPV6=""
 ENCRYPT=""
 MASTER_CERT=""
 SLAVE_CERT=""
@@ -37,7 +38,7 @@ SCRIPTNAME=/etc/init.d/lava-slave
 [ -r /etc/lava-dispatcher/$NAME ] && . /etc/lava-dispatcher/$NAME
 
 # Build the command line
-DAEMON_ARGS="--master $MASTER_URL --socket-addr $LOGGER_URL --level $LOGLEVEL $ENCRYPT $MASTER_CERT $SLAVE_CERT $HOSTNAME"
+DAEMON_ARGS="--master $MASTER_URL --socket-addr $LOGGER_URL --level $LOGLEVEL $IPV6 $ENCRYPT $MASTER_CERT $SLAVE_CERT $HOSTNAME"
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
