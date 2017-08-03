@@ -117,7 +117,7 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('lxc', template_dict['actions']['deploy']['methods'])
         self.assertIn('fastboot', template_dict['actions']['deploy']['methods'])
         self.assertEqual(
-            ['reboot', 'wait-usb-add', 'lxc-add-device'],
+            ['reboot'],
             template_dict['actions']['boot']['methods']['fastboot']
         )
 
