@@ -39,7 +39,6 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
-from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
@@ -256,51 +255,6 @@ class AutoLoginAction(Action):
         connection.sendline('export PS1="%s"' % self.job.device.get_constant(
             'default-shell-prompt'), delay=self.character_delay)
 
-        return connection
-
-
-class WaitUSBDeviceAction(Action):
-
-    def __init__(self, device_actions=None):
-        super(WaitUSBDeviceAction, self).__init__()
-        self.name = "wait-usb-device"
-        self.description = "wait for udev to see USB device"
-        self.summary = self.description
-        if not device_actions:
-            device_actions = []
-        self.device_actions = device_actions
-
-    def validate(self):
-        super(WaitUSBDeviceAction, self).validate()
-        if not isinstance(self.device_actions, list):
-            self.errors = "device_actions is not a list"
-        if 'device_info' in self.job.device \
-           and not isinstance(self.job.device['device_info'], list):
-            self.errors = "device_info unset"
-        try:
-            if 'device_info' in self.job.device:
-                for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
-                    usb_product_id = usb_device.get('usb_product_id', '')
-                    if board_id == '0000000000':
-                        self.errors = "board_id unset"
-                    if usb_vendor_id == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_product_id == '0000':
-                        self.errors = 'usb_product_id unset'
-        except KeyError as exc:
-            self.errors = exc
-            return
-        except (TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(WaitUSBDeviceAction, self).run(connection,
-                                                          max_end_time, args)
-        self.logger.info("Waiting for USB device(s) with actions %s ...",
-                         self.device_actions)
-        usb_device_wait(self.job, device_actions=self.device_actions)
         return connection
 
 

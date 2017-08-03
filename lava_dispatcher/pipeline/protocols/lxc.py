@@ -37,6 +37,7 @@ from lava_dispatcher.pipeline.shell import ShellCommand
 from lava_dispatcher.pipeline.utils.constants import (
     LAVA_LXC_TIMEOUT,
     LXC_PATH,
+    UDEV_RULES_DIR,
 )
 from lava_dispatcher.pipeline.utils.filesystem import lxc_path
 
@@ -190,4 +191,19 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                                                   shell.readlines()))
             if self.custom_lxc_path and not self.persistence:
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
+        # Remove udev rule which added device to the container and then reload
+        # udev rules.
+        rules_file = os.path.join(UDEV_RULES_DIR,
+                                  '100-' + self.lxc_name + '.rules')
+        if os.path.exists(rules_file):
+            os.remove(rules_file)
+        reload_cmd = "udevadm control --reload-rules"
+        shell = ShellCommand("%s\n" % cmd, self.system_timeout,
+                             logger=self.logger)
+        # execute udev reload command.
+        shell.expect(pexpect.EOF)
+        if shell.exitstatus:
+            self.logger.debug("%s command exited %d: %s" % (cmd,
+                                                            shell.exitstatus,
+                                                            shell.readlines()))
         self.logger.debug("%s protocol finalised.", self.name)

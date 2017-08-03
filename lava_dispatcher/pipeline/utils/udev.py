@@ -245,3 +245,13 @@ def usb_device_wait(job, device_actions=None):
                    and device.action in device_actions:
                     break
             return
+
+
+def lxc_udev_rule(data):
+    """Construct the udev rule string."""
+    rule = """ACTION=="add", \
+    ATTR{serial}=="{serial-number}", \
+    SYMLINK+="{device-symlink}", \
+    RUN+="/usr/bin/lava-lxc-device-add {lxc-name} /dev/{device-symlink}"
+    """.format(**data)
+    return rule

@@ -2,6 +2,7 @@
   name: lxc-deploy
   pipeline:
   - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
   - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
   - {class: actions.deploy.lxc.LxcAptUpdateAction, name: lxc-apt-update}
   - {class: actions.deploy.lxc.LxcAptInstallAction, name: lxc-apt-install}
@@ -37,7 +38,6 @@
     name: reset-device
     pipeline:
     - {class: power.PDUReboot, name: pdu-reboot}
-  - {class: actions.boot.WaitUSBDeviceAction, name: wait-usb-device}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
     pipeline:
@@ -50,7 +50,6 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
   - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action

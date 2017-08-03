@@ -31,9 +31,7 @@ from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
-    WaitUSBDeviceAction,
 )
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -44,9 +42,6 @@ def _fastboot_sequence_map(sequence):
     sequence_map = {'boot': (FastbootBootAction, None),
                     'reboot': (FastbootRebootAction, None),
                     'no-flash-boot': (FastbootBootAction, None),
-                    'wait-usb-add': (WaitUSBDeviceAction, ['add']),
-                    'wait-usb-remove': (WaitUSBDeviceAction, ['remove']),
-                    'lxc-add-device': (LxcAddDeviceAction, None),
                     'auto-login': (AutoLoginAction, None),
                     'shell-session': (ExpectShellSession, None),
                     'export-env': (ExportDeviceEnvironment, None), }

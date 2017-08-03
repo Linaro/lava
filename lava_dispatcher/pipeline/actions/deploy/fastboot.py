@@ -30,7 +30,6 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseImage
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
@@ -41,12 +40,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
-from lava_dispatcher.pipeline.utils.udev import (
-    get_udev_devices,
-    usb_device_wait,
-)
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
-from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
 
 
@@ -141,8 +135,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.internal_pipeline.add_action(ResetDevice())
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())
-        self.internal_pipeline.add_action(WaitUSBDeviceAction(
-            device_actions=['add']))
 
         fastboot_dir = self.mkdtemp()
         image_keys = sorted(parameters['images'].keys())
@@ -157,7 +149,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                    self.test_needs_deployment(parameters):
                     self.internal_pipeline.add_action(
                         DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
 
@@ -333,19 +324,4 @@ class FastbootFlashAction(DeployAction):
                             raise InfrastructureError("%s failed" % cmd)
                 else:
                     self.logger.info("Device does not have hard reset command")
-            if reboot:
-                self.logger.info("Waiting for USB device addition ...")
-                usb_device_wait(self.job, device_actions=['add'])
-                self.logger.info("Get USB device(s) ...")
-                device_paths = []
-                while True:
-                    device_paths = get_udev_devices(self.job,
-                                                    logger=self.logger)
-                    if device_paths:
-                        break
-                for device in device_paths:
-                    lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                    log = self.run_command(lxc_cmd)
-                    self.logger.debug(log)
-                    self.logger.debug("%s: device %s added", lxc_name, device)
         return connection
