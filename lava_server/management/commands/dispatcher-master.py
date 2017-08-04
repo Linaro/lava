@@ -138,7 +138,6 @@ class Command(BaseCommand):
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         self.dispatchers = {}
-        self.logging_support()
 
     def add_arguments(self, parser):
         parser.add_argument('--master-socket',
@@ -158,6 +157,9 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--level',
                             default='DEBUG',
                             help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
+        parser.add_argument('-o', '--log-file',
+                            default='/var/log/lava-server/lava-master.log',
+                            help="Log file full path.")
         parser.add_argument('--templates',
                             default="/etc/lava-server/dispatcher-config/",
                             help="Base directory for device configuration templates. "
@@ -591,15 +593,17 @@ class Command(BaseCommand):
             self.controler.send_multipart([str(worker_host.hostname),
                                            'CANCEL', str(job.id)])
 
-    def logging_support(self):
+    def logging_support(self, log_file):
         del logging.root.handlers[:]
         del logging.root.filters[:]
         # Create the logger
         log_format = '%(asctime)-15s %(levelname)s %(message)s'
-        logging.basicConfig(format=log_format, filename='/var/log/lava-server/lava-master.log')
+        logging.basicConfig(format=log_format, filename=log_file)
         self.logger = logging.getLogger('dispatcher-master')
 
     def handle(self, *args, **options):
+        # Initialize logging.
+        self.logging_support(options["log_file"])
         # Set the logging level
         if options['level'] == 'ERROR':
             self.logger.setLevel(logging.ERROR)
@@ -693,7 +697,7 @@ class Command(BaseCommand):
                     signum = ord(os.read(pipe_r, 1))
                     if signum == signal.SIGHUP:
                         self.logger.info("[POLL] SIGHUP received, restarting loggers")
-                        self.logging_support()
+                        self.logging_support(options["log_file"])
                     else:
                         self.logger.info("[POLL] Received a signal, leaving")
                         break
