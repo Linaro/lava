@@ -59,6 +59,16 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
             job.logger = DummyLogger()
         return job
 
+    def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
+        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(bbb_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+            job.logger = DummyLogger()
+        return job
+
 
 class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -138,6 +148,23 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             if isinstance(action, CompressRamdisk):
                 self.assertEqual(action.mkimage_arch, 'arm')
             self.assertTrue(action.valid)
+
+    def test_fastboot_uboot(self):  # pylint: disable=too-many-locals
+        job = self.factory.create_x15_job('sample_jobs/x15-uboot.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('x15-uboot.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_x15_uboot_nfs(self):  # pylint: disable=too-many-locals
+        job = self.factory.create_x15_job('sample_jobs/x15-nfs.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('x15-nfs.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        self.assertIn('compression', nfs.parameters['nfsrootfs'])
+        self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'gz')
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
