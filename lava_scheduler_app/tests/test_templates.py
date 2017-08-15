@@ -185,6 +185,20 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('interrupt_prompt', template_dict['actions']['boot']['methods']['u-boot']['parameters'])
+        # fastboot deploy to eMMC
+        self.assertIn('mmc', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['mmc'])
+        # NFS using standard U-Boot TFTP
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['nfs'])
+        for command in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if 'setenv bootargs' in command:
+                # x15 needs both consoles enabled.
+                self.assertIn('ttyS2', command)
+                self.assertNotIn('console=ttyO2', command)
 
     def test_armada375_template(self):
         """
