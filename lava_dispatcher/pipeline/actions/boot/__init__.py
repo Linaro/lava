@@ -161,6 +161,7 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
+        connection = super(AutoLoginAction, self).run(connection, max_end_time, args)
         if not connection:
             return connection
         prompts = self.parameters.get('prompts', None)

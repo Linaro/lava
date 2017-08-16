@@ -68,7 +68,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         self.raw_connection = child
         self.prompt_str = prompt_str
         self.check_char = '#'
-        self.timeout = 30
+        self.faketimeout = 30
         self.connected = True
         self.name = "fake-connection"
 
@@ -81,7 +81,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
     def wait(self, max_end_time=None):  # pylint: disable=unused-argument
         ret = None
         try:
-            ret = self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
+            ret = self.raw_connection.expect(self.prompt_str, timeout=self.faketimeout)
         except pexpect.EOF:
             pass
         return ret
