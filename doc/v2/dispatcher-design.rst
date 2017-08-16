@@ -1684,9 +1684,9 @@ Sample job definition for the VM job
      timeout:
        minutes: 5
      definitions:
-         - repository: git://git.linaro.org/qa/test.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
 

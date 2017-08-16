@@ -124,7 +124,7 @@ job: &id006
       default_connection_timeout: 300.0
       default_test_timeout: 30
       definitions: &id004
-      - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git',
+      - {from: git, name: smoke-tests, path: lava-test-shell/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/lava-team/lava-functional-tests.git',
         yaml_line: 24}
       - from: inline
         name: ssh-client
@@ -345,7 +345,7 @@ pipeline:
         timeout: {duration: 30.0, name: git-repo-action}
         uuid: a042a252-e4a7-4553-adc9-846869de9f2e
         valid: true
-        vcs: git://git.linaro.org/qa/test-definitions.git
+        vcs: git://git.linaro.org/lava-team/lava-functional-tests.git
       - connection_timeout: !!python/object:lava_dispatcher.pipeline.action.Timeout {
           duration: 300.0, name: test, protected: false}
         data: *id003

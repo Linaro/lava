@@ -370,8 +370,8 @@ Sample pipeline description output
         parameters:
           parameters:
             definitions:
-            - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml,
-              repository: 'git://git.linaro.org/qa/test-definitions.git', yaml_line: 31}
+            - {from: git, name: smoke-tests, path: lava-test-shell/smoke-tests-basic.yaml,
+              repository: 'git://git.linaro.org/lava-team/lava-functional-tests.git', yaml_line: 31}
             - {from: git, name: singlenode-basic, path: singlenode01.yaml, repository: 'git://git.linaro.org/people/neilwilliams/multinode-yaml.git',
               yaml_line: 39}
             failure_retry: 3

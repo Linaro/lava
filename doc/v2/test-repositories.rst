@@ -55,9 +55,9 @@ that revision of the repository will be used instead of HEAD.
       minutes: 10
     name: kvm-basic-singlenode
     definitions:
-        - repository: git://git.linaro.org/qa/test-definitions.git
+        - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
           from: git
-          path: ubuntu/smoke-tests-basic.yaml
+          path: lava-test-shell/smoke-tests-basic.yaml
           name: smoke-tests
         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
           from: git

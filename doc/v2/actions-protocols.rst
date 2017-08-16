@@ -327,9 +327,9 @@ allows much easier checking of the job before the job starts to run.
 
 .. code-block:: yaml
 
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
 This is a small deviation from how existing MultiNode jobs may be defined but

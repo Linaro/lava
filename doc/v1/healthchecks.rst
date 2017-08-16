@@ -73,8 +73,8 @@ In addition, it is recommended to use:
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     }
                 ],
                 "timeout": 900
@@ -120,9 +120,9 @@ health checks, without making the health check unnecessarily long:
        timeout:
          minutes: 5
        definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
 Or for :ref:`json_health_checks` ::
@@ -132,8 +132,8 @@ Or for :ref:`json_health_checks` ::
         "parameters": {
             "testdef_repos": [
                 {
-                    "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                    "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                    "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                 }
             ],
             "timeout": 900

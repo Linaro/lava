@@ -225,9 +225,9 @@ to complete their own actions.
            from: inline
            name: ssh-inline
            path: inline/ssh-install.yaml
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
      role:
      - host
@@ -245,9 +245,9 @@ final operation.
      timeout:
        minutes: 5
      definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
            # run the inline last as the host is waiting for this final sync.
          - repository:
@@ -414,9 +414,9 @@ https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
                from: inline
                name: ssh-inline
                path: inline/ssh-install.yaml
-             - repository: git://git.linaro.org/qa/test-definitions.git
+             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
                from: git
-               path: ubuntu/smoke-tests-basic.yaml
+               path: lava-test-shell/smoke-tests-basic.yaml
                name: smoke-tests
          role:
          - host
@@ -426,9 +426,9 @@ https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
          timeout:
            minutes: 5
          definitions:
-             - repository: git://git.linaro.org/qa/test-definitions.git
+             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
                from: git
-               path: ubuntu/smoke-tests-basic.yaml
+               path: lava-test-shell/smoke-tests-basic.yaml
                name: smoke-tests
                # run the inline last as the host is waiting for this final sync.
              - repository:

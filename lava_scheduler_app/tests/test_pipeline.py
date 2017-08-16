@@ -1268,12 +1268,12 @@ class TestYamlMultinode(TestCaseWithFactory):
             meta_dict,
             {
                 'omitted.1.inline.name': 'ssh-client',
-                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.definition.repository': 'git://git.linaro.org/lava-team/lava-functional-tests.git',
                 'test.0.definition.name': 'smoke-tests',
                 'boot.0.method': 'ssh',
                 'omitted.1.inline.path': 'inline/ssh-client.yaml',
                 'test.0.definition.from': 'git',
-                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml'
+                'test.0.definition.path': 'lava-test-shell/smoke-tests-basic.yaml'
             }
         )
 

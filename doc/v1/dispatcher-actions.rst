@@ -384,8 +384,8 @@ To run multiple tests without a reboot in between each test run, extra ``testdef
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     },
                     {
                         "git-repo": "http://git.linaro.org/git/lava-team/lava-functional-tests.git",
@@ -412,8 +412,8 @@ actions::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git: //git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     }
                 ],
                 "timeout": 900

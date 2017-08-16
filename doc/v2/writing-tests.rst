@@ -704,8 +704,8 @@ Examples
   .. code-block:: yaml
 
    extra:
-     path: ubuntu/smoke-tests-basic.yaml
-     repository: git://git.linaro.org/qa/test-definitions.git
+     path: lava-test-shell/smoke-tests-basic.yaml
+     repository: git://git.linaro.org/lava-team/lava-functional-tests.git
      success: c50a99ebb5835501181f4e34417e38fc819a6280
 
 * The **duration** result for the ``auto-login-action`` records the time taken

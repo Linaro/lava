@@ -218,13 +218,13 @@ class TestMetaTypes(TestCaseWithFactory):
             retval,
             {
                 'test.1.common.definition.from': 'git',
-                'test.0.common.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.common.definition.repository': 'git://git.linaro.org/lava-team/lava-functional-tests.git',
                 'test.0.common.definition.name': 'smoke-tests',
                 'test.1.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
                 'boot.0.common.method': 'qemu',
                 'test.1.common.definition.name': 'singlenode-advanced',
                 'test.0.common.definition.from': 'git',
-                'test.0.common.definition.path': 'ubuntu/smoke-tests-basic.yaml',
+                'test.0.common.definition.path': 'lava-test-shell/smoke-tests-basic.yaml',
                 'test.1.common.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
         )
 

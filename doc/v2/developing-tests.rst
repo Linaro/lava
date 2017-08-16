@@ -264,9 +264,9 @@ approach to testing on the target device. Its format is:
               from: inline
               name: env-dut-inline
               path: inline/env-dut.yaml
-            - repository: git://git.linaro.org/qa/test-definitions.git
+            - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
-              path: ubuntu/smoke-tests-basic.yaml
+              path: lava-test-shell/smoke-tests-basic.yaml
               name: smoke-tests
             - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
