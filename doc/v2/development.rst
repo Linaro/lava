@@ -124,6 +124,22 @@ Make your changes
   * `A note about git commit messages`_
   * `5 useful tips for a better commit message`_
 
+  * Avoid putting documentation into the commit message. Keep the commit
+    message to a reasonable length (about 10 to 12 lines at most).
+
+  * Usage examples need to go into the documentation, not the commit message.
+    Everything which is intended to help users to add this support to their own
+    test jobs must be in the documentation.
+
+  * Avoid duplicating or summarising the documentation in the commit message,
+    reviewers will be reading the documentation as well.
+
+  * Use comments in the code in preference to detailed commit messages.
+
+  * Avoid putting updates into the commit message for each patch set. The
+    review comments are the correct place for details of what changed at which
+    patch set.
+
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
 .. _`5 useful tips for a better commit message`: https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
