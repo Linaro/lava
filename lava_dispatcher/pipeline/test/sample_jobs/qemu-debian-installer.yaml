@@ -55,6 +55,6 @@ actions:
       minutes: 18
     definitions:
     - from: git
-      repository: git://git.linaro.org/qa/test-definitions.git
-      path: ubuntu/smoke-tests-basic.yaml
+      repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests

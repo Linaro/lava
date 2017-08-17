@@ -54,9 +54,9 @@ actions:
       timeout:
         minutes: 5
       definitions:
-      - repository: git://git.linaro.org/qa/test-definitions.git
+      - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
         from: git
-        path: ubuntu/smoke-tests-basic.yaml
+        path: lava-test-shell/smoke-tests-basic.yaml
         name: smoke-tests
     # secondary media - use the first deploy to get to a system which can deploy the next
     # in testing, assumed to already be deployed

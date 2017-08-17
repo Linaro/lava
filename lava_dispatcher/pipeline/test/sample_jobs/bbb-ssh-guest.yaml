@@ -25,7 +25,7 @@ actions:
       - 'root@debian:~#'
 - test:
     definitions:
-    - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}
+    - {from: git, name: smoke-tests, path: lava-test-shell/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/lava-team/lava-functional-tests.git'}
     - {from: git, name: singlenode-intermediate, path: lava-test-shell/single-node/singlenode02.yaml,
       repository: 'http://git.linaro.org/lava-team/lava-functional-tests.git'}
     - from: inline

@@ -356,7 +356,7 @@ class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-method
         ubuntu_testdef = None
         single_testdef = None
         for testdef in testdefs:
-            if testdef.parameters['path'] == 'ubuntu/smoke-tests-basic.yaml':
+            if testdef.parameters['path'] == 'lava-test-shell/smoke-tests-basic.yaml':
                 ubuntu_testdef = testdef
             elif testdef.parameters['path'] == 'lava-test-shell/single-node/singlenode03.yaml':
                 single_testdef = testdef

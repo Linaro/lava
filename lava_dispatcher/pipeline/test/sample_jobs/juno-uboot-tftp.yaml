@@ -43,8 +43,8 @@ actions:
      timeout:
        minutes: 5
      definitions:
-         - repository: http://git.linaro.org/qa/test-definitions.git
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: openembedded/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
