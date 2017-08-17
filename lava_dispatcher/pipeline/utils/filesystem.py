@@ -255,6 +255,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     """
     mnt_dir = mkdtemp()
     ext4_img = image + '.ext4'
+    logger = logging.getLogger('dispatcher')
     subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
                             stderr=subprocess.STDOUT)
     subprocess.check_output(['/bin/mount', '-o', 'loop', ext4_img, mnt_dir],
@@ -263,7 +264,16 @@ def copy_overlay_to_sparse_fs(image, overlay):
         os.unlink(overlay[:-3])
     decompressed_overlay = decompress_file(overlay, 'gz')
     untar_file(decompressed_overlay, mnt_dir)
+
+    # Check if we have space left on the mounted image.
+    df = subprocess.Popen(['df', '-k', mnt_dir], stdout=subprocess.PIPE)
+    output = df.communicate()[0]
+    logger.debug(output)
+    device, size, used, available, percent, mountpoint = output.split(
+        "\n")[1].split()
     subprocess.check_output(['/bin/umount', mnt_dir], stderr=subprocess.STDOUT)
+    if int(available) is 0 or percent is '100%':
+        raise JobError("No space in image after applying overlay: %s" % image)
     subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
                             stderr=subprocess.STDOUT)
     os.remove(ext4_img)
