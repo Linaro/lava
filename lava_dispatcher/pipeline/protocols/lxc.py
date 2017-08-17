@@ -197,7 +197,10 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                                   '100-' + self.lxc_name + '.rules')
         if os.path.exists(rules_file):
             os.remove(rules_file)
+            self.logger.debug("%s protocol: removed udev rules '%s'",
+                              self.name, rules_file)
         reload_cmd = "udevadm control --reload-rules"
+        self.logger.debug("%s protocol: executing '%s'", self.name, reload_cmd)
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
         # execute udev reload command.

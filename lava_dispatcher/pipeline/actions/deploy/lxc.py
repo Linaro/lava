@@ -288,6 +288,7 @@ class LxcCreateUdevRuleAction(DeployAction):
                                       '100-' + lxc_name + '.rules')
             with open(rules_file, 'wa') as f_obj:
                 f_obj.write(lxc_udev_rule(data))
+            self.logger.debug("Created udev rules file '%s'", rules_file)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
