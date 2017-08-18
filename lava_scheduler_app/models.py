@@ -1252,7 +1252,11 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
         public_state = False
         if 'group' in param:
             visibility = TestJob.VISIBLE_GROUP
-            viewing_groups.extend(Group.objects.filter(name__in=param['group']))
+            known_groups = list(Group.objects.filter(name__in=param['group']))
+            if not known_groups:
+                raise SubmissionException(
+                    "No known groups were found in the visibility list.")
+            viewing_groups.extend(known_groups)
 
     if not orig:
         orig = yaml.dump(job_data)
