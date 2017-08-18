@@ -1576,7 +1576,7 @@ class TestJob(RestrictedResource):
 
     @property
     def duration(self):
-        if self.end_time is None:
+        if self.end_time is None or self.start_time is None:
             return None
         return self.end_time - self.start_time
 
