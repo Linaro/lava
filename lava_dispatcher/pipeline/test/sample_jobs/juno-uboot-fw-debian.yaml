@@ -18,7 +18,7 @@ actions:
       minutes: 10
     to: vemsd
     recovery_image:
-      url:  http://releases.linaro.org/members/arm/platforms/16.10/juno-latest-oe-uboot.zip
+      url: http://images.validation.linaro.org/releases.linaro.org/members/arm/platforms/16.02/juno-latest-oe-uboot.zip
       compression: zip
 
 - deploy:

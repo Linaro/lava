@@ -5,14 +5,13 @@ device_type: juno
 job_name: juno-uboot-tftp
 timeouts:
   job:
-    minutes: 15 
+    minutes: 15
   action:
     minutes: 5
 priority: medium
 visibility: public
 
 actions:
-
   - deploy:
      timeout:
        minutes: 2
@@ -24,7 +23,7 @@ actions:
      dtb:
          url: http://images.validation.linaro.org/juno/kernel/juno.dtb
      nfsrootfs:
-         url: http://releases.linaro.org/openembedded/juno-lsk/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
+         url: http://images.validation.linaro.org/releases.linaro.org/openembedded/juno-lsk/16.02/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
          compression: gz
 
   - boot:
@@ -44,7 +43,7 @@ actions:
      timeout:
        minutes: 5
      definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: http://git.linaro.org/qa/test-definitions.git
            from: git
            path: openembedded/smoke-tests-basic.yaml
            name: smoke-tests
