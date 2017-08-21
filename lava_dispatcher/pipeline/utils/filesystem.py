@@ -266,8 +266,8 @@ def copy_overlay_to_sparse_fs(image, overlay):
     untar_file(decompressed_overlay, mnt_dir)
 
     # Check if we have space left on the mounted image.
-    df = subprocess.Popen(['df', '-k', mnt_dir], stdout=subprocess.PIPE)
-    output = df.communicate()[0]
+    output = subprocess.check_output(['df', '-k', mnt_dir],
+                                     stderr=subprocess.STDOUT)
     logger.debug(output)
     device, size, used, available, percent, mountpoint = output.split(
         "\n")[1].split()
