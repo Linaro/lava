@@ -381,7 +381,7 @@ class TestCase(models.Model, Queryable):
         if not self.metadata:
             return None
         try:
-            ret = yaml.load(self.metadata)
+            ret = yaml.load(self.metadata, Loader=yaml.CLoader)
         except yaml.YAMLError:
             return None
         return ret

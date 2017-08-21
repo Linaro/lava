@@ -179,9 +179,10 @@ def testjob_csv(request, job):
         extrasaction='ignore',
         fieldnames=testcase_export_fields())
     writer.writeheader()
-    for test_suite in job.testsuite_set.all():
-        for row in test_suite.testcase_set.all():
-            writer.writerow(export_testcase(row))
+    suites = job.testsuite_set.all().prefetch_related('test_sets__test_cases__actionlevels')
+    for test_suite in suites:
+        for test_case in test_suite.testcase_set.all():
+            writer.writerow(export_testcase(test_case))
     return response
 
 
@@ -192,10 +193,12 @@ def testjob_yaml(request, job):
     filename = "lava_%s.yaml" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
-    for test_suite in job.testsuite_set.all():
+    suites = job.testsuite_set.all().prefetch_related(
+        'test_sets__test_cases__actionlevels')
+    for test_suite in suites:
         for test_case in test_suite.testcase_set.all():
             yaml_list.append(export_testcase(test_case))
-    yaml.dump(yaml_list, response)
+    yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
     return response
 
 
