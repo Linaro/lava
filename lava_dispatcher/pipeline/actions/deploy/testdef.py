@@ -319,7 +319,18 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             shutil.rmtree(runner_path)
 
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
-        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+
+        # Set shallow to False if revision is specified.
+        # Otherwise default to True if not specified as a parameter.
+        revision = self.parameters.get('revision', None)
+        shallow = False
+        if not revision:
+            shallow = self.parameters.get('shallow', True)
+
+        commit_id = self.vcs.clone(
+            runner_path,
+            shallow=shallow,
+            revision=revision)
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
@@ -383,7 +394,9 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=args['test_name'])
 
-        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+        commit_id = self.vcs.clone(
+            runner_path,
+            revision=self.parameters.get('revision', None))
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {

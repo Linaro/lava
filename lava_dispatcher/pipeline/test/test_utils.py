@@ -97,12 +97,12 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_clone_at_head(self):
         git = vcs.GitHelper('git')
-        self.assertEqual(git.clone('git.clone1', 'a7af835862da0e0592eeeac901b90e8de2cf5b67'), 'a7af835862da0e0592eeeac901b90e8de2cf5b67')
+        self.assertEqual(git.clone('git.clone1', revision='a7af835862da0e0592eeeac901b90e8de2cf5b67'), 'a7af835862da0e0592eeeac901b90e8de2cf5b67')
 
     def test_clone_at_head_1(self):
         git = vcs.GitHelper('git')
-        self.assertEqual(git.clone('git.clone1', '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed'), '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed')
-        self.assertEqual(git.clone('git.clone2', '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed'), '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed')
+        self.assertEqual(git.clone('git.clone1', revision='2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed'), '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed')
+        self.assertEqual(git.clone('git.clone2', revision='2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed'), '2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed')
 
     def test_non_existing_git(self):
         git = vcs.GitHelper('does_not_exists')
@@ -116,11 +116,12 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_invalid_commit(self):
         git = vcs.GitHelper('git')
-        self.assertRaises(InfrastructureError, git.clone, 'foo.bar', 'badhash')
+        self.assertRaises(InfrastructureError, git.clone, 'foo.bar', True,
+                          'badhash')
 
     def test_branch(self):
         git = vcs.GitHelper('git')
-        self.assertEqual(git.clone('git.clone1', 'testing'), 'f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d')
+        self.assertEqual(git.clone('git.clone1', branch='testing'), 'f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d')
 
 
 @unittest.skipIf(infrastructure_error('bzr'), "bzr not installed")
