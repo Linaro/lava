@@ -195,7 +195,7 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super(TestShellAction, self).validate()
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         """
         Common run function for subclasses which define custom patterns
         """
@@ -248,7 +248,7 @@ class TestShellAction(TestAction):
 
         try:
             feedbacks = []
-            for feedback_ns in self.data.keys():
+            for feedback_ns in self.data.keys():  # pylint: disable=no-member
                 if feedback_ns == self.parameters.get('namespace'):
                     continue
                 feedback_connection = self.get_namespace_data(
@@ -630,6 +630,7 @@ class TestShellAction(TestAction):
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
                     self.logger.exception(str(exc))
+                    raise TestError("Unable to handle the test shell signal correctly: %s", str(exc))
                 except JobError as exc:
                     self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False
