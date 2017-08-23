@@ -1,4 +1,5 @@
 debian/lava-dispatcher.conf ./usr/share/lava-dispatcher/
 share/create_certificate.py ./usr/share/lava-dispatcher/
 share/apache2/lava-dispatcher.conf ./usr/share/lava-dispatcher/apache2/
+share/lava_lxc_device_add.py ./usr/share/lava-dispatcher/
 etc/lava-slave ./usr/share/lava-dispatcher/
