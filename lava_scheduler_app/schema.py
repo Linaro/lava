@@ -14,7 +14,6 @@ from voluptuous import (
     Schema
 )
 
-
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 INCLUDE_URL_TIMEOUT = 10
 
@@ -377,6 +376,15 @@ def _validate_secrets(data_object):
             raise SubmissionException("When 'secrets' is used, 'visibility' shouldn't be 'public'")
 
 
+def _validate_vcs_parameters(data_objects):
+    for action in data_objects['actions']:
+        if 'test' in action:
+            for definition in action['test']['definitions']:
+                if 'revision' in definition and \
+                   'shallow' in definition and definition['shallow'] is True:
+                    raise SubmissionException("When 'revision' is used, 'shallow' shouldn't be 'True'")
+
+
 def _download_raw_yaml(url):
     try:
         data = yaml.load(
@@ -430,6 +438,7 @@ def validate_submission(data_object):
         raise SubmissionException(exc)
 
     _validate_secrets(data_object)
+    _validate_vcs_parameters(data_object)
     return True
 
 

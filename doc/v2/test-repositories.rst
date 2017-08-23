@@ -65,6 +65,42 @@ that revision of the repository will be used instead of HEAD.
           name: singlenode-advanced
           revision: 441b61
 
+Shallow clones in GIT
+*********************
+
+Some git repositories have a long history of commits and using a full clone
+takes up a lot of space. When a test job involves multiple test repositories,
+this can cause issues with adding the LAVA overlay to the test job. For
+example, ramdisks could become too large or there could be insufficient
+space in the partition used for the test shell or it could take longer than
+desired to transfer the overlay to the device.
+
+When ``git`` support is requested for a test shell definition, LAVA will
+default to making a **shallow** clone using ``--depth=1``. The git history
+will be truncated to the single most recent commit.
+
+A full clone can be requested by passing the ``shallow`` parameter with a
+value of ``False``. If the ``revision`` option is used, shallow clone
+support will need to be turned off or the change to specified revision
+will fail.
+
+.. seealso:: https://git-scm.com/docs/git-clone
+
+.. code-block:: yaml
+
+ - test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    name: kvm-basic-singlenode
+    definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          shallow: False
+
+
 Sharing the contents of test definitions
 ****************************************
 
