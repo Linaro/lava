@@ -370,7 +370,7 @@ illustrates this:
 
 .. index:: bundle-stream
 
-.. _bundle_stream:
+.. _bundle_stream_deprecated:
 
 Bundle Stream Overview
 ======================

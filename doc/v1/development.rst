@@ -87,7 +87,7 @@ amount of work - :ref:`talk to us <mailing_lists>` before spending time
 on code which relies on such modules or which relies on newer versions
 of the modules than are currently available in Debian testing.
 
-.. seealso:: :ref:`quick_fixes` and :ref:`testing_refactoring_code`
+.. seealso:: :ref:`quick_fixes`
 
 .. _naming_conventions:
 

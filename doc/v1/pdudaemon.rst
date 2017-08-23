@@ -1,4 +1,4 @@
-.. _pdudaemon:
+.. _pdu_daemon:
 
 PDU Daemon
 **********
