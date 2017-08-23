@@ -132,7 +132,6 @@ setup(
         'lava-dispatch',
         'lava/dispatcher/lava-run',
         'lava/dispatcher/lava-dispatcher-slave',
-        'lava/dispatcher/lava-slave',
-        'lava-lxc-device-add'
+        'lava/dispatcher/lava-slave'
     ],
 )

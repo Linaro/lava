@@ -1,7 +1,0 @@
-#!/bin/bash
-#
-# Adds the given device symlink to lxc identified by lxc-name
-#
-# Usage: lava-lxc-device-add <lxc-name> <device-symlink>
-
-`which lxc-device` -n $1 add $(readlink -f $2)

@@ -274,12 +274,19 @@ class LxcCreateUdevRuleAction(DeployAction):
         if 'device_info' not in self.job.device:
             return connection
 
-        for device in self.job.device.get('device_info', []):
+        device_info = self.job.device.get('device_info', [])
+        device_info_file = os.path.join('/tmp', '-'.join(['job',
+                                                          str(self.job.job_id),
+                                                          'device-info']))
+        with open(device_info_file, 'w') as device_info_obj:
+            device_info_obj.write(str(device_info))
+        self.logger.debug("device info file '%s' created with:\n %s",
+                          device_info_file, device_info)
+        for device in device_info:
             data = {'serial-number': str(device.get('board_id', '')),
                     'serial': '{serial}',
                     'lxc-name': lxc_name,
-                    'device-symlink': '-'.join(['job', str(self.job.job_id),
-                                                'device'])}
+                    'device-info-file': device_info_file}
             # The rules file will be something like
             # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
             # where, 100 is just an arbitrary number which specifies loading

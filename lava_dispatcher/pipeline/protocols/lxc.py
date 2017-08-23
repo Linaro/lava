@@ -191,6 +191,14 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                                                   shell.readlines()))
             if self.custom_lxc_path and not self.persistence:
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
+        # Remove device info file which was created in /tmp
+        device_info_file = os.path.join('/tmp', '-'.join(['job',
+                                                          str(self.job_id),
+                                                          'device-info']))
+        if os.path.exists(device_info_file):
+            os.remove(device_info_file)
+            self.logger.debug("%s protocol: removed device info file '%s'",
+                              self.name, device_info_file)
         # Remove udev rule which added device to the container and then reload
         # udev rules.
         rules_file = os.path.join(UDEV_RULES_DIR,
