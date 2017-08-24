@@ -22,9 +22,9 @@
 import re
 import os
 import yaml
-import pexpect
 import logging
 import traceback
+import subprocess
 from lava_dispatcher.pipeline.connection import Protocol
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
@@ -33,7 +33,6 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     Timeout,
 )
-from lava_dispatcher.pipeline.shell import ShellCommand
 from lava_dispatcher.pipeline.utils.constants import (
     LAVA_LXC_TIMEOUT,
     LXC_PATH,
@@ -128,6 +127,17 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))
 
+    def _call_handler(self, command):
+        try:
+            self.logger.debug("%s protocol: executing '%s'", self.name, command)
+            output = subprocess.check_output(command.split(' '),
+                                             stderr=subprocess.STDOUT)
+            if output:
+                self.logger.debug(output)
+        except subprocess.CalledProcessError:
+            self.logger.debug("%s protocol: FAILED executing '%s'",
+                              self.name, command)
+
     def finalise_protocol(self, device=None):
         """Called by Finalize action to power down and clean up the assigned
         device.
@@ -140,48 +150,29 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             if 'adb_serial_number' in device and hasattr(device, 'power_state'):
                 if device.power_state not in ['on', 'off']:
                     reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
-                    self.logger.debug("%s protocol: executing '%s'", self.name,
-                                      reboot_cmd)
-                    shell = ShellCommand("%s\n" % reboot_cmd,
-                                         self.system_timeout,
-                                         logger=self.logger)
-                    if shell.exitstatus:
-                        self.logger.debug("%s command exited %d: %s",
-                                          reboot_cmd,
-                                          shell.exitstatus, shell.readlines())
+                    self._call_handler(reboot_cmd)
         else:
             self.logger.info("%s protocol: device not rebooting to fastboot",
                              self.name)
 
         # Stop the container.
         self.logger.debug("%s protocol: issue stop", self.name)
-        cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
-        shell = ShellCommand("%s\n" % cmd, self.system_timeout,
-                             logger=self.logger)
-        if shell.exitstatus:
-            self.logger.debug(
-                "%s command exited %d: %s" % (cmd, shell.exitstatus,
-                                              shell.readlines()))
+        stop_cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
+        self._call_handler(stop_cmd)
         # Check if the container should persist and skip destroying it.
         if self.persistence:
             self.logger.debug("%s protocol: persistence requested",
                               self.name)
         else:
-            self.logger.debug("%s protocol: destroy", self.name)
+            self.logger.debug("%s protocol: issue destroy", self.name)
             if self.custom_lxc_path:
                 abs_path = os.path.realpath(os.path.join(LXC_PATH,
                                                          self.lxc_name))
-                cmd = "lxc-destroy -n {0} -f -P {1}".format(
+                destroy_cmd = "lxc-destroy -n {0} -f -P {1}".format(
                     self.lxc_name, os.path.dirname(abs_path))
             else:
-                cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
-            self.logger.debug("%s protocol: executing '%s'", self.name, cmd)
-            shell = ShellCommand("%s\n" % cmd, self.system_timeout,
-                                 logger=self.logger)
-            if shell.exitstatus:
-                self.logger.debug(
-                    "%s command exited %d: %s" % (cmd, shell.exitstatus,
-                                                  shell.readlines()))
+                destroy_cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
+            self._call_handler(destroy_cmd)
             if self.custom_lxc_path and not self.persistence:
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
         # Remove udev rule which added device to the container and then reload
@@ -193,11 +184,5 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("%s protocol: removed udev rules '%s'",
                               self.name, rules_file)
         reload_cmd = "udevadm control --reload-rules"
-        self.logger.debug("%s protocol: executing '%s'", self.name, reload_cmd)
-        shell = ShellCommand("%s\n" % cmd, self.system_timeout,
-                             logger=self.logger)
-        if shell.exitstatus:
-            self.logger.debug("%s command exited %d: %s" % (cmd,
-                                                            shell.exitstatus,
-                                                            shell.readlines()))
+        self._call_handler(reload_cmd)
         self.logger.debug("%s protocol finalised.", self.name)
