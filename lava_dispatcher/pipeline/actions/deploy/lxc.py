@@ -275,9 +275,7 @@ class LxcCreateUdevRuleAction(DeployAction):
             return connection
 
         device_info = self.job.device.get('device_info', [])
-        device_info_file = os.path.join('/tmp', '-'.join(['job',
-                                                          str(self.job.job_id),
-                                                          'device-info']))
+        device_info_file = os.path.join(self.job.tmp_dir, 'device-info')
         with open(device_info_file, 'w') as device_info_obj:
             device_info_obj.write(str(device_info))
         self.logger.debug("device info file '%s' created with:\n %s",
