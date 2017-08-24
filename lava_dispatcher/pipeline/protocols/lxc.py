@@ -145,8 +145,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                     shell = ShellCommand("%s\n" % reboot_cmd,
                                          self.system_timeout,
                                          logger=self.logger)
-                    # execute the command.
-                    shell.expect(pexpect.EOF)
                     if shell.exitstatus:
                         self.logger.debug("%s command exited %d: %s",
                                           reboot_cmd,
@@ -160,8 +158,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
-        # execute the command.
-        shell.expect(pexpect.EOF)
         if shell.exitstatus:
             self.logger.debug(
                 "%s command exited %d: %s" % (cmd, shell.exitstatus,
@@ -183,8 +179,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                                   self.name, cmd)
             shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                                  logger=self.logger)
-            # execute the command.
-            shell.expect(pexpect.EOF)
             if shell.exitstatus:
                 self.logger.debug(
                     "%s command exited %d: %s" % (cmd, shell.exitstatus,
@@ -203,8 +197,6 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         self.logger.debug("%s protocol: executing '%s'", self.name, reload_cmd)
         shell = ShellCommand("%s\n" % cmd, self.system_timeout,
                              logger=self.logger)
-        # execute udev reload command.
-        shell.expect(pexpect.EOF)
         if shell.exitstatus:
             self.logger.debug("%s command exited %d: %s" % (cmd,
                                                             shell.exitstatus,
