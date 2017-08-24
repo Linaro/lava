@@ -163,10 +163,9 @@ actions:
 {{ base_uboot_addr_commands }}
 {{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nbdbasekargs verbose console={{ console_device }},{{ baud_rate }}n8"
-          - setenv nbdkbootargs '{{ base_nbdroot_args }} rw {{ base_kernel_args }} {{ base_ip_args }}'
-          - setenv nbdextraargs "earlyprintk systemd.log_color=false ${extraargs}"
-          - setenv bootargs "${nbdbasekargs} ${nbdkbootargs} ${nbdextraargs}"
+          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - setenv nbdkbootargs '{{ base_nbdroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'
+          - setenv bootargs verbose console={{ console_device }},{{ baud_rate }}n8 rw ${nbdbasekargs} ${nbdkbootargs}
 {{ base_uboot_nbd_bootcmd }}
         ramdisk:
           commands:
