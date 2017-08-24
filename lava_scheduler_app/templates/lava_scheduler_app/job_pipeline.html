@@ -201,11 +201,9 @@
   <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>
 </div>
 {% endif %}
-{% if job.failure_comment %}
-<div id="failure_block">
+<div id="failure_block" {% if not job.failure_comment %}style="display: none;" {% endif %}>
   <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
 </div>
-{% endif %}
 {% if size_warning %}
 <div class="alert alert-danger" id="size-warning">
 <p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
@@ -714,6 +712,10 @@
           if ('X-JobStatus' in data) {
             $('#cancel').css('display', 'none');
             poll_status = 0;
+          }
+          if (data['failure_comment'] != null) {
+            $("#failure_block").show();
+            $(".failure_comment").html(data['failure_comment']);
           }
         }
       });
