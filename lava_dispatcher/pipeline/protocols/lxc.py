@@ -143,14 +143,13 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         device.
         """
         # Reboot devices to bootloader if required, based on the availability
-        # of power cycle option and adb_serial_number.
+        # of adb_serial_number.
         # Do not reboot to bootloader if 'reboot_to_fastboot' is set to
         # 'false' in job definition.
         if self.fastboot_reboot:
-            if 'adb_serial_number' in device and hasattr(device, 'power_state'):
-                if device.power_state not in ['on', 'off']:
-                    reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
-                    self._call_handler(reboot_cmd)
+            if 'adb_serial_number' in device:
+                reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(self.lxc_name)
+                self._call_handler(reboot_cmd)
         else:
             self.logger.info("%s protocol: device not rebooting to fastboot",
                              self.name)
