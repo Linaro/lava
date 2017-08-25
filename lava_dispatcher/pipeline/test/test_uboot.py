@@ -242,13 +242,20 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             if isinstance(action, UBootAction):
                 self.assertIn('method', action.parameters)
                 self.assertEqual('u-boot', action.parameters['method'])
-            if isinstance(action, TftpAction):
+            elif isinstance(action, TftpAction):
                 self.assertIn('initrd', action.parameters)
                 self.assertIn('kernel', action.parameters)
                 self.assertIn('nbdroot', action.parameters)
                 self.assertIn('to', action.parameters)
                 self.assertEqual('nbd', action.parameters['to'])
             self.assertTrue(action.valid)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
+        for setenv in overlay.commands:
+            if 'setenv nbdbasekargs' in setenv:
+                self.assertIn('rw', setenv.split("'")[1])
+                self.assertIn('${extraargs}', setenv.split("'")[1])
+                self.assertEqual(3, len(setenv.split("'")))
 
     def test_transfer_media(self):
         """

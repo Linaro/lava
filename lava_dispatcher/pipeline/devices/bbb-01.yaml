@@ -130,19 +130,20 @@ actions:
         nbd:
           commands:
           - setenv autoload no
-          - setenv verify no
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
-          - setenv loadkernel 'tftp {kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp {initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp {fdt_addr_r} {DTB}'
+          - setenv initrd_high 0xffffffff
+          - setenv fdt_high 0xffffffff
+
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nbdargs 'setenv bootargs console=ttyO0,115200n8 ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nbdargs; {BOOTX}'
-          - boot
+          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - setenv nbdkbootargs ' ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7  fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000 rootdelay=5 ip=dhcp'
+          - setenv bootargs verbose console=ttyO2,115200n8 rw ${nbdbasekargs} ${nbdkbootargs}
+          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
+          - setenv verify no
+          - setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'
+          - run bootcmd
         ramdisk:
           commands:
           - setenv autoload no
