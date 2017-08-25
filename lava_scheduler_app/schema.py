@@ -378,7 +378,7 @@ def _validate_secrets(data_object):
 
 def _validate_vcs_parameters(data_objects):
     for action in data_objects['actions']:
-        if 'test' in action:
+        if 'test' in action and 'definitions' in action['test']:
             for definition in action['test']['definitions']:
                 if 'revision' in definition and \
                    'shallow' in definition and definition['shallow'] is True:
