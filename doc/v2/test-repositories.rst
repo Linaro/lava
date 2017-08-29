@@ -147,26 +147,6 @@ This allows a collection of LAVA test definitions to re-use other YAML custom
 scripts without duplication. The tests inside the other repository will **not**
 be executed.
 
-.. index:: test definition dependencies
-
-Adding test definition dependencies
-***********************************
-
-If your test depends on other tests to be executed before you run the current
-test, add an explicit dependency in the test definition YAML:
-
-.. code-block:: yaml
-
- test-case-deps:
-   - git-repo: git://git.linaro.org/qa/test-definitions.git
-     testdef: common/passfail.yaml
-   - bzr-repo: lp:~stylesen/lava-dispatcher/sampletestdefs-bzr
-     testdef: testdef.yaml
-   - url: https://people.linaro.org/~senthil.kumaran/deps_sample.yaml
-
-The test cases specified within ``test-case-deps`` section will be fetched from
-the given repositories or url and then executed in the same specified order.
-
 Test repository for functional tests in LAVA
 ********************************************
 
