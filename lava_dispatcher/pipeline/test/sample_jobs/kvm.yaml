@@ -55,6 +55,7 @@ actions:
               from: git
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
+              branch: stylesen
               revision: 441b61
 
 context:

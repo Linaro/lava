@@ -152,8 +152,10 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         for git_repo in git_repos:
             if git_repo.parameters['repository'] == 'http://git.linaro.org/lava-team/lava-functional-tests.git':
                 self.assertIn('revision', git_repo.parameters)
+                self.assertIn('branch', git_repo.parameters)
             else:
                 self.assertNotIn('revision', git_repo.parameters)
+                self.assertNotIn('branch', git_repo.parameters)
 
     def test_overlay(self):
 

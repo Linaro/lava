@@ -320,6 +320,9 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
 
+        # Get the branch if specified.
+        branch = self.parameters.get('branch', None)
+
         # Set shallow to False if revision is specified.
         # Otherwise default to True if not specified as a parameter.
         revision = self.parameters.get('revision', None)
@@ -330,7 +333,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         commit_id = self.vcs.clone(
             runner_path,
             shallow=shallow,
-            revision=revision)
+            revision=revision,
+            branch=branch)
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
