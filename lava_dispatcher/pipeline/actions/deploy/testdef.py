@@ -228,12 +228,6 @@ class RepoAction(Action):
             self.set_namespace_data(
                 action='test', label=self.uuid, key='revision', value=revision)
 
-        # FIXME - is this needed? - the issue here is that the new model does not use fs.tgz
-        # therefore, there may not be the same need to collate the dependent testdefs, all of the
-        # YAML in the repo will still exist - this may change behaviour.
-        # if 'test-case-deps' in testdef:
-        #    self._get_dependent_test_cases(testdef)
-
         return connection
 
     def store_testdef(self, testdef, vcs_name, commit_id=None):
