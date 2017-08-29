@@ -41,6 +41,29 @@ examples for you, including:
 * https://git.linaro.org/lava-team/lava-functional-tests.git
 * https://git.linaro.org/qa/test-definitions.git
 
+Using specific branch of a test definition repository
+*****************************************************
+
+If a public branch is specified as a parameter in the job submission YAML,
+that branch of the repository will be used instead of the default 'master'
+branch.
+
+.. code-block:: yaml
+
+ - test:
+     timeout:
+       minutes: 5
+     definitions:
+     - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/android/get-adb-serial-hikey.yaml
+       name: get-hikey-serial
+       branch: stylesen
+
+.. note:: Do not supply anything other than a branch name to this parameter,
+          like tag or revision as this would create a clone in a 'detached
+          HEAD' state.
+
 Using specific revisions of a test definition
 *********************************************
 
