@@ -32,6 +32,7 @@ from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
     BootloaderCommandsAction,
+    OverlayUnpack,
 )
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
@@ -44,6 +45,7 @@ def _fastboot_sequence_map(sequence):
                     'reboot': (FastbootRebootAction, None),
                     'no-flash-boot': (FastbootBootAction, None),
                     'auto-login': (AutoLoginAction, None),
+                    'overlay-unpack': (OverlayUnpack, None),
                     'shell-session': (ExpectShellSession, None),
                     'export-env': (ExportDeviceEnvironment, None), }
     return sequence_map.get(sequence, (None, None))
