@@ -1039,6 +1039,26 @@ class TestTemplates(unittest.TestCase):
 {% set exclusive = 'True' %}
 """))
 
+    def test_ifc6410(self):
+        data = """{% extends 'ifc6410.jinja2' %}
+{% set adb_serial_number = 'e080c212' %}
+{% set fastboot_serial_number = 'e080c212' %}
+        """
+        self.assertTrue(self.validate_data('staging-ifc6410-01', data))
+        test_template = prepare_jinja_template('staging-ifc6410-01',
+                                               data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('ifc6410', template_dict['device_type'])
+        self.assertEqual('e080c212', template_dict['adb_serial_number'])
+        self.assertEqual('e080c212', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+        methods = template_dict['actions']['boot']['methods']['fastboot']
+        self.assertIn('reboot', methods)
+        self.assertIn('boot', methods)
+        self.assertIn('auto-login', methods)
+        self.assertIn('overlay-unpack', methods)
+
     def test_juno_vexpress_template(self):
         data = """{% extends 'vexpress.jinja2' %}
     {% set connection_command = 'telnet serial4 7001' %}
