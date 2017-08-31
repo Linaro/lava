@@ -789,7 +789,9 @@ class Device(RestrictedResource):
                 created_by=user, device=self, old_state=self.status,
                 new_state=new_status, message=message, job=job)
         except ValidationError as e:
-            logger.error("Cannot create DeviceStateTransition object. %s", e)
+            logger.error(
+                "Cannot create DeviceStateTransition object. "
+                "old-state=%s new-state=%s %s", self.status, new_status, str(e))
             return False
         self.status = new_status
         self.save()

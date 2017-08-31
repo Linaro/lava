@@ -442,6 +442,10 @@ def _validate_idle_device(job, device):
         status__in=[TestJob.RUNNING, TestJob.SUBMITTED, TestJob.CANCELING],
         actual_device=device)
     if jobs:
+        if len(jobs) == 1 and jobs[0] == device.current_job and device.status == Device.RUNNING:
+            # leave this job alone, it started running quickly.
+            logger.debug("Duplication check, skipping %s", device)
+            return False
         logger.warning(
             "%s (which has current_job %s) is already referenced by %d jobs %s",
             device.hostname, device.current_job, len(jobs), [j.id for j in jobs])
@@ -533,10 +537,12 @@ def assign_jobs():
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
         if device:
-            if not _validate_idle_device(job, device) and device in devices:
-                logger.debug("Removing %s from the list of available devices",
-                             str(device.hostname))
-                devices.remove(device)
+            if not _validate_idle_device(job, device):
+                if device in devices:
+                    devices.remove(device)
+                    logger.debug(
+                        "Removing %s from the list of available devices",
+                        str(device.hostname))
                 continue
             logger.info("Assigning %s for %s", device, job)
             # avoid catching exceptions inside atomic (exceptions are slow too)
@@ -552,8 +558,10 @@ def assign_jobs():
                     job.save()
                     device.current_job = job
                     # implicit device save in state_transition_to()
-                    device.state_transition_to(
+                    chk = device.state_transition_to(
                         Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job, master=True)
+                    if not chk:
+                        raise IntegrityError('Unable to create device state transition.')
             except IntegrityError:
                 # Retry in the next call to _assign_jobs
                 logger.warning(
