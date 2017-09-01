@@ -630,7 +630,7 @@ class TestShellAction(TestAction):
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
                     self.logger.exception(str(exc))
-                    raise TestError("Unable to handle the test shell signal correctly: %s", str(exc))
+                    raise TestError("Unable to handle the test shell signal correctly: %s" % str(exc))
                 except JobError as exc:
                     self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False
