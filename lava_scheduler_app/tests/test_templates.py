@@ -54,7 +54,7 @@ class TestTemplates(unittest.TestCase):
     debug = False  # set to True to see the YAML device config output
     system = False  # set to True to debug the system templates
 
-    def validate_data(self, hostname, data, job_ctx=None):
+    def render_device_dictionary(self, hostname, data, job_ctx=None):
         if not job_ctx:
             job_ctx = {}
         test_template = prepare_jinja_template(hostname, data)
@@ -63,6 +63,10 @@ class TestTemplates(unittest.TestCase):
             print('#######')
             print(rendered)
             print('#######')
+        return rendered
+
+    def validate_data(self, hostname, data, job_ctx=None):
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
             ret = validate_device(yaml.load(rendered))
         except SubmissionException as exc:
@@ -120,6 +124,39 @@ class TestTemplates(unittest.TestCase):
             ['reboot'],
             template_dict['actions']['boot']['methods']['fastboot']
         )
+
+    def test_primary_connection_power_commands_fail(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = 'localhost' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertRaises(
+            SubmissionException,
+            validate_device,
+            yaml.load(device_dict)
+        )
+
+    def test_primary_connection_power_commands_empty_ssh_host(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = '' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertTrue(validate_device(yaml.load(device_dict)))
+
+    def test_primary_connection_power_commands(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertTrue(validate_device(yaml.load(device_dict)))
 
     def test_nexus4_template(self):
         data = """{% extends 'nexus4.jinja2' %}

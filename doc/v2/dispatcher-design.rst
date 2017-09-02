@@ -986,6 +986,8 @@ device dictionary table:
 
 #. No ``methods`` in the boot parameters.
 
+#. No :ref:`power_commands` can be used in the :term:`device dictionary`.
+
 This prevents other jobs being submitted which would cause the device to be
 rebooted or have a different deployment prepared. This can be further enhanced
 with :term:`device tag` support.

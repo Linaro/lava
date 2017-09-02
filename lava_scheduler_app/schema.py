@@ -442,6 +442,26 @@ def validate_submission(data_object):
     return True
 
 
+def _validate_primary_connection_power_commands(data_object):
+    power_control_commands = [
+        'power_off',
+        'power_on',
+        'hard_reset'
+    ]
+
+    # debug, tests don't pass. write docs.
+    try:
+        ssh_host = data_object['actions']['deploy']['methods']['ssh']['host']
+        if ssh_host:
+            if 'commands' in data_object:
+                for command in power_control_commands:
+                    if command in data_object['commands']:
+                        raise SubmissionException(
+                            "When primary connection is used, power control commands (%s) should not be specified." % ", ".join(power_control_commands))
+    except KeyError:
+        pass  # no primary connection setup, skip
+
+
 def validate_device(data_object):
     """
     Validates a python object as a pipeline device configuration
@@ -456,4 +476,5 @@ def validate_device(data_object):
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
 
+    _validate_primary_connection_power_commands(data_object)
     return True

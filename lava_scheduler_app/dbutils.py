@@ -25,6 +25,7 @@ from lava_scheduler_app.models import (
     TestJob,
     TemporaryDevice,
     validate_job,
+    validate_device
 )
 from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.dbutils import map_metadata
@@ -787,6 +788,11 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
             # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
             fail_job(job, fail_msg=msg)
+            return None
+        try:
+            validate_device(device_config)
+        except SubmissionException as exc:
+            fail_job(job, fail_msg="Device configuration error: %s" % exc)
             return None
         if not device.worker_host or not device.worker_host.hostname:
             msg = "Administrative error. Device '%s' has no worker host." % device.hostname
