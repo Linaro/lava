@@ -116,6 +116,8 @@ for previous releases.
 
 .. index:: irc
 
+.. _support_irc:
+
 IRC
 ***
 

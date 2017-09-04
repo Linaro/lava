@@ -18,6 +18,8 @@ device type template.
 
 Dictionary elements are shown in three blocks: commands, vland and others.
 
+.. _device_dictionary_commands:
+
 Commands
 ********
 
@@ -82,10 +84,11 @@ of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
 
+.. _device_dictionary_other_parameters:
+
 Other parameters
 ****************
 
 * **flash_cmds_order** - a list of strings, used for specifying the order in
   which the images should be flashed to the :term:`DUT` using the ``fastboot``
   command.
-

@@ -25,6 +25,7 @@ from lava_scheduler_app.models import (
     TestJob,
     TemporaryDevice,
     validate_job,
+    validate_device
 )
 from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.dbutils import map_metadata
@@ -442,6 +443,10 @@ def _validate_idle_device(job, device):
         status__in=[TestJob.RUNNING, TestJob.SUBMITTED, TestJob.CANCELING],
         actual_device=device)
     if jobs:
+        if len(jobs) == 1 and jobs[0] == device.current_job and device.status == Device.RUNNING:
+            # leave this job alone, it started running quickly.
+            logger.debug("Duplication check, skipping %s", device)
+            return False
         logger.warning(
             "%s (which has current_job %s) is already referenced by %d jobs %s",
             device.hostname, device.current_job, len(jobs), [j.id for j in jobs])
@@ -533,10 +538,12 @@ def assign_jobs():
         device = find_device_for_job(job, devices)
         # slower steps as assignment happens less often than the checks
         if device:
-            if not _validate_idle_device(job, device) and device in devices:
-                logger.debug("Removing %s from the list of available devices",
-                             str(device.hostname))
-                devices.remove(device)
+            if not _validate_idle_device(job, device):
+                if device in devices:
+                    devices.remove(device)
+                    logger.debug(
+                        "Removing %s from the list of available devices",
+                        str(device.hostname))
                 continue
             logger.info("Assigning %s for %s", device, job)
             # avoid catching exceptions inside atomic (exceptions are slow too)
@@ -552,8 +559,10 @@ def assign_jobs():
                     job.save()
                     device.current_job = job
                     # implicit device save in state_transition_to()
-                    device.state_transition_to(
+                    chk = device.state_transition_to(
                         Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job, master=True)
+                    if not chk:
+                        raise IntegrityError('Unable to create device state transition.')
             except IntegrityError:
                 # Retry in the next call to _assign_jobs
                 logger.warning(
@@ -750,7 +759,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             if not multinode_job.actual_device:
                 logger.debug("[%s] job has no device yet", multinode_job.sub_id)
                 return None
-            devices[str(multinode_job.actual_device.hostname)] = definition['protocols']['lava-multinode']['role']
+            devices[str(multinode_job.id)] = definition['protocols']['lava-multinode']['role']
         for multinode_job in job.sub_jobs_list:
             # apply the complete list to all jobs in this group
             definition = yaml.load(multinode_job.definition)
@@ -780,6 +789,11 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
             fail_job(job, fail_msg=msg)
             return None
+        try:
+            validate_device(device_config)
+        except SubmissionException as exc:
+            fail_job(job, fail_msg="Device configuration error: %s" % exc)
+            return None
         if not device.worker_host or not device.worker_host.hostname:
             msg = "Administrative error. Device '%s' has no worker host." % device.hostname
             logger.error('[%d] worker host error: %s', job.id, msg)
@@ -797,7 +811,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.info('[%d] worker-hostname not seen: %s', job.id, msg)
             return None
 
-        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        device_object = PipelineDevice(device_config)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
         if 'target' not in device_object:
             device_object.target = device.hostname

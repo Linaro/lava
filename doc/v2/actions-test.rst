@@ -90,9 +90,9 @@ the test shell, the value is the value of that variable.
 .. code-block:: yaml
 
      definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
          - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
@@ -149,9 +149,9 @@ Example syntax:
      timeout:
        minutes: 5
      definitions:
-       - repository: git://git.linaro.org/qa/test-definitions.git
+       - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
          from: git
-         path: ubuntu/smoke-tests-basic.yaml
+         path: lava-test-shell/smoke-tests-basic.yaml
          name: smoke-tests
        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
          skip_install:
@@ -171,9 +171,9 @@ the same definition:
      timeout:
        minutes: 5
      definitions:
-       - repository: git://git.linaro.org/qa/test-definitions.git
+       - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
          from: git
-         path: ubuntu/smoke-tests-basic.yaml
+         path: lava-test-shell/smoke-tests-basic.yaml
          name: smoke-tests
        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
          skip_install:

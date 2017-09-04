@@ -1703,6 +1703,7 @@ def job_status(request, pk):
     response_dict = {'actual_device': "<i>...</i>",
                      'duration': "<i>...</i>",
                      'job_status': job.get_status_display(),
+                     'failure_comment': job.failure_comment,
                      'started': "<i>...</i>",
                      'subjobs': []}
 

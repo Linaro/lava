@@ -124,9 +124,101 @@ Make your changes
   * `A note about git commit messages`_
   * `5 useful tips for a better commit message`_
 
+  * Avoid putting documentation into the commit message. Keep the commit
+    message to a reasonable length (about 10 to 12 lines at most).
+
+  * Usage examples need to go into the documentation, not the commit message.
+    Everything which is intended to help users to add this support to their own
+    test jobs must be in the documentation.
+
+  * Avoid duplicating or summarising the documentation in the commit message,
+    reviewers will be reading the documentation as well.
+
+  * Use comments in the code in preference to detailed commit messages.
+
+  * Avoid putting updates into the commit message for each patch set. The
+    review comments are the correct place for details of what changed at which
+    patch set.
+
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
 .. _`5 useful tips for a better commit message`: https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
+
+Add some unit tests
+===================
+
+lava-dispatcher
+---------------
+
+Whenever new functionality is added to ``lava-dispatcher``, especially a new
+:ref:`Strategy class <using_strategy_classes>`, there **must** be some new unit
+tests added to allow some assurance that the new classes continue to operate as
+expected as the rest of the codebase continues to develop. There are a lot of
+examples in the current unit tests.
+
+#. Start with a sample test job which is known to work. Copy that into
+   ``lava_dispatcher/tests/sample_jobs``. The URLs in that sample job will need
+   to be valid URLs but do not need to be working files. (This sample_job is
+   not being submitted to run on a device, it is only being used to check that
+   the construction of the pipeline is valid.) If you need files which other
+   sample jobs do not use then :ref:`we can help with that <getting_support>`
+   by putting files onto images.validation.linaro.org.
+
+#. Create a device configuration using the download link of a real device
+   dictionary which can run the testjob and save this file to
+   ``lava_dispatcher/pipeline/devices``.
+
+#. Add a function to a suitable Factory class to use the device config file to
+   create a device and use the parser to create a Job instance by following the
+   examples in the existing unit tests
+
+#. Create the pipeline ref by following the ``readme.txt`` in the
+   ``pipeline_ref`` directory. The simplest way to create a single new pipeline
+   reference file is to add one line to the new unit test function:
+
+   .. code-block:: python
+
+    self.update_ref = True
+
+   Run the unit test and the pipeline reference will be created. Remove the
+   line before committing for review or the ``./ci-run`` check will fail.
+
+   This file acts as a description of the classes involved in the pipeline
+   which has been constructed from the supplied test job and device
+   configuration. Validating it in the unit tests ensures that later
+   development does not invalidate the new code by accidentally removing or
+   adding unexpected actions.
+
+#. In the new function, use the ``pipeline_refs`` README to add a check that
+   the pipeline reference continues to reflect the pipeline which has been
+   constructed by the parser.
+
+.. note:: unit tests do not typically check any of the ``run`` function code.
+   Do as much checking as is practical in the ``validate`` functions of all the
+   new classes. For example, if ``run`` relies on a parameter being set, check
+   for that parameter in ``validate`` and check that the value of that
+   parameter is correct based on the sample job and the supplied device
+   configuration.
+
+lava-server
+-----------
+
+Some parts of lava-server are easier to test than others. New device-type
+templates need to have specific unit tests added to
+``lava_scheduler_app/tests/test_templates``. Follow the examples and make sure
+that if the new template adds new items then those items are checked for
+existence and validity in the new function which tests the new template.
+
+If you are adding or modifying documentation in ``lava-server``, make sure that
+the documentation builds cleanly:
+
+.. code-block:: none
+
+ $ make -C doc/v2 clean
+ $ make -C doc/v2 html
+
+For other parts of ``lava-server``, follow the examples of the existing unit
+tests and :ref:`talk to us <getting_support>`.
 
 Re-run the unit tests
 =====================

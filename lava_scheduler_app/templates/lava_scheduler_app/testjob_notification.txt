@@ -12,11 +12,13 @@ Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 {%- if job.status == 2 or job.status == 3 %}
 {%- if job.notification.verbosity < 2 %}
 
+{% if job.actual_device %}
 Device details:
 Hostname: {{ job.actual_device.hostname }}
 Type: {{ job.actual_device.device_type }}
 Owner: {{ job.actual_device.owner }}
 Worker: {{ job.actual_device.worker_host.hostname }}
+{% endif -%}
 
 Job details:
 Priority: {{ job.get_priority_display() }}
@@ -28,6 +30,13 @@ Finished: {% if job.end_time %}{{ job.end_time.strftime("%Y-%m-%d %H:%M:%S (%z %
 Duration: {{ job.duration }}
 {%- endif %}
 {%- if job.notification.verbosity == 0 %}
+
+Metadata:
+{%- for item in job.get_metadata_dict() %}
+{%- for key, value in item.items() %}
+{{ key }}: {{ value }}
+{%- endfor %}
+{%- endfor %}
 
 Results:
 {%- if job.notification.blacklist %}

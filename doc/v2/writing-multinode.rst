@@ -355,3 +355,118 @@ LAVA and relies on the test writer carefully planning how the job will work.
 See `_delayed_start_multinode` for an example of how to use this.
 
 .. FIXME: write the advanced example for this section
+
+.. _writing_multinode_with_lxc:
+
+Writing jobs using MultiNode and LXC
+************************************
+
+Some devices need an LXC to do the deployment operations, boot operations or
+test shell actions. These devices can still be part of a MultiNode group, as
+long as some thought is given to constructing the test job submission.
+
+In this section, the example will concentrate on adding MultiNode to a device
+which needs LXC support in order to allow the device to run tests inside a
+:ref:`secondary_connection`.
+
+This test job will combine the ideas of :term:`namespace` and :term:`role`.
+Make sure you are clear on which parts of the test job will happen in which
+namespace and in which role.
+
+.. seealso:: :ref:`writing_secondary_connection_jobs` and
+   :ref:`deploy_using_lxc`
+
+For a secondary connection MultiNode test job using a device which uses an LXC,
+there will be a need to deploy and boot the LXC, deploy and boot the host
+device and deploy and boot the SSH guest(s). There will also be test actions
+but those can be considered later.
+
+The host device and LXC will have existing test jobs which use namespaces.
+The secondary connection(s) will need to operate in an additional namespace.
+
+The host device and LXC will need to exist in the same role, the secondary
+connection(s) will need to be in a separate role so that the MultiNode protocol
+can be used to communicate from the host to the guest:
+
+In the example, the secondary connections use the ``guest`` role and the
+``guest`` namespace. The device uses the ``host`` role and the ``device``
+namespace. The LXC uses the ``host`` role and the ``probe`` namespace.
+
+Roles and namespaces **can** have the same label but are not the same thing.
+If you do use the same string for a namespace and a role, make sure that the
+namespace and the role apply to the same actions. All actions **must** have
+both a namespace and a role.
+
+`Download or view the complete example
+<examples/test-jobs/bbb-lxc-ssh-guest.yaml>`_:
+examples/test-jobs/bbb-lxc-ssh-guest.yaml
+
+The ``protocols`` block needs to combine the MultiNode requirements and the LXC
+requirements. However, the MultiNode requirements take priority because the LXC
+block is only accessed **after** the test job submission has been split into
+the list of sub-jobs contained within the MultiNode group. Therefore, the LXC
+protocol information has to declare the ``role`` and put the rest of the data
+within that role:
+
+.. include:: examples/test-jobs/bbb-lxc-ssh-guest.yaml
+     :code: yaml
+     :start-after: # PROTOCOL_BLOCK
+     :end-before: lava-multinode:
+
+The rest of the ``protocols`` block now defines the MultiNode roles and data
+required for the secondary connections - in this case 3 connections will be
+attempted. The full protocols block looks like:
+
+.. include:: examples/test-jobs/bbb-lxc-ssh-guest.yaml
+     :code: yaml
+     :start-after: # PROTOCOL_BLOCK
+     :end-before: # actions_block
+
+The actions need a little bit of consideration. Typically, the LXC will need to
+be deployed and booted first. This is so that tools inside the LXC can be
+installed and configured, ready to be used in the deploy stage of the device.
+
+Just as with the protocols block, the MultiNode requirements take priority over
+the LXC, so the LXC deploy and boot actions **must** declare a role. To be
+useful with the device, the role must match the role assigned to the device. In
+this example, that role is labelled ``host`` and uses the ``probe`` namespace.
+
+.. include:: examples/test-jobs/bbb-lxc-ssh-guest.yaml
+     :code: yaml
+     :start-after: # actions_block
+     :end-before: # device_actions
+
+The deploy and boot actions for the device and for the secondary connection
+guests remain the same as for a secondary connection test job without an LXC.
+Note how the device uses the ``host`` role and the ``device`` namespace and the
+guests use the ``guest`` role and ``guest`` namespace.
+
+The change compared to a test job for a device which needs an LXC is the use of
+``authorize``. Whichever role is operating as the ``host`` must specify how to
+authorize connections from other roles using the ``authorize:`` key in the
+deployment. This allows the relevant Action to deploy the necessary support.
+e.g. ``/root/.ssh/authorized_keys``
+
+.. include:: examples/test-jobs/bbb-lxc-ssh-guest.yaml
+     :code: yaml
+     :start-after: # device_actions
+     :end-before: - test:
+
+.. seealso:: :ref:`secondary_connection` for more information on secondary
+   connections and authorization.
+
+Adding test actions
+===================
+
+Test actions can be placed anywhere after the corresponding deploy and boot
+actions. As the LXC is deployed and booted first, the LXC can run a test shell
+before deploying the device, before booting the device, before the test shell
+action on the device which starts the secondary connection guests or at any
+later point.
+
+The test actions for the secondary connections retain the original order - the
+host test action needs to run first to set up the service and send the message
+declaring the IP address.
+
+Remember that the LXC is associated with the device (in this example, the
+``host`` role).

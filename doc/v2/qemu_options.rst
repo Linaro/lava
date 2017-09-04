@@ -235,3 +235,36 @@ How to override variables
      ensure that there is only the hyphen for the list. (``- virtio...``).
      Errors in this syntax will cause the test job to fail as Incomplete when
      the QEMU command line is constructed.
+
+How to specify QEMU environment options
+***************************************
+
+* QEMU also evaluates environment options that are used at runtime to determine
+  e.g. what subsystem should be used for the sound output on the host.
+  For obvious security reasons there is **no way** to influence environment
+  variables from within a job. But LAVA provides the capability to
+  specify (globally at the server level) what environment variables are to be used
+  for jobs in the file ``env.yaml``. See :ref:`simple_admin`.
+
+* One example is the use of ``-soundhw hda`` which emulates a soundcard on the target.
+  To avoid having any sound output on the host (or worker fwiw), you can specify
+  QEMU_AUDIO_DRV like so in ``/etc/lava-server/env.yaml``:
+
+  .. code-block:: yaml
+
+    # A dictionary of (key, value) that will be added to the inherited environment.
+    # If a key does not already exist in the inherited environment, it's added.
+    # default: an empty dictionary
+    overrides:
+      LC_ALL: C.UTF-8
+      LANG: C
+    #  http_proxy: http://lava-lab-proxy
+    #  https_proxy: http://lava-lab-proxy
+    #  ftp_proxy: http://lava-lab-proxy
+      PATH: /usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/usr/sbin:/sbin
+    #
+    # For qemu-system-* (device_type qemu) if -soundhw is passed,
+    # enable this to not forward sound to the host.
+    # Check qemu-system-x86_64 --audio-help for other options.
+      QEMU_AUDIO_DRV: none
+

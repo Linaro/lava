@@ -150,8 +150,8 @@ Example JSON::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     }
                 ],
                 "timeout": 1800

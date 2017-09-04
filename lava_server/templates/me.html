@@ -50,37 +50,43 @@
 
   <div class="col-md-6">
     <h4 class="modal-header">Groups</h4>
-    {% if user.groups.all %}
+  {% with groups=user.groups.all %}
+    {% if groups %}
     <p>You are member of the following LAVA groups:</p>
     <div class="panel-group" id="accordion">
-    {% for group in user.groups.all %}
+    {% for group in groups %}
+      {% with user_set=group.user_set.all %}
+        {% with users_count=user_set|length %}
       <div class="panel panel-default">
         <div class="panel-heading">
           <h4 class="panel-title">
-            {% if group.user_set.count > 1 %}
-              <a data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ forloop.counter }}">{{ group.name }} <span class="badge pull-right">{{ group.user_set.count|add:"-1" }}</span></a>
+            {% if users_count > 1 %}
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ forloop.counter }}">{{ group.name }} <span class="badge pull-right">{{ users_count|add:"-1" }}</span></a>
             {% else %}
               {{ group.name }} <span class="badge pull-right">0</span>
             {% endif %}
           </h4>
         </div>
-        {% if group.user_set.count > 1 %}
+        {% if users_count > 1 %}
         <div id="collapse-{{ forloop.counter }}" class="panel-collapse collapse">
           <div class="panel-body">
             <ul>
-            {% for group_user in group.user_set.all|dictsort:"first_name"|dictsort:"last_name" %}
-              {% if group_user != user %}<li>{% if group_user.get_full_name %}{{ group_user.get_full_name }}{% else %}<i>{{ group_user.username }}</i>{% endif %}</li>{% endif %}
+            {% for group_user in user_set|dictsort:"first_name"|dictsort:"last_name" %}
+              {% if group_user != user %}<li>{{ group_user.get_full_name|default:group_user.username }}</li>{% endif %}
             {% endfor %}
             </ul>
           </div>
         </div>
         {% endif %}
       </div>
+        {% endwith %}
+      {% endwith %}
     {% endfor %}
     </div>
     {% else %}
-    <p>You are not member of any group.</p>
+    <p><i>You are not member of any group.</i></p>
     {% endif %}
+  {% endwith %}
     </ul>
   </div>
 </div>

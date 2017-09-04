@@ -24,9 +24,6 @@
 {% set base_menu_dictionary =  menu_dictionary | default(base_menu_dictionary) -%}
 {% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
 
-{% block vland %}
-{% endblock vland %}
-
 {% block body %}
 
 device_type: mustang
@@ -34,6 +31,7 @@ device_type: mustang
 actions:
   deploy:
     methods:
+      sata:
       tftp:
       ssh:
         options:
@@ -84,6 +82,14 @@ actions:
           - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }}n8 debug
             root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ extra_kernel_args }}'
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        sata:
+          commands:
+          - insmod gzio
+          - linux ({{ sata_interface|default('hd0') }},{{ boot_part|default('gpt1') }})/{KERNEL}
+            console={{ console_device }},{{ baud_rate }}n8 debug
+            root={{ root_uuid|default('/dev/sda2') }} rw {{ base_ip_args }} {{ extra_kernel_args }}
+          - initrd ({{ sata_interface|default('hd0') }},{{ boot_part|default('gpt1') }}/{RAMDISK}
           - boot
       uefi-menu:
         menu_options: {{ grub_efi_method }}

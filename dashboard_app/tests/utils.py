@@ -8,8 +8,22 @@ from django.contrib.auth import login
 from django.http import HttpRequest
 from django.test.client import Client
 from importlib import import_module
+from distutils.version import StrictVersion
 
 from django_testscenarios.ubertest import (TestCase, TestCaseWithScenarios)
+
+
+def django_version_after(available, limit):
+    """
+    If the current django version is later than the specified limit,
+    return True.
+    Used to allow unittests to be skipped when the underlying django
+    would otherwise cause the test to fail.
+    *Only* for use with V1 unit tests and for django versions 1.11 or
+    later. V1 must continue working on django 1.7, 1.8 and 1.10
+    :return: boolean
+    """
+    return StrictVersion(available) > StrictVersion(limit)
 
 
 class CSRFTestCase(TestCase):

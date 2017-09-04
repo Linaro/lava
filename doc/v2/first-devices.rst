@@ -5,6 +5,15 @@
 Adding your first devices
 #########################
 
+.. caution:: **Do not rush**. **Always** start with QEMU testing, then add a
+   real device which is well supported by LAVA. Purchase and integrate one of
+   the :ref:`standard known devices <standard_known_devices>`. Take time to
+   learn what is required to automate a :term:`DUT`. Avoid rushing into adding
+   your own new :term:`device type`. When you have a LAVA instance which has
+   successfully run a few dozen test jobs using ``QEMU`` and a standard known
+   device, then consider how to :ref:`integrate a new device-type into LAVA
+   <adding_new_device_types>`.
+
 Requirements
 ************
 
@@ -304,131 +313,3 @@ code support is removed.
 
 .. seealso:: :ref:`migrating_known_device_example` and
    :ref:`migrating_to_pipeline`.
-
-.. index:: device integration, adding new device-types
-
-.. _adding_new_device_types:
-
-Adding new device types
-***********************
-
-.. warning:: This is the most complex part and it can be a lot of work
-  (sometimes several months) to integrate a completely new device into LAVA. V2
-  offers a different and wider range of support to V1 but some devices will
-  need new support to be written within ``lava-dispatcher``. **It is not always
-  possible to automate a new device**, depending on how the device connects to
-  LAVA, how the device is powered and whether the software on the device allows
-  the device to be controlled remotely.
-
-The integration process is different for every new device. Therefore, this
-documentation can only provide hints about such devices, based on experience
-within the LAVA software and lab teams. **Please** talk to us **before**
-starting on the integration of a new device using the :ref:`mailing_lists`.
-Include full details of the type of device, the bootloader specifications,
-hardware support and anything you have done so far to automate the device.
-Sometimes, the supplied bootloader **must** be modified to allow automation.
-Some devices need electrical modifications or specialised hardware to be
-automated.
-
-Integrating a new device type will involve some level of development work, the
-device type templates are more than configuration. Testing new device type
-templates requires setting up a developer workflow and running unit tests as
-well as running test jobs on a LAVA instance. If the new device type involves a
-new boot or deployment method, there will also need to be changes in the
-``lava-dispatcher`` codebase. New elements of the test job submissions and
-device configuration may also need changes to the schema in ``lava-server``.
-Some new device types will be a lot easier than others - for example UBoot
-tends to have a reasonably consistent interface across multiple devices, so
-changes for a new UBoot device could be as little as setting variables after
-extending the ``base-uboot.jinja2`` template.
-
-LAVA encourages new device type templates to be :ref:`contributed upstream
-<contribute_upstream>` as a :ref:`community contribution
-<community_contributions>` to LAVA.
-
-.. seealso:: :ref:`growing_your_lab`, including :ref:`lab_scaling`. Also
-   :ref:`developing_device_type_templates`, :ref:`developing_new_classes`
-   and :ref:`migrating_known_device_example`
-
-Hints
-=====
-
-The LAVA software and lab teams have built up a set hints relating to the
-integration of new device-types. The further a device deviates from one or more
-of these hints, the harder it will become to automate such a device. Always
-remember that the way that the device is supported **must** scale to large labs
-which already contain a range of other devices, each with their own issues. It
-is **not** acceptable to add a new device-type which is incompatible with
-devices which are already supported or which imposes restrictions on how many
-devices of any type can be used in any one lab.
-
-* **serial port** - LAVA expects to automate devices by interacting with the
-  serial port immediately after power is applied to the device. The bootloader
-  **must** interact with the serial port. If a serial port is not available on
-  the device, suitable additional hardware **must** be provided before
-  integration can begin. All messages about the boot process must be visible
-  using the serial port and the serial port should remain usable for the
-  duration of all test jobs on the device.
-
-* **UBoot** - if the device supports UBoot then this is a useful beginning.
-  However, the build of UBoot on the device can hinder integration due to the
-  wide range of configuration options and behavioural changes available inside
-  a patched UBoot build. Generally, the more components of UBoot that are
-  disabled or removed from a vendor build, the harder it will be to integrate.
-  If you are able to fully script a UBoot process from interrupting the
-  bootloader to booting a kernel of your own choice, this will greatly assist
-  in integrating the device into LAVA.
-
-  #. **Configuration** - ensure that the UBoot build supports a string which
-     can be used to interrupt UBoot and that once interrupted, the prompt is
-     set to a usable string like ``=>`` or ``uboot#`` etc. Make sure that the
-     configuration supports TFTP using commands sent over the serial port. The
-     timeout for interrupting the boot process **must** be configurable.
-
-* **Android** - LAVA relies on :abbr:`ADB (Android Debug Bridge)` and
-  ``fastboot`` to control an Android device. Support for ADB **must** be
-  enabled in **every** image running on the device or LAVA will lose the
-  ability to access, reboot or deploy to the device. The fastboot serial number
-  **must** be unique **and** modifiable by the admin in case an existing device
-  is already using that number. The device needs a reliable way to enter
-  fastboot mode from power on. Typically, if the boot partition is erased, this
-  will force the bootloader into fastboot mode. The device needs to implement
-  the ``fastboot boot <boot img>`` command, so that the test image can be
-  loaded directly into memory and executed.
-
-* **Battery Power** - devices which have internal batteries become difficult to
-  reliably automate for a few issues, unless the battery can be permanently
-  removed:
-
-  #. **forced reboots** become impossible without electrical modification of
-     the device to temporarily take the battery out of circuit. This means that
-     it is much easier to cause the device to go offline because of a broken
-     kernel build or broken image.
-
-  #. **recharging** can be an issue - devices may not behave normally when held
-     in ``fastboot`` mode or with a broken kernel build or image deployed to
-     the system. This can cause the device to fail to keep charge in the
-     battery or fail to recharge the battery, despite having power available.
-
-* **Serial power leaks** - some devices are capable of drawing power
-  over the serial line used to control the device, despite the actual power
-  supply being disconnected. Sometimes this requires a period of time to
-  discharge capacitors on the board (fixable by adding a ``sleep`` in the
-  ``power_off_command``). Sometimes this power leak can cause the device to
-  ``latch`` into a particular bootloader mode or other state which prevents the
-  automation from proceeding.
-
-  .. seealso:: :ref:`power_commands`
-
-* **Networking**
-
-  #. **Ethernet** - all devices using ethernet interfaces in LAVA **must**
-     have a unique MAC address on each interface. The MAC address **must** be
-     persistent across reboots but also be modifiable by admins in case it does
-     conflict with some other board in the same lab. No assumptions about fixed
-     IP addresses, address ranges or pre-defined routes. If more than one
-     interface is available, the boot process **must** be configurable to
-     always use the same interface every time the device is booted.
-
-  #. **WiFi** - is not currently supported as a method of booting devices.
-

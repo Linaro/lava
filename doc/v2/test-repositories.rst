@@ -41,6 +41,29 @@ examples for you, including:
 * https://git.linaro.org/lava-team/lava-functional-tests.git
 * https://git.linaro.org/qa/test-definitions.git
 
+Using specific branch of a test definition repository
+*****************************************************
+
+If a public branch is specified as a parameter in the job submission YAML,
+that branch of the repository will be used instead of the default 'master'
+branch.
+
+.. code-block:: yaml
+
+ - test:
+     timeout:
+       minutes: 5
+     definitions:
+     - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/android/get-adb-serial-hikey.yaml
+       name: get-hikey-serial
+       branch: stylesen
+
+.. note:: Do not supply anything other than a branch name to this parameter,
+          like tag or revision as this would create a clone in a 'detached
+          HEAD' state.
+
 Using specific revisions of a test definition
 *********************************************
 
@@ -55,15 +78,51 @@ that revision of the repository will be used instead of HEAD.
       minutes: 10
     name: kvm-basic-singlenode
     definitions:
-        - repository: git://git.linaro.org/qa/test-definitions.git
+        - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
           from: git
-          path: ubuntu/smoke-tests-basic.yaml
+          path: lava-test-shell/smoke-tests-basic.yaml
           name: smoke-tests
         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
           from: git
           path: lava-test-shell/single-node/singlenode03.yaml
           name: singlenode-advanced
           revision: 441b61
+
+Shallow clones in GIT
+*********************
+
+Some git repositories have a long history of commits and using a full clone
+takes up a lot of space. When a test job involves multiple test repositories,
+this can cause issues with adding the LAVA overlay to the test job. For
+example, ramdisks could become too large or there could be insufficient
+space in the partition used for the test shell or it could take longer than
+desired to transfer the overlay to the device.
+
+When ``git`` support is requested for a test shell definition, LAVA will
+default to making a **shallow** clone using ``--depth=1``. The git history
+will be truncated to the single most recent commit.
+
+A full clone can be requested by passing the ``shallow`` parameter with a
+value of ``False``. If the ``revision`` option is used, shallow clone
+support will need to be turned off or the change to specified revision
+will fail.
+
+.. seealso:: https://git-scm.com/docs/git-clone
+
+.. code-block:: yaml
+
+ - test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    name: kvm-basic-singlenode
+    definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          shallow: False
+
 
 Sharing the contents of test definitions
 ****************************************
@@ -87,26 +146,6 @@ address of the repository to clone
 This allows a collection of LAVA test definitions to re-use other YAML custom
 scripts without duplication. The tests inside the other repository will **not**
 be executed.
-
-.. index:: test definition dependencies
-
-Adding test definition dependencies
-***********************************
-
-If your test depends on other tests to be executed before you run the current
-test, add an explicit dependency in the test definition YAML:
-
-.. code-block:: yaml
-
- test-case-deps:
-   - git-repo: git://git.linaro.org/qa/test-definitions.git
-     testdef: common/passfail.yaml
-   - bzr-repo: lp:~stylesen/lava-dispatcher/sampletestdefs-bzr
-     testdef: testdef.yaml
-   - url: https://people.linaro.org/~senthil.kumaran/deps_sample.yaml
-
-The test cases specified within ``test-case-deps`` section will be fetched from
-the given repositories or url and then executed in the same specified order.
 
 Test repository for functional tests in LAVA
 ********************************************

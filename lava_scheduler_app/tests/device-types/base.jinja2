@@ -3,6 +3,7 @@
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
+{% set base_nbdroot_args = (" ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7 ") -%}
 {% set base_ip_args = base_ip_args|default("ip=dhcp") %}
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
@@ -150,13 +151,13 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
 
 {% block vland %}
 parameters:
-{% if interfaces or device_ip or device_mac%}
+{% if interfaces or device_ip or device_mac %}
   interfaces:
 {% if device_ip or device_mac %}
     target:
       ip: {{ device_ip|default('') }}
       mac: '{{ device_mac|default('') }}'
-{% endif %}
+{% endif %}  # device_ip or device_mac
 {% for interface in interfaces %}
     {{ interface }}:
       sysfs: "{{ sysfs.get(interface) }}"
@@ -164,17 +165,44 @@ parameters:
 {% for switch, port in map.get(interface).items() %}
       switch: "{{ switch }}"
       port: {{ port }}
-{% endfor %}
+{% endfor %}  # switch, port
       tags:
 {% if tags.get(interface) %}
 {% for tag in tags.get(interface) %}
       - {{ tag }}
 {% endfor %}
-{% endif %}
-{% endfor %}
+{% endif %}  # tags
+{% endfor %}  # interfaces
+{% endif %}  # interfaces or device_ip or device_mac
+
+{% if sata_uuid or sd_uuid or usb_uuid %}
+  media:
+{% if sata_uuid %}
+    sata:
+      UUID-required: {{ uuid_required|default(True) }}
+      {{ sata_label|default('ST160LM003') }}:
+        uuid: {{ sata_uuid }}
+        device_id: {{ sata_id|default(0) }}
+{# FIXME: merge into just sata_interface with changes in lava-dispatcher #}
+        uboot_interface: {{ sata_interface|default('scsi') }}
+        grub_interface: {{ sata_interface|default('hd0') }}
+        boot_part: {{ boot_part|default(1) }}
+{% endif %} #  sata_uuid
+{% if sd_uuid %}
+    sd:
+      {{ sd_label }}:
+        uuid: {{ sd_uuid }}
+        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
+{% endif %} #  sd_uuid
+{% if usb_uuid %}
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
+{% endif %} # usb_uuid
 {% else %}
   pass:
-{% endif %}
+{%- endif %} # sata_uuid_sd_uuid_usb_uuid
 {% endblock vland -%}
 
 {% block body %}{% endblock body -%}

@@ -138,10 +138,10 @@ actions:
           - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
           - lava-send lava_start
           - lava-sync clients
-    - from: git
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests
-      path: ubuntu/smoke-tests-basic.yaml
-      repository: http://git.linaro.org/qa/test-definitions.git
     - from: git
       repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       path: lava-test-shell/params/nfs.yaml
@@ -157,10 +157,10 @@ actions:
     role:
     - guest
     definitions:
-    - from: git
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: pre-smoke-tests
-      path: ubuntu/smoke-tests-basic.yaml
-      repository: http://git.linaro.org/qa/test-definitions.git
     - from: inline
       name: ssh-client
       path: inline/ssh-client.yaml
@@ -177,9 +177,9 @@ actions:
           steps:
           - lava-sync clients
           - tar -tzf /$(pwd|awk -F'-' '{print $2}'|awk -F'/' '{print $1}')-overlay*.tar.gz
-    - from: git
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: post-smoke-tests
-      path: ubuntu/smoke-tests-basic.yaml
-      repository: http://git.linaro.org/qa/test-definitions.git
     timeout:
       minutes: 5

@@ -44,6 +44,9 @@ Jobs may be submitted to LAVA in one of three ways:
    any computer running a Debian-based distribution. See :ref:`lava_tool` for
    more information.
 
+.. seealso:: To configure a fresh installation of lava-tool to be able to
+   submit test jobs see :ref:`lava_tool`
+
 For now, lava-tool is the easiest option to demonstrate. Once you have copied
 the above job definition to a file, (for example */tmp/job.yaml*), use
 ``lava-tool`` to submit it as a test job in Linaro's main LAVA lab:
@@ -102,7 +105,7 @@ the following:
 
 The first job mentioned above uses a more complex test definition:
 
-https://git.linaro.org/qa/test-definitions.git/tree/ubuntu/smoke-tests-basic.yaml
+https://git.linaro.org/lava-team/lava-functional-tests.git/tree/lava-test-shell/smoke-tests-basic.yaml
 
 The metadata in a test definition is for the maintenance of that test
 definition and covers details like the maintainer, the kinds of devices which

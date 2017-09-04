@@ -55,31 +55,7 @@ class UserQueryTable(LavaTable):
     query_group = tables.Column()
 
     actions = tables.TemplateColumn(
-        '''{% load results_accessibility_tags %}
-{% is_accessible_by record request.user as is_accessible %}
-<div class="text-nowrap">
-  <a class="btn btn-xs btn-success {% if not record.is_live and not record.has_view %}disabled{% endif %}"
-     title="{% if record.has_view or record.is_live %}View query results{% else %}Results not available, please run the query{% endif %}"
-     {% if not record.is_live and not record.has_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}"
-     {% endif %}>
-    <span class="glyphicon glyphicon-signal"></span>
-  </a>
-  <a href="{{ record.get_absolute_url }}/+detail" class="btn btn-xs btn-primary pointer-events" title="Edit query settings">
-    <span class="glyphicon glyphicon-eye-open"></span>
-  </a>
-  <a class="btn btn-xs btn-danger {% if not is_accessible %}disabled{% endif %}"
-     title="{% if is_accessible %}Delete query{% else %}You don't have sufficent persmission to delete query{% endif %}"
-     {% if not is_accessible %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
-     {% endif %}>
-    <span class="glyphicon glyphicon-trash"></span>
-  </a>
-</div>''')
+        template_name="lava_results_app/query_actions_field.html")
     actions.orderable = False
 
     last_updated = tables.TemplateColumn('''
@@ -107,6 +83,10 @@ class OtherQueryTable(UserQueryTable):
 
     name = tables.Column()
 
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_actions_field.html")
+    actions.orderable = False
+
     description = tables.Column()
 
     def render_description(self, value):
@@ -114,9 +94,10 @@ class OtherQueryTable(UserQueryTable):
         return value.split("\n")[0]
 
     class Meta(UserQueryTable.Meta):
-        model = Query
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'name', 'actions', 'description', 'owner',
+        )
+        sequence = fields
         exclude = (
             'is_published', 'query_group'
         )
@@ -131,6 +112,10 @@ class GroupQueryTable(UserQueryTable):
 
     name = tables.Column()
 
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_actions_field.html")
+    actions.orderable = False
+
     description = tables.Column()
 
     def render_description(self, value):
@@ -138,16 +123,26 @@ class GroupQueryTable(UserQueryTable):
         return value.split("\n")[0]
 
     class Meta(UserQueryTable.Meta):
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'name', 'actions', 'description', 'owner',
+        )
+        sequence = fields
 
 
 class QueryTestJobTable(JobTable):
 
+    id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     device.orderable = False
+    duration = tables.Column()
+    duration.orderable = False
+    submit_time = tables.DateColumn()
+    end_time = tables.DateColumn()
 
     omit = tables.TemplateColumn('''
     <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>
@@ -167,8 +162,6 @@ class QueryTestJobTable(JobTable):
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"
         queries = {}
-        fields = ()
-        sequence = ('...',)
 
 
 class QueryTestCaseTable(SuiteTable):

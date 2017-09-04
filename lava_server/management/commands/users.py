@@ -46,7 +46,7 @@ class Command(BaseCommand):
         sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
 
         # "add" sub-command
-        add_parser = sub.add_parser("add", help="Add a device")
+        add_parser = sub.add_parser("add", help="Add a user")
         add_parser.add_argument("username",
                                 help="Username of the user")
         add_parser.add_argument("--email", type=str, default=None,
@@ -61,12 +61,12 @@ class Command(BaseCommand):
                                 help="Make this user a super user")
 
         # "details" sub-command
-        details_parser = sub.add_parser("details", help="Device details")
+        details_parser = sub.add_parser("details", help="User details")
         details_parser.add_argument("username",
                                     help="Username of the user")
 
         # "list" sub-command
-        list_parser = sub.add_parser("list", help="List devices")
+        list_parser = sub.add_parser("list", help="List users")
         list_parser.add_argument("--all", dest="all", default=False,
                                  action="store_true",
                                  help="Show all users including inactive ones")

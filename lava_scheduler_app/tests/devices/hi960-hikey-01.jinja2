@@ -1,0 +1,10 @@
+{% extends 'hi960-hikey.jinja2' %}
+{% set adb_serial_number = '6980298624000000' %}
+{% set fastboot_serial_number = '6980298624000000' %}
+{% set connection_command = 'telnet tweetypie 4010' %}
+{% set hard_reset_command = '/home/stylesen/work/pdu/pdu-control-reset.sh 0 5 1 5' %}
+{% set soft_reset_command = 'fastboot -s usb:2-1.2 reboot' %}
+{% set power_on_command = '/home/stylesen/work/pdu/pdu-control-on.sh 5' %}
+{% set power_off_command = '/home/stylesen/work/pdu/pdu-control-off.sh 5' %}
+{% set fastboot_options = ['-S', '256M'] %}
+{% set device_info = [{'board_id': '6980298624000000'}] %}

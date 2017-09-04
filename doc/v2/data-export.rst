@@ -166,7 +166,7 @@ main function to run on the command line if you wish:
 
 .. code-block:: shell
 
- python zmq_client.py -j 357 -p tcp://127.0.0.1:5500 -t 1200
+ python zmq_client.py -j 357 --hostname tcp://127.0.0.1:5500 -t 1200
 
 zmq_client.py script:
 

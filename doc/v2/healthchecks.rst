@@ -83,9 +83,9 @@ checks, without making the health check unnecessarily long:
        timeout:
          minutes: 5
        definitions:
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
 These tests run simple Debian/Ubuntu test commands to do with networking and
