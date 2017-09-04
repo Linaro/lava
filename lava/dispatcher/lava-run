@@ -49,7 +49,7 @@ def parser():
                        help="Enable IPv6")
 
     group = p_obj.add_argument_group("logging")
-    group.add_argument("--logging-url", required=True, metavar="URL",
+    group.add_argument("--logging-url", metavar="URL", default=None,
                        help="URL of the ZMQ socket to send the logs to the master")
     group.add_argument("--master-cert", default=None, metavar="PATH",
                        type=argparse.FileType("r"),
@@ -60,10 +60,10 @@ def parser():
 
     group = p_obj.add_argument_group("configuration files")
     group.add_argument("--device", metavar="PATH",
-                       type=argparse.FileType("r"),
+                       type=argparse.FileType("r"), required=True,
                        help="Device configuration")
     group.add_argument("--dispatcher", metavar="PATH",
-                       type=argparse.FileType("r"), required=True,
+                       type=argparse.FileType("r"), default=None,
                        help="Dispatcher configuration")
     group.add_argument("--env-dut", metavar="PATH",
                        type=argparse.FileType("r"), default=None,
