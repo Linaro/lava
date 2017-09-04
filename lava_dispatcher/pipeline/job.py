@@ -70,9 +70,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, parameters, zmq_config):  # pylint: disable=too-many-arguments
+    def __init__(self, job_id, parameters, logger):  # pylint: disable=too-many-arguments
         self.job_id = job_id
-        self.zmq_config = zmq_config
+        self.logger = logger
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -117,24 +117,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 'job': self.parameters,
                 'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
-
-    def setup_logging(self):
-        # We are now able to create the logger when the job is started,
-        # allowing the functions that are called before run() to log.
-        # The validate() function is no longer called on the master so we can
-        # safelly add the ZMQ handler. This way validate can log errors that
-        # test writter will see.
-        self.logger = logging.getLogger('dispatcher')
-        if self.zmq_config is not None:
-            # pylint: disable=no-member
-            self.logger.addZMQHandler(self.zmq_config.logging_url,
-                                      self.zmq_config.master_cert,
-                                      self.zmq_config.slave_cert,
-                                      self.job_id,
-                                      self.zmq_config.ipv6)
-            self.logger.setMetadata("0", "validate")
-        else:
-            self.logger.addHandler(logging.StreamHandler())
 
     def mkdtemp(self, action_name, override=None):
         """

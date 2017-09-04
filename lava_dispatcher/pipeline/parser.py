@@ -115,13 +115,13 @@ class JobParser(object):
                 job.timeout = Timeout(data['job_name'], duration)
 
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, job_id, zmq_config, dispatcher_config,
+    def parse(self, content, device, job_id, logger, dispatcher_config,
               output_dir=None, env_dut=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
-        job = Job(job_id, data, zmq_config)
+        job = Job(job_id, data, logger)
         test_counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
@@ -132,9 +132,6 @@ class JobParser(object):
             config = yaml.load(dispatcher_config)
             if isinstance(config, dict):
                 job.parameters['dispatcher'] = config
-
-        # Setup the logging now that we have the parameters
-        job.setup_logging()
 
         level_tuple = Protocol.select_all(job.parameters)
         # sort the list of protocol objects by the protocol class level.

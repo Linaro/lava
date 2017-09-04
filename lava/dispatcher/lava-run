@@ -78,6 +78,27 @@ def parser():
     return p_obj
 
 
+def setup_logger(options):
+    # Pipeline always log as YAML so change the base logger.
+    # Every calls to logging.getLogger will now return a YAMLLogger
+    logging.setLoggerClass(YAMLLogger)
+
+    # The logger can be used by the parser and the Job object in all phases.
+    logger = logging.getLogger('dispatcher')
+    if options.logging_url is not None:
+        # pylint: disable=no-member
+        logger.addZMQHandler(options.logging_url,
+                             options.master_cert,
+                             options.slave_cert,
+                             options.job_id,
+                             options.ipv6)
+        logger.setMetadata("0", "validate")
+    else:
+        logger.addHandler(logging.StreamHandler())
+
+    return logger
+
+
 def parse_job_file(options):
     """
     Uses the parsed device_config instead of the old Device class
@@ -99,19 +120,14 @@ def parse_job_file(options):
     if options.dispatcher is not None:
         dispatcher_config = options.dispatcher.read()
 
-    try:
-        # Create the ZMQ config
-        zmq_config = None
-        if options.logging_url is not None:
-            zmq_config = ZMQConfig(options.logging_url,
-                                   options.master_cert,
-                                   options.slave_cert,
-                                   options.ipv6)
+    # Setup the logger as early as possible
+    logger = setup_logger(options)
 
+    try:
         # Generate the pipeline
         job = parser.parse(options.definition.read(),
                            device, options.job_id,
-                           zmq_config=zmq_config,
+                           logger=logger,
                            dispatcher_config=dispatcher_config,
                            output_dir=options.output_dir,
                            env_dut=env_dut)
@@ -123,7 +139,7 @@ def parse_job_file(options):
             f_describe.write(yaml.dump(description))
 
     except JobError as exc:
-        logging.error("Invalid job submission: %s", str(exc))
+        logger.error("Invalid job submission: %s", str(exc))
         return None
 
     return job
@@ -137,10 +153,6 @@ def main():
     if os.geteuid() != 0:
         print("lava-run should be executed as root")
         return 1
-
-    # Pipeline always log as YAML so change the base logger.
-    # Every calls to logging.getLogger will now return a YAMLLogger
-    logging.setLoggerClass(YAMLLogger)
 
     # Set process title for easier debugging
     setproctitle("lava-run [job: %s]" % options.job_id)
