@@ -48,39 +48,13 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootActio
 # pylint: disable=too-many-return-statements
 
 
-def fastboot_accept(device, parameters):
-    """
-    Each fastboot deployment strategy uses these checks
-    as a base, then makes the final decision on the
-    style of fastboot deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'fastboot':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'adb_serial_number' not in device:
-        return False
-    if 'fastboot_serial_number' not in device:
-        return False
-    if 'fastboot_options' not in device:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class Fastboot(Deployment):
     """
     Strategy class for a fastboot deployment.
     Downloads the relevant parts, copies to the locations using fastboot.
     """
     compatibility = 1
+    name = 'fastboot'
 
     def __init__(self, parent, parameters):
         super(Fastboot, self).__init__(parent)
@@ -91,11 +65,21 @@ class Fastboot(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not fastboot_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'fastboot':
+            return False, '"to" parameter is not "fastboot"'
+        if 'deploy' not in device['actions']:
+            return False, '"deploy" is not in the device configuration actions'
+        if 'adb_serial_number' not in device:
+            return False, '"adb_serial_number" is not in the device configuration'
+        if 'fastboot_serial_number' not in device:
+            return False, '"fastboot_serial_number" is not in the device configuration'
+        if 'fastboot_options' not in device:
+            return False, '"fastboot_options" is not in the device configuration'
         if 'fastboot' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"fastboot" was not in the device configuration deploy methods"'
 
 
 class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attributes

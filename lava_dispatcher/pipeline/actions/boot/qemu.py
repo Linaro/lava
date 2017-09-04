@@ -66,12 +66,12 @@ class BootQEMU(Boot):
     def accepts(cls, device, parameters):
         methods = device['actions']['boot']['methods']
         if 'qemu' not in methods and 'qemu-nfs' not in methods:
-            return False
+            return False, '"qemu" or "qemu-nfs" was not in the device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" was not in parameters'
         if parameters['method'] not in ['qemu', 'qemu-nfs', 'monitor']:
-            return False
-        return True
+            return False, '"method" was not "qemu" or "qemu-nfs"'
+        return True, 'accepted'
 
 
 class BootQEMUImageAction(BootAction):

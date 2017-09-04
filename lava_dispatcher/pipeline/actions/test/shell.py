@@ -75,7 +75,9 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        return ('definition' in parameters) or ('definitions' in parameters)
+        if ('definition' in parameters) or ('definitions' in parameters):
+            return True, 'accepted'
+        return False, '"definition" or "definitions" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):

@@ -24,7 +24,7 @@
 import os
 import tempfile
 
-from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.action import Pipeline, ConfigurationError
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
@@ -34,27 +34,6 @@ from lava_dispatcher.pipeline.utils.network import get_free_port
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
-
-
-def nbd_accept(device, parameters):
-    """
-    Each nbd deployment strategy uses these checks
-    as a base, then makes the final decision on the
-    style of nbd deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'nbd':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise RuntimeError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise RuntimeError("Device misconfiguration")
-    return True
 
 
 class Nbd(Deployment):
@@ -67,6 +46,7 @@ class Nbd(Deployment):
     """
 
     compatibility = 1
+    name = 'nbd'
 
     def __init__(self, parent, parameters):
         super(Nbd, self).__init__(parent)
@@ -77,11 +57,13 @@ class Nbd(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not nbd_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'nbd':
+            return False, '"to" parameter is not "nbd"'
         if 'nbd' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"ndb" was not in the device configuration deploy methods'
 
 
 class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes

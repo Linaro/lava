@@ -71,10 +71,8 @@ class BootFastboot(Boot):
     def accepts(cls, device, parameters):
         if 'method' in parameters:
             if parameters['method'] == 'fastboot':
-                return True
-        if 'methods' not in device['actions']['boot']:
-            raise ConfigurationError("Device misconfiguration")
-        return False
+                return True, 'accepted'
+        return False, 'boot "method" was not "fastboot"'
 
 
 class BootFastbootAction(BootAction):

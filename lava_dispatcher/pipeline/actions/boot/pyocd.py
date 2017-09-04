@@ -44,14 +44,14 @@ class PyOCD(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'pyocd' not in device['actions']['boot']['methods']:
-            return False
+            return False, '"pyocd" was not in the device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" was not in parameters'
         if parameters['method'] != 'pyocd':
-            return False
+            return False, '"method" was not "pyocd"'
         if 'board_id' not in device:
-            return False
-        return True
+            return False, '"board_id" is not in the device configuration'
+        return True, 'accepted'
 
 
 class BootPyOCD(BootAction):

@@ -55,34 +55,13 @@ from lava_dispatcher.pipeline.utils.filesystem import (
 # pylint: disable=superfluous-parens
 
 
-def lxc_accept(device, parameters):
-    """
-    Each lxc deployment strategy uses these checks as a base, then makes the
-    final decision on the style of lxc deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if 'os' not in parameters:
-        return False
-    if parameters['to'] != 'lxc':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class Lxc(Deployment):
     """
     Strategy class for a lxc deployment.
     Downloads the relevant parts, copies to the locations using lxc.
     """
     compatibility = 1
+    name = 'lxc'
 
     def __init__(self, parent, parameters):
         super(Lxc, self).__init__(parent)
@@ -93,11 +72,15 @@ class Lxc(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not lxc_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if 'os' not in parameters:
+            return False, '"os" is not in deploy parameters'
+        if parameters['to'] != 'lxc':
+            return False, '"to" parameter is not "lxc"'
         if 'lxc' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"lxc" was not in the device configuration deploy methods'
 
 
 class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes

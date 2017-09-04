@@ -34,26 +34,6 @@ from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 
 
-def nfs_accept(device, parameters):
-    """
-    Each NFS deployment strategy uses these checks
-    as a base
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'nfs':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class Nfs(Deployment):
     """
     Strategy class for a NFS deployment.
@@ -61,6 +41,7 @@ class Nfs(Deployment):
     """
 
     compatibility = 1
+    name = 'nfs'
 
     def __init__(self, parent, parameters):
         super(Nfs, self).__init__(parent)
@@ -71,13 +52,15 @@ class Nfs(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not nfs_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'nfs':
+            return False, '"to" parameter is not "nfs"'
         if 'image' in device['actions']['deploy']['methods']:
-            return False
+            return False, '"image" was in the device configuration deploy methods'
         if 'nfs' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"nfs" was not in the device configuration deploy methods"'
 
 
 class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
