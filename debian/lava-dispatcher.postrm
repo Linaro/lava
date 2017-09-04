@@ -21,6 +21,7 @@ set -e
 case "$1" in
     purge)
       rm -f /etc/lava-dispatcher/lava-dispatcher.conf
+      rm -f /etc/lava-dispatcher/lava-slave
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
