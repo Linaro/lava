@@ -4,7 +4,7 @@
 {% set device_type = "armada-370-db" %}
 {% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
 {% set bootm_kernel_addr = '0x02080000' %}
-{% set bootm_ramdisk_addr = '0x02880000' %}
+{% set bootm_ramdisk_addr = '0x03000000' %}
 {% set bootm_dtb_addr = '0x01000000' %}
 {% set base_ip_args = 'ip=dhcp' %}
 {% set uboot_mkimage_arch = 'arm' %}

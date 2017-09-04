@@ -1,0 +1,5 @@
+{% extends 'base-fastboot.jinja2' %}
+{% set device_type = "ifc6410" %}
+{% set fastboot_sequence = [
+    'reboot', 'boot', 'auto-login', 'overlay-unpack', 'shell-session', 'export-env'] %}
+{% set soft_reboot_command = '' %}

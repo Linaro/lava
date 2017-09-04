@@ -230,6 +230,9 @@
 {% endblock %}
 
 {% block scripts %}
+
+{% is_accessible_by query request.user as is_accessible %}
+
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/bootbox.min.js"></script>

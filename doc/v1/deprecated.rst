@@ -246,8 +246,8 @@ the job is submitted.
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     }
                 ],
                 "timeout": 900
@@ -312,8 +312,8 @@ to not use two ``lava_test_shell`` commands::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     }
                 ],
                 "timeout": 900
@@ -339,8 +339,8 @@ Becomes::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                        "git-repo": "git://git.linaro.org/lava-team/lava-functional-tests.git",
+                        "testdef": "lava-test-shell/smoke-tests-basic.yaml"
                     },
                     {
                         "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
@@ -370,7 +370,7 @@ illustrates this:
 
 .. index:: bundle-stream
 
-.. _bundle_stream:
+.. _bundle_stream_deprecated:
 
 Bundle Stream Overview
 ======================

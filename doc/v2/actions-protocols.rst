@@ -14,6 +14,42 @@ A Protocol operates separately from any Connection, generally over a
 predetermined layer, e.g. TCP/IP sockets. Some protocols can access data
 passing over a Connection.
 
+.. _using_protocols_from_actions:
+
+Using protocols from actions
+****************************
+
+Most protocols can be accessed from individually named actions from the test
+job submission using pre-defined commands. The list of requests supported by
+each protocol is shown in the reference for that protocol. Any action in the
+pipeline is able to make a request to a suitable protocol supported by the test
+job. If the test job uses :term:`namespaces <namespace>`, the action making the
+request needs to be in the correct namespace to have access to the correct
+parameters. LAVA provides no guarantee on when the request will be made within
+the runtime of the action and test writers should not rely on the request being
+made at the start of the action. Instead, specify the previous action in the
+same pipeline.
+
+.. note:: The syntax is similar but not identical to how protocols are accessed
+   from within the protocols block. When accessing protocols from an action
+   block, a list of requests can be made.
+
+.. code-block:: yaml
+
+  - deploy:
+      timeout:
+        minutes: 30
+      to: fastboot
+      namespace: hikey-oe
+      protocols:
+        lava-lxc:
+        - action: fastboot-deploy
+          request: pre-power-command
+          timeout:
+            minutes: 2
+
+.. seealso:: :ref:`lxc_protocol_reference`
+
 .. contents::
    :backlinks: top
 
@@ -291,9 +327,9 @@ allows much easier checking of the job before the job starts to run.
 
 .. code-block:: yaml
 
-         - repository: git://git.linaro.org/qa/test-definitions.git
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
            from: git
-           path: ubuntu/smoke-tests-basic.yaml
+           path: lava-test-shell/smoke-tests-basic.yaml
            name: smoke-tests
 
 This is a small deviation from how existing MultiNode jobs may be defined but
@@ -350,11 +386,101 @@ device will power-off or the connection can logout.)
    or :ref:`lava_wait` fails. If there are more test shell definitions after
    this point, those would attempt to run.
 
+.. _multinode_protocol_requests:
+
+Protocol requests from actions
+==============================
+
+* ``lava-sync``
+
+  .. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+          - action: prepare-scp-overlay
+            request: lava-sync
+            messageID: clients
+            timeout:
+              minutes: 5
+
+* ``lava-wait``
+
+  .. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+          - action: prepare-scp-overlay
+            request: lava-wait
+            message:
+                ipaddr: $ipaddr
+            messageID: ipv4
+            timeout:
+              minutes: 5
+
+* ``lava-wait-all``
+
+  .. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+          - action: prepare-scp-overlay
+            request: lava-wait
+            message:
+                ipaddr: $ipaddr
+            messageID: ipv4
+            timeout:
+              minutes: 5
+
+  * ``lava-wait-all`` with a role:
+
+    .. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+          - action: prepare-scp-overlay
+            request: lava-wait-all
+            role: server
+            message:
+                ipaddr: $ipaddr
+            messageID: ipv4
+            timeout:
+              minutes: 5
+
+
+* ``lava-send``
+
+  .. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+          - action: prepare-scp-overlay
+            request: lava-send
+            message:
+                ipaddr: $ipaddr
+            messageID: ipv4
+            timeout:
+              minutes: 5
+
+
 VLANd protocol
 **************
 
 See :ref:`VLANd protocol <vland_in_lava>` - which uses the MultiNode protocol
 to interface with :term:`VLANd` to support virtual local area networks in LAVA.
+
+.. _vland_protocol_requests:
+
+Protocol requests from actions
+==============================
+
+* ``deploy_vlans``
+
+  .. code-block:: yaml
+
+    protocols:
+      lava-vland:
+      - action: lava-vland-overlay
+        request: deploy_vlans
 
 .. index:: lxc protocol reference, lxc actions
 
@@ -438,3 +564,30 @@ elements that are accepted by the LXC protocol:
   `false`.
 
 .. seealso:: :ref:`feedback_using_lxc`
+
+.. _lxc_protocol_requests:
+
+Protocol requests from actions
+==============================
+
+* ``pre-power-command``
+
+  .. code-block:: yaml
+
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
+
+* ``pre-os-command``
+
+  .. code-block:: yaml
+
+    protocols:
+      lava-lxc:
+      - action: uefi-commands
+        request: pre-os-command
+        timeout:
+          minutes: 2

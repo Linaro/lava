@@ -19,7 +19,8 @@
 """
 Unit tests for dashboard_app.views.bundle_stream_list
 """
-
+import unittest
+import django
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from dashboard_app.views import bundle_stream_list
@@ -28,9 +29,14 @@ from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import (
     DashboardViewsTestCase,
     TestClient,
+    django_version_after,
 )
 
 # pylint: disable=too-many-ancestors,no-member,invalid-name
+
+
+def django_message():
+    return 'django %s is too new for this V1 test.' % django.get_version()
 
 
 class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
@@ -73,6 +79,7 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
         self.assertTemplateUsed(response,
                                 "dashboard_app/bundle_stream_list.html")
 
+    @unittest.skipIf(django_version_after(django.get_version(), '1.11'), django_message())
     def test_listed_bundles_are_the_ones_we_should_see(self):
         with fixtures.created_bundle_streams(self.bundle_streams) as bundle_streams:
             response = self.client.get(self.url)

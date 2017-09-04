@@ -54,7 +54,7 @@ class TestTemplates(unittest.TestCase):
     debug = False  # set to True to see the YAML device config output
     system = False  # set to True to debug the system templates
 
-    def validate_data(self, hostname, data, job_ctx=None):
+    def render_device_dictionary(self, hostname, data, job_ctx=None):
         if not job_ctx:
             job_ctx = {}
         test_template = prepare_jinja_template(hostname, data)
@@ -63,6 +63,10 @@ class TestTemplates(unittest.TestCase):
             print('#######')
             print(rendered)
             print('#######')
+        return rendered
+
+    def validate_data(self, hostname, data, job_ctx=None):
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
             ret = validate_device(yaml.load(rendered))
         except SubmissionException as exc:
@@ -117,9 +121,42 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('lxc', template_dict['actions']['deploy']['methods'])
         self.assertIn('fastboot', template_dict['actions']['deploy']['methods'])
         self.assertEqual(
-            ['reboot', 'wait-usb-add', 'lxc-add-device'],
+            ['reboot'],
             template_dict['actions']['boot']['methods']['fastboot']
         )
+
+    def test_primary_connection_power_commands_fail(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = 'localhost' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertRaises(
+            SubmissionException,
+            validate_device,
+            yaml.load(device_dict)
+        )
+
+    def test_primary_connection_power_commands_empty_ssh_host(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = '' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertTrue(validate_device(yaml.load(device_dict)))
+
+    def test_primary_connection_power_commands(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        device_dict = self.render_device_dictionary('staging-x86-01', data)
+        self.assertTrue(validate_device(yaml.load(device_dict)))
 
     def test_nexus4_template(self):
         data = """{% extends 'nexus4.jinja2' %}
@@ -459,6 +496,49 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('insmod efinet', nfs_commands)
         self.assertIn('net_bootp', nfs_commands)
 
+    def test_mustang_secondary_media(self):
+        data = """{% extends 'mustang-grub-efi.jinja2' %}
+{% set exclusive = 'True' %}
+{% set sata_label = 'ST500DM002' %}
+{% set sata_uuid = 'ata-ST500DM002-1BD142_S2AKYFSN' %}
+{% set grub_efi_method = 'pxe-grub' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
+{% set connection_command = 'telnet localhost 7012' %}"""
+        self.assertTrue(self.validate_data('staging-mustang-01', data))
+        test_template = prepare_jinja_template('staging-mustang-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        parameters = {
+            'parameters': {
+                'media': {
+                    'sata': {
+                        'ST500DM002': {
+                            'boot_part': 1,
+                            'device_id': 0,
+                            'grub_interface': 'hd0',
+                            'uboot_interface': 'scsi',
+                            'uuid': 'ata-ST500DM002-1BD142_S2AKYFSN'
+                        },
+                        'UUID-required': True
+                    }
+                }
+            }
+        }
+        self.assertTrue(template_dict['parameters'] == parameters['parameters'])
+        self.assertIn('sata', template_dict['actions']['boot']['methods']['grub-efi'])
+        commands = {
+            'commands': [
+                'insmod gzio',
+                'linux (hd0,gpt1)/{KERNEL} console=ttyS0,115200n8 debug root=/dev/sda2 rw ip=:::::eth0:dhcp',
+                'initrd (hd0,gpt1/{RAMDISK}',
+                'boot']}
+        self.assertEqual(
+            commands,
+            template_dict['actions']['boot']['methods']['grub-efi']['sata']
+        )
+
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
@@ -525,6 +605,40 @@ class TestTemplates(unittest.TestCase):
                 self.assertIn('ttyAMA3', command)
             else:
                 self.assertEqual('boot', command)
+        self.assertIn('ssh', template_dict['actions']['deploy']['methods'])
+        params = template_dict['actions']['deploy']['methods']['ssh']
+        self.assertIsNotNone(params)
+        self.assertIn('port', params)
+        self.assertIn('user', params)
+        self.assertIn('options', params)
+        self.assertIn('identity_file', params)
+
+    def test_hikey960_grub(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi960-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {
+            'kernel': 'Image',
+            'devicetree': 'hi960-hikey.dtb'
+        }
+        # self.assertTrue(self.validate_data('hi960-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsNotNone(template_dict['actions']['boot']['methods'])
+        self.assertNotIn('menu_options', template_dict['actions']['boot']['methods']['grub'])
+        self.assertIn('grub', template_dict['actions']['boot']['methods'])
+        params = template_dict['actions']['boot']['methods']['grub']
+        for command in params['installed']['commands']:
+            self.assertEqual('boot', command)
+        self.assertIn('ssh', template_dict['actions']['deploy']['methods'])
+        params = template_dict['actions']['deploy']['methods']['ssh']
+        self.assertIsNotNone(params)
+        self.assertIn('port', params)
+        self.assertIn('user', params)
+        self.assertIn('options', params)
+        self.assertIn('identity_file', params)
 
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -583,6 +697,7 @@ class TestTemplates(unittest.TestCase):
         data = """{% extends 'cubietruck.jinja2' %}
 {% set usb_label = 'SanDisk_Ultra' %}
 {% set sata_label = 'ST160LM003' %}
+{% set uuid_required = False %}
 {% set usb_uuid = "usb-SanDisk_Ultra_20060775320F43006019-0:0" %}
 {% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
 {% set connection_command = 'telnet localhost 6002' %}
@@ -791,13 +906,14 @@ class TestTemplates(unittest.TestCase):
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
                 self.assertIn(',tcp,hard,intr ', line)
-        job_ctx = {'extra_nfsroot_args': ',nolock'}
+                self.assertNotIn('nfsvers', line)
+        job_ctx = {'extra_nfsroot_args': ',nolock,nfsvers=3'}
         test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
         for line in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
             if line.startswith("setenv nfsargs"):
-                self.assertIn(',tcp,hard,intr,nolock ', line)
+                self.assertIn(',tcp,hard,intr,nolock,nfsvers=3 ', line)
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         checked = False
         for line in commands:
@@ -959,6 +1075,26 @@ class TestTemplates(unittest.TestCase):
 {% set device_ip = '192.168.1.11' %}
 {% set exclusive = 'True' %}
 """))
+
+    def test_ifc6410(self):
+        data = """{% extends 'ifc6410.jinja2' %}
+{% set adb_serial_number = 'e080c212' %}
+{% set fastboot_serial_number = 'e080c212' %}
+        """
+        self.assertTrue(self.validate_data('staging-ifc6410-01', data))
+        test_template = prepare_jinja_template('staging-ifc6410-01',
+                                               data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('ifc6410', template_dict['device_type'])
+        self.assertEqual('e080c212', template_dict['adb_serial_number'])
+        self.assertEqual('e080c212', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+        methods = template_dict['actions']['boot']['methods']['fastboot']
+        self.assertIn('reboot', methods)
+        self.assertIn('boot', methods)
+        self.assertIn('auto-login', methods)
+        self.assertIn('overlay-unpack', methods)
 
     def test_juno_vexpress_template(self):
         data = """{% extends 'vexpress.jinja2' %}

@@ -82,4 +82,8 @@ for more elaborate testing.
    only used when writing the test shell definition, it is not picked up by
    LAVA. It remains useful to record the maintainer of a test shell definition,
    the scope and the kinds of devices for which the definition is expected to
-   be useful. see also :ref:`test_definitions`.
+   be useful. see also :ref:`test_definitions`
+   To explicitly add limited metadata to the job from the Lava Test Shell
+   Definition, see :ref:`test_case_references`.
+   The job will automatically contain metadata relating to the URL, commit
+   hash and path of the test shell definition(s) used in the test job.

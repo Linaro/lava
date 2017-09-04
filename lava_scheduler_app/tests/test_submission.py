@@ -21,6 +21,7 @@ from lava_scheduler_app.models import (
     _check_exclusivity,
     is_deprecated_json,
 )
+from lava_scheduler_app.schema import SubmissionException
 import simplejson
 
 LOGGER = logging.getLogger()
@@ -218,6 +219,38 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
             user.get_all_permissions())
         self.assertTrue(user.has_perm('lava_scheduler_app.add_testjob'))
         self.assertTrue(user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+
+    def test_group_visibility(self):
+        self.factory.cleanup()
+        dt = self.factory.make_device_type(name='name')
+        device = self.factory.make_device(device_type=dt, hostname='name-1')
+        device.is_pipeline = True
+        device.save()
+        definition = self.factory.make_job_data()
+        definition['visibility'] = {'group': ['newgroup']}
+        definition['job_name'] = 'unittest_visibility'
+        self.assertIsNotNone(yaml.dump(definition))
+        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
+        self.assertIsNotNone(list(Device.objects.filter(
+            device_type=dt, is_pipeline=True)))
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        self.assertRaises(
+            SubmissionException,
+            TestJob.from_yaml_and_user,
+            yaml.dump(definition),
+            user)
+        self.factory.make_group('newgroup')
+        known_groups = list(Group.objects.filter(name__in=['newgroup']))
+        job = TestJob.from_yaml_and_user(
+            yaml.dump(definition), user)
+        job.refresh_from_db()
+        self.assertEqual(user, job.submitter)
+        self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
+        self.assertEqual(known_groups, list(job.viewing_groups.all()))
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_submitter(self):
         user = self.factory.make_user()

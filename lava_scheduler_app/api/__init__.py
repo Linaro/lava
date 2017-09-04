@@ -71,6 +71,8 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC integer which is the newly created
         job's id, provided the user is authenticated with an username and token.
+        If the job is a multinode job, this function returns the list of created
+        job IDs.
         """
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):

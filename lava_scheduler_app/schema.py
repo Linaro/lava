@@ -14,7 +14,6 @@ from voluptuous import (
     Schema
 )
 
-
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 INCLUDE_URL_TIMEOUT = 10
 
@@ -39,6 +38,7 @@ def _deploy_tftp_schema():
         Optional('kernel'): {Required('url'): str},
         Optional('ramdisk'): {Required('url'): str},
         Optional('nbdroot'): {Required('url'): str},
+        Optional('initrd'): {Required('url'): str},
         Optional('nfsrootfs'): {Required('url'): str},
         Optional('dtb'): {Required('url'): str},
         Optional('modules'): {Required('url'): str},
@@ -242,7 +242,8 @@ def _job_protocols_schema():
                 }
             }
         },
-        'lava-lxc': dict
+        'lava-lxc': dict,
+        'lava-xnbd': dict
     })
 
 
@@ -375,6 +376,15 @@ def _validate_secrets(data_object):
             raise SubmissionException("When 'secrets' is used, 'visibility' shouldn't be 'public'")
 
 
+def _validate_vcs_parameters(data_objects):
+    for action in data_objects['actions']:
+        if 'test' in action and 'definitions' in action['test']:
+            for definition in action['test']['definitions']:
+                if 'revision' in definition and \
+                   'shallow' in definition and definition['shallow'] is True:
+                    raise SubmissionException("When 'revision' is used, 'shallow' shouldn't be 'True'")
+
+
 def _download_raw_yaml(url):
     try:
         data = yaml.load(
@@ -428,7 +438,28 @@ def validate_submission(data_object):
         raise SubmissionException(exc)
 
     _validate_secrets(data_object)
+    _validate_vcs_parameters(data_object)
     return True
+
+
+def _validate_primary_connection_power_commands(data_object):
+    power_control_commands = [
+        'power_off',
+        'power_on',
+        'hard_reset'
+    ]
+
+    # debug, tests don't pass. write docs.
+    try:
+        ssh_host = data_object['actions']['deploy']['methods']['ssh']['host']
+        if ssh_host:
+            if 'commands' in data_object:
+                for command in power_control_commands:
+                    if command in data_object['commands']:
+                        raise SubmissionException(
+                            "When primary connection is used, power control commands (%s) should not be specified." % ", ".join(power_control_commands))
+    except KeyError:
+        pass  # no primary connection setup, skip
 
 
 def validate_device(data_object):
@@ -445,4 +476,5 @@ def validate_device(data_object):
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
 
+    _validate_primary_connection_power_commands(data_object)
     return True

@@ -601,6 +601,13 @@ using ``lava-test-reference``:
 
 The TEST_CASE_ID can be the same as an existing test case or a new test case.
 
+``lava-test-reference`` has similar support as ``lava-test-case`` except that
+``--measurement`` and ``--unit`` options are **not** supported.
+
+.. note:: Unlike the metadata in the test shell definition itself, the reference URL,
+          result and the test case name are stored as part of the job metadata in
+          the test job results. See also :ref:`job_metadata`.
+
 .. code-block:: yaml
 
   run:
@@ -704,8 +711,8 @@ Examples
   .. code-block:: yaml
 
    extra:
-     path: ubuntu/smoke-tests-basic.yaml
-     repository: git://git.linaro.org/qa/test-definitions.git
+     path: lava-test-shell/smoke-tests-basic.yaml
+     repository: git://git.linaro.org/lava-team/lava-functional-tests.git
      success: c50a99ebb5835501181f4e34417e38fc819a6280
 
 * The **duration** result for the ``auto-login-action`` records the time taken

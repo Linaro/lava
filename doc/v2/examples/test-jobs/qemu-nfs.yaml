@@ -60,17 +60,17 @@ actions:
     timeout:
       minutes: 25
     definitions:
-        - repository: git://git.linaro.org/qa/test-definitions.git
-          from: git
-          path: ubuntu/smoke-tests-basic.yaml
-          name: smoke-tests
-        - from: git
-          repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          path: lava-test-shell/params/nfs.yaml
-          parameters:
-            INTERFACE: enp0s1
-          name: nfs-dns
-        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/single-node/singlenode03.yaml
-          name: singlenode-advanced
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+    - from: git
+      repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/params/nfs.yaml
+      parameters:
+        INTERFACE: enp0s1
+      name: nfs-dns
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

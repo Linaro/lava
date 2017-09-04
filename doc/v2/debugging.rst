@@ -328,9 +328,9 @@ Be obsessive about paths and scripts
 * Avoid the temptation of using absolute paths - LAVA may need to change the
   absolute locations.
 
-.. _debugging_multinode:
-
 .. index:: MultiNode - debugging
+
+.. _debugging_multinode:
 
 Debugging MultiNode tests
 *************************

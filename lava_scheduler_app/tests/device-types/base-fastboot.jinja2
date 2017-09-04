@@ -26,8 +26,16 @@ actions:
   deploy:
     methods:
       lxc:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: '{{ ssh_host|default('') }}'
+        port: {{ ssh_port|default(22) }}
+        user: {{ ssh_user|default('root') }}
+        identity_file: {{ ssh_identity_file }}
       fastboot:
-{{ fastboot_deploy_uboot }}
+{{- fastboot_deploy_uboot }}
+{{- fastboot_interrupt_params }}
     connections:
       lxc:
       serial:
@@ -36,7 +44,8 @@ actions:
       lxc:
     methods:
       lxc:
+      ssh:
       fastboot: {{ fastboot_sequence }}
-{{ fastboot_boot_uboot }}
-
+{{- fastboot_boot_uboot }}
+{{- fastboot_boot_grub }}
 {% endblock body %}

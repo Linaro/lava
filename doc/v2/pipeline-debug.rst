@@ -176,3 +176,19 @@ The following checks are silenced and does not show any errors or warnings:
 
 .. note:: Admins should consult the respective Django documentation before changing these
    values to suit the requirements of each LAVA instance.
+
+.. _django_localhost:
+
+Using localhost
+---------------
+
+Newer versions of django include improved security features which can affect
+how LAVA is used as ``http://localhost``. By default, django enforces
+behaviour to ensure safe use of ``https://`` which can prevent attempts to
+sign in to a LAVA instance using ``http://localhost/``.
+
+To enable localhost, you may need to disable at least these security
+defaults by adding the following options to ``/etc/lava-server/settings.conf``::
+
+  "CSRF_COOKIE_SECURE": false,
+  "SESSION_COOKIE_SECURE": false

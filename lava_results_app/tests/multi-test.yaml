@@ -79,8 +79,8 @@ actions:
       name: env-dut-inline
       path: inline/env-dut.yaml
     - from: git
-      repository: git://git.linaro.org/qa/test-definitions.git
-      path: ubuntu/smoke-tests-basic.yaml
+      repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests
     - from: git
       repository: http://git.linaro.org/lava-team/lava-functional-tests.git

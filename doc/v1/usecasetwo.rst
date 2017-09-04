@@ -13,7 +13,7 @@ Source Code
 
 The test definition itself could be an unchanged singlenode test definition, e.g.
 
- https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/smoke-tests-basic.yaml
+ https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/smoke-tests-basic.yaml
 
 Alternatively, it could use the MultiNode API to synchronise the devices, e.g.
 

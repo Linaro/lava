@@ -56,7 +56,7 @@ copyright = u'2010-2014, Linaro Limited'
 # built documents.
 #
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'../..', stdout=subprocess.PIPE).stdout.read().rstrip()
+version = subprocess.Popen(r'./version.py', cwd=r'../..', stdout=subprocess.PIPE).stdout.read().rstrip().decode('utf-8')
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -123,7 +123,7 @@ html_theme = 'scrolls'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "../linaro.png"
+html_logo = "images/lava.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

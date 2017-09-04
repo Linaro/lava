@@ -107,7 +107,7 @@ actions:
       repository: https://git.linaro.org/qa/test-definitions.git
     - from: git
       name: kvm-guest
-      path: ubuntu/start-kvm.yaml
+      path: automated/linux/kvm/start-kvm.yaml
       parameters:
           GUEST_ARCH: aarch64
           GUEST_CORES: 4
@@ -126,7 +126,7 @@ actions:
       repository: https://git.linaro.org/qa/test-definitions.git
     - from: git
       name: guest-complete
-      path: ubuntu/stop-guest.yaml
+      path: automated/linux/kvm/stop-guest.yaml
       repository: https://git.linaro.org/qa/test-definitions.git
     timeout:
       minutes: 41

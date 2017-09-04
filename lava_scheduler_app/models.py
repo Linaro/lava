@@ -789,7 +789,9 @@ class Device(RestrictedResource):
                 created_by=user, device=self, old_state=self.status,
                 new_state=new_status, message=message, job=job)
         except ValidationError as e:
-            logger.error("Cannot create DeviceStateTransition object. %s", e)
+            logger.error(
+                "Cannot create DeviceStateTransition object. "
+                "old-state=%s new-state=%s %s", self.status, new_status, str(e))
             return False
         self.status = new_status
         self.save()
@@ -1252,7 +1254,11 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
         public_state = False
         if 'group' in param:
             visibility = TestJob.VISIBLE_GROUP
-            viewing_groups.extend(Group.objects.filter(name__in=param['group']))
+            known_groups = list(Group.objects.filter(name__in=param['group']))
+            if not known_groups:
+                raise SubmissionException(
+                    "No known groups were found in the visibility list.")
+            viewing_groups.extend(known_groups)
 
     if not orig:
         orig = yaml.dump(job_data)
@@ -1576,7 +1582,7 @@ class TestJob(RestrictedResource):
 
     @property
     def duration(self):
-        if self.end_time is None:
+        if self.end_time is None or self.start_time is None:
             return None
         return self.end_time - self.start_time
 
@@ -2786,7 +2792,6 @@ class TestJob(RestrictedResource):
         notification = self.notification
         # Prep template args.
         kwargs = self.get_notification_args()
-        irc_message = self.create_irc_notification()
         # Process notification callback.
         notification.invoke_callback()
 
@@ -2794,8 +2799,8 @@ class TestJob(RestrictedResource):
             if recipient.method == NotificationRecipient.EMAIL:
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     try:
-                        logger.info("sending email notification to %s",
-                                    recipient.email_address)
+                        logger.info("[%d] sending email notification to %s",
+                                    self.id, recipient.email_address)
                         title = "LAVA notification for Test Job %s" % self.id
                         kwargs["user"] = self.get_recipient_args(recipient)
                         body = self.create_notification_body(
@@ -2806,18 +2811,19 @@ class TestJob(RestrictedResource):
                         if result:
                             recipient.status = NotificationRecipient.SENT
                             recipient.save()
-                    except (smtplib.SMTPRecipientsRefused,
+                    except (smtplib.SMTPRecipientsRefused, jinja2.exceptions.TemplateError,
                             smtplib.SMTPSenderRefused, socket.error):
-                        logger.warning("failed to send email notification to %s",
-                                       recipient.email_address)
+                        logger.warning("[%d] failed to send email notification to %s",
+                                       self.id, recipient.email_address)
             else:  # IRC method
                 if recipient.status == NotificationRecipient.NOT_SENT:
                     if recipient.irc_server_name:
 
-                        logger.info("sending IRC notification to %s on %s",
-                                    recipient.irc_handle_name,
+                        logger.info("[%d] sending IRC notification to %s on %s",
+                                    self.id, recipient.irc_handle_name,
                                     recipient.irc_server_name)
                         try:
+                            irc_message = self.create_irc_notification()
                             utils.send_irc_notification(
                                 Notification.DEFAULT_IRC_HANDLE,
                                 recipient=recipient.irc_handle_name,
@@ -2825,12 +2831,13 @@ class TestJob(RestrictedResource):
                                 server=recipient.irc_server_name)
                             recipient.status = NotificationRecipient.SENT
                             recipient.save()
-                            logger.info("IRC notification sent to %s",
-                                        recipient.irc_handle_name)
+                            logger.info("[%d] IRC notification sent to %s",
+                                        self.id, recipient.irc_handle_name)
+                        # FIXME: this bare except should be constrained
                         except Exception as e:
                             logger.warning(
-                                "IRC notification not sent. Reason: %s - %s",
-                                e.__class__.__name__, str(e))
+                                "[%d] IRC notification not sent. Reason: %s - %s",
+                                self.id, e.__class__.__name__, str(e))
 
     def create_irc_notification(self):
         kwargs = {}

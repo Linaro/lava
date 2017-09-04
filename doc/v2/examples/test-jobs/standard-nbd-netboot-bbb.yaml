@@ -1,0 +1,59 @@
+device_type: beaglebone-black
+
+# NBD root deployment
+
+job_name: standard Debian ARMMP nbd test on bbb
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: standard/standard-nbd-netboot-bbb.yaml
+  build-readme: http://fix.me
+  build-console: https://fix.me
+  build-script: http://fix.me
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: nbd
+    kernel:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+    initrd:
+      url: http://fix.me/initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
+      allow_modify: false
+    nbdroot:
+      url: http://fix.me/rootfs.ext4.xz
+      compression: xz
+    os: debian
+    dtb:
+      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
+
+- boot:
+    method: u-boot
+    commands: nbd
+    type: bootz
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests

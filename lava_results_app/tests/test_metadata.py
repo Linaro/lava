@@ -57,7 +57,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -190,7 +190,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -218,13 +218,13 @@ class TestMetaTypes(TestCaseWithFactory):
             retval,
             {
                 'test.1.common.definition.from': 'git',
-                'test.0.common.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.common.definition.repository': 'git://git.linaro.org/lava-team/lava-functional-tests.git',
                 'test.0.common.definition.name': 'smoke-tests',
                 'test.1.common.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
                 'boot.0.common.method': 'qemu',
                 'test.1.common.definition.name': 'singlenode-advanced',
                 'test.0.common.definition.from': 'git',
-                'test.0.common.definition.path': 'ubuntu/smoke-tests-basic.yaml',
+                'test.0.common.definition.path': 'lava-test-shell/smoke-tests-basic.yaml',
                 'test.1.common.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
         )
 
@@ -243,7 +243,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -276,7 +276,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
@@ -316,7 +316,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device = Device.objects.get(hostname='fakeqemu1')
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
-        obj = PipelineDevice(device_config, device.hostname)
+        obj = PipelineDevice(device_config)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')

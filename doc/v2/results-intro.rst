@@ -5,7 +5,7 @@
 Introduction to Results in LAVA
 ###############################
 
-.. seealso:: :ref:`test_definition_yaml`
+.. seealso:: :ref:`test_definition_yaml`, :ref:`queries` and :ref:`lava_charts`
 
 Results in LAVA
 ***************

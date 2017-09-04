@@ -6,32 +6,58 @@ Contents
 The LAVA documentation is continually expanding and improving. This is the
 overview to help you know where to look for particular help.
 
+=======================================================================
+
 * :ref:`contents_first_steps_using` - if you are a new user of LAVA V2
   and looking to submit tests an an existing instance, start here.
+
 * :ref:`contents_first_steps_installing` - if you are starting with a
   fresh installation or running your own instance, start here.
+
+========================================================================
+
 * :ref:`contents_lava_ci` - this section explains the design goals
   of LAVA and how to use it best as part of a complete CI system.
+
 * :ref:`contents_writing_tests` - this guide takes you through how to
   design, write and debug the tests to be run using LAVA. Worked
   examples are included for a range of deployments and test methods.
+
 * :ref:`contents_results` - LAVA provides a generic view of test
   results. This guide covers how to use those results directly, and
   also how to export results data from LAVA to make it more useful.
+
+========================================================================
+
 * :ref:`contents_admin_guide` - this guide steps through the complex
   task of administering a LAVA instance, from a single emulated device
   to a large test lab with dozens of devices.
+
 * :ref:`contents_migration` - documentation to help users migrating a
   lab and its devices from LAVA V1 to V2.
+
+========================================================================
+
 * :ref:`contents_developer_guide` - LAVA is developed in the open, and
   contributions are welcome from the community. This guide introduces
   the code structure and design requirements as well as how to
   contribute patches for review.
+
+* :ref:`contents_integration_guide` - the most complex part of LAVA is
+  integrating a new :term:`device type`. You should already have a local LAVA
+  instance which has successfully run a large number of tests on more than one
+  :ref:`known device-type <standard_known_devices>`.
+
+========================================================================
+
 * :ref:`contents_context_help` - some pages in the UI have a ``Help``
   link in the context-menu section at the top of the page. These pages
   are listed in this section for reference and easier navigation.
+
 * :ref:`glossary` - descriptions of terms which have particular meanings inside
   LAVA.
+
+========================================================================
 
 .. toctree::
    :maxdepth: 1
@@ -45,9 +71,6 @@ overview to help you know where to look for particular help.
 
 First steps using LAVA V2
 =========================
-
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
 
 .. toctree::
    :maxdepth: 1
@@ -66,9 +89,6 @@ First steps using LAVA V2
 First steps installing LAVA V2
 ==============================
 
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
-
 .. toctree::
    :maxdepth: 1
 
@@ -82,9 +102,6 @@ First steps installing LAVA V2
 CI with LAVA
 ============
 
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
-
 .. toctree::
    :maxdepth: 1
 
@@ -94,9 +111,6 @@ CI with LAVA
 
 Writing tests for LAVA
 ======================
-
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
 
 .. toctree::
    :maxdepth: 1
@@ -110,6 +124,7 @@ Writing tests for LAVA
    healthchecks
    hacking-session
    qemu_options
+   secondary-media
    dispatcher-actions
    deploy-lxc
    multinode
@@ -123,9 +138,6 @@ Writing tests for LAVA
 
 Results in LAVA
 ===============
-
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
 
 .. toctree::
    :maxdepth: 1
@@ -142,15 +154,13 @@ Results in LAVA
 LAVA administration guide
 =========================
 
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
-
 .. toctree::
    :maxdepth: 1
 
    simple-admin
    admin-backups
    advanced-installation
+   admin-secondary-media
    growing_your_lab
    pipeline-server
    pipeline-admin
@@ -169,13 +179,22 @@ LAVA administration guide
    pipeline-debug
    lava-tool-issues
 
+.. _contents_integration_guide:
+
+LAVA device integration guide
+=============================
+
+.. toctree::
+   :maxdepth: 1
+
+   device-integration
+   integrate-uboot
+   integration-stories
+
 .. _contents_developer_guide:
 
 LAVA developer guide
 ====================
-
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
 
 .. toctree::
    :maxdepth: 1
@@ -197,9 +216,6 @@ LAVA developer guide
 Migrating to V2
 ===============
 
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
-
 .. toctree::
    :maxdepth: 1
 
@@ -211,9 +227,6 @@ Migrating to V2
 
 Context help
 ============
-
-.. # Keep this toctree in line with the hidden one in index.rst
-     - index.rst determines the Next Prev links, not this one.
 
 .. toctree::
    :maxdepth: 1

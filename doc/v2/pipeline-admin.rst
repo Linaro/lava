@@ -272,6 +272,8 @@ Software Requirements
 With such a bootloader installed on the device, the test writer has a wide
 range of possible deployments and boot methods.
 
+.. seealso:: :ref:`Device requirements for integration <device_requirements>`
+
 .. index:: pipeline support for devices of known type
 
 .. _adding_known_device:

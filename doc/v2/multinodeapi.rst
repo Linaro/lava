@@ -45,14 +45,10 @@ it with the API will aid in debugging the test definition.
 lava-self
 ---------
 
-Prints the hostname of the current device.
-
-.. note:: The LAVA hostname of a device is the name of the device within LAVA -
-   as visible via the web frontend. The same name is used whether the device
-   itself has a network connection or not. There is no requirement that the
-   LAVA hostname matches anything related to any network connection or network
-   service. This means that the LAVA hostname is always available via
-   ``lava-group`` and ``lava-self``.
+.. caution:: ``lava-self`` reports the job ID in V2 as the dispatcher has no
+   knowledge of the hostname of the deployed system or the original database
+   name of the device. The output of ``lava-group`` can still be used. This
+   behaviour changed in the 2017.9 release.
 
 Usage:
 ^^^^^^
@@ -105,29 +101,32 @@ This command will produce in its standard output a representation of the device
 group that is participating in the MultiNode test job.
 
 The output format contains one line per device, and each line contains the
-hostname and the role that device is playing in the test, separated by a TAB
+job ID and the role that job is playing in the test, separated by a TAB
 character::
 
-    panda01     client
-    highbank01  loadbalancer
-    highbank02  backend
-    highbank03  backend
+    12345     client
+    12346     loadbalancer
+    12347     backend
+    12348     backend
+
+.. caution:: This behaviour changed in 2017.9 as V2 does not have knowledge
+   of the device hostname, only the job ID for each role.
 
 Usage:
 ^^^^^^
  ``lava-group role``
 
-This command will produce in its standard output a list of the device names
+This command will produce in its standard output a list of the test jobs
 assigned the specified role in the MultiNode test job.
 
-The output format contains one line per device assigned to the specified role
+The output format contains one line per job ID assigned to the specified role
 with no whitespace. The matched role is not output.::
 
     $ lava-group client
-    panda01
+    12345
     $ lava-group backend
-    highbank02
-    highbank03
+    12347
+    12348
 
 If there is no matching role, exit non-zero and output nothing.::
 

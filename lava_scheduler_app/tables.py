@@ -148,40 +148,9 @@ class JobTable(LavaTable):
         self.length = 25
 
     id = tables.Column(verbose_name="ID")
-    actions = tables.TemplateColumn('''{% load utils %}
-
-{% can_view record request.user as can_view %}
-
-<div class="text-nowrap">
-  <a class="btn btn-xs btn-success {% if not can_view %}disabled{% endif %}"
-     title="{% if can_view %}View job results{% else %}Insufficient permissions{% endif %}"
-     {% if not can_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.results_link }}"
-     {% endif %}>
-    <span class="glyphicon glyphicon-signal"></span>
-  </a>
-    <a class="btn btn-xs btn-info {% if not can_view %}disabled{% endif %}"
-     title="{% if can_view %}View job details{% else %}Insufficient permissions{% endif %}"
-     {% if not can_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}"
-     {% endif %}>
-    <span class="glyphicon glyphicon-eye-open"></span>
-  </a>
-    <a class="btn btn-xs btn-primary {% if not can_view %}disabled{% endif %}" title="{% if can_view %}End of log{% else %}Insufficient permissions{% endif %}"
-     {% if not can_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}{% if record.is_pipeline %}#bottom{% else %}/log_file#bottom{% endif %}"
-     {% endif %}>
-    <span class="glyphicon glyphicon-fast-forward"></span>
-  </a>
-</div>''')
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
     actions.orderable = False
-
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
@@ -283,6 +252,9 @@ class JobTable(LavaTable):
 class IndexJobTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
@@ -292,8 +264,14 @@ class IndexJobTable(JobTable):
         self.length = 25
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'id', 'actions', 'status', 'priority', 'device',
+            'description', 'submitter', 'submit_time'
+        )
+        sequence = (
+            'id', 'actions', 'status', 'priority', 'device',
+            'description', 'submitter', 'submit_time'
+        )
         exclude = ('end_time', 'duration', )
 
 
@@ -313,6 +291,9 @@ class TagsColumn(tables.Column):
 class FailedJobTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
@@ -326,8 +307,12 @@ class FailedJobTable(JobTable):
         self.length = 10
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'id', 'actions', 'status', 'device', 'submit_time'
+        )
+        sequence = (
+            'id', 'actions', 'status', 'device', 'submit_time'
+        )
         exclude = ('submitter', 'end_time', 'priority', 'description')
 
 
@@ -335,6 +320,9 @@ class LongestJobTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
     id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     status = tables.Column()
     status.orderable = False
     device = tables.Column(accessor='actual_device')
@@ -367,8 +355,12 @@ class LongestJobTable(JobTable):
         return ''
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'id', 'actions', 'status', 'device'
+        )
+        sequence = (
+            'id', 'actions', 'status', 'device'
+        )
         exclude = ('duration', 'end_time')
 
 
@@ -376,6 +368,9 @@ class OverviewJobsTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
     id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
@@ -387,14 +382,23 @@ class OverviewJobsTable(JobTable):
         self.length = 10
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'id', 'actions', 'status', 'priority', 'device',
+            'description', 'submitter', 'submit_time', 'end_time',
+            'duration'
+        )
+        sequence = (
+            'id', 'actions'
+        )
 
 
 class RecentJobsTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
     id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     log_level = tables.Column(accessor="definition", verbose_name="Log level")
     duration = tables.Column(accessor='duration_sort')
@@ -418,9 +422,15 @@ class RecentJobsTable(JobTable):
         return data['logging_level'].lower()
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
+        fields = (
+            'id', 'actions', 'status', 'priority',
+            'description', 'submitter', 'submit_time', 'end_time',
+            'duration'
+        )
         sequence = (
-            '...', 'log_level'
+            'id', 'actions', 'status', 'priority',
+            'description', 'submitter', 'submit_time', 'end_time',
+            'duration', 'log_level'
         )
         exclude = ('device',)
 
@@ -692,6 +702,9 @@ class QueueJobsTable(JobTable):
 
     id = tables.Column(verbose_name="ID")
     id.orderable = False
+    actions = tables.TemplateColumn(
+        template_name="lava_scheduler_app/job_actions_field.html")
+    actions.orderable = False
     device = tables.Column(accessor='device_sort')
     in_queue = tables.TemplateColumn('''
     for {{ record.submit_time|timesince }}
@@ -705,8 +718,14 @@ class QueueJobsTable(JobTable):
         self.length = 50
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        fields = ()
-        sequence = ('...',)
+        fields = (
+            'id', 'actions', 'device', 'description', 'submitter',
+            'submit_time', 'in_queue'
+        )
+        sequence = (
+            'id', 'actions', 'device', 'description', 'submitter',
+            'submit_time', 'in_queue'
+        )
         exclude = ('status', 'priority', 'end_time', 'duration')
 
 

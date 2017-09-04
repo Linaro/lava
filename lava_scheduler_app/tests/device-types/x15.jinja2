@@ -1,8 +1,7 @@
 {% extends 'base-fastboot.jinja2' %}
 {% set device_type = "x15" %}
 {% set fastboot_sequence = [
-    'reboot', 'wait-usb-add', 'lxc-add-device',
-    'auto-login', 'shell-session', 'export-env'] %}
+    'reboot', 'auto-login', 'shell-session', 'export-env'] %}
 {% set fastboot_deploy_uboot = "
       u-boot:
         parameters:

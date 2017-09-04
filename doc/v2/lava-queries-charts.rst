@@ -1,30 +1,76 @@
-.. index:: using test results, queries, query conditions, queries in scripts
+.. index:: using test results
 
 .. _result_queries:
 
 Using Test Results
 ##################
 
+The most important use of test results is to :ref:`close the CI loop <ci_loop>`
+and a good way to do that is to distribute the results directly to the
+developers in a format which those developers find to be the most useful.
+
+LAVA, as a generic automation framework, cannot offer customised solutions for
+all development teams. A dedicated :term:`frontend` should always be considered
+as this can collate LAVA results with build system data and commit history to
+provide a complete picture of the meaning of the results. Bare results are
+often useless and only the development team can provide the information needed
+to reformat the raw results in a way that includes the relevant context and
+background information.
+
+.. important:: Take time to plan how the :term:`metadata` is created, updated
+   and parsed. Build numbers, commit hashes and developer branch names may all
+   need to be passed into the metadata of your test jobs in LAVA to make sense
+   of the results.
+
+Test results can be used in a variety of ways, inside and outside of LAVA.
+
+* :ref:`results_rest_api`
+
+* :ref:`data_export`
+
+* :ref:`notification_summary`
+
+* :ref:`custom_result_handling`
+
+* :ref:`queries`
+
+* :ref:`lava_charts`
+
+.. seealso:: :ref:`results_intro`
+
 LAVA result visualization
 *************************
+
+For simple tasks, LAVA supports Queries and Charts. A Query is used to pick out
+interesting test jobs based on metadata, test case names, test suite names or
+test job submitter amongst other fields. Most Queries can then be used to
+create a single Chart to follow trends over time.
+
+.. note:: Only V2 test jobs can be used with Queries and Charts.
+
+.. index:: queries
 
 .. _queries:
 
 LAVA Queries
-============
+############
 
-This is documentation for the new queries app to support V2.
+A single query can be based on one of the following object sets:
 
-Current features include querying following object sets:
+# FIXME: add hints about when to use which object.
 
 * Test jobs
 
-* Test cases
-
 * Test suites
 
+* Test cases
+
+.. index:: query conditions
+
+.. _query_conditions:
+
 Conditions
-----------
+**********
 
 You can add multiple conditions to each query where the query results must
 satisfy **all** conditions in order to be displayed. Conditions can span
@@ -42,26 +88,26 @@ conditions. This also means you can add the condition even if the field in the
 metadata is is not yet present in the system.
 
 Caching queries
----------------
+***************
 
 Queries can be live or cached. Cached queries data can be refreshed either
-through UI or via the XML-RPC API call by creator or someone in group assigned
-to the query. Please keep in mind, live queries are executed whenever someone
-visits the query page or refreshes it. Viewing a live query will usually take
-longer than a cached query, sometimes markedly longer. Live queries can stress
-the LAVA server which can cause the query to timeout.
+through UI or via the XML-RPC API call by the creator or someone in group
+assigned to the query. Please keep in mind, live queries are executed whenever
+someone visits the query page or refreshes it. Viewing a live query will
+usually take longer than a cached query, sometimes markedly longer. Live
+queries can stress the LAVA server which can cause the query to timeout.
 
 When adding/updating and removing conditions, query is **not** automatically
 updated. This needs to be done either through UI after updating the conditions
 or via XML-RPC.
 
 Authorization and admin
------------------------
+***********************
 
 Queries which are not published are visible exclusively to the query owner.
 When query is published, it's results are generally visible to all users,
-permitting the user has access to the jobs which provide the results. All the
-authorization is managed through test jobs visibility rules,  meaning that
+providing that the user has access to the jobs which provide the results. All
+the authorization is managed through test jobs visibility rules, meaning that
 individual results will be omitted in the query display list depending on user
 authorization to see the specific jobs.
 
@@ -75,7 +121,7 @@ listing page, via 'query group label' option.
 .. _query_by_url:
 
 Query by URL
-------------
+************
 
 The ability to add conditions through URL is also available. User can add as
 many conditions as possible through URL but must also specify the object set
@@ -98,14 +144,14 @@ so if the query is used often it should be created in the system so that the
 caching is enabled.
 
 Export Query
-------------
+************
 
 Currently, the only supported format for exporting is CSV.
 
 User can download the query CSV export file from the query display page.
 
 Omitting Query Results
-----------------------
+======================
 
 Ability to omit specific results from queries is available.
 
@@ -117,7 +163,7 @@ the results from queries.
 It is not possible to omit results from custom queries.
 
 Deleting a Query
-----------------
+================
 
 In LAVA, deleting a query does not really delete it, but rather 'archives' it
 so that if user created rather complex query, that query can be restored at a
@@ -126,10 +172,12 @@ admin section of LAVA. If user tries to create a query with the same name and
 owner (himself) which was already archived, system will inform the user that
 it's already in the system.
 
+.. index::  queries in scripts
+
 .. _lava_query_xmlrpc:
 
 Using Queries in XML-RPC scripts
-================================
+********************************
 
 The :ref:`XML-RPC API <xml_rpc>` can be used to execute a named query and the
 calling script can then process the data to output a summary of the results.
@@ -147,7 +195,7 @@ calling script can then process the data to output a summary of the results.
 script.
 
 Configuration
--------------
+=============
 
 The example script needs to be configured to include the :term:`token` as well
 as the ``hostname`` of the instance, the name of the ``query`` and the
@@ -163,7 +211,17 @@ as the ``hostname`` of the instance, the name of the ``query`` and the
    need alteration during testing with localhost.
 
 Example output
---------------
+==============
+
+:abbr:`CSV (Comma Separated Values)` format.
+
+* Job - Id of the test job which failed.
+
+* Type - type of the exception logged by the job. ``Infrastructure`` or ``Job``
+
+* Message - the message logged by the exception.
+
+* Time - the time that the exception was logged on the master. (UTC)
 
 :abbr:`CSV (Comma Separated Values)` format.
 
@@ -184,7 +242,7 @@ Example output
 .. _lava_query_use_cases:
 
 LAVA Query use cases
-====================
+********************
 
 #. Incomplete jobs submitted from kernel-ci:
 
@@ -252,24 +310,20 @@ LAVA Query use cases
 .. _lava_charts:
 
 LAVA Charts
-===========
+###########
 
-This is documentation for the new charts app, still in **development** stage.
-
-It is part of the new :ref:`dispatcher_design`.
-
-LAVA charts represent the visual representation for the Queries app.
+LAVA charts represent the visual representation of the Queries app.
 
 How to create a Chart?
-----------------------
+**********************
 
 On the Charts main page, after clicking on Create link and entering the name
 and the description for the Chart, you will be presented with the following
 page:
 
 .. image:: ./images/chart-details-page.png
-    :width: 700
-    :height: 300
+    :width: 1063
+    :height: 432
 
 From there you can edit, remove or publish the chart. Furthermore, you can
 review, add and remove queries associated with this chart from this page.
@@ -283,7 +337,7 @@ the system (also from query display).
 Once chart is published, you can assign it to a chart group:
 
 Chart grouping
---------------
+==============
 
 Once Chart is published, you can see the "Chart group label" field on the chart
 detail page. Clicking the field allows you to edit the grouping for that chart.
@@ -300,7 +354,7 @@ be deleted.
 .. _chart-permissions:
 
 Chart permissions
------------------
+=================
 
 Once Chart is published, you can see the ownership options on the chart detail
 page.
@@ -319,11 +373,11 @@ are not able to for other authorization reasons (no device permissions or test
 job visibility permissions).
 
 Adding Queries
---------------
+==============
 
 .. image:: ./images/chart-add-query.png
-    :width: 430
-    :height: 220
+    :width: 556
+    :height: 414
 
 
 In the Query field user can select the query they would like to chart with the
@@ -366,13 +420,13 @@ re-ordering.
 
 
 Charts display page
--------------------
+*******************
 
 See below for description of each specific feature of the display page.
 
 
 Interactive charts
-------------------
+******************
 
 You can click on each of the indices on the chart and a new tab will open with
 that particular test job/suite/case.
@@ -393,7 +447,7 @@ toggle, the chart zooming/panning will be reset.
 .. _legend:
 
 Legend
-^^^^^^
+======
 
 Legend displays the colors of the trends on chart and the aliases set up
 during image report creating (default is "filtername: testname: testcasename").
@@ -404,13 +458,13 @@ in order to use the interactivity you might need to change the order of the
 legend items.
 
 Date limits
-^^^^^^^^^^^
+===========
 
 You can limit the dates in the dropdowns. Start date setting
 will be saved and automatically loaded once you visit this page next time.
 
 Print menu
-^^^^^^^^^^
+==========
 
 There are three options in the print menu:
  * Download as csv - downloads CSV file with all the test data from this chart
@@ -420,23 +474,8 @@ There are three options in the print menu:
  * This chart by URL - opens a new tab with manually set conditions and object
    set
 
-.. _charts_legend:
-
-Legend
-^^^^^^
-
-Legend displays the colors of the trends on chart depending on the object set
-which is active.
-
-Legend is also interactive. You can shuffle the items in the legend with drag
-and drop and also turn on/off particular legend items.
-
-The advantage to this is that the indices in the chart can overlap so in order
-to use the interactivity you might need to change the order of the legend
-items.
-
 Chart using metadata
-^^^^^^^^^^^^^^^^^^^^
+********************
 
 By default, charts will use date and time to diplay results. User can change
 this behavior and use a custom attribute (i.e. build number) to plot the result
@@ -450,7 +489,7 @@ if particular test result does not contain the custom attribute that is set,
 that result will be omitted from chart.
 
 Omitting Chart Results
-----------------------
+======================
 
 Ability to omit specific results from charts is available through plot click
 event.
@@ -464,7 +503,7 @@ end up omitting the wrong results. Keep caution by reducing the date range or
 zooming in on the chart.
 
 Chart by URL
-------------
+============
 
 Similar as for queries (see :ref:`query_by_url`), user can view charts by
 typing in the entity and conditions in URL. There is one aditional option
