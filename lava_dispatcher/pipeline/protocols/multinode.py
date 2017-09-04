@@ -246,7 +246,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
             "host": self.settings['coordinator_hostname'],
             # hostname here is the node hostname, not the server.
             "hostname": socket.gethostname(),
-            'client_name': self.parameters['target'],
+            'client_name': self.job_id,
             "group_name": self.parameters['protocols'][self.name]['target_group'],
             "role": self.parameters['protocols'][self.name]['role'],
         }
@@ -283,7 +283,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
             "host": self.settings['coordinator_hostname'],
             # hostname here is the node hostname, not the server.
             "hostname": socket.gethostname(),
-            'client_name': self.parameters['target'],
+            'client_name': self.job_id,
             "group_name": self.parameters['protocols'][self.name]['target_group'],
             "role": self.parameters['protocols'][self.name]['role'],
         }
@@ -432,7 +432,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
             for item in replaceables:
                 if 'message' in reply:
                     target_list = [val for val in reply['message'].items()
-                                   if self.parameters['target'] in val]
+                                   if self.job_id in val]
                 else:
                     target_list = [val for val in list(reply.items())]
                 data = target_list[0][1]
@@ -483,11 +483,11 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         Asks the Coordinator to send back a particular messageID
         and blocks until that messageID is available for this node
         """
-        # use self.target as the node ID
+        # use self.job_id as the node ID
         self.logger.debug("request_wait %s", message_id)
         wait_msg = {"request": "lava_wait",
                     "messageID": message_id,
-                    "nodeID": self.parameters['target']}
+                    "nodeID": self.job_id}
         return self._send(wait_msg)
 
     def request_send(self, message_id, message=None):

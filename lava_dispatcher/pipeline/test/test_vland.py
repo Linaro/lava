@@ -149,7 +149,6 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
         bbb2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        bbb2['hostname'] = 'bbb2'
         bbb2['parameters']['interfaces']['eth0']['switch'] = '192.168.0.2'
         bbb2['parameters']['interfaces']['eth0']['port'] = '6'
         bbb2['parameters']['interfaces']['eth1']['switch'] = '192.168.0.2'

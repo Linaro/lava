@@ -20,7 +20,7 @@ actions:
       minutes: 10
     to: vemsd
     recovery_image:
-      url: https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
+      url: http://images.validation.linaro.org/releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
       compression: zip
 
 - deploy:

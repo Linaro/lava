@@ -28,13 +28,16 @@ from zmq.utils.strtypes import b
 
 
 class ZMQPushHandler(logging.Handler):
-    def __init__(self, logging_url, master_cert, slave_cert, job_id):
+    def __init__(self, logging_url, master_cert, slave_cert, job_id, ipv6):
         super(ZMQPushHandler, self).__init__()
 
         # Create the PUSH socket
         # pylint: disable=no-member
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
+
+        if ipv6:
+            self.socket.setsockopt(zmq.IPV6, 1)
 
         # Load the certificates (if encryption is on)
         if master_cert is not None and slave_cert is not None:
@@ -73,9 +76,9 @@ class YAMLLogger(logging.Logger):
         super(YAMLLogger, self).__init__(name)
         self.handler = None
 
-    def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id):
+    def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id, ipv6):
         self.handler = ZMQPushHandler(logging_url, master_cert,
-                                      slave_cert, job_id)
+                                      slave_cert, job_id, ipv6)
         self.addHandler(self.handler)
         return self.handler
 

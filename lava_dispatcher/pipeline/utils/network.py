@@ -1,6 +1,8 @@
 # Copyright (C) 2014 Linaro Limited
+#               2017 The Linux Foundation
 #
 # Author: Neil Williams <neil.williams@linaro.org>
+#         Jan-Simon Moeller <jsmoeller@linuxfoundation.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -23,9 +25,12 @@
 
 import os
 import netifaces
+import random
+import socket
 import subprocess
 from lava_dispatcher.pipeline.action import InfrastructureError
-
+from lava_dispatcher.pipeline.utils.constants import XNBD_PORT_RANGE_MIN
+from lava_dispatcher.pipeline.utils.constants import XNBD_PORT_RANGE_MAX
 
 # pylint: disable=no-member
 
@@ -70,3 +75,37 @@ def rpcinfo_nfs(server):
         if msg[1]:
             return "%s %s" % (server, msg[1])
     return None
+
+
+def get_free_port(dispatcher_config):
+    """
+    Finds the next free port to use
+    :param dispatcher_config: the dispatcher config to search for nbd_server_port
+    :return: port number
+    """
+    port = None
+    try:
+        dcport = dispatcher_config["nbd_server_port"]
+        if 'auto' in dcport:
+            pass
+        elif dcport.isdigit():
+            return dcport
+    except (KeyError, TypeError):
+        pass
+    # use random
+    rng = random.Random()
+    for _ in range(10):
+        randport = int(rng.randrange(XNBD_PORT_RANGE_MIN, XNBD_PORT_RANGE_MAX))
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.bind(("", randport))
+            s.listen(1)
+            port = s.getsockname()[1]
+        except socket.error:
+            s.close()
+            continue
+        s.close()
+        if port is not None:
+            return port
+    # fallthrough single default nbd port as per services file
+    return 10809

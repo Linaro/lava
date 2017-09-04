@@ -68,7 +68,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         self.raw_connection = child
         self.prompt_str = prompt_str
         self.check_char = '#'
-        self.timeout = 30
+        self.faketimeout = 30
         self.connected = True
         self.name = "fake-connection"
 
@@ -81,7 +81,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
     def wait(self, max_end_time=None):  # pylint: disable=unused-argument
         ret = None
         try:
-            ret = self.raw_connection.expect(self.prompt_str, timeout=self.timeout)
+            ret = self.raw_connection.expect(self.prompt_str, timeout=self.faketimeout)
         except pexpect.EOF:
             pass
         return ret
@@ -106,7 +106,7 @@ class TestBootMessages(StdoutTestCase):  # pylint: disable=too-many-public-metho
         The same logfile passes kernel boot and fails
         to find init - so the panic needs to be caught by InitMessages
         """
-        logfile = os.path.join(os.path.dirname(__file__), 'kernel.txt')
+        logfile = os.path.join(os.path.dirname(__file__), 'kernel-panic.txt')
         self.assertTrue(os.path.exists(logfile))
         child = pexpect.spawn('cat', [logfile])
         message_list = LinuxKernelMessages.get_kernel_prompts()
@@ -138,6 +138,18 @@ class TestBootMessages(StdoutTestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('message', result[1])
         self.assertTrue('Attempted to kill init' in str(result[1]['message']))
         self.assertTrue('(unwind_backtrace) from' in str(result[1]['message']))
+
+    def test_kernel_1(self):
+        logfile = os.path.join(os.path.dirname(__file__), 'kernel-1.txt')
+        self.assertTrue(os.path.exists(logfile))
+        child = pexpect.spawn('cat', [logfile])
+        message_list = LinuxKernelMessages.get_kernel_prompts()
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(connection, max_end_time=self.max_end_time)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0],
+                         {'message': 'kernel-messages',
+                          'success': 'Freeing unused kernel memory'})
 
     def test_kernel_2(self):
         logfile = os.path.join(os.path.dirname(__file__), 'kernel-2.txt')

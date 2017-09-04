@@ -1,0 +1,171 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2017 Linaro Limited
+#
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Coordinator is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Coordinator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses>.
+
+import argparse
+import errno
+import logging
+import os
+from setproctitle import setproctitle
+import sys
+import yaml
+
+from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.job import ZMQConfig
+from lava_dispatcher.pipeline.log import YAMLLogger
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
+
+
+def parser():
+    """ Configure the parser """
+    # Configure the parser
+    p_obj = argparse.ArgumentParser()
+
+    p_obj.add_argument("--job-id", required=True, metavar="ID",
+                       help="Job identifier. "
+                            "This alters process name for easier debugging")
+    p_obj.add_argument("--output-dir", required=True, metavar="DIR",
+                       help="Directory for temporary ressources")
+    p_obj.add_argument("--ipv6", action="store_true", default=False,
+                       help="Enable IPv6")
+
+    group = p_obj.add_argument_group("logging")
+    group.add_argument("--logging-url", metavar="URL", default=None,
+                       help="URL of the ZMQ socket to send the logs to the master")
+    group.add_argument("--master-cert", default=None, metavar="PATH",
+                       type=argparse.FileType("r"),
+                       help="master certificate file")
+    group.add_argument("--slave-cert", default=None, metavar="PATH",
+                       type=argparse.FileType("r"),
+                       help="slave certificate file")
+
+    group = p_obj.add_argument_group("configuration files")
+    group.add_argument("--device", metavar="PATH",
+                       type=argparse.FileType("r"), required=True,
+                       help="Device configuration")
+    group.add_argument("--dispatcher", metavar="PATH",
+                       type=argparse.FileType("r"), default=None,
+                       help="Dispatcher configuration")
+    group.add_argument("--env-dut", metavar="PATH",
+                       type=argparse.FileType("r"), default=None,
+                       help="DUT environment")
+
+    p_obj.add_argument("--validate", action="store_true", default=False,
+                       help="validate the job file, do not execute any steps")
+
+    p_obj.add_argument("definition", type=argparse.FileType("r"),
+                       help="job definition")
+
+    return p_obj
+
+
+def parse_job_file(options):
+    """
+    Uses the parsed device_config instead of the old Device class
+    so it can fail before the Pipeline is made.
+    Avoids loading all configuration for all supported devices for every job.
+    """
+    # Prepare the pipeline from the file using the parser.
+    device = None  # secondary connections do not need a device
+    if options.device is not None:
+        device = NewDevice(options.device)
+    parser = JobParser()
+    job = None
+
+    # Load the configuration files (this should *not* fail)
+    env_dut = None
+    if options.env_dut is not None:
+        env_dut = options.env_dut.read()
+    dispatcher_config = None
+    if options.dispatcher is not None:
+        dispatcher_config = options.dispatcher.read()
+
+    try:
+        # Create the ZMQ config
+        zmq_config = None
+        if options.logging_url is not None:
+            zmq_config = ZMQConfig(options.logging_url,
+                                   options.master_cert,
+                                   options.slave_cert,
+                                   options.ipv6)
+
+        # Generate the pipeline
+        job = parser.parse(options.definition.read(),
+                           device, options.job_id,
+                           zmq_config=zmq_config,
+                           dispatcher_config=dispatcher_config,
+                           output_dir=options.output_dir,
+                           env_dut=env_dut)
+        # Generate the description
+        description = job.describe()
+        description_file = os.path.join(options.output_dir,
+                                        'description.yaml')
+        with open(description_file, 'w') as f_describe:
+            f_describe.write(yaml.dump(description))
+
+    except JobError as exc:
+        logging.error("Invalid job submission: %s", str(exc))
+        return None
+
+    return job
+
+
+def main():
+    # Parse the command line
+    options = parser().parse_args()
+
+    # Check that we are running as root
+    if os.geteuid() != 0:
+        print("lava-run should be executed as root")
+        return 1
+
+    # Pipeline always log as YAML so change the base logger.
+    # Every calls to logging.getLogger will now return a YAMLLogger
+    logging.setLoggerClass(YAMLLogger)
+
+    # Set process title for easier debugging
+    setproctitle("lava-run [job: %s]" % options.job_id)
+
+    # Create the output directory
+    try:
+        os.makedirs(options.output_dir, mode=0o755)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
+
+    # Parse the definition and create the job object
+    job = parse_job_file(options)
+
+    if job is None:
+        return 1
+
+    # Start the job
+    try:
+        job.validate(simulate=options.validate)
+        if not options.validate:
+            return job.run()
+    except BaseException:
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

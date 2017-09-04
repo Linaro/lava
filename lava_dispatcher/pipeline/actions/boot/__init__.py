@@ -23,7 +23,6 @@ import re
 import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
-    InfrastructureError,
     JobError,
     Timeout,
     LAVABug)
@@ -40,7 +39,6 @@ from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import write_bootscript
-from lava_dispatcher.pipeline.utils.udev import usb_device_wait
 from lava_dispatcher.pipeline.connections.ssh import SShSession
 
 # pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
@@ -149,7 +147,7 @@ class AutoLoginAction(Action):
         self.logger.debug(connection.prompt_str)
         parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
         if len(parsed) and 'success' in parsed[0]:
-            self.results = {'success': parsed[0]}
+            self.results = {'success': parsed[0]['success']}
         elif not parsed:
             self.results = {'success': "No kernel warnings or errors detected."}
         else:
@@ -163,6 +161,7 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
+        connection = super(AutoLoginAction, self).run(connection, max_end_time, args)
         if not connection:
             return connection
         prompts = self.parameters.get('prompts', None)
@@ -193,7 +192,7 @@ class AutoLoginAction(Action):
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
             if 'success' in self.results:
-                check = self.results['success'].values()
+                check = self.results['success']
                 if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
                     raise JobError("auto_login not enabled but image requested login details.")
             # clear kernel message prompt patterns
@@ -207,7 +206,7 @@ class AutoLoginAction(Action):
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time)
             if 'success' in self.results:
-                if LOGIN_INCORRECT_MSG in self.results['success'].values():
+                if LOGIN_INCORRECT_MSG in self.results['success']:
                     self.logger.warning("Login incorrect message matched before the login prompt. "
                                         "Please check that the login prompt is correct. Retrying login...")
             self.logger.debug("Sending username %s", params['username'])
@@ -260,51 +259,6 @@ class AutoLoginAction(Action):
         return connection
 
 
-class WaitUSBDeviceAction(Action):
-
-    def __init__(self, device_actions=None):
-        super(WaitUSBDeviceAction, self).__init__()
-        self.name = "wait-usb-device"
-        self.description = "wait for udev to see USB device"
-        self.summary = self.description
-        if not device_actions:
-            device_actions = []
-        self.device_actions = device_actions
-
-    def validate(self):
-        super(WaitUSBDeviceAction, self).validate()
-        if not isinstance(self.device_actions, list):
-            self.errors = "device_actions is not a list"
-        if 'device_info' in self.job.device \
-           and not isinstance(self.job.device['device_info'], list):
-            self.errors = "device_info unset"
-        try:
-            if 'device_info' in self.job.device:
-                for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
-                    usb_product_id = usb_device.get('usb_product_id', '')
-                    if board_id == '0000000000':
-                        self.errors = "board_id unset"
-                    if usb_vendor_id == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_product_id == '0000':
-                        self.errors = 'usb_product_id unset'
-        except KeyError as exc:
-            self.errors = exc
-            return
-        except (TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(WaitUSBDeviceAction, self).run(connection,
-                                                          max_end_time, args)
-        self.logger.info("Waiting for USB device(s) with actions %s ...",
-                         self.device_actions)
-        usb_device_wait(self.job, device_actions=self.device_actions)
-        return connection
-
-
 class BootloaderCommandOverlay(Action):
     """
     Replace KERNEL_ADDR and DTB placeholders with the actual values for this
@@ -326,6 +280,7 @@ class BootloaderCommandOverlay(Action):
         self.use_bootscript = False
         self.lava_mac = None
         self.bootcommand = ''
+        self.ram_disk = None
 
     def validate(self):
         super(BootloaderCommandOverlay, self).validate()
@@ -366,12 +321,18 @@ class BootloaderCommandOverlay(Action):
         connection = super(BootloaderCommandOverlay, self).run(connection, max_end_time, args)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
 
+        self.ram_disk = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
+        # most jobs substitute RAMDISK, so also use this for the initrd
+        if self.get_namespace_data(action='nbd-deploy', label='nbd', key='initrd'):
+            self.ram_disk = self.get_namespace_data(action='download-action', label='file', key='initrd')
+
         substitutions = {
             '{SERVER_IP}': ip_addr,
             '{PRESEED_CONFIG}': self.get_namespace_data(action='download-action', label='file', key='preseed'),
             '{PRESEED_LOCAL}': self.get_namespace_data(action='compress-ramdisk', label='file', key='preseed_local'),
             '{DTB}': self.get_namespace_data(action='download-action', label='file', key='dtb'),
-            '{RAMDISK}': self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'),
+            '{RAMDISK}': self.ram_disk,
+            '{INITRD}': self.ram_disk,
             '{KERNEL}': self.get_namespace_data(action='download-action', label='file', key='kernel'),
             '{LAVA_MAC}': self.lava_mac
         }
@@ -386,20 +347,29 @@ class BootloaderCommandOverlay(Action):
             self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
             substitutions['{KERNEL}'] = prepared_kernel
         if self.bootcommand:
+            self.logger.debug("%s" % self.job.device['parameters'])
             kernel_addr = self.job.device['parameters'][self.bootcommand]['kernel']
             dtb_addr = self.job.device['parameters'][self.bootcommand]['dtb']
             ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
 
             if not self.get_namespace_data(action='tftp-deploy', label='tftp', key='ramdisk') \
-                    and not self.get_namespace_data(action='download-action', label='file', key='ramdisk'):
+                    and not self.get_namespace_data(action='download-action', label='file', key='ramdisk') \
+                    and not self.get_namespace_data(action='download-action', label='file', key='initrd'):
                 ramdisk_addr = '-'
             add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
             if self.method == 'u-boot' and not add_header == "u-boot":
                 self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = '-'
 
-            substitutions['{BOOTX}'] = "%s %s %s %s" % (
-                self.bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
+            if self.get_namespace_data(action='download-action', label='file', key='initrd'):
+                # no u-boot header, thus no embedded size, so we have to add it to the
+                # boot cmd with colon after the ramdisk
+                substitutions['{BOOTX}'] = "%s %s %s:%s %s" % (
+                    self.bootcommand, kernel_addr, ramdisk_addr, '${initrd_size}', dtb_addr)
+            else:
+                substitutions['{BOOTX}'] = "%s %s %s %s" % (
+                    self.bootcommand, kernel_addr, ramdisk_addr, dtb_addr)
+
             substitutions['{KERNEL_ADDR}'] = kernel_addr
             substitutions['{DTB_ADDR}'] = dtb_addr
             substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
@@ -419,8 +389,13 @@ class BootloaderCommandOverlay(Action):
             substitutions['{NFS_SERVER_IP}'] = self.get_namespace_data(
                 action='persistent-nfs-overlay', label='nfs_address', key='serverip')
 
-        substitutions['{ROOT}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='root')  # UUID label, not a file
-        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part')
+        nbd_root = self.get_namespace_data(action='download-action', label='file', key='nbdroot')
+        if nbd_root:
+            substitutions['{NBDSERVERIP}'] = str(self.get_namespace_data(action='nbd-deploy', label='nbd', key='nbd_server_ip'))
+            substitutions['{NBDSERVERPORT}'] = str(self.get_namespace_data(action='nbd-deploy', label='nbd', key='nbd_server_port'))
+
+        substitutions['{ROOT}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='root')  # UUID label, not a file
+        substitutions['{ROOT_PART}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='boot_part')
         if self.use_bootscript:
             script = "/script.ipxe"
             bootscript = self.get_namespace_data(action='tftp-deploy', label='tftp', key='tftp_dir') + script
@@ -434,6 +409,39 @@ class BootloaderCommandOverlay(Action):
         self.set_namespace_data(action='bootloader-overlay', label=self.method, key='commands', value=subs)
         self.logger.info("Parsed boot commands: %s", '; '.join(subs))
         return connection
+
+
+class BootloaderSecondaryMedia(Action):
+    """
+    Generic class for secondary media substitutions
+    """
+    def __init__(self):
+        super(BootloaderSecondaryMedia, self).__init__()
+        self.name = "bootloader-from-media"
+        self.summary = "set bootloader strings for deployed media"
+        self.description = "let bootloader know where to find the kernel in the image on secondary media"
+
+    def validate(self):
+        super(BootloaderSecondaryMedia, self).validate()
+        if 'media' not in self.job.device.get('parameters', []):
+            return
+        media_keys = self.job.device['parameters']['media'].keys()
+        if self.parameters['commands'] not in media_keys:
+            return
+        if 'kernel' not in self.parameters:
+            self.errors = "Missing kernel location"
+        # ramdisk does not have to be specified, nor dtb
+        if 'root_uuid' not in self.parameters:
+            # FIXME: root_node also needs to be supported
+            self.errors = "Missing UUID of the roofs inside the deployed image"
+        if 'boot_part' not in self.parameters:
+            self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+        self.set_namespace_data(action='download-action', label='file', key='kernel', value=self.parameters.get('kernel', ''))
+        self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
+        self.set_namespace_data(action='download-action', label='file', key='ramdisk', value=self.parameters.get('ramdisk', ''))
+        self.set_namespace_data(action='download-action', label='file', key='dtb', value=self.parameters.get('dtb', ''))
+        self.set_namespace_data(action='bootloader-from-media', label='uuid', key='root', value=self.parameters.get('root_uuid', ''))
+        self.set_namespace_data(action='bootloader-from-media', label='uuid', key='boot_part', value=str(self.parameters.get('boot_part')))
 
 
 class OverlayUnpack(Action):

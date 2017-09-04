@@ -111,7 +111,6 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_params(self):
-        self.assertEqual(self.job.device['hostname'], 'ssh-host-01')
         self.assertTrue(any('ssh' in item for item in self.job.device['actions']['deploy']['methods']))
         params = self.job.device['actions']['deploy']['methods']
         identity = os.path.realpath(os.path.join(__file__, '../../../', params['ssh']['identity_file']))

@@ -20,7 +20,7 @@ actions:
       minutes: 10
     to: vemsd
     recovery_image:
-      url: https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
+      url: http://images.validation.linaro.org/releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
       compression: zip
 
 - deploy:
@@ -33,7 +33,7 @@ actions:
      dtb:
          url: http://images.validation.linaro.org/juno/kernel/juno.dtb
      nfsrootfs:
-         url: http://releases.linaro.org/openembedded/juno-lsk/15.09/linaro-image-minimal-genericarmv8-20150921-770.rootfs.tar.gz
+         url: http://images.validation.linaro.org/releases.linaro.org/openembedded/juno-lsk/15.09/linaro-image-minimal-genericarmv8-20150921-770.rootfs.tar.gz
          compression: gz
      os: oe
 

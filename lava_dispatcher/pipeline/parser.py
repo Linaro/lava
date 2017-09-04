@@ -126,7 +126,6 @@ class JobParser(object):
         job.device = device
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
-        job.parameters['target'] = device.target
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
         if dispatcher_config is not None:
@@ -194,7 +193,7 @@ class JobParser(object):
                     pipeline.add_action(action)
 
                 else:
-                    raise JobError("Unknown action name '%'" % name)
+                    raise JobError("Unknown action name '%s'" % name)
 
         # there's always going to need to be a finalize_process action
         finalize = FinalizeAction()

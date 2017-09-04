@@ -1,0 +1,45 @@
+device_type: beaglebone-black
+
+job_name: bbb-armhf-standard-initrd-nbd
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: nbd
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/beaglebone/deploy/images/beaglebone/zImage
+      type: zimage
+    initrd:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/beaglebone/deploy/images/beaglebone/initramfs-netboot-image-beaglebone.ext4.gz
+      allow_modify: false
+    nbdroot:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/beaglebone/deploy/images/beaglebone/agl-demo-platform-crosssdk-beaglebone.ext4.xz
+      compression: xz
+    os: agl
+    dtb:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/beaglebone/deploy/images/beaglebone/zImage-am335x-boneblack.dtb
+
+- boot:
+    method: u-boot
+    commands: nbd
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@beaglebone:'
+    timeout:
+      minutes: 4

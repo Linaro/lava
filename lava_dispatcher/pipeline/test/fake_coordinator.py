@@ -32,7 +32,7 @@ class TestSignals(object):
     message_str = ''
 
     def formatString(self, reply):
-        if type(reply) is dict:
+        if isinstance(reply, dict):
             for target, messages in reply.items():
                 for key, value in messages.items():
                     self.message_str += " %s:%s=%s" % (target, key, value)
@@ -90,7 +90,7 @@ class TestSocket(object):
                 # actual calls will discriminate between dict and string replies
                 # according to the call prototype itself
                 if "message" in json_data:
-                    if type(json_data['message']) is dict:
+                    if isinstance(json_data['message'], dict):
                         self.log.info("\tCould have expected a message: '%s'" % json.dumps(json_data['message']))
                     else:
                         self.log.info("\t<LAVA_TEST_REPLY %s>" % json_data['message'])

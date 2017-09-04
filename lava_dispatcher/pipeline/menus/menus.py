@@ -116,9 +116,8 @@ class MenuConnect(ConnectDevice):
         self.description = "change into a menu session"
 
     def validate(self):
-        hostname = self.job.device['hostname']
         if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s" % hostname
+            self.errors = "Unable to connect to device"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuConnect, self).run(connection, max_end_time, args)

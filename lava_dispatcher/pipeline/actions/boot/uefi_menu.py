@@ -38,7 +38,6 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_UEFI_LABEL_CLASS,
     LINE_SEPARATOR,
@@ -272,7 +271,6 @@ class UefiMenuAction(BootAction):
             self.internal_pipeline.add_action(MenuReset())
             self.internal_pipeline.add_action(AutoLoginAction())
             self.internal_pipeline.add_action(ExportDeviceEnvironment())
-            self.internal_pipeline.add_action(LxcAddDeviceAction())
         else:
             self.internal_pipeline.add_action(UefiSubstituteCommands())
             self.internal_pipeline.add_action(MenuConnect())

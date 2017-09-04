@@ -120,7 +120,6 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
-#        self.assertIsNotNone(testdef.job.device['hostname'])
 
     def test_name(self):
         deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
@@ -153,8 +152,10 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         for git_repo in git_repos:
             if git_repo.parameters['repository'] == 'http://git.linaro.org/lava-team/lava-functional-tests.git':
                 self.assertIn('revision', git_repo.parameters)
+                self.assertIn('branch', git_repo.parameters)
             else:
                 self.assertNotIn('revision', git_repo.parameters)
+                self.assertNotIn('branch', git_repo.parameters)
 
     def test_overlay(self):
 
@@ -357,7 +358,7 @@ class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-method
         ubuntu_testdef = None
         single_testdef = None
         for testdef in testdefs:
-            if testdef.parameters['path'] == 'ubuntu/smoke-tests-basic.yaml':
+            if testdef.parameters['path'] == 'lava-test-shell/smoke-tests-basic.yaml':
                 ubuntu_testdef = testdef
             elif testdef.parameters['path'] == 'lava-test-shell/single-node/singlenode03.yaml':
                 single_testdef = testdef
@@ -489,7 +490,6 @@ class TestDefinitions(StdoutTestCase):
                     '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'
                 )
 
-    @unittest.skipIf(sys.version > '3', 'pexpect issues in python3')
     def test_defined_pattern(self):
         """
         For python3 support, need to resolve:
@@ -510,10 +510,13 @@ test3a: skip
         match = re.search(re_pat, data)
         if match:
             self.assertEqual(match.groupdict(), {'test_case_id': 'test1a', 'result': 'pass'})
-        child = pexpect.spawn('cat', [self.res_data])
+        if sys.version_info[0] == 2:
+            child = pexpect.spawn('cat', [self.res_data])
+        elif sys.version_info[0] == 3:
+            child = pexpect.spawn('cat', [self.res_data], encoding='utf-8')
         child.expect([re_pat, pexpect.EOF])
-        self.assertEqual(child.after, b'test1a: pass')
+        self.assertEqual(child.after.encode('utf-8'), b'test1a: pass')
         child.expect([re_pat, pexpect.EOF])
-        self.assertEqual(child.after, b'test2a: fail')
+        self.assertEqual(child.after.encode('utf-8'), b'test2a: fail')
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)

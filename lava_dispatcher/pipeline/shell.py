@@ -91,12 +91,21 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
             raise LAVABug("ShellCommand needs a logger")
-        pexpect.spawn.__init__(
-            self, command,
-            timeout=lava_timeout.duration,
-            cwd=cwd,
-            logfile=ShellLogger(logger),
-        )
+        if sys.version_info[0] == 2:
+            pexpect.spawn.__init__(
+                self, command,
+                timeout=lava_timeout.duration,
+                cwd=cwd,
+                logfile=ShellLogger(logger),
+            )
+        elif sys.version_info[0] == 3:
+            pexpect.spawn.__init__(
+                self, command,
+                timeout=lava_timeout.duration,
+                cwd=cwd,
+                logfile=ShellLogger(logger),
+                encoding='utf-8',
+            )
         self.name = "ShellCommand"
         self.logger = logger
         # set a default newline character, but allow actions to override as neccessary

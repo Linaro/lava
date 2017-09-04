@@ -2,6 +2,7 @@
   name: lxc-deploy
   pipeline:
   - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
   - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
   - {class: actions.deploy.lxc.LxcAptUpdateAction, name: lxc-apt-update}
   - {class: actions.deploy.lxc.LxcAptInstallAction, name: lxc-apt-install}

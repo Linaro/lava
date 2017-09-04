@@ -151,7 +151,10 @@ class LinuxKernelMessages(Action):
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
                     'message': message[:METADATA_MESSAGE_LIMIT]
                 })
-                continue
+                if index == cls.PANIC:
+                    break
+                else:
+                    continue
             elif index and index >= cls.FREE_UNUSED:
                 if init and index <= cls.FREE_INIT:
                     results.append({

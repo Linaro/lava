@@ -25,7 +25,6 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
-    LAVABug,
     Pipeline,
     JobError,
     TestError,

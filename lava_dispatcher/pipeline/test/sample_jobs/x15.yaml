@@ -77,8 +77,8 @@ actions:
       from: git
       path: lava-test-shell/android/get-adb-serial.yaml
       name: get-x15-serial
-    - repository: git://git.linaro.org/qa/test-definitions.git
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
-      path: ubuntu/smoke-tests-basic.yaml
+      path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests-lxc
 

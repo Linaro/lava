@@ -248,7 +248,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         in order of the pipeline levels.
         """
         for child in self.actions:
-            child.cleanup(connection)
+            try:
+                child.cleanup(connection)
+            except Exception as exc:
+                # Just log the exception and continue the cleanup
+                child.logger.error("Failed to clean after action '%s': %s", child.name, str(exc))
 
     def _diagnose(self, connection):
         """
