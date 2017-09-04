@@ -46,10 +46,11 @@ class ZMQConfig(object):
     """
     Namespace for the ZMQ logging configuration
     """
-    def __init__(self, logging_url, master_cert, slave_cert):
+    def __init__(self, logging_url, master_cert, slave_cert, ipv6):
         self.logging_url = logging_url
         self.master_cert = master_cert
         self.slave_cert = slave_cert
+        self.ipv6 = ipv6
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -129,7 +130,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             self.logger.addZMQHandler(self.zmq_config.logging_url,
                                       self.zmq_config.master_cert,
                                       self.zmq_config.slave_cert,
-                                      self.job_id)
+                                      self.job_id,
+                                      self.zmq_config.ipv6)
             self.logger.setMetadata("0", "validate")
         else:
             self.logger.addHandler(logging.StreamHandler())

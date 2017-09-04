@@ -31,9 +31,9 @@ from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import (
     BootAction,
     AutoLoginAction,
-    WaitUSBDeviceAction,
+    BootloaderCommandsAction,
+    OverlayUnpack,
 )
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.shell import ExpectShellSession
@@ -44,10 +44,8 @@ def _fastboot_sequence_map(sequence):
     sequence_map = {'boot': (FastbootBootAction, None),
                     'reboot': (FastbootRebootAction, None),
                     'no-flash-boot': (FastbootBootAction, None),
-                    'wait-usb-add': (WaitUSBDeviceAction, ['add']),
-                    'wait-usb-remove': (WaitUSBDeviceAction, ['remove']),
-                    'lxc-add-device': (LxcAddDeviceAction, None),
                     'auto-login': (AutoLoginAction, None),
+                    'overlay-unpack': (OverlayUnpack, None),
                     'shell-session': (ExpectShellSession, None),
                     'export-env': (ExportDeviceEnvironment, None), }
     return sequence_map.get(sequence, (None, None))
@@ -109,6 +107,53 @@ class BootFastbootAction(BootAction):
                 self.internal_pipeline.add_action(mapped[0]())
 
 
+class WaitFastBootInterrupt(Action):
+    """
+    Interrupts fastboot to access the next bootloader
+    Relies on fastboot-flash-action setting the prompt and string
+    from the deployment parameters.
+    """
+
+    def __init__(self, type):
+        super(WaitFastBootInterrupt, self).__init__()
+        self.name = 'wait-fastboot-interrupt'
+        self.summary = "watch output and try to interrupt fastboot"
+        self.description = "Check for prompt and pass the interrupt string to exit fastboot."
+        self.type = type
+        self.prompt = None
+        self.string = None
+
+    def validate(self):
+        super(WaitFastBootInterrupt, self).validate()
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
+        if 'fastboot_options' not in self.job.device:
+            self.errors = "device fastboot options missing"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
+        device_methods = self.job.device['actions']['deploy']['methods']
+        if isinstance(device_methods.get('fastboot'), dict):
+            self.prompt = device_methods['fastboot'].get('interrupt_prompt')
+            self.string = device_methods['fastboot'].get('interrupt_string')
+        if not self.prompt or not self.string:
+            self.errors = "Missing interrupt configuration for device."
+
+    def run(self, connection, max_end_time, args=None):
+        if not connection:
+            raise LAVABug("%s started without a connection already in use" % self.name)
+        connection = super(WaitFastBootInterrupt, self).run(connection, max_end_time, args)
+        device_methods = self.job.device['actions']['boot']['methods']
+        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
+        connection.prompt_str = self.prompt
+        self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+        self.wait(connection)
+        self.logger.debug("Sending '%s' to interrupt fastboot.", self.string)
+        connection.sendline(self.string)
+        return connection
+
+
 class FastbootBootAction(Action):
     """
     This action calls fastboot to boot into the system.
@@ -124,12 +169,12 @@ class FastbootBootAction(Action):
         super(FastbootBootAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootBootAction, self).run(connection, max_end_time, args)
@@ -184,12 +229,12 @@ class FastbootRebootAction(Action):
         super(FastbootRebootAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(FastbootRebootAction, self).run(connection, max_end_time, args)

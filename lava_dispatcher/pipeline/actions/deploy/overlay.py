@@ -284,7 +284,7 @@ class MultinodeOverlayAction(OverlayAction):
                     elif foutname == 'lava-role':
                         fout.write("TARGET_ROLE='%s'\n" % self.job.parameters['protocols'][self.protocol]['role'])
                     elif foutname == 'lava-self':
-                        fout.write("LAVA_HOSTNAME='%s'\n" % self.job.device.target)
+                        fout.write("LAVA_HOSTNAME='%s'\n" % self.job.job_id)
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % lava_test_results_dir)
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)

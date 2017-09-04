@@ -470,12 +470,6 @@ class TestStrategySelector(StdoutTestCase):
     class Third(Base):
         priority = 3
 
-    @unittest.skipIf(sys.version_info[0] == 3, 'test case only for python2')
-    def test_prioritized(self):
-        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-        self.assertIsInstance(prioritized[0], TestStrategySelector.Third)
-
     def test_willing(self):
         willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
         willing.sort(key=lambda x: x.priority, reverse=True)

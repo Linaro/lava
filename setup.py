@@ -93,7 +93,7 @@ setup(
     install_requires=[
         'json-schema-validator >= 2.3',
         'lava-tool >= 0.4',
-        'pexpect >= 2.3',
+        'pexpect >= 4.2',
         'configglue',
         'PyYAML',
         'pyserial >= 2.6',
@@ -103,7 +103,8 @@ setup(
         'nose',
         'pyzmq',
         'configobj',
-        'pyudev >= 0.21'
+        'pyudev >= 0.21',
+        'setproctitle >= 1.1.8'
     ],
     test_suite='lava_dispatcher.tests.test_suite',
     tests_require=[
@@ -129,6 +130,7 @@ setup(
     ],
     scripts=[
         'lava-dispatch',
+        'lava/dispatcher/lava-run',
         'lava/dispatcher/lava-dispatcher-slave',
         'lava/dispatcher/lava-slave'
     ],

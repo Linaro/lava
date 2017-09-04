@@ -351,7 +351,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.results = {'success': {'sha256': sha256sum}}
 
         # certain deployments need prefixes set
-        if self.parameters['to'] == 'tftp':
+        if self.parameters['to'] == 'tftp' or self.parameters['to'] == 'nbd':
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp',
                                              key='suffix')
             self.set_namespace_data(action='download-action', label='file', key=self.key,
@@ -363,6 +363,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                                     value=os.path.join(suffix, self.key, os.path.basename(fname)))
         else:
             self.set_namespace_data(action='download-action', label='file', key=self.key, value=fname)
+
+        # xnbd protocoll needs to know the location
+        nbdroot = self.get_namespace_data(action='download-action', label='file', key='nbdroot')
+        if 'lava-xnbd' in self.parameters and nbdroot:
+            self.parameters['lava-xnbd']['nbdroot'] = nbdroot
+
         self.results = {
             'label': self.key,
             'md5sum': str(self.get_namespace_data(

@@ -172,7 +172,7 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None,
                 break
 
 
-def get_udev_devices(job, logger=None):
+def get_udev_devices(job=None, logger=None, device_info=None):
     """
     Get udev device nodes based on serial, vendor and product ID
     All subsystems are allowed so that additional hardware like
@@ -181,7 +181,11 @@ def get_udev_devices(job, logger=None):
     """
     context = pyudev.Context()
     device_paths = set()
-    for usb_device in job.device.get('device_info', []):
+    if job or device_info:
+        devices = job.device.get('device_info', []) if job else device_info
+    else:
+        return []
+    for usb_device in devices:
         board_id = str(usb_device.get('board_id', ''))
         usb_vendor_id = str(usb_device.get('usb_vendor_id', ''))
         usb_product_id = str(usb_device.get('usb_product_id', ''))
@@ -245,3 +249,12 @@ def usb_device_wait(job, device_actions=None):
                    and device.action in device_actions:
                     break
             return
+
+
+def lxc_udev_rule(data):
+    """Construct the udev rule string."""
+    rule = """ACTION=="add", \
+    ATTR{serial}=="{serial-number}", \
+    RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py {lxc-name} {device-info-file}"
+    """.format(**data)
+    return rule

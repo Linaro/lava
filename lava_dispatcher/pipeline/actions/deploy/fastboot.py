@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import (
@@ -31,7 +30,6 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseImage
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
@@ -42,12 +40,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
-from lava_dispatcher.pipeline.utils.udev import (
-    get_udev_devices,
-    usb_device_wait,
-)
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
-from lava_dispatcher.pipeline.actions.boot import WaitUSBDeviceAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
 
 
@@ -142,12 +135,9 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.internal_pipeline.add_action(ResetDevice())
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())
-        self.internal_pipeline.add_action(WaitUSBDeviceAction(
-            device_actions=['add']))
 
         fastboot_dir = self.mkdtemp()
-        image_keys = list(parameters['images'].keys())
-        image_keys.sort()
+        image_keys = sorted(parameters['images'].keys())
         for image in image_keys:
             if image != 'yaml_line':
                 self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
@@ -159,7 +149,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                    self.test_needs_deployment(parameters):
                     self.internal_pipeline.add_action(
                         DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
         self.internal_pipeline.add_action(FastbootFlashAction())
 
 
@@ -180,16 +169,16 @@ class EnterFastbootAction(DeployAction):
         super(EnterFastbootAction, self).validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
+        elif self.job.device['adb_serial_number'] == '0000000000':
+            self.errors = "device adb serial number unset"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
@@ -254,19 +243,25 @@ class FastbootFlashAction(DeployAction):
         self.summary = "fastboot flash"
         self.retries = 3
         self.sleep = 10
+        self.interrupt_prompt = None
+        self.interrupt_string = None
 
     def validate(self):
         super(FastbootFlashAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
-            if self.job.device['fastboot_serial_number'] == '0000000000':
-                self.errors = "device fastboot serial number unset"
+        elif self.job.device['fastboot_serial_number'] == '0000000000':
+            self.errors = "device fastboot serial number unset"
         if 'flash_cmds_order' not in self.job.device:
             self.errors = "device flash commands order missing"
         if 'fastboot_options' not in self.job.device:
             self.errors = "device fastboot options missing"
-            if not isinstance(self.job.device['fastboot_options'], list):
-                self.errors = "device fastboot options is not a list"
+        elif not isinstance(self.job.device['fastboot_options'], list):
+            self.errors = "device fastboot options is not a list"
+        device_methods = self.job.device['actions']['deploy']['methods']
+        if isinstance(device_methods.get('fastboot'), dict):
+            self.interrupt_prompt = device_methods['fastboot'].get('interrupt_prompt')
+            self.interrupt_string = device_methods['fastboot'].get('interrupt_string')
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
@@ -294,6 +289,15 @@ class FastbootFlashAction(DeployAction):
                 'fastboot', [])
             if 'no-flash-boot' in sequence and flash_cmd in ['boot']:
                 continue
+
+            # each time, read anything from the previous buffer before doing the reset.
+            # cannot happen after the reset or it would be a race condition with the addition
+            # of the device to the LXC.
+            if self.interrupt_prompt:
+                connection.prompt_str = self.interrupt_prompt
+                self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+                self.wait(connection)
+
             serial_number = self.job.device['fastboot_serial_number']
             fastboot_opts = self.job.device['fastboot_options']
             fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
@@ -335,19 +339,4 @@ class FastbootFlashAction(DeployAction):
                             raise InfrastructureError("%s failed" % cmd)
                 else:
                     self.logger.info("Device does not have hard reset command")
-            if reboot:
-                self.logger.info("Waiting for USB device addition ...")
-                usb_device_wait(self.job, device_actions=['add'])
-                self.logger.info("Get USB device(s) ...")
-                device_paths = []
-                while True:
-                    device_paths = get_udev_devices(self.job,
-                                                    logger=self.logger)
-                    if device_paths:
-                        break
-                for device in device_paths:
-                    lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-                    log = self.run_command(lxc_cmd)
-                    self.logger.debug(log)
-                    self.logger.debug("%s: device %s added", lxc_name, device)
         return connection

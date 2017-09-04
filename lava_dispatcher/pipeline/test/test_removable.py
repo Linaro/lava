@@ -24,6 +24,7 @@ from lava_dispatcher.pipeline.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.actions.boot import BootloaderSecondaryMedia
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
 from lava_dispatcher.pipeline.test.utils import DummyLogger
@@ -45,6 +46,7 @@ class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
 
@@ -138,6 +140,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual('0', '%s' % dd_action.get_namespace_data(action=dd_action.name, label='u-boot', key='boot_part'))
         self.assertIsInstance(dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'), str)
         self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
+        self.assertIsNotNone(dd_action.get_namespace_data(
+            action='uboot-prepare-kernel', label='bootcommand', key='bootcommand'))
 
     def test_juno_deployment(self):
         factory = RemovableFactory()
@@ -167,6 +171,46 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
             action for action in storage_deploy_action.internal_pipeline.actions if action.name == 'download-retry'][0]
         self.assertIsNotNone(download_action)
         self.assertEqual('android', storage_deploy_action.parameters['namespace'])
+
+    def test_mustang_deployment(self):
+        factory = RemovableFactory()
+        job = factory.create_job('sample_jobs/mustang-secondary-media.yaml', '../devices/mustang-media.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('mustang-media.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertIn('sata', job.device['parameters']['media'].keys())
+        deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
+        self.assertIn('device', deploy_params)
+        self.assertIn(deploy_params['device'], job.device['parameters']['media']['sata'])
+        self.assertIn('uuid', job.device['parameters']['media']['sata'][deploy_params['device']])
+        self.assertIn('device_id', job.device['parameters']['media']['sata'][deploy_params['device']])
+        self.assertEqual('hd0', job.device['parameters']['media']['sata'][deploy_params['device']]['grub_interface'])
+        grub_deploys = [action for action in job.pipeline.actions if action.name == 'grub-main-action']
+        self.assertEqual(len(grub_deploys), 2)
+        first_deploy = grub_deploys[0]
+        second_deploy = grub_deploys[1]
+        self.assertEqual('nfsdeploy', first_deploy.parameters['namespace'])
+        self.assertEqual('satadeploy', second_deploy.parameters['namespace'])
+
+    def test_secondary_media(self):
+        factory = RemovableFactory()
+        job = factory.create_job('sample_jobs/mustang-secondary-media.yaml', '../devices/mustang-media.yaml')
+        job.validate()
+        grub_nfs = [action for action in job.pipeline.actions if action.name == 'grub-main-action' and action.parameters['namespace'] == 'nfsdeploy'][0]
+        media_action = [action for action in grub_nfs.internal_pipeline.actions if action.name == 'bootloader-from-media'][0]
+        self.assertEqual(None, media_action.get_namespace_data(action='download-action', label='file', key='kernel'))
+        self.assertEqual(None, media_action.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'))
+        self.assertEqual(None, media_action.get_namespace_data(action='download-action', label='file', key='dtb'))
+        self.assertEqual(None, media_action.get_namespace_data(action=media_action.name, label='file', key='root'))
+        grub_main = [action for action in job.pipeline.actions if action.name == 'grub-main-action' and action.parameters['namespace'] == 'satadeploy'][0]
+        media_action = [action for action in grub_main.internal_pipeline.actions if action.name == 'bootloader-from-media'][0]
+        self.assertIsInstance(media_action, BootloaderSecondaryMedia)
+        self.assertIsNotNone(media_action.get_namespace_data(action='download-action', label='file', key='kernel'))
+        self.assertIsNotNone(media_action.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk'))
+        self.assertIsNotNone(media_action.get_namespace_data(action='download-action', label='file', key='ramdisk'))
+        self.assertEqual('', media_action.get_namespace_data(action='download-action', label='file', key='dtb'))
+        self.assertIsNotNone(media_action.get_namespace_data(action=media_action.name, label='uuid', key='root'))
+        self.assertIsNotNone(media_action.get_namespace_data(action=media_action.name, label='uuid', key='boot_part'))
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_primary_media(self):

@@ -227,6 +227,36 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
         self.assertEqual(overlay.commands, ['a list', 'of commands', 'with a {KERNEL_ADDR} substitution'])
 
+    @unittest.skipIf(infrastructure_error('xnbd-server'), "xnbd-server not installed")
+    def test_nbd_boot(self):
+        job = self.factory.create_bbb_job('sample_jobs/bbb-initrd-nbd.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('bbb-initrd-nbd.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # Fixme: more asserts
+        self.assertIn('u-boot', job.device['actions']['boot']['methods'])
+        params = job.device['actions']['deploy']['parameters']
+        for action in job.pipeline.actions:
+            action.validate()
+            if isinstance(action, UBootAction):
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
+            elif isinstance(action, TftpAction):
+                self.assertIn('initrd', action.parameters)
+                self.assertIn('kernel', action.parameters)
+                self.assertIn('nbdroot', action.parameters)
+                self.assertIn('to', action.parameters)
+                self.assertEqual('nbd', action.parameters['to'])
+            self.assertTrue(action.valid)
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        overlay = [action for action in uboot.internal_pipeline.actions if action.name == 'bootloader-overlay'][0]
+        for setenv in overlay.commands:
+            if 'setenv nbdbasekargs' in setenv:
+                self.assertIn('rw', setenv.split("'")[1])
+                self.assertIn('${extraargs}', setenv.split("'")[1])
+                self.assertEqual(3, len(setenv.split("'")))
+
     def test_transfer_media(self):
         """
         Test adding the overlay to existing rootfs
@@ -309,18 +339,20 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
-        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
+        uboot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action' and action.parameters['namespace'] == 'boot2'][0]
+        u_boot_media = [action for action in uboot_action.internal_pipeline.actions if action.name == 'uboot-from-media' and action.parameters['namespace'] == 'boot2'][0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
         self.assertEqual(u_boot_media.parameters['kernel'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='kernel'))
+            action='download-action', label='file', key='kernel'))
         self.assertEqual(u_boot_media.parameters['ramdisk'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='ramdisk'))
+            action='compress-ramdisk', label='file', key='ramdisk'))
         self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='file', key='dtb'))
+            action='download-action', label='file', key='dtb'))
+        # use the base class name so that uboot-from-media can pick up the value reliably.
         self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_namespace_data(
-            action=u_boot_media.name, label='uuid', key='root'))
+            action='bootloader-from-media', label='uuid', key='root'))
         device = u_boot_media.get_namespace_data(action='storage-deploy', label='u-boot', key='device')
         self.assertIsNotNone(device)
         part_reference = '%s:%s' % (

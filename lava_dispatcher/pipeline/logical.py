@@ -176,7 +176,7 @@ class Deployment(object):
         if len(willing) == 0:
             raise JobError(
                 "No deployment strategy available for the given "
-                "device '%s'. %s" % (device['hostname'], cls))
+                "device. %s" % cls)
 
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
@@ -215,7 +215,7 @@ class Boot(object):
         if len(willing) == 0:
             raise JobError(
                 "No boot strategy available for the device "
-                "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
+                "with the specified job parameters. %s" % cls
             )
 
         # higher priority first
@@ -256,7 +256,7 @@ class LavaTest(object):
         if len(willing) == 0:
             if hasattr(device, 'parameters'):
                 msg = "No test strategy available for the device "\
-                      "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
+                      "with the specified job parameters. %s" % cls
             else:
                 msg = "No test strategy available for the device. %s" % cls
             raise JobError(msg)

@@ -1,0 +1,349 @@
+Starting kernel ...
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Linux version 4.12.0-rc6 (buildslave@kernelci-staging-jenkins-builder-1842542277-g6wgb) (gcc version 5.3.1 20160412 (Linaro GCC 5.3-2016.05) ) #1 SMP Wed Jul 12 13:32:11 UTC 2017
+[    0.000000] CPU: ARMv7 Processor [412fc0f3] revision 3 (ARMv7), cr=10c5387d
+[    0.000000] CPU: div instructions available: patching division code
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, PIPT instruction cache
+[    0.000000] OF: fdt: Machine model: Google Peach Pi Rev 10+
+[    0.000000] Memory policy: Data cache writealloc
+[    0.000000] efi: Getting EFI parameters from FDT:
+[    0.000000] efi: UEFI not found.
+[    0.000000] Reserved memory: created DMA memory pool at 0xff700000, size 8 MiB
+[    0.000000] OF: reserved mem: initialized node region_mfc_right, compatible id shared-dma-pool
+[    0.000000] Reserved memory: created DMA memory pool at 0xfd300000, size 36 MiB
+[    0.000000] OF: reserved mem: initialized node region_mfc_left, compatible id shared-dma-pool
+[    0.000000] cma: Reserved 64 MiB at 0xf9000000
+[    0.000000] Samsung CPU ID: 0xe5422001
+[    0.000000] percpu: Embedded 17 pages/cpu @ee337000 s39168 r8192 d22272 u69632
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 904703
+[    0.000000] Kernel command line: console=ttySAC3,115200n8 root=/dev/ram0  ip=:::::eth0:dhcp
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Memory: 3501692K/3624956K available (10240K kernel code, 1501K rwdata, 4184K rodata, 2048K init, 409K bss, 57728K reserved, 65536K cma-reserved, 2772988K highmem)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+[    0.000000]     vmalloc : 0xf0800000 - 0xff800000   ( 240 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)
+[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+[    0.000000]     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+[    0.000000]       .text : 0xc0208000 - 0xc0d00000   (11232 kB)
+[    0.000000]       .init : 0xc1200000 - 0xc1400000   (2048 kB)
+[    0.000000]       .data : 0xc1400000 - 0xc15776b0   (1502 kB)
+[    0.000000]        .bss : 0xc1580d88 - 0xc15e7448   ( 410 kB)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU debugfs-based tracing is enabled.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=16 to nr_cpu_ids=8.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] Switching to timer-based delay loop, resolution 41ns
+[    0.000000] clocksource: mct-frc: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 79635851949 ns
+[    0.000003] sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 89478484971ns
+[    0.002292] Console: colour dummy device 80x30
+[    0.002311] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=240000)
+[    0.002322] pid_max: default: 32768 minimum: 301
+[    0.002374] Mount-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.002381] Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.002641] CPU: Testing write buffer coherency: ok
+[    0.002923] CPU0: update cpu_capacity 1535
+[    0.002930] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.003168] Setting up static identity map for 0x20300000 - 0x203000a0
+[    0.003426] ARM CCI driver probed
+[    0.003781] Exynos MCPM support installed
+[    0.006069] EFI services will not be available.
+[    0.006284] smp: Bringing up secondary CPUs ...
+[    0.006651] CPU1: update cpu_capacity 1535
+[    0.006655] CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+[    0.007061] CPU2: update cpu_capacity 1535
+[    0.007064] CPU2: thread -1, cpu 2, socket 0, mpidr 80000002
+[    0.007443] CPU3: update cpu_capacity 1535
+[    0.007447] CPU3: thread -1, cpu 3, socket 0, mpidr 80000003
+[    0.007890] CPU4: update cpu_capacity 448
+[    0.007901] CPU4: thread -1, cpu 0, socket 1, mpidr 80000100
+[    0.008449] CPU5: update cpu_capacity 448
+[    0.008458] CPU5: thread -1, cpu 1, socket 1, mpidr 80000101
+[    0.008953] CPU6: update cpu_capacity 448
+[    0.008961] CPU6: thread -1, cpu 2, socket 1, mpidr 80000102
+[    0.009457] CPU7: update cpu_capacity 448
+[    0.009465] CPU7: thread -1, cpu 3, socket 1, mpidr 80000103
+[    0.009590] smp: Brought up 1 node, 8 CPUs
+[    0.009615] SMP: Total of 8 processors activated (384.00 BogoMIPS).
+[    0.009621] CPU: All CPU(s) started in SVC mode.
+[    0.010415] devtmpfs: initialized
+[    0.019444] VFP support v0.3: implementor 41 architecture 4 part 30 variant f rev 0
+[    0.019683] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.019694] futex hash table entries: 2048 (order: 5, 131072 bytes)
+[    0.021105] pinctrl core: initialized pinctrl subsystem
+[    0.022399] NET: Registered protocol family 16
+[    0.023967] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.025662] cpuidle: using governor menu
+[    0.025776] No ATAGs?
+[    0.025978] hw-breakpoint: found 5 (+1 reserved) breakpoint and 4 watchpoint registers.
+[    0.025986] hw-breakpoint: maximum watchpoint size is 8 bytes.
+[    0.027314] Serial: AMBA PL011 UART driver
+[    0.046083] EXYNOS5420 PMU initialized
+[    0.064192] AT91: Could not find identification node
+[    0.067072] vgaarb: loaded
+[    0.067575] SCSI subsystem initialized
+[    0.067830] usbcore: registered new interface driver usbfs
+[    0.067864] usbcore: registered new interface driver hub
+[    0.067968] usbcore: registered new device driver usb
+[    0.068664] s3c-i2c 12c80000.i2c: slave address 0x50
+[    0.068675] s3c-i2c 12c80000.i2c: bus frequency set to 65 KHz
+[    0.068814] s3c-i2c 12c80000.i2c: i2c-2: S3C I2C adapter
+[    0.069456] pps_core: LinuxPPS API ver. 1 registered
+[    0.069462] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.069474] PTP clock support registered
+[    0.069636] EDAC MC: Ver: 3.0.0
+[    0.071259] clocksource: Switched to clocksource mct-frc
+[    0.108423] NET: Registered protocol family 2
+[    0.108693] TCP established hash table entries: 8192 (order: 3, 32768 bytes)
+[    0.108730] TCP bind hash table entries: 8192 (order: 4, 65536 bytes)
+[    0.108802] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.108866] UDP hash table entries: 512 (order: 2, 16384 bytes)
+[    0.108886] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+[    0.108983] NET: Registered protocol family 1
+[    0.109405] RPC: Registered named UNIX socket transport module.
+[    0.109412] RPC: Registered udp transport module.
+[    0.109418] RPC: Registered tcp transport module.
+[    0.109423] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.109716] *** Random lines from the Zen of Python ***
+[    0.109721] Simple is better than complex.
+[    0.109727] Complex is better than complicated.
+[    0.109731] Flat is better than nested.
+[    0.109736] Sparse is better than dense.
+[    0.109741] Trying to unpack rootfs image as initramfs...
+[    0.391580] Freeing initrd memory: 8288K
+[    0.393245] workingset: timestamp_bits=30 max_order=20 bucket_order=0
+[    0.397640] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.398119] NFS: Registering the id_resolver key type
+[    0.398139] Key type id_resolver registered
+[    0.398145] Key type id_legacy registered
+[    0.398169] ntfs: driver 2.1.32 [Flags: R/O].
+[    0.399547] bounce: pool size: 64 pages
+[    0.399573] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[    0.399581] io scheduler noop registered
+[    0.399587] io scheduler deadline registered
+[    0.399603] io scheduler cfq registered (default)
+[    0.399609] io scheduler mq-deadline registered
+[    0.399615] io scheduler kyber registered
+[    0.403588] exynos5_usb3drd_phy 12100000.phy: 12100000.phy supply vbus-boost not found, using dummy regulator
+[    0.403823] exynos5_usb3drd_phy 12500000.phy: 12500000.phy supply vbus-boost not found, using dummy regulator
+[    0.421990] dma-pl330 121a0000.pdma: Loaded driver for PL330 DMAC-241330
+[    0.422000] dma-pl330 121a0000.pdma: 	DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+[    0.423235] dma-pl330 121b0000.pdma: Loaded driver for PL330 DMAC-241330
+[    0.423243] dma-pl330 121b0000.pdma: 	DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+[    0.423639] dma-pl330 10800000.mdma: Loaded driver for PL330 DMAC-241330
+[    0.423647] dma-pl330 10800000.mdma: 	DBUFF-64x8bytes Num_Chans-8 Num_Peri-1 Num_Events-32
+[    0.464168] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    0.466080] 12c00000.serial: ttySAC0 at MMIO 0x12c00000 (irq = 58, base_baud = 0) is a S3C6400/10
+[    0.466297] 12c10000.serial: ttySAC1 at MMIO 0x12c10000 (irq = 59, base_baud = 0) is a S3C6400/10
+[    0.466501] 12c20000.serial: ttySAC2 at MMIO 0x12c20000 (irq = 60, base_baud = 0) is a S3C6400/10
+[    0.466701] 12c30000.serial: ttySAC3 at MMIO 0x12c30000 (irq = 61, base_baud = 0) is a S3C6400/10
+[    0.539508] random: fast init done
+[    1.298593] console [ttySAC3] enabled
+[    1.302621] SuperH (H)SCI(F) driver initialized
+[    1.307591] msm_serial: driver initialized
+[    1.310981] STMicroelectronics ASC driver initialized
+[    1.329668] brd: module loaded
+[    1.337524] loop: module loaded
+[    1.346633] libphy: Fixed MDIO Bus: probed
+[    1.349814] CAN device driver interface
+[    1.353816] bgmac_bcma: Broadcom 47xx GBit MAC driver loaded
+[    1.359848] e1000e: Intel(R) PRO/1000 Network Driver - 3.2.6-k
+[    1.364542] e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+[    1.370451] igb: Intel(R) Gigabit Ethernet Network Driver - version 5.4.0-k
+[    1.377377] igb: Copyright (c) 2007-2014 Intel Corporation.
+[    1.385963] pegasus: v0.9.3 (2013/04/25), Pegasus/Pegasus II USB Ethernet driver
+[    1.391923] usbcore: registered new interface driver pegasus
+[    1.397533] usbcore: registered new interface driver asix
+[    1.402931] usbcore: registered new interface driver ax88179_178a
+[    1.408979] usbcore: registered new interface driver cdc_ether
+[    1.414822] usbcore: registered new interface driver smsc75xx
+[    1.420523] usbcore: registered new interface driver smsc95xx
+[    1.426267] usbcore: registered new interface driver net1080
+[    1.431902] usbcore: registered new interface driver cdc_subset
+[    1.437777] usbcore: registered new interface driver zaurus
+[    1.443368] usbcore: registered new interface driver cdc_ncm
+[    1.449607] exynos-dwc3 soc:usb3-0: soc:usb3-0 supply vdd33 not found, using dummy regulator
+[    1.457429] exynos-dwc3 soc:usb3-0: soc:usb3-0 supply vdd10 not found, using dummy regulator
+[    1.467740] exynos-dwc3 soc:usb3-1: soc:usb3-1 supply vdd33 not found, using dummy regulator
+[    1.474750] exynos-dwc3 soc:usb3-1: soc:usb3-1 supply vdd10 not found, using dummy regulator
+[    1.485809] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    1.490851] ehci-pci: EHCI PCI platform driver
+[    1.495317] ehci-platform: EHCI generic platform driver
+[    1.500655] ehci-orion: EHCI orion driver
+[    1.504643] SPEAr-ehci: EHCI SPEAr driver
+[    1.508600] ehci-st: EHCI STMicroelectronics driver
+[    1.513476] ehci-exynos: EHCI EXYNOS driver
+[    1.517692] ehci-atmel: EHCI Atmel driver
+[    1.521631] tegra-ehci: Tegra EHCI driver
+[    1.525618] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    1.531648] ohci-pci: OHCI PCI platform driver
+[    1.536067] ohci-platform: OHCI generic platform driver
+[    1.541426] ohci-omap3: OHCI OMAP3 driver
+[    1.545378] SPEAr-ohci: OHCI SPEAr driver
+[    1.549372] ohci-st: OHCI STMicroelectronics driver
+[    1.554249] ohci-atmel: OHCI Atmel driver
+[    1.558513] xhci-hcd xhci-hcd.2.auto: xHCI Host Controller
+[    1.563582] xhci-hcd xhci-hcd.2.auto: new USB bus registered, assigned bus number 1
+[    1.571410] xhci-hcd xhci-hcd.2.auto: hcc params 0x0220f04c hci version 0x100 quirks 0x02010010
+[    1.579884] xhci-hcd xhci-hcd.2.auto: irq 141, io mem 0x12000000
+[    1.586336] hub 1-0:1.0: USB hub found
+[    1.589595] hub 1-0:1.0: 1 port detected
+[    1.593690] xhci-hcd xhci-hcd.2.auto: xHCI Host Controller
+[    1.598947] xhci-hcd xhci-hcd.2.auto: new USB bus registered, assigned bus number 2
+[    1.606668] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[    1.615064] hub 2-0:1.0: USB hub found
+[    1.618394] hub 2-0:1.0: 1 port detected
+[    1.622519] xhci-hcd xhci-hcd.5.auto: xHCI Host Controller
+[    1.627751] xhci-hcd xhci-hcd.5.auto: new USB bus registered, assigned bus number 3
+[    1.635604] xhci-hcd xhci-hcd.5.auto: hcc params 0x0220f04c hci version 0x100 quirks 0x02010010
+[    1.644091] xhci-hcd xhci-hcd.5.auto: irq 142, io mem 0x12400000
+[    1.650445] hub 3-0:1.0: USB hub found
+[    1.653814] hub 3-0:1.0: 1 port detected
+[    1.657850] xhci-hcd xhci-hcd.5.auto: xHCI Host Controller
+[    1.663162] xhci-hcd xhci-hcd.5.auto: new USB bus registered, assigned bus number 4
+[    1.670827] usb usb4: We don't know the algorithms for LPM for this host, disabling LPM.
+[    1.679256] hub 4-0:1.0: USB hub found
+[    1.682610] hub 4-0:1.0: 1 port detected
+[    1.686905] usbcore: registered new interface driver usb-storage
+[    1.696467] i2c /dev entries driver
+[    1.703565] max77686-rtc max77802-rtc: rtc core: registered max77802-rtc as rtc0
+[    1.722690] sdhci: Secure Digital Host Controller Interface driver
+[    1.727383] sdhci: Copyright(c) Pierre Ossman
+[    1.733132] Synopsys Designware Multimedia Card Interface Driver
+[    1.738355] dwmmc_exynos 12200000.mmc: IDMAC supports 32-bit address mode.
+[    1.744623] dwmmc_exynos 12200000.mmc: Using internal DMA controller.
+[    1.750985] dwmmc_exynos 12200000.mmc: Version ID is 250a
+[    1.756400] dwmmc_exynos 12200000.mmc: DW MMC controller at irq 78,64 bit host data width,64 deep fifo
+[    1.765710] mmc_host mmc0: card is non-removable.
+[    1.791294] mmc_host mmc0: Bus speed (slot 0) = 50000000Hz (slot req 400000Hz, actual 396825HZ div = 63)
+[    1.821303] dwmmc_exynos 12200000.mmc: 1 slots initialized
+[    1.825671] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    1.832214] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    1.838581] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    1.843991] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    1.854562] dwmmc_exynos 12220000.mmc: IDMAC supports 32-bit address mode.
+[    1.862238] dwmmc_exynos 12220000.mmc: Using internal DMA controller.
+[    1.867199] dwmmc_exynos 12220000.mmc: Version ID is 250a
+[    1.872615] dwmmc_exynos 12220000.mmc: DW MMC controller at irq 80,64 bit host data width,64 deep fifo
+[    1.911292] mmc_host mmc1: Bus speed (slot 0) = 50000000Hz (slot req 400000Hz, actual 396825HZ div = 63)
+[    1.937557] mmc_host mmc0: Bus speed (slot 0) = 200000000Hz (slot req 200000000Hz, actual 200000000HZ div = 0)
+[    1.946171] dwmmc_exynos 12220000.mmc: 1 slots initialized
+[    1.952533] sdhci-pltfm: SDHCI platform and OF driver helper
+[    1.959922] ledtrig-cpu: registered to indicate activity on CPUs
+[    1.964533] mmc_host mmc0: Bus speed (slot 0) = 50000000Hz (slot req 52000000Hz, actual 50000000HZ div = 0)
+[    1.964773] usbcore: registered new interface driver usbhid
+[    1.964775] usbhid: USB HID core driver
+[    1.967727] isl29018 7-0044: No cache defaults, reading back from HW
+[    1.967943] isl29018 7-0044: Failed to read 1: -6
+[    1.967947] isl29018 7-0044: regmap initialization fails: -6
+[    1.968895] NET: Registered protocol family 10
+[    1.969560] Segment Routing with IPv6
+[    1.969593] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    1.969960] NET: Registered protocol family 17
+[    1.969968] can: controller area network core (rev 20170425 abi 9)
+[    1.970011] NET: Registered protocol family 29
+[    1.970016] can: raw protocol (rev 20170425)
+[    1.970019] can: broadcast manager protocol (rev 20170425 t)
+[    1.970027] can: netlink gateway (rev 20170425) max_hops=1
+[    1.970267] Key type dns_resolver registered
+[    1.970607] ThumbEE CPU extension supported.
+[    1.970615] Registering SWP/SWPB emulation handler
+[    1.990924] usb 1-1: new high-speed USB device number 2 using xhci-hcd
+[    2.000417] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    2.000467] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    2.000476] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    2.000496] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    2.001563] input: gpio-keys as /devices/platform/gpio-keys/input/input0
+[    2.010904] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    2.010939] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.010968] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    2.010977] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    2.010991] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    2.012019] max77686-rtc max77802-rtc: hctosys: unable to read the hardware clock
+[    2.140804] mmc_host mmc0: Bus speed (slot 0) = 400000000Hz (slot req 200000000Hz, actual 200000000HZ div = 1)
+[    2.151887] mmc0: new HS400 MMC card at address 0001
+[    2.155784] mmcblk0: mmc0:0001 MAG2GC 14.6 GiB
+[    2.160145] mmcblk0boot0: mmc0:0001 MAG2GC partition 1 4.00 MiB
+[    2.166119] mmcblk0boot1: mmc0:0001 MAG2GC partition 2 4.00 MiB
+[    2.172004] mmcblk0rpmb: mmc0:0001 MAG2GC partition 3 4.00 MiB
+[    2.173884] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.173894] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.173922] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.173930] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.173961] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.173970] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.173995] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.174004] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.174033] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.174042] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.174067] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.174076] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183715] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183724] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183750] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183759] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183786] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183795] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183821] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183830] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183859] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183867] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.183893] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.183901] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.310416]  mmcblk0: p1 p2 p3 p4
+[    2.320975] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    2.326408] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.331703] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.336985] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    2.343404] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    2.348760] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    2.420244] mmc_host mmc1: Bus speed (slot 0) = 50000000Hz (slot req 50000000Hz, actual 50000000HZ div = 0)
+[    2.428601] mmc1: new high speed SDHC card at address 59b4
+[    2.434365] mmcblk1: mmc1:59b4 USD   29.2 GiB
+[    2.445839]  mmcblk1: p1 p2
+[    2.454796] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    2.460198] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.465510] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.470776] alloc_contig_range: [f9067, f9068) PFNs busy
+[    2.476106] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    2.482508] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    2.487870] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    2.665043] asix 1-1:1.0 eth0: register 'asix' at usb-xhci-hcd.2.auto-1, ASIX AX88772B USB 2.0 Ethernet, 00:80:8a:8e:1a:79
+[    2.681974] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    2.687368] alloc_contig_range: [f9059, f905a) PFNs busy
+[    2.692679] alloc_contig_range: [f905a, f905b) PFNs busy
+[    2.697948] alloc_contig_range: [f9067, f9068) PFNs busy
+[    2.703261] alloc_contig_range: [f9068, f9069) PFNs busy
+[    2.708544] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    2.714971] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    2.720333] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+[    3.031720] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[    4.556009] asix 1-1:1.0 eth0: link up, 100Mbps, full-duplex, lpa 0xC5E1
+[    4.561287] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+[    4.591310] Sending DHCP requests ., OK
+[    4.653660] IP-Config: Got DHCP answer from 172.24.69.1, my address is 172.24.69.147
+[    4.661381] IP-Config: Complete:
+[    4.664568]      device=eth0, hwaddr=00:80:8a:8e:1a:79, ipaddr=172.24.69.147, mask=255.255.255.0, gw=172.24.69.1
+[    4.674734]      host=172.24.69.147, domain=lan, nis-domain=(none)
+[    4.680891]      bootserver=172.24.69.1, rootserver=172.24.69.1, rootpath=     nameserver0=172.24.69.1
+[    4.692819] Freeing unused kernel memory: 2048K
+Starting logging: OK
+Populating /dev using udev: [    4.750615] udevd[150]: starting version 3.1.5
+[    5.112582] dma-pl330 3880000.adma: Loaded driver for PL330 DMAC-241330
+[    5.117719] dma-pl330 3880000.adma: 	DBUFF-4x8bytes Num_Chans-6 Num_Peri-16 Num_Events-6
+[    5.134189] dwmmc_exynos 12210000.mmc: IDMAC supports 32-bit address mode.
+[    5.139666] dwmmc_exynos 12210000.mmc: Using internal DMA controller.
+[    5.146052] dwmmc_exynos 12210000.mmc: Version ID is 250a
+[    5.151420] dwmmc_exynos 12210000.mmc: DW MMC controller at irq 79,64 bit host data width,64 deep fifo
+done
+Initializing random number generator... done.
+Starting network...
+ip: RTNETLINK answers: File exists
+Starting dropbear sshd: OK
+/bin/sh: can't access tty; job control turned off
+/ # export PS1=\"lava-test: # \"

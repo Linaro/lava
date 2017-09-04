@@ -141,6 +141,9 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--slave-cert", default=None,
             help="Slave certificate file")
+        parser.add_argument(
+            "--ipv6", action='store_true',
+            help="Enable IPv6")
 
         # Don't put any default value as it has to be defined by the calling process
         parser.add_argument(
@@ -276,7 +279,8 @@ class dispatch(DispatcherCommand):
                 if self.args.socket_addr is not None:
                     zmq_config = ZMQConfig(self.args.socket_addr,
                                            self.args.master_cert,
-                                           self.args.slave_cert)
+                                           self.args.slave_cert,
+                                           self.args.ipv6)
                 # Generate the pipeline
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,

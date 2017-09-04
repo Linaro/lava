@@ -30,7 +30,6 @@ from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
     Action,
-    ConfigurationError,
     InfrastructureError,
     JobError,
     LAVABug,
@@ -163,8 +162,6 @@ class RepoAction(Action):
         return willing[0]
 
     def validate(self):
-        if 'hostname' not in self.job.device:
-            raise ConfigurationError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             self.errors = "Unable to determine test_name"
             return
@@ -230,12 +227,6 @@ class RepoAction(Action):
         if revision:
             self.set_namespace_data(
                 action='test', label=self.uuid, key='revision', value=revision)
-
-        # FIXME - is this needed? - the issue here is that the new model does not use fs.tgz
-        # therefore, there may not be the same need to collate the dependent testdefs, all of the
-        # YAML in the repo will still exist - this may change behaviour.
-        # if 'test-case-deps' in testdef:
-        #    self._get_dependent_test_cases(testdef)
 
         return connection
 
@@ -322,7 +313,22 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             shutil.rmtree(runner_path)
 
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
-        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+
+        # Get the branch if specified.
+        branch = self.parameters.get('branch', None)
+
+        # Set shallow to False if revision is specified.
+        # Otherwise default to True if not specified as a parameter.
+        revision = self.parameters.get('revision', None)
+        shallow = False
+        if not revision:
+            shallow = self.parameters.get('shallow', True)
+
+        commit_id = self.vcs.clone(
+            runner_path,
+            shallow=shallow,
+            revision=revision,
+            branch=branch)
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
@@ -386,7 +392,9 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=args['test_name'])
 
-        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+        commit_id = self.vcs.clone(
+            runner_path,
+            revision=self.parameters.get('revision', None))
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
@@ -755,11 +763,15 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             for def_param_name, def_param_value in list(testdef['params'].items()):
                 if def_param_name is 'yaml_line':
                     continue
+                if not def_param_value:
+                    def_param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
         if 'parameters' in testdef:
             for def_param_name, def_param_value in list(testdef['parameters'].items()):
                 if def_param_name is 'yaml_line':
                     continue
+                if not def_param_value:
+                    def_param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
         ret_val.append('######\n')
         # inject the parameters that were set in job submission.
@@ -769,6 +781,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             for param_name, param_value in list(self.parameters['parameters'].items()):
                 if param_name is 'yaml_line':
                     continue
+                if not param_value:
+                    param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
                 self.logger.debug("%s='%s'", param_name, param_value)
         if 'params' in self.parameters and self.parameters['params'] != '':
@@ -776,6 +790,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             for param_name, param_value in list(self.parameters['params'].items()):
                 if param_name is 'yaml_line':
                     continue
+                if not param_value:
+                    param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
                 self.logger.debug("%s='%s'", param_name, param_value)
         ret_val.append('######\n')

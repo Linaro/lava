@@ -148,10 +148,10 @@ class DDAction(Action):
 
         if uuid_required:  # FIXME unit test required
             if 'uuid' not in self.boot_params[self.parameters['device']]:
-                self.errors = "A UUID is required for %s on %s" % (
-                    self.parameters['device'], self.job.device.hostname)
+                self.errors = "A UUID is required for %s" % (
+                    self.parameters['device'])
             if 'root_part' in self.boot_params[self.parameters['device']]:
-                self.errors = "'root_part' is not valid for %s as a UUID is required" % self.job.device.hostname
+                self.errors = "'root_part' is not valid as a UUID is required"
         if self.parameters['device'] in self.boot_params:
             self.set_namespace_data(
                 action=self.name,

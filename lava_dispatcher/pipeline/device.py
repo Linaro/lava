@@ -19,7 +19,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import yaml
 
 from lava_dispatcher.pipeline.action import ConfigurationError
@@ -32,13 +31,9 @@ class PipelineDevice(dict):
     out YAML files from database content.
     """
 
-    def __init__(self, config, hostname):
+    def __init__(self, config):
         super(PipelineDevice, self).__init__()
         self.update(config)
-
-        self.target = hostname
-
-        self['hostname'] = hostname
 
     def check_config(self, job):
         """
@@ -99,18 +94,17 @@ class NewDevice(PipelineDevice):
     """
 
     def __init__(self, target):
-        super(NewDevice, self).__init__({}, None)
+        super(NewDevice, self).__init__({})
         # Parse the yaml configuration
         try:
-            with open(target) as f_in:
-                self.update(yaml.load(f_in))
+            if isinstance(target, str):
+                with open(target) as f_in:
+                    self.update(yaml.load(f_in))
+            else:
+                self.update(yaml.load(target.read()))
         except yaml.parser.ParserError:
             raise ConfigurationError("%s could not be parsed" % target)
 
-        # Get the device name (/path/to/kvm01.yaml => kvm01)
-        self.target = os.path.splitext(os.path.basename(target))[0]
-
-        self['hostname'] = self.target
         self.setdefault('power_state', 'off')  # assume power is off at start of job
 
     def check_config(self, job):

@@ -4,6 +4,9 @@
 # MASTER_URL="tcp://<lava-master-dns>:5556"
 # LOGGER_URL="tcp://<lava-master-dns>:5555"
 
+# Enable IPv6 to connect to the master and logger
+# IPV6="--ipv6"
+
 # Slave hostname
 # Should be set for host that have random hostname (containers, ...)
 # HOSTNAME="--hostname <hostname.fqdn>"

@@ -41,8 +41,12 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
     LXC_DEFAULT_PACKAGES,
+    UDEV_RULES_DIR,
 )
-from lava_dispatcher.pipeline.utils.udev import get_udev_devices
+from lava_dispatcher.pipeline.utils.udev import (
+    get_udev_devices,
+    lxc_udev_rule,
+)
 from lava_dispatcher.pipeline.utils.filesystem import (
     debian_package_version,
     lxc_path,
@@ -132,6 +136,7 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
                                           parameters=parameters)
         self.internal_pipeline.add_action(LxcCreateAction())
+        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         if 'packages' in parameters:
             self.internal_pipeline.add_action(LxcStartAction())
             self.internal_pipeline.add_action(LxcAptUpdateAction())
@@ -227,6 +232,78 @@ class LxcCreateAction(DeployAction):
                                     self.lxc_data['lxc_name']),
                        os.path.join(LXC_PATH,
                                     self.lxc_data['lxc_name']))
+        return connection
+
+
+class LxcCreateUdevRuleAction(DeployAction):
+    """
+    Creates Lxc related udev rules for this container.
+    """
+
+    def __init__(self):
+        super(LxcCreateUdevRuleAction, self).__init__()
+        self.name = "lxc-create-udev-rule-action"
+        self.description = "create lxc udev rule action"
+        self.summary = "create lxc udev rule"
+        self.retries = 10
+        self.sleep = 10
+
+    def validate(self):
+        super(LxcCreateUdevRuleAction, self).validate()
+        self.errors = infrastructure_error('udevadm')
+        if 'device_info' in self.job.device \
+           and not isinstance(self.job.device.get('device_info'), list):
+            self.errors = "device_info unset"
+        try:
+            if 'device_info' in self.job.device:
+                for usb_device in self.job.device['device_info']:
+                    board_id = usb_device.get('board_id', '')
+                    if board_id == '0000000000':
+                        self.errors = "board_id unset"
+        except TypeError:
+            self.errors = "Invalid parameters for %s" % self.name
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcCreateUdevRuleAction, self).run(connection,
+                                                              max_end_time,
+                                                              args)
+        lxc_name = self.get_namespace_data(action='lxc-create-action',
+                                           label='lxc', key='name')
+
+        # If there is no device_info then this action should be idempotent.
+        if 'device_info' not in self.job.device:
+            return connection
+
+        device_info = self.job.device.get('device_info', [])
+        device_info_file = os.path.join(self.mkdtemp(), 'device-info')
+        with open(device_info_file, 'w') as device_info_obj:
+            device_info_obj.write(str(device_info))
+        self.logger.debug("device info file '%s' created with:\n %s",
+                          device_info_file, device_info)
+        for device in device_info:
+            data = {'serial-number': str(device.get('board_id', '')),
+                    'serial': '{serial}',
+                    'lxc-name': lxc_name,
+                    'device-info-file': device_info_file}
+            # The rules file will be something like
+            # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
+            # where, 100 is just an arbitrary number which specifies loading
+            # priority for udevd
+            rules_file = os.path.join(UDEV_RULES_DIR,
+                                      '100-' + lxc_name + '.rules')
+            with open(rules_file, 'wa') as f_obj:
+                f_obj.write(lxc_udev_rule(data))
+            self.logger.debug("udev rules file '%s' created with:\n %s",
+                              rules_file, lxc_udev_rule(data))
+
+        # Reload udev rules.
+        reload_cmd = ['udevadm', 'control', '--reload-rules']
+        cmd_out = self.run_command(reload_cmd, allow_fail=True,
+                                   allow_silent=True)
+        if cmd_out is False:
+            self.logger.debug('Reloading udev rules failed')
+        else:
+            self.logger.debug('udev rules reloaded.')
         return connection
 
 
