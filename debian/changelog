@@ -1,3 +1,84 @@
+lava-server (2017.9-1) unstable; urgency=medium
+
+  * New production release
+    6d1ff5c5 Improve the docs on lava-test-reference and metadata
+    2f11898f LAVA-997 - Invalidate primary connections setup when
+       power is configured.
+    ccfb3961 b2260: allow setting bootloader_prompt in device config
+    4a1b8f5f Prevent mistaken fixup of device reservation
+    5093f40c LAVA-1022 - V2 support for IFC6410
+    1f18eada LAVA-1021 - Document specifying branch for git
+    36513ec3 Change default source code URL after systems change
+    da49e558 Remove doc for unimplemented feature test-case-deps.
+    61dfd204 Document settings to enable authentication
+       in http://localhost
+    5cbf5b11 Allow vcs checks to skip monitor test actions
+    b85baa75 NBD kernel bootarg fixups
+    c089adb7 Add failure comment message via async update on the
+       job detail page.
+    5ca25620 Improve V1 doc build for Debian reproducibility
+    dccd1588 LAVA-998 - Default to shallow clones in overlay
+    250f27dd Fix warning of linaro.img not found.
+    938b3da1 Fix typos and warnings in deploy to nbd doc.
+    90c9ed74 LAVA-1013 improve performance of result export
+    0af80d19 LAVA-1008 Group visibility check
+    080dd10d LAVA-1007 Prevent NoneType crash in job duration
+    b2d90962 Fix typos in manage users which talk about devices
+    07e5fa19 Fix reference to smoke test
+    59340f70 Expand advice on good commit messages.
+    cfae2faa Skip some dashboard tests if django is too new
+    68b24fcc Revert "Move action fields templates to table files."
+    c9f65507 Add log file argument to dispatcher-master command.
+    dabaf74c LAVA-1002 - fix group label editing in query details page.
+    7398abd4 CTT-441 - lava-lxc-device-* don't work properly
+    f1cb7faf Decrease the number of SQL queries to list the groups
+    984f3b02 doc: fix example of zmq_client usage
+    f864696d Documentation build error tweaks
+    9aeff523 XMLRPC authentication: fix wrong logic
+    93572067 Basic integration advice for U-Boot devices
+    5b2d39d7 Support PyOCD for KW41Z and remove CMSIS boot method
+    3f8c8a93 Fix a typo in persistent container configuration doc.
+    d334642c Rename xmlrpc module to api
+    9f947433 Add ssh deployment support for secondary connections.
+    ce9f0da6 Document how to combine LXC and MultiNode
+    e2be8567 Allow documentation to be built with python3
+    cc6e9696 Add notes on writing new unit tests
+    c40ac0da Document option for device_type qemu to choose host audio handling
+    97eac4b6 Update lava-self documentation for change in output
+    7e0f6eca Fix PipelineDevice usage after last dispatcher commit
+    37d4eba4 Fix a typo - repeated usb_vendor_id parameter in
+       device_info example.
+    d4a80fc1 Improve the validation message when a role is not found in every
+    1a5aec5f Add a seealso for fresh installs of lava-tool
+    4707ff98 Check that the Debian package has been installed
+    72d30834 Mention cookie specific options for reverse proxy
+    716424a3 api: fix scheduler.jobs.submit's docstring
+    6dc1a966 Add sudo for the apache config copy command in V2 worker setup doc.
+    ae39d57b Add docs on calling protocols from actions
+    a49cc9c6 Expand the device integration guidance.
+    1fd5e964 Add Integration Stories for supported devices
+    620dcbf1 Move smoke-tests into functional test repository
+    ad2f57df device-type: update at91-sama5d4_xplained addresses
+    b6734844 device-type: update at91-sama5d2_xplained addresses
+    c4ead793 device-type: update sama53d addresses
+    1204f81c Skip links to secondary connections device-types
+    8b9068a3 Add Metadata output to verbose notifications.
+    2da8c076 LAVA-357 - Allow override of the nfsvers in base_nfs_root_args
+    5926b9a8 Catch TemplateError in notifications
+    98b3da07 Initial improvements for the Queries and Charts docs
+    092f56a5 device-type: update armada-xp-linksys-mamba addresses
+    0fdf33a8 device-type: update armada-388-gp addresses
+    5af8f640 device-type: update armada-370-db addresses
+    9f4c975f XMLRPC: self.user return an AnonymousUser instead of None
+    d7b34e2d Add an helper command to switch to a dev setup
+    9bedff1e Add option to enable listening on IPv6
+    8ff7c4f1 Extend secondary media docs
+    f132af4e Add support for secondary media for mustang
+    1fecd500 Integration of Hikey 960
+    b27f60c4 LAVA xnbd protocol support and documentation for nbd boot
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 04 Sep 2017 14:31:22 +0100
+
 lava-server (2017.7-1) unstable; urgency=medium
 
   * New production release
