@@ -1,3 +1,54 @@
+lava-dispatcher (2017.9-1) unstable; urgency=medium
+
+  * New production release
+    255e1dc2 Allow use of lava-run from the command line
+    5e3e4df8 parser: fix exception with unknown action
+    b167715b Fix exception message
+    75ef463a Add transfer_overlay support to fastboot
+    4fcdbb0c LAVA-1020 - Allow branch to be specified for git
+    d067a6e4 Remove FIXME about unused feature test-case-deps.
+    93947b9d Fix job tmp_dir NoneType error.
+    cf0095ca Extend NBD unit tests for template update
+    ca72b0cc Honour reboot to bootloader irrespective of power state existence.
+    b210b297 LAVA-1009 - Improve cleanup of temp files and containers
+    70fb8c09 Add debug log at the right place for lxc-destroy command execution.
+    51938bf5 Stop executing shell commands twice.
+    60c39bae Create device-info-file consumed by udev rules in job's tmp_dir.
+    46a9789d LAVA-1012 - Handle udev paths outside /dev/bus/usb
+    c6e06463 LAVA-998 - Default to shallow clones in overlay
+    b9cc1da8 LAVA-1001 - raise TestError on invalid signal call
+    4a8241e1 Use check_output instead of Popen from subprocess module.
+    7024de4c Move to permanent URLs for better unit test support
+    4f32f4e2 Fix reference to smoke test
+    927bb33a LAVA-1011 - Check for ENOSPACE after adding overlay to sparse image
+    47608877 Add udev rule file contents to debug message.
+    15d8adea Add more debug messages for udev rules addition on the fly.
+    1b2c9252 Ensure auto-login-action can execute protocols
+    44755d5a CTT-441 - lava-lxc-device-* don't work properly
+    d55526c4 Add option to enable IPv6 connections
+    07839bdf Raise a JobError when lava_test_results_dir is undefined
+    3f9c87f5 Remove unneeded test
+    003990f7 Add setproctitle as a python installation requirement to setup.py
+    d04dcf58 Fix prospector warnings
+    c2601cbe Extend pipeline_reference readme
+    115d84ad Create a clean script to replace lava-dispatch for v2 jobs
+    80bfa16e device: remove 'hostname' and 'target'
+    b663e427 Do not crash when cleanup raises and exception
+    fcbff4a6 Hikey 960 support for OE and AOSP
+    bab3c6f1 Replace kernel.txt with a normal boot and add kernel-panic.txt
+    c61c67bc Fix value of self.results['success'] in pipeline boot action
+    6939c5ea Add pre-power command support to LXC protocol
+    98ede789 LAVA-996 - preserve empty parameters in the overlay
+    9d33ced5 Use encoding to pexpect.spawn for python3 support
+    ce2dbd83 Stop parsing kernel messages when the end of a panic has been found
+    b4ae5b4d lava-slave: Pretty print the configuration
+    cf22ed83 Extend secondary media to mustang
+    3e746b47 Add network block device boot support
+  * Remove /etc/lava-dispatcher/lava-slave during purge
+    (Closes: #867686)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 04 Sep 2017 14:29:57 +0100
+
 lava-dispatcher (2017.7-1) unstable; urgency=medium
 
   * New production release
