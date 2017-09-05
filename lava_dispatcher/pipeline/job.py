@@ -21,7 +21,6 @@
 import atexit
 import logging
 import errno
-import signal
 import shutil
 import tempfile
 import time
@@ -250,24 +249,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                                  "case": "validate",
                                  "result": "pass"})
 
-    def cancelling_handler(*_):
-        """
-        Catches KeyboardInterrupt or SIGTERM and raise
-        KeyboardInterrupt that will go through all the stack frames. We then
-        cleanup the job and report the errors.
-        """
-        signal.signal(signal.SIGINT, signal.default_int_handler)
-        signal.signal(signal.SIGTERM, signal.default_int_handler)
-        raise KeyboardInterrupt
-
     def _run(self):
         """
         Run the pipeline under the run() wrapper that will catch the exceptions
         """
-        # Set the signal handler
-        signal.signal(signal.SIGINT, self.cancelling_handler)
-        signal.signal(signal.SIGTERM, self.cancelling_handler)
-
         self.started = True
 
         # Setup the protocols

@@ -25,11 +25,11 @@ import errno
 import logging
 import os
 from setproctitle import setproctitle
+import signal
 import sys
 import yaml
 
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.job import ZMQConfig
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -145,6 +145,19 @@ def parse_job_file(options):
     return job
 
 
+def cancelling_handler(*_):
+    """
+    Catches most signals and raise KeyboardInterrupt.
+    The exception will go through all the stack frames cleaning and reporting
+    the error.
+    """
+    signal.signal(signal.SIGHUP, signal.default_int_handler)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGQUIT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
+    raise KeyboardInterrupt
+
+
 def main():
     # Parse the command line
     options = parser().parse_args()
@@ -156,6 +169,12 @@ def main():
 
     # Set process title for easier debugging
     setproctitle("lava-run [job: %s]" % options.job_id)
+
+    # Set the signal handler
+    signal.signal(signal.SIGHUP, cancelling_handler)
+    signal.signal(signal.SIGINT, cancelling_handler)
+    signal.signal(signal.SIGQUIT, cancelling_handler)
+    signal.signal(signal.SIGTERM, cancelling_handler)
 
     # Create the output directory
     try:
