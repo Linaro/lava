@@ -27,9 +27,15 @@ import os
 from setproctitle import setproctitle
 import signal
 import sys
+import traceback
 import yaml
 
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
+    JobCanceled,
+    LAVABug,
+    LAVAError
+)
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -99,7 +105,7 @@ def setup_logger(options):
     return logger
 
 
-def parse_job_file(options):
+def parse_job_file(logger, options):
     """
     Uses the parsed device_config instead of the old Device class
     so it can fail before the Pipeline is made.
@@ -120,34 +126,26 @@ def parse_job_file(options):
     if options.dispatcher is not None:
         dispatcher_config = options.dispatcher.read()
 
-    # Setup the logger as early as possible
-    logger = setup_logger(options)
-
-    try:
-        # Generate the pipeline
-        job = parser.parse(options.definition.read(),
-                           device, options.job_id,
-                           logger=logger,
-                           dispatcher_config=dispatcher_config,
-                           output_dir=options.output_dir,
-                           env_dut=env_dut)
-        # Generate the description
-        description = job.describe()
-        description_file = os.path.join(options.output_dir,
-                                        'description.yaml')
-        with open(description_file, 'w') as f_describe:
-            f_describe.write(yaml.dump(description))
-
-    except JobError as exc:
-        logger.error("Invalid job submission: %s", str(exc))
-        return None
+    # Generate the pipeline
+    job = parser.parse(options.definition.read(),
+                       device, options.job_id,
+                       logger=logger,
+                       dispatcher_config=dispatcher_config,
+                       output_dir=options.output_dir,
+                       env_dut=env_dut)
+    # Generate the description
+    description = job.describe()
+    description_file = os.path.join(options.output_dir,
+                                    'description.yaml')
+    with open(description_file, 'w') as f_describe:
+        f_describe.write(yaml.dump(description))
 
     return job
 
 
 def cancelling_handler(*_):
     """
-    Catches most signals and raise KeyboardInterrupt.
+    Catches most signals and raise JobCanceled (inherit from LAVAError).
     The exception will go through all the stack frames cleaning and reporting
     the error.
     """
@@ -155,7 +153,9 @@ def cancelling_handler(*_):
     signal.signal(signal.SIGINT, signal.default_int_handler)
     signal.signal(signal.SIGQUIT, signal.default_int_handler)
     signal.signal(signal.SIGTERM, signal.default_int_handler)
-    raise KeyboardInterrupt
+    signal.signal(signal.SIGUSR1, signal.default_int_handler)
+    signal.signal(signal.SIGUSR2, signal.default_int_handler)
+    raise JobCanceled("The job was canceled")
 
 
 def main():
@@ -170,32 +170,59 @@ def main():
     # Set process title for easier debugging
     setproctitle("lava-run [job: %s]" % options.job_id)
 
-    # Set the signal handler
-    signal.signal(signal.SIGHUP, cancelling_handler)
-    signal.signal(signal.SIGINT, cancelling_handler)
-    signal.signal(signal.SIGQUIT, cancelling_handler)
-    signal.signal(signal.SIGTERM, cancelling_handler)
+    # Setup the logger as early as possible
+    logger = setup_logger(options)
 
-    # Create the output directory
+    # By default, that's a failure
+    success = False
     try:
-        os.makedirs(options.output_dir, mode=0o755)
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise
+        # Set the signal handler
+        signal.signal(signal.SIGHUP, cancelling_handler)
+        signal.signal(signal.SIGINT, cancelling_handler)
+        signal.signal(signal.SIGQUIT, cancelling_handler)
+        signal.signal(signal.SIGTERM, cancelling_handler)
+        signal.signal(signal.SIGUSR1, cancelling_handler)
+        signal.signal(signal.SIGUSR2, cancelling_handler)
 
-    # Parse the definition and create the job object
-    job = parse_job_file(options)
+        # Create the output directory
+        try:
+            os.makedirs(options.output_dir, mode=0o755)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise InfrastructureError("Unable to create %s" % options.output_dir)
 
-    if job is None:
-        return 1
+        # Parse the definition and create the job object
+        job = parse_job_file(logger, options)
 
-    # Start the job
-    try:
         job.validate(simulate=options.validate)
         if not options.validate:
-            return job.run()
-    except BaseException:
-        return 1
+            job.run()
+
+    except LAVAError as exc:
+        error_help = exc.error_help
+        error_msg = str(exc)
+        error_type = exc.error_type
+    except Exception as exc:
+        logger.exception(traceback.format_exc())
+        error_help = LAVABug.error_help
+        error_msg = str(exc)
+        error_type = LAVABug.error_type
+    else:
+        success = True
+    finally:
+        result_dict = {"definition": "lava",
+                       "case": "job"}
+        if success:
+            result_dict["result"] = "pass"
+            logger.info("Job finished correctly")
+        else:
+            result_dict["result"] = "fail"
+            result_dict["error_msg"] = error_msg
+            result_dict["error_type"] = error_type
+            logger.error(error_help)
+        logger.results(result_dict)
+
+    return 0 if success else 1
 
 
 if __name__ == "__main__":

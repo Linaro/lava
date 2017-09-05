@@ -96,8 +96,6 @@ class MenuSession(ShellSession):
                 self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
             except pexpect.TIMEOUT:
                 raise JobError("wait for prompt timed out")
-            except KeyboardInterrupt:
-                raise KeyboardInterrupt
             else:
                 break
 

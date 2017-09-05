@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import atexit
-import logging
 import errno
 import shutil
 import tempfile
@@ -31,9 +30,9 @@ import yaml
 from lava_dispatcher.pipeline.action import (
     LAVABug,
     LAVAError,
+    JobCanceled,
     JobError,
 )
-from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
@@ -165,17 +164,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         LAVAError) if it fails.
         If simulate is True, then print the pipeline description.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
-        self.logger.info(label)
-        self.logger.info("start: 0 validate")
-        start = time.time()
-
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
-            except KeyboardInterrupt:
-                self.logger.info("Canceled")
-                raise JobError("Canceled")
             except LAVAError:
                 self.logger.error("Configuration failed for protocol %s", protocol.name)
                 raise
@@ -208,46 +199,35 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             raise JobError(msg)
 
         # validate the pipeline
-        try:
-            self.pipeline.validate_actions()
-        except KeyboardInterrupt:
-            self.logger.info("Canceled")
-            raise JobError("Canceled")
-        except LAVAError as exc:
-            self.logger.error("Invalid job definition")
-            self.logger.exception(str(exc))
-            # This should be re-raised to end the job
-            raise
-        except Exception as exc:
-            self.logger.error("Validation failed")
-            self.logger.exception(traceback.format_exc())
-            raise LAVABug(exc)
-        finally:
-            self.logger.info("validate duration: %.02f", time.time() - start)
+        self.pipeline.validate_actions()
 
     def validate(self, simulate=False):
         """
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
+        self.logger.info(label)
+        self.logger.info("start: 0 validate")
+        start = time.time()
+
+        success = False
         try:
             self._validate(simulate)
         except LAVAError as exc:
-            self.logger.results({"definition": "lava",
-                                 "case": "validate",
-                                 "result": "fail"})
-            self.cleanup(connection=None)
-            self.logger.error(exc.error_help)
-            self.logger.results({"definition": "lava",
-                                 "case": "job",
-                                 "result": "fail",
-                                 "error_msg": str(exc),
-                                 "error_type": exc.error_type})
             raise
+        except Exception as exc:
+            self.logger.exception(traceback.format_exc())
+            raise LAVABug(exc)
         else:
+            success = True
+        finally:
+            if not success:
+                self.cleanup(connection=None)
+            self.logger.info("validate duration: %.02f", time.time() - start)
             self.logger.results({"definition": "lava",
                                  "case": "validate",
-                                 "result": "pass"})
+                                 "result": "pass" if success else "fail"})
 
     def _run(self):
         """
@@ -282,55 +262,15 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        error_help = ""
-        error_msg = ""
-        error_type = ""
-        return_code = 0
         try:
             self._run()
-        except LAVAError as exc:
-            error_help = exc.error_help
-            error_msg = str(exc)
-            error_type = exc.error_type
-            return_code = exc.error_code
-        except KeyboardInterrupt:
-            error_help = "KeyboardInterrupt: the job was canceled."
-            error_msg = "The job was canceled"
-            error_type = "Canceled"
-            return_code = 6
-        except Exception as exc:
-            self.logger.exception(traceback.format_exc())
-            error_help = "%s: unknown exception, please report it" % exc.__class__.__name__
-            error_msg = str(exc)
-            error_type = "Unknown"
-            return_code = 7
-
-        # Cleanup now
-        self.cleanup(self.connection)
-
-        # Detect errors based on pipeline.errors
-        # TODO: shouldn't be needed anymore
-        if not error_msg and self.pipeline.errors:
-            error_help = "Errors detected"
-            error_msg = self.pipeline.errors
-            error_type = "Unknown"
-            return_code = 7
-
-        # Build the job result
-        result_dict = {"definition": "lava",
-                       "case": "job"}
-        if error_msg:
-            result_dict["result"] = "fail"
-            result_dict["error_msg"] = error_msg
-            result_dict["error_type"] = error_type
-            self.logger.error(error_help)
-            self.logger.results(result_dict)
-        else:
-            result_dict["result"] = "pass"
-            self.logger.info("Job finished correctly")
-            self.logger.results(result_dict)
-
-        return return_code
+            # FIXME: this shouldn't be needed anymore as action.errors should
+            # not be used by run() functions.
+            if self.pipeline.errors:
+                raise JobError(self.pipeline.errors)
+        finally:
+            # Cleanup now
+            self.cleanup(self.connection)
 
     def cleanup(self, connection):
         if self.cleaned:

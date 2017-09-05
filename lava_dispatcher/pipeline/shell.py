@@ -240,8 +240,6 @@ class ShellSession(Connection):
                 else:
                     # TODO: is someone expecting pexpect.TIMEOUT?
                     raise
-            except KeyboardInterrupt:
-                raise
 
     def wait(self, max_end_time=None):
         """
@@ -259,8 +257,6 @@ class ShellSession(Connection):
             return self.raw_connection.expect(self.prompt_str, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
-        except KeyboardInterrupt:
-            raise
 
     def listen_feedback(self, timeout):
         """
@@ -272,8 +268,6 @@ class ShellSession(Connection):
             self.raw_connection.logfile.is_feedback = True
             return self.raw_connection.expect([pexpect.EOF, pexpect.TIMEOUT],
                                               timeout=timeout)
-        except KeyboardInterrupt:
-            raise
         finally:
             self.raw_connection.logfile.is_feedback = False
 

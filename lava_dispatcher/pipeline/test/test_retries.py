@@ -451,8 +451,8 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        # run() returns 2 for JobError
-        self.assertEqual(self.fakejob.run(), 2)
+        with self.assertRaises(JobError):
+            self.fakejob.run()
 
     def test_action_complete(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -463,7 +463,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        self.assertEqual(self.fakejob.run(), 0)
+        self.fakejob.run()
 
     def test_job_timeout(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -476,8 +476,8 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        # run() returns 2 for JobError
-        self.assertEqual(self.fakejob.run(), 2)
+        with self.assertRaises(JobError):
+            self.fakejob.run()
 
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
@@ -490,8 +490,8 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        # run() returns 0 in case of success
-        self.assertEqual(self.fakejob.run(), 0)
+        # run() raises an exception in case of error
+        self.fakejob.run()
 
     def test_long_job_safe(self):
         self.fakejob.timeout.duration = 8
@@ -509,4 +509,4 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
-        self.assertEqual(self.fakejob.run(), 0)
+        self.fakejob.run()

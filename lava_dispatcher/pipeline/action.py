@@ -44,7 +44,6 @@ if sys.version > '3':
 
 class LAVAError(Exception):
     """ Base class for all exceptions in LAVA """
-    error_code = 0
     error_help = ""
     error_type = ""
 
@@ -61,10 +60,15 @@ class InfrastructureError(LAVAError):
 
     Use LAVABug for errors arising from bugs in LAVA code.
     """
-    error_code = 1
     error_help = "InfrastructureError: The Infrastructure is not working " \
                  "correctly. Please report this error to LAVA admins."
     error_type = "Infrastructure"
+
+
+class JobCanceled(LAVAError):
+    """ The job was canceled """
+    error_help = "JobCanceled: The job was canceled"
+    error_type = "Canceled"
 
 
 class JobError(LAVAError):
@@ -74,7 +78,6 @@ class JobError(LAVAError):
     the TestJob or a download which results in a file which tar or gzip
     does not recognise.
     """
-    error_code = 2
     error_help = "JobError: Your job cannot terminate cleanly."
     error_type = "Job"
 
@@ -84,7 +87,6 @@ class LAVABug(LAVAError):
     An error that is raised when an un-expected error is catched. Only happen
     when a bug is encountered.
     """
-    error_code = 3
     error_help = "LAVABug: This is probably a bug in LAVA, please report it."
     error_type = "Bug"
 
@@ -95,20 +97,17 @@ class TestError(LAVAError):
     in parsing measurements or commands which fail.
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    error_code = 4
     error_help = "TestError: A test failed to run, look at the error message."
     error_type = "Test"
 
 
 class ConfigurationError(LAVAError):
-    error_code = 5
     error_help = "ConfigurationError: The LAVA instance is not configured " \
                  "correctly. Please report this error to LAVA admins."
     error_type = "Configuration"
 
 
 class MultinodeProtocolTimeoutError(LAVAError):
-    error_code = 6
     error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
                  "has timed out."
     error_type = "MultinodeTimeout"
@@ -253,6 +252,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             except Exception as exc:
                 # Just log the exception and continue the cleanup
                 child.logger.error("Failed to clean after action '%s': %s", child.name, str(exc))
+                child.logger.exception(traceback.format_exc())
 
     def _diagnose(self, connection):
         """
