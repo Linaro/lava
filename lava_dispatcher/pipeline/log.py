@@ -82,6 +82,10 @@ class YAMLLogger(logging.Logger):
         self.addHandler(self.handler)
         return self.handler
 
+    def close(self):
+        if self.handler is not None:
+            self.handler.context.destroy()
+
     def setMetadata(self, level, name):
         if isinstance(self.handler, ZMQPushHandler):
             self.handler.setMetadata(level, name)

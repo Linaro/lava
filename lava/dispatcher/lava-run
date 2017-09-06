@@ -51,18 +51,20 @@ def parser():
                             "This alters process name for easier debugging")
     p_obj.add_argument("--output-dir", required=True, metavar="DIR",
                        help="Directory for temporary ressources")
-    p_obj.add_argument("--ipv6", action="store_true", default=False,
-                       help="Enable IPv6")
+    p_obj.add_argument("--validate", action="store_true", default=False,
+                       help="validate the job file, do not execute any steps")
 
     group = p_obj.add_argument_group("logging")
     group.add_argument("--logging-url", metavar="URL", default=None,
                        help="URL of the ZMQ socket to send the logs to the master")
     group.add_argument("--master-cert", default=None, metavar="PATH",
                        type=argparse.FileType("r"),
-                       help="master certificate file")
+                       help="Master certificate file")
     group.add_argument("--slave-cert", default=None, metavar="PATH",
                        type=argparse.FileType("r"),
-                       help="slave certificate file")
+                       help="Slave certificate file")
+    group.add_argument("--ipv6", action="store_true", default=False,
+                       help="Enable IPv6")
 
     group = p_obj.add_argument_group("configuration files")
     group.add_argument("--device", metavar="PATH",
@@ -74,9 +76,6 @@ def parser():
     group.add_argument("--env-dut", metavar="PATH",
                        type=argparse.FileType("r"), default=None,
                        help="DUT environment")
-
-    p_obj.add_argument("--validate", action="store_true", default=False,
-                       help="validate the job file, do not execute any steps")
 
     p_obj.add_argument("definition", type=argparse.FileType("r"),
                        help="job definition")
@@ -116,7 +115,6 @@ def parse_job_file(logger, options):
     if options.device is not None:
         device = NewDevice(options.device)
     parser = JobParser()
-    job = None
 
     # Load the configuration files (this should *not* fail)
     env_dut = None
@@ -127,20 +125,12 @@ def parse_job_file(logger, options):
         dispatcher_config = options.dispatcher.read()
 
     # Generate the pipeline
-    job = parser.parse(options.definition.read(),
-                       device, options.job_id,
-                       logger=logger,
-                       dispatcher_config=dispatcher_config,
-                       output_dir=options.output_dir,
-                       env_dut=env_dut)
-    # Generate the description
-    description = job.describe()
-    description_file = os.path.join(options.output_dir,
-                                    'description.yaml')
-    with open(description_file, 'w') as f_describe:
-        f_describe.write(yaml.dump(description))
-
-    return job
+    return parser.parse(options.definition.read(),
+                        device, options.job_id,
+                        logger=logger,
+                        dispatcher_config=dispatcher_config,
+                        output_dir=options.output_dir,
+                        env_dut=env_dut)
 
 
 def cancelling_handler(*_):
@@ -174,6 +164,7 @@ def main():
     logger = setup_logger(options)
 
     # By default, that's a failure
+    description = ""
     success = False
     try:
         # Set the signal handler
@@ -193,6 +184,7 @@ def main():
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
+        description = yaml.dump(job.describe())
 
         job.validate(simulate=options.validate)
         if not options.validate:
@@ -221,6 +213,16 @@ def main():
             result_dict["error_type"] = error_type
             logger.error(error_help)
         logger.results(result_dict)
+
+    # Closing the socket. We are now sure that all messages where sent.
+    logger.close()
+
+    # Generate the description
+    # A missing description.yaml indicate that lava-run crashed
+    description_file = os.path.join(options.output_dir,
+                                    'description.yaml')
+    with open(description_file, 'w') as f_describe:
+        f_describe.write(description)
 
     return 0 if success else 1
 
