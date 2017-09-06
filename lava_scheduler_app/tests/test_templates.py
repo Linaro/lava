@@ -13,6 +13,10 @@ from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.test.utils import DummyLogger
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+)
 
 # pylint: disable=too-many-branches,too-many-public-methods
 # pylint: disable=too-many-nested-blocks
@@ -626,6 +630,32 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('user', params)
         self.assertIn('options', params)
         self.assertIn('identity_file', params)
+
+    def test_hikey620_uarts(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {}
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        validate_device(template_dict)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('commands', template_dict)
+        self.assertNotIn('connect', template_dict['commands'])
+        self.assertIn('connections', template_dict['commands'])
+        self.assertIn('uart0', template_dict['commands']['connections'])
+        self.assertIn('uart1', template_dict['commands']['connections'])
+        self.assertIn('tags', template_dict['commands']['connections']['uart1'])
+        self.assertIn('primary', template_dict['commands']['connections']['uart1']['tags'])
+        self.assertNotIn('tags', template_dict['commands']['connections']['uart0'])
+        self.assertEqual(
+            template_dict['commands']['connections']['uart0']['connect'],
+            'telnet localhost 4002')
+        self.assertEqual(
+            template_dict['commands']['connections']['uart1']['connect'],
+            'telnet 192.168.1.200 8001')
 
     def test_hikey960_grub(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi960-hikey-01.jinja2')) as hikey:
