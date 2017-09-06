@@ -234,7 +234,7 @@ class Command(BaseCommand):
         # Mark the dispatcher as alive
         self.dispatchers[hostname].alive()
 
-    def logging_socket(self, options):
+    def logging_socket(self):
         msg = self.pull_socket.recv_multipart()
         try:
             (job_id, level, name, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
@@ -303,6 +303,23 @@ class Command(BaseCommand):
                 self.logger.warning(
                     "[%s] Unable to map scanned results: %s",
                     job_id, message)
+            else:
+                # Look for lava.job result
+                if message_msg["definition"] == "lava" and message_msg["case"] == "job":
+                    if message_msg["result"] == "pass":
+                        status = TestJob.COMPLETE
+                        status_msg = "Complete"
+                    else:
+                        status = TestJob.INCOMPLETE
+                        status_msg = "Incomplete"
+
+                    self.logger.info("[%s] job status: %s", job_id, status_msg)
+                    # Update status.
+                    with transaction.atomic():
+                        job = TestJob.objects.select_for_update().get(id=job_id)
+                        if job.status == TestJob.CANCELING:
+                            cancel_job(job)
+                        fail_job(job, fail_msg="", job_status=status)
 
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
@@ -376,16 +393,14 @@ class Command(BaseCommand):
                 job_id = int(msg[2])
                 job_status = int(msg[3])
                 error_msg = msg[4]
-                description = msg[5]
+                compressed_description = msg[5]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
             if job_status:
-                status = TestJob.INCOMPLETE
-                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
+                self.logger.info("[%d] %s => END (lava-run crashed)", job_id, hostname)
                 self.logger.error("[%d] Error: %s", job_id, error_msg)
             else:
-                status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
 
             # Find the corresponding job and update the status
@@ -395,20 +410,28 @@ class Command(BaseCommand):
                 job = TestJob.objects.get(id=job_id)
                 filename = os.path.join(job.output_dir, 'description.yaml')
                 try:
+                    # Create the directory if it was not already created
+                    mkdir(os.path.dirname(filename))
+                    description = lzma.decompress(compressed_description)
                     with open(filename, 'w') as f_description:
-                        f_description.write(lzma.decompress(description))
+                        f_description.write(description)
+                    if description:
+                        parse_job_description(job)
                 except (IOError, lzma.error) as exc:
                     self.logger.error("[%d] Unable to dump 'description.yaml'",
                                       job_id)
                     self.logger.exception(exc)
-                parse_job_description(job)
 
-                # Update status.
-                with transaction.atomic():
-                    job = TestJob.objects.select_for_update().get(id=job_id)
-                    if job.status == TestJob.CANCELING:
-                        cancel_job(job)
-                    fail_job(job, fail_msg=error_msg, job_status=status)
+                # Update status only if job_status is not 0.
+                # The slave send a non 0 if lava-run crashed and was not able
+                # to send the results.
+                if job_status:
+                    self.logger.error("[%d] lava-run crashed, marking job as INCOMPLETE", job_id)
+                    with transaction.atomic():
+                        job = TestJob.objects.select_for_update().get(id=job_id)
+                        if job.status == TestJob.CANCELING:
+                            cancel_job(job)
+                        fail_job(job, fail_msg=error_msg, job_status=TestJob.INCOMPLETE)
 
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
@@ -658,7 +681,7 @@ class Command(BaseCommand):
         # Last access to the database for new jobs and cancelations
         last_db_access = 0
 
-        # Poll on the sockets (only one for the moment). This allow to have a
+        # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         poller = zmq.Poller()
         poller.register(self.pull_socket, zmq.POLLIN)
@@ -711,7 +734,7 @@ class Command(BaseCommand):
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
-                    self.logging_socket(options)
+                    self.logging_socket()
 
                 # Garbage collect file handlers
                 now = time.time()
