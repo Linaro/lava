@@ -23,6 +23,7 @@
 
 # pylint: disable=unused-import
 
+from lava_dispatcher.pipeline.actions.boot import SecondaryShell
 from lava_dispatcher.pipeline.actions.boot.cmsis_dap import CMSIS
 from lava_dispatcher.pipeline.actions.boot.dfu import DFU
 from lava_dispatcher.pipeline.actions.boot.docker import BootDocker

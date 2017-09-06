@@ -1,5 +1,13 @@
 commands:
-    connect: telnet localhost 7019
+    # deprecated
+    # connect: telnet localhost 7019
+    connections:
+      uart1:
+        connect: telnet localhost 7019
+        tags:
+        - primary
+      uart0:
+        connect: telnet localhost 7020
     hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
     power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
     power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 08
@@ -29,10 +37,12 @@ actions:
     connections:
       lxc:
       serial:
+      console:
   boot:
     connections:
       lxc:
       serial:
+      console:
     methods:
       grub-efi:
         installed:

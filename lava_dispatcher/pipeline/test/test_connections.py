@@ -282,6 +282,35 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
 
 
+class TestConsoleConnections(StdoutTestCase):
+
+    def test_device_commands(self):
+        device_data = """
+commands:
+    # deprecated
+    # connect: telnet localhost 7019
+    connections:
+      uart1:
+        connect: telnet localhost 7019
+        tags:
+        - primary
+      uart0:
+        connect: telnet localhost 7020
+        """
+        data = yaml.load(device_data)
+        self.assertIn('commands', data)
+        self.assertIn('connections', data['commands'])
+        self.assertNotIn('connect', data['commands'])
+        for hardware, value in data['commands']['connections'].items():
+            if 'connect' not in value:
+                self.fail("Misconfigured device configuration")
+            if 'tags' in value and 'primary' in value['tags']:
+                self.assertEqual('uart1', hardware)
+            else:
+                self.assertEqual('uart0', hardware)
+        print(data)
+
+
 class TestTimeouts(StdoutTestCase):
     """
     Test action and connection timeout parsing.

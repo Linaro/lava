@@ -200,8 +200,17 @@ class TestShellAction(TestAction):
         super(TestShellAction, self).run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
+        connection_namespace = self.parameters.get('connection-namespace', None)
+        parameters = None
+        if connection_namespace:
+            self.logger.debug("Using connection namespace: %s", connection_namespace)
+            parameters = {"namespace": connection_namespace}
+        else:
+            parameters = {'namespace': self.parameters.get('namespace', 'common')}
+            self.logger.debug("Using namespace: %s", parameters['namespace'])
         connection = self.get_namespace_data(
-            action='shared', label='shared', key='connection', deepcopy=False)
+            action='shared', label='shared', key='connection', deepcopy=False, parameters=parameters)
+
         if not connection:
             raise LAVABug("No connection retrieved from namespace data")
 
@@ -373,6 +382,9 @@ class TestShellAction(TestAction):
         revision = self.get_namespace_data(action='test', label=uuid, key='revision')
         res['revision'] = revision if revision else 'unspecified'
         res['namespace'] = self.parameters['namespace']
+        connection_namespace = self.parameters.get('connection_namespace', None)
+        if connection_namespace:
+            res['connection-namespace'] = connection_namespace
         commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
         if commit_id:
             res['commit_id'] = commit_id

@@ -280,13 +280,15 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
             failed = False
+            namespace = action.parameters.get('namespace', 'common')
             # Begin the action
             try:
                 with action.timeout(max_end_time) as action_max_end_time:
                     # Add action start timestamp to the log message
                     # Log in INFO for root actions and in DEBUG for the other actions
                     timeout = seconds_to_str(action_max_end_time - action.timeout.start)
-                    msg = 'start: %s %s (timeout %s)' % (action.level, action.name, timeout)
+                    msg = 'start: %s %s (timeout %s) [%s]' % (
+                        action.level, action.name, timeout, namespace)
                     if self.parent is None:
                         action.logger.info(msg)
                     else:
@@ -311,8 +313,9 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
-                msg = "end: %s %s (duration %s)" % (action.level, action.name,
-                                                    seconds_to_str(duration))
+                msg = "end: %s %s (duration %s) [%s]" % (
+                    action.level, action.name,
+                    seconds_to_str(duration), namespace)
                 if self.parent is None:
                     action.logger.info(msg)
                 else:

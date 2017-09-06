@@ -76,6 +76,12 @@ class PipelineDevice(dict):
     def connect_command(self):
         if 'connect' in self['commands']:
             return self['commands']['connect']
+        elif 'connections' in self['commands']:
+            for hardware, value in self['commands']['connections'].items():
+                if 'connect' not in value:
+                    return ''
+                if 'tags' in value and 'primary' in value['tags']:
+                    return value['connect']
         return ''
 
     def get_constant(self, const):

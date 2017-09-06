@@ -220,6 +220,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         except LAVAError as exc:
             raise
         except Exception as exc:
+            # provide useful info on command line, e.g. failed unit tests.
             self.logger.exception(traceback.format_exc())
             raise LAVABug(exc)
         else:

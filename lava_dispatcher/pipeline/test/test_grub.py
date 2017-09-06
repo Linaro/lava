@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error_multi_paths
 
 
 class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -121,8 +122,9 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_device_d02(self):
         job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        self.assertNotIn('connect', job.device['commands'])
         self.assertEqual(
-            job.device['commands']['connect'],
+            job.device['commands']['connections']['uart0']['connect'],
             'telnet ratchet 7003'
         )
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
@@ -282,6 +284,39 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('item_class', menu.params)
         grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
         self.assertEqual('fastboot', grub_efi.commands)
+
+    @unittest.skipIf(infrastructure_error_multi_paths(
+        ['lxc-info', 'img2simg', 'simg2img']),
+        "lxc or img2simg or simg2img not installed")
+    def test_hikey_uart(self):
+        job = self.factory.create_hikey_job('sample_jobs/hikey-console.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('hikey-console.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        console = [action for action in job.pipeline.actions if action.name == 'secondary-shell-action'][0]
+        command = [action for action in console.internal_pipeline.actions if action.name == 'connect-shell'][0]
+        self.assertEqual('isolation', command.parameters['namespace'])
+        self.assertEqual('uart0', command.hardware)
+        self.assertIn('connections', job.device['commands'])
+        uart = job.device['commands']['connections'][command.hardware]['connect']
+        self.assertIn(command.command, uart)
+        self.assertEqual('telnet localhost 7020', uart)
+        tshells = [action for action in job.pipeline.actions if action.name == 'lava-test-retry']
+        for shell in tshells:
+            cn = shell.parameters.get('connection-namespace', None)
+            if cn:
+                self.assertEqual(shell.parameters['namespace'], 'hikey-oe')
+                self.assertNotEqual(shell.parameters['namespace'], 'isolation')
+                self.assertNotEqual(shell.parameters['namespace'], 'tlxc')
+                self.assertEqual(shell.parameters['connection-namespace'], 'isolation')
+                retry = [action for action in shell.internal_pipeline.actions][0]
+                print(retry.parameters.get('connection-namespace', None))
+            else:
+                self.assertNotEqual(shell.parameters['namespace'], 'hikey-oe')
+                self.assertNotEqual(shell.parameters['namespace'], 'isolation')
+                self.assertEqual(shell.parameters['namespace'], 'tlxc')
+                self.assertNotIn('connection-namespace', shell.parameters.keys())
 
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job('sample_jobs/hikey960-oe.yaml')

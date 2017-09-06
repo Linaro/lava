@@ -23,9 +23,13 @@ from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
 )
-from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
+from lava_dispatcher.pipeline.shell import (
+    ShellCommand,
+    ShellSession,
+)
 
-# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-public-methods,too-many-instance-attributes
+# pylint: disable=too-many-branches
 
 
 class ConnectDevice(Action):
@@ -42,25 +46,68 @@ class ConnectDevice(Action):
         self.description = "use the configured command to connect serial to the device"
         self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
         self.shell_class = ShellCommand  # runs the command to initiate the connection
+        self.command = ''
+        self.hardware = None
+        self.primary = True
+        self.message = 'Connecting to device using'
+
+    def _check_command(self):
+        exe = ''
+        try:
+            exe = self.command.split(' ')[0]
+        except AttributeError:
+            self.errors = "Unable to parse the connection command %s" % self.command
+        self.errors = infrastructure_error(exe)
 
     def validate(self):
         super(ConnectDevice, self).validate()
-        if 'connect' not in self.job.device['commands']:
-            self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
-            return
-        command = self.job.device['commands']['connect']
-        exe = ''
-        try:
-            exe = command.split(' ')[0]
-        except AttributeError:
-            self.errors = "Unable to parse the connection command %s" % command
-        self.errors = infrastructure_error(exe)
+        matched = False
+        if 'connect' in self.job.device['commands']:
+            # deprecated but allowed for primary
+            if self.primary:
+                self.command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
+            else:
+                self.errors = "Device configuration retains deprecated connect command."
+        elif 'connections' in self.job.device['commands']:
+            # if not primary, takes account of the name from the job definition
+            for hardware, value in self.job.device['commands']['connections'].items():
+                if 'connect' not in value:
+                    self.errors = "Misconfigured connection commands"
+                    return
+                if self.primary:
+                    if 'primary' in value.get('tags', []):
+                        self.hardware = hardware
+                        break
+                else:
+                    if 'tags' in value:
+                        if 'primary' in value['tags']:
+                            # ignore any primary hardware
+                            continue
+                        else:
+                            # allow tags other than primary
+                            if hardware == self.hardware:
+                                matched = True
+                                break
+                    else:
+                        # allow for no tags
+                        matched = True
+                        break
+            if self.primary:
+                if not self.hardware:
+                    self.errors = "Unable to identify primary connection command."
+            else:
+                if not matched:
+                    self.errors = "Unable to identify connection command hardware. %s" % self.hardware
+            self.command = self.job.device['commands']['connections'][self.hardware]['connect'][:]  # local copy to retain idempotency.
+        self._check_command()
 
     def run(self, connection, max_end_time, args=None):
         connection_namespace = self.parameters.get('connection-namespace', None)
         parameters = None
         if connection_namespace:
             parameters = {"namespace": connection_namespace}
+        else:
+            parameters = {'namespace': self.parameters.get('namespace', 'common')}
         connection = self.get_namespace_data(
             action='shared', label='shared', key='connection', deepcopy=False, parameters=parameters)
         if connection:
@@ -70,12 +117,12 @@ class ConnectDevice(Action):
             self.logger.warning("connection_namespace provided but no connection found. "
                                 "Please ensure that this parameter is correctly set to existing namespace.")
 
-        command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
-        self.logger.info("%s Connecting to device using '%s'", self.name, command)
+        self.logger.info(
+            "[%s] %s %s '%s'", parameters['namespace'], self.name, self.message, self.command)
         # ShellCommand executes the connection command
-        shell = self.shell_class("%s\n" % command, self.timeout, logger=self.logger)
+        shell = self.shell_class("%s\n" % self.command, self.timeout, logger=self.logger)
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
+            raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
@@ -84,4 +131,37 @@ class ConnectDevice(Action):
             connection.prompt_str = [self.job.device.get_constant(
                 'default-shell-prompt')]
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        return connection
+
+
+class ConnectShell(ConnectDevice):
+    """
+    Specialist class to use the device commands to connect to the
+    kernel console, e.g. using ser2net
+    """
+
+    def __init__(self, name=None):
+        super(ConnectShell, self).__init__()
+        self.name = "connect-shell"
+        self.primary = False
+        self.hardware = name
+        self.summary = "run connection command"
+        self.description = "use the configured command to connect serial to a second shell"
+        self.message = 'Connecting to shell using'
+        self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
+        self.shell_class = ShellCommand  # runs the command to initiate the connection
+
+    def validate(self):
+        super(ConnectShell, self).validate()
+        if 'connections' not in self.job.device['commands']:
+            self.errors = "Unable to connect to shell - missing connections block."
+            return
+        self._check_command()
+
+    def run(self, connection, max_end_time, args=None):
+        # explicitly call the base class run()
+        connection = super(ConnectShell, self).run(connection, max_end_time, args)
+        self.logger.debug("Forcing a prompt")
+        # force a prompt to appear without using a character that could be interpreted as a username
+        connection.sendline('')
         return connection
