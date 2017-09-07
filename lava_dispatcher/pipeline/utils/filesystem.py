@@ -242,6 +242,8 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     filename = os.path.basename(src)
     dst = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
                        filename)
+    logger = logging.getLogger('dispatcher')
+    logger.debug("copying %s to %s" % (filename, lxc_name))
     try:
         shutil.copyfile(src, dst)
     except IOError:
