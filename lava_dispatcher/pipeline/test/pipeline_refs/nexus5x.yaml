@@ -33,7 +33,7 @@
 - class: actions.deploy.fastboot.FastbootAction
   name: fastboot-deploy
   pipeline:
-  - {class: actions.deploy.fastboot.EnterFastbootAction, name: enter-fastboot-action}
+  - {class: actions.boot.fastboot.EnterFastbootAction, name: enter-fastboot-action}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
     pipeline:
@@ -58,6 +58,7 @@
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot-boot
   pipeline:
+  - {class: actions.boot.fastboot.EnterFastbootAction, name: enter-fastboot-action}
   - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry

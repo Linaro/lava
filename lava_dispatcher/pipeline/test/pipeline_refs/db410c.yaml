@@ -107,6 +107,11 @@
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot-boot
   pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
