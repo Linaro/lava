@@ -80,24 +80,18 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
 
 class JobHandler(object):  # pylint: disable=too-few-public-methods
-    def __init__(self, job, level, filename):
+    def __init__(self, job):
         self.output_dir = job.output_dir
         self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
-        self.current_level = level
-        self.sub_log = open(filename, 'a+')
         self.last_usage = time.time()
 
     def write(self, message):
         self.output.write(message)
         self.output.write('\n')
         self.output.flush()
-        self.sub_log.write(message)
-        self.sub_log.write('\n')
-        self.sub_log.flush()
 
     def close(self):
         self.output.close()
-        self.sub_log.close()
 
 
 def load_optional_yaml_file(filename):
@@ -265,17 +259,7 @@ class Command(BaseCommand):
             return
 
         # Find the handler (if available)
-        if job_id in self.jobs:
-            if level != self.jobs[job_id].current_level:
-                # Close the old file handler
-                self.jobs[job_id].sub_log.close()
-                filename = os.path.join(self.jobs[job_id].output_dir,
-                                        "pipeline", level.split('.')[0],
-                                        "%s-%s.yaml" % (level, name))
-                mkdir(os.path.dirname(filename))
-                self.current_level = level
-                self.jobs[job_id].sub_log = open(filename, 'a+')
-        else:
+        if job_id not in self.jobs:
             # Query the database for the job
             try:
                 job = TestJob.objects.get(id=job_id)
@@ -284,12 +268,9 @@ class Command(BaseCommand):
                 return
 
             self.logger.info("[%s] Receiving logs from a new job", job_id)
-            filename = os.path.join(job.output_dir,
-                                    "pipeline", level.split('.')[0],
-                                    "%s-%s.yaml" % (level, name))
             # Create the sub directories (if needed)
-            mkdir(os.path.dirname(filename))
-            self.jobs[job_id] = JobHandler(job, level, filename)
+            mkdir(job.output_dir)
+            self.jobs[job_id] = JobHandler(job)
 
         if message_lvl == "results":
             try:
