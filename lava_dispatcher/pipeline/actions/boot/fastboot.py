@@ -197,7 +197,7 @@ class FastbootBootAction(Action):
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                         '-s', serial_number, 'boot',
                         boot_img] + self.job.device['fastboot_options']
-        command_output = self.run_command(fastboot_cmd)
+        command_output = self.run_command(fastboot_cmd, allow_fail=True)
         if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
@@ -251,7 +251,7 @@ class FastbootRebootAction(Action):
         fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
                         serial_number, 'reboot'] + fastboot_opts
-        command_output = self.run_command(fastboot_cmd)
+        command_output = self.run_command(fastboot_cmd, allow_fail=True)
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to fastboot reboot: %s" % command_output)
         else:
