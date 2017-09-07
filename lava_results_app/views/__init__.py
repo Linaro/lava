@@ -76,7 +76,7 @@ class SuiteView(LavaView):
     View of a test suite
     """
     def get_queryset(self):
-        return TestCase.objects.all().order_by('logged')
+        return TestCase.objects.all().order_by('logged').select_related("suite")
 
 
 @BreadCrumb("Results", parent=lava_index)
