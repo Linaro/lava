@@ -281,7 +281,7 @@ def suite_yaml(request, job, pk):
     yaml_list = []
     for test_case in test_suite.testcase_set.all():
         yaml_list.append(export_testcase(test_case))
-    yaml.dump(yaml_list, response)
+    yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
     return response
 
 
