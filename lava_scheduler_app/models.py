@@ -121,18 +121,20 @@ def is_deprecated_json(data):
 
 
 def validate_job(data):
-    if not is_deprecated_json(data):
-        try:
-            # only try YAML if this is not JSON
-            # YAML can parse JSON as YAML, JSON cannot parse YAML at all
-            yaml_data = yaml.load(data)
-        except yaml.YAMLError as exc:
-            # neither yaml nor json loaders were able to process the submission.
-            raise SubmissionException("Loading job submission failed: %s." % exc)
+    if is_deprecated_json(data):
+        raise SubmissionException("v1 jobs cannot be submitted to this instance")
 
-        # validate against the submission schema.
-        validate_submission(yaml_data)  # raises SubmissionException if invalid.
-        validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+    try:
+        # only try YAML if this is not JSON
+        # YAML can parse JSON as YAML, JSON cannot parse YAML at all
+        yaml_data = yaml.load(data)
+    except yaml.YAMLError as exc:
+        # neither yaml nor json loaders were able to process the submission.
+        raise SubmissionException("Loading job submission failed: %s." % exc)
+
+    # validate against the submission schema.
+    validate_submission(yaml_data)  # raises SubmissionException if invalid.
+    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
 
 
 def validate_yaml(yaml_data):
@@ -2369,8 +2371,9 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        return (user.is_superuser or
-                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+        return self.is_pipeline and \
+            (user.is_superuser or
+             user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def job_device_type(self):
         device_type = None

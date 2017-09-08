@@ -19,8 +19,6 @@
 import os
 import xmlrpclib
 
-from django.contrib.auth.models import AnonymousUser
-
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.models import TestJob
