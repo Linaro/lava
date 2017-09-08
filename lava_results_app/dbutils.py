@@ -439,10 +439,6 @@ def export_testcase(testcase):
     :param testcase: list of TestCase objects
     :return: Dictionary containing relevant information formatted for export
     """
-    actiondata = testcase.action_data
-    duration = float(actiondata.duration) if actiondata else ''
-    timeout = actiondata.timeout if actiondata else ''
-    level = actiondata.action_level if actiondata else None
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get('extra', None)
@@ -460,12 +456,9 @@ def export_testcase(testcase):
         'result': str(testcase.result_code),
         'measurement': str(testcase.measurement),
         'unit': str(testcase.units),
-        'duration': str(duration),
-        'timeout': str(timeout),
-        'logged': str(testcase.logged),
-        'level': str(level),
-        'metadata': metadata,
         'url': str(testcase.get_absolute_url()),
-        'id': str(testcase.id)
+        'id': str(testcase.id),
+        'logged': str(testcase.logged),
+        'metadata': metadata,
     }
     return casedict
