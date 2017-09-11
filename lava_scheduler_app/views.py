@@ -3006,9 +3006,9 @@ def migration(request):
     # iterate over all devices, excluding disabled healthchecks
     for dev in active_health:
         hc = dev.get_health_check()
-        # even if hc contains data, check for a database entry
-        # need migration if either db has entry or hc is empty
-        if not hc or dev.device_type.health_check_job:
+        # Health checks are not pulled from the database anymore: only count
+        # device that are missing a health-check file.
+        if not hc:
             no_healthcheck[dev.hostname] = dev.get_absolute_url()
 
     if active_count:
