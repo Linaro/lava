@@ -279,6 +279,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
     def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
+            failed = False
             # Begin the action
             try:
                 with action.timeout(max_end_time) as action_max_end_time:
@@ -295,10 +296,16 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                                                 action_max_end_time, args)
             except LAVAError as exc:
                 action.logger.error(str(exc))
+                # allows retries without setting errors, which make the job incomplete.
+                failed = True
+                action.results = {'fail': str(exc)}
                 self._diagnose(connection)
                 raise
             except Exception as exc:
                 action.logger.exception(traceback.format_exc())
+                # allows retries without setting errors, which make the job incomplete.
+                failed = True
+                action.results = {'fail': str(exc)}
                 # Raise a LAVABug that will be correctly classified later
                 raise LAVABug(str(exc))
             finally:
@@ -311,7 +318,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 # set results including retries and failed actions
-                action.log_action_results()
+                action.log_action_results(fail=failed)
 
             if new_connection:
                 connection = new_connection
@@ -782,18 +789,23 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             raise JobError("Invalid connection timeout %s" % str(timeout))
         self.connection_timeout = Timeout(self.name, Timeout.parse(timeout))
 
-    def log_action_results(self):
+    def log_action_results(self, fail=False):
         if self.results and isinstance(self.logger, YAMLLogger):
+            res = "pass"
+            if self.errors:
+                res = "fail"
+            if fail:
+                # allows retries without setting errors, which make the job incomplete.
+                res = "fail"
             self.logger.results({  # pylint: disable=no-member
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
                 "duration": "%.02f" % self.timeout.elapsed_time,
-                "result": "fail" if self.errors else "pass",
+                "result": res,
                 "extra": self.results})
             self.results.update(
                 {
-                    'level': self.level,
                     'duration': self.timeout.elapsed_time,
                     'timeout': self.timeout.duration,
                     'connection-timeout': self.connection_timeout.duration

@@ -267,10 +267,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         """
         try:
             self._run()
-            # FIXME: this shouldn't be needed anymore as action.errors should
-            # not be used by run() functions.
-            if self.pipeline.errors:
-                raise JobError(self.pipeline.errors)
         finally:
             # Cleanup now
             self.cleanup(self.connection)

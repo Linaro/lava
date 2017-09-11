@@ -63,6 +63,9 @@ class RetryAction(Action):
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
+                # Restart max_end_time or the retry on a timeout fails with duration < 0
+                max_end_time = self.timeout.duration + time.time()
+                self.timeout.start = time.time()
                 # Print the error message
                 retries += 1
                 msg = "%s failed: %d of %d attempts. '%s'" % (self.name, retries,
@@ -80,7 +83,7 @@ class RetryAction(Action):
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                self.logger.warning("Retrying: %s %s", self.level, self.name)
+                self.logger.warning("Retrying: %s %s (%s sec)", self.level, self.name, max_end_time)
 
         # If we are repeating, check that all repeat were a success.
         if has_failed:
