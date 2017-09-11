@@ -1368,20 +1368,30 @@ def job_detail(request, pk):
             template = "lava_scheduler_app/job_pipeline.html"
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
-                    for line in log_data:
-                        if line["lvl"] == "results":
-                            case_id = TestCase.objects.filter(
-                                suite__job=job,
-                                suite__name=line["msg"]["definition"],
-                                name=line["msg"]["case"]).values_list(
-                                    "id", flat=True)
-                            if case_id:
-                                line["msg"]["case_id"] = case_id[0]
+                    # Compute the size of the file
+                    f_in.seek(0, 2)
+                    job_file_size = f_in.tell()
 
-                    if sys.version_info < (3, 0):
-                        for line in log_data:
-                            remove_broken_string(line)
+                    if job_file_size >= job.size_limit:
+                        log_data = []
+                    else:
+                        # Go back to the start and load the file
+                        f_in.seek(0, 0)
+                        log_data = yaml.load(f_in, Loader=yaml.CLoader)
+
+                for line in log_data:
+                    if line["lvl"] == "results":
+                        case_id = TestCase.objects.filter(
+                            suite__job=job,
+                            suite__name=line["msg"]["definition"],
+                            name=line["msg"]["case"]).values_list(
+                                "id", flat=True)
+                        if case_id:
+                            line["msg"]["case_id"] = case_id[0]
+
+                if sys.version_info < (3, 0):
+                    for line in log_data:
+                        remove_broken_string(line)
 
             except IOError:
                 log_data = []
@@ -1403,6 +1413,7 @@ def job_detail(request, pk):
 
     log_file = job.output_file()
     if log_file:
+        # FIXME: remove this second setting of job_file_size when V1 is removed
         with log_file as f:
             f.seek(0, 2)
             job_file_size = f.tell()
