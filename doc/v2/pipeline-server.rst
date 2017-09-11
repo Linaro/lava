@@ -46,6 +46,65 @@ If the value is not set or set to ``true``, the Results app will be displayed.
 
 .. seealso:: :ref:`setting_up_pipeline_instance`
 
+.. index:: archive v1
+
+.. _archiving_v1:
+
+Support for a V1 archive
+========================
+
+Some admins may choose to keep an archive of the V1 test data after the main
+instance has upgraded beyond 2017.10. Such an archive would become a read-only
+instance, created from a backup of the main instance. Important considerations
+for such an archive include:
+
+* Choose a machine which is running Debian stable or oldstable (stretch or
+  jessie respectively). Remember that rendering the V1 test data can still
+  involve appreciable resources on the machine. Avoid the temptation to put the
+  archive onto a physical or virtual machine with less memory or fewer cores
+  than the original machine.
+
+  * Restore a backup of the database and ``/etc/lava-server/instance.conf``
+    on a clean install of ``lava-server``. Do **not** be tempted to optimise or
+    delete data from this backup, this is completely unnecessary and may cause
+    the deletion of V1 test data from the archive.
+
+    .. seealso:: :ref:`migrating_postgresql_versions`
+
+* Make changes in the :ref:`django admin interface<django_admin_interface>`
+
+  * Disable all workers - the archive will not be running any test jobs. These
+    workers only exist in the restored database and have no relevance to the
+    archive.
+
+  * Remove permissions from all users except a few admins.
+
+  * Retire all devices - **do not simply delete** the database objects. This
+    will prevent new V2 submissions being accepted whilst allowing the archive
+    to present the V1 test data.
+
+* Make changes in ``/etc/lava-server/settings.conf`` (JSON syntax).
+
+  * Set the ``ARCHIVED`` flag to ``True``.
+
+  * Set a useful ``BRANDING_MESSAGE`` which will show on the LAVA home page to
+    inform users that this is an archived instance.
+
+* Upgrade to 2017.10 and then ensure that the archive **never** upgrades passed
+  that version - the next and subsequent releases will deliberately remove
+  access to the test data which is meant to be preserved in this archive.
+
+  * This upgrade will make the dashboard objects read-only, so that new
+    Filters, Image Reports and Image Reports 2.0 cannot be created and existing
+    ones cannot be modified.
+
+  * Other packages in the base system can be upgraded, although care may be
+    needed with direct dependencies of ``lava-server`` like ``python-django``.
+
+.. important:: The support for an archive **will be removed in 2017.11** which
+   will include changes to make V1 test data invisible on instances which
+   upgrade. This section will be removed in 2017.11.
+
 .. _pipeline_install_considerations:
 
 Initial considerations
