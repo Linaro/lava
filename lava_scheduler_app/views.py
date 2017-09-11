@@ -1145,23 +1145,6 @@ def job_submit(request):
         return HttpResponse(template.render(response_data, request=request))
 
 
-@BreadCrumb("Submit Job", parent=index)
-def job_submit_wizard(request):
-
-    is_authorized = False
-    if request.user and request.user.has_perm(
-            'lava_scheduler_app.add_testjob'):
-        is_authorized = True
-
-    response_data = {
-        'is_authorized': is_authorized,
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
-        'device_types': filter_device_types(request.user),
-    }
-    template = loader.get_template("lava_scheduler_app/job_wizard.html")
-    return HttpResponse(template.render(response_data, request=request))
-
-
 def _prepare_template(request):
 
     boot_type = request.POST.get("boot_type")

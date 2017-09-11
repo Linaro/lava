@@ -45,8 +45,7 @@
 <p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% else %}
-<p>You can use the <a href="{% url 'lava.scheduler.job.submit_wizard' %}">Job Submission Wizard GUI</a> for submitting jobs (used for deprecated V1 only).</p>
-<p>Otherwise, paste your job definition here. Alternatively, you can paste a URL to your job definition file.</p>
+<p>Paste your job definition here. Alternatively, you can paste a URL to your job definition file.</p>
 
 <form action="" method="post">
   {% csrf_token %}
