@@ -620,6 +620,10 @@ class Command(BaseCommand):
         else:
             self.logger.setLevel(logging.DEBUG)
 
+        if os.path.exists('/etc/lava-server/worker.conf'):
+            self.logger.error("[FAIL] lava-master must not be run on a remote worker!")
+            sys.exit(2)
+
         self.logger.info("Dropping privileges")
         if not self.drop_privileges(options['user'], options['group']):
             self.logger.error("Unable to drop privileges")
@@ -685,13 +689,6 @@ class Command(BaseCommand):
         signal.signal(signal.SIGQUIT, signal_to_pipe)
         poller.register(pipe_r, zmq.POLLIN)
 
-        if os.path.exists('/etc/lava-server/worker.conf'):
-            self.logger.error("[FAIL] lava-master must not be run on a remote worker!")
-            self.controler.close(linger=0)
-            self.pull_socket.close(linger=0)
-            context.term()
-            sys.exit(2)
-
         self.logger.info("[INIT] LAVA dispatcher-master has started.")
         self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
 
@@ -754,10 +751,31 @@ class Command(BaseCommand):
                 self.logger.info("[RESET] database connection reset.")
                 continue
 
-        # Closing sockets and droping messages.
-        self.logger.info("[CLOSE] Closing the sockets and dropping messages")
+        # Drop controler socket: the protocol does handle lost messages
+        self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
         self.controler.close(linger=0)
-        self.pull_socket.close(linger=0)
+
+        # Carefully close the logging socket as we don't want to lose messages
+        self.logger.info("[CLOSE] Disconnect logging socket and process messages")
+        endpoint = self.pull_socket.getsockopt(zmq.LAST_ENDPOINT)
+        self.logger.debug("unbinding from '%s'", endpoint)
+        self.pull_socket.unbind(endpoint)
+
+        poller = zmq.Poller()
+        poller.register(self.pull_socket, zmq.POLLIN)
+        while True:
+            try:
+                sockets = dict(poller.poll(5000))
+            except zmq.error.ZMQError:
+                continue
+
+            if sockets.get(self.pull_socket) == zmq.POLLIN:
+                self.logging_socket()
+            else:
+                break
+
+        self.logger.info("[CLOSE] Closing the logging socket: the queue is empty")
+        self.pull_socket.close()
         if options['encrypt']:
             auth.stop()
         context.term()
