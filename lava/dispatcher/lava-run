@@ -33,15 +33,15 @@ import sys
 import traceback
 import yaml
 
-from lava_dispatcher.pipeline.action import (
+from lava_dispatcher.action import (
     InfrastructureError,
     JobCanceled,
     LAVABug,
     LAVAError
 )
-from lava_dispatcher.pipeline.log import YAMLLogger
-from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.log import YAMLLogger
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 
 
 def parser():

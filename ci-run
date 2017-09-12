@@ -35,14 +35,15 @@ if [ ${PEP8} = 2 ]; then
     exit 0
 fi
 
+echo "Removing old .pyc files"
+echo
+find . -name '*.pyc' -delete
+
 echo "Starting unit tests"
 echo
 
 python setup.py test "$@"
 
-# to run python3 unit tests, you can use
-# but the python3 dependencies are not automatically installed.
-
 if [ ${ALL} = 1 ]; then
-    python3 -m unittest discover -v lava_dispatcher.pipeline
+    python3 -m unittest discover -v lava_dispatcher/test
 fi

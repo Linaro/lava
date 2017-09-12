@@ -34,8 +34,8 @@ import sys
 import time
 import yaml
 
-from lava_dispatcher.pipeline.log import YAMLLogger
-from lava_dispatcher.pipeline.utils.udev import get_udev_devices
+from lava_dispatcher.log import YAMLLogger
+from lava_dispatcher.utils.udev import get_udev_devices
 
 # Wait 10s maximum to close the socket
 LINGER = 10000

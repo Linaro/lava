@@ -10,7 +10,7 @@
 #Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
 LAVA_MULTI_NODE_API="LAVA_SEND"
 #MESSAGE_TIMEOUT=5
-#MESSAGE_NEED_ACK=yes
+MESSAGE_NEED_ACK=
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 

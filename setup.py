@@ -26,44 +26,28 @@ setup(
         'Topic :: Software Development :: Embedded Systems',
         'Topic :: Software Development :: Testing',
     ],
-    entry_points="""
-    [lava.commands]
-    dispatch = lava.dispatcher.commands:dispatch
-    connect = lava.dispatcher.commands:connect
-    devices = lava.dispatcher.commands:devices
-    power-cycle = lava.dispatcher.commands:power_cycle
-
-    [lava.signal_handlers]
-    add-duration = lava_dispatcher.signals.duration:AddDuration
-    arm-probe = lava_dispatcher.signals.armprobe:ArmProbe
-    shell-hooks = lava_dispatcher.signals.shellhooks:ShellHooks
-    """,
     packages=find_packages(),
     namespace_packages=['lava'],
     package_data={
         'lava_dispatcher': [
-            'default-config/lava-dispatcher/lava-dispatcher.conf',
-            'default-config/lava-dispatcher/lava-dispatcher.conf',
-            'default-config/lava-dispatcher/device-defaults.conf',
-            'default-config/lava-dispatcher/device-types/*.conf',
-            'default-config/lava-dispatcher/devices/*.conf',
-            'pipeline/device_types/*.conf',
-            'pipeline/devices/*.conf',
-            'pipeline/devices/*.yaml',
-            'device/sdmux.sh',
             'device/dynamic_vm_keys/lava*',
+            'devices/*.yaml',
             'lava_test_shell/lava-add-keys',
             'lava_test_shell/lava-add-sources',
             'lava_test_shell/lava-background-process-start',
             'lava_test_shell/lava-background-process-stop',
             'lava_test_shell/lava-echo-ipv4',
-            'lava_test_shell/lava-vm-groups-setup-host',
             'lava_test_shell/lava-installed-packages',
             'lava_test_shell/lava-install-packages',
+            'lava_test_shell/lava-lxc-device-add',
+            'lava_test_shell/lava-lxc-device-wait-add',
             'lava_test_shell/lava-os-build',
+            'lava_test_shell/lava-target-ip',
+            'lava_test_shell/lava-target-mac',
             'lava_test_shell/lava-test-case',
             'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-case-metadata',
+            'lava_test_shell/lava-test-reference',
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
             'lava_test_shell/lava-test-set',
@@ -76,23 +60,10 @@ setup(
             'lava_test_shell/distro/ubuntu/*',
             'lava_test_shell/distro/debian/*',
             'lava_test_shell/distro/oe/*',
-            'pipeline/lava_test_shell/lava-test-case',
-            'pipeline/lava_test_shell/lava-test-runner',
-            'pipeline/lava_test_shell/lava-target-ip',
-            'pipeline/lava_test_shell/lava-target-mac',
-            'pipeline/lava_test_shell/lava-test-reference',
-            'pipeline/lava_test_shell/multi_node/*',
-        ],
-        'linaro_dashboard_bundle': [
-            'schemas/*',
-            'test_documents/*',
         ],
     },
     install_requires=[
-        'json-schema-validator >= 2.3',
-        'lava-tool >= 0.4',
         'pexpect >= 4.2',
-        'configglue',
         'PyYAML',
         'pyserial >= 2.6',
         '%s' % lzma,
@@ -100,16 +71,14 @@ setup(
         'netifaces >= 0.10.0',
         'nose',
         'pyzmq',
-        'configobj',
         'pyudev >= 0.21',
         'pytz',
         'file-magic',
         'setproctitle >= 1.1.8'
     ],
-    test_suite='lava_dispatcher.tests.test_suite',
+    test_suite='lava_dispatcher.test',
     tests_require=[
         'pep8 >= 1.4.6',
-        'testscenarios >= 0.4'
     ],
     data_files=[
         ('/usr/share/lava-dispatcher/',
@@ -129,7 +98,6 @@ setup(
             ['etc/lava-slave.service'])
     ],
     scripts=[
-        'lava-dispatch',
         'lava/dispatcher/lava-run',
         'lava/dispatcher/lava-dispatcher-slave',
         'lava/dispatcher/lava-slave'
