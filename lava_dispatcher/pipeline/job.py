@@ -22,7 +22,9 @@ import atexit
 import errno
 import shutil
 import tempfile
+import datetime
 import time
+import pytz
 import traceback
 import os
 import yaml
@@ -164,6 +166,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         LAVAError) if it fails.
         If simulate is True, then print the pipeline description.
         """
+        self.logger.info("Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow()))
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
