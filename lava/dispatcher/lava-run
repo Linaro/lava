@@ -175,6 +175,8 @@ def main():
         signal.signal(signal.SIGUSR1, cancelling_handler)
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
+        # Should be an absolute directory
+        options.output_dir = os.path.abspath(options.output_dir)
         # Create the output directory
         try:
             os.makedirs(options.output_dir, mode=0o755)
