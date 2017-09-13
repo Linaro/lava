@@ -169,6 +169,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
                             'case': case_id,
+                            'level': self.level,
                             'result': match['result'],
                             'extra': {'test_case_id': match['test_case_id'].strip()}
                         }
@@ -187,6 +188,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
                             'case': case_id,
+                            'level': self.level,
                             'result': 'pass',
                             'measurement': float(match['measurement']),
                             'extra': {'test_case_id': match['test_case_id'].strip()}

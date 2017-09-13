@@ -280,10 +280,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
             # Begin the action
-            # TODO: this shouldn't be needed
-            # The ci-test does not set the default logging class
-            if isinstance(action.logger, YAMLLogger):
-                action.logger.setMetadata(action.level, action.name)
             try:
                 with action.timeout(max_end_time) as action_max_end_time:
                     # Add action start timestamp to the log message

@@ -51,18 +51,10 @@ class ZMQPushHandler(logging.Handler):
         self.socket.connect(logging_url)
 
         self.job_id = str(job_id)
-        self.action_level = '0'
-        self.action_name = 'dispatcher'
-
         self.formatter = logging.Formatter("%(message)s")
 
-    def setMetadata(self, level, name):
-        self.action_level = level
-        self.action_name = name
-
     def emit(self, record):
-        msg = [b(self.job_id), b(self.action_level), b(self.action_name),
-               b(self.formatter.format(record))]
+        msg = [b(self.job_id), b(self.formatter.format(record))]
         self.socket.send_multipart(msg)
 
     def close(self):
@@ -85,10 +77,6 @@ class YAMLLogger(logging.Logger):
     def close(self):
         if self.handler is not None:
             self.handler.context.destroy()
-
-    def setMetadata(self, level, name):
-        if isinstance(self.handler, ZMQPushHandler):
-            self.handler.setMetadata(level, name)
 
     def log_message(self, level, level_name, message, *args, **kwargs):  # pylint: disable=unused-argument
         # Build the dictionnary
@@ -144,4 +132,6 @@ class YAMLLogger(logging.Logger):
         self.log_message(logging.INFO, 'feedback', message, *args, **kwargs)
 
     def results(self, results, *args, **kwargs):
+        if 'extra' in results and 'level' not in results:
+            raise Exception("'level' is mandatory when 'extra' is used")
         self.log_message(logging.INFO, 'results', results, *args, **kwargs)
