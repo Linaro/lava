@@ -231,7 +231,7 @@ class Command(BaseCommand):
     def logging_socket(self):
         msg = self.pull_socket.recv_multipart()
         try:
-            (job_id, level, name, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("Failed to parse log message, skipping: %s", msg)
@@ -251,11 +251,6 @@ class Command(BaseCommand):
             self.logger.error(
                 "[%s] Invalid log line, missing \"lvl\" or \"msg\" keys: %s",
                 job_id, message)
-            return
-
-        # Clear filename
-        if '/' in level or '/' in name:
-            self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
             return
 
         # Find the handler (if available)
@@ -278,7 +273,7 @@ class Command(BaseCommand):
             except TestJob.DoesNotExist:
                 self.logger.error("[%s] Unknown job id", job_id)
                 return
-            meta_filename = create_metadata_store(message_msg, job, level)
+            meta_filename = create_metadata_store(message_msg, job)
             ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
             if not ret:
                 self.logger.warning(

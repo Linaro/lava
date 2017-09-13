@@ -78,13 +78,17 @@ def append_failure_comment(job, msg):
     logger.error(msg)
 
 
-def create_metadata_store(results, job, level):
+def create_metadata_store(results, job):
     """
     Uses the OrderedDict import to correctly handle
     the yaml.load
     """
     if 'extra' not in results:
         return None
+    level = results.get('level')
+    if level is None:
+        return None
+
     logger = logging.getLogger('dispatcher-master')
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
