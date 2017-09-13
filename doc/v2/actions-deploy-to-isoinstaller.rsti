@@ -2,7 +2,7 @@
 
 .. _deploy_to_iso_installer:
 
-to: iso_installer
+to: iso-installer
 *****************
 
 Provides QEMU operations using an operating system installer into a new image
