@@ -31,6 +31,12 @@ class ZMQPushHandler(logging.Handler):
     def __init__(self, logging_url, master_cert, slave_cert, job_id, ipv6):
         super(ZMQPushHandler, self).__init__()
 
+        # Keep track of the parameters
+        self.logging_url = logging_url
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
+        self.ipv6 = ipv6
+
         # Create the PUSH socket
         # pylint: disable=no-member
         self.context = zmq.Context()

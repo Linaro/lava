@@ -258,26 +258,31 @@ class LxcCreateUdevRuleAction(DeployAction):
             return connection
 
         device_info = self.job.device.get('device_info', [])
-        device_info_file = os.path.join(self.mkdtemp(), 'device-info')
+        device_info_file = os.path.join(self.mkdtemp(), 'device-info.yaml')
         with open(device_info_file, 'w') as device_info_obj:
             device_info_obj.write(str(device_info))
         self.logger.debug("device info file '%s' created with:\n %s",
                           device_info_file, device_info)
         for device in device_info:
             data = {'serial-number': str(device.get('board_id', '')),
-                    'serial': '{serial}',
                     'lxc-name': lxc_name,
-                    'device-info-file': device_info_file}
+                    'device-info-file': device_info_file,
+                    'logging_url': self.logger.handler.logging_url,
+                    'master_cert': self.logger.handler.master_cert,
+                    'slave_cert': self.logger.handler.slave_cert,
+                    'ipv6': self.logger.handler.ipv6,
+                    'job_id': self.logger.handler.job_id}
             # The rules file will be something like
             # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
             # where, 100 is just an arbitrary number which specifies loading
             # priority for udevd
             rules_file = os.path.join(UDEV_RULES_DIR,
                                       '100-' + lxc_name + '.rules')
+            str_lxc_udev_rule = lxc_udev_rule(data)
             with open(rules_file, 'wa') as f_obj:
-                f_obj.write(lxc_udev_rule(data))
+                f_obj.write(str_lxc_udev_rule)
             self.logger.debug("udev rules file '%s' created with:\n %s",
-                              rules_file, lxc_udev_rule(data))
+                              rules_file, str_lxc_udev_rule)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
