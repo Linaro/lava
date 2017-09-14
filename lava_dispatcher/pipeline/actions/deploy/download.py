@@ -35,6 +35,10 @@ import bz2
 import contextlib
 import lzma
 import zlib
+from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
@@ -42,13 +46,23 @@ from lava_dispatcher.pipeline.action import (
     LAVABug,
     Pipeline,
 )
-from lava_dispatcher.pipeline.logical import RetryAction
+from lava_dispatcher.pipeline.logical import (
+    Deployment,
+    RetryAction,
+)
 from lava_dispatcher.pipeline.utils.compression import untar_file
+from lava_dispatcher.pipeline.utils.filesystem import (
+    copy_to_lxc,
+    lava_lxc_home,
+)
 from lava_dispatcher.pipeline.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
     SCP_DOWNLOAD_CHUNK_SIZE,
+    LAVA_LXC_HOME,
 )
+from lava_dispatcher.pipeline.actions.boot.fastboot import EnterFastbootAction
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
 
 if sys.version_info[0] == 2:
     import urlparse as lavaurl
@@ -90,6 +104,8 @@ class DownloaderAction(RetryAction):
             action = HttpDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
         elif url.scheme == 'file':
             action = FileDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
+        elif url.scheme == 'lxc':
+            action = LxcDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.internal_pipeline.add_action(action)
@@ -512,6 +528,51 @@ class ScpDownloadAction(DownloadHandler):
                     pass
 
 
+class LxcDownloadAction(Action):
+    """
+    Map an already downloaded resource to the correct path.
+    """
+
+    def __init__(self, key, path, url):
+        super(LxcDownloadAction, self).__init__()
+        self.name = "lxc-download"
+        self.description = "Map to the correct lxc path"
+        self.summary = "lxc download"
+        self.key = key
+        self.path = path
+        self.url = url
+
+    def validate(self):
+        super(LxcDownloadAction, self).validate()
+        if self.url.scheme != 'lxc':
+            self.errors = "lxc:/// url scheme is invalid"
+        if not self.url.path:
+            self.errors = "Invalid path in lxc:/// url"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(LxcDownloadAction, self).run(connection,
+                                                        max_end_time, args)
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            raise JobError("Erroneous lxc url '%s' without protocol %s" %
+                           self.url, LxcProtocol.name)
+
+        fname = os.path.basename(self.url.path)
+        lxc_home = lava_lxc_home(lxc_name, self.job.parameters['dispatcher'])
+        file_path = os.path.join(lxc_home, fname)
+        self.logger.debug("Found '%s' matching '%s'", file_path, fname)
+        if os.path.exists(file_path):
+            self.set_namespace_data(action='download-action', label=self.key,
+                                    key='file', value=file_path)
+        else:
+            raise JobError("Resource unavailable: %s" % self.url.path)
+        return connection
+
+
 class QCowConversionAction(Action):
     """
     explicit action for qcow conversion to avoid reliance
@@ -551,4 +612,113 @@ class QCowConversionAction(Action):
 
         self.set_namespace_data(action=self.name, label=self.key, key='file', value=fname)
         self.set_namespace_data(action=self.name, label='file', key=self.key, value=fname)
+        return connection
+
+
+class Download(Deployment):
+    """
+    Strategy class for a download deployment.
+    Downloads the relevant parts, copies to LXC if available.
+    """
+    compatibility = 1
+    name = 'download'
+
+    def __init__(self, parent, parameters):
+        super(Download, self).__init__(parent)
+        self.action = DownloadAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'download':
+            return False, '"to" parameter is not "download"'
+        return True, 'accepted'
+
+
+class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+
+    def __init__(self):
+        super(DownloadAction, self).__init__()
+        self.name = "download-deploy"
+        self.description = "download files and copy to LXC if available"
+        self.summary = "download deployment"
+        self.download_dir = None
+
+    def validate(self):
+        super(DownloadAction, self).validate()
+        self.set_namespace_data(action=self.name, label='download-dir',
+                                key='dir', value=self.download_dir)
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
+        # Check if the device has a power command such as HiKey, Dragonboard,
+        # etc. against device that doesn't like Nexus, etc.
+        # This is required in order to power on the device so that when the
+        # test job writer wants to perform some operation using a
+        # lava-test-shell action that follows, this becomes mandatory. Think of
+        # issuing any fastboot commands on the powered on device.
+        #
+        # NOTE: Add more power on strategies, if required for specific devices.
+        if self.job.device.get('fastboot_via_uboot', False):
+            self.internal_pipeline.add_action(ConnectDevice())
+            self.internal_pipeline.add_action(UBootEnterFastbootAction())
+        elif self.job.device.power_command:
+            self.force_prompt = True
+            self.internal_pipeline.add_action(ConnectDevice())
+            self.internal_pipeline.add_action(ResetDevice())
+        else:
+            self.internal_pipeline.add_action(EnterFastbootAction())
+
+        self.download_dir = self.mkdtemp()
+        image_keys = sorted(parameters['images'].keys())
+        for image in image_keys:
+            if image != 'yaml_line':
+                self.internal_pipeline.add_action(DownloaderAction(
+                    image, self.download_dir))
+        self.internal_pipeline.add_action(CopyToLxcAction())
+
+
+class CopyToLxcAction(DeployAction):
+    """
+    Copy downloaded files to LXC within LAVA_LXC_HOME.
+    """
+
+    def __init__(self):
+        super(CopyToLxcAction, self).__init__()
+        self.name = "copy-to-lxc"
+        self.description = "copy files to lxc"
+        self.summary = "copy to lxc"
+        self.retries = 3
+        self.sleep = 10
+
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+        connection = super(CopyToLxcAction, self).run(connection, max_end_time,
+                                                      args)
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        else:
+            return connection
+
+        # Copy each file to LXC.
+        namespace = self.parameters['namespace']
+        images = self.data[namespace]['download-action'].keys()
+        for image in images:
+            src = self.get_namespace_data(action='download-action',
+                                          label=image, key='file')
+            # The archive extraction logic and some deploy logic in
+            # DownloadHandler will set a label 'file' in the namespace but
+            # that file would have been dealt with and the actual path may not
+            # exist, though the key exists as part of the namespace, which we
+            # can ignore safely, hence we continue on invalid src.
+            if not src:
+                continue
+            copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
         return connection

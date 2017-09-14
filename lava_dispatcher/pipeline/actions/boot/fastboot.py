@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.actions.boot import (
     OverlayUnpack,
 )
 from lava_dispatcher.pipeline.power import ResetDevice
+from lava_dispatcher.pipeline.utils.constants import LAVA_LXC_HOME
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
@@ -209,7 +210,7 @@ class FastbootBootAction(Action):
         if not boot_img:
             raise JobError("Boot image not found, unable to boot")
         else:
-            boot_img = os.path.join('/', os.path.basename(boot_img))
+            boot_img = os.path.join(LAVA_LXC_HOME, os.path.basename(boot_img))
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
                         '-s', serial_number, 'boot',
                         boot_img] + self.job.device['fastboot_options']

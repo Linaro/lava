@@ -30,7 +30,10 @@ import logging
 from configobj import ConfigObj
 
 from lava_dispatcher.pipeline.action import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.pipeline.utils.constants import LXC_PATH
+from lava_dispatcher.pipeline.utils.constants import (
+    LXC_PATH,
+    LAVA_LXC_HOME,
+)
 from lava_dispatcher.pipeline.utils.compression import (
     decompress_file,
     untar_file,
@@ -226,30 +229,55 @@ def lxc_path(dispatcher_config):
         return LXC_PATH
 
 
-def copy_to_lxc(lxc_name, src, dispatcher_config):
-    """Copies given file in SRC to lxc filesystem '/' with the provided
-    LXC_NAME and configured lxc_path
+def lava_lxc_home(lxc_name, dispatcher_config):
+    """
+    Creates lava_lxc_home if it is unavailable and Returns absolute path of
+    LAVA_LXC_HOME as seen from the host machine.
 
-    For example, SRC such as '/var/lib/lava/dispatcher/tmp/tmpuuI_U0/system.img'
-    will get copied to '/var/lib/lxc/lxc-nexus4-test-None/rootfs/system.img'
+    Takes into account the dispatcher specific path configured via lxc_path
+    key in dispatcher_config.
+    """
+    path = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
+                        LAVA_LXC_HOME.lstrip('/'))
+    # Create lava_lxc_home if it is unavailable
+    if not os.path.exists(path):
+        os.makedirs(path, 0o755)
+    return path
+
+
+def copy_to_lxc(lxc_name, src, dispatcher_config):
+    """Copies given file in SRC to LAVA_LXC_HOME with the provided LXC_NAME
+    and configured lxc_path
+
+    For example,
+
+    SRC such as:
+    '/var/lib/lava/dispatcher/tmp/tmpuuI_U0/system.img'
+
+    will get copied to:
+    '/var/lib/lxc/lxc-nexus4-test-None/rootfs/lava-lxc/system.img'
+
     where, '/var/lib/lxc' is the lxc_path and 'lxc-nexus4-test-None' is the
     LXC_NAME
 
-    Returns the destination path within lxc. For example, '/boot.img'
+    Returns the destination path within lxc. For example, '/lava-lxc/boot.img'
 
     Raises JobError if the copy failed.
     """
     filename = os.path.basename(src)
-    dst = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
-                       filename)
+    dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
     logger = logging.getLogger('dispatcher')
-    logger.debug("copying %s to %s" % (filename, lxc_name))
-    try:
-        shutil.copyfile(src, dst)
-    except IOError:
-        raise JobError("Unable to copy image: %s" % src)
+    if src == dst:
+        logger.debug("Not copying since src: '%s' and dst: '%s' are same" %
+                     (src, dst))
+    else:
+        logger.debug("Copying %s to %s" % (filename, lxc_name))
+        try:
+            shutil.copyfile(src, dst)
+        except IOError:
+            raise JobError("Unable to copy image: %s" % src)
 
-    return os.path.join('/', filename)
+    return os.path.join(LAVA_LXC_HOME, filename)
 
 
 def copy_overlay_to_sparse_fs(image, overlay):
