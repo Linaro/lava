@@ -14,6 +14,7 @@ import re
 import sys
 
 from django import forms
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
@@ -977,6 +978,7 @@ def health_job_list(request, pk):
             'transition_table': trans_table,
             'health_job_table': health_table,
             'show_forcehealthcheck':
+                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
@@ -2478,6 +2480,7 @@ def device_detail(request, pk):
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
             'show_forcehealthcheck':
+                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
