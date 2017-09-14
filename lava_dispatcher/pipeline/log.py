@@ -57,10 +57,9 @@ class ZMQPushHandler(logging.Handler):
         msg = [b(self.job_id), b(self.formatter.format(record))]
         self.socket.send_multipart(msg)
 
-    def close(self):
+    def close(self, linger):
         super(ZMQPushHandler, self).close()
-        self.socket.close()
-        self.context.destroy()
+        self.context.destroy(linger=linger)
 
 
 class YAMLLogger(logging.Logger):
@@ -74,9 +73,11 @@ class YAMLLogger(logging.Logger):
         self.addHandler(self.handler)
         return self.handler
 
-    def close(self):
+    def close(self, linger=-1):
         if self.handler is not None:
-            self.handler.context.destroy()
+            self.handler.close(linger)
+            self.removeHandler(self.handler)
+            self.handler = None
 
     def log_message(self, level, level_name, message, *args, **kwargs):  # pylint: disable=unused-argument
         # Build the dictionnary
