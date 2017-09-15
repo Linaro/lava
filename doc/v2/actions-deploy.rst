@@ -63,3 +63,4 @@ Parameter List
 .. include:: actions-deploy-to-tftp.rsti
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti
+.. include:: actions-deploy-to-download.rsti

@@ -34,7 +34,7 @@ Glossary of terms
 
 **J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
-**L** [ :term:`lxc` ]
+**L** [ :term:`LAVA_LXC_HOME` ] [ :term:`lxc` ] [ :term:`lxc://` ]
 
 **M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`metadata` ]
 [ :term:`MultiNode` ]
@@ -299,6 +299,13 @@ Glossary of terms
     definition will be the unchanged YAML from the original submission; the job
     definition will be the parsed YAML for this particular device within the
     MultiNode job.
+
+  LAVA_LXC_HOME
+    The path within :term:`lxc` set to ``/lava-lxc`` by default. From the host
+    machine this path would be something like
+    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc``. Any files downloaded by
+    :ref:`deploy_to_download` will be copied to this location which can then be
+    accessible from within the container.
 
   LXC
     `Linux containers <https://en.wikipedia.org/wiki/LXC>`_ are used in LAVA to
