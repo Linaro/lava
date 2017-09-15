@@ -310,6 +310,19 @@ Glossary of terms
     .. seealso:: :ref:`deploy_using_lxc`, :ref:`lxc_deploy`,
       :ref:`feedback_using_lxc` and :ref:`lxc_protocol_reference`
 
+  lxc://
+    This is a URL scheme specific to LAVA which points to files available in
+    :term:`LAVA_LXC_HOME`. An URL like ``lxc:///boot.img`` will refer to
+    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc/boot.img`` on the host or
+    ``/lava-lxc/boot.img`` within the :term:`lxc`. This URL scheme is valid
+    only when :ref:`lxc_protocol_reference` is defined in the test job. It also
+    only makes sense for the ``deploy`` and ``boot`` actions.
+
+    .. note:: Pay attention to 3 forward slashes in the URL when referring to a
+              file.
+
+    .. seealso:: :ref:`deploy_to_download`
+
   master
     The master is a server machine with ``lava-server`` installed and it
     optionally supports one or more :term:`remote workers <remote worker>`
