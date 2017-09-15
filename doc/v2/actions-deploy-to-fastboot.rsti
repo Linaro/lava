@@ -19,27 +19,28 @@ the device. The list of images will depend on the test job and the test device.
 The available elements determine the command arguments passed to ``fastboot``
 inside the LXC i.e., the partition to be flashed.
 
-* :ref:`deploy_to_fastboot_images_boot`
-* :ref:`deploy_to_fastboot_images_cache`
-* :ref:`deploy_to_fastboot_images_ptable`
-* :ref:`deploy_to_fastboot_images_system`
-* :ref:`deploy_to_fastboot_images_userdata`
-* :ref:`deploy_to_fastboot_images_vendor`
-* :ref:`deploy_to_fastboot_images_rootfs`
+partition
+---------
 
-.. index:: deploy to fastboot images boot
+The partition is a text string which specifies the partition to which the
+image will be flashed using the ``fastboot`` command.
 
-.. _deploy_to_fastboot_images_boot:
+In the example, the partition to be flashed on the :term:`DUT` is ``system``.
 
-boot
-----
+.. note:: The partition text is passed to fastboot command as given in the
+   job, for example, ``fastboot flash system /lava-lxc/rootfs.img``, hence
+   take caution to pass the right partition name.
 
-.. index:: deploy to fastboot images boot url
 
-.. _deploy_to_fastboot_images_boot_url:
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+     :code: yaml
+     :start-after: to: fastboot
+     :end-before: reboot:
 
-url
-^^^
+.. _deploy_to_fastboot_images_url:
+
+url *
+^^^^^
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -54,8 +55,9 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+ * ``lxc://``
 
-.. _deploy_to_fastboot_images_boot_compression:
+.. _deploy_to_fastboot_images_compression:
 
 compression
 ^^^^^^^^^^^
@@ -68,7 +70,7 @@ If the image is compressed, the compression method **must** be specified.
  * ``bz2``
  * ``xz``
 
-.. _deploy_to_fastboot_images_boot_reboot:
+.. _deploy_to_fastboot_images_reboot:
 
 reboot
 ^^^^^^
@@ -82,118 +84,7 @@ image, then the method **must** be specified.
  * ``fastboot-reboot``
  * ``fastboot-reboot-bootloader``
 
-.. _deploy_to_fastboot_images_cache:
-
-cache
------
-
-.. index:: deploy to fastboot images cache url
-
-.. _deploy_to_fastboot_images_cache_url:
-
-url
-^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. _deploy_to_fastboot_images_cache_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. _deploy_to_fastboot_images_cache_reboot:
-
-reboot
-^^^^^^
-
-If there is a need to restart or reboot the :term:`DUT` after flashing cache
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
-
-.. _deploy_to_fastboot_images_ptable:
-
-ptable
-------
-
-.. index:: deploy to fastboot images ptable url
-
-.. _deploy_to_fastboot_images_ptable_url:
-
-url
-^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. _deploy_to_fastboot_images_ptable_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. _deploy_to_fastboot_images_ptable_reboot:
-
-reboot
-^^^^^^
-
-If there is a need to restart or reboot the :term:`DUT` after flashing ptable
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
-
-.. index:: deploy to fastboot images system
-
-.. _deploy_to_fastboot_images_system:
-
-system
-------
+.. _deploy_to_fastboot_images_archive:
 
 archive
 ^^^^^^^
@@ -205,41 +96,7 @@ need the ``archive`` option specified to unpack the system image correctly.
 
    archive: tar
 
-.. _deploy_to_fastboot_images_system_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. index:: deploy to fastboot images system url
-
-.. _deploy_to_fastboot_images_system_url:
-
-url
-^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. _deploy_to_fastboot_images_system_apply-overlay:
+.. _deploy_to_fastboot_images_apply-overlay:
 
 apply-overlay
 ^^^^^^^^^^^^^
@@ -255,210 +112,29 @@ necessary action to handle these type of images.
 
 .. seealso:: The sparse image format is defined in `sparse_format.h`_
 
-.. _deploy_to_fastboot_images_system_reboot:
+.. _deploy_to_fastboot_images_md5sum:
 
-reboot
+md5sum
 ^^^^^^
 
-If there is a need to restart or reboot the :term:`DUT` after flashing system
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
-
-.. index:: deploy to fastboot images userdata
-
-.. _deploy_to_fastboot_images_userdata:
-
-userdata
---------
-
-.. index:: deploy to fastboot images userdata url
-
-.. _deploy_to_fastboot_images_userdata_url:
-
-url
-^^^
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. _deploy_to_fastboot_images_userdata_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. _deploy_to_fastboot_images_userdata_reboot:
-
-reboot
-^^^^^^
-
-If there is a need to restart or reboot the :term:`DUT` after flashing userdata
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
-
-.. index:: deploy to fastboot images vendor
-
-.. _deploy_to_fastboot_images_vendor:
-
-vendor
-------
-
-.. index:: deploy to fastboot images vendor url
-
-.. _deploy_to_fastboot_images_vendor_url:
-
-url
-^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. _deploy_to_fastboot_images_vendor_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. _deploy_to_fastboot_images_vendor_reboot:
-
-reboot
-^^^^^^
-
-If there is a need to restart or reboot the :term:`DUT` after flashing vendor
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
-
-.. index:: deploy to fastboot images rootfs
-
-.. _deploy_to_fastboot_images_rootfs:
-
-rootfs
-------
-
-archive
-^^^^^^^
-
-Some rootfs images are compressed as a tarball (``.tar.gz``), these images
-need the ``archive`` option specified to unpack the rootfs image correctly.
-
-::
-
-   archive: tar
-
-.. _deploy_to_fastboot_images_rootfs_compression:
-
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
-
-.. index:: deploy to fastboot images rootfs url
-
-.. _deploy_to_fastboot_images_rootfs_url:
-
-url
-^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. index:: deploy to fastboot images rootfs apply-overlay
-
-.. _deploy_to_fastboot_images_rootfs_apply-overlay:
-
-apply-overlay
-^^^^^^^^^^^^^
-
-Some rootfs images are shipped as sparse images which needs special handling
-with tools such as `simg2img` and `img2simg`, in order to apply LAVA specific
-overlays to it. This should be explicitly mentioned, so that LAVA will take
-necessary action to handle these type of images.
-
-::
-
-   apply-overlay: true
-
-.. seealso:: The sparse image format is defined in `sparse_format.h`_
-
-.. _sparse_format.h: https://android.googlesource.com/platform/system/core/+/master/libsparse/sparse_format.h
-
-.. _deploy_to_fastboot_images_rootfs_reboot:
-
-reboot
-^^^^^^
-
-If there is a need to restart or reboot the :term:`DUT` after flashing rootfs
-image, then the method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``hard-reset``
- * ``fastboot-reboot``
- * ``fastboot-reboot-bootloader``
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.
+
+.. _deploy_to_fastboot_images_sha256sum:
+
+sha256sum
+^^^^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+     :code: yaml
+     :start-after: system:
+     :end-before: os: debian
