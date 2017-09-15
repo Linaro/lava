@@ -263,15 +263,23 @@ class LxcCreateUdevRuleAction(DeployAction):
             device_info_obj.write(str(device_info))
         self.logger.debug("device info file '%s' created with:\n %s",
                           device_info_file, device_info)
+        logging_url = master_cert = slave_cert = ipv6 = None
+        job_id = self.job.job_id
+        if self.logger.handler:
+            logging_url = self.logger.handler.logging_url
+            master_cert = self.logger.handler.master_cert
+            slave_cert = self.logger.handler.slave_cert
+            ipv6 = self.logger.handler.ipv6
+            job_id = self.logger.handler.job_id
         for device in device_info:
             data = {'serial-number': str(device.get('board_id', '')),
                     'lxc-name': lxc_name,
                     'device-info-file': device_info_file,
-                    'logging_url': self.logger.handler.logging_url,
-                    'master_cert': self.logger.handler.master_cert,
-                    'slave_cert': self.logger.handler.slave_cert,
-                    'ipv6': self.logger.handler.ipv6,
-                    'job_id': self.logger.handler.job_id}
+                    'logging_url': logging_url,
+                    'master_cert': master_cert,
+                    'slave_cert': slave_cert,
+                    'ipv6': ipv6,
+                    'job_id': job_id}
             # The rules file will be something like
             # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
             # where, 100 is just an arbitrary number which specifies loading
