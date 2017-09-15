@@ -52,10 +52,6 @@ from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
-from lava_dispatcher.pipeline.utils.udev import (
-    get_udev_devices,
-    usb_device_wait,
-)
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
 
@@ -465,33 +461,6 @@ class TestShellAction(TestAction):
             name = "testset_" + action.lower()
         return name
 
-    def signal_lxc_add(self):
-        # the lxc namespace may not be accessible here depending on the
-        # lava-test-shell action namespace.
-        lxc_name = None
-        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
-        protocol = protocols[0] if protocols else None
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            self.logger.debug("No LXC device requested")
-            return False
-        self.logger.info(
-            "Get USB device(s) using: %s",
-            yaml.dump(self.job.device.get('device_info', [])).strip()
-        )
-        device_paths = get_udev_devices(self.job, self.logger)
-        if not device_paths:
-            self.logger.warning("No USB devices added to the LXC.")
-            return False
-        for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-            log = self.run_command(lxc_cmd)
-            self.logger.debug(log)
-            self.logger.debug("%s: device %s added", lxc_name,
-                              device)
-        return True
-
     @nottest
     def pattern_test_case(self, test_connection):
         match = test_connection.match
@@ -572,11 +541,6 @@ class TestShellAction(TestAction):
                 ret = self.signal_test_set(params)
                 if ret:
                     name = ret
-            elif name == "LXCDEVICEADD":
-                self.signal_lxc_add()
-            elif name == "LXCDEVICEWAITADD":
-                self.logger.info("Waiting for USB device(s) ...")
-                usb_device_wait(self.job, device_actions=['add'])
 
             self.signal_director.signal(name, params)
             ret_val = True
