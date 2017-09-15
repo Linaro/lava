@@ -443,7 +443,7 @@ class HttpDownloadAction(DownloadHandler):
             self.logger.error("Request timed out")
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
-            self.logger.error("Ressource not available")
+            self.logger.error("Resource not available")
             self.errors = "Unable to get '%s': %s" % (self.url.geturl(), str(exc))
         finally:
             if res is not None:
