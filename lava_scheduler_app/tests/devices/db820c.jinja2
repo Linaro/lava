@@ -1,0 +1,28 @@
+{% extends 'dragonboard-820c.jinja2' %}
+{% set exclusive = 'True' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 8 --delay 20' %}
+{% set pre_os_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m off -u 8' %}
+{% set pre_power_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 8' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 8' %}
+{% set fastboot_serial_number = '3083f595' %}
+{% set device_info = [{'board_id': '3083f595'}] %}
+{% set adb_serial_number = '3083f595' %}
+{% set connection_command = 'telnet localhost 7203' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 8' %}
+{% set flash_cmds_order = ['update',
+'ptable',
+'partition',
+'hyp',
+'modem',
+'rpm',
+'sbl1',
+'sbl2',
+'sec',
+'tz',
+'aboot',
+'boot',
+'rootfs',
+'vendor',
+'system',
+'cache',
+'userdata'] %}

@@ -1115,3 +1115,17 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
         self.assertIn('cpu-reset-message', template_dict['constants'])
+
+    def test_db820c_template(self):
+        data = """{% extends 'dragonboard-820c.jinja2' %}
+{% set adb_serial_number = '3083f595' %}
+{% set fastboot_serial_number = '3083f595' %}
+"""
+        self.assertTrue(self.validate_data('db820c-01', data))
+        test_template = prepare_jinja_template('db820c-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('dragonboard-820c', template_dict['device_type'])
+        self.assertEqual('3083f595', template_dict['adb_serial_number'])
+        self.assertEqual('3083f595', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
