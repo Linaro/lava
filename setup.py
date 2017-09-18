@@ -86,8 +86,6 @@ setup(
              'etc/dispatcher.yaml']),
         ('/etc/exports.d',
             ['etc/lava-dispatcher-nfs.exports']),
-        ('/etc/modprobe.d',
-            ['etc/lava-options.conf']),
         ('/etc/modules-load.d/',
             ['etc/lava-modules.conf']),
         ('/etc/logrotate.d/',
