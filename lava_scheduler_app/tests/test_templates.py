@@ -1143,3 +1143,13 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual('3083f595', template_dict['adb_serial_number'])
         self.assertEqual('3083f595', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
+
+    def test_docker_template(self):
+        data = "{% extends 'docker.jinja2' %}"
+        self.assertTrue(self.validate_data('docker-01', data))
+        test_template = prepare_jinja_template('docker-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('docker', template_dict['device_type'])
+        self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
+        self.assertEqual({'docker': None}, template_dict['actions']['boot']['methods'])
