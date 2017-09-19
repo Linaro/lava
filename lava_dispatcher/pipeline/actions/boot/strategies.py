@@ -23,18 +23,19 @@
 
 # pylint: disable=unused-import
 
-from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
-from lava_dispatcher.pipeline.actions.boot.pyocd import PyOCD
 from lava_dispatcher.pipeline.actions.boot.cmsis_dap import CMSIS
 from lava_dispatcher.pipeline.actions.boot.dfu import DFU
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot
-from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec
-from lava_dispatcher.pipeline.actions.boot.ssh import SshLogin, Schroot
+from lava_dispatcher.pipeline.actions.boot.docker import BootDocker
 from lava_dispatcher.pipeline.actions.boot.fastboot import BootFastboot
-from lava_dispatcher.pipeline.actions.boot.uefi_menu import UefiMenu
-from lava_dispatcher.pipeline.actions.boot.lxc import BootLxc
-from lava_dispatcher.pipeline.actions.boot.ipxe import IPXE
 from lava_dispatcher.pipeline.actions.boot.grub import Grub, GrubSequence
 from lava_dispatcher.pipeline.actions.boot.iso import BootIsoInstaller
+from lava_dispatcher.pipeline.actions.boot.ipxe import IPXE
+from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec
+from lava_dispatcher.pipeline.actions.boot.lxc import BootLxc
 from lava_dispatcher.pipeline.actions.boot.minimal import Minimal
+from lava_dispatcher.pipeline.actions.boot.pyocd import PyOCD
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
+from lava_dispatcher.pipeline.actions.boot.ssh import SshLogin, Schroot
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot
 from lava_dispatcher.pipeline.actions.boot.uefi import UefiShell
+from lava_dispatcher.pipeline.actions.boot.uefi_menu import UefiMenu
