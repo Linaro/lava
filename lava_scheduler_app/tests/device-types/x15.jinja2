@@ -33,8 +33,9 @@
         # method specific stanza
         mmc:
           commands:
+          - run findfdt
           - setenv console ttyS2,115200n8
           - setenv mmcdev 1
           - \"setenv bootpart 1:e\"
-          - run bootcmd
+          - run mmcboot
 " %}
