@@ -22,8 +22,8 @@ The test writer needs to provide the following information about the image:
 
 .. _deploy_to_usb_kernel:
 
-kernel
-======
+kernel *
+========
 
 * **kernel**: The path, within the image, to the kernel which
   will be used by the bootloader.
@@ -42,8 +42,8 @@ ramdisk
 
 .. _deploy_to_usb_dtb:
 
-dtb
-===
+dtb *
+=====
 
 * **dtb**: The path, within the image, to the dtb which will be used by the
   bootloader.
@@ -52,8 +52,8 @@ dtb
 
 .. _deploy_to_usb_uuid:
 
-UUID
-====
+UUID *
+======
 
 * **UUID**: The UUID of the partition which contains the root filesystem of the
   booted image.
@@ -62,8 +62,8 @@ UUID
 
 .. _deploy_to_usb_boot_part:
 
-boot_part
-=========
+boot_part *
+===========
 
 * **boot_part**: the partition on the media from which the bootloader can read
   the kernel, ramdisk & dtb.

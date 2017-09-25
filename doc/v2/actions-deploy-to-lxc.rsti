@@ -16,8 +16,8 @@ packages
 
 .. _deploy_os:
 
-os
-**
+os *
+****
 
 The operating system of the image **must** be specified so that the LAVA
 scripts can install packages and identify other defaults in the deployment

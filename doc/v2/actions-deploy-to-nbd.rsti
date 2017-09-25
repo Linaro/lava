@@ -27,8 +27,8 @@ To deploy images using NBDroot, arguments will be downloaded to a configured dir
 
 .. _deploy_to_nbd_kernel_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -58,8 +58,8 @@ dtb
 
 .. _deploy_to_nbd_dtb_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -104,8 +104,8 @@ There are a few important aspects:
 
 .. _deploy_to_nbd_initrd_url:
 
-url
----
+url *
+-----
 
 .. topic:: Supported schema
 
@@ -123,8 +123,8 @@ nbdroot
 
 .. _deploy_to_nbd_nbdroot_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``

@@ -47,8 +47,8 @@ QEMU requires ``,media=cdrom,readonly`` to handle the ISO correctly.
 
 .. _deploy_to_iso_installer_images_iso_url:
 
-url
-^^^
+url *
+^^^^^
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -74,8 +74,8 @@ installation to proceed without prompting for information.
 
 .. _deploy_to_iso_installer_images_iso_preseed_url:
 
-url
-^^^
+url *
+^^^^^
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
