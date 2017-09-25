@@ -147,17 +147,6 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     name = results["case"].strip()
 
     if suite.name == "lava":
-        match_action = None
-        if "level" in results:
-            match_action = ActionData.objects.filter(
-                action_level=str(results['level']),
-                testdata__testjob=suite.job)
-            if match_action:
-                match_action = match_action[0]
-                if 'duration' in results:
-                    match_action.duration = results['duration']
-                if 'timeout' in results:
-                    match_action.timeout = results['timeout']  # duration, positive integer
         try:
             result_val = TestCase.RESULT_MAP[results['result']]
         except KeyError:
@@ -176,10 +165,6 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                                        measurement=measurement,
                                        units=units,
                                        result=result_val)
-        with transaction.atomic():
-            if match_action:
-                match_action.testcase = case
-                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
 
     else:
         result = results["result"]
@@ -333,6 +318,14 @@ def build_action(action_data, testdata, submission):
     if 'max_retries' in action_data:
         max_retry = action_data['max_retries']
 
+    # find corresponding test case
+    match_case = None
+    test_cases = TestCase.objects.filter(suite__job=testdata.testjob, suite__name='lava')
+    for case in test_cases:
+        if 'level' in case.action_metadata:
+            if case.action_metadata['level'] == action_data['level']:
+                match_case = case
+
     # maps the static testdata derived from the definition to the runtime pipeline construction
     action = ActionData.objects.create(
         action_name=action_data['name'],
@@ -342,8 +335,10 @@ def build_action(action_data, testdata, submission):
         action_description=action_data['description'],
         meta_type=action_meta,
         max_retries=max_retry,
-        timeout=int(Timeout.parse(action_data['timeout']))
+        timeout=int(Timeout.parse(action_data['timeout'])),
+        testcase=match_case
     )
+
     with transaction.atomic():
         action.save()
 
@@ -460,6 +455,7 @@ def export_testcase(testcase):
         'result': str(testcase.result_code),
         'measurement': str(testcase.measurement),
         'unit': str(testcase.units),
+        'level': metadata.get('level', ''),
         'url': str(testcase.get_absolute_url()),
         'id': str(testcase.id),
         'logged': str(testcase.logged),
