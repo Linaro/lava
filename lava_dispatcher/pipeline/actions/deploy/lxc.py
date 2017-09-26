@@ -287,7 +287,7 @@ class LxcCreateUdevRuleAction(DeployAction):
             rules_file = os.path.join(UDEV_RULES_DIR,
                                       '100-' + lxc_name + '.rules')
             str_lxc_udev_rule = lxc_udev_rule(data)
-            with open(rules_file, 'wa') as f_obj:
+            with open(rules_file, 'a') as f_obj:
                 f_obj.write(str_lxc_udev_rule)
             self.logger.debug("udev rules file '%s' created with:\n %s",
                               rules_file, str_lxc_udev_rule)

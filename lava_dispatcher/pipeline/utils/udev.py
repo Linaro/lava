@@ -266,5 +266,5 @@ def lxc_udev_rule(data):
         rule += " --slave-cert %s" % data["slave_cert"]
     if data["ipv6"]:
         rule += " --ipv6"
-    rule += '"'
+    rule += '"\n'
     return rule
