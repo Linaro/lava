@@ -89,7 +89,7 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_shell_file': None,
 })
 
-ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
+archlinux = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -97,73 +97,7 @@ ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
     'line_separator': '\n',
 
     # for lava-test-shell
-    'distro': 'ubuntu',
-    'tar_flags': '--warning no-timestamp',
-    'lava_test_sh_cmd': '/bin/bash',
-    'lava_test_dir': '/lava-%s',
-    'lava_test_results_part_attr': 'root_part',
-    'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': '~/.bashrc',
-})
-
-debian = deployment_data_dict({  # pylint: disable=invalid-name
-    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
-    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
-    'TESTER_PS1_INCLUDES_RC': True,
-    'boot_cmds': 'boot_cmds',
-    'line_separator': '\n',
-
-    # for lava-test-shell
-    'distro': 'debian',
-    'tar_flags': '--warning no-timestamp',
-    'lava_test_sh_cmd': '/bin/bash',
-    'lava_test_dir': '/lava-%s',
-    'lava_test_results_part_attr': 'root_part',
-    'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': '~/.bashrc',
-})
-
-oe = deployment_data_dict({  # pylint: disable=invalid-name
-    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
-    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
-    'TESTER_PS1_INCLUDES_RC': True,
-    'boot_cmds': 'boot_cmds_oe',
-    'line_separator': '\n',
-
-    # for lava-test-shell
-    'distro': 'oe',
-    'lava_test_sh_cmd': '/bin/sh',
-    'lava_test_dir': '/lava-%s',
-    'lava_test_results_part_attr': 'root_part',
-    'lava_test_results_dir': '/lava-%s',
-    'lava_test_shell_file': '~/.bashrc',
-})
-
-lede = deployment_data_dict({  # pylint: disable=invalid-name
-    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
-    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
-    'TESTER_PS1_INCLUDES_RC': True,
-    'boot_cmds': 'boot_cmds_lede',
-    'line_separator': '\n',
-
-    # for lava-test-shell
-    'distro': 'lede',
-    'lava_test_sh_cmd': '/bin/sh',
-    'lava_test_dir': '/tmp/lava-%s',
-    'lava_test_results_part_attr': 'root_part',
-    'lava_test_results_dir': '/tmp/lava-results-%s',
-    'lava_test_shell_file': None,
-})
-
-fedora = deployment_data_dict({  # pylint: disable=invalid-name
-    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
-    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
-    'TESTER_PS1_INCLUDES_RC': True,
-    'boot_cmds': 'boot_cmds',
-    'line_separator': '\n',
-
-    # for lava-test-shell
-    'distro': 'fedora',
+    'distro': 'archlinux',
     'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
@@ -181,6 +115,41 @@ centos = deployment_data_dict({  # pylint: disable=invalid-name
 
     # for lava-test-shell
     'distro': 'centos',
+    'tar_flags': '--warning no-timestamp',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})
+
+centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
+    'installer_extra_cmd': 'curl {OVERLAY_URL} > /lava-overlay.tar.gz\ntar -zxvf /lava-overlay.tar.gz -C /',
+    'preseed_to_ramdisk': "preseed.cfg",
+
+    # for lava-test-shell
+    'distro': 'centos',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})
+
+debian = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
+
+    # for lava-test-shell
+    'distro': 'debian',
     'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
@@ -218,18 +187,82 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_shell_file': '~/.bashrc',
 })
 
-centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
+fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
     'line_separator': '\n',
-    'installer_extra_cmd': 'curl {OVERLAY_URL} > /lava-overlay.tar.gz\ntar -zxvf /lava-overlay.tar.gz -C /',
-    'preseed_to_ramdisk': "preseed.cfg",
 
     # for lava-test-shell
-    'distro': 'centos',
+    'distro': 'fedora',
+    'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})
+
+lede = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds_lede',
+    'line_separator': '\n',
+
+    # for lava-test-shell
+    'distro': 'lede',
+    'lava_test_sh_cmd': '/bin/sh',
+    'lava_test_dir': '/tmp/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/tmp/lava-results-%s',
+    'lava_test_shell_file': None,
+})
+
+oe = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds_oe',
+    'line_separator': '\n',
+
+    # for lava-test-shell
+    'distro': 'oe',
+    'lava_test_sh_cmd': '/bin/sh',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})
+
+slackware = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
+
+    # for lava-test-shell
+    'distro': 'slackware',
+    'tar_flags': '--warning no-timestamp',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})
+ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+    'line_separator': '\n',
+
+    # for lava-test-shell
+    'distro': 'ubuntu',
+    'tar_flags': '--warning no-timestamp',
+    'lava_test_sh_cmd': '/bin/sh',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+pacman -Q | awk '{print "package: " $1 " : " $2}'

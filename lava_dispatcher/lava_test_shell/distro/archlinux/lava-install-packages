@@ -1,0 +1,18 @@
+#!/bin/sh
+
+retry=0
+max_retry=4
+
+while [ 1 ]
+do
+  pacman -Syu --noprogressbar --noconfirm "$@"
+  return_value=$?
+  [ "$return_value" = 0 ] && break
+  [ "$retry" = "$max_retry" ] && exit $return_value
+
+  echo "================================================="
+  echo "($retry) Install failed... Retrying after some seconds"
+  echo "================================================="
+  sleep 60
+  retry=$((retry+1))
+done
