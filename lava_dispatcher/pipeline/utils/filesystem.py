@@ -27,6 +27,7 @@ import guestfs
 import subprocess
 import glob
 import logging
+import magic
 from configobj import ConfigObj
 
 from lava_dispatcher.pipeline.action import InfrastructureError, JobError, LAVABug
@@ -286,6 +287,11 @@ def copy_overlay_to_sparse_fs(image, overlay):
     mnt_dir = mkdtemp()
     ext4_img = image + '.ext4'
     logger = logging.getLogger('dispatcher')
+
+    # Check if the given image is an Android sparse image
+    if not is_sparse_image(image):
+        raise JobError("Image is not an Android sparse image: %s" % image)
+
     subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
                             stderr=subprocess.STDOUT)
     subprocess.check_output(['/bin/mount', '-o', 'loop', ext4_img, mnt_dir],
@@ -354,3 +360,15 @@ def remove_directory_contents(root_dir):
             shutil.rmtree(fname)
         else:
             os.remove(fname)
+
+
+def is_sparse_image(image):
+    """
+    Returns True if the image is an 'Android sparse image' else False.
+    """
+    image_magic = magic.open(magic.MAGIC_NONE)
+    image_magic.load()
+    if image_magic.file(image).split(',')[0] == 'Android sparse image':
+        return True
+    else:
+        return False
