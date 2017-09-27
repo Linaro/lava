@@ -121,6 +121,8 @@ class RestrictedDeviceColumn(tables.Column):
 def all_jobs_with_custom_sort():
     jobs = TestJob.objects.select_related(
         "actual_device",
+        "actual_device__user",
+        "actual_device__group",
         "actual_device__device_type",
         "requested_device",
         "requested_device_type",

@@ -1,6 +1,6 @@
 import logging
 import sys
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
     Device,
@@ -77,7 +77,7 @@ class TestDeviceTable(DeviceTable):
 class TestDeviceView(LavaView):
 
     def get_queryset(self):
-        visible = filter_device_types(None)
+        visible = filter_device_types(AnonymousUser())
         return Device.objects.select_related("device_type")\
             .order_by("hostname").filter(device_type__in=visible)
 

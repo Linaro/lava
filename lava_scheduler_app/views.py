@@ -289,9 +289,13 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type", "current_job__submitter", "worker_host") \
-                             .order_by("hostname") \
-                             .filter(temporarydevice=None, device_type__in=visible)
+        return Device.objects.select_related("device_type", "worker_host",
+                                             "current_job__submitter",
+                                             "user", "group") \
+                             .prefetch_related("tags") \
+                             .filter(temporarydevice=None,
+                                     device_type__in=visible) \
+                             .order_by("hostname")
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -550,14 +554,13 @@ def online_device_list(request):
         request=request))
 
 
-class PassingHealthTableView(JobTableView):
+class PassingHealthTableView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type")\
-            .order_by("-health_status", "device_type", "hostname")\
-            .filter(temporarydevice=None, device_type__in=visible)\
-            .exclude(status=Device.RETIRED)
+        q = super(PassingHealthTableView, self).get_queryset()
+        q = q.exclude(status=Device.RETIRED)
+        q = q.select_related("last_health_report_job", "last_health_report_job__actual_device")
+        return q.order_by("-health_status", "device_type", "hostname")
 
 
 @BreadCrumb("Passing Health Checks", parent=index)
@@ -659,11 +662,8 @@ def filter_device_types(user):
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible) \
-                             .exclude(status=Device.RETIRED) \
-                             .select_related("device_type", "current_job__submitter", "worker_host") \
-                             .order_by("hostname")
+        q = super(ActiveDeviceView, self).get_queryset()
+        return q.exclude(status=Device.RETIRED)
 
 
 class PipelineDeviceView(DeviceTableView):

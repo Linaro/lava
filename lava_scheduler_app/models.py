@@ -14,6 +14,7 @@ import smtplib
 import socket
 import sys
 import yaml
+
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -21,7 +22,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
-from django.utils.safestring import mark_safe
+from django.core.cache import cache
 from django.core.exceptions import (
     ImproperlyConfigured,
     ValidationError,
@@ -34,9 +35,10 @@ from django.core.validators import validate_email
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-from django.shortcuts import get_object_or_404
+from django.utils.safestring import mark_safe
 
 
 from django_restricted_resource.models import (
@@ -402,16 +404,27 @@ class DeviceType(models.Model):
         :param user: User to check
         :return: True if some devices of this DeviceType are visible
         """
+        # Grab the key from the cache if available
+        version = user.id if user.id is not None else -1
+        cached_value = cache.get(self.name, version=version)
+        if cached_value is not None:
+            return cached_value
+
         devices = Device.objects.filter(device_type=self) \
                                 .only('user', 'group') \
                                 .select_related('user', 'group')
+
         if self.owners_only:
+            result = False
             for d in devices:
                 if d.is_owned_by(user):
-                    return True
-            return False
+                    result = True
+                    break
         else:
-            return devices.exists()
+            result = devices.exists()
+        # Cache the value for 30 seconds
+        cache.set(self.name, result, 30, version=version)
+        return result
 
 
 class DefaultDeviceOwner(models.Model):
