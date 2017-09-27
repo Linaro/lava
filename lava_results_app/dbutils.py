@@ -63,9 +63,7 @@ def _check_for_testset(result_dict, suite):
             suite.job.set_failure_comment(msg)
             logger.warning(msg)
             return None
-        testset, created = TestSet.objects.get_or_create(name=set_name, suite=suite)
-        if created:
-            testset.save()
+        testset, _ = TestSet.objects.get_or_create(name=set_name, suite=suite)
         logger.debug("%s", testset)
     return testset
 
@@ -139,9 +137,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         append_failure_comment(job, msg)
         return False
 
-    suite, created = TestSuite.objects.get_or_create(name=results["definition"], job=job)
-    if created:
-        suite.save()
+    suite, _ = TestSuite.objects.get_or_create(name=results["definition"], job=job)
     testset = _check_for_testset(results, suite)
 
     name = results["case"].strip()
@@ -158,13 +154,13 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         if 'duration' in results:
             measurement = results['duration']
             units = 'seconds'
-        case = TestCase.objects.create(name=name,
-                                       suite=suite,
-                                       test_set=testset,
-                                       metadata=yaml.dump(results),
-                                       measurement=measurement,
-                                       units=units,
-                                       result=result_val)
+        TestCase.objects.create(name=name,
+                                suite=suite,
+                                test_set=testset,
+                                metadata=yaml.dump(results),
+                                measurement=measurement,
+                                units=units,
+                                result=result_val)
 
     else:
         result = results["result"]
@@ -190,8 +186,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                 result=TestCase.RESULT_MAP[result],
                 metadata=yaml.dump(results),
                 measurement=measurement,
-                units=units
-            ).save()
+                units=units)
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
     return True
@@ -310,13 +305,9 @@ def build_action(action_data, testdata, submission):
             "type_name failed for %s metatype %s",
             action_data['section'], MetaType.TYPE_CHOICES[metatype])
         return
-    action_meta, created = MetaType.objects.get_or_create(
-        name=type_name, metatype=metatype)
-    if created:
-        action_meta.save()
-    max_retry = None
-    if 'max_retries' in action_data:
-        max_retry = action_data['max_retries']
+    action_meta, _ = MetaType.objects.get_or_create(name=type_name,
+                                                    metatype=metatype)
+    max_retry = action_data.get('max_retries')
 
     # find corresponding test case
     match_case = None
@@ -327,7 +318,7 @@ def build_action(action_data, testdata, submission):
                 match_case = case
 
     # maps the static testdata derived from the definition to the runtime pipeline construction
-    action = ActionData.objects.create(
+    ActionData.objects.create(
         action_name=action_data['name'],
         action_level=action_data['level'],
         action_summary=action_data['summary'],
@@ -338,9 +329,6 @@ def build_action(action_data, testdata, submission):
         timeout=int(Timeout.parse(action_data['timeout'])),
         testcase=match_case
     )
-
-    with transaction.atomic():
-        action.save()
 
 
 def walk_actions(data, testdata, submission):
@@ -378,7 +366,6 @@ def map_metadata(description, job):
         # prevent updates of existing TestData
         logger.debug("[%s] skipping alteration of existing TestData", job.id)
         return False
-    testdata.save()
 
     # get job-action metadata
     if description is None:
