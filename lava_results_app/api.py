@@ -40,11 +40,11 @@ from lava_scheduler_app.models import TestJob
 
 class ResultsAPI(ExposedAPI):
 
-    def make_custom_query(self, entity, conditions):
+    def make_custom_query(self, entity, conditions, limit=200):
         """
         Name
         ----
-        `make_custom_query` (`entity`, `conditions`)
+        `make_custom_query` (`entity`, `conditions`, `limit`)
 
         Description
         -----------
@@ -56,6 +56,9 @@ class ResultsAPI(ExposedAPI):
             The entity you want to query
         `conditions`: string
             The conditions of the query
+        `limit`: integer
+            Add a limit to the number of results returned.
+            Defaults to 200.
 
         Return value
         ------------
@@ -104,7 +107,7 @@ class ResultsAPI(ExposedAPI):
             raise xmlrpclib.Fault(400,
                                   "Conditions URL incorrect: Field does not exist. "
                                   "Please refer to query docs.")
-        return list(results)
+        return list(results[:limit])
 
     def run_query(self, query_name, limit=200, username=None):
         """
@@ -154,7 +157,7 @@ class ResultsAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 403, "Permission denied for user to query %s" % query_name)
 
-        return list(query.get_results(self.user, limit=limit))
+        return list(query.get_results(self.user)[:limit])
 
     def refresh_query(self, query_name, username=None):
         """
