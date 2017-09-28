@@ -240,9 +240,12 @@ class LxcCreateUdevRuleAction(DeployAction):
         try:
             if 'device_info' in self.job.device:
                 for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    if board_id == '0000000000':
+                    if usb_device.get('board_id', '') in ['', '0000000000']:
                         self.errors = "board_id unset"
+                    if usb_device.get('usb_vendor_id', '') == '0000':
+                        self.errors = 'usb_vendor_id unset'
+                    if usb_device.get('usb_product_id', '') == '0000':
+                        self.errors = 'usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
@@ -272,9 +275,11 @@ class LxcCreateUdevRuleAction(DeployAction):
             ipv6 = self.logger.handler.ipv6
             job_id = self.logger.handler.job_id
         for device in device_info:
-            data = {'serial-number': str(device.get('board_id', '')),
-                    'lxc-name': lxc_name,
-                    'device-info-file': device_info_file,
+            data = {'serial_number': str(device.get('board_id', '')),
+                    'vendor_id': device.get('usb_vendor_id', None),
+                    'product_id': device.get('usb_product_id', None),
+                    'lxc_name': lxc_name,
+                    'device_info_file': device_info_file,
                     'logging_url': logging_url,
                     'master_cert': master_cert,
                     'slave_cert': slave_cert,
