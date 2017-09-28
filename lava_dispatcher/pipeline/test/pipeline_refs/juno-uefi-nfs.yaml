@@ -5,7 +5,7 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.lxc.LxcAddDeviceAction, name: lxc-add-device-action}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: power.ResetDevice
     name: reset-device

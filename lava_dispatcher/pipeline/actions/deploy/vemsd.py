@@ -33,7 +33,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
@@ -99,7 +99,7 @@ class VExpressMsdAction(DeployAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'recovery_image' in parameters:
             self.internal_pipeline.add_action(DownloaderAction('recovery_image', path=download_dir))
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())

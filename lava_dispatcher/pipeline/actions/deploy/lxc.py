@@ -253,8 +253,15 @@ class LxcCreateUdevRuleAction(DeployAction):
         connection = super(LxcCreateUdevRuleAction, self).run(connection,
                                                               max_end_time,
                                                               args)
-        lxc_name = self.get_namespace_data(action='lxc-create-action',
-                                           label='lxc', key='name')
+        # this may be the device namespace - the lxc namespace may not be
+        # accessible
+        lxc_name = None
+        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        if protocols:
+            lxc_name = protocols[0].lxc_name
+        if not lxc_name:
+            self.logger.debug("No LXC device requested")
+            return connection
 
         # If there is no device_info then this action should be idempotent.
         if 'device_info' not in self.job.device:
@@ -363,56 +370,4 @@ class LxcAptInstallAction(DeployAction):
                'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
-        return connection
-
-
-class LxcAddDeviceAction(Action):
-    """Add usb device to lxc.
-    """
-    def __init__(self):
-        super(LxcAddDeviceAction, self).__init__()
-        self.name = "lxc-add-device-action"
-        self.description = "action that adds usb devices to lxc"
-        self.summary = "device add lxc"
-        self.retries = 10
-        self.sleep = 10
-
-    def validate(self):
-        super(LxcAddDeviceAction, self).validate()
-        if 'device_info' in self.job.device \
-           and not isinstance(self.job.device.get('device_info'), list):
-            self.errors = "device_info unset"
-        try:
-            if 'device_info' in self.job.device:
-                for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
-                    usb_product_id = usb_device.get('usb_product_id', '')
-                    if board_id == '0000000000':
-                        self.errors = "board_id unset"
-                    if usb_vendor_id == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_product_id == '0000':
-                        self.errors = 'usb_product_id unset'
-        except TypeError:
-            self.errors = "Invalid parameters for %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAddDeviceAction, self).run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
-        if protocols:
-            lxc_name = protocols[0].lxc_name
-        if not lxc_name:
-            self.logger.debug("No LXC device requested")
-            return connection
-
-        self.logger.info("Get USB device(s) ...")
-        device_paths = get_udev_devices(self.job, logger=self.logger)
-        for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-            log = self.run_command(lxc_cmd)
-            self.logger.debug(log)
-            self.logger.debug("%s: device %s added", lxc_name, device)
         return connection
