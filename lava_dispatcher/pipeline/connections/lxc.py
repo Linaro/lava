@@ -24,7 +24,6 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
-from lava_dispatcher.pipeline.utils.udev import get_udev_devices
 
 # pylint: disable=too-many-public-methods
 
@@ -56,14 +55,6 @@ class ConnectLxc(Action):
         if not lxc_name:
             self.logger.debug("No LXC device requested")
             return connection
-
-        self.logger.info("Get USB device(s) ...")
-        device_paths = get_udev_devices(self.job, logger=self.logger)
-        for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-            log = self.run_command(lxc_cmd)
-            self.logger.debug(log)
-            self.logger.debug("%s: device %s added", lxc_name, device)
 
         connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
         if connection:

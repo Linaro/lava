@@ -43,10 +43,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_DEFAULT_PACKAGES,
     UDEV_RULES_DIR,
 )
-from lava_dispatcher.pipeline.utils.udev import (
-    get_udev_devices,
-    lxc_udev_rule,
-)
+from lava_dispatcher.pipeline.utils.udev import lxc_udev_rule
 from lava_dispatcher.pipeline.utils.filesystem import (
     debian_package_version,
     lxc_path,
