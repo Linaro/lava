@@ -10,3 +10,5 @@ nose python-nose; PEP386
 pyzmq python-zmq; PEP386
 pyudev python-pyudev; PEP386
 setproctitle python-setproctitle; PEP386
+pytz python-tz; PEP386
+file-magic python-magic; PEP386
