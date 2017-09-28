@@ -41,9 +41,11 @@ from lava_dispatcher.pipeline.utils.udev import WaitUSBMassStorageDeviceAction
 from lava_dispatcher.pipeline.utils.constants import (
     VEXPRESS_AUTORUN_INTERRUPT_CHARACTER,
 )
-from lava_dispatcher.pipeline.utils.filesystem import (
+from lava_dispatcher.pipeline.utils.compression import (
     decompress_file,
     untar_file,
+)
+from lava_dispatcher.pipeline.utils.filesystem import (
     copy_directory_contents,
     remove_directory_contents,
 )

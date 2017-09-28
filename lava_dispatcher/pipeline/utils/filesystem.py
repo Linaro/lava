@@ -35,10 +35,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_PATH,
     LAVA_LXC_HOME,
 )
-from lava_dispatcher.pipeline.utils.compression import (
-    decompress_file,
-    untar_file,
-)
+from lava_dispatcher.pipeline.utils.compression import decompress_file
 
 
 def rmtree(directory):
@@ -284,9 +281,9 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
 def copy_overlay_to_sparse_fs(image, overlay):
     """copy_overlay_to_sparse_fs
     """
-    mnt_dir = mkdtemp()
     ext4_img = image + '.ext4'
     logger = logging.getLogger('dispatcher')
+    guest = guestfs.GuestFS(python_return_dict=True)
 
     # Check if the given image is an Android sparse image
     if not is_sparse_image(image):
@@ -294,21 +291,26 @@ def copy_overlay_to_sparse_fs(image, overlay):
 
     subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
                             stderr=subprocess.STDOUT)
-    subprocess.check_output(['/bin/mount', '-o', 'loop', ext4_img, mnt_dir],
-                            stderr=subprocess.STDOUT)
+    guest.add_drive(ext4_img)
+    guest.launch()
+    devices = guest.list_devices()
+    if not devices:
+        raise InfrastructureError("Unable to prepare guestfs")
+    guest.mount(devices[0], '/')
+    # FIXME: max message length issues when using tar_in
+    # on tar.gz.  Works fine with tar so decompressing
+    # overlay first.
     if os.path.exists(overlay[:-3]):
         os.unlink(overlay[:-3])
     decompressed_overlay = decompress_file(overlay, 'gz')
-    untar_file(decompressed_overlay, mnt_dir)
-
+    guest.tar_in(decompressed_overlay, '/')
     # Check if we have space left on the mounted image.
-    output = subprocess.check_output(['df', '-k', mnt_dir],
-                                     stderr=subprocess.STDOUT)
+    output = guest.df()
     logger.debug(output)
     device, size, used, available, percent, mountpoint = output.split(
         "\n")[1].split()
-    subprocess.check_output(['/bin/umount', mnt_dir], stderr=subprocess.STDOUT)
-    if int(available) is 0 or percent is '100%':
+    guest.umount(devices[0])
+    if int(available) is 0 or percent == '100%':
         raise JobError("No space in image after applying overlay: %s" % image)
     subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
                             stderr=subprocess.STDOUT)
