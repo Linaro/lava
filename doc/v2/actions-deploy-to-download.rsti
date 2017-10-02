@@ -18,9 +18,10 @@ can then be referred by the URL scheme ``lxc:///`` in subsequent actions.
 images
 ======
 
-Download deployments support images to be downloaded and saved along with copying to :term:`LAVA_LXC_HOME` when :ref:`LXC protocol <lxc_protocol_reference>`
-is available. The list of images will depend on the test job and the test
-device.
+Download deployments support images to be downloaded and saved along with
+copying to :term:`LAVA_LXC_HOME` when :ref:`LXC protocol
+<lxc_protocol_reference>` is available. The list of images will depend on the
+test job and the test device.
 
 partition
 ---------
@@ -28,9 +29,9 @@ partition
 The partition is a text which specifies the partition to which the image will
 get flashed using ``fastboot`` command in subsequent deploy action.
 
-In the example, the partition to be flashed on the :term:`DUT` is ````.
+In the example, the partition to be flashed on the :term:`DUT` is ``rootfs``.
 
-.. include:: examples/test-jobs/artifact-conversion.yaml
+.. include:: examples/test-jobs/artifact-conversion-download.yaml
      :code: yaml
      :start-after: to: download
      :end-before: partition:
@@ -40,7 +41,7 @@ In the example, the partition to be flashed on the :term:`DUT` is ````.
 url
 ^^^
 
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
 
 URLs are checked during the test job validation to ensure that the file can be
@@ -112,14 +113,14 @@ label
 =====
 
 The label is arbitrary text, that refers to the image key that will get
-downloaded as spefied in :ref:`deploy_to_download_label_url`
+downloaded as specified in :ref:`deploy_to_download_label_url`
 
 .. _deploy_to_download_label_url:
 
 url
 ---
 
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
 
 URLs are checked during the test job validation to ensure that the file can be

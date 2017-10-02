@@ -110,7 +110,10 @@ necessary action to handle these type of images.
 
    apply-overlay: true
 
-.. seealso:: The sparse image format is defined in `sparse_format.h`_
+.. seealso:: The sparse image format is defined in `sparse_format
+   <sparse_format.h>`_ in the platform source code.
+
+_sparse_format: https://android.googlesource.com/platform/system/core/+/master/libsparse/sparse_format.h
 
 .. _deploy_to_fastboot_images_md5sum:
 
