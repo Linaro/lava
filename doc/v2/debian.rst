@@ -29,7 +29,7 @@ compared to the old lava-deployment-tool buildouts.
 .. _developer_preparations:
 
 Preparing for LAVA development
-==============================
+******************************
 
 LAVA provides a ``lava-dev`` package which supplies all the dependencies which
 are required :ref:`to build local LAVA packages <dev_builds>`. This package is
@@ -254,6 +254,8 @@ devices/\*.jinja2        next testjob submission
 \*_daemon/\*.py          ``$ sudo service lava-server restart``
 ====================== ==============================================
 
+.. index:: postgres migration, migrate postgres
+
 .. _migrating_postgresql_versions:
 
 Migrating postgresql versions
@@ -263,8 +265,30 @@ LAVA installs the ``postgresql`` package which installs the current default
 version of postgresql. When this default changes in Debian, a second package
 will be added to your system which will start with no actual data.
 
+.. caution:: ``postgresql`` **will disable database access** during the
+   migration and this will interfere with the running instance. There is
+   typically no rush to do the migration, so this is usually a task for a
+   scheduled maintenance window. Declare a time when all devices can be taken
+   offline and put a replacement site in place of the apache configuration to
+   prevent database access during the migration.
+
+Determining the active cluster
+==============================
+
+The output of ``pg_lsclusters`` includes the port number of each cluster.
+To ensure that the correct cluster is upgraded, check the ``LAVA_DB_PORT``
+setting in ``/etc/lava-server/instance.conf`` for the current instance. If
+multiple clusters are shown, ``postgresql`` will upgrade to the latest version,
+so ensure that any intermediate clusters are also stopped before starting the
+migration.
+
+Performing the migration
+========================
+
 Debian gives a notice similar to this when a new version of postgres is
-installed::
+installed:
+
+.. code-block:: none
 
  Default clusters and upgrading
  ------------------------------
