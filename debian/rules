@@ -53,10 +53,3 @@ override_dh_auto_clean:
 	$(RM) -r versiontools-*.egg/ doc/build/ doc/html/
 	[ ! -f man/Makefile ] || make -C man/ clean
 
-# get upstream version for get-orig-source target
-VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: //' | sed -e 's/\-.*$$//')
-
-sdist-orig:
-	python setup.py sdist
-	mv -v dist/lava-dispatcher-$(VERSION)*.tar.gz ../lava-dispatcher_$(VERSION).orig.tar.gz
-	$(RM) -r versiontools-*.egg/
