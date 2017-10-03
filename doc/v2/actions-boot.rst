@@ -323,6 +323,20 @@ fastboot
 
 The ``fastboot`` boot method takes no arguments or parameters.
 
+.. code-block:: yaml
+
+  - boot:
+      method: fastboot
+      namespace: droid
+      prompts:
+        - 'root@(.*):/#'
+        - 'hikey:/'
+      timeout:
+        minutes: 15
+
+.. note:: Since all fastboot :term:`DUT` depend on LXC to run jobs, it is
+          mandatory to have the namespace specified.
+
 .. index:: boot method grub
 
 .. _boot_method_grub:
@@ -389,36 +403,11 @@ lxc
 .. code-block:: yaml
 
  - boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    timeout:
-      minutes: 5
     method: lxc
-
-LXC Boot example
-----------------
-
-.. code-block:: yaml
-
- - boot:
-    namespace: droid
     prompts:
     - 'root@(.*):/#'
     timeout:
       minutes: 5
-    method: fastboot
-    failure_retry: 2
-    connection: lxc
-
-  - boot:
-      method: grub
-      commands: ramdisk
-      timeout:
-          minutes: 50
-      prompts:
-       - 'root@genericarmv8:~#'
-       - '/ #'
 
 .. index:: boot method qemu
 

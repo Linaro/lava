@@ -121,18 +121,20 @@ def is_deprecated_json(data):
 
 
 def validate_job(data):
-    if not is_deprecated_json(data):
-        try:
-            # only try YAML if this is not JSON
-            # YAML can parse JSON as YAML, JSON cannot parse YAML at all
-            yaml_data = yaml.load(data)
-        except yaml.YAMLError as exc:
-            # neither yaml nor json loaders were able to process the submission.
-            raise SubmissionException("Loading job submission failed: %s." % exc)
+    if is_deprecated_json(data):
+        raise SubmissionException("v1 jobs cannot be submitted to this instance")
 
-        # validate against the submission schema.
-        validate_submission(yaml_data)  # raises SubmissionException if invalid.
-        validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+    try:
+        # only try YAML if this is not JSON
+        # YAML can parse JSON as YAML, JSON cannot parse YAML at all
+        yaml_data = yaml.load(data)
+    except yaml.YAMLError as exc:
+        # neither yaml nor json loaders were able to process the submission.
+        raise SubmissionException("Loading job submission failed: %s." % exc)
+
+    # validate against the submission schema.
+    validate_submission(yaml_data)  # raises SubmissionException if invalid.
+    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
 
 
 def validate_yaml(yaml_data):
@@ -973,15 +975,14 @@ class Device(RestrictedResource):
         return False
 
     def get_health_check(self):
-        # Keep the old behavior for v1 devices
+        # Do not submit any new v1 job
         if not self.is_pipeline:
-            return self.device_type.health_check_job
+            return None
 
         # Get the device dictionary
         extends = self.get_extends()
         if not extends:
-            # TODO: will be removed in the next release
-            return self.device_type.health_check_job
+            return None
 
         filename = os.path.join(Device.HEALTH_CHECK_PATH,
                                 "%s.yaml" % extends)
@@ -989,8 +990,7 @@ class Device(RestrictedResource):
             with open(filename, "r") as f_in:
                 return f_in.read()
         except IOError:
-            # TODO: will be removed in the next release
-            return self.device_type.health_check_job
+            return None
 
 
 class TemporaryDevice(Device):
@@ -2364,15 +2364,25 @@ class TestJob(RestrictedResource):
         """
         Permission required for user to add failure information to a job
         """
+        # Make the instance read only
+        if settings.ARCHIVED:
+            return False
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
         return self._can_admin(user) and self.status in states
 
     def can_cancel(self, user):
+        # Make the instance read only
+        if settings.ARCHIVED:
+            return False
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        return (user.is_superuser or
-                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+        # Make the instance read only
+        if settings.ARCHIVED:
+            return False
+        return self.is_pipeline and \
+            (user.is_superuser or
+             user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def job_device_type(self):
         device_type = None

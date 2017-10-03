@@ -12,9 +12,6 @@
 
 <div class="fields-container">
   <div class="form-field">
-    <a href="{{ image_chart.get_absolute_url }}/+edit">Edit</a> this chart.
-  </div>
-  <div class="form-field">
     Description: {{ image_chart.description }}
   </div>
   <div class="form-field">
@@ -47,12 +44,6 @@
 </div>
 
 <h3>Filters</h3>
-
-<div class="fields-container">
-  <div id="add_filter_link">
-    <a href="{{ image_chart.get_absolute_url }}/+add-filter">Add filter</a>
-  </div>
-</div>
 
 <div class="list-container">
   {% for chart_filter in image_chart.imagechartfilter_set.all %}

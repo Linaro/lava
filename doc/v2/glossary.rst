@@ -34,7 +34,7 @@ Glossary of terms
 
 **J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
-**L** [ :term:`lxc` ]
+**L** [ :term:`LAVA_LXC_HOME` ] [ :term:`lxc` ] [ :term:`lxc://` ]
 
 **M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`metadata` ]
 [ :term:`MultiNode` ]
@@ -300,6 +300,13 @@ Glossary of terms
     definition will be the parsed YAML for this particular device within the
     MultiNode job.
 
+  LAVA_LXC_HOME
+    The path within :term:`lxc` set to ``/lava-lxc`` by default. From the host
+    machine this path would be something like
+    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc``. Any files downloaded by
+    :ref:`deploy_to_download` will be copied to this location which can then be
+    accessible from within the container.
+
   LXC
     `Linux containers <https://en.wikipedia.org/wiki/LXC>`_ are used in LAVA to
     allow custom configurations on the dispatcher for each use. The extra
@@ -309,6 +316,19 @@ Glossary of terms
 
     .. seealso:: :ref:`deploy_using_lxc`, :ref:`lxc_deploy`,
       :ref:`feedback_using_lxc` and :ref:`lxc_protocol_reference`
+
+  lxc://
+    This is a URL scheme specific to LAVA which points to files available in
+    :term:`LAVA_LXC_HOME`. An URL like ``lxc:///boot.img`` will refer to
+    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc/boot.img`` on the host or
+    ``/lava-lxc/boot.img`` within the :term:`lxc`. This URL scheme is valid
+    only when :ref:`lxc_protocol_reference` is defined in the test job. It also
+    only makes sense for the ``deploy`` and ``boot`` actions.
+
+    .. note:: Pay attention to 3 forward slashes in the URL when referring to a
+              file.
+
+    .. seealso:: :ref:`deploy_to_download`
 
   master
     The master is a server machine with ``lava-server`` installed and it

@@ -153,6 +153,7 @@ class TestMetaTypes(TestCaseWithFactory):
         results = {
             'definition': 'lava',
             'case': 'unit-test',
+            'level': level,
             # list of numbers, generates a much longer YAML string than just the count
             'extra': range(int(field.max_length / 2)),
             'result': 'pass'
@@ -169,7 +170,7 @@ class TestMetaTypes(TestCaseWithFactory):
         if os.path.exists(meta_filename):
             # isolate from other unit tests
             os.unlink(meta_filename)
-        self.assertEqual(meta_filename, create_metadata_store(results, job, level))
+        self.assertEqual(meta_filename, create_metadata_store(results, job))
         self.assertTrue(map_scanned_results(results, job, meta_filename))
         self.assertEqual(TestCase.objects.filter(name='unit-test').count(), 1)
         test_data = yaml.load(TestCase.objects.filter(name='unit-test')[0].metadata, Loader=yaml.CLoader)

@@ -152,14 +152,6 @@ of each type are available for tests and currently running jobs.</p>
               class="btn btn-success">
               <span class="glyphicon glyphicon-question-sign"></span>
               Writing a LAVA test definition.</a></li>
-            {% if user.is_authenticated %}
-          {% if not 'HIDE_V1_DOCS'|get_settings %}
-          <li><a href="{% url 'lava.scheduler.job.submit_wizard' %}"
-              class="btn btn-success">
-              <span class="glyphicon glyphicon-calendar"></span>
-              V1 Job submission wizard.</a></li>
-            {% endif %}
-        {% endif %}
         </ul>
       </div>
     </div>

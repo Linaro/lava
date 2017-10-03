@@ -139,7 +139,7 @@ class LavaView(tables.SingleTableView):
             if hasattr(self.table_class.Meta, 'queries'):
                 for key in self.table_class.Meta.queries:
                     # note that this calls the function 'key' with the argument from the search
-                    args = 'q = q.__or__(self.{0}("{1}"))'.format(key, self.terms["search"])
+                    args = 'q = q.__or__(self.{0}("{1}"))'.format(key, self.terms["search"].encode("utf-8"))
                     try:
                         exec args
                     except SyntaxError:

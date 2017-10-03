@@ -68,7 +68,7 @@ class Command(BaseCommand):
         update_parser = sub.add_parser("update", help="Update an existing V2 device type in the database.")
         update_parser.add_argument("device-type", help="The device type name.")
         update_alias = update_parser.add_argument_group("alias")
-        update_alias.add_argument("--alias", default='', help='Name of an alias for this device-type.')
+        update_alias.add_argument("--alias", required=True, help='Name of an alias for this device-type.')
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device-type")
@@ -113,12 +113,13 @@ class Command(BaseCommand):
 
     def handle_update(self, device_type, alias):
         """Update an existing device type"""
+        if not alias:
+            raise CommandError("No alias was specified to update '%s'" % device_type)
         try:
             dt = device_type = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
             raise CommandError("Unable to find device-type '%s'" % device_type)
-        if alias:
-            alias_item, _ = Alias.objects.get_or_create(name=alias)
+        alias_item, _ = Alias.objects.get_or_create(name=alias)
         dt.aliases.add(alias_item)
 
     def handle_add(self, device_type, alias, health_denominator,

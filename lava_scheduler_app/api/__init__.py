@@ -11,6 +11,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
+    is_deprecated_json,
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
@@ -74,6 +75,10 @@ class SchedulerAPI(ExposedAPI):
         If the job is a multinode job, this function returns the list of created
         job IDs.
         """
+        # Reject v1 jobs
+        if is_deprecated_json(job_data):
+            raise xmlrpclib.Fault(400, "v1 jobs cannot be submitted to this instance")
+
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
             raise xmlrpclib.Fault(
@@ -126,6 +131,11 @@ class SchedulerAPI(ExposedAPI):
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        # Reject v1 jobs
+        if not job.is_pipeline:
+            raise xmlrpclib.Fault(400, "v1 jobs cannot be submitted to this instance")
+
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
         elif job.is_vmgroup:

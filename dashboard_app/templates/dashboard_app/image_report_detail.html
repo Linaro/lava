@@ -28,19 +28,7 @@
   </div>
    <h4>Manage</h4>
   <div class="form-field">
-    <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
-  </div>
-  <div class="form-field">
     <a href="{{ image_report.get_absolute_url }}">Preview</a> this image report.
-  </div>
-  <div class="form-field">
-    {% if image_report.is_published %}
-    <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.&nbsp;&nbsp;
-    <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Forbid other users from viewing this report.">?</button>
-    {% else %}
-    <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.&nbsp;&nbsp;
-    <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Let other users view this report.">?</button>
-    {% endif %}
   </div>
 
   {% if image_report.is_published %}
@@ -48,9 +36,7 @@
   <div class="form-field" style="float: left;">
     Image Report Group label:&nbsp;&nbsp;
   </div>
-  <a href="#">
-    <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Click here to select"}}</div>
-  </a>
+  <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Not available"}}</div>
 
   {% if image_report.image_report_group %}
   <div id="group_link" class="group-link">
@@ -76,9 +62,7 @@
   <div class="form-field" style="float: left;">
     Group edit permission:&nbsp;&nbsp;
   </div>
-  <a href="#">
-    <div id="group" style="float: left;">{{ image_report.group|default:"Click here to select"}}</div>
-  </a>
+  <div id="group" style="float: left;">{{ image_report.group|default:"Not available"}}</div>
   &nbsp;&nbsp;
   <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
   <div style="clear: both;"></div>
@@ -87,12 +71,6 @@
 </div>
 
 <h3>Charts</h3>
-
-<div class="fields-container">
-  <a href="{% url 'dashboard_app.views.image_reports.views.image_chart_add' image_report.name %}">
-    Add new chart
-  </a>
-</div>
 
 <div class="list-container" id="charts">
   {% for image_chart in image_report.imagereportchart_set.all %}
@@ -154,59 +132,4 @@
   });
 </script>
 
-{% if image_report.is_published %}
-<script>
-  $("#image_report_group").editable(
-  "{% url 'image_report_add_group' name=image_report.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-    callback: function(data) {
-      if(data != "") {
-        $("#group_link").show();
-        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
-        $("#group_link a:first-child").attr("href", href + data);
-      } else {
-        $("#group_link").hide();
-      }
-    }
-  });
-
-  $("#image_report_group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if not image_report.image_report_group %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'image_report_group_list' %}',
-        minLength: 2,
-      });
-  });
-
-
-  $("#group").editable(
-  "{% url 'image_report_select_group' name=image_report.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-  });
-
-  $("#group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if not image_report.group %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'dashboard_app.views.image_reports.views.get_group_names' %}',
-        minLength: 1,
-      });
-  });
-
-
-</script>
-{% endif %}
 {% endblock %}

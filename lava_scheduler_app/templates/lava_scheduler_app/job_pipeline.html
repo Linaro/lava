@@ -207,9 +207,10 @@
 {% if size_warning %}
 <div class="alert alert-danger" id="size-warning">
 <p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
-    It can only be downloaded.</p>
+    It can only be downloaded:
+<a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></p>
 </div>
-{% else %}
+{% endif %}
 <div class="affix hidden-xs hidden-sm">
   <h4>Pipeline <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
   <div id="affix-full">
@@ -218,7 +219,6 @@
     </ul>
   </div>
 </div>
-{% endif %}
 
 <ul class="nav nav-tabs">
   <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
@@ -228,6 +228,7 @@
 
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
+{% if not size_warning %}
     <div class="btn-group" data-toggle="buttons" id="logbuttons">
       <label class="btn btn-default" id="debug_label" for="debug"><input type="checkbox" id="debug" autocomplete="off">debug</label>
       <label class="btn btn-info" id="info_label" for="info"><input type="checkbox" id="info" autocomplete="off">info</label>
@@ -238,6 +239,7 @@
       <label class="btn btn-feedback" id="feedback_label" for="feedback"><input type="checkbox" id="feedback" autocomplete="off">feedback</label>
       <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
     </div>
+{% endif %}
 
     <div class="btn-group pull-right">
       {% if job.is_multinode %}
@@ -327,12 +329,13 @@
       <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
       {% endif %}
     </div>
+    {% if not size_warning %}
     <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
     {% if job.status >= job.RUNNING %}
     <p><a href="/static/docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
     {% endif %}
+    {% endif %}
   </div>
-
   <div class="tab-pane" id="Description">
     <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
       <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
@@ -564,6 +567,7 @@
 <script type="text/javascript">
   $(document).ready(
     function() {
+{% if not size_warning %}
       // Create a new CSS sheet and use it
       var sheet = (function() {
         var style = document.createElement("style");
@@ -636,6 +640,7 @@
           affix.removeClass("fix-affix");
         }
       });
+{% endif %}
 
       // Load the timing on demand
       var timing_already_loaded = false;
@@ -643,6 +648,9 @@
         if (timing_already_loaded) { return; }
         $.ajax({
           url: '{% url 'lava.scheduler.job_pipeline_timing' pk=job.pk %}',
+          error: function(xhr, txt_status, error) {
+            $('#timing_block').html("<p><strong>Unable to load the timing!</strong</p>");
+          },
           success: function(data, success, xhr) {
             if (data['graph'].length == 0) {
               $('#timing_block').html("<p>Unable to parse the log file.</p>");

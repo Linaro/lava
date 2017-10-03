@@ -185,6 +185,20 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('interrupt_prompt', template_dict['actions']['boot']['methods']['u-boot']['parameters'])
+        # fastboot deploy to eMMC
+        self.assertIn('mmc', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['mmc'])
+        # NFS using standard U-Boot TFTP
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['nfs'])
+        for command in template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']:
+            if 'setenv bootargs' in command:
+                # x15 needs both consoles enabled.
+                self.assertIn('ttyS2', command)
+                self.assertNotIn('console=ttyO2', command)
 
     def test_armada375_template(self):
         """
@@ -1115,3 +1129,27 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
         self.assertIn('cpu-reset-message', template_dict['constants'])
+
+    def test_db820c_template(self):
+        data = """{% extends 'dragonboard-820c.jinja2' %}
+{% set adb_serial_number = '3083f595' %}
+{% set fastboot_serial_number = '3083f595' %}
+"""
+        self.assertTrue(self.validate_data('db820c-01', data))
+        test_template = prepare_jinja_template('db820c-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('dragonboard-820c', template_dict['device_type'])
+        self.assertEqual('3083f595', template_dict['adb_serial_number'])
+        self.assertEqual('3083f595', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+
+    def test_docker_template(self):
+        data = "{% extends 'docker.jinja2' %}"
+        self.assertTrue(self.validate_data('docker-01', data))
+        test_template = prepare_jinja_template('docker-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('docker', template_dict['device_type'])
+        self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
+        self.assertEqual({'docker': None}, template_dict['actions']['boot']['methods'])

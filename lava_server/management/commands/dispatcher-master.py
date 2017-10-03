@@ -80,24 +80,18 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
 
 class JobHandler(object):  # pylint: disable=too-few-public-methods
-    def __init__(self, job, level, filename):
+    def __init__(self, job):
         self.output_dir = job.output_dir
         self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
-        self.current_level = level
-        self.sub_log = open(filename, 'a+')
         self.last_usage = time.time()
 
     def write(self, message):
         self.output.write(message)
         self.output.write('\n')
         self.output.flush()
-        self.sub_log.write(message)
-        self.sub_log.write('\n')
-        self.sub_log.flush()
 
     def close(self):
         self.output.close()
-        self.sub_log.close()
 
 
 def load_optional_yaml_file(filename):
@@ -234,10 +228,10 @@ class Command(BaseCommand):
         # Mark the dispatcher as alive
         self.dispatchers[hostname].alive()
 
-    def logging_socket(self, options):
+    def logging_socket(self):
         msg = self.pull_socket.recv_multipart()
         try:
-            (job_id, level, name, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("Failed to parse log message, skipping: %s", msg)
@@ -259,23 +253,8 @@ class Command(BaseCommand):
                 job_id, message)
             return
 
-        # Clear filename
-        if '/' in level or '/' in name:
-            self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
-            return
-
         # Find the handler (if available)
-        if job_id in self.jobs:
-            if level != self.jobs[job_id].current_level:
-                # Close the old file handler
-                self.jobs[job_id].sub_log.close()
-                filename = os.path.join(self.jobs[job_id].output_dir,
-                                        "pipeline", level.split('.')[0],
-                                        "%s-%s.yaml" % (level, name))
-                mkdir(os.path.dirname(filename))
-                self.current_level = level
-                self.jobs[job_id].sub_log = open(filename, 'a+')
-        else:
+        if job_id not in self.jobs:
             # Query the database for the job
             try:
                 job = TestJob.objects.get(id=job_id)
@@ -284,12 +263,9 @@ class Command(BaseCommand):
                 return
 
             self.logger.info("[%s] Receiving logs from a new job", job_id)
-            filename = os.path.join(job.output_dir,
-                                    "pipeline", level.split('.')[0],
-                                    "%s-%s.yaml" % (level, name))
             # Create the sub directories (if needed)
-            mkdir(os.path.dirname(filename))
-            self.jobs[job_id] = JobHandler(job, level, filename)
+            mkdir(job.output_dir)
+            self.jobs[job_id] = JobHandler(job)
 
         if message_lvl == "results":
             try:
@@ -297,12 +273,29 @@ class Command(BaseCommand):
             except TestJob.DoesNotExist:
                 self.logger.error("[%s] Unknown job id", job_id)
                 return
-            meta_filename = create_metadata_store(message_msg, job, level)
+            meta_filename = create_metadata_store(message_msg, job)
             ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
             if not ret:
                 self.logger.warning(
                     "[%s] Unable to map scanned results: %s",
                     job_id, message)
+            else:
+                # Look for lava.job result
+                if message_msg["definition"] == "lava" and message_msg["case"] == "job":
+                    if message_msg["result"] == "pass":
+                        status = TestJob.COMPLETE
+                        status_msg = "Complete"
+                    else:
+                        status = TestJob.INCOMPLETE
+                        status_msg = "Incomplete"
+
+                    self.logger.info("[%s] job status: %s", job_id, status_msg)
+                    # Update status.
+                    with transaction.atomic():
+                        job = TestJob.objects.select_for_update().get(id=job_id)
+                        if job.status == TestJob.CANCELING:
+                            cancel_job(job)
+                        fail_job(job, fail_msg="", job_status=status)
 
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
@@ -376,16 +369,14 @@ class Command(BaseCommand):
                 job_id = int(msg[2])
                 job_status = int(msg[3])
                 error_msg = msg[4]
-                description = msg[5]
+                compressed_description = msg[5]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
             if job_status:
-                status = TestJob.INCOMPLETE
-                self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
+                self.logger.info("[%d] %s => END (lava-run crashed)", job_id, hostname)
                 self.logger.error("[%d] Error: %s", job_id, error_msg)
             else:
-                status = TestJob.COMPLETE
                 self.logger.info("[%d] %s => END", job_id, hostname)
 
             # Find the corresponding job and update the status
@@ -395,20 +386,28 @@ class Command(BaseCommand):
                 job = TestJob.objects.get(id=job_id)
                 filename = os.path.join(job.output_dir, 'description.yaml')
                 try:
+                    # Create the directory if it was not already created
+                    mkdir(os.path.dirname(filename))
+                    description = lzma.decompress(compressed_description)
                     with open(filename, 'w') as f_description:
-                        f_description.write(lzma.decompress(description))
+                        f_description.write(description)
+                    if description:
+                        parse_job_description(job)
                 except (IOError, lzma.error) as exc:
                     self.logger.error("[%d] Unable to dump 'description.yaml'",
                                       job_id)
                     self.logger.exception(exc)
-                parse_job_description(job)
 
-                # Update status.
-                with transaction.atomic():
-                    job = TestJob.objects.select_for_update().get(id=job_id)
-                    if job.status == TestJob.CANCELING:
-                        cancel_job(job)
-                    fail_job(job, fail_msg=error_msg, job_status=status)
+                # Update status only if job_status is not 0.
+                # The slave send a non 0 if lava-run crashed and was not able
+                # to send the results.
+                if job_status:
+                    self.logger.error("[%d] lava-run crashed, marking job as INCOMPLETE", job_id)
+                    with transaction.atomic():
+                        job = TestJob.objects.select_for_update().get(id=job_id)
+                        if job.status == TestJob.CANCELING:
+                            cancel_job(job)
+                        fail_job(job, fail_msg=error_msg, job_status=TestJob.INCOMPLETE)
 
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
@@ -616,6 +615,10 @@ class Command(BaseCommand):
         else:
             self.logger.setLevel(logging.DEBUG)
 
+        if os.path.exists('/etc/lava-server/worker.conf'):
+            self.logger.error("[FAIL] lava-master must not be run on a remote worker!")
+            sys.exit(2)
+
         self.logger.info("Dropping privileges")
         if not self.drop_privileges(options['user'], options['group']):
             self.logger.error("Unable to drop privileges")
@@ -658,7 +661,7 @@ class Command(BaseCommand):
         # Last access to the database for new jobs and cancelations
         last_db_access = 0
 
-        # Poll on the sockets (only one for the moment). This allow to have a
+        # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         poller = zmq.Poller()
         poller.register(self.pull_socket, zmq.POLLIN)
@@ -680,13 +683,6 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, signal_to_pipe)
         signal.signal(signal.SIGQUIT, signal_to_pipe)
         poller.register(pipe_r, zmq.POLLIN)
-
-        if os.path.exists('/etc/lava-server/worker.conf'):
-            self.logger.error("[FAIL] lava-master must not be run on a remote worker!")
-            self.controler.close(linger=0)
-            self.pull_socket.close(linger=0)
-            context.term()
-            sys.exit(2)
 
         self.logger.info("[INIT] LAVA dispatcher-master has started.")
         self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
@@ -711,7 +707,7 @@ class Command(BaseCommand):
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
-                    self.logging_socket(options)
+                    self.logging_socket()
 
                 # Garbage collect file handlers
                 now = time.time()
@@ -750,10 +746,31 @@ class Command(BaseCommand):
                 self.logger.info("[RESET] database connection reset.")
                 continue
 
-        # Closing sockets and droping messages.
-        self.logger.info("[CLOSE] Closing the sockets and dropping messages")
+        # Drop controler socket: the protocol does handle lost messages
+        self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
         self.controler.close(linger=0)
-        self.pull_socket.close(linger=0)
+
+        # Carefully close the logging socket as we don't want to lose messages
+        self.logger.info("[CLOSE] Disconnect logging socket and process messages")
+        endpoint = self.pull_socket.getsockopt(zmq.LAST_ENDPOINT)
+        self.logger.debug("unbinding from '%s'", endpoint)
+        self.pull_socket.unbind(endpoint)
+
+        poller = zmq.Poller()
+        poller.register(self.pull_socket, zmq.POLLIN)
+        while True:
+            try:
+                sockets = dict(poller.poll(5000))
+            except zmq.error.ZMQError:
+                continue
+
+            if sockets.get(self.pull_socket) == zmq.POLLIN:
+                self.logging_socket()
+            else:
+                break
+
+        self.logger.info("[CLOSE] Closing the logging socket: the queue is empty")
+        self.pull_socket.close()
         if options['encrypt']:
             auth.stop()
         context.term()

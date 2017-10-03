@@ -73,7 +73,7 @@ def daemonise(pidfile, logfile):
     # noinspection PyArgumentList
     lockfile = pidlockfile.PIDLockFile(pidfile)
     if lockfile.is_locked():
-        logging.error("PIDFile %s already locked", pidfile)
+        logging.error("PIDFile {} already locked".format(pidfile))
         sys.exit(os.EX_OSERR)
     context = daemon.DaemonContext(
         detach_process=True,

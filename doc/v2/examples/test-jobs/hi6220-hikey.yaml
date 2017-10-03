@@ -46,8 +46,8 @@ actions:
 - deploy:
     timeout:
       minutes: 15
-    to: fastboot
     namespace: droid
+    to: fastboot
     images:
       ptable:
         url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi/latest/release/hikey/ptable-aosp-8g.img
@@ -64,6 +64,7 @@ actions:
         compression: xz
       system:
         url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/system.img.xz
+        sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
         compression: xz
     os: debian
 

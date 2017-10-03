@@ -197,3 +197,6 @@ LOGGING = {
         }
     }
 }
+
+# Do not make the test instance read only
+ARCHIVED = False
