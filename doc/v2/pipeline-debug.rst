@@ -179,8 +179,8 @@ The following checks are silenced and does not show any errors or warnings:
 
 .. _django_localhost:
 
-Using localhost
----------------
+Using localhost or non HTTPS instance URL
+-----------------------------------------
 
 Newer versions of django include improved security features which can affect
 how LAVA is used as ``http://localhost``. By default, django enforces
