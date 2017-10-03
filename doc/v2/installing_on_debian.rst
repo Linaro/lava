@@ -46,13 +46,14 @@ that codename in the table.
          release of Debian stable. Experimental will typically have no LAVA
          packages outside of a Debian release freeze.
 
-.. [#f2] `stretch` is due for release on 17th June 2017. All updates to LAVA
-         packages for Stretch will be made using `stretch-backports`_ once this
-         becomes available. Systems using Debian Stretch are recommended to
-         enable stretch-backports. LAVA packages and dependencies which are
-         installed using stretch-backports are **fully supported** by upstream
-         and are the same codebase as the relevant production release available
-         from the :ref:`lava_repositories`.
+.. [#f2] `stretch` was released on 17th June 2017. All updates to LAVA
+         packages for Stretch will be made using
+         `stretch-backports`_. Systems using Debian Stretch are
+         recommended to enable stretch-backports. LAVA packages and
+         dependencies which are installed using stretch-backports are
+         **fully supported** by upstream and are the same codebase as
+         the relevant production release available from the
+         :ref:`lava_repositories`.
 
 .. [#f3] Jessie was released on April 25th, 2015. All updates to LAVA packages
          for Jessie will be made using `jessie-backports`_. Systems using
