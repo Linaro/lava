@@ -156,8 +156,8 @@ so that the filesystem can be unpacked.
  * ``bz2``
  * ``xz``
 
-md5sum (optional)
------------------
+md5sum
+------
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple
@@ -167,8 +167,8 @@ file, irrespective of whether that file is decompressed later.
 
 .. _deploy_to_nbd_images_sha256sum:
 
-sha256sum (optional)
---------------------
+sha256sum
+---------
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple

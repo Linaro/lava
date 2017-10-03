@@ -38,8 +38,8 @@ In the example, the partition to be flashed on the :term:`DUT` is ``rootfs``.
 
 .. _deploy_to_download_images_url:
 
-url
-^^^
+url *
+^^^^^
 
 Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
@@ -58,8 +58,8 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 
 .. _deploy_to_download_images_compression:
 
-compression (optional)
-^^^^^^^^^^^^^^^^^^^^^^
+compression
+^^^^^^^^^^^
 
 If the image is compressed, the compression method **must** be specified.
 
@@ -71,8 +71,8 @@ If the image is compressed, the compression method **must** be specified.
 
 .. _deploy_to_download_images_archive:
 
-archive (optional)
-^^^^^^^^^^^^^^^^^^
+archive
+^^^^^^^
 
 Some system or rootfs images are compressed as a tarball (``.tar.gz``), these
 images need the ``archive`` option specified to unpack the system image
@@ -84,8 +84,8 @@ correctly.
 
 .. _deploy_to_download_images_md5sum:
 
-md5sum (optional)
-^^^^^^^^^^^^^^^^^
+md5sum
+^^^^^^
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple
@@ -95,8 +95,8 @@ file, irrespective of whether that file is decompressed later.
 
 .. _deploy_to_download_images_sha256sum:
 
-sha256sum (optional)
-^^^^^^^^^^^^^^^^^^^^
+sha256sum
+^^^^^^^^^
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple
@@ -117,8 +117,8 @@ downloaded as specified in :ref:`deploy_to_download_label_url`
 
 .. _deploy_to_download_label_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
@@ -137,8 +137,8 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 
 .. _deploy_to_download_label_compression:
 
-compression (optional)
-----------------------
+compression
+-----------
 
 If the image is compressed, the compression method **must** be specified.
 
@@ -150,8 +150,8 @@ If the image is compressed, the compression method **must** be specified.
 
 .. _deploy_to_download_label_archive:
 
-archive (optional)
-------------------
+archive
+-------
 
 Some system or rootfs images are compressed as a tarball (``.tar.gz``), these
 images need the ``archive`` option specified to unpack the system image
@@ -163,8 +163,8 @@ correctly.
 
 .. _deploy_to_download_label_md5sum:
 
-md5sum (optional)
------------------
+md5sum
+------
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple
@@ -174,8 +174,8 @@ file, irrespective of whether that file is decompressed later.
 
 .. _deploy_to_download_label_sha256sum:
 
-sha256sum (optional)
---------------------
+sha256sum
+---------
 
 The checksum of the file to download can be provided, and if so it will be
 checked against the downloaded content. This can help to detect multiple
