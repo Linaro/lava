@@ -61,19 +61,15 @@ class UefiMenu(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
         if parameters['method'] != 'uefi-menu':
-            return False
-        if 'boot' not in device['actions']:
-            return False
-        if 'methods' not in device['actions']['boot']:
-            raise ConfigurationError("Device misconfiguration")
+            return False, '"method" was not "uefi-menu"'
         if 'uefi-menu' in device['actions']['boot']['methods']:
             params = device['actions']['boot']['methods']['uefi-menu']['parameters']
             if 'interrupt_prompt' in params and 'interrupt_string' in params:
-                return True
-        return False
+                return True, 'accepted'
+            else:
+                return False, '"interrupt_prompt" or "interrupt_string" was not in the device configuration uefi-menu boot method parameters'
+        return False, '"uefi-menu" was not in the device configuration boot methods'
 
 
 class UEFIMenuInterrupt(MenuInterrupt):

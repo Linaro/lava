@@ -48,8 +48,12 @@ class MultinodeTestShell(LavaTest):
         if 'role' in parameters:
             if MultinodeProtocol.name in parameters:
                 if 'target_group' in parameters[MultinodeProtocol.name]:
-                    return True
-        return False
+                    return True, 'accepted'
+                else:
+                    return False, '"target_group" was not in parameters for %s' % MultinodeProtocol.name
+            else:
+                return False, '%s was not in parameters' % MultinodeProtocol.name
+        return False, '"role" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):

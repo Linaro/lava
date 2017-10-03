@@ -1,3 +1,40 @@
+- class: actions.deploy.lxc.LxcAction
+  name: lxc-deploy
+  pipeline:
+  - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
+  - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: actions.deploy.lxc.LxcAptUpdateAction, name: lxc-apt-update}
+  - {class: actions.deploy.lxc.LxcAptInstallAction, name: lxc-apt-install}
+  - {class: actions.boot.lxc.LxcStopAction, name: lxc-stop}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.overlay.OverlayAction
+    name: lava-overlay
+    pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
+    - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
+    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+    - class: actions.deploy.testdef.TestDefinitionAction
+      name: test-definition
+      pipeline:
+      - {class: actions.deploy.testdef.InlineRepoAction, name: inline-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+  - {class: actions.deploy.apply_overlay.ApplyLxcOverlay, name: apply-lxc-overlay}
+- class: actions.boot.lxc.BootLxcAction
+  name: lxc-boot
+  pipeline:
+  - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: connections.lxc.ConnectLxc, name: connect-lxc}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.deploy.tftp.TftpAction
   name: tftp-deploy
   pipeline:
@@ -17,21 +54,7 @@
     name: prepare-tftp-overlay
     pipeline:
     - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, name: extract-nfsrootfs}
-    - class: actions.deploy.overlay.OverlayAction
-      name: lava-overlay
-      pipeline:
-      - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
-      - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
-      - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
-      - class: actions.deploy.testdef.TestDefinitionAction
-        name: test-definition
-        pipeline:
-        - {class: actions.deploy.testdef.InlineRepoAction, name: inline-repo-action}
-        - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-        - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-        - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
-      - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
-      - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+    - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
@@ -42,7 +65,6 @@
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
@@ -59,19 +81,10 @@
     - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-    - {class: shell.ExpectShellSession, name: expect-shell-connection}
-    - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
   - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
-- class: actions.boot.kexec.BootKexecAction
-  name: kexec-boot
-  pipeline:
-  - {class: actions.boot.kexec.KexecAction, name: call-kexec}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: shell.ExpectShellSession, name: expect-shell-connection}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

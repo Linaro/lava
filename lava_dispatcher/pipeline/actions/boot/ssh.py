@@ -48,21 +48,11 @@ class SshLogin(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'actions' not in device or 'boot' not in device['actions']:
-            return False
-        if 'methods' not in device['actions']['boot']:
-            return False
         if 'ssh' not in device['actions']['boot']['methods']:
-            return False
-        # It is an error to have multiple keys - each method is a dict with a single key
-        params = device['actions']['boot']['methods']
-        if not params:
-            return False
-        if not any('ssh' in data for data in params):
-            return False
+            return False, '"ssh" not in device configuration boot methods'
         if 'ssh' not in parameters['method']:
-            return False
-        return True
+            return False, '"ssh" not in "method"'
+        return True, 'accepted'
 
 
 class SshAction(RetryAction):
@@ -243,19 +233,16 @@ class Schroot(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'actions' not in device or 'boot' not in device['actions']:
-            return False
+            return False, '"boot" was not in the device configuration actions'
         if 'methods' not in device['actions']['boot']:
-            return False
-        params = device['actions']['boot']['methods']
-        if not params:
-            return False
-        if 'schroot' not in params:
-            return False
+            return False, '"methods" was not in the device config'
+        if 'schroot' not in device['actions']['boot']['methods']:
+            return False, '"schroot" was not in the device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" was not in parameters'
         if 'schroot' not in parameters['method']:
-            return False
-        return True
+            return False, '"method" was not "schroot"'
+        return True, 'accepted'
 
 
 class SchrootAction(Action):

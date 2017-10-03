@@ -22,6 +22,7 @@ import time
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
+    ConfigurationError,
     JobError,
     LAVABug,
     TestError,
@@ -62,6 +63,9 @@ class RetryAction(Action):
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
+                # Restart max_end_time or the retry on a timeout fails with duration < 0
+                max_end_time = self.timeout.duration + time.time()
+                self.timeout.start = time.time()
                 # Print the error message
                 retries += 1
                 msg = "%s failed: %d of %d attempts. '%s'" % (self.name, retries,
@@ -79,7 +83,7 @@ class RetryAction(Action):
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                self.logger.warning("Retrying: %s %s", self.level, self.name)
+                self.logger.warning("Retrying: %s %s (%s sec)", self.level, self.name, max_end_time)
 
         # If we are repeating, check that all repeat were a success.
         if has_failed:
@@ -128,6 +132,7 @@ class Deployment(object):
     priority = 0
     action_type = 'deploy'
     compatibility = 0
+    name = 'unset-deployment-name'
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -168,15 +173,39 @@ class Deployment(object):
         return NotImplementedError("accepts %s" % cls)
 
     @classmethod
-    def select(cls, device, parameters):
+    def deploy_check(cls, device, parameters):
+        if not device:
+            raise JobError('job "device" was None')
+        if 'actions' not in device:
+            raise ConfigurationError('Invalid device configuration, no "actions" in device configuration')
+        if 'to' not in parameters:
+            raise ConfigurationError('"to" not specified in deploy parameters')
+        if 'deploy' not in device['actions']:
+            raise ConfigurationError('"deploy" is not in the device configuration actions')
+        if 'methods' not in device['actions']['deploy']:
+            raise ConfigurationError('Device misconfiguration, no "methods" in device configuration deploy actions')
 
+    @classmethod
+    def select(cls, device, parameters):
+        cls.deploy_check(device, parameters)
         candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
+        replies = {}
+        willing = []
+        for c in candidates:
+            res = c.accepts(device, parameters)
+            if not isinstance(res, tuple):
+                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+            if res[0]:
+                willing.append(c)
+            else:
+                replies[c.name] = res[1]
 
         if len(willing) == 0:
+            replies_string = ""
+            for name, reply in replies.items():
+                replies_string += ("%s: %s\n" % (name, reply))
             raise JobError(
-                "No deployment strategy available for the given "
-                "device. %s" % cls)
+                "None of the deployment strategies accepted your deployment parameters, reasons given:\n%s" % replies_string)
 
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
@@ -199,6 +228,19 @@ class Boot(object):
             self.job.compatibility = self.compatibility
 
     @classmethod
+    def boot_check(cls, device, parameters):
+        if not device:
+            raise JobError('job "device" was None')
+        if 'method' not in parameters:
+            raise ConfigurationError("method not specified in boot parameters")
+        if 'actions' not in device:
+            raise ConfigurationError('Invalid device configuration, no "actions" in device configuration')
+        if 'boot' not in device['actions']:
+            raise ConfigurationError('"boot" is not in the device configuration actions')
+        if 'methods' not in device['actions']['boot']:
+            raise ConfigurationError('Device misconfiguration, no "methods" in device configuration boot action')
+
+    @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
         """
         Returns True if this deployment strategy can be used the the
@@ -210,15 +252,27 @@ class Boot(object):
 
     @classmethod
     def select(cls, device, parameters):
+        cls.boot_check(device, parameters)
         candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
-        if len(willing) == 0:
-            raise JobError(
-                "No boot strategy available for the device "
-                "with the specified job parameters. %s" % cls
-            )
+        replies = {}
+        willing = []
+        for c in candidates:
+            res = c.accepts(device, parameters)
+            if not isinstance(res, tuple):
+                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+            if res[0]:
+                willing.append(c)
+            else:
+                class_name = c.name if hasattr(c, 'name') else c.__name__
+                replies[class_name] = res[1]
 
-        # higher priority first
+        if len(willing) == 0:
+            replies_string = ""
+            for name, reply in replies.items():
+                replies_string += ("%s: %s\n" % (name, reply))
+            raise JobError(
+                "None of the boot strategies accepted your boot parameters, reasons given:\n%s" % replies_string)
+
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
@@ -252,16 +306,25 @@ class LavaTest(object):
     @classmethod
     def select(cls, device, parameters):
         candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
-        if len(willing) == 0:
-            if hasattr(device, 'parameters'):
-                msg = "No test strategy available for the device "\
-                      "with the specified job parameters. %s" % cls
+        replies = {}
+        willing = []
+        for c in candidates:
+            res = c.accepts(device, parameters)
+            if not isinstance(res, tuple):
+                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+            if res[0]:
+                willing.append(c)
             else:
-                msg = "No test strategy available for the device. %s" % cls
-            raise JobError(msg)
+                class_name = c.name if hasattr(c, 'name') else c.__name__
+                replies[class_name] = res[1]
 
-        # higher priority first
+        if len(willing) == 0:
+            replies_string = ""
+            for name, reply in replies.items():
+                replies_string += ("%s: %s\n" % (name, reply))
+            raise JobError(
+                "None of the test strategies accepted your test parameters, reasons given:\n%s" % replies_string)
+
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 

@@ -47,12 +47,12 @@ class Minimal(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'minimal' not in device['actions']['boot']['methods']:
-            return False
+            return False, '"minimal" was not in device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" was not in parameters'
         if parameters['method'] != 'minimal':
-            return False
-        return True
+            return False, '"method" was not "minimal"'
+        return True, 'accepted'
 
 
 class MinimalBoot(BootAction):

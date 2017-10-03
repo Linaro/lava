@@ -41,37 +41,11 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
 )
 from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
 
 
 # pylint: disable=too-many-return-statements
-
-
-def fastboot_accept(device, parameters):
-    """
-    Each fastboot deployment strategy uses these checks
-    as a base, then makes the final decision on the
-    style of fastboot deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'fastboot':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'adb_serial_number' not in device:
-        return False
-    if 'fastboot_serial_number' not in device:
-        return False
-    if 'fastboot_options' not in device:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
 
 
 class Fastboot(Deployment):
@@ -80,6 +54,7 @@ class Fastboot(Deployment):
     Downloads the relevant parts, copies to the locations using fastboot.
     """
     compatibility = 1
+    name = 'fastboot'
 
     def __init__(self, parent, parameters):
         super(Fastboot, self).__init__(parent)
@@ -90,11 +65,21 @@ class Fastboot(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not fastboot_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'fastboot':
+            return False, '"to" parameter is not "fastboot"'
+        if 'deploy' not in device['actions']:
+            return False, '"deploy" is not in the device configuration actions'
+        if 'adb_serial_number' not in device:
+            return False, '"adb_serial_number" is not in the device configuration'
+        if 'fastboot_serial_number' not in device:
+            return False, '"fastboot_serial_number" is not in the device configuration'
+        if 'fastboot_options' not in device:
+            return False, '"fastboot_options" is not in the device configuration'
         if 'fastboot' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"fastboot" was not in the device configuration deploy methods"'
 
 
 class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attributes
@@ -150,85 +135,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                     self.internal_pipeline.add_action(
                         DeployDeviceEnvironment())
         self.internal_pipeline.add_action(FastbootFlashAction())
-
-
-class EnterFastbootAction(DeployAction):
-    """
-    Enters fastboot bootloader.
-    """
-
-    def __init__(self):
-        super(EnterFastbootAction, self).__init__()
-        self.name = "enter-fastboot-action"
-        self.description = "enter fastboot bootloader"
-        self.summary = "enter fastboot"
-        self.retries = 10
-        self.sleep = 10
-
-    def validate(self):
-        super(EnterFastbootAction, self).validate()
-        if 'adb_serial_number' not in self.job.device:
-            self.errors = "device adb serial number missing"
-        elif self.job.device['adb_serial_number'] == '0000000000':
-            self.errors = "device adb serial number unset"
-        if 'fastboot_serial_number' not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device['fastboot_serial_number'] == '0000000000':
-            self.errors = "device fastboot serial number unset"
-        if 'fastboot_options' not in self.job.device:
-            self.errors = "device fastboot options missing"
-        elif not isinstance(self.job.device['fastboot_options'], list):
-            self.errors = "device fastboot options is not a list"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
-
-        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
-        fastboot_serial_number = self.job.device['fastboot_serial_number']
-
-        # Try to enter fastboot mode with adb.
-        adb_serial_number = self.job.device['adb_serial_number']
-        # start the adb daemon
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
-        command_output = self.run_command(adb_cmd, allow_fail=True)
-        if command_output and 'successfully' in command_output:
-            self.logger.debug("adb daemon started: %s", command_output)
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
-                   adb_serial_number, 'devices']
-        command_output = self.run_command(adb_cmd, allow_fail=True)
-        if command_output and adb_serial_number in command_output:
-            self.logger.debug("Device is in adb: %s", command_output)
-            adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
-                       '-s', adb_serial_number, 'reboot-bootloader']
-            self.run_command(adb_cmd)
-            return connection
-
-        # Enter fastboot mode with fastboot.
-        fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
-                        fastboot_serial_number, 'devices'] + fastboot_opts
-        command_output = self.run_command(fastboot_cmd)
-        if command_output and fastboot_serial_number in command_output:
-            self.logger.debug("Device is in fastboot: %s", command_output)
-            fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', fastboot_serial_number,
-                            'reboot-bootloader'] + fastboot_opts
-            command_output = self.run_command(fastboot_cmd)
-            if command_output and 'OKAY' not in command_output:
-                raise InfrastructureError("Unable to enter fastboot: %s" %
-                                          command_output)
-            else:
-                status = [status.strip() for status in command_output.split(
-                    '\n') if 'finished' in status][0]
-                self.results = {'status': status}
-        return connection
 
 
 class FastbootFlashAction(DeployAction):

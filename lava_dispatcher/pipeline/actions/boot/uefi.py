@@ -52,23 +52,17 @@ class UefiShell(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' not in parameters:
-            raise RuntimeError("method not specified in boot parameters")
         if parameters['method'] != 'uefi':
-            return False
-        if 'boot' not in device['actions']:
-            return False
-        if 'methods' not in device['actions']['boot']:
-            raise RuntimeError("Device misconfiguration")
+            return False, '"method" was not "uefi"'
         if 'uefi' in device['actions']['boot']['methods']:
             params = device['actions']['boot']['methods']['uefi']['parameters']
             if not params:
-                return False
+                return False, 'there were no parameters in the "uefi" device configuration boot method'
             if 'shell_interrupt_string' not in params:
-                return False
+                return False, '"shell_interrupt_string" was not in the uefi device configuration boot method parameters'
             if 'shell_interrupt_prompt' in params and 'bootloader_prompt' in params:
-                return True
-        return False
+                return True, 'accepted'
+        return False, 'missing or invalid parameters in the uefi device configuration boot methods'
 
 
 class UefiShellAction(BootAction):

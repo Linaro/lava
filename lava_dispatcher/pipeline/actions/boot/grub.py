@@ -50,20 +50,6 @@ from lava_dispatcher.pipeline.power import (
 )
 
 
-def bootloader_accepts(device, parameters):
-    if 'method' not in parameters:
-        raise ConfigurationError("method not specified in boot parameters")
-    if parameters["method"] not in ["grub", "grub-efi"]:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'boot' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['boot']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class GrubSequence(Boot):
 
     compatibility = 3
@@ -77,16 +63,24 @@ class GrubSequence(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not bootloader_accepts(device, parameters):
-            return False
+        if 'method' not in parameters:
+            raise ConfigurationError("method not specified in boot parameters")
+        if parameters["method"] not in ["grub", "grub-efi"]:
+            return False, '"method" was not "grub" or "grub-efi"'
+        if 'actions' not in device:
+            raise ConfigurationError("Invalid device configuration")
+        if 'boot' not in device['actions']:
+            return False, '"boot" was not in the device configuration actions'
+        if 'methods' not in device['actions']['boot']:
+            raise ConfigurationError("Device misconfiguration")
         params = device['actions']['boot']['methods']
         if 'grub' not in params:
-            return False
+            return False, '"grub" was not in the device configuration boot methods'
         if 'grub-efi' in params:
-            return False
+            return False, '"grub-efi" was not in the device configuration boot methods'
         if 'sequence' in params['grub']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"sequence" not in device configuration boot methods'
 
 
 class Grub(Boot):
@@ -102,12 +96,23 @@ class Grub(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not bootloader_accepts(device, parameters):
-            return False
+        if 'method' not in parameters:
+            raise ConfigurationError("method not specified in boot parameters")
+        if parameters["method"] not in ["grub", "grub-efi"]:
+            return False, '"method" was not "grub" or "grub-efi"'
+        if 'actions' not in device:
+            raise ConfigurationError("Invalid device configuration")
+        if 'boot' not in device['actions']:
+            return False, '"boot" was not in the device configuration actions'
+        if 'methods' not in device['actions']['boot']:
+            raise ConfigurationError("Device misconfiguration")
         params = device['actions']['boot']['methods']
         if 'grub' in params and 'sequence' in params['grub']:
-            return False
-        return 'grub' in params or 'grub-efi' in params
+            return False, '"sequence" was in "grub" parameters'
+        if 'grub' in params or 'grub-efi' in params:
+            return True, 'accepted'
+        else:
+            return False, '"grub" or "grub-efi" was not in the device configuration boot methods'
 
 
 def _grub_sequence_map(sequence):

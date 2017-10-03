@@ -178,7 +178,7 @@ class Job(object):
         except (IOError, LZMAError) as exc:
             LOG.error("[%d] Unable to read 'description.yaml'", self.job_id)
             LOG.exception(exc)
-            return ''
+            return None
 
     def start(self):
         """Start the process."""
@@ -268,20 +268,16 @@ def send_multipart_u(sock, data):
 
 def send_end(sock, job_id, job, print_exception=False):
     err = job.errors()
-    if job.proc is not None and job.proc.returncode is not None:
-        job_status = job.proc.returncode
-    elif err == '':
+    description = job.description()
+    if description is not None:
         job_status = 0
     else:
+        LOG.error("[%d] lava-run crashed", job_id)
+        description = ""
         job_status = 2
 
-    if print_exception and job_status:
-        LOG.info("[%d] Job returned non-zero", job_id)
-        if err:
-            LOG.exception(err)
-
     send_multipart_u(sock, ["END", str(job_id), str(job_status), err,
-                            job.description()])
+                            description])
 
 
 def create_zmq_context(master_uri, hostname, ipv6, encrypt,

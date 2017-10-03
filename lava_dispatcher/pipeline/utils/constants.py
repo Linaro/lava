@@ -74,6 +74,9 @@ LXC_TEMPLATE_WITH_MIRROR = ['debian', 'ubuntu']
 # LXC default packages
 LXC_DEFAULT_PACKAGES = "systemd,systemd-sysv"
 
+# LAVA home in LXC
+LAVA_LXC_HOME = "/lava-lxc"
+
 # Timeout used by the vland protocol when waiting for vland to
 # respond to the api.create_vlan request, in seconds.
 VLAND_DEPLOY_TIMEOUT = 120

@@ -253,8 +253,22 @@ def usb_device_wait(job, device_actions=None):
 
 def lxc_udev_rule(data):
     """Construct the udev rule string."""
-    rule = """ACTION=="add", \
-    ATTR{serial}=="{serial-number}", \
-    RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py {lxc-name} {device-info-file}"
-    """.format(**data)
+    rule = 'ACTION=="add", '
+    rule += 'ATTR{{serial}}=="{serial_number}", '
+    if data["vendor_id"] is not None:
+        rule += 'ATTR{{idVendor}}=="{vendor_id}", '
+    if data["product_id"] is not None:
+        rule += 'ATTR{{idProduct}}=="{product_id}", '
+    rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
+            '--lxc-name {lxc_name} --device-info {device_info_file} ' \
+            '--logging-url {logging_url} --job-id {job_id}'
+    rule = rule.format(**data)
+
+    if data["master_cert"] is not None:
+        rule += " --master-cert %s" % data["master_cert"]
+    if data["slave_cert"] is not None:
+        rule += " --slave-cert %s" % data["slave_cert"]
+    if data["ipv6"]:
+        rule += " --ipv6"
+    rule += '"\n'
     return rule

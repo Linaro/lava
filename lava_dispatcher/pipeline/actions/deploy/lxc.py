@@ -43,10 +43,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     LXC_DEFAULT_PACKAGES,
     UDEV_RULES_DIR,
 )
-from lava_dispatcher.pipeline.utils.udev import (
-    get_udev_devices,
-    lxc_udev_rule,
-)
+from lava_dispatcher.pipeline.utils.udev import lxc_udev_rule
 from lava_dispatcher.pipeline.utils.filesystem import (
     debian_package_version,
     lxc_path,
@@ -55,34 +52,13 @@ from lava_dispatcher.pipeline.utils.filesystem import (
 # pylint: disable=superfluous-parens
 
 
-def lxc_accept(device, parameters):
-    """
-    Each lxc deployment strategy uses these checks as a base, then makes the
-    final decision on the style of lxc deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if 'os' not in parameters:
-        return False
-    if parameters['to'] != 'lxc':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class Lxc(Deployment):
     """
     Strategy class for a lxc deployment.
     Downloads the relevant parts, copies to the locations using lxc.
     """
     compatibility = 1
+    name = 'lxc'
 
     def __init__(self, parent, parameters):
         super(Lxc, self).__init__(parent)
@@ -93,11 +69,15 @@ class Lxc(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not lxc_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if 'os' not in parameters:
+            return False, '"os" is not in deploy parameters'
+        if parameters['to'] != 'lxc':
+            return False, '"to" parameter is not "lxc"'
         if 'lxc' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"lxc" was not in the device configuration deploy methods'
 
 
 class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
@@ -257,9 +237,12 @@ class LxcCreateUdevRuleAction(DeployAction):
         try:
             if 'device_info' in self.job.device:
                 for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    if board_id == '0000000000':
+                    if usb_device.get('board_id', '') in ['', '0000000000']:
                         self.errors = "board_id unset"
+                    if usb_device.get('usb_vendor_id', '') == '0000':
+                        self.errors = 'usb_vendor_id unset'
+                    if usb_device.get('usb_product_id', '') == '0000':
+                        self.errors = 'usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
@@ -267,34 +250,56 @@ class LxcCreateUdevRuleAction(DeployAction):
         connection = super(LxcCreateUdevRuleAction, self).run(connection,
                                                               max_end_time,
                                                               args)
-        lxc_name = self.get_namespace_data(action='lxc-create-action',
-                                           label='lxc', key='name')
+        # this may be the device namespace - the lxc namespace may not be
+        # accessible
+        lxc_name = None
+        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        if protocols:
+            lxc_name = protocols[0].lxc_name
+        if not lxc_name:
+            self.logger.debug("No LXC device requested")
+            return connection
 
         # If there is no device_info then this action should be idempotent.
         if 'device_info' not in self.job.device:
             return connection
 
         device_info = self.job.device.get('device_info', [])
-        device_info_file = os.path.join(self.mkdtemp(), 'device-info')
+        device_info_file = os.path.join(self.mkdtemp(), 'device-info.yaml')
         with open(device_info_file, 'w') as device_info_obj:
             device_info_obj.write(str(device_info))
         self.logger.debug("device info file '%s' created with:\n %s",
                           device_info_file, device_info)
+        logging_url = master_cert = slave_cert = ipv6 = None
+        job_id = self.job.job_id
+        if self.logger.handler:
+            logging_url = self.logger.handler.logging_url
+            master_cert = self.logger.handler.master_cert
+            slave_cert = self.logger.handler.slave_cert
+            ipv6 = self.logger.handler.ipv6
+            job_id = self.logger.handler.job_id
         for device in device_info:
-            data = {'serial-number': str(device.get('board_id', '')),
-                    'serial': '{serial}',
-                    'lxc-name': lxc_name,
-                    'device-info-file': device_info_file}
+            data = {'serial_number': str(device.get('board_id', '')),
+                    'vendor_id': device.get('usb_vendor_id', None),
+                    'product_id': device.get('usb_product_id', None),
+                    'lxc_name': lxc_name,
+                    'device_info_file': device_info_file,
+                    'logging_url': logging_url,
+                    'master_cert': master_cert,
+                    'slave_cert': slave_cert,
+                    'ipv6': ipv6,
+                    'job_id': job_id}
             # The rules file will be something like
             # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
             # where, 100 is just an arbitrary number which specifies loading
             # priority for udevd
             rules_file = os.path.join(UDEV_RULES_DIR,
                                       '100-' + lxc_name + '.rules')
-            with open(rules_file, 'wa') as f_obj:
-                f_obj.write(lxc_udev_rule(data))
+            str_lxc_udev_rule = lxc_udev_rule(data)
+            with open(rules_file, 'a') as f_obj:
+                f_obj.write(str_lxc_udev_rule)
             self.logger.debug("udev rules file '%s' created with:\n %s",
-                              rules_file, lxc_udev_rule(data))
+                              rules_file, str_lxc_udev_rule)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
@@ -362,56 +367,4 @@ class LxcAptInstallAction(DeployAction):
                'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
-        return connection
-
-
-class LxcAddDeviceAction(Action):
-    """Add usb device to lxc.
-    """
-    def __init__(self):
-        super(LxcAddDeviceAction, self).__init__()
-        self.name = "lxc-add-device-action"
-        self.description = "action that adds usb devices to lxc"
-        self.summary = "device add lxc"
-        self.retries = 10
-        self.sleep = 10
-
-    def validate(self):
-        super(LxcAddDeviceAction, self).validate()
-        if 'device_info' in self.job.device \
-           and not isinstance(self.job.device.get('device_info'), list):
-            self.errors = "device_info unset"
-        try:
-            if 'device_info' in self.job.device:
-                for usb_device in self.job.device['device_info']:
-                    board_id = usb_device.get('board_id', '')
-                    usb_vendor_id = usb_device.get('usb_vendor_id', '')
-                    usb_product_id = usb_device.get('usb_product_id', '')
-                    if board_id == '0000000000':
-                        self.errors = "board_id unset"
-                    if usb_vendor_id == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_product_id == '0000':
-                        self.errors = 'usb_product_id unset'
-        except TypeError:
-            self.errors = "Invalid parameters for %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAddDeviceAction, self).run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
-        if protocols:
-            lxc_name = protocols[0].lxc_name
-        if not lxc_name:
-            self.logger.debug("No LXC device requested")
-            return connection
-
-        self.logger.info("Get USB device(s) ...")
-        device_paths = get_udev_devices(self.job, logger=self.logger)
-        for device in device_paths:
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-            log = self.run_command(lxc_cmd)
-            self.logger.debug(log)
-            self.logger.debug("%s: device %s added", lxc_name, device)
         return connection

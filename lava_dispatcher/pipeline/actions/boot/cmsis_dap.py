@@ -47,18 +47,18 @@ class CMSIS(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'cmsis-dap' not in device['actions']['boot']['methods']:
-            return False
+            return False, '"cmsis-dap" is not in the device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" not in parameters'
         if parameters['method'] != 'cmsis-dap':
-            return False
+            return False, '"method" was not "cmsis-dap"'
         if 'board_id' not in device:
-            return False
+            return False, 'device has no "board_id" configured'
         if 'parameters' not in device['actions']['boot']['methods']['cmsis-dap']:
-            return False
+            return False, '"parameters" was not in the device boot method configuration for "cmsis-dap"'
         if 'usb_mass_device' not in device['actions']['boot']['methods']['cmsis-dap']['parameters']:
-            return False
-        return True
+            return False, '"usb_mass_device" was not in the device configuration "cmsis-dap" boot method parameters'
+        return True, 'accepted'
 
 
 class BootCMSIS(BootAction):

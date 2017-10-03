@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,
 )
+from lava_dispatcher.pipeline.utils.contextmanager import chdir
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.network import rpcinfo_nfs
@@ -454,17 +455,16 @@ class CompressOverlay(Action):
             self.logger.error(self.errors)
             return connection
         connection = super(CompressOverlay, self).run(connection, max_end_time, args)
-        cur_dir = os.getcwd()
-        try:
-            with tarfile.open(output, "w:gz") as tar:
-                os.chdir(location)
-                tar.add(".%s" % lava_test_results_dir)
-                # ssh authorization support
-                if os.path.exists('./root/'):
-                    tar.add(".%s" % '/root/')
-        except tarfile.TarError as exc:
-            raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
-        os.chdir(cur_dir)
+        with chdir(location):
+            try:
+                with tarfile.open(output, "w:gz") as tar:
+                    tar.add(".%s" % lava_test_results_dir)
+                    # ssh authorization support
+                    if os.path.exists('./root/'):
+                        tar.add(".%s" % '/root/')
+            except tarfile.TarError as exc:
+                raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
+
         self.set_namespace_data(action=self.name, label='output', key='file', value=output)
         return connection
 

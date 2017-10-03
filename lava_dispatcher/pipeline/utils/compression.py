@@ -33,6 +33,9 @@ from lava_dispatcher.pipeline.action import (
     JobError
 )
 
+from lava_dispatcher.pipeline.utils.contextmanager import chdir
+
+
 # https://www.kernel.org/doc/Documentation/xz.txt
 compress_command_map = {'xz': 'xz --check=crc32', 'gz': 'gzip', 'bz2': 'bzip2'}
 decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zip': 'unzip'}
@@ -43,16 +46,15 @@ def compress_file(infile, compression):
         return infile
     if compression not in compress_command_map.keys():
         raise JobError("Cannot find shell command to compress: %s" % compression)
-    pwd = os.getcwd()
-    os.chdir(os.path.dirname(infile))
-    cmd = "%s %s" % (compress_command_map[compression], infile)
-    try:
-        # safe to use shell=True here, no external arguments
-        subprocess.check_output(cmd, shell=True)
-        os.chdir(pwd)
-        return "%s.%s" % (infile, compression)
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
+
+    with chdir(os.path.dirname(infile)):
+        cmd = "%s %s" % (compress_command_map[compression], infile)
+        try:
+            # safe to use shell=True here, no external arguments
+            subprocess.check_output(cmd, shell=True)
+            return "%s.%s" % (infile, compression)
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
 
 
 def decompress_file(infile, compression):
@@ -60,17 +62,18 @@ def decompress_file(infile, compression):
         return infile
     if compression not in decompress_command_map.keys():
         raise JobError("Cannot find shell command to decompress: %s" % compression)
-    os.chdir(os.path.dirname(infile))
-    cmd = "%s %s" % (decompress_command_map[compression], infile)
-    outfile = infile
-    if infile.endswith(compression):
-        outfile = infile[:-(len(compression) + 1)]
-    try:
-        # safe to use shell=True here, no external arguments
-        subprocess.check_output(cmd, shell=True)
-        return outfile
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))
+
+    with chdir(os.path.dirname(infile)):
+        cmd = "%s %s" % (decompress_command_map[compression], infile)
+        outfile = infile
+        if infile.endswith(compression):
+            outfile = infile[:-(len(compression) + 1)]
+        try:
+            # safe to use shell=True here, no external arguments
+            subprocess.check_output(cmd, shell=True)
+            return outfile
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))
 
 
 def untar_file(infile, outdir, member=None, outfile=None):

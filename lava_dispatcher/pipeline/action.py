@@ -44,7 +44,6 @@ if sys.version > '3':
 
 class LAVAError(Exception):
     """ Base class for all exceptions in LAVA """
-    error_code = 0
     error_help = ""
     error_type = ""
 
@@ -61,10 +60,15 @@ class InfrastructureError(LAVAError):
 
     Use LAVABug for errors arising from bugs in LAVA code.
     """
-    error_code = 1
     error_help = "InfrastructureError: The Infrastructure is not working " \
                  "correctly. Please report this error to LAVA admins."
     error_type = "Infrastructure"
+
+
+class JobCanceled(LAVAError):
+    """ The job was canceled """
+    error_help = "JobCanceled: The job was canceled"
+    error_type = "Canceled"
 
 
 class JobError(LAVAError):
@@ -74,7 +78,6 @@ class JobError(LAVAError):
     the TestJob or a download which results in a file which tar or gzip
     does not recognise.
     """
-    error_code = 2
     error_help = "JobError: Your job cannot terminate cleanly."
     error_type = "Job"
 
@@ -84,7 +87,6 @@ class LAVABug(LAVAError):
     An error that is raised when an un-expected error is catched. Only happen
     when a bug is encountered.
     """
-    error_code = 3
     error_help = "LAVABug: This is probably a bug in LAVA, please report it."
     error_type = "Bug"
 
@@ -95,20 +97,17 @@ class TestError(LAVAError):
     in parsing measurements or commands which fail.
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    error_code = 4
     error_help = "TestError: A test failed to run, look at the error message."
     error_type = "Test"
 
 
 class ConfigurationError(LAVAError):
-    error_code = 5
     error_help = "ConfigurationError: The LAVA instance is not configured " \
                  "correctly. Please report this error to LAVA admins."
     error_type = "Configuration"
 
 
 class MultinodeProtocolTimeoutError(LAVAError):
-    error_code = 6
     error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
                  "has timed out."
     error_type = "MultinodeTimeout"
@@ -253,6 +252,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             except Exception as exc:
                 # Just log the exception and continue the cleanup
                 child.logger.error("Failed to clean after action '%s': %s", child.name, str(exc))
+                child.logger.exception(traceback.format_exc())
 
     def _diagnose(self, connection):
         """
@@ -279,11 +279,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
     def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
+            failed = False
             # Begin the action
-            # TODO: this shouldn't be needed
-            # The ci-test does not set the default logging class
-            if isinstance(action.logger, YAMLLogger):
-                action.logger.setMetadata(action.level, action.name)
             try:
                 with action.timeout(max_end_time) as action_max_end_time:
                     # Add action start timestamp to the log message
@@ -299,10 +296,16 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                                                 action_max_end_time, args)
             except LAVAError as exc:
                 action.logger.error(str(exc))
+                # allows retries without setting errors, which make the job incomplete.
+                failed = True
+                action.results = {'fail': str(exc)}
                 self._diagnose(connection)
                 raise
             except Exception as exc:
                 action.logger.exception(traceback.format_exc())
+                # allows retries without setting errors, which make the job incomplete.
+                failed = True
+                action.results = {'fail': str(exc)}
                 # Raise a LAVABug that will be correctly classified later
                 raise LAVABug(str(exc))
             finally:
@@ -315,7 +318,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 # set results including retries and failed actions
-                action.log_action_results()
+                action.log_action_results(fail=failed)
 
             if new_connection:
                 connection = new_connection
@@ -441,7 +444,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         # only unit tests should have actions without a pointer to the job.
         if 'failure_retry' in self.parameters and 'repeat' in self.parameters:
-            self.errors = "Unable to use repeat and failure_retry, use a repeat block"
+            raise JobError("Unable to use repeat and failure_retry, use a repeat block")
         if 'failure_retry' in self.parameters:
             self.max_retries = self.parameters['failure_retry']
         if 'repeat' in self.parameters:
@@ -738,7 +741,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         params = parameters if parameters else self.parameters
         namespace = params['namespace']
         if not label or not key:
-            self.errors = "Invalid call to set_namespace_data: %s" % action
+            raise LAVABug("Invalid call to set_namespace_data: %s" % action)
         self.data.setdefault(namespace, {})  # pylint: disable=no-member
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})
@@ -786,18 +789,23 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             raise JobError("Invalid connection timeout %s" % str(timeout))
         self.connection_timeout = Timeout(self.name, Timeout.parse(timeout))
 
-    def log_action_results(self):
+    def log_action_results(self, fail=False):
         if self.results and isinstance(self.logger, YAMLLogger):
+            res = "pass"
+            if self.errors:
+                res = "fail"
+            if fail:
+                # allows retries without setting errors, which make the job incomplete.
+                res = "fail"
             self.logger.results({  # pylint: disable=no-member
                 "definition": "lava",
                 "case": self.name,
                 "level": self.level,
                 "duration": "%.02f" % self.timeout.elapsed_time,
-                "result": "fail" if self.errors else "pass",
+                "result": res,
                 "extra": self.results})
             self.results.update(
                 {
-                    'level': self.level,
                     'duration': self.timeout.elapsed_time,
                     'timeout': self.timeout.duration,
                     'connection-timeout': self.connection_timeout.duration

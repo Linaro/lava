@@ -145,7 +145,7 @@ class TestMultiDeploy(StdoutTestCase):
         self.assertIsInstance(pipeline.actions[2], TestMultiDeploy.TestDeployAction)
         job.validate()
         self.assertEqual([], job.pipeline.errors)
-        self.assertEqual(job.run(), 0)
+        job.run()
         self.assertNotEqual(pipeline.actions[0].data, {'fake-deploy': pipeline.actions[0].parameters})
         self.assertEqual(pipeline.actions[1].data, {'fake-deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared

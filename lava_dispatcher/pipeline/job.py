@@ -19,12 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import atexit
-import logging
 import errno
-import signal
 import shutil
 import tempfile
+import datetime
 import time
+import pytz
 import traceback
 import os
 import yaml
@@ -32,9 +32,9 @@ import yaml
 from lava_dispatcher.pipeline.action import (
     LAVABug,
     LAVAError,
+    JobCanceled,
     JobError,
 )
-from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
@@ -70,9 +70,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, parameters, zmq_config):  # pylint: disable=too-many-arguments
+    def __init__(self, job_id, parameters, logger):  # pylint: disable=too-many-arguments
         self.job_id = job_id
-        self.zmq_config = zmq_config
+        self.logger = logger
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -117,24 +117,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 'job': self.parameters,
                 'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
-
-    def setup_logging(self):
-        # We are now able to create the logger when the job is started,
-        # allowing the functions that are called before run() to log.
-        # The validate() function is no longer called on the master so we can
-        # safelly add the ZMQ handler. This way validate can log errors that
-        # test writter will see.
-        self.logger = logging.getLogger('dispatcher')
-        if self.zmq_config is not None:
-            # pylint: disable=no-member
-            self.logger.addZMQHandler(self.zmq_config.logging_url,
-                                      self.zmq_config.master_cert,
-                                      self.zmq_config.slave_cert,
-                                      self.job_id,
-                                      self.zmq_config.ipv6)
-            self.logger.setMetadata("0", "validate")
-        else:
-            self.logger.addHandler(logging.StreamHandler())
 
     def mkdtemp(self, action_name, override=None):
         """
@@ -184,17 +166,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         LAVAError) if it fails.
         If simulate is True, then print the pipeline description.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
-        self.logger.info(label)
-        self.logger.info("start: 0 validate")
-        start = time.time()
-
+        self.logger.info("Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow()))
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
-            except KeyboardInterrupt:
-                self.logger.info("Canceled")
-                raise JobError("Canceled")
             except LAVAError:
                 self.logger.error("Configuration failed for protocol %s", protocol.name)
                 raise
@@ -227,65 +202,40 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             raise JobError(msg)
 
         # validate the pipeline
-        try:
-            self.pipeline.validate_actions()
-        except KeyboardInterrupt:
-            self.logger.info("Canceled")
-            raise JobError("Canceled")
-        except LAVAError as exc:
-            self.logger.error("Invalid job definition")
-            self.logger.exception(str(exc))
-            # This should be re-raised to end the job
-            raise
-        except Exception as exc:
-            self.logger.error("Validation failed")
-            self.logger.exception(traceback.format_exc())
-            raise LAVABug(exc)
-        finally:
-            self.logger.info("validate duration: %.02f", time.time() - start)
+        self.pipeline.validate_actions()
 
     def validate(self, simulate=False):
         """
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
+        self.logger.info(label)
+        self.logger.info("start: 0 validate")
+        start = time.time()
+
+        success = False
         try:
             self._validate(simulate)
         except LAVAError as exc:
-            self.logger.results({"definition": "lava",
-                                 "case": "validate",
-                                 "result": "fail"})
-            self.cleanup(connection=None)
-            self.logger.error(exc.error_help)
-            self.logger.results({"definition": "lava",
-                                 "case": "job",
-                                 "result": "fail",
-                                 "error_msg": str(exc),
-                                 "error_type": exc.error_type})
             raise
+        except Exception as exc:
+            self.logger.exception(traceback.format_exc())
+            raise LAVABug(exc)
         else:
+            success = True
+        finally:
+            if not success:
+                self.cleanup(connection=None)
+            self.logger.info("validate duration: %.02f", time.time() - start)
             self.logger.results({"definition": "lava",
                                  "case": "validate",
-                                 "result": "pass"})
-
-    def cancelling_handler(*_):
-        """
-        Catches KeyboardInterrupt or SIGTERM and raise
-        KeyboardInterrupt that will go through all the stack frames. We then
-        cleanup the job and report the errors.
-        """
-        signal.signal(signal.SIGINT, signal.default_int_handler)
-        signal.signal(signal.SIGTERM, signal.default_int_handler)
-        raise KeyboardInterrupt
+                                 "result": "pass" if success else "fail"})
 
     def _run(self):
         """
         Run the pipeline under the run() wrapper that will catch the exceptions
         """
-        # Set the signal handler
-        signal.signal(signal.SIGINT, self.cancelling_handler)
-        signal.signal(signal.SIGTERM, self.cancelling_handler)
-
         self.started = True
 
         # Setup the protocols
@@ -315,55 +265,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        error_help = ""
-        error_msg = ""
-        error_type = ""
-        return_code = 0
         try:
             self._run()
-        except LAVAError as exc:
-            error_help = exc.error_help
-            error_msg = str(exc)
-            error_type = exc.error_type
-            return_code = exc.error_code
-        except KeyboardInterrupt:
-            error_help = "KeyboardInterrupt: the job was canceled."
-            error_msg = "The job was canceled"
-            error_type = "Canceled"
-            return_code = 6
-        except Exception as exc:
-            self.logger.exception(traceback.format_exc())
-            error_help = "%s: unknown exception, please report it" % exc.__class__.__name__
-            error_msg = str(exc)
-            error_type = "Unknown"
-            return_code = 7
-
-        # Cleanup now
-        self.cleanup(self.connection)
-
-        # Detect errors based on pipeline.errors
-        # TODO: shouldn't be needed anymore
-        if not error_msg and self.pipeline.errors:
-            error_help = "Errors detected"
-            error_msg = self.pipeline.errors
-            error_type = "Unknown"
-            return_code = 7
-
-        # Build the job result
-        result_dict = {"definition": "lava",
-                       "case": "job"}
-        if error_msg:
-            result_dict["result"] = "fail"
-            result_dict["error_msg"] = error_msg
-            result_dict["error_type"] = error_type
-            self.logger.error(error_help)
-            self.logger.results(result_dict)
-        else:
-            result_dict["result"] = "pass"
-            self.logger.info("Job finished correctly")
-            self.logger.results(result_dict)
-
-        return return_code
+        finally:
+            # Cleanup now
+            self.cleanup(self.connection)
 
     def cleanup(self, connection):
         if self.cleaned:

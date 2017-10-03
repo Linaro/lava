@@ -31,6 +31,12 @@ class ZMQPushHandler(logging.Handler):
     def __init__(self, logging_url, master_cert, slave_cert, job_id, ipv6):
         super(ZMQPushHandler, self).__init__()
 
+        # Keep track of the parameters
+        self.logging_url = logging_url
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
+        self.ipv6 = ipv6
+
         # Create the PUSH socket
         # pylint: disable=no-member
         self.context = zmq.Context()
@@ -51,24 +57,15 @@ class ZMQPushHandler(logging.Handler):
         self.socket.connect(logging_url)
 
         self.job_id = str(job_id)
-        self.action_level = '0'
-        self.action_name = 'dispatcher'
-
         self.formatter = logging.Formatter("%(message)s")
 
-    def setMetadata(self, level, name):
-        self.action_level = level
-        self.action_name = name
-
     def emit(self, record):
-        msg = [b(self.job_id), b(self.action_level), b(self.action_name),
-               b(self.formatter.format(record))]
+        msg = [b(self.job_id), b(self.formatter.format(record))]
         self.socket.send_multipart(msg)
 
-    def close(self):
+    def close(self, linger):
         super(ZMQPushHandler, self).close()
-        self.socket.close()
-        self.context.destroy()
+        self.context.destroy(linger=linger)
 
 
 class YAMLLogger(logging.Logger):
@@ -82,9 +79,11 @@ class YAMLLogger(logging.Logger):
         self.addHandler(self.handler)
         return self.handler
 
-    def setMetadata(self, level, name):
-        if isinstance(self.handler, ZMQPushHandler):
-            self.handler.setMetadata(level, name)
+    def close(self, linger=-1):
+        if self.handler is not None:
+            self.handler.close(linger)
+            self.removeHandler(self.handler)
+            self.handler = None
 
     def log_message(self, level, level_name, message, *args, **kwargs):  # pylint: disable=unused-argument
         # Build the dictionnary
@@ -140,4 +139,6 @@ class YAMLLogger(logging.Logger):
         self.log_message(logging.INFO, 'feedback', message, *args, **kwargs)
 
     def results(self, results, *args, **kwargs):
+        if 'extra' in results and 'level' not in results:
+            raise Exception("'level' is mandatory when 'extra' is used")
         self.log_message(logging.INFO, 'results', results, *args, **kwargs)

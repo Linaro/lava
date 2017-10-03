@@ -21,7 +21,7 @@
 
 import os
 from lava_dispatcher.pipeline.logical import Deployment
-from lava_dispatcher.pipeline.action import Pipeline, Action
+from lava_dispatcher.pipeline.action import Pipeline, Action, ConfigurationError
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
@@ -46,6 +46,7 @@ class Ssh(Deployment):
     """
 
     compatibility = 1
+    name = 'ssh'
 
     def __init__(self, parent, parameters):
         super(Ssh, self).__init__(parent)
@@ -55,15 +56,11 @@ class Ssh(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'actions' not in device or 'deploy' not in device['actions']:
-            return False
-        if 'methods' not in device['actions']['deploy']:
-            return False
         if 'ssh' not in device['actions']['deploy']['methods']:
-            return False
-        if 'to' in parameters and parameters['to'] != 'ssh':
-            return False
-        return True
+            return False, '"ssh" is not in the device configuration deploy methods'
+        if parameters['to'] != 'ssh':
+            return False, '"to" parameter is not "ssh"'
+        return True, 'accepted'
 
 
 class ScpOverlay(DeployAction):

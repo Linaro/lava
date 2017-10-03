@@ -33,7 +33,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
@@ -49,26 +49,6 @@ from lava_dispatcher.pipeline.utils.filesystem import (
 )
 
 
-def vexpress_fw_accept(device, parameters):
-    """
-    Each VExpress FW deployment strategy uses these
-    checks as a base
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'vemsd':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class VExpressMsd(Deployment):
     """
     Strategy class for a Versatile Express firmware deployment.
@@ -76,6 +56,7 @@ class VExpressMsd(Deployment):
     to target device
     """
     compatibility = 1
+    name = 'vemsd'
 
     def __init__(self, parent, parameters):
         super(VExpressMsd, self).__init__(parent)
@@ -86,11 +67,13 @@ class VExpressMsd(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not vexpress_fw_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'vemsd':
+            return False, '"to" parameter is not "vemsd"'
         if 'vemsd' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"vemsd" was not in the device configuration deploy methods'
 
 
 class VExpressMsdAction(DeployAction):
@@ -116,7 +99,7 @@ class VExpressMsdAction(DeployAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'recovery_image' in parameters:
             self.internal_pipeline.add_action(DownloaderAction('recovery_image', path=download_dir))
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
