@@ -93,9 +93,12 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         user.save()
         server = self.server_proxy('test', 'test')
         definition = self.factory.make_job_json()
-        job_id = server.scheduler.submit_job(definition)
-        job = TestJob.objects.get(id=job_id)
-        self.assertEqual(definition, job.definition)
+        try:
+            job_id = server.scheduler.submit_job(definition)
+        except xmlrpclib.Fault as f:
+            self.assertEqual(400, f.faultCode)
+        else:
+            self.fail("v1 job was accepted")
 
     def test_cancel_job_rejects_anonymous(self):
         job = self.factory.make_testjob()

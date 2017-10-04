@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import url
 from lava_scheduler_app.views import (
     active_device_list, active_jobs, device_derestrict_device, device_detail,
@@ -15,7 +16,7 @@ from lava_scheduler_app.views import (
     job_log_file_plain, job_log_incremental, job_log_pipeline_incremental,
     job_output, job_pipeline_incremental, job_pipeline_sections,
     job_pipeline_timing, job_resubmit, job_section_log, job_status,
-    job_submit, job_submit_wizard, job_toggle_favorite, lab_health, migration,
+    job_submit, job_toggle_favorite, lab_health, migration,
     longest_jobs, multinode_job_definition, multinode_job_definition_plain,
     mydevice_list, mydevices_health_history_log, myjobs, online_device_list,
     passing_health_checks, pipeline, pipeline_device_list, queue, reports,
@@ -31,8 +32,6 @@ urlpatterns = [
     url(r'^edit_worker_desc', edit_worker_desc, name='lava.scheduler.edit_worker_desc'),
     url(r'^activejobs$', active_jobs, name='lava.scheduler.job.active'),
     url(r'^alljobs$', job_list, name='lava.scheduler.job.list'),
-    url(r'^jobsubmit$', job_submit, name='lava.scheduler.job.submit'),
-    url(r'^jobsubmitwizard$', job_submit_wizard, name='lava.scheduler.job.submit_wizard'),
     url(r'^device_type/(?P<pk>[-_a-zA-Z0-9]+)$', device_type_detail,
         name='lava.scheduler.device_type.detail'),
     url(r'^alldevices$', device_list, name='lava.scheduler.alldevices'),
@@ -109,8 +108,6 @@ urlpatterns = [
         name='lava.scheduler.job.section_log'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/cancel$', job_cancel,
         name='lava.scheduler.job.cancel'),
-    url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/resubmit$', job_resubmit,
-        name='lava.scheduler.job.resubmit'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/annotate_failure$',
         job_annotate_failure,
         name='lava.scheduler.job.annotate_failure'),
@@ -180,3 +177,10 @@ urlpatterns = [
         name='lava.scheduler.job.similar_jobs'),
     url(r'^migration$', migration, name='lava.scheduler.migration'),
 ]
+
+if not settings.ARCHIVED:
+    urlpatterns += [
+        url(r'^jobsubmit$', job_submit, name='lava.scheduler.job.submit'),
+        url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/resubmit$', job_resubmit,
+            name='lava.scheduler.job.resubmit'),
+    ]

@@ -1,0 +1,189 @@
+.. index:: deploy to download
+
+.. _deploy_to_download:
+
+to: download
+************
+
+Download is a special type of deployment in which the files specified in the
+URL are downloaded as in any other deployment type and does nothing more. If
+there is a :ref:`LXC protocol <lxc_protocol_reference>` requested then the
+downloaded files are copied to :term:`LAVA_LXC_HOME`. These downloaded files
+can then be referred by the URL scheme ``lxc:///`` in subsequent actions.
+
+.. index:: deploy to download images
+
+.. _deploy_to_download_images:
+
+images
+======
+
+Download deployments support images to be downloaded and saved along with
+copying to :term:`LAVA_LXC_HOME` when :ref:`LXC protocol
+<lxc_protocol_reference>` is available. The list of images will depend on the
+test job and the test device.
+
+partition
+---------
+
+The partition is a text which specifies the partition to which the image will
+get flashed using ``fastboot`` command in subsequent deploy action.
+
+In the example, the partition to be flashed on the :term:`DUT` is ``rootfs``.
+
+.. include:: examples/test-jobs/artifact-conversion-download.yaml
+     :code: yaml
+     :start-after: to: download
+     :end-before: partition:
+
+.. _deploy_to_download_images_url:
+
+url *
+^^^^^
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_download_images_compression:
+
+compression
+^^^^^^^^^^^
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_download_images_archive:
+
+archive
+^^^^^^^
+
+Some system or rootfs images are compressed as a tarball (``.tar.gz``), these
+images need the ``archive`` option specified to unpack the system image
+correctly.
+
+::
+
+   archive: tar
+
+.. _deploy_to_download_images_md5sum:
+
+md5sum
+^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.
+
+.. _deploy_to_download_images_sha256sum:
+
+sha256sum
+^^^^^^^^^
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+     :code: yaml
+     :start-after: system:
+     :end-before: os: debian
+
+label
+=====
+
+The label is arbitrary text, that refers to the image key that will get
+downloaded as specified in :ref:`deploy_to_download_label_url`
+
+.. _deploy_to_download_label_url:
+
+url *
+-----
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_download_label_compression:
+
+compression
+-----------
+
+If the image is compressed, the compression method **must** be specified.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``bz2``
+ * ``xz``
+
+.. _deploy_to_download_label_archive:
+
+archive
+-------
+
+Some system or rootfs images are compressed as a tarball (``.tar.gz``), these
+images need the ``archive`` option specified to unpack the system image
+correctly.
+
+::
+
+   archive: tar
+
+.. _deploy_to_download_label_md5sum:
+
+md5sum
+------
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.
+
+.. _deploy_to_download_label_sha256sum:
+
+sha256sum
+---------
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+     :code: yaml
+     :start-after: system:
+     :end-before: os: debian

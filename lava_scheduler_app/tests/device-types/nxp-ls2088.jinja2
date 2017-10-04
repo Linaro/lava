@@ -7,7 +7,7 @@
 {% else %}
 {% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600 nousb default_hugepagesz=2m hugepagesz=2m hugepages=256" %}
 {% endif %}
-{% set bootloader_prompt = '=>' %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set bootm_kernel_addr = '0x80080000' %}
 {% set bootm_ramdisk_addr = '0x91000000' %}
 {% set bootm_dtb_addr = '0x90000000' %}

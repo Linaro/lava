@@ -29,6 +29,7 @@ from django.core.management.base import (
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    Tag,
     Worker
 )
 

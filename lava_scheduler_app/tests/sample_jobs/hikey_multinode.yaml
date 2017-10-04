@@ -153,7 +153,6 @@ actions:
           description: "Basic network tests"
         run:
           steps:
-          - lava-lxc-device-add
           # the image does not raise the interface itself
           # force a DHCP request to avoid avahi using a zero conf address.
           - udhcpc

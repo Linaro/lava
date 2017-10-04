@@ -30,7 +30,8 @@ Required parameters
 Every deployment **must** specify a ``to`` parameter. This value is then used
 to select the appropriate Strategy class for the deployment which, in turn,
 will require other parameters to provide the data on how to deploy to the
-requested location.
+requested location. Additionally, all the required parameters are marked with
+a *****
 
 .. # comment - WARNING: respect the capitalisation (or lack of such) in all the
    following sections as these are intended to exactly match the examples.
@@ -62,3 +63,4 @@ Parameter List
 .. include:: actions-deploy-to-tftp.rsti
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti
+.. include:: actions-deploy-to-download.rsti

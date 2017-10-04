@@ -56,7 +56,32 @@ The architecture has been significantly improved since V1, bringing major
 changes in terms of how a distributed LAVA instance is installed, configured
 and used for running test jobs.
 
-Migration to V2 started with the 2016.2 release.
+.. index:: V1 end of life, archive
+
+.. _v1_end_of_life:
+
+End Of Life for LAVA V1
+***********************
+
+Migration to V2 started with the 2016.2 release as the new codebase
+grew and improved. We are now reaching the end of this long
+process. As `announced`_, LAVA V1 is now (September 2017) being
+retired, in the following steps:
+
+* **2017.9** is the last release of LAVA which will support running V1
+  test jobs.
+
+* **2017.10** will not support running V1 test jobs, but will include
+  support for :ref:`providing a read-only archive of V1 test
+  data<archiving_v1>`.
+
+* **2017.11** will be the first release of LAVA which is V2 **only**. It
+  will contain no support for accessing V1 data.
+
+* **2017.12** will **permanently delete all V1 test data** from the database
+  upon installation.
+
+.. _`announced`: https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html
 
 LAVA Overview
 #############

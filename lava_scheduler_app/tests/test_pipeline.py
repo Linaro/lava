@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.test.test_defs import check_missing_path
 from lava_dispatcher.pipeline.action import JobError, InfrastructureError
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.test.utils import DummyLogger
 from django_restricted_resource.managers import RestrictedResourceQuerySet
 from unittest import TestCase
 
@@ -847,7 +848,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 host_job.definition, parser_device,
-                host_job.id, None, "", output_dir=host_job.output_dir)
+                host_job.id, DummyLogger(), "", output_dir=host_job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (host_job.sub_id, exc))
         pipeline_job._validate(False)
@@ -857,7 +858,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 guest_job.definition, parser_device,
-                guest_job.id, None, "", output_dir=guest_job.output_dir)
+                guest_job.id, DummyLogger(), "", output_dir=guest_job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (guest_job.sub_id, exc))
         pipeline_job._validate(False)

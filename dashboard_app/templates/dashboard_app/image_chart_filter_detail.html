@@ -10,9 +10,6 @@
 
 <div class="fields-container">
   <div class="form-field">
-    <a href="{{ chart_filter.get_absolute_url }}/+edit">Edit</a> filter settings.
-  </div>
-  <div class="form-field">
     Representation: {{ chart_filter.representation }}
   </div>
   {% ifequal chart_filter.image_chart.chart_type "pass/fail" %}
@@ -37,10 +34,6 @@
     {% else %}
     {{ chart_test.test_case.test_case_id }}
     {% endifequal %}
-
-    <a style="font-size: 13px;" href="javascript:void(0)" onclick="open_test_edit('{{ chart_filter.id }}', '{{ chart_test.id }}');">
-      edit
-    </a>
   </div>
   <div>
     Alias:&nbsp;

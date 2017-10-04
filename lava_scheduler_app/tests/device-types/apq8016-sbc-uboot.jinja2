@@ -9,7 +9,7 @@
 {% set extra_kernel_args = "debug loglevel=7" %}
 {% endif %}
 {% set interrupt_prompt = 'Qualcomm-DragonBoard 410C' %}
-{% set bootloader_prompt = '=>' %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set action_timeout_u_boot_commands = 90 %}
 {% set booti_kernel_addr = '0x80080000' %}
 {% set booti_ramdisk_addr = '0x82000000' %}

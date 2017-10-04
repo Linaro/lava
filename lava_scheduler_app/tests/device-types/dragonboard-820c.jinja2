@@ -1,0 +1,7 @@
+{% extends 'base-fastboot.jinja2' %}
+
+{% set device_type = 'dragonboard-820c' %}
+{% set fastboot_sequence = ['no-flash-boot', 'auto-login', 'shell-session', 'export-env'] %}
+{% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
+'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor',
+'system', 'cache', 'userdata'] %}

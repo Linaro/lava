@@ -48,8 +48,8 @@ be converted to a ``uImage``.
 
 .. _deploy_to_tftp_kernel_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -79,8 +79,8 @@ dtb
 
 .. _deploy_to_tftp_dtb_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -115,8 +115,8 @@ tests within the ramdisk itself.
 
 .. _deploy_to_tftp_modules_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -176,8 +176,8 @@ cases).
 
 .. _deploy_to_tftp_ramdisk_url:
 
-url
----
+url *
+-----
 
 .. topic:: Supported schema
 
@@ -238,8 +238,8 @@ nfsrootfs
 
 .. _deploy_to_tftp_nfsrootfs_url:
 
-url
----
+url *
+-----
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``
@@ -296,8 +296,8 @@ test writer.
 
 .. _deploy_to_tftp_persistent_address:
 
-address
--------
+address *
+---------
 
 Specifies the address to use for the persistent filesystem.
 
@@ -374,8 +374,8 @@ make sense to QEMU.
 
 .. _deploy_to_tmpfs_images_url:
 
-url
-^^^
+url *
+^^^^^
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``

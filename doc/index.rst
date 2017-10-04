@@ -121,14 +121,36 @@ V1 refers to the components of LAVA which are related to:
 * Bundles, BundleStreams and the ``submit_results`` action
 * Image Reports and Image Reports 2.0
 
-All code supporting V1 is deprecated as of the **2016.2 release** and is
-scheduled to be removed from the codebase during 2017.
+All code supporting V1 is deprecated as of the **2016.2 release** and
+will be removed from the codebase in releases from **2017.11** onwards.
 
 .. warning:: When the code objects implementing V1 are removed, the
    corresponding database records, tables, indexes and relationships will be
    **deleted** during later upgrades. Instances which want to continue using V1
    from 2017 onwards **must not** install updates or **all V1 data will be
    lost**.
+
+End Of Life for LAVA V1
+***********************
+
+Migration to V2 started with the 2016.2 release as the new codebase
+grew and improved. We are now reaching the end of this long
+process. As `announced`_, LAVA V1 is now (September 2017) being
+retired, in the following steps:
+
+* **2017.9** is the last release of LAVA which will support running V1
+  test jobs.
+
+* **2017.10** will not support running V1 test jobs, but will include
+  support for providing a read-only archive of V1 test data.
+
+* **2017.11** will be the first release of LAVA which is V2 **only**. It
+  will contain no support for accessing V1 data.
+
+* **2017.12** will **permanently delete all V1 test data** from the database
+  upon installation.
+
+.. _`announced`: https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html
 
 .. seealso:: `LAVA V1 <v1/index.html>`_
 
@@ -147,7 +169,7 @@ of deploying distributed instances.
 
 The code supporting V2 is being extended to support a wider range of devices
 and deployment methods. The migration to V2 is expected to last until the end
-of 2016.
+of 2017.
 
 .. seealso:: `LAVA V2 <v2/index.html>`_
 

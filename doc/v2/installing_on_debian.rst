@@ -5,6 +5,8 @@
 Installing on a Debian system
 *****************************
 
+.. seealso:: :ref:`archiving_v1`
+
 These instructions cover installation on Debian. The supported versions are:
 
 +---------------+------------------------+--------+----------------------+
@@ -44,13 +46,14 @@ that codename in the table.
          release of Debian stable. Experimental will typically have no LAVA
          packages outside of a Debian release freeze.
 
-.. [#f2] `stretch` is due for release on 17th June 2017. All updates to LAVA
-         packages for Stretch will be made using `stretch-backports`_ once this
-         becomes available. Systems using Debian Stretch are recommended to
-         enable stretch-backports. LAVA packages and dependencies which are
-         installed using stretch-backports are **fully supported** by upstream
-         and are the same codebase as the relevant production release available
-         from the :ref:`lava_repositories`.
+.. [#f2] `stretch` was released on 17th June 2017. All updates to LAVA
+         packages for Stretch will be made using
+         `stretch-backports`_. Systems using Debian Stretch are
+         recommended to enable stretch-backports. LAVA packages and
+         dependencies which are installed using stretch-backports are
+         **fully supported** by upstream and are the same codebase as
+         the relevant production release available from the
+         :ref:`lava_repositories`.
 
 .. [#f3] Jessie was released on April 25th, 2015. All updates to LAVA packages
          for Jessie will be made using `jessie-backports`_. Systems using
@@ -131,6 +134,39 @@ repository, using the same suites::
 This repository uses the same key as the production repository and uses ``sid``
 in the same way.
 
+.. _archive_repository:
+
+Archive repository
+------------------
+
+The recommended time to create an :ref:`archive <archiving_v1>` for V1
+test data is after the upgrade to 2017.10 but before the upgrade to
+2017.11.
+
+It is possible to create an archive retrospectively, but **only** if a
+usable backup of the postgresql database exists from the period
+**between** the upgrade to 2017.10 and the upgrade to 2017.11.
+
+.. important:: Once an instance has been upgraded to 2017.11, some of
+   the internal data links in the V1 test data **will have been
+   deleted** and the database will not be able to function correctly
+   as an archive of V1 test data. Once an instance has been upgraded
+   to 2017.12 or beyond, **all** V1 test data will have been
+   permanently and deliberately deleted from the database.
+
+For the sake of users needing this archive functionality, packages of
+the 2017.10 LAVA release will also remain available in a dedicated
+LAVA repository. The archive machine will need to be configured
+**not** to use the default apt sources for either stretch or jessie
+above. The archive **must instead use** the archive repository, for
+stretch or jessie respectively::
+
+ deb https://images.validation.linaro.org/v1-archive-repo stretch-backports main
+
+or::
+
+ deb https://images.validation.linaro.org/v1-archive-repo jessie-backports main
+
 .. index:: lava archive signing key
 
 .. _lava_archive_signing_key:
@@ -168,7 +204,7 @@ Then update to locate the required dependencies::
 Production releases
 ===================
 
-.. seealso:: :ref:`setting_up_pipeline_instance`.
+.. seealso:: :ref:`setting_up_pipeline_instance` and :ref:`archiving_v1`.
 
 LAVA is currently packaged for Debian unstable using Django1.8 and Postgresql.
 LAVA packages are now available from official Debian mirrors for Debian
@@ -513,4 +549,3 @@ user account without losing data, using the `mergeldapuser` command, provided
 the LDAP username does not already exist in the LAVA instance::
 
   $ sudo lava-server manage mergeldapuser --lava-user <lava_user> --ldap-user <ldap_user>
-

@@ -99,6 +99,15 @@ device_type: {{ device_type|default('uboot') }}
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
 {% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
 
+{% if fastboot_deploy_uboot %}
+adb_serial_number: {{ adb_serial_number|default("'0000000000'") }}
+fastboot_serial_number: {{ fastboot_serial_number|default("'0000000000'") }}
+fastboot_options: {{ fastboot_options|default([]) }}
+# This attribute identifies whether a device should get into fastboot mode by
+# interrupting uboot and issuing commands at the bootloader prompt.
+fastboot_via_uboot: True
+{% endif %}
+
 actions:
   deploy:
     parameters:
@@ -120,6 +129,11 @@ actions:
         port: {{ ssh_port|default(22) }}
         user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
+{% if fastboot_deploy_uboot %}
+      fastboot:
+{{- fastboot_deploy_uboot }}
+{{- fastboot_interrupt_params }}
+{% endif %}
 
   boot:
     connections:
@@ -128,6 +142,9 @@ actions:
     methods:
       minimal:
       ssh:
+{% if fastboot_boot_uboot %}
+      fastboot: {{ fastboot_sequence }}
+{% endif %}
       u-boot:
         parameters:
           mkimage_arch: {{ uboot_mkimage_arch|default('arm') }}
@@ -136,6 +153,10 @@ actions:
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: "{{ interrupt_char|default('') }}"
           boot_message: {{ boot_message|default('Booting Linux') }}
+{% if fastboot_boot_uboot %}
+{{- fastboot_boot_uboot }}
+{{- fastboot_boot_grub }}
+{% endif %}
           # method specific stanza
         nfs:
           commands:

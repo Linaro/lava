@@ -149,18 +149,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         multinode_job2 = TestJob.objects.get(pk=multinode_job2.id)  # reload
         self.assertTrue(all([job.actual_device is not None for job in [multinode_job1, multinode_job2]]))
 
-    def test_health_check(self):
-
-        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
-        self.panda.save()
-
-        jobs = self.scheduler_tick()
-
-        panda_jobs = [j for j in jobs if j.actual_device.device_type == self.panda]
-
-        self.assertTrue(len(panda_jobs) > 0)
-        self.assertTrue(all([job.actual_device is not None for job in panda_jobs]))
-
     def test_one_worker_does_not_mess_with_jobs_from_the_others(self):
         # simulate a worker with no devices configured
         worker = DatabaseJobSource(lambda: [])
@@ -171,36 +159,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
         self.assertEqual([], scheduled_jobs)
         self.assertTrue(all([job.status == TestJob.SUBMITTED for job in TestJob.objects.all()]))
-
-    @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
-    def test_multinode_job_across_different_workers(self):
-        master = self.master
-        # This is not a normal worker, it is just another database view
-        worker = DatabaseJobSource(lambda: ['arndale01'])
-        arndale01 = self.arndale01
-        self.panda02.state_transition_to(Device.OFFLINE)
-        panda01 = self.panda01
-
-        self.submit_job(
-            device_group=[
-                {"device_type": "panda", "count": 1, "role": "client"},
-                {"device_type": "arndale", "count": 1, "role": "server"},
-            ]
-        )
-
-        master_jobs = self.scheduler_tick(master)
-        worker_jobs = self.scheduler_tick(worker)
-
-        if len(master_jobs) == 0:
-            master_jobs = self.scheduler_tick(master)
-        if len(worker_jobs) == 0:
-            worker_jobs = self.scheduler_tick(worker)
-
-        self.assertEqual(1, len(master_jobs))
-        self.assertEqual(master_jobs[0].actual_device, panda01)
-
-        self.assertEqual(1, len(worker_jobs))
-        self.assertEqual(worker_jobs[0].actual_device, arndale01)
 
     # noinspection PyShadowingNames
     def test_two_multinode_jobs_plus_two_singlenode_jobs(self):
@@ -291,37 +249,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertEqual([m1a], self.scheduler_tick(worker))
         self.report_end(self.whoami())
 
-    def test_looping_mode(self):
-
-        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
-        self.panda.save()
-        self.device_status('panda01', health_status=Device.HEALTH_LOOPING)
-        self.device_status('panda02', status=Device.OFFLINE)
-
-        jobs = self.scheduler_tick()
-        self.assertEqual(1, len(jobs))
-        health_check = jobs[0]
-        self.assertTrue(health_check.health_check)
-        self.assertEqual(health_check.actual_device.hostname, 'panda01')
-
-        # no new health check while the original one is running
-        self.assertEqual(0, len(self.scheduler_tick()))
-
-        self.job_finished(health_check)
-        jobs = self.scheduler_tick()
-        self.assertEqual(1, len(jobs))
-        new_health_check = jobs[0]
-        self.assertTrue(new_health_check.health_check)
-        self.assertEqual(new_health_check.actual_device.hostname, 'panda01')
-
-        # again just to be sure
-        self.job_finished(new_health_check)
-        jobs = self.scheduler_tick()
-        self.assertEqual(1, len(jobs))
-        third_health_check = jobs[0]
-        self.assertTrue(third_health_check.health_check)
-        self.assertEqual(third_health_check.actual_device.hostname, 'panda01')
-
     def test_find_device_for_job(self):
         """
         tests that find_device_for_job gives preference to matching by requested
@@ -349,56 +276,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
             find_device_for_job(job, devices),
             self.panda02
         )
-
-    def test_offline_health_check(self):
-        """
-        tests whether we are able to submit health check jobs for devices that
-        are OFFLINE.
-        """
-        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
-        self.panda.save()
-
-        self.panda01.state_transition_to(Device.OFFLINE)
-        self.panda02.state_transition_to(Device.OFFLINE)
-
-        initiate_health_check_job(self.panda01)
-        initiate_health_check_job(self.panda02)
-
-        jobs = self.scheduler_tick()
-
-        self.assertEqual(2, len(jobs))
-        self.assertTrue(all([job.actual_device is not None for job in jobs]))
-        self.assertEqual(self.panda01.status, Device.OFFLINE)
-        self.assertEqual(self.panda02.status, Device.OFFLINE)
-
-    def test_failed_health_check(self):
-        """
-        Incomplete health checks must take the device offline with a failed health status.
-        """
-        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
-        self.panda.save()
-        # Check that the return value is correct.
-        self.assertTrue(self.panda01.state_transition_to(Device.OFFLINE))
-        # Already in IDLE state.
-        self.assertFalse(self.panda02.state_transition_to(Device.IDLE))
-        self.assertEqual(self.panda01.status, Device.OFFLINE)
-        self.assertEqual(self.panda02.status, Device.IDLE)
-        self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
-        self.assertEqual(self.panda02.health_status, Device.HEALTH_UNKNOWN)
-
-        jobs = self.scheduler_tick()
-        for job in jobs:
-            job_obj = TestJob.objects.get(pk=job.id)  # reload
-            job_obj.status = TestJob.INCOMPLETE
-            self.job_failed(job_obj)
-
-        # Always go to the database to check the effects of job completion.
-        self.panda01 = Device.objects.get(hostname="panda01")  # reload
-        self.panda02 = Device.objects.get(hostname="panda02")  # reload
-        self.assertEqual(self.panda01.status, Device.OFFLINE)
-        self.assertEqual(self.panda02.status, Device.OFFLINE)
-        self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
-        self.assertEqual(self.panda02.health_status, Device.HEALTH_FAIL)
 
     @unittest.skipIf(django_lts_after(django.get_version(), '1.11'), django_message())
     def test_find_device_for_job_with_tag(self):

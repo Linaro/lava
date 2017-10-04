@@ -14,6 +14,7 @@ import re
 import sys
 
 from django import forms
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
@@ -977,6 +978,7 @@ def health_job_list(request, pk):
             'transition_table': trans_table,
             'health_job_table': health_table,
             'show_forcehealthcheck':
+                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
@@ -1143,23 +1145,6 @@ def job_submit(request):
     else:
         template = loader.get_template("lava_scheduler_app/job_submit.html")
         return HttpResponse(template.render(response_data, request=request))
-
-
-@BreadCrumb("Submit Job", parent=index)
-def job_submit_wizard(request):
-
-    is_authorized = False
-    if request.user and request.user.has_perm(
-            'lava_scheduler_app.add_testjob'):
-        is_authorized = True
-
-    response_data = {
-        'is_authorized': is_authorized,
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
-        'device_types': filter_device_types(request.user),
-    }
-    template = loader.get_template("lava_scheduler_app/job_wizard.html")
-    return HttpResponse(template.render(response_data, request=request))
 
 
 def _prepare_template(request):
@@ -1368,20 +1353,30 @@ def job_detail(request, pk):
             template = "lava_scheduler_app/job_pipeline.html"
             try:
                 with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
-                    for line in log_data:
-                        if line["lvl"] == "results":
-                            case_id = TestCase.objects.filter(
-                                suite__job=job,
-                                suite__name=line["msg"]["definition"],
-                                name=line["msg"]["case"]).values_list(
-                                    "id", flat=True)
-                            if case_id:
-                                line["msg"]["case_id"] = case_id[0]
+                    # Compute the size of the file
+                    f_in.seek(0, 2)
+                    job_file_size = f_in.tell()
 
-                    if sys.version_info < (3, 0):
-                        for line in log_data:
-                            remove_broken_string(line)
+                    if job_file_size >= job.size_limit:
+                        log_data = []
+                    else:
+                        # Go back to the start and load the file
+                        f_in.seek(0, 0)
+                        log_data = yaml.load(f_in, Loader=yaml.CLoader)
+
+                for line in log_data:
+                    if line["lvl"] == "results":
+                        case_id = TestCase.objects.filter(
+                            suite__job=job,
+                            suite__name=line["msg"]["definition"],
+                            name=line["msg"]["case"]).values_list(
+                                "id", flat=True)
+                        if case_id:
+                            line["msg"]["case_id"] = case_id[0]
+
+                if sys.version_info < (3, 0):
+                    for line in log_data:
+                        remove_broken_string(line)
 
             except IOError:
                 log_data = []
@@ -1403,6 +1398,7 @@ def job_detail(request, pk):
 
     log_file = job.output_file()
     if log_file:
+        # FIXME: remove this second setting of job_file_size when V1 is removed
         with log_file as f:
             f.seek(0, 2)
             job_file_size = f.tell()
@@ -1436,7 +1432,7 @@ def job_detail(request, pk):
             levels[kl] = 0
         for level, msg, _ in job_log_messages:
             levels[level] += 1
-        levels = sorted(levels.items(), key=lambda (k, v): logging._levelNames.get(k))
+        levels = sorted(levels.items(), key=lambda tup: logging._levelNames.get(tup[0]))
         data.update({
             'job_file_present': True,
             'job_log_messages': job_log_messages,
@@ -2484,6 +2480,7 @@ def device_detail(request, pk):
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
             'show_forcehealthcheck':
+                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
@@ -3012,9 +3009,9 @@ def migration(request):
     # iterate over all devices, excluding disabled healthchecks
     for dev in active_health:
         hc = dev.get_health_check()
-        # even if hc contains data, check for a database entry
-        # need migration if either db has entry or hc is empty
-        if not hc or dev.device_type.health_check_job:
+        # Health checks are not pulled from the database anymore: only count
+        # device that are missing a health-check file.
+        if not hc:
             no_healthcheck[dev.hostname] = dev.get_absolute_url()
 
     if active_count:

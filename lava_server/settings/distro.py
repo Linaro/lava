@@ -126,6 +126,14 @@ if AUTH_LDAP_SERVER_URI:
         AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
             "AUTH_LDAP_USER_FLAGS_BY_GROUP")
 
+    if distro_settings.get_setting("AUTH_LDAP_REQUIRE_GROUP"):
+        AUTH_LDAP_REQUIRE_GROUP = distro_settings.get_setting(
+            "AUTH_LDAP_REQUIRE_GROUP")
+
+    if distro_settings.get_setting("AUTH_LDAP_DENY_GROUP"):
+        AUTH_LDAP_DENY_GROUP = distro_settings.get_setting(
+            "AUTH_LDAP_DENY_GROUP")
+
     # read any LDAP login message to use from the settings.conf
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 elif AUTH_DEBIAN_SSO:
@@ -225,6 +233,9 @@ LOGGING = {
 # pipeline results display
 # set to false in /etc/lava-server/settings.conf to hide the Results menu
 PIPELINE = distro_settings.get_setting("PIPELINE", True)
+
+# Make this instance read only
+ARCHIVED = distro_settings.get_setting("ARCHIVED", False)
 
 # Scheduler options
 SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
