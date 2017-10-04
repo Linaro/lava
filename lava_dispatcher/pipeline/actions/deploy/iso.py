@@ -80,6 +80,7 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
 class DeployIso(Deployment):
 
     compatibility = 3
+    name = 'iso'
 
     def __init__(self, parent, parameters):
         super(DeployIso, self).__init__(parent)
@@ -91,11 +92,16 @@ class DeployIso(Deployment):
     @classmethod
     def accepts(cls, device, parameters):
         if 'image' not in device['actions']['deploy']['methods']:
-            return False
+            return False, '"image" is not in the device configuration deploy methods'
         if 'to' in parameters and parameters['to'] == 'iso-installer':
-            if 'iso' in parameters and 'installation_size' in parameters['iso']:
-                return True
-        return False
+            if 'iso' in parameters:
+                if 'installation_size' in parameters['iso']:
+                    return True, 'accepted'
+                else:
+                    return False, '"installation_size" was not in the iso parameters'
+            else:
+                return False, '"iso" was not in the parameters'
+        return False, '"to" was not in parameters, or "to" was not "iso-installer"'
 
 
 class IsoEmptyImage(Action):

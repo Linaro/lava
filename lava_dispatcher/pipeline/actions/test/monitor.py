@@ -55,9 +55,10 @@ class TestMonitor(LavaTest):
         if 'monitors' in parameters:
             for monitor in parameters['monitors']:
                 if all([x for x in required_parms if x in monitor]):
-                    return True
+                    return True, 'accepted'
+            return False, 'missing a required parameter from %s' % required_parms
         else:
-            return False
+            return False, '"monitors" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):
@@ -168,6 +169,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
                             'case': case_id,
+                            'level': self.level,
                             'result': match['result'],
                             'extra': {'test_case_id': match['test_case_id'].strip()}
                         }
@@ -186,6 +188,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
                         results = {
                             'definition': self.test_suite_name.replace(' ', '-').lower(),
                             'case': case_id,
+                            'level': self.level,
                             'result': 'pass',
                             'measurement': float(match['measurement']),
                             'extra': {'test_case_id': match['test_case_id'].strip()}

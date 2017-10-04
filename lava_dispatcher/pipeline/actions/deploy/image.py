@@ -74,6 +74,7 @@ class DeployQemuNfs(Deployment):
     Does not use GuestFS, adds overlay to the NFS
     """
     compatibility = 5
+    name = 'qemu-nfs'
 
     def __init__(self, parent, parameters):
         super(DeployQemuNfs, self).__init__(parent)
@@ -91,15 +92,15 @@ class DeployQemuNfs(Deployment):
         which can use instance data.
         """
         if 'nfs' not in device['actions']['deploy']['methods']:
-            return False
+            return False, '"nfs" is not in the device configuration deploy methods'
         if parameters['to'] != 'nfs':
-            return False
+            return False, '"to" is not "nfs"'
         if 'qemu-nfs' not in device['actions']['boot']['methods']:
-            return False
+            return False, '"qemu-nfs" is not in the device configuration boot methods'
         if 'type' in parameters:
             if parameters['type'] != 'monitor':
-                return False
-        return True
+                return False, '"type" was set, but it was not "monitor"'
+        return True, 'accepted'
 
 
 class DeployQemuNfsAction(DeployAction):
@@ -209,6 +210,7 @@ class DeployImages(Deployment):
         test-definitions-action
     """
     compatibility = 4
+    name = 'images'
 
     def __init__(self, parent, parameters):
         super(DeployImages, self).__init__(parent)
@@ -226,16 +228,13 @@ class DeployImages(Deployment):
         which can use instance data.
         """
         if 'image' not in device['actions']['deploy']['methods']:
-            return False
+            return False, '"image" is not in the device configuration deploy methods'
         if parameters['to'] != 'tmpfs':
-            return False
+            return False, '"to" parameter is not "tmpfs"'
         # lookup if the job parameters match the available device methods
         if 'images' not in parameters:
-            # python3 compatible
-            # FIXME: too broad
-            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
-            return False
+            return False, '"images" was not in the deployment parameters'
         if 'type' in parameters:
             if parameters['type'] != 'monitor':
-                return False
-        return True
+                return False, '"type" parameter was set but it was not "monitor"'
+        return True, 'accepted'

@@ -18,9 +18,9 @@ visibility: public
 
 metadata:
   uefi-build: uefi 13
-  uefi-url: http://builds.96boards.org/snapshots/reference-platform/components/uefi-staging/13/hikey960/release/
+  uefi-url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/
   build: '71'
-  build-url: https://builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/
+  build-url: https://http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/
   series: tom-feedback
 
 protocols:
@@ -57,13 +57,13 @@ actions:
     connection: lxc
     images:
       ptable:
-        url: http://builds.96boards.org/snapshots/reference-platform/components/uefi-staging/13/hikey960/release/prm_ptable.img
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img
         reboot: hard-reset
       boot:
-        url: https://builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img
         reboot: hard-reset
       system:
-        url: https://builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz
         compression: gz
         # ensure that this job raises a network interface with DHCP before relying on internet access
     os: oe

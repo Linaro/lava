@@ -94,12 +94,6 @@ class TestPatterns(StdoutTestCase):
         self.assertFalse(self.ret)
         del conn
 
-    def test_signal_lxc_add(self):
-        """
-        test that a plain job without a protocol returns False.
-        """
-        self.assertFalse(self.test_shell.signal_lxc_add())
-
     def test_set_with_no_name(self):
         params = ['START']
         with self.assertRaises(JobError):

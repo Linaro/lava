@@ -49,8 +49,8 @@ class BootKExec(Boot):
     def accepts(cls, device, parameters):
         if 'method' in parameters:
             if parameters['method'] == 'kexec':
-                return True
-        return False
+                return True, 'accepted'
+        return False, '"method" was not in parameters, or "method" was not "kexec"'
 
 
 class BootKexecAction(BootAction):

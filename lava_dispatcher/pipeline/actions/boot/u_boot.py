@@ -44,22 +44,6 @@ from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.strings import map_kernel_uboot
 
 
-def uboot_accepts(device, parameters):
-    if 'method' not in parameters:
-        raise ConfigurationError("method not specified in boot parameters")
-    if parameters['method'] != 'u-boot':
-        return False
-    if 'commands' not in parameters:
-        raise ConfigurationError("commands not specified in boot parameters")
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'boot' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['boot']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class UBoot(Boot):
     """
     The UBoot method prepares the command to run on the dispatcher but this
@@ -81,9 +65,14 @@ class UBoot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not uboot_accepts(device, parameters):
-            return False
-        return 'u-boot' in device['actions']['boot']['methods']
+        if parameters['method'] != 'u-boot':
+            return False, '"method" was not "u-boot"'
+        if 'commands' not in parameters:
+            raise ConfigurationError("commands not specified in boot parameters")
+        if 'u-boot' in device['actions']['boot']['methods']:
+            return True, 'accepted'
+        else:
+            return False, '"u-boot" was not in the device configuration boot methods'
 
 
 class UBootAction(BootAction):
@@ -145,10 +134,7 @@ class UBootRetry(BootAction):
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
-        # Log an error only when needed
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        if self.errors:
-            self.logger.error(self.errors)
         return connection
 
 
@@ -283,6 +269,4 @@ class UBootEnterFastbootAction(BootAction):
                 self.wait(connection)
                 i += 1
 
-        if self.errors:
-            self.logger.error(self.errors)
         return connection

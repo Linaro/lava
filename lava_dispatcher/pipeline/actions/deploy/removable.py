@@ -60,6 +60,7 @@ class Removable(Deployment):
     """
 
     compatibility = 1
+    name = 'removeable'
 
     def __init__(self, parent, parameters):
         super(Removable, self).__init__(parent)
@@ -75,21 +76,17 @@ class Removable(Deployment):
 
         # Is the media supported?
         if media not in ['sata', 'sd', 'usb']:
-            return False
-        # Matching a method?
-        if job_device is None:
-            return False
+            return False, '"media" was not "sata", "sd", or "usb"'
         # "parameters.media" is not defined for every devices
         if 'parameters' not in device or 'media' not in device['parameters']:
-            return False
-
+            return False, '"parameters" was not in the device or "media" was not in the parameters'
         # Is the device allowing this method?
         if job_device not in device['parameters']['media'].get(media, {}):
-            return False
+            return False, 'media was not in the device "media" parameters'
         # Is the configuration correct?
         if 'uuid' in device['parameters']['media'][media].get(job_device, {}):
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"uuid" was not in the parameters for the media device %s' % job_device
 
 
 class DDAction(Action):

@@ -44,20 +44,6 @@ from lava_dispatcher.pipeline.utils.constants import (
 )
 
 
-def bootloader_accepts(device, parameters):
-    if 'method' not in parameters:
-        raise ConfigurationError("method not specified in boot parameters")
-    if parameters['method'] != 'ipxe':
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'boot' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['boot']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
-
-
 class IPXE(Boot):
     """
     The IPXE method prepares the command to run on the dispatcher but this
@@ -79,9 +65,12 @@ class IPXE(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not bootloader_accepts(device, parameters):
-            return False
-        return 'ipxe' in device['actions']['boot']['methods']
+        if parameters['method'] != 'ipxe':
+            return False, '"method" was not "ipxe"'
+        if 'ipxe' in device['actions']['boot']['methods']:
+            return True, 'accepted'
+        else:
+            return False, '"ipxe" was not in the device configuration boot methods'
 
 
 class BootloaderAction(BootAction):

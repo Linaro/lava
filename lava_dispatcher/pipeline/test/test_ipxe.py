@@ -85,7 +85,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
-            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'lxc-add-device-action', 'deploy-device-env']
+            ['download-retry', 'download-retry', 'download-retry', 'prepare-tftp-overlay', 'lxc-create-udev-rule-action', 'deploy-device-env']
         )
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])

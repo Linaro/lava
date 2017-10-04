@@ -21,6 +21,7 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     ConfigurationError,
+    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
@@ -46,14 +47,14 @@ class DFU(Boot):
     @classmethod
     def accepts(cls, device, parameters):
         if 'dfu' not in device['actions']['boot']['methods']:
-            return False
+            return False, '"dfu" was not in the device configuration boot methods'
         if 'method' not in parameters:
-            return False
+            return False, '"method" was in the parameters'
         if parameters['method'] != 'dfu':
-            return False
+            return False, '"method" was not "dfu"'
         if 'board_id' not in device:
-            return False
-        return True
+            return False, '"board_id" is not in the device configuration'
+        return True, 'accepted'
 
 
 class BootDFU(BootAction):
@@ -150,11 +151,9 @@ class FlashDFUAction(Action):
             output = self.run_command(dfu.split(' '))
             if output:
                 if not ("No error condition is present\nDone!\n" in output):
-                    error = "command failed: %s" % dfu
-                    self.errors = error
+                    raise InfrastructureError("command failed: %s" % dfu)
             else:
-                error = "command failed: %s" % dfu
-                self.errors = error
+                raise InfrastructureError("command failed: %s" % dfu)
             count += 1
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

@@ -31,34 +31,13 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.constants import TFTP_SIZE_LIMIT
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import tftpd_dir
-
-
-def tftp_accept(device, parameters):
-    """
-    Each tftp deployment strategy uses these checks
-    as a base, then makes the final decision on the
-    style of tftp deployment.
-    """
-    if 'to' not in parameters:
-        return False
-    if parameters['to'] != 'tftp':
-        return False
-    if not device:
-        return False
-    if 'actions' not in device:
-        raise ConfigurationError("Invalid device configuration")
-    if 'deploy' not in device['actions']:
-        return False
-    if 'methods' not in device['actions']['deploy']:
-        raise ConfigurationError("Device misconfiguration")
-    return True
 
 
 class Tftp(Deployment):
@@ -70,6 +49,7 @@ class Tftp(Deployment):
     """
 
     compatibility = 1
+    name = 'tftp'
 
     def __init__(self, parent, parameters):
         super(Tftp, self).__init__(parent)
@@ -80,11 +60,13 @@ class Tftp(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if not tftp_accept(device, parameters):
-            return False
+        if 'to' not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters['to'] != 'tftp':
+            return False, '"to" parameter is not "tftp"'
         if 'tftp' in device['actions']['deploy']['methods']:
-            return True
-        return False
+            return True, 'accepted'
+        return False, '"tftp" was not in the device configuration deploy methods"'
 
 
 class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
@@ -137,7 +119,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
-        self.internal_pipeline.add_action(LxcAddDeviceAction())
+        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
 

@@ -104,6 +104,8 @@ setup(
         'pyzmq',
         'configobj',
         'pyudev >= 0.21',
+        'pytz',
+        'file-magic',
         'setproctitle >= 1.1.8'
     ],
     test_suite='lava_dispatcher.tests.test_suite',
