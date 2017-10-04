@@ -1,3 +1,62 @@
+lava-server (2017.10-1) unstable; urgency=medium
+
+  * New production release
+    03fec0ea Fix out of date stretch reference
+    2c8a88d8 Include non https in title for security defaults configuration doc.
+    56185add Mark required parameters in left over deploy action reference.
+    b1de8acf Update instructions for migrating postgres
+    2b845967 Fix issues in the documentation build.
+    f9e64aa1 Fix SQL request storm when listing jobs
+    95b12c01 Fix missing import
+    0a63c2f3 Adjust U-Boot load addresses for imx6q-sabrelite to allow
+      bigger kernels
+    3a4cddf4 LAVA-341 Unicode issues in tables and queries
+    5bff2fd5 Mark required parameters in deploy action using an asterisk.
+    00b5044a LAVA-1035 Force all Dashboard objects into read-only mode
+      for users
+    7a006f64 Change load addresses for Jetson TK1 to allow bigger kci kernels
+    ca5e6834 Update commands for eMMC boot of OE on X15
+    0d17e797 Add docker device-type configuration
+    f0c2107c Remove doc references to lava-lxc-device-* commands.
+    715c6309 LAVA-771 - Support dragonboard-820c with lxc
+    7a4adb03 Fix the hierarchy of md5sum and sha256sum in nbdroot index.
+    576661f4 Make clear when to use lxc://
+    7c68e21b Document download deploy and explain about lxc:// url scheme.
+    8f4d7419 Rewrite fastboot deploy action reference doc.
+    11f5c222 archive: do not allow to force hc
+    9536450d logger: drop level and action name
+    771d0d93 Fix a typo in deploy to name.
+    0a2404fa Update command requires an alias argument
+    e7a704a1 Add V1 EOL summary to the index page for all docs
+    cdaa6376 LAVA-1003 do not lose logging messages
+    f09b6beb LAVA-1045 - document the archive setting
+    483fb1a7 LAVA-1038 add a settings to archive the instance
+    866afbf4 migration: v1 health-check are not used anymore
+    896db15b LAVA-1033 remove v1 job wizard
+    2eac055b LAVA-1043 fix handling of large log files
+    aef7d7b8 Add device-type disco-l475-iot1
+    399b9dbc Use the CDumper to export results
+    c9dc6a14 LAVA-1032 reject v1 submission at api level
+    65394986 Drop lookups to ActionData from testcase export
+    80d1a9fa Add support for the NextThing CHIP Pro
+    21c8fc52 Only write logs to output.yaml
+    01df9ce0 Improve job listing by fetching more data
+    436c220e Decrease SQL queries when listing test results
+    445b9c66 Add support for reading django settings for limiting
+      LDAP group access
+    a33b9c9f Only set the job status if lava-run crashed
+    581b616f Fix boot action doc for fastboot and lxc boot methods.
+    08393dbb Use new logging API
+    33a73bb3 device-types: panda: handle bigger kernels
+    746fe4c9 Allow override of prompt in device configuration
+    5932f9d1 LAVA-1048 Extend X15 to typical U-Boot support
+    affaa35d Fix error message in daemonise.py
+    e24db160 Fix lambda syntax
+    8fb16105 v2: Do not fall back to db for health-checks
+    bceecc64 Do not submit new health checks for v1 only device
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 04 Oct 2017 08:54:36 +0100
+
 lava-server (2017.9-1) unstable; urgency=medium
 
   * New production release
