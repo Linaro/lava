@@ -1,3 +1,46 @@
+lava-dispatcher (2017.10-1) unstable; urgency=medium
+
+  * New production release
+    1b129396 Remove unnecessary calls to get_udev_devices.
+    55cc9a0d Replace LxcAddDeviceAction with LxcCreateUdevRuleAction.
+    9cf899df Include vendor and product id if available, while writing
+      udev rule.
+    5eea8b61 Add missing requirement for magic binding
+    75b47c6a Remove loop mounts via guestfs, while applying overlay
+      to sparse image.
+    1f285ecf Ensure the image is Android sparse image before acting on it.
+    44b8436a Add missing dependency on pytz
+    b953a562 Append to the udev rules and avoid overwriting.
+    44380b3e Add a new device type: docker
+    336719bf Fix broken link in hikey960 unit test.
+    1703dc94 Remove unused signals after introduction of udev based
+      device addition.
+    7f2f049e Always don't assume a ZMQ handler for logging.
+    9fa3995e Fix a typo in log message.
+    9cab91d0 LAVA-1046 allow sending logs from lxc udev scripts
+    37c7e863 log: allow adding a linger when closing socket
+    dd4f6b09 LAVA-1040 - Initial boot only support for artifact
+      conversion in LXC
+    7ed0674c logger: remove level and action name
+    70fb64c4 lava-run: output_dir should be an absolute path
+    8f31f584 Always revert directory changes
+    40ca2c11 Add a timezone aware log message at job start
+    79325b7b Ensure a retry sets a failed result
+    b8527df2 Debug log message to know image files are copied to LXC.
+    3665e840 Allow fastboot calls to fail and return the log
+    7de0f887 Fix bug #3007 - Unable to reboot target between tests
+      on hikey-hi6220
+    dc5e5b18 Send a bad status only when lava-run crashed
+    18607373 Write description.yaml when all logs where sent to lava-master
+    e185d967 Move most exception handling to lava-run
+    57829892 Move signal handling to lava-run
+    d9d39463 Provide useful output when no classes accept an action
+    1c45a4ad Setup logging as early as possible
+    af4401f0 LAVA-1048 extend X15 support for U-Boot
+    12711359 Raise an error instead of setting self.errors in run()
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 04 Oct 2017 08:54:43 +0100
+
 lava-dispatcher (2017.9-1) unstable; urgency=medium
 
   * New production release
