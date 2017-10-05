@@ -125,6 +125,7 @@ Writing tests for LAVA
    hacking-session
    qemu_options
    secondary-media
+   connections
    dispatcher-actions
    deploy-lxc
    multinode
