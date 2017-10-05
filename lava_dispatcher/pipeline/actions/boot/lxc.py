@@ -105,14 +105,25 @@ class LxcStartAction(Action):
         if command_output and command_output is not '':
             raise JobError("Unable to start lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
-        lxc_cmd = ['lxc-attach', '-n', lxc_name, 'runlevel']
-        self.logger.debug("Waiting for '%s' to become ready", lxc_name)
+        lxc_cmd = ['lxc-info', '-sH', '-n', lxc_name]
+        self.logger.debug("Wait until '%s' state becomes RUNNING", lxc_name)
         while True:
             command_output = self.run_command(lxc_cmd, allow_fail=True)
-            if command_output and command_output not in ['unknown', 'S']:
+            if command_output and 'RUNNING' in command_output.strip():
                 break
             time.sleep(self.sleep)  # poll every 10 seconds.
-        self.logger.info("'%s' is ready", lxc_name)
+        self.logger.info("'%s' state is RUNNING", lxc_name)
+        # Check if LXC got an IP address so that we are sure, networking is
+        # enabled and the LXC can update or install software.
+        lxc_cmd = ['lxc-info', '-iH', '-n', lxc_name]
+        self.logger.debug("Wait until '%s' gets an IP address", lxc_name)
+        while True:
+            command_output = self.run_command(lxc_cmd, allow_fail=True)
+            if command_output:
+                break
+            time.sleep(self.sleep)  # poll every 10 seconds.
+        self.logger.info("'%s' IP address is: '%s'", lxc_name,
+                         command_output.strip())
         return connection
 
 
