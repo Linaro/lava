@@ -7,8 +7,9 @@ to: ssh
 
 SSH methods can support two types of deployment.
 
-.. seealso:: :ref:`primary_connection` and :ref:`ssh_as_the_primary_connection`
-   as an example of the primary connection.
+.. seealso:: :ref:`primary_remote_connection` and
+   :ref:`ssh_as_the_primary_remote_connection` as an example of the
+   primary ssh connection.
 
 .. seealso:: :ref:`secondary_connection`
 
