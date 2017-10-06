@@ -997,8 +997,11 @@ class Device(RestrictedResource):
         if not extends:
             return None
 
-        filename = os.path.join(Device.HEALTH_CHECK_PATH,
-                                "%s.yaml" % extends)
+        filename = os.path.join(Device.HEALTH_CHECK_PATH, "%s.yaml" % extends)
+        # Try if health check file is having a .yml extension
+        if not os.path.exists(filename):
+            filename = os.path.join(Device.HEALTH_CHECK_PATH,
+                                    "%s.yml" % extends)
         try:
             with open(filename, "r") as f_in:
                 return f_in.read()
