@@ -103,8 +103,8 @@ class DDAction(Action):
         self.description = "deploy image to drive"
         self.timeout = Timeout(self.name, 600)
         self.boot_params = None
-        self.dd_prompts = None
-        self.dd_flags = None
+        self.tool_prompts = None
+        self.tool_flags = None
 
     def validate(self):
         super(DDAction, self).validate()
@@ -152,19 +152,19 @@ class DDAction(Action):
         if not self.valid:
             return
 
-        dd_params = self.parameters.get('dd', None)
-        if dd_params:
-            self.dd_prompts = dd_params.get('prompts', DD_PROMPTS)
-            self.dd_flags = dd_params.get('flags')
+        tool_params = self.parameters.get('tool')
+        if tool_params:
+            self.tool_prompts = tool_params.get('prompts', DD_PROMPTS)
+            self.tool_flags = tool_params.get('flags')
         else:
-            self.dd_prompts = DD_PROMPTS
+            self.tool_prompts = DD_PROMPTS
 
-        if not isinstance(self.dd_prompts, list):
-            self.errors = "'dd prompts' should be a list"
+        if not isinstance(self.tool_prompts, list):
+            self.errors = "'tool prompts' should be a list"
         else:
-            for msg in self.dd_prompts:
+            for msg in self.tool_prompts:
                 if not msg:
-                    self.errors = "items of 'dd prompts' cannot be empty"
+                    self.errors = "items of 'tool prompts' cannot be empty"
 
         uuid_required = False
         self.boot_params = self.job.device['parameters']['media'][self.parameters['to']]
@@ -228,13 +228,13 @@ class DDAction(Action):
 
         writer_params = self.parameters.get('writer')
         if writer_params:
-            dd_options = substitute([writer_params['options']], substitutions)[0]
-            dd_cmd = [writer_params['tool'], dd_options]
+            tool_options = substitute([writer_params['options']], substitutions)[0]
+            tool_cmd = [writer_params['tool'], tool_options]
         else:
-            dd_cmd = ["dd of='{}' bs=4M".format(device_path)]  # busybox dd does not support other flags
-        if self.dd_flags:
-            dd_cmd.append(self.dd_flags)
-        cmd = ' '.join(dd_cmd)
+            tool_cmd = ["dd of='{}' bs=4M".format(device_path)]  # busybox dd does not support other flags
+        if self.tool_flags:
+            tool_cmd.append(self.tool_flags)
+        cmd = ' '.join(tool_cmd)
 
         cmd_line = ' '.join([download_cmd, '|', cmd]) if download_cmd else cmd
 
@@ -251,7 +251,7 @@ class DDAction(Action):
             self.logger.error(self.errors)
 
         # change prompt string to list of dd outputs
-        connection.prompt_str = self.dd_prompts
+        connection.prompt_str = self.tool_prompts
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
 
