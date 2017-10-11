@@ -245,7 +245,6 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
 
         self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
-        suffix = os.path.join(suffix, "image")
         self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)
 
     def populate(self, parameters):
@@ -262,8 +261,10 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         self.internal_pipeline.add_action(CustomisationAction())
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        uniquify = parameters.get('uniquify', True)
         if 'image' in parameters:
-            self.internal_pipeline.add_action(DownloaderAction('image', path=self.image_path))
+            self.internal_pipeline.add_action(DownloaderAction(
+                'image', path=self.image_path, uniquify=uniquify))
             if self.test_needs_overlay(parameters):
                 self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())
