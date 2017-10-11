@@ -48,6 +48,9 @@ def setup_logger(options):
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger('dispatcher')
     if options.logging_url is not None:
+        if options.master_cert and options.slave_cert:
+            if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
+                return None
         # pylint: disable=no-member
         logger.addZMQHandler(options.logging_url,
                              options.master_cert,
@@ -76,10 +79,8 @@ def main():
     group.add_argument("--logging-url", metavar="URL", default=None,
                        help="URL of the ZMQ socket to send the logs to the master")
     group.add_argument("--master-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Master certificate file")
     group.add_argument("--slave-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Slave certificate file")
     group.add_argument("--ipv6", action="store_true", default=False,
                        help="Enable IPv6")
@@ -90,6 +91,8 @@ def main():
 
     # Setup the logger
     logger = setup_logger(options)
+    if not logger:
+        return 1
 
     start = time.gmtime()
     uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (lxc_name, start.tm_hour, start.tm_min, start.tm_sec)
