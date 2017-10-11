@@ -57,11 +57,11 @@ def parser():
     group = p_obj.add_argument_group("logging")
     group.add_argument("--logging-url", metavar="URL", default=None,
                        help="URL of the ZMQ socket to send the logs to the master")
+    # zmq.auth.load_certificate expects a filename, avoid opening the file here
     group.add_argument("--master-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Master certificate file")
+    # zmq.auth.load_certificate expects a filename, avoid opening the file here
     group.add_argument("--slave-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Slave certificate file")
     group.add_argument("--ipv6", action="store_true", default=False,
                        help="Enable IPv6")
@@ -91,6 +91,8 @@ def setup_logger(options):
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger('dispatcher')
     if options.logging_url is not None:
+        if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
+            return None
         # pylint: disable=no-member
         logger.addZMQHandler(options.logging_url,
                              options.master_cert,
@@ -161,6 +163,9 @@ def main():
 
     # Setup the logger as early as possible
     logger = setup_logger(options)
+    if not logger:
+        print("lava-run failed to setup logging")
+        return 1
 
     # By default, that's a failure
     description = ""
