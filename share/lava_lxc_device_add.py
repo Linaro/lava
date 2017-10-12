@@ -26,6 +26,7 @@
 #
 # Usage: lava_lxc_device_add.py <lxc-name> <device-info-file>
 
+import os
 import argparse
 import logging
 import subprocess
@@ -38,6 +39,8 @@ from lava_dispatcher.pipeline.utils.udev import get_udev_devices
 
 # Wait 5s maximum to close the socket
 LINGER = 5
+
+# pylint: disable=line-too-long,missing-docstring
 
 
 def setup_logger(options):
@@ -102,13 +105,13 @@ def main():
         device_info = yaml.load(options.device_info.read())
     except yaml.error.YAMLError as exc:
         logger.error("[%s] Unable to parse the device info: %s", uniq_str, str(exc))
-        logger.close(linger=LINGER)
+        logger.close(linger=LINGER)  # pylint: disable=no-member
         return 1
 
     udev_devices = get_udev_devices(device_info=device_info)
     if not udev_devices:
         logger.error("[%s] No devices found", uniq_str)
-        logger.close(linger=LINGER)
+        logger.close(linger=LINGER)  # pylint: disable=no-member
         return 1
 
     for device in udev_devices:
@@ -121,7 +124,7 @@ def main():
             logger.error("[%s] failed to add device %s: '%s'",
                          uniq_str, device, exc)
 
-    logger.close(linger=LINGER)
+    logger.close(linger=LINGER)  # pylint: disable=no-member
 
 
 if __name__ == '__main__':

@@ -20,6 +20,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+# pylint: disable=wrong-import-order,superfluous-parens,too-many-statements
+# pylint: disable=missing-docstring
+
 import argparse
 import errno
 import logging
@@ -201,7 +204,7 @@ def main():
         error_help = exc.error_help
         error_msg = str(exc)
         error_type = exc.error_type
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
         logger.exception(traceback.format_exc())
         error_help = LAVABug.error_help
         error_msg = str(exc)
@@ -219,10 +222,10 @@ def main():
             result_dict["error_msg"] = error_msg
             result_dict["error_type"] = error_type
             logger.error(error_help)
-        logger.results(result_dict)
+        logger.results(result_dict)  # pylint: disable=no-member
 
     # Closing the socket. We are now sure that all messages where sent.
-    logger.close()
+    logger.close()  # pylint: disable=no-member
 
     # Generate the description
     # A missing description.yaml indicate that lava-run crashed
