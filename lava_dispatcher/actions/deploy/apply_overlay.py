@@ -94,22 +94,29 @@ class ApplyOverlayGuest(Action):
 
 class ApplyOverlayImage(Action):
 
-    def __init__(self):
+    def __init__(self, image_key='image', use_root_partition=True):
         super(ApplyOverlayImage, self).__init__()
         self.name = "apply-overlay-image"
         self.summary = "apply overlay to test image"
         self.description = "apply overlay via guestfs to the test image"
+        self.image_key = image_key
+        self.use_root_partition = use_root_partition
 
     def run(self, connection, max_end_time, args=None):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
-            decompressed_image = self.get_namespace_data(action='download-action', label='image', key='file')
+            decompressed_image = self.get_namespace_data(action='download-action',
+                                                         label=self.image_key, key='file')
             self.logger.debug("Image: %s", decompressed_image)
-            root_partition = self.parameters['image'].get('root_partition')
-            if root_partition is None:
-                raise JobError("Unable to apply the overlay image without 'root_partition'")
-            self.logger.debug("root_partition: %s", root_partition)
+            root_partition = None
+
+            if self.use_root_partition:
+                root_partition = self.parameters[self.image_key].get('root_partition')
+                if root_partition is None:
+                    raise JobError("Unable to apply the overlay image without 'root_partition'")
+                self.logger.debug("root_partition: %s", root_partition)
+
             copy_in_overlay(decompressed_image, root_partition, overlay_file)
         else:
             self.logger.debug("No overlay to deploy")

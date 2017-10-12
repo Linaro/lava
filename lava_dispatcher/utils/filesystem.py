@@ -201,16 +201,26 @@ def copy_out_files(image, filenames, destination):
 def copy_in_overlay(image, root_partition, overlay):
     """
     Mounts test image partition as specified by the test
-    writer and extracts overlay at the root
+    writer and extracts overlay at the root, if root_partition
+    is None the image is handled as a filesystem instead of
+    partitioned image.
     """
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
     guest.launch()
-    partitions = guest.list_partitions()
-    if not partitions:
-        raise InfrastructureError("Unable to prepare guestfs")
-    guest_partition = partitions[root_partition]
-    guest.mount(guest_partition, '/')
+
+    if root_partition:
+        partitions = guest.list_partitions()
+        if not partitions:
+            raise InfrastructureError("Unable to prepare guestfs")
+        guest_partition = partitions[root_partition]
+        guest.mount(guest_partition, '/')
+    else:
+        devices = guest.list_devices()
+        if not devices:
+            raise InfrastructureError("Unable to prepare guestfs")
+        guest.mount(devices[0], '/')
+
     # FIXME: max message length issues when using tar_in
     # on tar.gz.  Works fine with tar so decompressing
     # overlay first.
@@ -218,7 +228,11 @@ def copy_in_overlay(image, root_partition, overlay):
         os.unlink(overlay[:-3])
     decompressed_overlay = decompress_file(overlay, 'gz')
     guest.tar_in(decompressed_overlay, '/')
-    guest.umount(guest_partition)
+
+    if root_partition:
+        guest.umount(guest_partition)
+    else:
+        guest.umount(devices[0])
 
 
 def lxc_path(dispatcher_config):

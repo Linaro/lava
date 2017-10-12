@@ -30,12 +30,13 @@ from lava_dispatcher.action import (
     Action,
 )
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlaySparseImage
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.actions.deploy.download import (
-    DownloaderAction,
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    ApplyOverlaySparseImage,
+    ApplyOverlayImage,
 )
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
@@ -125,8 +126,12 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
                 if parameters['images'][image].get('apply-overlay', False):
                     if self.test_needs_overlay(parameters):
-                        self.internal_pipeline.add_action(
-                            ApplyOverlaySparseImage(image))
+                        if parameters['images'][image].get('sparse', True):
+                            self.internal_pipeline.add_action(
+                                ApplyOverlaySparseImage(image))
+                        else:
+                            self.internal_pipeline.add_action(
+                                ApplyOverlayImage(image, use_root_partition=False))
                 if self.test_needs_overlay(parameters) and \
                    self.test_needs_deployment(parameters):
                     self.internal_pipeline.add_action(
