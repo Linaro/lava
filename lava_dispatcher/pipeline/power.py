@@ -198,17 +198,20 @@ class FinalizeAction(Action):
         The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         self.ran = True
-        connection = super(FinalizeAction, self).run(connection, max_end_time, args)
-        if connection:
-            connection.finalise()
+        try:
+            connection = super(FinalizeAction, self).run(connection, max_end_time, args)
+            if connection:
+                connection.finalise()
 
-        # Finalize all connections associated with each namespace.
-        connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
-        if connection:
-            connection.finalise()
-
-        for protocol in self.job.protocols:
-            protocol.finalise_protocol(self.job.device)
+            # Finalize all connections associated with each namespace.
+            connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
+            if connection:
+                connection.finalise()
+        except Exception as exc:
+            pass
+        finally:
+            for protocol in self.job.protocols:
+                protocol.finalise_protocol(self.job.device)
 
     def cleanup(self, connection):
         # avoid running Finalize in validate or unit tests
