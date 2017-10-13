@@ -30,15 +30,6 @@
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
           <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-dashboard"></span> Dashboard <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="{% url 'lava_dashboard_image_report_list' %}">Image Reports</a></li>
-              <li><a href="{% url 'lava_dashboard_image_report_report_list' %}">Image Reports 2.0</a></li>
-              <li><a href="{% url 'lava_dashboard_filters_list' %}">Filters</a></li>
-              <li><a href="{% url 'lava_dashboard_bundle_stream_list' %}">Bundle Streams</a></li>
-            </ul>
-          </li>
 {% if 'PIPELINE'|get_settings %}
           <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>

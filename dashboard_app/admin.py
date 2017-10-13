@@ -275,25 +275,3 @@ class TestDefinitionAdmin(admin.ModelAdmin):
             'fields': ('target_dev_types', 'environment', 'mime_type',
                        'target_os', 'content')}),
     )
-
-
-admin.site.register(Attachment, AttachmentAdmin)
-admin.site.register(Bundle, BundleAdmin)
-admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
-admin.site.register(BundleStream, BundleStreamAdmin)
-admin.site.register(HardwareDevice, HardwareDeviceAdmin)
-admin.site.register(Image, ImageAdmin)
-admin.site.register(ImageSet, ImageSetAdmin)
-admin.site.register(ImageReport, ImageReportAdmin)
-admin.site.register(BugLink, BugLinkAdmin)
-admin.site.register(PMQABundleStream)
-admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
-admin.site.register(SoftwareSource, SoftwareSourceAdmin)
-admin.site.register(Test, TestAdmin)
-admin.site.register(TestCase, TestCaseAdmin)
-admin.site.register(TestResult, TestResultAdmin)
-admin.site.register(TestRun, TestRunAdmin)
-admin.site.register(TestRunFilter, TestRunFilterAdmin)
-admin.site.register(TestRunFilterSubscription, TestRunFilterSubscriptionAdmin)
-admin.site.register(Tag)
-admin.site.register(TestDefinition, TestDefinitionAdmin)
