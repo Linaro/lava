@@ -31,6 +31,8 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.utils.constants import REBOOT_COMMAND_LIST
 
+# pylint: disable=missing-docstring
+
 
 class ResetDevice(Action):
     """
@@ -171,6 +173,43 @@ class PowerOff(Action):
         return connection
 
 
+class ReadFeedback(Action):
+    """
+    Generalise the feedback support so that it can be added
+    to any pipeline.
+    """
+    def __init__(self, finalize=False):
+        super(ReadFeedback, self).__init__()
+        self.name = 'read-feedback'
+        self.summary = 'Read from other namespaces'
+        self.description = 'Check for messages on all other namespaces'
+        self.finalize = finalize
+        self.parameters['namespace'] = 'common'
+        self.duration = 1
+
+    def run(self, connection, max_end_time, args=None):
+        feedbacks = []
+        for feedback_ns in self.data.keys():  # pylint: disable=no-member
+            if feedback_ns == self.parameters.get('namespace'):
+                continue
+            feedback_connection = self.get_namespace_data(
+                action='shared', label='shared', key='connection',
+                deepcopy=False, parameters={"namespace": feedback_ns})
+            if feedback_connection:
+                feedbacks.append((feedback_ns, feedback_connection))
+        for feedback in feedbacks:
+            self.logger.debug(
+                "Listening to connection for namespace '%s' for %ds",
+                feedback[0], self.duration)
+            feedback[1].listen_feedback(timeout=self.duration)
+            self.logger.debug(
+                "Listening to connection for namespace '%s' done", feedback[0])
+            if self.finalize:
+                # Finalize all connections associated with each namespace.
+                feedback[1].finalise()
+        return connection
+
+
 class FinalizeAction(Action):
 
     def __init__(self):
@@ -185,11 +224,11 @@ class FinalizeAction(Action):
         self.summary = "finalize the job"
         self.description = "finish the process and cleanup"
         self.ran = False
-        self.parameters['namespace'] = 'common'
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
         self.internal_pipeline.add_action(PowerOff())
+        self.internal_pipeline.add_action(ReadFeedback(finalize=True))
 
     def run(self, connection, max_end_time, args=None):
         """
@@ -203,15 +242,12 @@ class FinalizeAction(Action):
             if connection:
                 connection.finalise()
 
-            # Finalize all connections associated with each namespace.
-            connection = self.get_namespace_data(action='shared', label='shared', key='connection', deepcopy=False)
-            if connection:
-                connection.finalise()
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=unused-variable,broad-except
             pass
         finally:
             for protocol in self.job.protocols:
                 protocol.finalise_protocol(self.job.device)
+        return connection
 
     def cleanup(self, connection):
         # avoid running Finalize in validate or unit tests

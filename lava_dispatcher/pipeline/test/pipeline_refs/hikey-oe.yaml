@@ -95,3 +95,4 @@
   name: finalize
   pipeline:
   - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}
