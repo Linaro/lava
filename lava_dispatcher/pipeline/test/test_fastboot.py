@@ -153,7 +153,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertEqual(calling['action'], deploy.name)
             self.assertEqual(calling['request'], 'pre-power-command')
         pair = ['pre-os-command', 'pre-power-command']
-        action_list = {jaction.keys()[0] for jaction in job.parameters['actions']}
+        action_list = {list(jaction.keys())[0] for jaction in job.parameters['actions']}
         block = job.parameters['actions']
         for action in action_list:
             for item in block:
