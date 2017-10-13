@@ -802,6 +802,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 res = "fail"
             self.logger.results({  # pylint: disable=no-member
                 "definition": "lava",
+                "namespace": self.parameters.get('namespace', 'common'),
                 "case": self.name,
                 "level": self.level,
                 "duration": "%.02f" % self.timeout.elapsed_time,

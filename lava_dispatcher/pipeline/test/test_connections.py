@@ -308,7 +308,6 @@ commands:
                 self.assertEqual('uart1', hardware)
             else:
                 self.assertEqual('uart0', hardware)
-        print(data)
 
 
 class TestTimeouts(StdoutTestCase):

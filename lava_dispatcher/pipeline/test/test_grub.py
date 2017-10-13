@@ -325,7 +325,8 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         description_ref = self.pipeline_reference('hi960-grub-efi.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
-        flash = [action for action in deploy.internal_pipeline.actions if action.name == 'fastboot-flash-action'][0]
+        flash_ord = [action for action in deploy.internal_pipeline.actions if action.name == 'fastboot-flash-order-action'][0]
+        flash = [action for action in flash_ord.internal_pipeline.actions if action.name == 'fastboot-flash-action'][0]
         self.assertIsNotNone(flash.interrupt_prompt)
         self.assertEqual('Android Fastboot mode', flash.interrupt_prompt)
         self.assertIsNotNone(flash.interrupt_string)

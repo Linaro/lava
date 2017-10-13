@@ -24,10 +24,10 @@ from lava_dispatcher.pipeline.power import (
     ResetDevice,
 )
 from lava_dispatcher.pipeline.action import (
-    ConfigurationError,
     InfrastructureError,
     JobError,
     Pipeline,
+    Action,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlaySparseImage
@@ -43,9 +43,10 @@ from lava_dispatcher.pipeline.utils.filesystem import copy_to_lxc
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootEnterFastbootAction
+from lava_dispatcher.pipeline.power import PDUReboot, ReadFeedback
 
 
-# pylint: disable=too-many-return-statements
+# pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring
 
 
 class Fastboot(Deployment):
@@ -134,26 +135,49 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                    self.test_needs_deployment(parameters):
                     self.internal_pipeline.add_action(
                         DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(FastbootFlashAction())
+        self.internal_pipeline.add_action(FastbootFlashOrderAction())
 
 
-class FastbootFlashAction(DeployAction):
+class FastbootFlashOrderAction(DeployAction):
     """
     Fastboot flash image.
     """
 
     def __init__(self):
-        super(FastbootFlashAction, self).__init__()
-        self.name = "fastboot-flash-action"
-        self.description = "fastboot_flash"
-        self.summary = "fastboot flash"
+        super(FastbootFlashOrderAction, self).__init__()
+        self.name = "fastboot-flash-order-action"
+        self.description = "Determine support for each flash operation"
+        self.summary = "Handle reset and options for each flash url."
         self.retries = 3
         self.sleep = 10
         self.interrupt_prompt = None
         self.interrupt_string = None
 
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        flash_cmds_order = self.job.device['flash_cmds_order']
+        userlist = list(parameters['images'].keys())
+        userlist.remove('yaml_line')
+        flash_cmds = set(userlist).difference(set(flash_cmds_order))
+        flash_cmds = flash_cmds_order + list(flash_cmds)
+        self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+        for flash_cmd in flash_cmds_order:
+            if flash_cmd not in parameters['images']:
+                continue
+            self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
+            reboot = parameters['images'][flash_cmd].get('reboot', None)
+            if reboot == 'fastboot-reboot':
+                self.internal_pipeline.add_action(FastbootReboot())
+                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+            elif reboot == 'fastboot-reboot-bootloader':
+                self.internal_pipeline.add_action(FastbootRebootBootloader())
+                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+            elif reboot == 'hard-reset':
+                self.internal_pipeline.add_action(PDUReboot())
+                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+
     def validate(self):
-        super(FastbootFlashAction, self).validate()
+        super(FastbootFlashOrderAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
         elif self.job.device['fastboot_serial_number'] == '0000000000':
@@ -164,6 +188,29 @@ class FastbootFlashAction(DeployAction):
             self.errors = "device fastboot options missing"
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
+
+
+class FastbootFlashAction(Action):
+
+    """
+    Fastboot flash image.
+    """
+
+    def __init__(self, cmd=None):
+        super(FastbootFlashAction, self).__init__()
+        self.name = "fastboot-flash-action"
+        self.description = "Run a specified flash command"
+        self.summary = "Execute fastboot flash command"
+        self.retries = 3
+        self.sleep = 10
+        self.command = cmd
+        self.interrupt_prompt = None
+        self.interrupt_string = None
+
+    def validate(self):
+        super(FastbootFlashAction, self).validate()
+        if not self.command:
+            self.errors = "Invalid configuration - missing flash command"
         device_methods = self.job.device['actions']['deploy']['methods']
         if isinstance(device_methods.get('fastboot'), dict):
             self.interrupt_prompt = device_methods['fastboot'].get('interrupt_prompt')
@@ -179,70 +226,93 @@ class FastbootFlashAction(DeployAction):
         if not lxc_name:
             raise JobError("Unable to use fastboot")
 
-        # Order flash commands so that some commands take priority over others
-        flash_cmds_order = self.job.device['flash_cmds_order']
-        namespace = self.parameters['namespace']
-        flash_cmds = set(self.data[namespace]['download-action'].keys()).difference(
-            set(flash_cmds_order))
-        flash_cmds = flash_cmds_order + list(flash_cmds)
+        src = self.get_namespace_data(action='download-action', label=self.command, key='file')
+        if not src:
+            return connection
+        dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
+        sequence = self.job.device['actions']['boot']['methods'].get(
+            'fastboot', [])
+        if 'no-flash-boot' in sequence and self.command in ['boot']:
+            return connection
 
-        for flash_cmd in flash_cmds:
-            src = self.get_namespace_data(action='download-action', label=flash_cmd, key='file')
-            if not src:
-                continue
-            dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
-            sequence = self.job.device['actions']['boot']['methods'].get(
-                'fastboot', [])
-            if 'no-flash-boot' in sequence and flash_cmd in ['boot']:
-                continue
+        if self.interrupt_prompt:
+            connection.prompt_str = self.interrupt_prompt
+            self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+            self.wait(connection)
 
-            # each time, read anything from the previous buffer before doing the reset.
-            # cannot happen after the reset or it would be a race condition with the addition
-            # of the device to the LXC.
-            if self.interrupt_prompt:
-                connection.prompt_str = self.interrupt_prompt
-                self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
-                self.wait(connection)
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_opts = self.job.device['fastboot_options']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', self.command,
+                        dst] + fastboot_opts
+        self.logger.info("Handling %s", self.command)
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise InfrastructureError("Unable to flash %s using fastboot: %s" %
+                                      (self.command, command_output))
+        self.results = {'label': self.command}
 
-            serial_number = self.job.device['fastboot_serial_number']
-            fastboot_opts = self.job.device['fastboot_options']
-            fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', serial_number, 'flash', flash_cmd,
-                            dst] + fastboot_opts
-            command_output = self.run_command(fastboot_cmd)
-            if command_output and 'error' in command_output:
-                raise InfrastructureError("Unable to flash %s using fastboot: %s" %
-                                          (flash_cmd, command_output))
-            reboot = self.parameters['images'][flash_cmd].get('reboot', False)
-            if reboot == 'fastboot-reboot':
-                self.logger.info("fastboot rebooting device.")
-                fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
-                                'fastboot', '-s', serial_number,
-                                'reboot'] + fastboot_opts
-                command_output = self.run_command(fastboot_cmd)
-                if command_output and 'error' in command_output:
-                    raise InfrastructureError("Unable to reboot: %s"
-                                              % (command_output))
-            if reboot == 'fastboot-reboot-bootloader':
-                self.logger.info("fastboot reboot device to bootloader.")
-                fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
-                                'fastboot', '-s', serial_number,
-                                'reboot-bootloader'] + fastboot_opts
-                command_output = self.run_command(fastboot_cmd)
-                if command_output and 'error' in command_output:
-                    raise InfrastructureError(
-                        "Unable to reboot to bootloader: %s"
-                        % (command_output))
-            if reboot == 'hard-reset':
-                if self.job.device.hard_reset_command:
-                    self.logger.info("Hard resetting device.")
-                    command = self.job.device.hard_reset_command
-                    if not isinstance(command, list):
-                        command = [command]
-                    for cmd in command:
-                        if not self.run_command(cmd.split(' '),
-                                                allow_silent=True):
-                            raise InfrastructureError("%s failed" % cmd)
-                else:
-                    self.logger.info("Device does not have hard reset command")
         return connection
+
+
+class FastbootReboot(FastbootFlashAction):
+
+    def __init__(self):
+        self.name = 'fastboot-reboot'
+        self.summary = 'execute a reboot using fastboot'
+        self.description = 'Reset a device between flash operations using fastboot reboot.'
+
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+
+        connection = super(FastbootReboot, self).run(connection, max_end_time, args)
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            raise JobError("Unable to use fastboot")
+
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_opts = self.job.device['fastboot_options']
+
+        self.logger.info("fastboot rebooting device.")
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
+                        'fastboot', '-s', serial_number,
+                        'reboot'] + fastboot_opts
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise InfrastructureError("Unable to reboot: %s"
+                                      % (command_output))
+
+
+class FastbootRebootBootloader(FastbootFlashAction):
+
+    def __init__(self):
+        self.name = 'fastboot-reboot-bootloader'
+        self.summary = 'execute a reboot to bootloader using fastboot'
+        self.description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
+
+    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+
+        connection = super(FastbootRebootBootloader, self).run(connection, max_end_time, args)
+        # this is the device namespace - the lxc namespace is not accessible
+        lxc_name = None
+        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        if protocol:
+            lxc_name = protocol.lxc_name
+        if not lxc_name:
+            raise JobError("Unable to use fastboot")
+
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_opts = self.job.device['fastboot_options']
+
+        self.logger.info("fastboot reboot device to bootloader.")
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
+                        'fastboot', '-s', serial_number,
+                        'reboot-bootloader'] + fastboot_opts
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise InfrastructureError(
+                "Unable to reboot to bootloader: %s"
+                % (command_output))

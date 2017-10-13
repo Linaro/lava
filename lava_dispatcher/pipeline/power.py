@@ -178,20 +178,22 @@ class ReadFeedback(Action):
     Generalise the feedback support so that it can be added
     to any pipeline.
     """
-    def __init__(self, finalize=False):
+    def __init__(self, finalize=False, repeat=False):
         super(ReadFeedback, self).__init__()
         self.name = 'read-feedback'
         self.summary = 'Read from other namespaces'
         self.description = 'Check for messages on all other namespaces'
         self.finalize = finalize
         self.parameters['namespace'] = 'common'
-        self.duration = 1
+        self.duration = 1  # FIXME: needs to be a constant set in the base template.
+        self.repeat = repeat
 
     def run(self, connection, max_end_time, args=None):
         feedbacks = []
         for feedback_ns in self.data.keys():  # pylint: disable=no-member
             if feedback_ns == self.parameters.get('namespace'):
-                continue
+                if not self.repeat:
+                    continue
             feedback_connection = self.get_namespace_data(
                 action='shared', label='shared', key='connection',
                 deepcopy=False, parameters={"namespace": feedback_ns})
