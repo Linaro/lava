@@ -73,56 +73,64 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('boot_message', u_boot_params['parameters'])
         self.assertIn('bootloader_prompt', u_boot_params['parameters'])
 
-    def test_job_parameters(self):
-        """
-        Test that the job parameters match expected structure
-        """
+    def _check_valid_job(self, device, test_file):
         self.maxDiff = None  # pylint: disable=invalid-name
         job_parser = JobParser()
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/{}'.format(test_file))
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
         job.logger = DummyLogger()
         try:
             job.validate()
         except JobError:
             self.fail(job.pipeline.errors)
-        sample_job_data.close()
-        description_ref = self.pipeline_reference('cubietruck-removable.yaml', job=job)
+        description_ref = self.pipeline_reference(test_file, job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+        return job
 
+    def _check_job_parameters(self, device, job, agent_key):
         mass_storage = None  # deploy
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
                 if isinstance(action, MassStorage):
                     self.assertTrue(action.valid)
-                    agent = action.parameters['download']['tool']
+                    agent = action.parameters[agent_key]['tool']
                     self.assertTrue(agent.startswith('/'))  # needs to be a full path but on the device, so avoid os.path
                     self.assertIn(action.parameters['device'], job.device['parameters']['media']['usb'])
                     mass_storage = action
         self.assertIsNotNone(mass_storage)
         self.assertIn('device', mass_storage.parameters)
-        self.assertIn(mass_storage.parameters['device'], cubie['parameters']['media']['usb'])
+        self.assertIn(mass_storage.parameters['device'], device['parameters']['media']['usb'])
         self.assertIsNotNone(mass_storage.get_namespace_data(action='storage-deploy', label='u-boot', key='device'))
-        u_boot_params = cubie['actions']['boot']['methods']['u-boot']
+        u_boot_params = device['actions']['boot']['methods']['u-boot']
         self.assertEqual(mass_storage.get_namespace_data(action='uboot-retry', label='bootloader_prompt', key='prompt'), u_boot_params['parameters']['bootloader_prompt'])
 
-    def test_deployment(self):
-        job_parser = JobParser()
+    def test_job_parameters(self):
+        """
+        Test that the job parameters match expected structure
+        """
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
-        job.logger = DummyLogger()
-        job.validate()
-        self.assertIn('usb', cubie['parameters']['media'].keys())
+        job = self._check_valid_job(cubie, 'cubietruck-removable.yaml')
+        self._check_job_parameters(cubie, job, 'download')
+
+    def test_writer_job_parameters(self):
+        """
+        Test that the job parameters with a writer tool match expected structure
+        """
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        job = self._check_valid_job(cubie, 'cubietruck-removable-with-writer.yaml')
+        self._check_job_parameters(cubie, job, 'writer')
+
+    def _check_deployment(self, device, test_file):
+        job_parser = JobParser()
+        job = self._check_valid_job(device, test_file)
+        self.assertIn('usb', device['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
         self.assertIn('device', deploy_params)
-        self.assertIn(deploy_params['device'], cubie['parameters']['media']['usb'])
-        self.assertIn('uuid', cubie['parameters']['media']['usb'][deploy_params['device']])
-        self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
-        self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
+        self.assertIn(deploy_params['device'], device['parameters']['media']['usb'])
+        self.assertIn('uuid', device['parameters']['media']['usb'][deploy_params['device']])
+        self.assertIn('device_id', device['parameters']['media']['usb'][deploy_params['device']])
+        self.assertNotIn('boot_part', device['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
         tftp_deploy_action = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         self.assertIsNotNone(deploy_action)
@@ -130,7 +138,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(test_dir)
         self.assertIn('/lava-', test_dir)
         self.assertIsInstance(deploy_action, MassStorage)
-        self.assertIn('image', deploy_action.parameters.keys())
+        img_params = deploy_action.parameters.get('images', deploy_action.parameters)
+        self.assertIn('image', img_params)
         dd_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'dd-image'][0]
         self.assertEqual(
             dd_action.boot_params[dd_action.parameters['device']]['uuid'],
@@ -142,6 +151,14 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual('0:1', dd_action.get_namespace_data(action='uboot-from-media', label='uuid', key='boot_part'))
         self.assertIsNotNone(dd_action.get_namespace_data(
             action='uboot-prepare-kernel', label='bootcommand', key='bootcommand'))
+
+    def test_deployment(self):
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        self._check_deployment(cubie, 'cubietruck-removable.yaml')
+
+    def test_writer_deployment(self):
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        self._check_deployment(cubie, 'cubietruck-removable-with-writer.yaml')
 
     def test_juno_deployment(self):
         factory = RemovableFactory()
