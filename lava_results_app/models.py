@@ -1115,9 +1115,9 @@ def limit_update_signal(sender, instance, **kwargs):
     try:
         query = sender.objects.get(pk=instance.pk)
     except sender.DoesNotExist:
-        pass # New query, ignore.
+        pass  # New query, ignore.
     else:
-        if not query.limit == instance.limit: # Field has changed
+        if not query.limit == instance.limit:  # Field has changed
             instance.is_changed = True
 
 
