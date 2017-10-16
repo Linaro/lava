@@ -7,7 +7,6 @@
 {% set adb_serial_number = adb_serial_number|default("'0000000000'") %}
 {% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
 {% set soft_reboot_command = soft_reboot_command|default('adb -s ' + fastboot_serial_number + ' reboot bootloader') %}
-{% set connection_command = connection_command|default('adb -s ' + adb_serial_number +' shell') %}
 {% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
 
 {% block body %}

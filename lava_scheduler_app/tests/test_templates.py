@@ -91,6 +91,35 @@ class TestTemplates(unittest.TestCase):
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
 
+    def test_all_template_connections(self):
+        path = os.path.dirname(CONFIG_PATH)
+        templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
+        self.assertNotEqual([], templates)
+        for template in templates:
+            name = os.path.basename(template)
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            data += "{% set connection_command = 'telnet calvin 6080' %}"
+            self.validate_data('device', data)
+            test_template = prepare_jinja_template('testing-01', data)
+            rendered = test_template.render()
+            template_dict = yaml.load(rendered)
+            self.assertIn('connect', template_dict['commands'])
+            self.assertNotIn(
+                'connections',
+                template_dict['commands'], msg="%s - failed support for connection_list syntax" % name)
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            data += "{% set connection_list = ['uart0'] %}"
+            data += "{% set connection_commands = {'uart1': 'telnet calvin 6080'} %}"
+            data += "{% set connection_tags = {'uart1': ['primary']} %}"
+            self.validate_data('device', data)
+            test_template = prepare_jinja_template('testing-01', data)
+            rendered = test_template.render()
+            template_dict = yaml.load(rendered)
+            self.assertNotIn('connect', template_dict['commands'])
+            self.assertIn(
+                'connections',
+                template_dict['commands'], msg="%s - missing connection_list syntax" % name)
+
     def test_rendering(self):
         self.assertFalse(CONFIG_PATH.startswith('/etc/'))
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'db410c.jinja2')) as hikey:
@@ -112,6 +141,7 @@ class TestTemplates(unittest.TestCase):
         data = """{% extends 'nexus4.jinja2' %}
 {% set adb_serial_number = 'R42D300FRYP' %}
 {% set fastboot_serial_number = 'R42D300FRYP' %}
+{% set connection_command = 'adb -s ' + adb_serial_number +' shell' %}
 """
         test_template = prepare_jinja_template('nexus4-01', data)
         rendered = test_template.render()
