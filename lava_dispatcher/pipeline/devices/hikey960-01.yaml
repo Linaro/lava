@@ -32,7 +32,11 @@ constants:
      grub-interrupt-character: 'c'
 
 commands:
-    connect: telnet tweetypie 4050
+    connections:
+      uart0:
+        connect: telnet tweetypie 4050
+        tags:
+        - primary
     hard_reset: ['/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 02', 'sleep 10', '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 02']
     soft_reset: fastboot -u -s 4932A6C603284698 reboot
     soft_reboot: adb -s 4932A6C603284698 reboot bootloader

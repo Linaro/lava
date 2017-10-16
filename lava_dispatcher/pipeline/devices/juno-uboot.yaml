@@ -6,7 +6,11 @@ usb_product_id: '4003'
 usb_filesystem_label: 'JUNO'
 
 commands:
-    connect: telnet localhost 7002
+    connections:
+      uart0:
+        connect: telnet localhost 7002
+        tags:
+        - primary
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 02 --delay 10
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 02 --delay 10
     power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 02 --delay 10

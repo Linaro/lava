@@ -1,5 +1,9 @@
 commands:
-    connect: telnet localhost 7112
+    connections:
+      uart0:
+        connect: telnet localhost 7112
+        tags:
+        - primary
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 19 --delay 20
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 19 --delay 20
     power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 19 --delay 20

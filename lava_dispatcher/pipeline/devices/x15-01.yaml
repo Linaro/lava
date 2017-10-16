@@ -1,5 +1,9 @@
 commands:
-    connect: telnet localhost 7020
+    connections:
+      uart0:
+        connect: telnet localhost 7020
+        tags:
+        - primary
     hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 5 --delay 20
     power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']

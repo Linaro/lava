@@ -19,7 +19,11 @@ parameters:
         uboot_interface: scsi
 
 commands:
-  connect: telnet localhost 6002
+  connections:
+    uart0:
+      connect: telnet localhost 6002
+      tags:
+      - primary
   #hard_reset: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command reboot --port 05
   #power_off: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command off --port 05
   #power_on: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command on --port 05

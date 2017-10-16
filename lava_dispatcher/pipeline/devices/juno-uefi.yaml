@@ -11,7 +11,11 @@ parameters:
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
 
 commands:
-  connect: telnet localhost 7002
+  connections:
+    uart0:
+      connect: telnet localhost 7002
+      tags:
+      - primary
   hard_reset: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02; sleep 10; /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
   power_off: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02
   power_on: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
@@ -89,7 +93,7 @@ actions:
           - Image console=ttyAMA0,115200n8 root=/dev/sda2 rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 sky2.mac_address=0x00,0x02,0xf7,0x00,0x68,0x03 ip=dhcp dtb=juno.dtb
       uefi-menu:
         parameters:
-          character_delay: 300 
+          character_delay: 300
           interrupt_prompt: The default boot selection will start in
           interrupt_string: ' '
           item_markup:
@@ -127,7 +131,7 @@ actions:
         - select:
             enter: n
             wait: 'Arguments to pass to the binary:'
-        - select: 
+        - select:
             enter: "dtb=board.dtb initrd=ramdisk.img console=ttyAMA0,115200 androidboot.hardware=juno systemd.log_target=null rootwait root=/dev/sda1"
             wait: 'Description for this new Entry:'
         - select:

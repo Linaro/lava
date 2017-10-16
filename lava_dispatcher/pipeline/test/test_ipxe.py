@@ -93,7 +93,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
     def test_device_x86(self):
         job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
         self.assertEqual(
-            job.device['commands']['connect'],
+            job.device['commands']['connections']['uart0']['connect'],
             'telnet bumblebee 8003'
         )
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')

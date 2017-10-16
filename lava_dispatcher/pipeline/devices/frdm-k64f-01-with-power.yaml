@@ -1,7 +1,11 @@
 device_type: frdm-k64f
 
 commands:
-  connect: telnet lava-dev 7004
+  connections:
+    usb0:
+      connect: telnet lava-dev 7004
+      tags:
+      - primary
   hard_reset: echo example hard_reset
   power_off: echo example power_off
   power_on: echo example power_on

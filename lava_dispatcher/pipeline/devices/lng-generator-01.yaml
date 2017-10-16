@@ -28,7 +28,11 @@ constants:
      uboot-interrupt-character: ' '
 
 commands:
-    connect: telnet localhost 7301
+    connections:
+      uart0:
+        connect: telnet localhost 7301
+        tags:
+        - primary
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command reboot
     power_off: /usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command off
     power_on: /usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command on

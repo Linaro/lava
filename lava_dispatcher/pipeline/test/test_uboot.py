@@ -112,7 +112,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
     def test_device_bbb(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot.yaml')
         self.assertEqual(
-            job.device['commands']['connect'],
+            job.device['commands']['connections']['uart0']['connect'],
             'telnet localhost 6000'
         )
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
