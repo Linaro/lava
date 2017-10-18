@@ -63,7 +63,10 @@ class ZMQPushHandler(logging.Handler):
         msg = [b(self.job_id), b(self.formatter.format(record))]
         self.socket.send_multipart(msg)
 
-    def close(self, linger):
+    def close(self, linger=-1):
+        # If the process crashes really early, the handler will be closed
+        # directly by the logging module. In this case, close is called without
+        # any arguments.
         super(ZMQPushHandler, self).close()
         self.context.destroy(linger=linger)
 
