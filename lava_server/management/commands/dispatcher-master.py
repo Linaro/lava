@@ -247,6 +247,9 @@ class Command(BaseCommand):
         try:
             message_lvl = scanned["lvl"]
             message_msg = scanned["msg"]
+        except TypeError:
+            self.logger.error("[%s] not a dictionary, dropping", job_id)
+            return
         except KeyError:
             self.logger.error(
                 "[%s] Invalid log line, missing \"lvl\" or \"msg\" keys: %s",
