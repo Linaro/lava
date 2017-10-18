@@ -711,7 +711,7 @@ def device_type_detail(request, pk):
             raise Http404('No device type matches the given query.')
 
     # Get some test job statistics
-    now = timezone.now().date()
+    now = timezone.now()
     devices = list(Device.objects.filter(device_type=dt)
                    .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
