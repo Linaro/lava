@@ -52,6 +52,7 @@ from lava_scheduler_app.schema import (
     SubmissionException
 )
 from dashboard_app.models import (
+    Bundle,
     BundleStream,
     get_domain
 )
@@ -1690,6 +1691,22 @@ class TestJob(RestrictedResource):
 
         return self.id <= last_archived_job
 
+    def archived_bundle(self):
+        """
+        DEPRECATED
+
+        Checks if the current bundle file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
+
+        if not os.path.exists(last_info):
+            return False
+
+        with open(last_info, 'r') as last:
+            last_archived_bundle = int(last.read())
+
+        return self.id <= last_archived_bundle
+
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
     failure_comment = models.TextField(null=True, blank=True)
@@ -1697,9 +1714,17 @@ class TestJob(RestrictedResource):
     _results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
 
+    _results_bundle = models.OneToOneField(
+        Bundle, null=True, blank=True, db_column="results_bundle_id",
+        on_delete=models.SET_NULL)
+
     @property
     def results_link(self):
-        if self.is_pipeline:
+        if self._results_bundle:
+            return self._results_bundle.get_permalink()
+        elif self._results_link:
+            return self._results_link
+        elif self.is_pipeline:
             return u'/results/%s' % self.id
         else:
             return None
@@ -1738,6 +1763,18 @@ class TestJob(RestrictedResource):
         if 'role' not in json_data:
             return "Error"
         return json_data['role']
+
+    @property
+    def results_bundle(self):
+        if self._results_bundle:
+            return self._results_bundle
+        if not self.results_link:
+            return None
+        sha1 = self.results_link.strip('/').split('/')[-1]
+        try:
+            return Bundle.objects.get(content_sha1=sha1)
+        except Bundle.DoesNotExist:
+            return None
 
     def log_admin_entry(self, user, reason):
         testjob_ct = ContentType.objects.get_for_model(TestJob)
