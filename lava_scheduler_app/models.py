@@ -2343,22 +2343,13 @@ class TestJob(RestrictedResource):
         """
         Permission required for user to add failure information to a job
         """
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
         return self._can_admin(user) and self.status in states
 
     def can_cancel(self, user):
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         return self.is_pipeline and \
             (user.is_superuser or
              user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))

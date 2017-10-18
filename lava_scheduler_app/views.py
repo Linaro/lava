@@ -978,7 +978,6 @@ def health_job_list(request, pk):
             'transition_table': trans_table,
             'health_job_table': health_table,
             'show_forcehealthcheck':
-                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
@@ -2480,7 +2479,6 @@ def device_detail(request, pk):
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
             'show_forcehealthcheck':
-                not settings.ARCHIVED and
                 device.can_admin(request.user) and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and

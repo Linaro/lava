@@ -198,9 +198,6 @@ LOGGING = {
     }
 }
 
-# Do not make the test instance read only
-ARCHIVED = False
-
 # Do not use caching as it interfere with test
 CACHES = {
     'default': {

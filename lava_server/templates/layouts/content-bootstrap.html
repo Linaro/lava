@@ -45,9 +45,7 @@
             <ul class="dropdown-menu">
               <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
               <li role="separator" class="divider"></li>
-{% if not 'ARCHIVED'|get_settings %}
               <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
-{% endif %}
               <li><a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.pipeline' %}">Pipeline Jobs</a></li>
