@@ -36,18 +36,18 @@ Chart Group:&nbsp;&nbsp;<a href="{% url 'lava.results.chart_list' %}#{{ chart.ch
 <script src="{{ STATIC_URL }}lava_results_app/js/chart.min.js"></script>
 <script src="{{ STATIC_URL }}lava-server/js/bootbox.min.js"></script>
 <script src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.navigate.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.min.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.canvas.min.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.axislabels.min.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.navigate.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.time.js"></script>
+<script src="{{ STATIC_URL }}lava_results_app/js/jquery.flot.labels.min.js"></script>
 
 <script>
   chart_data = $.parseJSON($('<div/>').html('{{chart_data|make_jquery_safe|escapejs}}').text());
   csrf_token = '{{csrf_token}}';
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  image_url = '{{ STATIC_URL }}lava_results_app/images/';
   custom_chart_url = '{% url 'lava.results.chart_custom' %}';
 </script>
 

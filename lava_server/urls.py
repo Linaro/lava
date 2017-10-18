@@ -92,8 +92,6 @@ urlpatterns = [
         name='lava.api_help',
         kwargs={'mapper': mapper}),
 
-    url(r'^{mount_point}dashboard/'.format(mount_point=settings.MOUNT_POINT),
-        include('dashboard_app.urls')),
     url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
         include('linaro_django_xmlrpc.urls')),
     url(r'^{mount_point}results/'.format(mount_point=settings.MOUNT_POINT),

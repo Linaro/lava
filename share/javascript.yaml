@@ -10,7 +10,7 @@ debian:
     version: '1.10'
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
-    lava_directory: dashboard_app/static/dashboard_app/js/
+    lava_directory: lava_results_app/static/lava_results_app/js/
     replacements:
       jquery.flot.navigate.min.js: jquery.flot.navigate.min.js
       jquery.flot.navigate.js: jquery.flot.navigate.js
@@ -47,20 +47,17 @@ debian:
       jquery.jeditable.js: jquery.jeditable.min.js
       anchor-v3.2.0.js: anchor-v3.2.0.min.js
   - uglify:
-    lava_directory: dashboard_app/static/dashboard_app/js/
-    destination: dashboard_app/static/dashboard_app/js/
-    files:
-      jquery.flot.labels.js: jquery.flot.labels.min.js
-      jquery.flot.dashes.js: jquery.flot.dashes.min.js
-      jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
-  - uglify:
     lava_directory: lava_results_app/static/lava_results_app/js/
     destination: lava_results_app/static/lava_results_app/js/
     files:
+      bug-links.js: bug-links.min.js
+      jquery.flot.labels.js: jquery.flot.labels.min.js
+      jquery.flot.dashes.js: jquery.flot.dashes.min.js
+      jquery.formset.js: jquery.formset.min.js
+      jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
       query.js: query.min.js
       chart.js: chart.min.js
       bootbox.data.toggle.js: bootbox.data.toggle.min.js
-      bug-links.js: bug-links.min.js
   - uglify:
     lava_directory: lava_server/lava-server/js/
     destination: lava_server/lava-server/js/

@@ -38,7 +38,6 @@ from lava_server.settings.getsettings import Settings
 
 from lava_scheduler_app.schema import SubmissionException
 
-
 DEFAULT_IRC_SERVER = "irc.freenode.net"
 DEFAULT_IRC_PORT = 6667
 
