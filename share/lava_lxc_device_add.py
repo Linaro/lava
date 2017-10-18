@@ -37,8 +37,8 @@ import yaml
 from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.utils.udev import get_udev_devices
 
-# Wait 5s maximum to close the socket
-LINGER = 5
+# Wait 10s maximum to close the socket
+LINGER = 10000
 
 # pylint: disable=line-too-long,missing-docstring
 
@@ -95,6 +95,7 @@ def main():
     # Setup the logger
     logger = setup_logger(options)
     if not logger:
+        print("Unable to setup the logger")
         return 1
 
     start = time.gmtime()
