@@ -786,7 +786,7 @@ class SchedulerAPI(ExposedAPI):
         status, health_check, description, admin_notifications, start_time,
         target_group, visibility, requested_device_id, pipeline_compatibility,
         submit_time, is_public, _old_status, actual_device_id, definition,
-        sub_id, requested_device_type_id, _results_bundle_id, end_time,
+        sub_id, requested_device_type_id, end_time,
         group_id, absolute_url, submitter_username
         """
         self._authenticate()

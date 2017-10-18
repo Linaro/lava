@@ -329,14 +329,6 @@ class DatabaseJobSource(object):
                 with open(bundle_file) as f:
                     results_link = f.read().strip()
                 job._results_link = results_link
-                sha1 = results_link.strip('/').split('/')[-1]
-                try:
-                    bundle = Bundle.objects.get(content_sha1=sha1)
-                except Bundle.DoesNotExist:
-                    pass
-                else:
-                    job._results_bundle = bundle
-                    device.device_version = _get_device_version(job.results_bundle)
         else:
             self.logger.warning("[%d] lacked a usable output_dir", job.id)
 
@@ -423,15 +415,3 @@ class DatabaseJobSource(object):
                         self.logger.info('job %s cancelled on %s', job.id, job.actual_device)
                     job.cancel()
                     self._commit_transaction(src='_handle_cancelling_jobs')
-
-
-def _get_device_version(bundle):
-    """ Deprecated """
-    if bundle is None:
-        return None
-    try:
-        lava_test_run = bundle.test_runs.filter(test__test_id='lava')[0]
-        version_attribute = lava_test_run.attributes.filter(name='target.device_version')[0]
-        return version_attribute.value
-    except IndexError:
-        return 'unknown'

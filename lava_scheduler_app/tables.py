@@ -215,7 +215,6 @@ class JobTable(LavaTable):
             'multinode_definition',
             'admin_notifications',
             '_results_link',
-            '_results_bundle',
             'requested_device_type',
             'start_time',
             'requested_device',

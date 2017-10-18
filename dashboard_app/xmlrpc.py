@@ -644,11 +644,6 @@ class DashboardAPI(ExposedAPI):
                     # Bug 713 left no file content for specific bundles.
                     content_size = 0
                 job_id = 'NA'
-                try:
-                    job = TestJob.objects.get(_results_bundle=bundle)
-                    job_id = job.id
-                except TestJob.DoesNotExist:
-                    job_id = 'NA'
                 bundles.append({
                     'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
                     'uploaded_on': bundle.uploaded_on,
