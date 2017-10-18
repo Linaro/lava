@@ -23,14 +23,13 @@
         <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
                 width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
         {% else %}
-        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img  height={{ lava.branding_height }}
+        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
                 width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
         {% endif %}
       </div>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
           <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
-{% if 'PIPELINE'|get_settings %}
           <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>
             <ul class="dropdown-menu">
@@ -39,7 +38,6 @@
               <li><a href="{% url 'lava.results.chart_list' %}">Charts</a></li>
             </ul>
           </li>
-{% endif %}
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
             <ul class="dropdown-menu">
@@ -48,12 +46,10 @@
               <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
               <li><a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></li>
-              <li><a href="{% url 'lava.scheduler.pipeline' %}">Pipeline Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.healthcheck' %}">Healthcheck Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></li>
               <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></li>
-              <li><a href="{% url 'lava.scheduler.pipeline_devices' %}">Pipeline Devices</a></li>
               <li><a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></li>
               <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
@@ -71,12 +67,7 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
               <ul class="dropdown-menu">
                   <li><a href="{{ STATIC_URL }}docs/">LAVA Overview</a></li>
-              {% if not 'HIDE_V2_DOCS'|get_settings %}
-                  <li><a href="{{ STATIC_URL }}docs/v2">Help (Pipeline V2)</a></li>
-              {% endif %}
-              {% if not 'HIDE_V1_DOCS'|get_settings %}
-                  <li><a href="{{ STATIC_URL }}docs/v1">Help (Deprecated V1)</a></li>
-              {% endif %}
+                  <li><a href="{{ STATIC_URL }}docs/v2">Help</a></li>
               {% assign_setting 'CUSTOM_DOCS' as userdocs %}
                   {% if userdocs %}
                       {% for label, url in userdocs.items %}
@@ -132,11 +123,7 @@
   {% block breadcrumb_container %}
     {% if context_help %}
        <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a target="_blank"
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
            href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
-           {% else %}
-           href="/static/docs/v1/{{ context_help|join:'-'|slugify }}.html"
-           {% endif %}
            ><b>Help</b></a></span>
     {% endif %}
   <ul class="breadcrumb">

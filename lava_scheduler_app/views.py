@@ -294,7 +294,8 @@ class DeviceTableView(JobTableView):
                                              "user", "group") \
                              .prefetch_related("tags") \
                              .filter(temporarydevice=None,
-                                     device_type__in=visible) \
+                                     device_type__in=visible,
+                                     is_pipeline=True) \
                              .order_by("hostname")
 
 
@@ -507,33 +508,11 @@ def active_device_list(request):
         request=request))
 
 
-@BreadCrumb("Pipeline Devices", parent=index)
-def pipeline_device_list(request):
-
-    data = PipelineDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data())
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
-        ptable)
-    template = loader.get_template("lava_scheduler_app/pipelinedevices.html")
-    return HttpResponse(template.render(
-        {
-            'pipeline_devices_table': ptable,
-            "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
-            "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                pipeline_device_list),
-        },
-        request=request))
-
-
 class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible)\
-            .exclude(status=Device.RETIRED).order_by("status")
+        q = super(OnlineDeviceView, self).get_queryset()
+        return q.exclude(status=Device.RETIRED)
 
 
 @BreadCrumb("Online Devices", parent=index)
@@ -664,16 +643,6 @@ class ActiveDeviceView(DeviceTableView):
     def get_queryset(self):
         q = super(ActiveDeviceView, self).get_queryset()
         return q.exclude(status=Device.RETIRED)
-
-
-class PipelineDeviceView(DeviceTableView):
-
-    def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible,
-                                     is_pipeline=True)\
-                             .exclude(status=Device.RETIRED)\
-                             .order_by("hostname")
 
 
 class DeviceHealthView(DeviceTableView):
@@ -1040,7 +1009,7 @@ class FavoriteJobsView(JobTableView):
 class AllJobsView(JobTableView):
 
     def get_queryset(self):
-        return all_jobs_with_custom_sort()
+        return all_jobs_with_custom_sort().filter(is_pipeline=True)
 
 
 @BreadCrumb("All Jobs", parent=index)
@@ -2781,33 +2750,6 @@ def healthcheck(request):
             "discrete_data": health_check_ptable.prepare_discrete_data(health_check_data),
             'health_check_table': health_check_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(healthcheck),
-        },
-        request=request))
-
-
-class PipelineJobsView(JobTableView):
-
-    def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(is_pipeline=True)
-
-
-@BreadCrumb("Pipeline", parent=index)
-def pipeline(request):
-    pipeline_data = PipelineJobsView(request, model=TestJob,
-                                     table_class=JobTable)
-    pipeline_ptable = JobTable(pipeline_data.get_table_data(),)
-    config = RequestConfig(request,
-                           paginate={"per_page": pipeline_ptable.length})
-    config.configure(pipeline_ptable)
-    template = loader.get_template("lava_scheduler_app/pipelinejobs.html")
-    return HttpResponse(template.render(
-        {
-            "times_data": pipeline_ptable.prepare_times_data(pipeline_data),
-            "terms_data": pipeline_ptable.prepare_terms_data(pipeline_data),
-            "search_data": pipeline_ptable.prepare_search_data(pipeline_data),
-            "discrete_data": pipeline_ptable.prepare_discrete_data(pipeline_data),
-            'pipeline_table': pipeline_ptable,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(pipeline),
         },
         request=request))
 

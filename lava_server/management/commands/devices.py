@@ -58,9 +58,6 @@ class Command(BaseCommand):
                                 help="Device type")
         add_parser.add_argument("--description", default=None,
                                 help="Device description")
-        add_parser.add_argument("--non-pipeline", action="store_false",
-                                dest="pipeline", default=True,
-                                help="Create a v1 device (v2 by default)")
         add_parser.add_argument("--offline", action="store_false",
                                 dest="online", default=True,
                                 help="Create the device offline (online by default)")
@@ -116,8 +113,8 @@ class Command(BaseCommand):
         if options["sub_command"] == "add":
             self.handle_add(options["hostname"], options["device_type"],
                             options["worker"], options["description"],
-                            options["pipeline"], options["public"],
-                            options["online"], options["tags"])
+                            options["public"], options["online"],
+                            options["tags"])
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
@@ -127,7 +124,7 @@ class Command(BaseCommand):
             self.handle_set(options)
 
     def handle_add(self, hostname, device_type, worker_name,
-                   description, pipeline, public, online, tags):
+                   description, public, online, tags):
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
@@ -141,7 +138,7 @@ class Command(BaseCommand):
         status = Device.IDLE if online else Device.OFFLINE
         device = Device.objects.create(hostname=hostname, device_type=dt,
                                        description=description,
-                                       worker_host=worker, is_pipeline=pipeline,
+                                       worker_host=worker, is_pipeline=True,
                                        status=status, is_public=public)
 
         if tags is not None:
@@ -162,7 +159,6 @@ class Command(BaseCommand):
         self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
         self.stdout.write("public     : %s" % device.is_public)
-        self.stdout.write("pipeline   : %s" % device.is_pipeline)
 
         config = device.load_configuration(output_format="raw")
         self.stdout.write("device-dict: %s" % bool(config))

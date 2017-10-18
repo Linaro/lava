@@ -26,14 +26,12 @@ of each type are available for tests and currently running jobs.</p>
 {% endif %}
 <h3>LAVA components</h3>
 <ul>
-{% if 'PIPELINE'|get_settings %}
     <li>
         <span class="glyphicon glyphicon-signal"></span>
         <b><a href="{% url 'lava_results' %}">Results</a></b> - viewing
         results of pipeline tests run by you or others. (YAML pipeline
     submissions only.)
     </li>
-{% endif %}
     <li>
         <span class="glyphicon glyphicon-calendar"></span>
         <b><a href="{% url 'lava.scheduler' %}">Scheduler</a></b> - jobs

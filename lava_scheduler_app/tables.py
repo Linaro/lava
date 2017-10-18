@@ -402,7 +402,6 @@ class RecentJobsTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html")
     actions.orderable = False
     device = tables.Column(accessor='device_sort')
-    log_level = tables.Column(accessor="definition", verbose_name="Log level")
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
     submit_time = tables.DateColumn("Nd, g:ia")
@@ -411,17 +410,6 @@ class RecentJobsTable(JobTable):
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
         self.length = 10
-
-    def render_log_level(self, record):  # pylint: disable=no-self-use
-        try:
-            data = json.loads(record.definition)
-        except ValueError:
-            return "debug"
-        try:
-            data['logging_level']
-        except KeyError:
-            return ""
-        return data['logging_level'].lower()
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
@@ -432,7 +420,7 @@ class RecentJobsTable(JobTable):
         sequence = (
             'id', 'actions', 'status', 'priority',
             'description', 'submitter', 'submit_time', 'end_time',
-            'duration', 'log_level'
+            'duration'
         )
         exclude = ('device',)
 
@@ -556,20 +544,6 @@ class DeviceTable(LavaTable):
     health_status = tables.Column(verbose_name='Health')
     tags = TagsColumn()
 
-    json = tables.Column(accessor='is_pipeline', verbose_name='JSON jobs')
-
-    def render_json(self, record):  # pylint: disable=no-self-use
-        if record.is_exclusive:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
-        return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
-
-    pipeline = tables.Column(accessor='is_pipeline', verbose_name='Pipeline jobs')
-
-    def render_pipeline(self, record):  # pylint: disable=no-self-use
-        if record.is_pipeline:
-            return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
-        return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
-
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Device
         exclude = [
@@ -579,7 +553,7 @@ class DeviceTable(LavaTable):
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'status',
-            'owner', 'health_status', 'json', 'pipeline'
+            'owner', 'health_status'
         ]
         searches = {
             'hostname': 'contains',

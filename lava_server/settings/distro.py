@@ -230,10 +230,6 @@ LOGGING = {
     }
 }
 
-# pipeline results display
-# set to false in /etc/lava-server/settings.conf to hide the Results menu
-PIPELINE = distro_settings.get_setting("PIPELINE", True)
-
 # Scheduler options
 SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
 
