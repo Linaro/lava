@@ -185,11 +185,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'dashboard_app': {
-            'handlers': ['logfile'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'lava_scheduler_app': {
             'handlers': ['logfile'],
             'level': 'INFO',

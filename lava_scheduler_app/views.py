@@ -72,7 +72,6 @@ from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     testjob_submission
 )
-from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaView
 from lava_results_app.utils import description_data, description_filename
@@ -1046,7 +1045,6 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
-        use_wizard = request.POST.get("wizard", None)
 
         if request.is_ajax():
             try:
@@ -1055,21 +1053,6 @@ def job_submit(request):
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
                                     content_type="application/json")
-
-        elif use_wizard:
-            try:
-                if request.POST.get("create_stream"):
-                    BundleStream.create_from_pathname(
-                        request.POST.get("submit_stream"), request.user)
-            except Exception as e:
-                response_data["error"] = str(e)
-
-            job_definition = _prepare_template(request)
-            response_data["definition_input"] = str(job_definition).replace(
-                "'", '"')
-            template = loader.get_template("lava_scheduler_app/job_submit.html")
-            return HttpResponse(template.render(
-                response_data, request=request))
 
         else:
             try:
