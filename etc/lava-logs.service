@@ -1,0 +1,10 @@
+[Unit]
+Description=Pipeline lava-server manage lava-logs
+After=remote-fs.target
+
+[Service]
+ExecStart=/usr/bin/lava-server manage lava-logs
+Type=simple
+
+[Install]
+WantedBy=network.target

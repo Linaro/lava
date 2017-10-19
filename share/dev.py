@@ -27,7 +27,7 @@ import sys
 
 modules = ["lava_results_app", "lava_scheduler_app",
            "lava_scheduler_daemon", "lava_server", "linaro_django_xmlrpc"]
-services = ["lava-coordinator", "lava-master", "lava-publisher",
+services = ["lava-coordinator", "lava-logs", "lava-master", "lava-publisher",
             "lava-server", "lava-server-gunicorn", "lava-slave"]
 
 

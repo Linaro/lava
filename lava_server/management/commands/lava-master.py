@@ -34,7 +34,6 @@ from django.db import connection, transaction
 from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
 
-from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 from lava_scheduler_app.dbutils import (
     create_job, start_job,
     fail_job, cancel_job,
@@ -75,21 +74,6 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
         self.last_msg = time.time()
 
 
-class JobHandler(object):  # pylint: disable=too-few-public-methods
-    def __init__(self, job):
-        self.output_dir = job.output_dir
-        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
-        self.last_usage = time.time()
-
-    def write(self, message):
-        self.output.write(message)
-        self.output.write('\n')
-        self.output.flush()
-
-    def close(self):
-        self.output.close()
-
-
 def load_optional_yaml_file(filename):
     """
     Returns the string after checking for YAML errors which would cause issues later.
@@ -122,10 +106,8 @@ class Command(LAVADaemonCommand):
 
     def __init__(self, *args, **options):
         super(Command, self).__init__(*args, **options)
-        self.pull_socket = None
         self.controler = None
         # List of logs
-        self.jobs = {}
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         self.dispatchers = {}
@@ -151,9 +133,6 @@ class Command(LAVADaemonCommand):
         net.add_argument('--master-socket',
                          default='tcp://*:5556',
                          help="Socket for master-slave communication. Default: tcp://*:5556")
-        net.add_argument('--log-socket',
-                         default='tcp://*:5555',
-                         help="Socket waiting for logs. Default: tcp://*:5555")
         net.add_argument('--ipv6', default=False, action='store_true',
                          help="Enable IPv6 on the listening sockets")
         net.add_argument('--encrypt', default=False, action='store_true',
@@ -186,88 +165,6 @@ class Command(LAVADaemonCommand):
 
         # Mark the dispatcher as alive
         self.dispatchers[hostname].alive()
-
-    def logging_socket(self):
-        msg = self.pull_socket.recv_multipart()
-        try:
-            (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
-        except ValueError:
-            # do not let a bad message stop the master.
-            self.logger.error("Failed to parse log message, skipping: %s", msg)
-            return
-
-        try:
-            scanned = yaml.load(message, Loader=yaml.CLoader)
-        except yaml.YAMLError:
-            self.logger.error("[%s] data are not valid YAML, dropping", job_id)
-            return
-
-        # Look for "results" level
-        try:
-            message_lvl = scanned["lvl"]
-            message_msg = scanned["msg"]
-        except TypeError:
-            self.logger.error("[%s] not a dictionary, dropping", job_id)
-            return
-        except KeyError:
-            self.logger.error(
-                "[%s] Invalid log line, missing \"lvl\" or \"msg\" keys: %s",
-                job_id, message)
-            return
-
-        # Find the handler (if available)
-        if job_id not in self.jobs:
-            # Query the database for the job
-            try:
-                job = TestJob.objects.get(id=job_id)
-            except TestJob.DoesNotExist:
-                self.logger.error("[%s] Unknown job id", job_id)
-                return
-
-            self.logger.info("[%s] Receiving logs from a new job", job_id)
-            # Create the sub directories (if needed)
-            mkdir(job.output_dir)
-            self.jobs[job_id] = JobHandler(job)
-
-        if message_lvl == "results":
-            try:
-                job = TestJob.objects.get(pk=job_id)
-            except TestJob.DoesNotExist:
-                self.logger.error("[%s] Unknown job id", job_id)
-                return
-            meta_filename = create_metadata_store(message_msg, job)
-            ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
-            if not ret:
-                self.logger.warning(
-                    "[%s] Unable to map scanned results: %s",
-                    job_id, message)
-            else:
-                # Look for lava.job result
-                if message_msg["definition"] == "lava" and message_msg["case"] == "job":
-                    if message_msg["result"] == "pass":
-                        status = TestJob.COMPLETE
-                        status_msg = "Complete"
-                    else:
-                        status = TestJob.INCOMPLETE
-                        status_msg = "Incomplete"
-
-                    self.logger.info("[%s] job status: %s", job_id, status_msg)
-                    # Update status.
-                    with transaction.atomic():
-                        job = TestJob.objects.select_for_update().get(id=job_id)
-                        if job.status == TestJob.CANCELING:
-                            cancel_job(job)
-                        fail_job(job, fail_msg="", job_status=status)
-
-        # Mark the file handler as used
-        self.jobs[job_id].last_usage = time.time()
-
-        # n.b. logging here would produce a log entry for every message in every job.
-        # The format is a list of dictionaries
-        message = "- %s" % message
-
-        # Write data
-        self.jobs[job_id].write(message)
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
@@ -573,12 +470,10 @@ class Command(LAVADaemonCommand):
         auth = None
         # Create the sockets
         context = zmq.Context()
-        self.pull_socket = context.socket(zmq.PULL)
         self.controler = context.socket(zmq.ROUTER)
 
         if options['ipv6']:
             self.logger.info("Enabling IPv6")
-            self.pull_socket.setsockopt(zmq.IPV6, 1)
             self.controler.setsockopt(zmq.IPV6, 1)
 
         if options['encrypt']:
@@ -597,11 +492,7 @@ class Command(LAVADaemonCommand):
             self.controler.curve_publickey = master_public
             self.controler.curve_secretkey = master_secret
             self.controler.curve_server = True
-            self.pull_socket.curve_publickey = master_public
-            self.pull_socket.curve_secretkey = master_secret
-            self.pull_socket.curve_server = True
 
-        self.pull_socket.bind(options['log_socket'])
         self.controler.bind(options['master_socket'])
 
         # Last access to the database for new jobs and cancelations
@@ -610,7 +501,6 @@ class Command(LAVADaemonCommand):
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         poller = zmq.Poller()
-        poller.register(self.pull_socket, zmq.POLLIN)
         poller.register(self.controler, zmq.POLLIN)
 
         # Translate signals into zmq messages
@@ -632,18 +522,6 @@ class Command(LAVADaemonCommand):
                 if sockets.get(pipe_r) == zmq.POLLIN:
                     self.logger.info("[POLL] Received a signal, leaving")
                     break
-
-                # Logging socket
-                if sockets.get(self.pull_socket) == zmq.POLLIN:
-                    self.logging_socket()
-
-                # Garbage collect file handlers
-                now = time.time()
-                for job_id in self.jobs.keys():  # pylint: disable=consider-iterating-dictionary
-                    if now - self.jobs[job_id].last_usage > FD_TIMEOUT:
-                        self.logger.info("[%s] Closing log file", job_id)
-                        self.jobs[job_id].close()
-                        del self.jobs[job_id]
 
                 # Command socket
                 if sockets.get(self.controler) == zmq.POLLIN:
@@ -679,28 +557,6 @@ class Command(LAVADaemonCommand):
         # Drop controler socket: the protocol does handle lost messages
         self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
         self.controler.close(linger=0)
-
-        # Carefully close the logging socket as we don't want to lose messages
-        self.logger.info("[CLOSE] Disconnect logging socket and process messages")
-        endpoint = self.pull_socket.getsockopt(zmq.LAST_ENDPOINT)
-        self.logger.debug("unbinding from '%s'", endpoint)
-        self.pull_socket.unbind(endpoint)
-
-        poller = zmq.Poller()
-        poller.register(self.pull_socket, zmq.POLLIN)
-        while True:
-            try:
-                sockets = dict(poller.poll(5000))
-            except zmq.error.ZMQError:
-                continue
-
-            if sockets.get(self.pull_socket) == zmq.POLLIN:
-                self.logging_socket()
-            else:
-                break
-
-        self.logger.info("[CLOSE] Closing the logging socket: the queue is empty")
-        self.pull_socket.close()
         if options['encrypt']:
             auth.stop()
         context.term()

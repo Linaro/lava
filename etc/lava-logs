@@ -1,0 +1,17 @@
+# Configuration for lava-logs daemon
+
+# Socket addresses of the logger (IPv4 only)
+# SOCKET="--socket tcp://*:5555"
+
+# Uses ipv6 (default to ipv4 only)
+# IPV6="--ipv6"
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# LOGLEVEL="DEBUG"
+
+# Encryption
+# If set, will activate encryption using the master private and the slaves
+# public keys
+# ENCRYPT="--encrypt"
+# MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
+# SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d/"
