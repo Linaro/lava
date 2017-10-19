@@ -120,8 +120,8 @@ class TestUefiShell(StdoutTestCase):
 
         self.assertIsNotNone([action for action in boot.internal_pipeline.actions if action.name == 'uefi-shell-interrupt'])
 
-        self.assertEquals(0, len([action for action in boot.internal_pipeline.actions if action.name == 'uefi-shell-menu-interrupt']))
-        self.assertEquals(0, len([action for action in boot.internal_pipeline.actions if action.name == 'uefi-shell-menu-selector']))
+        self.assertEqual(0, len([action for action in boot.internal_pipeline.actions if action.name == 'uefi-shell-menu-interrupt']))
+        self.assertEqual(0, len([action for action in boot.internal_pipeline.actions if action.name == 'uefi-shell-menu-selector']))
 
         self.assertEqual('uefi', commands.method)
         self.assertFalse(commands.use_bootscript)
