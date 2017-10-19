@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import yaml
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -267,7 +268,7 @@ class LxcCreateUdevRuleAction(DeployAction):
         device_info = self.job.device.get('device_info', [])
         device_info_file = os.path.join(self.mkdtemp(), 'device-info.yaml')
         with open(device_info_file, 'w') as device_info_obj:
-            device_info_obj.write(str(device_info))
+            yaml.dump(device_info, device_info_obj)
         self.logger.debug("device info file '%s' created with:\n %s",
                           device_info_file, device_info)
         logging_url = master_cert = slave_cert = ipv6 = None
