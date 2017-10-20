@@ -14,4 +14,3 @@ the UI.
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
    lava-dashboard-image-reports.rst
-   lava-scheduler-migration
