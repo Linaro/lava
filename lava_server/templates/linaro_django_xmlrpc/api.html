@@ -71,10 +71,6 @@ print server.system.listMethods()
 </p>
 <h2 id="top">Available functions</h2>
 <div>
-      <h2>Dashboard</h2>
-      {% for method in methods.dashboard %}
-        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
-      {% endfor %}
       <h2>Scheduler</h2>
       {% for method in methods.scheduler %}
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
@@ -88,15 +84,6 @@ print server.system.listMethods()
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
       {% endfor %}
 </div>
-
-{% for method in methods.dashboard %}
-    <hr/>
-<div id="{{ method.name }}">
-  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
-  <div><pre>{{ method.help }}</pre></div>
-  <a href="#top">Available functions</a>
-</div>
-{% endfor %}
 
 {% for method in methods.scheduler %}
     <hr/>
