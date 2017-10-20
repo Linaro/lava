@@ -966,13 +966,8 @@ def health_job_list(request, pk):
 class MyJobsView(JobTableView):
 
     def get_queryset(self):
-        jobs = TestJob.objects.select_related("actual_device", "requested_device",
-                                              "requested_device_type", "group")\
-            .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                          'requested_device_id, requested_device_type_id)',
-                           'duration_sort': 'end_time - start_time'}).all()\
-            .filter(submitter=self.request.user)
-        return jobs.order_by('-submit_time')
+        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        return query.filter(submitter=self.request.user)
 
 
 class LongestJobsView(JobTableView):
@@ -990,19 +985,10 @@ class LongestJobsView(JobTableView):
 class FavoriteJobsView(JobTableView):
 
     def get_queryset(self):
+        user = self.user if user else self.request.user
 
-        user = self.user
-        if not user:
-            user = self.request.user
-
-        jobs = TestJob.objects.select_related("actual_device", "requested_device",
-                                              "requested_device_type", "group")\
-            .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                          'requested_device_id, requested_device_type_id)',
-                           'duration_sort': 'end_time - start_time'}).all()\
-            .filter(testjobuser__user=user,
-                    testjobuser__is_favorite=True)
-        return jobs.order_by('-submit_time')
+        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
 
 
 class AllJobsView(JobTableView):
@@ -2249,20 +2235,7 @@ class RecentJobsView(JobTableView):
         self.device = device
 
     def get_queryset(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "requested_device",
-            "requested_device_type",
-            "submitter",
-            "user",
-            "group",
-        ).extra(
-            select={'duration_sort': 'end_time - start_time'}
-        ).filter(
-            actual_device=self.device
-        ).order_by(
-            '-submit_time'
-        )
+        return all_jobs_with_custom_sort().filter(actual_device=self.device)
 
 
 class TransitionView(JobTableView):
