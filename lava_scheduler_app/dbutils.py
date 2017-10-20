@@ -10,7 +10,6 @@ import yaml
 import jinja2
 import datetime
 import logging
-import simplejson
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
@@ -20,7 +19,6 @@ from lava_scheduler_app.models import (
     Device,
     DevicesUnavailableException,
     DeviceType,
-    is_deprecated_json,
     JSONDataError,
     TestJob,
     TemporaryDevice,
@@ -84,14 +82,6 @@ def initiate_health_check_job(device):
         device.put_into_maintenance_mode(
             user, "health check job not found in initiate_health_check_job")
         raise JSONDataError("no health check job found for %r", device.hostname)
-    if is_deprecated_json(job_data):
-        # only JSON supports 'target' and that needs to be set by the health-check not the admin.
-        job_json = simplejson.loads(job_data)
-        if 'target' in job_json:
-            logger.error("[%s] JSON Health check definition must not specify a 'target'.", device.device_type.name)
-            device.put_into_maintenance_mode(
-                user, "target must not be defined in health check definitions.")
-            return None
     try:
         job = testjob_submission(job_data, user, check_device=device)
     except (DevicesUnavailableException, SubmissionException) as exc:
@@ -158,65 +148,31 @@ def submit_health_check_jobs():
             logger.debug('submit health check for %s', device.hostname)
             try:
                 initiate_health_check_job(device)
-            except (yaml.YAMLError, JSONDataError):
+            except yaml.YAMLError:
                 # already logged, don't allow the daemon to fail.
                 pass
 
 
 def testjob_submission(job_definition, user, check_device=None, original_job=None):
     """
-    Single submission frontend for JSON or YAML
+    Single submission frontend for YAML
     :param job_definition: string of the job submission
     :param user: user attempting the submission
-    :param check_device: set specified device as the target
-    **and** thereby set job as a health check job. (JSON only)
     :return: a job or a list of jobs
     :raises: SubmissionException, Device.DoesNotExist,
         DeviceType.DoesNotExist, DevicesUnavailableException,
-        JSONDataError, JSONDecodeError, ValueError
+        ValueError
     """
 
-    if is_deprecated_json(job_definition):
-        allow_health = False
-        job_json = simplejson.loads(job_definition)
-        target_device = None
-        if 'target' in job_json:
-            target_device = Device.objects.get(hostname=job_json['target'])
-        if check_device:
-            job_json['target'] = check_device.hostname
-            job_json['health-check'] = True
-            job_definition = simplejson.dumps(job_json)
-            allow_health = True
-        try:
-            # returns a single job or a list (not a QuerySet) of job objects.
-            job = TestJob.from_json_and_user(job_definition, user, health_check=allow_health)
-            if isinstance(job, list):
-                # multinode health checks not supported
-                return job
-            job.health_check = allow_health
-            if check_device:
-                job.requested_device = check_device
-            elif target_device:
-                job.requested_device = target_device
-            job.save(update_fields=['health_check', 'requested_device'])
-        except (JSONDataError, ValueError) as exc:
-            if check_device:
-                check_device.put_into_maintenance_mode(
-                    user, "Job submission failed for health job for %s: %s" % (check_device, exc))
-                raise JSONDataError("Health check job submission failed for %s: %s" % (check_device, exc))
-            else:
-                raise JSONDataError("Job submission failed: %s" % exc)
-
-    else:
-        validate_job(job_definition)
-        # returns a single job or a list (not a QuerySet) of job objects.
-        job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
-        if check_device and isinstance(check_device, Device) and not isinstance(job, list):
-            # the slave must neither know nor care if this is a health check,
-            # only the master cares and that has the database connection.
-            job.health_check = True
-            job.requested_device = check_device
-            job.save(update_fields=['health_check', 'requested_device'])
+    validate_job(job_definition)
+    # returns a single job or a list (not a QuerySet) of job objects.
+    job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
+    if check_device and isinstance(check_device, Device) and not isinstance(job, list):
+        # the slave must neither know nor care if this is a health check,
+        # only the master cares and that has the database connection.
+        job.health_check = True
+        job.requested_device = check_device
+        job.save(update_fields=['health_check', 'requested_device'])
     return job
 
 
