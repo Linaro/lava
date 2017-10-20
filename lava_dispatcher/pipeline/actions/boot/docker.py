@@ -91,10 +91,21 @@ class CallDockerAction(Action):
         self.description = "call docker run on the image"
         self.summary = "call docker run"
         self.cleanup_required = False
+        self.extra_options = ''
 
     def validate(self):
         super(CallDockerAction, self).validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+
+        options = self.job.device['actions']['boot']['methods']['docker']['options']
+
+        if options['cpus']:
+            self.extra_options += ' --cpus %s' % options['cpus']
+        if options['memory']:
+            self.extra_options += ' --memory %s' % options['memory']
+        if options['volumes']:
+            for volume in options['volumes']:
+                self.extra_options += ' --volume %s' % volume
 
     def run(self, connection, max_end_time, args=None):
         location = self.get_namespace_data(action='test', label='shared', key='location')
@@ -106,6 +117,7 @@ class CallDockerAction(Action):
         cmd = "docker run --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         cmd += " --volume %s:%s" % (os.path.join(location, overlay.strip("/")), overlay)
+        cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 
         self.logger.debug("Boot command: %s", cmd)
