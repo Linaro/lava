@@ -3,7 +3,6 @@ import os
 import shutil
 import urlparse
 import signal
-from dashboard_app.models import Bundle
 
 from django.db import connection
 from django.db import transaction

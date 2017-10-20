@@ -442,12 +442,6 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
                 }
             ], **kw)
 
-    def test_from_json_and_user_rejects_missing_bundlestream(self):
-        user = self.factory.make_user()
-        j = self.make_job_json_for_stream_name('no such stream')
-        self.assertRaises(ValueError, TestJob.from_json_and_user, j, user)
-        self.factory.cleanup()
-
     def test_from_json_and_user_repeat_parameter_expansion(self):
         device_type = self.factory.make_device_type('base')
         device = self.factory.make_device(device_type=device_type, hostname="generic")

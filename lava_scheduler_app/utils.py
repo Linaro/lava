@@ -21,6 +21,7 @@ import copy
 import datetime
 import errno
 import jinja2
+import ldap
 import logging
 import netifaces
 import os
@@ -35,6 +36,9 @@ from collections import OrderedDict
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
+
+from lava_server.settings.getsettings import Settings
+
 from lava_scheduler_app.schema import SubmissionException
 
 
@@ -68,6 +72,18 @@ def get_fqdn():
             raise ValueError("Your FQDN contains invalid characters")
     except ValueError as exc:
         raise exc
+
+
+def get_domain():
+    domain = '???'
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+
+    return domain
 
 
 def rewrite_hostname(result_url):
@@ -698,3 +714,55 @@ def device_dictionary_vlan():
         'mac_addr',
         'sysfs',
     ]
+
+
+def get_ldap_user_properties(ldap_user):
+    """Searches LDAP based on the parameters in settings.conf and returns LDAP
+    user properties as a dictionary, eg:
+
+    {uid: 'senthil.kumaran',
+     mail: 'senthil.kumaran@linaro.org',
+     sn: 'Kumaran',
+     given_name: 'Senthil'
+    }
+
+    If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT
+    """
+    settings = Settings("lava-server")
+    server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
+    bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
+    bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
+    user_dn_template = settings.get_setting("AUTH_LDAP_USER_DN_TEMPLATE", None)
+    user_search = settings.get_setting("AUTH_LDAP_USER_SEARCH", None)
+
+    search_scope = ldap.SCOPE_SUBTREE
+    attributes = ['uid', 'givenName', 'sn', 'mail']
+    search_filter = "cn=*"
+
+    if user_dn_template:
+        user_dn = user_dn_template % {'user': ldap_user}
+    if user_search:
+        from django_auth_ldap.config import LDAPSearch
+        search = eval(user_search)
+        user_dn = search.base_dn
+        search_filter = search.filterstr % {'user': ldap_user}
+
+    user_properties = {}
+    if server_uri is not None:
+        conn = ldap.initialize(server_uri)
+        if user_dn:
+            conn.simple_bind_s(bind_dn, bind_password)
+            try:
+                result = conn.search_s(user_dn, search_scope,
+                                       search_filter, attributes)
+                if len(result) == 1:
+                    result_type, result_data = result[0]
+                    user_properties['uid'] = result_data.get('uid', [None])[0]
+                    user_properties['mail'] = result_data.get('mail',
+                                                              [None])[0]
+                    user_properties['sn'] = result_data.get('sn', [None])[0]
+                    user_properties['given_name'] = result_data.get('givenName',
+                                                                    [None])[0]
+                    return user_properties
+            except ldap.NO_SUCH_OBJECT:
+                raise

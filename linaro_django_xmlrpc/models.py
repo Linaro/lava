@@ -31,6 +31,23 @@ from django.db import models
 from django.utils import timezone
 
 
+class errors:
+    """
+    A namespace for error codes that may be returned by various XML-RPC
+    methods. Where applicable existing status codes from HTTP protocol
+    are reused
+    """
+    AUTH_FAILED = 100
+    AUTH_BLOCKED = 101
+    BAD_REQUEST = 400
+    AUTH_REQUIRED = 401
+    FORBIDDEN = 403
+    NOT_FOUND = 404
+    CONFLICT = 409
+    INTERNAL_SERVER_ERROR = 500
+    NOT_IMPLEMENTED = 501
+
+
 def _make_secret():
     """
     A default value for a django field cannot be lambda, it won't serialize.

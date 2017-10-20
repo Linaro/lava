@@ -51,10 +51,6 @@ from lava_scheduler_app.schema import (
     handle_include_option,
     SubmissionException
 )
-from dashboard_app.models import (
-    BundleStream,
-    get_domain
-)
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
@@ -1984,20 +1980,6 @@ class TestJob(RestrictedResource):
         for action in job_data['actions']:
             if not action['command'].startswith('submit_results'):
                 continue
-            stream = action['parameters']['stream']
-            try:
-                bundle_stream = BundleStream.objects.get(pathname=stream)
-            except BundleStream.DoesNotExist:
-                raise ValueError("stream %s not found" % stream)
-            if not bundle_stream.can_upload(submitter):
-                raise ValueError(
-                    "you cannot submit to the stream %s" % stream)
-            # NOTE: this *overwrites* the HTTP:Request.user with the BundleStream.user
-            # use the cached submitter value for user checks.
-            if not bundle_stream.is_anonymous:
-                user, group, is_public = (bundle_stream.user,
-                                          bundle_stream.group,
-                                          bundle_stream.is_public)
             server = action['parameters']['server']
             parsed_server = urlparse.urlsplit(server)
             action["parameters"]["server"] = utils.rewrite_hostname(server)
@@ -2822,14 +2804,14 @@ class TestJob(RestrictedResource):
     def create_irc_notification(self):
         kwargs = {}
         kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
         return self.create_notification_body(
             Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
 
     def get_notification_args(self):
         kwargs = {}
         kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
             kwargs["query"]["results"] = self.notification.get_query_results()

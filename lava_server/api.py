@@ -24,12 +24,10 @@ import xmlrpclib
 
 from django.http import Http404
 
-from dashboard_app.models import Bundle
-from dashboard_app.xmlrpc import errors
 from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
-from linaro_django_xmlrpc.models import Mapper, SystemAPI
+from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
 
 
 class LavaSystemAPI(SystemAPI):
@@ -156,72 +154,13 @@ class LavaSystemAPI(SystemAPI):
         ----
         user_can_view_bundles (`bundle_list`)
 
-        Administrators only:
-        user_can_view_bundles (`bundle_list`, `username`)
-
-        Deprecated
-        ----------
-        This function will cease to operate when V1 is disabled.
-
-        Description
-        -----------
-        Check the access permissions on a list of bundles.
-        Admins can specify a username as the second argument to run
-        the query on behalf of that user.
-
-        Arguments
-        ---------
-        bundle_list: list
-            list of bundle sha1sums to query
-        username: string
-            username of the user to query (admins only)
-
-        Return value
-        ------------
-        Returns a dictionary where the key is a sha1sum from the bundle_list
-        which exists in the queried instance. The value is a boolean
-        for whether the user can access that bundle.
-        {
-          '1b08b2613066d2c4d3ef00584d15e75188eeb9e4': True,
-          'eb59cb31c43dfc322c5c5c1d44ce3e74254b4557': False
-        }
-        If the bundle does not exist, that bundle will be omitted from the
-        returned dictionary.
-        This function requires authentication with a username and token.
-
-        Example
-        -------
-        server.system.user_can_view_bundles(
-            ['eb59cb31c43dfc322c5c5c1d44ce3e74254b4557',
-            '1b08b2613066d2c4d3ef00584d15e75188eeb9e4'])
-
-        {'eb59cb31c43dfc322c5c5c1d44ce3e74254b4557': True, '1b08b2613066d2c4d3ef00584d15e75188eeb9e4': True}
-
-        # if using the username and token of an admin, a different user can be queried:
-        server.system.user_can_view_bundles(
-            ['eb59cb31c43dfc322c5c5c1d44ce3e74254b4557',
-            '1b08b2613066d2c4d3ef00584d15e75188eeb9e4']
-            'firstname.lastname')
-
-        {'eb59cb31c43dfc322c5c5c1d44ce3e74254b4557': True, '1b08b2613066d2c4d3ef00584d15e75188eeb9e4': False}
+        Removal of V1 support
+        --------------------
+        This function has been disabled. It is retained as a stub for older
+        versions of clients. Please update your tool to use LAVA V2.
 
         """
-        self._authenticate()
-        if not isinstance(bundle_list, list):
-            raise xmlrpclib.Fault(
-                errors.BAD_REQUEST,
-                "bundle list argument must be a list")
-        username = self._switch_user(username)
-        retval = {}
-        for content_sha1 in bundle_list:
-            try:
-                bundle = Bundle.objects.get(content_sha1=content_sha1)  # pylint: disable=no-member
-                if not bundle.bundle_stream.is_accessible_by(username):
-                    retval[content_sha1] = False
-            except Bundle.DoesNotExist:  # pylint: disable=no-member
-                continue
-            retval[content_sha1] = True
-        return retval
+        return False
 
     def user_can_view_devices(self, device_list, username=None):
         """

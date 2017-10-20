@@ -94,7 +94,6 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_server', 'templates'),
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-            os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
             os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
         ],
