@@ -52,7 +52,6 @@ from lava_scheduler_app.schema import (
     SubmissionException
 )
 
-from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.schema import validate_device
@@ -105,22 +104,7 @@ class Tag(models.Model):
         return self.name.lower()
 
 
-def is_deprecated_json(data):
-    """ Deprecated """
-    deprecated_json = True
-    try:
-        ob = simplejson.loads(data)
-        # calls deprecated lava_dispatcher code
-        validate_job_data(ob)
-    except (AttributeError, simplejson.JSONDecodeError, ValueError):
-        deprecated_json = False
-    return deprecated_json
-
-
 def validate_job(data):
-    if is_deprecated_json(data):
-        raise SubmissionException("v1 jobs cannot be submitted to this instance")
-
     try:
         # only try YAML if this is not JSON
         # YAML can parse JSON as YAML, JSON cannot parse YAML at all
@@ -189,15 +173,6 @@ def validate_yaml(yaml_data):
                     )
                 except Exception as e:
                     raise SubmissionException(e)
-
-
-def validate_job_json(data):
-    """ Deprecated """
-    try:
-        ob = simplejson.loads(data)
-        validate_job_data(ob)
-    except ValueError as e:
-        raise ValidationError(e)
 
 
 class Architecture(models.Model):

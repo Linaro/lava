@@ -16,8 +16,6 @@ from twisted.internet.threads import deferToThread  # pylint: disable=unused-imp
 
 from zope.interface import implements
 
-import lava_dispatcher.config as dispatcher_config
-
 from lava_scheduler_app.models import (
     Device,
     TestJob,
@@ -47,7 +45,7 @@ except ImportError:
 
 def get_configured_devices():
     """ Deprecated """
-    return dispatcher_config.list_devices()
+    return []
 
 
 def get_temporary_devices(devices):
