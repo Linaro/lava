@@ -2763,7 +2763,7 @@ class Notification(models.Model):
             query = Query.objects.get(name=self.query_name,
                                       owner=self.query_owner)
             # We use query_owner as user here since we show only status.
-            return query.get_results(self.query_owner, self.QUERY_LIMIT)
+            return query.get_results(self.query_owner)[:self.QUERY_LIMIT]
         else:
             return Query.get_queryset(
                 self.entity,
