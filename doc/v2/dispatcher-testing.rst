@@ -88,14 +88,14 @@ lava-dispatcher
 
 ::
 
- $ python -m unittest discover lava_dispatcher/pipeline/
+ $ python -m unittest discover lava_dispatcher/
 
 To run a single test, use the test class name as output by a failing test,
 without the call to ``discover``::
 
- $ python -m unittest lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python -m unittest lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
- $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python -m unittest -v -c -f lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
 The call references the path to the python module, the class and then the test
 function within that class. To run all tests in a class, omit the function. To
@@ -104,7 +104,7 @@ run all tests in a file, omit the class and the function.
 Sets of tests can also be executed from the :file:`./ci-run` script
 of ``lava-dispatcher`` as well::
 
- $ ./ci-run --test-suite lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ ./ci-run --test-suite lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
 Also, install the updated ``lava-dispatcher`` package and use it to inspect the
 output of the pipeline using the ``--validate`` switch to ``lava-dispatch``::
@@ -398,7 +398,7 @@ Provisos with the current codebase
 
 The code can be executed::
 
- $ sudo lava-dispatch --target kvm01 lava_dispatcher/pipeline/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
+ $ sudo lava-dispatch --target kvm01 lava_dispatcher/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
 
 * During development, there may be images left mounted at the end of the run.
   Always check the output of ``mount``.
@@ -845,7 +845,7 @@ statements in the device configuration or job submission show up inside the
 classes is to use a unit test. To run a single unit-test, for example
 test_function in a class called TestExtra in a file called test_extra.py, use::
 
- $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_extra.TestExtra.test_function
+ $ python -m unittest -v -c -f lava_dispatcher.test.test_extra.TestExtra.test_function
 
 Example python code:
 
@@ -886,7 +886,7 @@ Use syntax checkers during the refactoring
 ::
 
  $ sudo apt install pylint
- $ pylint -d line-too-long -d missing-docstring lava_dispatcher/pipeline/
+ $ pylint -d line-too-long -d missing-docstring lava_dispatcher/
 
 Use class analysis tools
 ========================
@@ -894,7 +894,7 @@ Use class analysis tools
 ::
 
  $ sudo apt install graphviz
- $ pyreverse lava_dispatcher/pipeline/
+ $ pyreverse lava_dispatcher/
  $ dot -Tpng classes_No_Name.dot > classes.png
 
 (Actual images can be very large.)

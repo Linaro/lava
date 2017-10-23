@@ -12,10 +12,10 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
 from lava_scheduler_app.dbutils import find_device_for_job, assign_jobs
-from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.protocols.vland import VlandProtocol
+from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 # pylint does not like TestCaseWithFactory
 # pylint: disable=too-many-ancestors,no-self-use,too-many-statements

@@ -84,6 +84,7 @@ class SchedulerAPI(ExposedAPI):
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
             raise xmlrpclib.Fault(400, "Problem with submitted job data: %s" % exc)
+        # FIXME: json error is not needed anymore
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
             raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except (Device.DoesNotExist, DeviceType.DoesNotExist):

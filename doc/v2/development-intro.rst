@@ -356,7 +356,7 @@ will be tidied up.
 
 * **lava-dispatcher** includes the ``lava_dispatcher`` and ``lava_test_shell``
   components. All LAVA V2 dispatcher code lives in
-  ``lava_dispatcher/pipeline``. Some ``lava_test_shell`` scripts remain in the
+  ``lava_dispatcher``. Some ``lava_test_shell`` scripts remain in the
   top level ``lava_test_shell`` directory with overrides in
   ``pipeline/lava_test_shell``.
 

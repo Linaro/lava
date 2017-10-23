@@ -27,7 +27,7 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.dbutils import map_metadata
-from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.device import PipelineDevice
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -153,6 +153,7 @@ def submit_health_check_jobs():
                 pass
 
 
+# TODO: check the list of exception that can be raised
 def testjob_submission(job_definition, user, check_device=None, original_job=None):
     """
     Single submission frontend for YAML

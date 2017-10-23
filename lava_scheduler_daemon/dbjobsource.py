@@ -43,11 +43,6 @@ except ImportError:
         pass
 
 
-def get_configured_devices():
-    """ Deprecated """
-    return []
-
-
 def get_temporary_devices(devices):
     """ Deprecated
     :param devices: list of device HOSTNAMES
@@ -87,7 +82,7 @@ class DatabaseJobSource(object):
     def __init__(self, my_devices=None):
         self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
         if my_devices is None:
-            self.my_devices = get_configured_devices
+            self.my_devices = lambda: []
         else:
             self.my_devices = my_devices
 

@@ -36,7 +36,7 @@ from lava_results_app.models import (
 )
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
-from lava_dispatcher.pipeline.action import Timeout
+from lava_dispatcher.action import Timeout
 
 if django.VERSION > (1, 10):
     from django.urls.exceptions import NoReverseMatch

@@ -165,7 +165,7 @@ configuration. These are the raw forms which are used on the ``lava-dispatch``
 command line and are useful for debugging and starting to create support for
 your own devices.
 
-https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
+https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher
 
 The lava-server unit test support
 =================================

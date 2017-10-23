@@ -106,11 +106,8 @@ class Tag(models.Model):
 
 def validate_job(data):
     try:
-        # only try YAML if this is not JSON
-        # YAML can parse JSON as YAML, JSON cannot parse YAML at all
         yaml_data = yaml.load(data)
     except yaml.YAMLError as exc:
-        # neither yaml nor json loaders were able to process the submission.
         raise SubmissionException("Loading job submission failed: %s." % exc)
 
     # validate against the submission schema.
