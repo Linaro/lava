@@ -207,8 +207,8 @@ Debian testing.
 
 .. _naming_conventions:
 
-Naming conventions and LAVA V2 architecture
-*******************************************
+Naming conventions and LAVA architecture
+****************************************
 
 Certain terms used in LAVA V2 have specific meanings, please be consistent in
 the use of the following terms:

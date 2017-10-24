@@ -5,8 +5,8 @@
 Administrator debugging
 #######################
 
-Debugging a LAVA V2 instance
-****************************
+Debugging a LAVA instance
+*************************
 
 .. _debugging_components:
 

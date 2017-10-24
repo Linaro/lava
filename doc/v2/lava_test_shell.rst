@@ -116,8 +116,6 @@ tests. When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
 * :ref:`lava-test-case`
-* :ref:`lava-test-case-attach`
-* :ref:`lava-test-run-attach`
 * :ref:`lava-background-process-start`
 * :ref:`lava-background-process-stop`
 
@@ -233,26 +231,6 @@ executed correctly but that the result of that execution was a failure::
 #. **echo2** - pass
 #. **test2b** - fail
 
-.. _lava-test-case-attach:
-
-lava-test-case-attach
----------------------
-
-.. caution:: ``lava-test-case-attach`` is **disabled** in the V2 dispatcher as
-   there is no submit stage and no bundle creation stage on the device.
-
-.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
-
-.. _lava-test-run-attach:
-
-lava-test-run-attach
---------------------
-
-.. caution:: ``lava-test-run-attach`` is **disabled** in the V2 dispatcher as
-   there is no submit stage and no bundle creation stage on the device.
-
-.. seealso:: :ref:`test_attach` and :ref:`publishing_artifacts`
-
 .. _lava-background-process-start:
 
 lava-background-process-start
@@ -308,20 +286,9 @@ The arguments are:
 Handling test attachments
 =========================
 
-The V1 dispatcher support for test attachments depends on the deprecated bundle
-and `bundle stream` support. The scripts available in lava-test shell do not
-actually attach the requested files, just copy the files to a hard-coded
-directory where the bundle processing code expects to find data to put into the
-bundle. This relies on the device being booted into an environment with a
-working network connection - what was called the master image.
-
-In the V2 pipeline dispatcher, master images and bundles have been removed.
-This puts the handling of attachments into the control of the test writer. An
-equivalent method would be to simply add another deploy and boot action to get
-the test device into an environment where the network connection is known to
-work, however the eventual location of the file needs to be managed by the test
-writer. An alternative method for text based data is simply to output the
-contents into the log file.
+Handling of attachments is in the control of the test writer. A separate
+publishing location can be configured or text based data is simply to output
+the contents into the log file.
 
 .. seealso:: :ref:`publishing_artifacts`
 

@@ -323,9 +323,7 @@ Helper tools in LAVA
 
 LAVA provides some helper routines for common data transfer tasks and more can
 be added where appropriate. The main MultiNode API calls are intended to work
-on all POSIX systems, but some of the helper tools like :ref:`lava_network` may
-be restricted to particular operating systems or compatible shells due to a
-reliance on operating system tools like ``ifconfig``.
+on all POSIX systems.
 
 Other MultiNode calls
 =====================

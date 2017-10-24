@@ -69,8 +69,8 @@ overview to help you know where to look for particular help.
 
 .. _contents_first_steps_using:
 
-First steps using LAVA V2
-=========================
+First steps using LAVA
+======================
 
 .. toctree::
    :maxdepth: 1
@@ -86,8 +86,8 @@ First steps using LAVA V2
 
 .. _contents_first_steps_installing:
 
-First steps installing LAVA V2
-==============================
+First steps installing LAVA
+===========================
 
 .. toctree::
    :maxdepth: 1

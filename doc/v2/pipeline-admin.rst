@@ -214,8 +214,8 @@ Current support includes:
 
 .. _pipeline_device_requirements:
 
-Requirements for a pipeline device
-**********************************
+Requirements for a LAVA device
+******************************
 
 The new design makes less assumptions about the software support on the device
 - principally only a *working* bootloader is required. The detail of *working*

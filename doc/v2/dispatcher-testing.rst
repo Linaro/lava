@@ -2,8 +2,8 @@
 
 .. _testing_pipeline_code:
 
-Testing the new design
-######################
+Testing the design
+##################
 
 To test the new design after making changes, use the :ref:`unit_tests`. During
 development, it is useful to only run selected tests, although remember that

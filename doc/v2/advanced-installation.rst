@@ -178,11 +178,8 @@ workers.
 Master with one or more remote workers
 ======================================
 
-Any single instance of LAVA V2 can be extended to work with one or
-more workers which only need the ``lava-dispatcher`` package
-installed.
-
-.. seealso:: :ref:`Installing a worker <installing_pipeline_worker>`
+Any single instance of LAVA can be extended to work with one or more workers
+which only need the ``lava-dispatcher`` package installed.
 
 Authentication and encryption
 -----------------------------
@@ -194,63 +191,11 @@ passing control messages to the worker and the socket used to pass
 logs back to the master should use authentication and :ref:`encryption
 <zmq_curve>`.
 
-Authentication needs to be configured on the master first, then
-workers can be :ref:`prepared <installing_pipeline_worker>` and
-configured to match.
+Authentication needs to be configured on the master first, then workers can be
+:prepared and configured to match.
 
 Other installation notes
 ************************
-
-.. _automated_installation:
-
-Automated installation
-======================
-
-Using debconf pre-seeding with Debian packages
-----------------------------------------------
-
-Debconf is the standard method on Debian systems for controlling and
-storing high-level configuration for packages. Debian packages may ask
-questions during installation to set up this configuration. Debconf
-may also be automated, using a text file which contains the answers to
-those debconf questions - just keep the file up to date if the
-questions change. For example, to preseed a worker install:
-
-.. code-block:: shell
-
- $ cat preseed.txt
- lava-server   lava-worker/db-port string 5432
- lava-server   lava-worker/db-user string lava-server
- lava-server   lava-server/master boolean false
- lava-server   lava-worker/master-instance-name string default
- lava-server   lava-worker/db-server string snagglepuss.codehelp
- lava-server   lava-worker/db-pass string werewolves
- lava-server   lava-worker/db-name string lava-server
-
-To insert the preseed information into the debconf database:
-
-.. code-block:: shell
-
- $ sudo debconf-set-selections < preseed.txt
-
-or to show the existing debconf information for a package:
-
-.. code-block:: shell
-
- $ sudo debconf-show lava-server
- * lava-worker/master-instance-name: default
- * lava-server/master: false
- * lava-worker/db-pass: werewolves
- * lava-worker/db-port: 5432
- * lava-worker/db-name: lava-server
- * lava-worker/db-server: snagglepuss.codehelp
- * lava-worker/db-user: lava-server
-
-The strings available for seeding are in the Debian packaging for the
-relevant package, in the ``debian/<PACKAGE>.templates`` file.
-
-* http://www.debian-administration.org/articles/394
-* http://www.fifi.org/doc/debconf-doc/tutorial.html
 
 .. _branding:
 

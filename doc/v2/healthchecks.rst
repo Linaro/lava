@@ -23,16 +23,12 @@ Health checks are defined in
 ``/etc/lava-server/dispatcher-config/health-checks`` according to the template
 used by the device. Health checks are run as the lava-health user.
 
-.. note:: To generate the filename of the health check of a V2 device, the
+.. note:: To generate the filename of the health check of a device, the
    scheduler takes the name of the template extended in the device dictionary
    (for instance ``qemu.jinja2`` for qemu devices) and replace the extension
    with ``.yaml``. The health check will be called
    ``/etc/lava-server/dispatcher-config/health-checks/qemu.yaml``.  The health
-   check job database field in the device-type is used for devices which are
-   able to run V1 test jobs. To migrate health checks out of the database, use
-   the ``lava-server manage migrate-health-checks`` command. For more
-   information, see
-   https://lists.linaro.org/pipermail/lava-announce/2017-March/000027.html
+   check job database field in the device-type is unused.
 
 .. note:: Admins can temporarily disable health checks for all devices of a
    given type in the device-type admin page.

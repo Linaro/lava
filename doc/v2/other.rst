@@ -13,4 +13,3 @@ the UI.
    lava-scheduler-device-dictionary.rst
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
-   lava-dashboard-image-reports.rst
