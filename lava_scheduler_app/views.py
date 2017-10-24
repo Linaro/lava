@@ -985,7 +985,7 @@ class LongestJobsView(JobTableView):
 class FavoriteJobsView(JobTableView):
 
     def get_queryset(self):
-        user = self.user if user else self.request.user
+        user = self.user if self.user else self.request.user
 
         query = all_jobs_with_custom_sort().filter(is_pipeline=True)
         return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
