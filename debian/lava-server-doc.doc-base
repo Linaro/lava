@@ -7,5 +7,5 @@ Abstract: This manual describes what lava-server is
 Section: Network/Monitoring
 
 Format: HTML
-Index: /usr/share/doc/lava-server-doc/html/index.html
-Files: /usr/share/doc/lava-server-doc/html/*.html
+Index: /usr/share/doc/lava-server-doc/html/v2/index.html
+Files: /usr/share/doc/lava-server-doc/html/v2/*.html
