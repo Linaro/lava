@@ -164,8 +164,6 @@ BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", "https://bugs
 BRANDING_SOURCE_URL = distro_settings.get_setting("BRANDING_SOURCE_URL", "https://git.linaro.org/lava")
 BRANDING_MESSAGE = distro_settings.get_setting("BRANDING_MESSAGE", '')
 
-HIDE_V1_DOCS = distro_settings.get_setting("HIDE_V1_DOCS", False)
-HIDE_V2_DOCS = distro_settings.get_setting("HIDE_V2_DOCS", False)
 CUSTOM_DOCS = distro_settings.get_setting("CUSTOM_DOCS", {})
 
 # Logging

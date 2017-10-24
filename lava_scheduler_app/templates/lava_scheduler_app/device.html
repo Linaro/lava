@@ -18,13 +18,8 @@
   <div class="alert alert-warning">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <strong>The device has no
-    {% if not 'HIDE_V2_DOCS'|get_settings %}
       <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a></strong>
     Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
-    {% else %}
-      <a href="{{ STATIC_URL }}docs/v1/glossary.html#term-health-check">health check job</a></strong>
-    Consider adding a <a href="{{ STATIC_URL }}docs/v1/healthchecks.html#health-checks">health check definition</a>.
-    {% endif %}
   </div>
 {% endif %}
 {% endblock %}
