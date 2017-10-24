@@ -9,7 +9,6 @@ import uuid
 import simplejson
 import urllib
 import urllib2
-import urlparse
 import smtplib
 import socket
 import sys

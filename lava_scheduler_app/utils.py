@@ -18,7 +18,6 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import datetime
 import errno
 import jinja2
 import ldap
@@ -28,14 +27,12 @@ import os
 import re
 import socket
 import subprocess
-import urlparse
 import yaml
 
 from collections import OrderedDict
 
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import timezone
 
 from lava_server.settings.getsettings import Settings
 
@@ -86,209 +83,6 @@ def get_domain():
     return domain
 
 
-def rewrite_hostname(result_url):
-    """If URL has hostname value as localhost/127.0.0.*, change it to the
-    actual server FQDN.
-
-    Returns the RESULT_URL (string) re-written with hostname.
-
-    See https://cards.linaro.org/browse/LAVA-611
-    """
-    domain = get_fqdn()
-    try:
-        site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
-        domain = site.domain
-
-    if domain == 'example.com' or domain == 'www.example.com':
-        domain = get_ip_address()
-
-    host = urlparse.urlparse(result_url).netloc
-    if host == "localhost":
-        result_url = result_url.replace("localhost", domain)
-    elif host.startswith("127.0.0"):
-        ip_pat = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        result_url = re.sub(ip_pat, domain, result_url)
-    return result_url
-
-
-def split_multi_job(json_jobdata, target_group):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-    node_json = {}
-    node_actions = {}
-    node_lmp = {}
-    shared_config = get_shared_device_config("/etc/lava-server/shared-device-config.yaml")
-
-    # Check if we are operating on multinode job data. Else return the job
-    # data as it is.
-    if "device_group" in json_jobdata and target_group:
-        pass
-    else:
-        return json_jobdata
-
-    # get all the roles and create node action list for each role.
-    for group in json_jobdata["device_group"]:
-        node_actions[group["role"]] = []
-        node_lmp[group["role"]] = []
-
-    # Take each action and assign it to proper roles. If roles are not
-    # specified for a specific action, then assign it to all the roles.
-    all_actions = json_jobdata["actions"]
-    for role in node_actions.keys():
-        for action in all_actions:
-            new_action = copy.deepcopy(action)
-            if 'parameters' in new_action \
-                    and 'role' in new_action["parameters"]:
-                if new_action["parameters"]["role"] == role:
-                    new_action["parameters"].pop('role', None)
-                    node_actions[role].append(new_action)
-            else:
-                node_actions[role].append(new_action)
-
-    if "lmp_module" in json_jobdata:
-        # For LMP init in multinode case
-        all_lmp_modules = json_jobdata["lmp_module"]
-        for role in node_lmp.keys():
-            for lmp in all_lmp_modules:
-                new_lmp = copy.deepcopy(lmp)
-                if 'parameters' in new_lmp \
-                        and 'role' in new_lmp["parameters"]:
-                    if new_lmp["parameters"]["role"] == role:
-                        new_lmp["parameters"].pop('role', None)
-                        node_lmp[role].append(new_lmp)
-                else:
-                    node_lmp[role].append(new_lmp)
-
-    group_count = 0
-    for clients in json_jobdata["device_group"]:
-        group_count += int(clients["count"])
-    if group_count <= 1:
-        raise ValueError("Only one device requested in a MultiNode job submission.")
-    for clients in json_jobdata["device_group"]:
-        role = str(clients["role"])
-        count = int(clients["count"])
-        node_json[role] = []
-        for c in range(0, count):
-            node_json[role].append({})
-            node_json[role][c]["timeout"] = json_jobdata["timeout"]
-            if json_jobdata.get("job_name", False):
-                node_json[role][c]["job_name"] = json_jobdata["job_name"]
-            if clients.get("tags", False):
-                node_json[role][c]["tags"] = clients["tags"]
-            if "is_slave" in clients:
-                node_json[role][c]["is_slave"] = clients["is_slave"]
-            node_json[role][c]["group_size"] = group_count
-            node_json[role][c]["target_group"] = target_group
-            node_json[role][c]["actions"] = node_actions[role]
-            if "lmp_module" in json_jobdata:
-                node_json[role][c]["lmp_module"] = node_lmp[role]
-
-            node_json[role][c]["role"] = role
-            # multinode node stage 2
-            if json_jobdata.get("logging_level", False):
-                node_json[role][c]["logging_level"] = \
-                    json_jobdata["logging_level"]
-            if json_jobdata.get("priority", False):
-                node_json[role][c]["priority"] = json_jobdata["priority"]
-            node_json[role][c]["device_type"] = clients["device_type"]
-            if shared_config:
-                node_json[role][c]["shared_config"] = shared_config
-
-    return node_json
-
-
-def split_vm_job(json_jobdata, vm_group):  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
-    node_json = {}
-    node_actions = {}
-    vms_list = []
-
-    # Check if we are operating on vm_group job data. Else return the job
-    # data as it is.
-    if "vm_group" in json_jobdata and vm_group:
-        pass
-    else:
-        raise Exception('Invalid vm_group data')
-
-    # Get the VM host details.
-    device_type = json_jobdata['vm_group']['host']['device_type']
-    role = json_jobdata['vm_group']['host']['role']
-    is_vmhost = True
-    auto_start_vms = None
-    if 'auto_start_vms' in json_jobdata['vm_group']:
-        auto_start_vms = json_jobdata['vm_group']['auto_start_vms']
-    vms_list.append((device_type, role, 1, is_vmhost))  # where 1 is the count
-
-    # Get all other constituting VMs.
-    for vm in json_jobdata['vm_group']['vms']:
-        device_type = vm['device_type']
-        count = int(vm.get('count', 1))
-        role = vm.get('role', None)
-        is_vmhost = False
-        vms_list.append((device_type, role, count, is_vmhost))
-
-    # get all the roles and create node action list for each role.
-    for vm in vms_list:
-        node_actions[vm[1]] = []
-
-    # Take each action and assign it to proper roles. If roles are not
-    # specified for a specific action, then assign it to all the roles.
-    all_actions = json_jobdata["actions"]
-    for role in node_actions.keys():
-        for action in all_actions:
-            new_action = copy.deepcopy(action)
-            if 'parameters' in new_action \
-                    and 'role' in new_action["parameters"]:
-                if new_action["parameters"]["role"] == role:
-                    new_action["parameters"].pop('role', None)
-                    node_actions[role].append(new_action)
-            else:
-                node_actions[role].append(new_action)
-
-    group_count = 0
-    for vm in vms_list:
-        group_count += int(vm[2])
-
-    group_counter = group_count
-    for vm in vms_list:
-        role = vm[1]
-        count = int(vm[2])
-        node_json[role] = []
-        is_vmhost = vm[3]
-        for c in range(0, count):
-            node_json[role].append({})
-            node_json[role][c]["timeout"] = json_jobdata["timeout"]
-            node_json[role][c]["is_vmhost"] = is_vmhost
-            if auto_start_vms is not None:
-                node_json[role][c]["auto_start_vms"] = auto_start_vms
-            if json_jobdata.get("job_name", False):
-                node_json[role][c]["job_name"] = json_jobdata["job_name"]
-            if "is_slave" in json_jobdata:
-                node_json[role][c]["is_slave"] = json_jobdata["is_slave"]
-            node_json[role][c]["group_size"] = group_count
-            node_json[role][c]["target_group"] = vm_group
-            node_json[role][c]["actions"] = node_actions[role]
-            node_json[role][c]["role"] = role
-            # vm_group node stage 2
-            if json_jobdata.get("logging_level", False):
-                node_json[role][c]["logging_level"] = \
-                    json_jobdata["logging_level"]
-            if json_jobdata.get("priority", False):
-                node_json[role][c]["priority"] = json_jobdata["priority"]
-            if is_vmhost:
-                node_json[role][c]["device_type"] = vm[0]
-            else:
-                node_json[role][c]["device_type"] = "dynamic-vm"
-                node_json[role][c]["config"] = {
-                    "device_type": "dynamic-vm",
-                    "dynamic_vm_backend_device_type": vm[0],
-                }
-                node_json[role][c]["target"] = 'vm%d' % group_counter
-        group_counter -= 1
-
-    return node_json
-
-
 def is_master():
     """Checks if the current machine is the master.
     """
@@ -298,15 +92,6 @@ def is_master():
                                           worker_config_path[1:])
 
     return not os.path.exists(worker_config_path)
-
-
-def get_uptime():
-    """Return the system uptime string.
-    """
-    with open('/proc/uptime', 'r') as f:
-        uptime_seconds = int(float(f.readline().split()[0]))
-        uptime = str(datetime.timedelta(seconds=uptime_seconds))
-        return uptime
 
 
 # pylint gets confused with netifaces
@@ -326,84 +111,6 @@ def get_ip_address():  # pylint: disable=no-member
                     ip = default_interface_values.get(
                         netifaces.AF_INET)[0].get('addr')
     return ip
-
-
-def get_heartbeat_timeout():
-    """Returns the HEARTBEAT_TIMEOUT value specified in worker.conf
-
-    If there is no value found, we return a default timeout value 300.
-    """
-    return 300
-
-
-# Private variable to record scheduler tick, which shouldn't be accessed from
-# other modules, except via the following APIs.
-__last_scheduler_tick = timezone.now()
-
-
-def record_scheduler_tick():
-    """Records the scheduler tick timestamp in the global variable
-    __last_scheduler_tick
-    """
-    global __last_scheduler_tick
-    __last_scheduler_tick = timezone.now()
-
-
-def last_scheduler_tick():
-    """Returns django.utils.timezone object of last scheduler tick timestamp.
-    """
-    return __last_scheduler_tick
-
-
-def process_repeat_parameter(json_jobdata):  # pylint: disable=too-many-branches
-    new_json = {}
-    new_actions = []
-    allowed_actions = ["delpoy_linaro_image", "deploy_image",
-                       "boot_linaro_image", "boot_linaro_android_image",
-                       "lava_test_shell", "lava_android_test_run",
-                       "lava_android_test_run_custom", "lava_android_test_run_monkeyrunner"]
-
-    # Take each action and expand it if repeat parameter is specified.
-    all_actions = json_jobdata["actions"]
-    for action in all_actions:
-        new_action = copy.deepcopy(action)
-        if 'parameters' in new_action \
-           and 'repeat' in new_action["parameters"]:
-            if new_action["command"] not in allowed_actions:
-                raise ValueError("Action '%s' can't be repeated" % new_action["command"])
-            repeat = new_action["parameters"]["repeat"]
-            new_action["parameters"].pop('repeat', None)
-            if repeat > 1:
-                for i in range(repeat):
-                    new_action["parameters"]["repeat_count"] = i
-                    new_actions.append(copy.deepcopy(new_action))
-            else:
-                new_actions.append(copy.deepcopy(new_action))
-        else:
-            new_actions.append(new_action)
-
-    new_json["timeout"] = json_jobdata["timeout"]
-    if json_jobdata.get("device_type", False):
-        new_json["device_type"] = json_jobdata["device_type"]
-    if json_jobdata.get("target", False):
-        new_json["target"] = json_jobdata["target"]
-    if json_jobdata.get("job_name", False):
-        new_json["job_name"] = json_jobdata["job_name"]
-    if json_jobdata.get("logging_level", False):
-        new_json["logging_level"] = json_jobdata["logging_level"]
-    if json_jobdata.get("priority", False):
-        new_json["priority"] = json_jobdata["priority"]
-    if json_jobdata.get("tags", False):
-        new_json["tags"] = json_jobdata["tags"]
-    if "health_check" in json_jobdata:
-        new_json["health_check"] = json_jobdata.get("health_check")
-    if "device_group" in json_jobdata:
-        new_json["device_group"] = json_jobdata.get("device_group")
-    if "vm_group" in json_jobdata:
-        new_json["vm_group"] = json_jobdata.get("vm_group")
-    new_json["actions"] = new_actions
-
-    return new_json
 
 
 def is_member(user, group):
@@ -603,18 +310,6 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             jobs[role][0]['protocols'].update({'lava-lxc': submission['protocols']['lava-lxc'][role]})
 
     return jobs
-
-
-def get_shared_device_config(filename):
-    if os.path.isfile(filename):
-        try:
-            with open(filename, 'r') as f:
-                config_dict = yaml.load(f.read())
-        except (yaml.YAMLError, IOError):
-            return None
-    else:
-        return None
-    return config_dict
 
 
 def mkdir(path):

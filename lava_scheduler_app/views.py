@@ -14,7 +14,6 @@ import re
 import sys
 
 from django import forms
-from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
@@ -82,7 +81,6 @@ from lava_results_app.models import (
     TestCase,
 )
 
-from lava_scheduler_app.template_helper import expand_template
 from lava_scheduler_app.job_templates import (
     DEFAULT_TEMPLATE,
     DEPLOY_IMAGE,
@@ -1082,142 +1080,6 @@ def job_submit(request):
     else:
         template = loader.get_template("lava_scheduler_app/job_submit.html")
         return HttpResponse(template.render(response_data, request=request))
-
-
-def _prepare_template(request):
-
-    boot_type = request.POST.get("boot_type")
-
-    if boot_type == "android_image":
-        action_template = copy.deepcopy(ACTIONS_LINARO_ANDROID_IMAGE)
-
-        action_config = {
-            "BOOT_IMAGE_PARAMETER": str(request.POST.get("android_boot")),
-            "DATA_IMAGE_PARAMETER": str(request.POST.get("android_data")),
-            "SYSTEM_IMAGE_PARAMETER": str(request.POST.get("android_system")),
-            "TESTS_PARAMETER": [str(request.POST.get("test_name"))],
-            "TEST_NAME_PARAMETER": str(request.POST.get("test_name")),
-        }
-
-        if request.POST.get("boot_options") != "":
-            android_boot_template = copy.deepcopy(ANDROID_BOOT_WITH_CMDS)
-            boot_cmds = request.POST.get("boot_options").replace("\r", "")
-            android_boot_config = {
-                "ANDROID_BOOT_OPTIONS_PARAMETER":
-                [str(x) for x in boot_cmds.split("\n")]
-            }
-        else:
-            android_boot_template = copy.deepcopy(ANDROID_BOOT_NO_CMDS)
-            android_boot_config = {}
-
-        expand_template(android_boot_template, android_boot_config)
-        action_config["ANDROID_BOOT"] = android_boot_template
-
-    else:
-        image_template = None
-        image_config = None
-        deploy_command = None
-        if boot_type == "linaro_image":
-            image_template = copy.deepcopy(DEPLOY_IMAGE)
-            deploy_command = "deploy_linaro_image"
-            image_config = {
-                "PREBUILT_IMAGE_PARAMETER": str(request.POST.get("image_url"))
-            }
-        elif boot_type == "linaro_hwpack":
-            image_template = copy.deepcopy(DEPLOY_IMAGE_HWPACK)
-            deploy_command = "deploy_linaro_image"
-            image_config = {
-                "HWPACK_PARAMETER": str(request.POST.get("hwpack_url")),
-                "ROOTFS_PARAMETER": str(request.POST.get("rootfs_url"))
-            }
-        elif boot_type == "linaro_kernel":
-            image_template = copy.deepcopy(DEPLOY_IMAGE_KERNEL)
-            deploy_command = "deploy_linaro_kernel"
-            image_config = {
-                "KERNEL_PARAMETER": str(request.POST.get("kernel")),
-                "RAMDISK_PARAMETER": str(request.POST.get("ramdisk")),
-                "DTB_PARAMETER": str(request.POST.get("dtb")),
-                "ROOTFS_PARAMETER": str(request.POST.get("kernel_rootfs"))
-            }
-
-        expand_template(image_template, image_config)
-
-        command_test_shell = None
-        if request.POST.get("repo") or request.POST.get("testdef_url"):
-
-            if request.POST.get("testdef_type") == "repo":
-                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_REPO)
-                test_shell_config = {
-                    "REPO_PARAMETER": str(request.POST.get("repo")),
-                    "TESTDEF_PARAMETER": str(request.POST.get("testdef"))
-                }
-            else:
-                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_URL)
-                test_shell_config = {
-                    "TESTDEF_URLS_PARAMETER": [str(request.POST.get("testdef_url"))]
-                }
-
-            expand_template(test_shell_template, test_shell_config)
-
-            command_test_shell = copy.deepcopy(COMMAND_TEST_SHELL)
-            command_test_shell_config = {
-                "TEST_SHELL_PARAMETER": test_shell_template
-            }
-            expand_template(command_test_shell, command_test_shell_config)
-
-        if request.POST.get("boot_options") != "":
-            action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
-            boot_cmds = request.POST.get("boot_options").replace("\r", "")
-            action_config = {
-                "DEPLOY_COMMAND_PARAMETER": deploy_command,
-                "DEPLOY_PARAMETER": image_template,
-                "BOOT_OPTIONS_PARAMETER": [str(x) for x in boot_cmds.split("\n")],
-                "COMMAND_TEST_SHELL": command_test_shell
-            }
-
-        else:
-            action_template = copy.deepcopy(ACTIONS_LINARO)
-            action_config = {
-                "DEPLOY_COMMAND_PARAMETER": deploy_command,
-                "DEPLOY_PARAMETER": image_template,
-                "COMMAND_TEST_SHELL": command_test_shell
-            }
-
-    command_submit = None
-    if request.POST.get("submit_stream"):
-        command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
-        command_submit_config = {
-            "SUBMIT_SERVER": "http://{0}{1}RPC2".format(
-                utils.get_fqdn(),
-                reverse('lava.home')),
-            "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
-        }
-        expand_template(command_submit, command_submit_config)
-
-    action_config["COMMAND_SUBMIT_RESULTS"] = command_submit
-
-    expand_template(action_template, action_config)
-
-    notify = None
-    if request.POST.get("notify"):
-        notify = ["%s" % str(x.strip()) for x in request.POST.get("notify").split(",")]
-    device_tags = None
-    if request.POST.get("device_tags"):
-        device_tags = ["%s" % str(x.strip()) for x in request.POST.get("device_tags").split(",")]
-
-    job_template = copy.deepcopy(DEFAULT_TEMPLATE)
-    default_config = {
-        "JOBNAME_PARAMETER": str(request.POST.get("job_name")),
-        "TIMEOUT_PARAMETER": int(request.POST.get("timeout")),
-        "DEVICE_TYPE_PARAMETER": str(request.POST.get("device_type")),
-        "NOTIFY_ON_INCOMPLETE_PARAMETER": notify,
-        "ACTIONS_PARAMETER": action_template,
-        "TAGS_PARAMETER": device_tags,
-    }
-
-    expand_template(job_template, default_config)
-
-    return job_template
 
 
 def remove_broken_string(line):
