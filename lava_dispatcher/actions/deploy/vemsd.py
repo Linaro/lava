@@ -25,7 +25,6 @@ import os
 import shutil
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     JobError,
     InfrastructureError,
     LAVABug,

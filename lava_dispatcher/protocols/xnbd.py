@@ -25,7 +25,6 @@ from lava_dispatcher.connection import Protocol
 from lava_dispatcher.action import (
     Timeout,
 )
-from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.shell import ShellCommand
 from lava_dispatcher.utils.constants import XNBD_SYSTEM_TIMEOUT
 

@@ -23,7 +23,6 @@
 
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     LAVABug,
     Pipeline,
 )

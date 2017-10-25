@@ -22,16 +22,15 @@
 import os
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     InfrastructureError,
     JobError,
+    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
     BootAction,
     AutoLoginAction,
-    BootloaderCommandsAction,
     OverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice
@@ -161,7 +160,6 @@ class WaitFastBootInterrupt(Action):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(WaitFastBootInterrupt, self).run(connection, max_end_time, args)
-        device_methods = self.job.device['actions']['boot']['methods']
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = self.prompt
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)

@@ -32,7 +32,6 @@ import yaml
 from lava_dispatcher.action import (
     LAVABug,
     LAVAError,
-    JobCanceled,
     JobError,
 )
 from lava_dispatcher.logical import PipelineContext

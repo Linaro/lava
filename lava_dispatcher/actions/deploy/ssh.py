@@ -21,7 +21,7 @@
 
 import os
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.action import Pipeline, Action, ConfigurationError
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment

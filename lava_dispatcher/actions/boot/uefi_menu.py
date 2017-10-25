@@ -21,7 +21,6 @@
 
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     InfrastructureError,
     Pipeline,
 )

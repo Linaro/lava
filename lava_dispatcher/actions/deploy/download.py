@@ -59,7 +59,6 @@ from lava_dispatcher.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
     SCP_DOWNLOAD_CHUNK_SIZE,
-    LAVA_LXC_HOME,
 )
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction

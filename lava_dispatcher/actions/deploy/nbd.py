@@ -24,7 +24,7 @@
 import os
 import tempfile
 
-from lava_dispatcher.action import Pipeline, ConfigurationError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction

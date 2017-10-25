@@ -25,7 +25,6 @@ import os
 import tempfile
 
 from lava_dispatcher.action import (
-    ConfigurationError,
     JobError,
     Pipeline
 )
