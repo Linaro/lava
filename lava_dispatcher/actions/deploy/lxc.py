@@ -19,10 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import yaml
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.action import (
-    Action,
-    ConfigurationError,
     JobError,
     LAVABug,
     Pipeline,
@@ -49,7 +48,7 @@ from lava_dispatcher.utils.filesystem import (
     lxc_path,
 )
 
-# pylint: disable=superfluous-parens
+# pylint: disable=superfluous-parens,too-many-locals
 
 
 class Lxc(Deployment):
@@ -272,6 +271,7 @@ class LxcCreateUdevRuleAction(DeployAction):
                           device_info_file, device_info)
         logging_url = master_cert = slave_cert = ipv6 = None
         job_id = self.job.job_id
+        # pylint: disable=no-member
         if self.logger.handler:
             logging_url = self.logger.handler.logging_url
             master_cert = self.logger.handler.master_cert
