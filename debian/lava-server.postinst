@@ -17,15 +17,13 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-# Source debconf library.
-. /usr/share/debconf/confmodule
-
 LAVA_SYS_MOUNTDIR="/var/lib/lava-server/default"
 
 master_config() {
-    db_get lava-server/instance-name
-    LAVA_INSTANCE=$RET
-
+    if [ "$LAVA_INSTANCE" = '$LAVA_INSTANCE' ]
+    then
+      LAVA_DB_NAME="default"
+    fi
     if [ "$LAVA_DB_NAME" = '$LAVA_DB_NAME' ]
     then
       LAVA_DB_NAME="lavaserver"
@@ -55,107 +53,20 @@ master_config() {
     write_config() {
         # reduce the content of this conf file once l-d-t is replaced.
         cat <<INSTANCE_CONF
-# Config version
-LAVA_CONFIG_VERSION="$LAVA_CONFIG_VERSION"
-# Installation prefix
-LAVA_PREFIX="$LAVA_PREFIX"
 # Instance name
 LAVA_INSTANCE="$LAVA_INSTANCE"
-# The lava-server branch used by upgrade
-LAVA_MANIFEST_BRANCH="$LAVA_MANIFEST_BRANCH"
-LAVA_BUILDOUT_CFG="$LAVA_BUILDOUT_CFG"
 # System configuration (Unix-level)
 LAVA_SYS_USER="$LAVA_SYS_USER"
-LAVA_INSTANCE_OWNS_USER="$LAVA_INSTANCE_OWNS_USER"
-# Apache configuration
-LAVA_APACHE_VHOST="$LAVA_APACHE_VHOST"
-LAVA_DEV_MODE="$LAVA_DEV_MODE"
 # PostgreSQL configuration
 LAVA_DB_NAME="$LAVA_DB_NAME"
 LAVA_DB_USER="$LAVA_DB_USER"
 LAVA_DB_SERVER="localhost"
 LAVA_DB_PORT="$LAVA_DB_PORT"
 LAVA_DB_PASSWORD="$LAVA_DB_PASSWORD"
-# Scheduler configuration
-LAVA_SCHEDULER_ENABLED="$LAVA_SCHEDULER_ENABLED"
-LAVA_SERVER_IP="$LAVA_SERVER_IP"
-LAVA_PROXY="$LAVA_PROXY"
 INSTANCE_CONF
     }
-
     write_config >/etc/lava-server/instance.conf
     rm -f /etc/lava-server/worker.conf
-    # lava-mount-masterfs support
-    touch $LAVA_SYS_MOUNTDIR/media/.mounted
-}
-
-worker_config() {
-    db_get lava-worker/master-instance-name
-    LAVA_INSTANCE=$RET
-    db_get lava-worker/db-server
-    LAVA_DB_SERVER=$RET
-    db_get lava-worker/db-name
-    LAVA_DB_NAME=$RET
-    db_get lava-worker/db-user
-    LAVA_DB_USER=$RET
-    db_get lava-worker/db-port
-    LAVA_DB_PORT=$RET
-    db_get lava-worker/db-pass
-    LAVA_DB_PASSWORD=$RET
-
-    LAVA_SYS_USER="lavaserver"
-    LAVA_SYS_HOME=/var/lib/lava-server/home/
-
-    # LAVA_SERVER_IP is where this worker will allow boards to
-    # download modified images, served by apache
-    # this is likely unnecessary as lava-dispatcher does the same thing
-    # but needs an upstream fix.
-    iface=$(ip route | awk '{ if ($1 == "default") { print($5); exit; } }')
-    LAVA_SERVER_IP=$(ip addr show "$iface" | awk '{ if ($1 == "inet") { gsub("/.*", "", $2); print($2) } }')
-
-    if [ "$LAVA_DB_PORT" = '' ]
-    then
-      LAVA_DB_PORT=5432
-    fi
-    write_config() {
-    cat <<INSTANCE_CONF
-# Config version
-LAVA_CONFIG_VERSION="$LAVA_CONFIG_VERSION"
-# Installation prefix
-LAVA_PREFIX="$LAVA_PREFIX"
-# Instance name
-LAVA_INSTANCE="$LAVA_INSTANCE"
-# The lava-server branch used by upgrade
-LAVA_MANIFEST_BRANCH="$LAVA_MANIFEST_BRANCH"
-LAVA_BUILDOUT_CFG="$LAVA_BUILDOUT_CFG"
-# System configuration (Unix-level)
-LAVA_SYS_USER="$LAVA_SYS_USER"
-LAVA_INSTANCE_OWNS_USER="$LAVA_INSTANCE_OWNS_USER"
-# Apache configuration
-LAVA_APACHE_VHOST="$LAVA_APACHE_VHOST"
-LAVA_DEV_MODE="$LAVA_DEV_MODE"
-# PostgreSQL configuration
-LAVA_DB_NAME="$LAVA_DB_NAME"
-LAVA_DB_USER="$LAVA_DB_USER"
-LAVA_DB_SERVER="$LAVA_DB_SERVER"
-LAVA_DB_PORT="$LAVA_DB_PORT"
-LAVA_DB_PASSWORD="$LAVA_DB_PASSWORD"
-# Scheduler configuration
-LAVA_SCHEDULER_ENABLED="$LAVA_SCHEDULER_ENABLED"
-LAVA_SERVER_IP="$LAVA_SERVER_IP"
-LAVA_PROXY="$LAVA_PROXY"
-INSTANCE_CONF
-    }
-
-    write_config >/etc/lava-server/instance.conf
-    if [ ! -f /etc/lava-server/worker.conf ]; then
-        echo "# Created by LAVA server postinst script" > /etc/lava-server/worker.conf
-    fi
-    HEARTBEAT=`grep HEARTBEAT_TIMEOUT /etc/lava-server/worker.conf || true`
-    if [ -z "$HEARTBEAT" ]; then
-        echo "# comment out this line if not needed." >> /etc/lava-server/worker.conf
-        echo "HEARTBEAT_TIMEOUT='300'" >> /etc/lava-server/worker.conf
-    fi
 }
 
 die() {
@@ -228,32 +139,18 @@ case "$1" in
         if [ -z "$LAVA_SYS_USER" ]; then
             LAVA_SYS_USER="lavaserver"
         fi
-        db_get lava-server/master
-        if [ "$RET" = "false" ]; then
-            worker_config
-            adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
-            chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_MOUNTDIR
-            RET=`mountpoint $LAVA_SYS_MOUNTDIR/media > /dev/null ; echo $?` || true
-            if [ ! $RET ]; then
-                chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_MOUNTDIR/media
-            fi
-        else
-            master_config
-            # directories within the SSHFS mount, only on master
-            mkdir -p $LAVA_SYS_MOUNTDIR/media/lava-logs/
-            mkdir -p $LAVA_SYS_MOUNTDIR/media/job-output/
-            mkdir -p $LAVA_SYS_MOUNTDIR/media/attachments/
-            mkdir -p $LAVA_SYS_MOUNTDIR/media/bundles/
-            adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
-            find $LAVA_SYS_MOUNTDIR -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \;
-            # fixup bug from date based subdirectories - allowed to be missing.
-            find $LAVA_SYS_MOUNTDIR/media/job-output/2017 -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
-            # support changes in xml-rpc API for 2017.6
-            find /etc/lava-server/dispatcher.d/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
-            find /etc/lava-server/dispatcher-config/ -maxdepth 1 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
-            find /etc/lava-server/dispatcher-config/devices/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
-            find /etc/lava-server/dispatcher-config/devices-types/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
-        fi
+        master_config
+        # directories within the SSHFS mount, only on master
+        mkdir -p $LAVA_SYS_MOUNTDIR/media/job-output/
+        adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
+        find $LAVA_SYS_MOUNTDIR -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \;
+        # fixup bug from date based subdirectories - allowed to be missing.
+        find $LAVA_SYS_MOUNTDIR/media/job-output/2017 -maxdepth 2 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
+        # support changes in xml-rpc API for 2017.6
+        find /etc/lava-server/dispatcher.d/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
+        find /etc/lava-server/dispatcher-config/ -maxdepth 1 -type d -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
+        find /etc/lava-server/dispatcher-config/devices/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
+        find /etc/lava-server/dispatcher-config/devices-types/ -maxdepth 1 -exec chown $LAVA_SYS_USER:$LAVA_SYS_USER {} \; 2>/dev/null || true
         # user may not have been removed but the directory has, after purge.
         if [ ! -d $LAVA_SYS_HOME ]; then
             mkdir $LAVA_SYS_HOME
@@ -270,24 +167,12 @@ case "$1" in
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
         # Allow lavaserver to write device dictionary files
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/dispatcher-config/devices/
-        # setup SSHFS - master has empty dir, worker has key
-        SSHDIR="$LAVA_SYS_HOME/.ssh"
-        if [ ! -d $SSHDIR ]; then
-            sudo -u $LAVA_SYS_USER mkdir $SSHDIR
-        fi
-        if [ -f /etc/lava-server/worker.conf ]; then
-            if [ ! -f $SSHDIR/id_rsa ]; then
-                # ssh-keygen -q might be a problem here, prevents it prompting for
-                # more randomness, but that is what openssh-server uses.
-                sudo -u $LAVA_SYS_USER ssh-keygen -C "ssh key used by LAVA for sshfs" -f $SSHDIR/id_rsa -t rsa -N ""
-            fi
-        else
-            # install database only on the master
-            install_database
-            # Allow lavaserver to write to all the log files
-            touch /var/log/lava-server/django.log
-            chown $LAVA_SYS_USER:adm /var/log/lava-server/django.log
-        fi
+        # install database only on the master
+        # FIXME: determine if postgresql is installed.
+        install_database
+        # Allow lavaserver to write to all the log files
+        touch /var/log/lava-server/django.log
+        chown $LAVA_SYS_USER:adm /var/log/lava-server/django.log
 
         # allow reinstalls when the user has not been removed.
         if [ ! -d $LAVA_SYS_HOME/ ]; then
@@ -298,6 +183,9 @@ case "$1" in
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
             apache2ctl restart
         fi
+        # clear V1 files
+        rm -f /etc/lava-server/worker.conf
+        rm -rf /usr/sbin/lava-mount-masterfs
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

@@ -14,7 +14,6 @@ License: GPL-3.0+
 
 Files: dashboard_app/tests/import_prohibitor.py
  dashboard_app/tests/call_helper.py setup.py
- lava_scheduler_app/template_helper.py
 Copyright: 2010-2013, Linaro Limited
 License: LGPL-3.0
 
@@ -43,14 +42,12 @@ Files: lava_server/lava-server/js/jquery.watermark.js
 Copyright: 2009-2011 Todd Northrop
 License: GPL-2 or MIT
 
-Files: lava_scheduler_app/management/commands/pipeline-worker.py
+Files:
  lava_server/lava-master
  share/javascript.py
  lava_server/daemonise.py
- lava_scheduler_app/management/commands/dispatcher-master.py
  share/render-template.py
  share/validate_devices.py
- lava_scheduler_app/management/commands/device-dictionary.py
  lava_server/lava-daemon
 Copyright: 2013, 2016 Linaro Limited
            2015 Neil Williams <codehelp@debian.org>
@@ -70,8 +67,7 @@ Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
            2007-2011 Jay Salvat
 License: GPL-3.0+ or MIT
 
-Files: doc/_static/default.css
-       dashboard_app/static/dashboard_app/js/jquery.formset.js
+Files: doc/v2/_static/default.css
 Copyright: 2009, Stanislaus Madueke
            2007-2011 by the Sphinx team
 License: BSD-3-clause
@@ -83,10 +79,6 @@ License: BSD-3-clause
 Files: debian/*
 Copyright: 2013-2016 Neil Williams <codehelp@debian.org>
 License: GPL-3.0+
-
-Files: debian/po/*
-Copyright: 2013-2016 Neil Williams <codehelp@debian.org>
-License: AGPL-3.0
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
