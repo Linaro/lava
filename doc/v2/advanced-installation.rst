@@ -202,10 +202,11 @@ Other installation notes
 LAVA server branding support
 ============================
 
-The icon, link, alt text, bug URL and source code URL of the LAVA link on each
-page can be changed in the settings ``/etc/lava-server/settings.conf`` (JSON
-syntax)::
+The instance name, icon, link, alt text, bug URL and source code URL of the
+LAVA link on each page can be changed in the settings
+``/etc/lava-server/settings.conf`` (JSON syntax)::
 
+   "INSTANCE_NAME": "default",
    "BRANDING_URL": "http://www.example.org",
    "BRANDING_ALT": "Example site",
    "BRANDING_ICON": "https://www.example.org/logo/logo.png",
@@ -219,6 +220,7 @@ detail than is available via the instance name. This will be added in a paragrap
 on the home page under "About the {{instance_name}} LAVA instance"::
 
    "BRANDING_MESSAGE": "Example site for local testing",
+   "INSTANCE_NAME": "dev-box",
 
 If the icon is available under the django static files location, this location
 can be specified instead of a URL::
@@ -377,6 +379,21 @@ endpoints, and will retry to deliver those messages as necessary. No
 messages will be lost until the queue overflows.
 
 .. seealso:: :ref:`publishing_events`
+
+.. _postgres_db_port:
+
+PostgreSQL Port configuration
+=============================
+
+In the majority of cases, there is no need to change the PostgreSQL port number
+from the default of ``5432``. If a change is required, edit
+``/etc/lava-server/instance.conf`` and then restart the LAVA master and UI
+daemons:
+
+.. code-block:: none
+
+ $ sudo service lava-server-gunicorn restart
+ $ sudo service lava-master restart
 
 LAVA server performances
 ************************

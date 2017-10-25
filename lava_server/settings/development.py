@@ -17,7 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
+from lava_server.settings.config_file import ConfigFile
 from lava_server.settings.common import *
 
 # Top-level directory of the project.
@@ -149,6 +149,14 @@ BRANDING_WIDTH = "BRANDING_WIDTH", 22
 BRANDING_BUG_URL = "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework"
 BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
 BRANDING_MESSAGE = ''
+
+instance_name = 'default'
+instance_path = "/etc/lava-server/instance.conf"
+if os.path.exists(instance_path):
+    instance_config = ConfigFile.load(instance_path)
+    instance_name = instance_config.LAVA_INSTANCE
+
+INSTANCE_NAME = instance_name
 
 # Logging
 
