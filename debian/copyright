@@ -6,14 +6,6 @@ Files: *
 Copyright: 2010-2016, Linaro Limited
 License: GPL-2.0+
 
-Files: linaro_dashboard_bundle/evolution.py
- linaro_dashboard_bundle/__init__.py
- linaro_dashboard_bundle/errors.py
- linaro_dashboard_bundle/io.py
- linaro_dashboard_bundle/tests.py
-Copyright: 2010-2013, Linaro Limited
-License: LGPL-3.0
-
 Files: debian/*
 Copyright: 2013 Neil Williams <codehelp@debian.org>
 License: GPL-2.0+
