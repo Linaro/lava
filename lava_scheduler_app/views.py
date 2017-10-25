@@ -1100,6 +1100,11 @@ def remove_broken_string(line):
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
+    # Refuse non-pipeline jobs
+    if not job.is_pipeline:
+        raise Http404()
+
+    # Is the job favorite?
     is_favorite = False
     if request.user.is_authenticated():
         try:
@@ -1109,7 +1114,20 @@ def job_detail(request, pk):
         except TestJobUser.DoesNotExist:
             is_favorite = False
 
-    template = "lava_scheduler_app/job.html"
+    description = description_data(job)
+    job_data = description.get('job', {})
+    action_list = job_data.get('actions', [])
+    pipeline = description.get('pipeline', {})
+
+    deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
+    boot_list = [item['boot'] for item in action_list if 'boot' in item]
+    test_list = [item['test'] for item in action_list if 'test' in item]
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    default_section = 'boot'  # to come from user profile later.
+
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1126,132 +1144,74 @@ def job_detail(request, pk):
         'available_content_types': simplejson.dumps(
             QueryCondition.get_similar_job_content_types()
         ),
+        'device_data': description.get('device', {}),
+        'job_data': job_data,
+        'pipeline_data': pipeline,
+        'deploy_list': deploy_list,
+        'boot_list': boot_list,
+        'test_list': test_list,
+        'job_tags': job.tags.all(),
     }
-    if job.is_pipeline:
-        description = description_data(job)
-        job_data = description.get('job', {})
-        action_list = job_data.get('actions', [])
-        pipeline = description.get('pipeline', {})
 
-        deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
-        boot_list = [item['boot'] for item in action_list if 'boot' in item]
-        test_list = [item['test'] for item in action_list if 'test' in item]
-        sections = []
-        for action in pipeline:
-            if 'section' in action:
-                sections.append({action['section']: action['level']})
-        default_section = 'boot'  # to come from user profile later.
-
-        # Is it the old log format?
-        if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-            if 'section' in request.GET:
-                log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-            else:
-                log_data = utils.folded_logs(job, default_section, sections, summary=True)
-                if not log_data:
-                    default_section = 'deploy'
-                    log_data = utils.folded_logs(job, default_section, sections, summary=True)
+    # Is the old or new v2 format?
+    if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+        if 'section' in request.GET:
+            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
         else:
-            template = "lava_scheduler_app/job_pipeline.html"
-            try:
-                with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    # Compute the size of the file
-                    f_in.seek(0, 2)
-                    job_file_size = f_in.tell()
-
-                    if job_file_size >= job.size_limit:
-                        log_data = []
-                    else:
-                        # Go back to the start and load the file
-                        f_in.seek(0, 0)
-                        log_data = yaml.load(f_in, Loader=yaml.CLoader)
-
-                for line in log_data:
-                    if line["lvl"] == "results":
-                        case_id = TestCase.objects.filter(
-                            suite__job=job,
-                            suite__name=line["msg"]["definition"],
-                            name=line["msg"]["case"]).values_list(
-                                "id", flat=True)
-                        if case_id:
-                            line["msg"]["case_id"] = case_id[0]
-
-                if sys.version_info < (3, 0):
-                    for line in log_data:
-                        remove_broken_string(line)
-
-            except IOError:
-                log_data = []
-            except yaml.YAMLError:
-                log_data = None
+            log_data = utils.folded_logs(job, default_section, sections, summary=True)
+            if not log_data:
+                default_section = 'deploy'
+                log_data = utils.folded_logs(job, default_section, sections, summary=True)
 
         data.update({
-            'device_data': description.get('device', {}),
-            'job_data': job_data,
-            'pipeline_data': pipeline,
-            'deploy_list': deploy_list,
-            'boot_list': boot_list,
-            'test_list': test_list,
             'log_data': log_data if log_data else [],
             'invalid_log_data': log_data is None,
-            'job_tags': job.tags.all(),
             'default_section': default_section,
         })
 
-    log_file = job.output_file()
-    if log_file:
-        # FIXME: remove this second setting of job_file_size when V1 is removed
-        with log_file as f:
-            f.seek(0, 2)
-            job_file_size = f.tell()
+        return render(request, "lava_scheduler_app/job.html", data)
 
-        if job_file_size >= job.size_limit:
-            data.update({
-                'job_file_present': True,
-                'job_log_messages': None,
-                'levels': None,
-                'size_warning': job.size_limit,
-                'job_file_size': job_file_size,
-            })
-            # Is it the old log format?
-            if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-                template = loader.get_template("lava_scheduler_app/job.html")
-            else:
-                template = loader.get_template("lava_scheduler_app/job_pipeline.html")
-            return HttpResponse(template.render(data, request=request))
-
-        if not job.failure_comment:
-            job_errors = getDispatcherErrors(job.output_file())
-            if len(job_errors) > 0:
-                msg = job_errors[-1]
-                if msg != "ErrorMessage: None":
-                    job.failure_comment = msg
-                    job.save()
-
-        job_log_messages = getDispatcherLogMessages(job.output_file())
-        levels = defaultdict(int)
-        for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-            levels[kl] = 0
-        for level, msg, _ in job_log_messages:
-            levels[level] += 1
-        levels = sorted(levels.items(), key=lambda tup: logging._levelNames.get(tup[0]))
-        data.update({
-            'job_file_present': True,
-            'job_log_messages': job_log_messages,
-            'levels': levels,
-            'job_file_size': job_file_size,
-        })
     else:
+        try:
+            with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+                # Compute the size of the file
+                f_in.seek(0, 2)
+                job_file_size = f_in.tell()
+
+                if job_file_size >= job.size_limit:
+                    log_data = []
+                    data["size_warning"] = job.size_limit
+                else:
+                    # Go back to the start and load the file
+                    f_in.seek(0, 0)
+                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
+
+            # list all related results
+            for line in log_data:
+                if line["lvl"] == "results":
+                    case_id = TestCase.objects.filter(
+                        suite__job=job,
+                        suite__name=line["msg"]["definition"],
+                        name=line["msg"]["case"]).values_list(
+                            "id", flat=True)
+                    if case_id:
+                        line["msg"]["case_id"] = case_id[0]
+
+            if sys.version_info < (3, 0):
+                for line in log_data:
+                    remove_broken_string(line)
+
+        except IOError:
+            log_data = []
+        except yaml.YAMLError:
+            log_data = None
+
         data.update({
-            'job_file_present': False,
+            'log_data': log_data if log_data else [],
+            'invalid_log_data': log_data is None,
         })
 
-    if "repeat_count" in job.definition:
-        data.update({
-            'expand': True,
-        })
-    template_obj = loader.get_template(template)
-    return HttpResponse(template_obj.render(data, request=request))
+        return render(request, "lava_scheduler_app/job_pipeline.html", data)
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
