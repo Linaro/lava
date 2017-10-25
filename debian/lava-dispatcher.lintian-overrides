@@ -25,7 +25,6 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-echo-config
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-group
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
-lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-network
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-role
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-self
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-send
