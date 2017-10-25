@@ -10,10 +10,9 @@ Build-Depends: debhelper (>= 8.0.0), dh-python,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.4), python-sphinx-bootstrap-theme,
- po-debconf, python-mocker, python-setuptools (>= 3), python-yaml
+ python-mocker, python-setuptools (>= 3), python-yaml
 X-Python-Version: 2.7
-Testsuite: autopkgtest
-Standards-Version: 4.0.0
+Standards-Version: 4.1.1
 Homepage: http://www.linaro.org/projects/test-validation/
 Vcs-Git: https://github.com/Linaro/pkg-lava-server.git
 Vcs-Browser: https://github.com/Linaro/pkg-lava-server
@@ -30,10 +29,10 @@ Depends: apache2, adduser, gunicorn, iproute2, lsb-base (>= 4),
  python-django (>= 1.8), python-django-auth-ldap, python-setuptools,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
- postgresql, postgresql-client, postgresql-common,
- lava-dispatcher (>= 2017.7),
+ lava-dispatcher (>= 2017.10),
  ${python:Depends}, ${misc:Depends}
-Recommends: fuse, ntp, lava-coordinator, lava-server-doc
+Recommends: fuse, ntp, lava-coordinator, lava-server-doc,
+ postgresql, postgresql-client, postgresql-common,
 Suggests: python-django-hijack, python-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
@@ -59,7 +58,7 @@ Depends: lava-server (= ${binary:Version}), lava-server-doc,
  lava-dispatcher, lava-coordinator, lava-dev, lava-tool,
  lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, linaro-image-tools, schroot,
+Recommends: lavapdu-daemon, schroot,
  android-tools-fsutils | img2simg
 Suggests: vmdebootstrap
 Description: Linaro Automated Validation Architecture metapackage
@@ -82,7 +81,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev, pep8 | python-pep8,
- python-guestfs, python-sphinx (>= 1.4) | python3-sphinx (>= 1.4), po-debconf,
+ python-guestfs, python-sphinx (>= 1.4) | python3-sphinx (>= 1.4),
  python-mocker, python-nose, python-netifaces, python-setuptools,
  python-sphinx-bootstrap-theme, python-zmq, python-yaml,
  python-voluptuous (>= 0.8.8), docbook-xsl, xsltproc, python-mock,
