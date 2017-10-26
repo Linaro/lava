@@ -14,29 +14,8 @@ register = template.Library()
 
 
 @register.filter
-def get_priority_select(current):
-    select = ""
-    val = TestJob.PRIORITY_CHOICES
-    for priority, label in val:
-        check = " checked" if priority == current else ""
-        default = " [default]" if current != 50 and priority == 50 else ""
-        select += '<label class="checkbox-inline">'
-        select += '<input type="radio" name="priority" style="..." id="%s" value="%d"%s>%s%s</input><br/>' %\
-                  (label.lower(), priority, check, label, default)
-        select += '</label>'
-    return mark_safe(select)
-
-
-@register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
-
-
-@register.filter
-def get_settings(value):
-    """This is only a filter, so use for boolean checks """
-    if hasattr(settings, value):
-        return getattr(settings, value)
 
 
 # Compile it only once
@@ -230,11 +209,6 @@ def markup_metadata(key, value):
         return mark_safe("<a href='%s'>%s</a>" % (value, value))
     else:
         return value
-
-
-@register.filter()
-def markup_completion(data):
-    return [key for key, _ in data.items() if 'test' in key]
 
 
 @register.assignment_tag
