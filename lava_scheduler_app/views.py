@@ -645,7 +645,9 @@ class ActiveDeviceView(DeviceTableView):
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
-        return super(DeviceHealthView, self).get_queryset().exclude(status=Device.RETIRED)
+        q = super(DeviceHealthView, self).get_queryset()
+        q = q.exclude(status=Device.RETIRED)
+        return q.select_related("last_health_report_job")
 
 
 class DeviceTypeOverView(JobTableView):
@@ -934,6 +936,7 @@ def health_job_list(request, pk):
     discrete_data = trans_table.prepare_discrete_data(trans_data)
     discrete_data.update(health_table.prepare_discrete_data(health_data))
     template = loader.get_template("lava_scheduler_app/health_jobs.html")
+    device_can_admin = device.can_admin(request.user)
     return HttpResponse(template.render(
         {
             'device': device,
@@ -944,17 +947,17 @@ def health_job_list(request, pk):
             'transition_table': trans_table,
             'health_job_table': health_table,
             'show_forcehealthcheck':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
                 device.get_health_check(),
-            'can_admin': device.can_admin(request.user),
+            'can_admin': device_can_admin,
             'show_maintenance':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
-            'edit_description': device.can_admin(request.user),
+            'edit_description': device_can_admin,
             'show_online':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
@@ -2255,6 +2258,7 @@ def device_detail(request, pk):
             mismatch = not os.path.exists(devicetype_file)
 
     template = loader.get_template("lava_scheduler_app/device.html")
+    device_can_admin = device.can_admin(request.user)
     return HttpResponse(template.render(
         {
             'device': device,
@@ -2266,22 +2270,22 @@ def device_detail(request, pk):
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
             'show_forcehealthcheck':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
                 device.get_health_check(),
-            'can_admin': device.can_admin(request.user),
+            'can_admin': device_can_admin,
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
             'show_maintenance':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
-            'edit_description': device.can_admin(request.user),
-            'show_online': (device.can_admin(request.user) and
+            'edit_description': device_can_admin,
+            'show_online': (device_can_admin and
                             device.status in [Device.OFFLINE, Device.OFFLINING]),
-            'show_restrict': (device.is_public and device.can_admin(request.user) and
+            'show_restrict': (device.is_public and device_can_admin and
                               device.status not in [Device.RETIRED]),
-            'show_pool': (not device.is_public and device.can_admin(request.user) and
+            'show_pool': (not device.is_public and device_can_admin and
                           device.status not in [Device.RETIRED] and not
                           device.device_type.owners_only),
             'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
