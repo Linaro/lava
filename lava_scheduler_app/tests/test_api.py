@@ -138,7 +138,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         Most of the time is spent setting up the database
         and submitting all the test jobs.
         """
-        print >> sys.stderr, timezone.now(), "start"
+        sys.stderr.write(timezone.now(), "start")
         user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))
@@ -153,9 +153,9 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             device = self.factory.make_device(device_type=device_type, hostname="imx6q-%s" % suffix)
             device.save()
             count += 1
-        print >> sys.stderr, timezone.now(), "%d dummy devices created" % count
+        sys.stderr.write(timezone.now(), "%d dummy devices created" % count)
         device_list = list(get_available_devices())
-        print >> sys.stderr, timezone.now(), "%d available devices" % len(device_list)
+        sys.stderr.write(timezone.now(), "%d available devices" % len(device_list))
         filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'master-check.json')
         self.assertTrue(os.path.exists(filename))
         with open(filename, 'r') as json_file:
@@ -167,17 +167,17 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             job = testjob_submission(definition, user)
             self.assertFalse(job.health_check)
             count += 1
-        print >> sys.stderr, timezone.now(), "%d jobs submitted" % count
+        sys.stderr.write(timezone.now(), "%d jobs submitted" % count)
         jobs = list(get_job_queue())
         self.assertIsNotNone(jobs)
-        print >> sys.stderr, timezone.now(), "Finding devices for jobs."
+        sys.stderr.write(timezone.now(), "Finding devices for jobs.")
         for job in jobs:
             # this needs to stay as a tight loop to cope with load
             device = find_device_for_job(job, device_list)
             if device:
-                print >> sys.stderr, timezone.now(), "[%d] allocated %s" % (job.id, device)
+                sys.stderr.write(timezone.now(), "[%d] allocated %s" % (job.id, device))
                 device_list.remove(device)
-        print >> sys.stderr, timezone.now(), "end"
+        sys.stderr.write(timezone.now(), "end")
 
 
 class TransactionTestCaseWithFactory(TransactionTestCase):

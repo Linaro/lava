@@ -30,9 +30,9 @@ def forwards_func(apps, schema_editor):
         if new_user.password == '!':
             new_user.password = password
             new_user.save()
-            print "lava-health user exists, password updated ..."
+            print("lava-health user exists, password updated ...")
         else:
-            print "lava-health user exists, leaving it intact ..."
+            print("lava-health user exists, leaving it intact ...")
 
 
 def backwards_func(apps, schema_editor):
