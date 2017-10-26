@@ -12,7 +12,6 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, IntegrityError
 from lava_server.settings.getsettings import Settings
-from json_schema_validator.extensions import datetime_extension, timedelta_extension
 
 
 PROFILE_LOGGING = False

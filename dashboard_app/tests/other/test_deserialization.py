@@ -29,8 +29,6 @@ from django_testscenarios.ubertest import (
     TransactionTestCase,
 )
 from django.contrib.auth.models import User
-from json_schema_validator.errors import ValidationError
-from json_schema_validator.extensions import datetime_extension
 
 
 from dashboard_app.tests import fixtures

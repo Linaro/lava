@@ -20,7 +20,6 @@ import logging
 import urlparse
 
 from linaro_django_xmlrpc.models import AuthToken
-from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 from lava_scheduler_app.models import (
     User,
     Worker)
@@ -73,5 +72,3 @@ class WorkerData:
         """
         if not job_id:
             return
-        server = _get_scheduler_rpc()
-        server.notify_incomplete_job(job_id)

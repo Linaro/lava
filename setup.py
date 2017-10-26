@@ -85,7 +85,6 @@ setup(
         'django-restricted-resource >= 2015.09',
         'django-tables2 >= 1.2',
         'docutils >= 0.6',
-        'lava-tool >= 0.2',
         'markdown >= 2.0.3',
         'psycopg2',
         'markupsafe',
@@ -95,9 +94,6 @@ setup(
         'jinja2',
         'django-auth-ldap >= 1.1.8',
         'voluptuous >= 0.8.8',
-        # dashboard
-        'pygments >= 1.2',
-
         # scheduler
         "lava-dispatcher",
         "simplejson",
