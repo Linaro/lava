@@ -115,6 +115,8 @@ default apache2 installation::
     $ sudo a2dissite 000-default
     $ sudo service apache2 restart
 
+.. seealso:: :ref:`disable_v1_worker`
+
 .. _adding_pipeline_workers:
 
 Adding workers to the master
@@ -334,6 +336,292 @@ worker drop-down in the device detail page.
 
 .. note:: A worker may have a description but does not have a record of the IP
    address, uptime or architecture in the Worker object.
+
+.. index:: disable v1 worker, fuse, psql, sshfs
+
+.. _disable_v1_worker:
+
+Disabling V1 on pipeline dispatchers
+************************************
+
+Existing remote workers with both V1 and V2 device support will need to migrate
+to supporting V2 only. Once all devices on the worker can support V2, the admin
+can disable V1 test jobs on that worker.
+
+.. caution:: Due to the way that V1 remote workers are configured, it is
+   possible for removal of V1 support to **erase** data on the master if these
+   steps are not followed in order. It is particularly important that the V1
+   SSHFS mountpoint is handled correctly and that any operations on the
+   database remain **local** to the remote worker by using ``psql`` instead of
+   any ``lava-server`` commands.
+
+#. All device types on the dispatcher must have V2 health checks configured.
+
+#. Remove V1 configuration files from the dispatcher. Depending on local admin,
+   this may involve tools like ``salt`` or ``ansible`` removing files from
+   ``/etc/lava-dispatcher/devices/`` and ``/etc/lava-dispatcher/device-types/``
+
+#. Ensure lava-slave is pinging the master correctly:
+
+   .. code-block:: shell
+
+    tail -f /var/log/lava-dispatcher/lava-slave.log
+
+#. Check for existing database records using ``psql``
+
+   .. note:: Do **not** use ``lava-server manage shell`` for this step because
+      the developer shell has access to the master database, use ``psql``.
+
+   Check the LAVA_DB_NAME value from ``/etc/lava-server/instance.conf``.  If
+   there is no database with that name visible to ``psql``, there is nothing
+   else to do for this stage.
+
+   .. code-block:: shell
+
+    $ sudo su postgres
+    $ psql lavaserver
+    psql: FATAL:  database "lavaserver" does not exist
+
+   If a database does exist with LAVA_DB_NAME, it **should** be empty. Check
+   using a sample SQL command:
+
+   .. code-block:: sql
+
+    =# SELECT count(id) from lava_scheduler_app_testjob;
+
+   If records exist, it is up to you to investigate these records and decide if
+   something has gone wrong with your LAVA configuration or if these are old
+   records from a time when this machine was not a worker. Database records on a
+   worker are **not** visible to the master or web UI.
+
+#. Stop the V1 scheduler:
+
+   .. code-block:: shell
+
+    sudo service lava-server stop
+
+#. ``umount`` the V1 SSHFS which provices read-write access to the test job
+   log files **on the master**.
+
+   * Check the output of ``mount`` and ``/etc/lava-server/instance.conf`` for
+     the value of LAVA_PREFIX. The SSHFS mount is
+     ``${LAVA_PREFIX}/default/media``. The directory should be empty once the
+     SSHFS mount is removed:
+
+     .. code-block:: shell
+
+      $ sudo mountpoint /var/lib/lava-server/default/media
+      /var/lib/lava-server/default/media is a mountpoint
+      $ sudo umount /var/lib/lava-server/default/media
+      $ sudo ls -a /var/lib/lava-server/default/media
+      .  ..
+
+#. Check if ``lavapdu`` is required for the remaining devices. If not, you may
+   choose to stop ``lavapdu-runner`` and ``lavapdu-listen``, then remove
+   ``lavapdu``:
+
+   .. code-block:: shell
+
+    sudo service lavapdu-listen stop
+    sudo service lavapdu-runner stop
+    sudo apt-get --purge remove lavapdu-client lavapdu-daemon
+
+#. Unless any other tasks on this worker, unrelated to LAVA, use the postgres
+   database, you can now choose to drop the postgres cluster on this worker,
+   deleting all postgresql databases on the worker. (Removing or purging the
+   ``postgres`` package does not drop the database, it continues to take up
+   space on the filesystem).
+
+   .. code-block:: shell
+
+    sudo su postgres
+    pg_lsclusters
+
+   The output of ``pg_lsclusters`` is dependent on the version of ``postgres``.
+   Check for the ``Ver`` and ``Cluster`` columns, these will be needed to
+   identify the cluster to drop, e.g. ``9.4 main``.
+
+   To drop the cluster, specify the ``Ver`` and ``Cluster`` to the
+   ``pg_dropcluster`` postgres command, for example:
+
+   .. code-block:: shell
+
+    pg_dropcluster 9.4 main --stop
+    exit
+
+#. If lava-coordinator is installed, check the local config is not localhost in
+   ``/etc/lava-coordinator/lava-coordinator.conf`` and then stop
+   lava-coordinator::
+
+    sudo service lava-coordinator stop
+
+   .. caution:: ``lava-coordinator`` will typically be uninstalled in a later
+      step. Ensure that the working coordinator configuration is retained by
+      copying ``/etc/lava-coordinator/lava-coordinator.conf`` to a safe
+      location. It will need to be restored later. The coordinator process
+      itself is not needed on the worker for either V1 or V2 was installed
+      as a requirement of ``lava-server``, only the configuration is actually
+      required.
+
+#. Remove ``lava-server``:
+
+   .. code-block:: shell
+
+    sudo apt-get --purge remove lava-server
+
+#. Remove the remaining dependencies required for ``lava-server``:
+
+   .. code-block:: shell
+
+    sudo apt-get --purge autoremove
+
+   This list may include ``lava-coordinator``, ``lava-server-doc``,
+   ``libapache2-mod-uwsgi``, ``libapache2-mod-wsgi``, ``postgresql``,
+   ``python-django-auth-ldap``, ``python-django-restricted-resource``,
+   ``python-django-tables2``, ``python-ldap``, ``python-markdown``,
+   ``uwsgi-core`` but may also remove others. Check the list carefully.
+
+#. Check lava-slave is still pinging the master correctly.
+
+#. Check for any remaining files in ``/etc/lava-server/`` and remove.
+
+#. Create the ``/etc/lava-coordinator`` directory and restore
+   ``/etc/lava-coordinator/lava-coordinator.conf`` to restore MultiNode
+   operation on this worker.
+
+#. Check for any remaining lava-server processes - only ``lava-slave`` should
+   be running.
+
+#. Check if apache can be cleanly restarted. You may need to run ``sudo
+   a2dismod uwsgi`` and ``sudo a2dissite lava-server``:
+
+   .. code-block:: shell
+
+    sudo service apache2 restart
+
+#. Copy the default ``apache2`` lava-dispatcher configuration into
+   ``/etc/apache2/sites-available/`` and enable:
+
+   .. code-block:: shell
+
+    cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
+    $ sudo a2ensite lava-dispatcher
+    $ sudo service apache2 restart
+    $ sudo apache2ctl -M
+    $ wget http://localhost/tmp/
+    $ rm index.html
+
+#. Undo fuse configuration
+
+   V1 setup required editing ``/etc/fuse.conf`` on the worker and enabling the
+   ``user_allow_other`` option. This can now be disabled.
+
+#. Run healthchecks on all your devices.
+
+.. index:: disable v1 master, revoke v1 postgres access
+
+.. _disable_v1_master:
+
+Disabling V1 support on the master
+**********************************
+
+Once all workers on an instance have had V1 support disabled, there remain
+tasks to be done on the server. V1 relies on read:write database access from
+each worker supporting V1 as well as the SSHFS mountpoint. For the security of
+the data on the master, this access needs to be revoked now that V1 is no
+longer in use on this master.
+
+The changes below undo the *Distributed deployment* setup of V1 for remote
+workers. The master continues to have a worker available and this worker is
+unaffected by the removal of remote worker support.
+
+.. note:: There was a lot of scope in V1 for admins to make subtle changes to
+   the local configuration, especially if the instance was first installed
+   before the Debian packaging became the default installation method. (Even if
+   the machine has later been reinstalled, elements such as system usernames,
+   database names and postgres usernames will have been retained to be able to
+   access older data.) Check the details in ``/etc/lava-server/instance.conf``
+   on the master for information on ``LAVA_SYS_USER``, ``LAVA_DB_USER`` and
+   ``LAVA_PREFIX``. In some places, V1 setup only advised that certain changes
+   were made - admins may have adapted these instructions and removal of those
+   changes will need to take this into account. It is, however, important that
+   the V1 support changes are removed to ensure the security of the data on the
+   master.
+
+SSH authorized keys
+===================
+
+The SSH public keys need to be removed from the ``LAVA_SYS_USER`` account on
+the master. Check the contents of ``/etc/lava-server/instance.conf`` - the
+default for recent installs is ``lavaserver``. Check the details in, for
+example, ``/var/lib/lava-server/home/.ssh/authorized_keys``:
+
+.. code-block:: shell
+
+ $ sudo su lavaserver
+ $ vim /var/lib/lava-server/home/.ssh/authorized_keys
+
+.. note:: V1 used the same comment for all keys. ``ssh key used by LAVA for
+   sshfs``. Once all V1 workers are disabled, all such keys can be removed
+   from ``/var/lib/lava-server/home/.ssh/authorized_keys``.
+
+Prevent postgres listening to workers
+=====================================
+
+V1 setup advised that ``postgresql.conf`` was modified to allow
+``listen_addresses = '*'``. Depending on your version of postgres, this file
+can be found under the ``/etc/postgresql/`` directory, in the ``main``
+directory for that version of ``postgres``. e.g.
+``/etc/postgresql/9.4/main/postgresql.conf``
+
+There is no need for a V2 master to have any LAVA processes connecting to the
+database other than those on the master. ``listen_addresses`` can be updated,
+according to the postgres documentation. The default is for
+``listen_addresses`` to be commented out in ``postgresql.conf``.
+
+Revoke postgres access
+======================
+
+V1 setup advised that ``pg_hba.conf`` was modified to allow remote workers to
+be able to read and write to the postgres database. Depending on your version
+of postgres, this file can be found under the ``/etc/postgresql/`` directory,
+in the ``main`` directory for that version of ``postgres``. e.g.
+``/etc/postgresql/9.4/main/pg_hba.conf`` A line similar to the following
+may exist:
+
+.. code-block:: none
+
+ host    lavaserver      lavaserver      0.0.0.0/0               md5
+
+Some instances may have a line similar to:
+
+.. code-block:: none
+
+ host    all             all             10.0.0.0/8              md5
+
+For V2, only the default postgres configuration is required. For example:
+
+.. code-block:: none
+
+ local   all             all                                     peer
+ local   all             all                                     peer
+ host    all             all             127.0.0.1/32            md5
+ host    all             all             ::1/128                 md5
+
+Check the entries in your own instance (in this example, 9.4) using:
+
+.. code-block:: none
+
+ sudo grep -v '#' /etc/postgresql/9.4/main/pg_hba.conf
+
+Restart postgres
+================
+
+For these changes to take effect, postgres must be restarted:
+
+.. code-block:: shell
+
+ sudo service postgresql restart
 
 .. index:: archive v1
 
