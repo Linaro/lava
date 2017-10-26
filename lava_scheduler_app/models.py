@@ -1673,7 +1673,7 @@ class TestJob(RestrictedResource):
 
     @property
     def essential_role(self):  # pylint: disable=too-many-return-statements
-        if not (self.is_multinode or self.is_vmgroup or self.is_pipeline):
+        if not self.is_multinode:
             return False
         data = yaml.load(self.definition)
         # would be nice to use reduce here but raising and catching TypeError is slower
@@ -1690,21 +1690,16 @@ class TestJob(RestrictedResource):
 
     @property
     def device_role(self):  # pylint: disable=too-many-return-statements
-        if not (self.is_multinode or self.is_vmgroup):
+        if not self.is_multinode:
             return "Error"
-        if self.is_pipeline:
-            data = yaml.load(self.definition)
-            if 'protocols' not in data:
-                return 'Error'
-            if 'lava-multinode' not in data['protocols']:
-                return 'Error'
-            if 'role' not in data['protocols']['lava-multinode']:
-                return 'Error'
-            return data['protocols']['lava-multinode']['role']
-        json_data = simplejson.loads(self.definition)
-        if 'role' not in json_data:
-            return "Error"
-        return json_data['role']
+        data = yaml.load(self.definition)
+        if 'protocols' not in data:
+            return 'Error'
+        if 'lava-multinode' not in data['protocols']:
+            return 'Error'
+        if 'role' not in data['protocols']['lava-multinode']:
+            return 'Error'
+        return data['protocols']['lava-multinode']['role']
 
     def log_admin_entry(self, user, reason):
         testjob_ct = ContentType.objects.get_for_model(TestJob)
@@ -2009,10 +2004,6 @@ class TestJob(RestrictedResource):
             jobs = TestJob.objects.filter(
                 target_group=self.target_group).order_by('id')
             return jobs
-        elif self.is_vmgroup:
-            jobs = TestJob.objects.filter(
-                vm_group=self.vm_group).order_by('id')
-            return jobs
         else:
             return None
 
@@ -2041,13 +2032,6 @@ class TestJob(RestrictedResource):
         return parent.actual_device.worker_host
 
     @property
-    def is_vmgroup(self):
-        if self.is_pipeline:
-            return False
-        else:
-            return bool(self.vm_group)
-
-    @property
     def display_id(self):
         if self.sub_id:
             return self.sub_id
@@ -2074,8 +2058,7 @@ class TestJob(RestrictedResource):
         which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
         before this attribute was introduced, return the DEFINITION.
         """
-        if self.original_definition and\
-                not (self.is_multinode or self.is_vmgroup):
+        if self.original_definition and not self.is_multinode:
             return self.original_definition
         else:
             return self.definition
@@ -2114,7 +2097,7 @@ class TestJob(RestrictedResource):
         def ready_or_running(job):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
-        if self.is_multinode or self.is_vmgroup:
+        if self.is_multinode:
             # FIXME: bad use of map - use list comprehension
             return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:

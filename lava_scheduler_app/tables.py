@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe

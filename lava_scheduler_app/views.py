@@ -1,13 +1,11 @@
 # pylint: disable=too-many-lines,invalid-name
-from collections import defaultdict, OrderedDict
-import copy
+from collections import OrderedDict
 import yaml
 import jinja2
 import json
 import logging
 import os
 import simplejson
-import StringIO
 import datetime
 import urllib2
 import re
@@ -23,7 +21,6 @@ from django.template.loader import render_to_string
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
@@ -47,11 +44,6 @@ from lava_server.bread_crumbs import (
 )
 
 from lava_scheduler_app.decorators import post_only
-from lava_scheduler_app.logfile_helper import (
-    formatLogFile,
-    getDispatcherErrors,
-    getDispatcherLogMessages
-)
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -79,22 +71,6 @@ from lava_results_app.models import (
     Query,
     QueryCondition,
     TestCase,
-)
-
-from lava_scheduler_app.job_templates import (
-    DEFAULT_TEMPLATE,
-    DEPLOY_IMAGE,
-    DEPLOY_IMAGE_HWPACK,
-    DEPLOY_IMAGE_KERNEL,
-    LAVA_TEST_SHELL_REPO,
-    LAVA_TEST_SHELL_URL,
-    ACTIONS_LINARO,
-    ACTIONS_LINARO_BOOT,
-    ACTIONS_LINARO_ANDROID_IMAGE,
-    COMMAND_SUBMIT_RESULTS,
-    COMMAND_TEST_SHELL,
-    ANDROID_BOOT_NO_CMDS,
-    ANDROID_BOOT_WITH_CMDS
 )
 
 from django.contrib.auth.models import User, Group
@@ -1060,14 +1036,8 @@ def job_submit(request):
                     testjob_user.is_favorite = True
                     testjob_user.save()
 
-                if job.is_pipeline:
-                    return HttpResponseRedirect(
-                        reverse('lava.scheduler.job.detail', args=[job.pk]))
-                else:
-                    template = loader.get_template(
-                        "lava_scheduler_app/job_submit.html")
-                    return HttpResponse(template.render(
-                        response_data, request=request))
+                return HttpResponseRedirect(
+                    reverse('lava.scheduler.job.detail', args=[job.pk]))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -1096,7 +1066,7 @@ def remove_broken_string(line):
         line['msg'] = '<<lava: broken line>>'
 
 
-@BreadCrumb("Job", parent=index, needs=['pk'])
+@BreadCrumb("Job {pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
@@ -1218,7 +1188,7 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    description = description_data(job) if job.is_pipeline else {}
+    description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
     return HttpResponse(template.render(
         {
@@ -1233,8 +1203,6 @@ def job_definition(request, pk):
 
 def job_description_yaml(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.is_pipeline:
-        raise Http404()
     filename = description_filename(job)
     if not filename:
         raise Http404()
@@ -1249,32 +1217,8 @@ def job_description_yaml(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
-    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
-    return response
-
-
-@BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
-def expanded_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
-    template = loader.get_template("lava_scheduler_app/expanded_job_definition.html")
-    return HttpResponse(template.render(
-        {
-            'job': job,
-            'job_file_present': bool(log_file),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(expanded_job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-        },
-        request=request))
-
-
-def expanded_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    response = HttpResponse(job.definition, content_type='text/plain')
-    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
-        job.id
     return response
 
 
@@ -1297,33 +1241,9 @@ def multinode_job_definition(request, pk):
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
-    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
         "attachment; filename=multinode_%s" % filename
-    return response
-
-
-@BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
-def vmgroup_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
-    template = loader.get_template("lava_scheduler_app/vmgroup_job_definition.html")
-    return HttpResponse(template.render(
-        {
-            'job': job,
-            'job_file_present': bool(log_file),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(vmgroup_job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-        },
-        request=request))
-
-
-def vmgroup_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
-    response['Content-Disposition'] = \
-        "attachment; filename=vmgroup_job_%d.json" % job.id
     return response
 
 
@@ -1394,8 +1314,6 @@ def favorite_jobs(request, username=None):
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.is_pipeline:
-        raise Http404
     # If this is a new log format, redirect to the job page
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
@@ -1424,16 +1342,13 @@ def job_complete_log(request, pk):
             'default_section': default_section,
             'log_data': log_data,
             'pipeline_data': pipeline,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
-            # 'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_complete_log, pk=pk),
         },
         request=request))
 
 
 def job_section_log(request, job, log_name):
     job = get_restricted_job(request.user, job, request=request)
-    if not job.is_pipeline:
-        raise Http404
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
@@ -1491,29 +1406,6 @@ def job_status(request, pk):
         response_dict['X-JobStatus'] = '1'
 
     response = HttpResponse(json.dumps(response_dict), content_type='text/json')
-    return response
-
-
-def job_pipeline_sections(request, pk):
-    job = get_restricted_job(request.user, pk)
-    if not job.is_pipeline:
-        raise Http404
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        if 'section' in action:
-            sections.append({action['section']: action['level']})
-    template = loader.get_template("lava_scheduler_app/_section_logging.html")
-    response = HttpResponse(template.render(
-        {
-            'job': job,
-            'pipeline_data': pipeline,
-            'sections': sections,
-            'default_section': 'any',
-        }, request=request))
-    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response['X-Sections'] = '1'
     return response
 
 
@@ -1599,74 +1491,6 @@ def job_pipeline_timing(request, pk):
     return HttpResponse(json.dumps(response_dict), content_type='text/json')
 
 
-def job_pipeline_incremental(request, pk):
-    # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
-    job = get_restricted_job(request.user, pk)
-    summary = int(request.GET.get('summary', 0)) == 1
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        if 'section' in action:
-            sections.append({action['section']: action['level']})
-    default_section = str(request.GET.get('section', 'deploy'))
-    if 'section' in request.GET:
-        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=summary)
-    else:
-        log_data = utils.folded_logs(job, default_section, sections, summary=summary, increment=True)
-        if not log_data:
-            default_section = 'deploy'
-            log_data = utils.folded_logs(job, default_section, sections, summary=summary)
-    template = loader.get_template("lava_scheduler_app/_structured_logdata.html")
-    response = HttpResponse(template.render(
-        {
-            'job': TestJob.objects.get(pk=pk),
-            'sections': sections,
-            'default_section': 'any',
-            'log_data': log_data,
-        },
-        request=request))
-    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
-@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
-def job_log_file(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    if job.is_pipeline:
-        return redirect(job_complete_log, pk=pk)
-    log_file = job.output_file()
-    if not log_file:
-        raise Http404
-
-    with log_file as f:
-        f.seek(0, 2)
-        job_file_size = f.tell()
-
-    size_warning = 0
-    if job_file_size >= job.size_limit:
-        size_warning = job.size_limit
-        content = None
-    else:
-        content = formatLogFile(job.output_file())
-    template = loader.get_template("lava_scheduler_app/job_log_file.html")
-    return HttpResponse(template.render(
-        {
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-            'job': job,
-            'job_file_present': bool(log_file),
-            'sections': content,
-            'size_warning': size_warning,
-            'job_file_size': job_file_size,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
-            'show_failure': job.can_annotate(request.user),
-            'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
-        },
-        request=request))
-
-
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     # Old style jobs
@@ -1685,21 +1509,6 @@ def job_log_file_plain(request, pk):
             return response
     except IOError:
         raise Http404
-
-
-def job_log_incremental(request, pk):
-    start = int(request.GET.get('start', 0))
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(start)
-    new_content = log_file.read()
-    m = getDispatcherLogMessages(StringIO.StringIO(new_content))
-    response = HttpResponse(
-        simplejson.dumps(m), content_type='application/json')
-    response['X-Current-Size'] = str(start + len(new_content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
 
 
 def job_log_pipeline_incremental(request, pk):
@@ -1751,62 +1560,6 @@ def job_log_pipeline_incremental(request, pk):
     return response
 
 
-def job_full_log_incremental(request, pk):
-    start = int(request.GET.get('start', 0))
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(start)
-    new_content = log_file.read()
-    nl_index = new_content.rfind('\n', -NEWLINE_SCAN_SIZE)
-    if nl_index >= 0:
-        new_content = new_content[:nl_index + 1]
-    m = formatLogFile(StringIO.StringIO(new_content))
-    response = HttpResponse(
-        simplejson.dumps(m), content_type='application/json')
-    response['X-Current-Size'] = str(start + len(new_content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
-LOG_CHUNK_SIZE = 512 * 1024
-NEWLINE_SCAN_SIZE = 80
-
-
-def job_output(request, pk):
-    start = request.GET.get('start', 0)
-    try:
-        start = int(start)
-    except ValueError:
-        return HttpResponseBadRequest("invalid start")
-    count_present = 'count' in request.GET
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(0, os.SEEK_END)
-    size = int(request.GET.get('count', log_file.tell()))
-    if size - start > LOG_CHUNK_SIZE and not count_present:
-        log_file.seek(-LOG_CHUNK_SIZE, os.SEEK_END)
-        content = log_file.read(LOG_CHUNK_SIZE)
-        nl_index = content.find('\n', 0, NEWLINE_SCAN_SIZE)
-        if nl_index > 0 and not count_present:
-            content = content[nl_index + 1:]
-        skipped = size - start - len(content)
-    else:
-        skipped = 0
-        log_file.seek(start, os.SEEK_SET)
-        content = log_file.read(size - start)
-    nl_index = content.rfind('\n', -NEWLINE_SCAN_SIZE)
-    if nl_index >= 0 and not count_present:
-        content = content[:nl_index + 1]
-    response = HttpResponse(content)
-    if skipped:
-        response['X-Skipped-Bytes'] = str(skipped)
-    response['X-Current-Size'] = str(start + len(content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
@@ -1815,11 +1568,6 @@ def job_cancel(request, pk):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
-        elif job.is_vmgroup:
-            vmgroup_jobs = TestJob.objects.filter(
-                vm_group=job.vm_group)
-            for vmgroup_job in vmgroup_jobs:
-                vmgroup_job.cancel(request.user)
         else:
             job.cancel(request.user)
         return redirect(job)
@@ -1854,14 +1602,8 @@ def job_resubmit(request, pk):
                 else:
                     response_data["job_id"] = job.id
 
-                if job.is_pipeline:
-                    return HttpResponseRedirect(
-                        reverse('lava.scheduler.job.detail', args=[job.pk]))
-                else:
-                    template = loader.get_template(
-                        "lava_scheduler_app/job_submit.html")
-                    return HttpResponse(
-                        template.render(response_data, request=request))
+                return HttpResponseRedirect(
+                    reverse('lava.scheduler.job.detail', args=[job.pk]))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -1881,33 +1623,8 @@ def job_resubmit(request, pk):
                                         content_type="application/json")
             if job.is_multinode:
                 definition = job.multinode_definition
-            elif job.is_vmgroup:
-                definition = job.vmgroup_definition
             else:
                 definition = job.display_definition
-
-            if request.user != job.owner and not request.user.is_superuser \
-               and not utils.is_member(request.user, job.owner):
-                obj = simplejson.loads(definition)
-
-                # Iterate through the objects in the JSON and pop (remove)
-                # the bundle stream path in submit_results action once we find it.
-                for key in obj:
-                    if key == "actions":
-                        for i in xrange(len(obj[key])):
-                            if obj[key][i]["command"] == \
-                                    "submit_results_on_host" or \
-                                    obj[key][i]["command"] == "submit_results":
-                                for key1 in obj[key][i]:
-                                    if key1 == "parameters":
-                                        for key2 in obj[key][i][key1]:
-                                            if key2 == "stream":
-                                                obj[key][i][key1][key2] = ""
-                                                break
-                definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
-                response_data["resubmit_warning"] = \
-                    "The bundle stream was removed because you are neither the submitter "\
-                    "nor in the same group as the submitter. Please provide a bundle stream."
 
             try:
                 response_data["definition_input"] = definition

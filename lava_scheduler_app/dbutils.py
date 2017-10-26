@@ -21,7 +21,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     JSONDataError,
     TestJob,
-    TemporaryDevice,
     validate_job,
     validate_device
 )
@@ -246,13 +245,6 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             continue
         if job.is_pipeline and not device.is_pipeline:
             continue
-        if job.is_vmgroup:
-            # deprecated and slow!
-            # special handling, tied directly to the TestJob within the vmgroup
-            # mask to a Temporary Device to be able to see vm_group of the device
-            tmp_dev = TemporaryDevice.objects.filter(hostname=device.hostname)
-            if tmp_dev and job.vm_group != tmp_dev[0].vm_group:
-                continue
         # these are the principal requirements and checks.
         # for pipeline, requested_device is only used for automated health checks, handled above.
         # device_type, requested_device and requested_device_type have been retrieved with select_related

@@ -128,14 +128,8 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
-        # Reject v1 jobs
-        if not job.is_pipeline:
-            raise xmlrpclib.Fault(400, "v1 jobs cannot be submitted to this instance")
-
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
-        elif job.is_vmgroup:
-            return self.submit_job(job.vmgroup_definition)
         else:
             return self.submit_job(job.definition)
 
@@ -180,9 +174,6 @@ class SchedulerAPI(ExposedAPI):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(self.user)
-        elif job.is_vmgroup:
-            for vmgroup_job in job.sub_jobs_list:
-                vmgroup_job.cancel(self.user)
         else:
             job.cancel(self.user)
         return True
@@ -777,7 +768,7 @@ class SchedulerAPI(ExposedAPI):
 
         The elements available in XML-RPC structure include:
         _results_link, _state, submitter_id, submit_token_id, is_pipeline,
-        id, failure_comment, multinode_definition, user_id, vmgroup_definition,
+        id, failure_comment, multinode_definition, user_id,
         priority, _actual_device_cache, vm_group, original_definition,
         status, health_check, description, admin_notifications, start_time,
         target_group, visibility, requested_device_id, pipeline_compatibility,

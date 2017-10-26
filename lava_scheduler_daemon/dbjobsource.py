@@ -271,16 +271,6 @@ class DatabaseJobSource(object):
             Device.STATUS_CHOICES[new_device_status][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
-        # Temporary devices should be marked as RETIRED once the job is
-        # complete or canceled.
-        if job.is_vmgroup:
-            try:
-                if device.temporarydevice:
-                    new_device_status = Device.RETIRED
-                    device.current_job = None
-            except TemporaryDevice.DoesNotExist:
-                self.logger.debug("%s is not a tmp device", device.hostname)
-
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
                 job.status = TestJob.COMPLETE
@@ -389,15 +379,6 @@ class DatabaseJobSource(object):
                     if device.status in [Device.RESERVED, Device.RUNNING]:
                         new_state = Device.IDLE
                         transition_device = True
-                    if job.is_vmgroup:
-                        try:
-                            # any canceled temporary device always goes to RETIRED
-                            # irrespective of previous state or code above
-                            if device.temporarydevice:
-                                new_state = Device.RETIRED
-                                transition_device = True
-                        except TemporaryDevice.DoesNotExist:
-                            self.logger.debug("%s is not a tmp device", device.hostname)
                     if transition_device:
                         device.current_job = None  # creating the transition calls save()
                         self.logger.debug("Transitioning %s to %s", device.hostname, new_state)
