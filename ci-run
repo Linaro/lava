@@ -44,6 +44,7 @@ fi
 echo "Removing old .pyc files"
 echo
 find . -name '*.pyc' -delete
+rm -rf ./.cache/
 
 echo "Starting unit tests"
 echo
