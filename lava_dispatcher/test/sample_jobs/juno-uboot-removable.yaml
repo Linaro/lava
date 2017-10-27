@@ -43,17 +43,17 @@ actions:
      to: tftp
      os: oe
      kernel:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/Image
+         url: http://images.validation.linaro.org/juno/removable/juno-latest-oe-uboot/SOFTWARE/Image
          type: image
      dtb:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/juno.dtb
+         url: http://images.validation.linaro.org/juno/removable/juno-latest-oe-uboot/SOFTWARE/juno.dtb
      ramdisk:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-latest-oe-uboot/SOFTWARE/ramdisk.img
+         url: http://images.validation.linaro.org/juno/removable/juno-latest-oe-uboot/SOFTWARE/ramdisk.img
          header: u-boot
          install_overlay: False
          install_modules: False
      nfsrootfs:
-         url: http://ironhide.bounceme.net/deano-my-lad/linaro-image-lamp-genericarmv8-20150921-770.rootfs.tar.gz
+         url: http://images.validation.linaro.org/juno/removable/linaro-image-lamp-genericarmv8-20150921-770.rootfs.tar.gz
          compression: gz
 
   - boot:
@@ -89,15 +89,15 @@ actions:
      to: tftp
      os: android
      kernel:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/Image
+         url: http://images.validation.linaro.org/juno/removable/juno-lsk-android-uboot/SOFTWARE/Image
          type: image
      ramdisk:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/ramdisk.img
+         url: http://images.validation.linaro.org/juno/removable/juno-lsk-android-uboot/SOFTWARE/ramdisk.img
          header: u-boot
          install_overlay: False
          install_modules: False
      dtb:
-         url: http://ironhide.bounceme.net/deano-my-lad/juno-lsk-android-uboot/SOFTWARE/juno.dtb
+         url: http://images.validation.linaro.org/juno/removable/juno-lsk-android-uboot/SOFTWARE/juno.dtb
 
   - boot:
      namespace: android
