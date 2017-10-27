@@ -211,6 +211,7 @@ class SchedulerJobsAPI(ExposedV2API):
                 "end_time": job.end_time,
                 "tags": [t.name for t in job.tags.all()],
                 "visibility": job.get_visibility_display(),
+                "failure_comment": job.failure_comment,
                 }
 
     def resubmit(self, job_id):
