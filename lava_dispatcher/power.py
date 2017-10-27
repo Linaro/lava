@@ -200,12 +200,11 @@ class ReadFeedback(Action):
             if feedback_connection:
                 feedbacks.append((feedback_ns, feedback_connection))
         for feedback in feedbacks:
-            self.logger.debug(
-                "Listening to connection for namespace '%s' for %ds",
-                feedback[0], self.duration)
-            feedback[1].listen_feedback(timeout=self.duration)
-            self.logger.debug(
-                "Listening to connection for namespace '%s' done", feedback[0])
+            bytes_read = feedback[1].listen_feedback(timeout=self.duration)
+            # ignore empty or single newline-only content
+            if bytes_read > 1:
+                self.logger.debug(
+                    "Listened to connection for namespace '%s' for %ds", feedback[0], self.duration)
             if self.finalize:
                 # Finalize all connections associated with each namespace.
                 feedback[1].finalise()

@@ -261,15 +261,19 @@ class ShellSession(Connection):
     def listen_feedback(self, timeout):
         """
         Listen to output and log as feedback
+        Returns the number of characters read.
         """
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
             self.raw_connection.logfile.is_feedback = True
-            return self.raw_connection.expect([pexpect.EOF, pexpect.TIMEOUT],
-                                              timeout=timeout)
+            index = self.raw_connection.expect(
+                [pexpect.EOF, pexpect.TIMEOUT], timeout=timeout)
         finally:
             self.raw_connection.logfile.is_feedback = False
+            if index == 1:
+                return len(self.raw_connection.before)
+            return index
 
 
 class ExpectShellSession(Action):
