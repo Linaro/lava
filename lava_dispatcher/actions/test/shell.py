@@ -457,6 +457,18 @@ class TestShellAction(TestAction):
         self.logger.results(res_dict)  # pylint: disable=no-member
 
     @nottest
+    def signal_test_feedback(self, params):
+        feedback_ns = params[0]
+        if feedback_ns not in self.data.keys():
+            self.logger.error("%s is not a valid namespace")
+            return
+        self.logger.info("Requesting feedback from namespace: %s", feedback_ns)
+        feedback_connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection',
+            deepcopy=False, parameters={"namespace": feedback_ns})
+        feedback_connection.listen_feedback(timeout=1)
+
+    @nottest
     def signal_test_set(self, params):
         name = None
         action = params.pop(0)
@@ -547,6 +559,8 @@ class TestShellAction(TestAction):
                 self.signal_end_run(params)
             elif name == "TESTCASE":
                 self.signal_test_case(params)
+            elif name == "TESTFEEDBACK":
+                self.signal_test_feedback(params)
             elif name == "TESTREFERENCE":
                 self.signal_test_reference(params)
             elif name == "TESTSET":

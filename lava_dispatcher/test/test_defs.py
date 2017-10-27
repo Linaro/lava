@@ -173,6 +173,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             'lava-test-case',
             'lava-test-case-attach',
             'lava-test-case-metadata',
+            'lava-test-feedback',
             'lava-test-reference',
             'lava-test-run-attach',
             'lava-test-runner',
