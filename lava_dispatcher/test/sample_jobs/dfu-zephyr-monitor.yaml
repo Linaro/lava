@@ -19,13 +19,13 @@ actions:
     images:
       app:
         image_arg: --alt x86_app --download {app}
-        url: http://ironhide.bounceme.net/arduino101/zephyr.bin
+        url: http://images.validation.linaro.org/ironhide.bounceme.net/arduino101/zephyr.bin
       sensor_core:
         image_arg: --alt sensor_core --download {sensor_core}
-        url: http://ironhide.bounceme.net/arduino101/arc.bin
+        url: http://images.validation.linaro.org/ironhide.bounceme.net/arduino101/arc.bin
       ble_core:
         image_arg: --alt ble_core --download {ble_core}
-        url: http://ironhide.bounceme.net/arduino101/ble_core/image.bin
+        url: http://images.validation.linaro.org/ironhide.bounceme.net/arduino101/ble_core/image.bin
 
 - boot:
     method: dfu
