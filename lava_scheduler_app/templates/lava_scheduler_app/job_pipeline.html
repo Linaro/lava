@@ -190,6 +190,11 @@
   </div>
 </div>
 
+{% if lava_job_result %}
+<div class="alert alert-danger">
+  <p><strong>{{ lava_job_result.error_type }} error:</strong> {{ lava_job_result.error_msg }}</p>
+</div>
+{% endif %}
 {% if invalid_log_data %}
 <div class="alert alert-warning">
   <p><strong>Unable to parse invalid logs:</strong> This is maybe a bug in LAVA that should be reported.</p>

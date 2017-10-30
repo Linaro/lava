@@ -1176,9 +1176,22 @@ def job_detail(request, pk):
         except yaml.YAMLError:
             log_data = None
 
+        # Get lava.job result if available
+        lava_job_result = None
+        try:
+            lava_job_obj = TestCase.objects.get(suite__job=job,
+                                                suite__name="lava",
+                                                name="job")
+            # Only print it if it's a failure
+            if lava_job_obj.result == TestCase.RESULT_FAIL:
+                lava_job_result = lava_job_obj.action_metadata
+        except TestCase.DoesNotExist:
+            pass
+
         data.update({
             'log_data': log_data if log_data else [],
             'invalid_log_data': log_data is None,
+            'lava_job_result': lava_job_result
         })
 
         return render(request, "lava_scheduler_app/job_pipeline.html", data)
