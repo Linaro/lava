@@ -25,17 +25,21 @@ actions:
           boot_message: {{ boot_message|default('Linux version') }}
         ramdisk:
           commands:
+{% block grub_ramdisk %}
           - net_bootp
           - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/ram0 {{ base_ip_args }}'
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - devicetree (tftp,{SERVER_IP})/{DTB}
           - boot
+{% endblock grub_ramdisk %}
         nfs:
           commands:
+{% block grub_nfs %}
           - net_bootp
           - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
           - devicetree (tftp,{SERVER_IP})/{DTB}
           - boot
+{% endblock grub_nfs %}
         debian-installer:
           expect_shell: False
           commands:
