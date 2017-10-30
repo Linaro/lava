@@ -260,7 +260,7 @@ def lxc_udev_rule(data):
     if data["product_id"] is not None:
         rule += 'ATTR{{idProduct}}=="{product_id}", '
     rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
-            '--lxc-name {lxc_name} --device-info {device_info_file} ' \
+            '--lxc-name {lxc_name} --device-node $name ' \
             '--logging-url {logging_url} --job-id {job_id}'
     rule = rule.format(**data)
 

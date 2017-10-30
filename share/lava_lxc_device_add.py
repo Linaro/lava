@@ -35,7 +35,6 @@ import time
 import yaml
 
 from lava_dispatcher.log import YAMLLogger
-from lava_dispatcher.utils.udev import get_udev_devices
 
 # Wait 10s maximum to close the socket
 LINGER = 10000
@@ -72,9 +71,8 @@ def main():
 
     parser.add_argument("--lxc-name", required=True,
                         help="Name of the lxc container")
-    parser.add_argument("--device-info", required=True,
-                        type=argparse.FileType("r"),
-                        help="Path to the device information file")
+    parser.add_argument("--device-node", required=True,
+                        help="Path to the device node")
 
     group = parser.add_argument_group("logging")
     group.add_argument("--job-id", required=True, metavar="ID",
@@ -101,29 +99,16 @@ def main():
     start = time.gmtime()
     uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (lxc_name, start.tm_hour, start.tm_min, start.tm_sec)
 
-    # Parse the device information file
+    device = "/dev/%s" % options.device_node
+
+    lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
     try:
-        device_info = yaml.load(options.device_info.read())
-    except yaml.error.YAMLError as exc:
-        logger.error("[%s] Unable to parse the device info: %s", uniq_str, str(exc))
-        logger.close(linger=LINGER)  # pylint: disable=no-member
-        return 1
-
-    udev_devices = get_udev_devices(device_info=device_info)
-    if not udev_devices:
-        logger.error("[%s] No devices found", uniq_str)
-        logger.close(linger=LINGER)  # pylint: disable=no-member
-        return 1
-
-    for device in udev_devices:
-        lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
-        try:
-            output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)
-            logger.debug(output)
-            logger.info("[%s] device %s added", uniq_str, device)
-        except subprocess.CalledProcessError as exc:
-            logger.error("[%s] failed to add device %s: '%s'",
-                         uniq_str, device, exc)
+        output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)
+        logger.debug(output)
+        logger.info("[%s] device %s added", uniq_str, device)
+    except subprocess.CalledProcessError as exc:
+        logger.error("[%s] failed to add device %s: '%s'",
+                     uniq_str, device, exc)
 
     logger.close(linger=LINGER)  # pylint: disable=no-member
 
