@@ -36,6 +36,7 @@ from lava_dispatcher.utils.constants import (
     LAVA_LXC_HOME,
 )
 from lava_dispatcher.utils.compression import decompress_file
+from lava_dispatcher.utils.decorator import replace_exception
 
 
 def rmtree(directory):
@@ -113,6 +114,7 @@ def write_bootscript(commands, filename):
         bootscript.close()
 
 
+@replace_exception(RuntimeError, JobError)
 def prepare_guestfs(output, overlay, size):
     """
     Applies the overlay, offset by one directory.
@@ -153,6 +155,7 @@ def prepare_guestfs(output, overlay, size):
     return guest.blkid(guest_device)['UUID']
 
 
+@replace_exception(RuntimeError, JobError)
 def prepare_install_base(output, size):
     """
     Create an empty image of the specified size (in bytes),
@@ -169,6 +172,7 @@ def prepare_install_base(output, size):
     guest.shutdown()
 
 
+@replace_exception(RuntimeError, JobError)
 def copy_out_files(image, filenames, destination):
     """
     Copies a list of files out of the image to the specified
@@ -193,6 +197,7 @@ def copy_out_files(image, filenames, destination):
     guest.shutdown()
 
 
+@replace_exception(RuntimeError, JobError)
 def copy_in_overlay(image, root_partition, overlay):
     """
     Mounts test image partition as specified by the test
@@ -278,6 +283,7 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     return os.path.join(LAVA_LXC_HOME, filename)
 
 
+@replace_exception(RuntimeError, JobError)
 def copy_overlay_to_sparse_fs(image, overlay):
     """copy_overlay_to_sparse_fs
     """
