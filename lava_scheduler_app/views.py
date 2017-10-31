@@ -1825,12 +1825,12 @@ class DTHealthHistoryView(JobTableView):
         states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
 
         return DeviceStateTransition.objects.select_related(
-            'device__hostname', 'created_by'
+            'device', 'created_by'
         ).filter(
             (Q(old_state__in=states) | Q(new_state__in=states)),
             device__device_type=self.device_type
         ).order_by(
-            'device__hostname',
+            'device',
             '-created_on'
         )
 
