@@ -1071,31 +1071,6 @@ def _check_tags(taglist, device_type=None, hostname=None):
     return list(set(matched_devices))
 
 
-def _check_exclusivity(device_list, pipeline=True):
-    """
-    Checks whether the device is exclusive to the pipeline.
-    :param device_list: A list of device objects to check
-    :param pipeline: whether the job being checked is a pipeline job
-    :return: a subset of the device_list to which the job can be submitted.
-    """
-    allow = []
-    check_type = "YAML" if pipeline else "JSON"
-    if len(device_list) == 0:
-        # logic error
-        return allow
-    for device in device_list:
-        if pipeline and not device.is_pipeline:
-            continue
-        if not pipeline and device.is_exclusive:
-            # devices which are exclusive to the pipeline cannot accept non-pipeline jobs.
-            continue
-        allow.append(device)
-    if len(allow) == 0:
-        raise DevicesUnavailableException(
-            "No devices of the requested type are currently available for %s submissions" % check_type)
-    return allow
-
-
 def _check_submit_to_device(device_list, user):
     """
     Handles the affects of Device Ownership on job submission
@@ -1163,39 +1138,6 @@ def _get_device_type(user, name):
         logger.error(msg)
         raise DevicesUnavailableException(msg)
     return device_type
-
-
-def _check_device_types(user):
-    """
-    Filters the list of device types to exclude types which are
-    owner_only if the user is not an owner of one of those devices.
-    :param user: the user submitting the TestJob
-    """
-
-    # Get all device types that are available for scheduling.
-    device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) |
-        models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED) |
-        models.Q(device__status=Device.OFFLINE) |
-        models.Q(device__status=Device.OFFLINING))\
-        .annotate(num_count=models.Count('name')).order_by('name')
-
-    # Count each of the device types available.
-    # reduce the count by the number of devices available to that user
-    # if this type is hidden  Skip if this results in zero devices of that type.
-    all_devices = {}
-    for dt in device_types:
-        # dt[0] -> device type name
-        # dt[1] -> device type count
-        device_type = DeviceType.objects.get(name=dt[0])
-        if device_type.owners_only:
-            count = device_type.num_devices_visible_to(user)
-            if count > 0:
-                all_devices[dt[0]] = count
-        if dt[1] > 0:
-            all_devices[dt[0]] = dt[1]
-    return all_devices
 
 
 # pylint: disable=too-many-arguments,too-many-locals
