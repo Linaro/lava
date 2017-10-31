@@ -8,17 +8,6 @@ debian:
       jquery-1.11.0.js: jquery.js
       jquery-1.11.0.min.js: jquery.min.js
     version: '1.10'
-  - package: libjs-jquery-cookie
-    directory: /usr/share/javascript/jquery-cookie/
-    lava_directory: lava_server/lava-server/js/
-    replacements:
-      jquery.cookie.js: jquery.cookie.js
-  - package: libjs-jquery-watermark
-    directory: /usr/share/javascript/jquery-watermark/
-    lava_directory: lava_server/lava-server/js/
-    replacements:
-      jquery.watermark.js: jquery.watermark.js
-      jquery.watermark.min.js: jquery.watermark.min.js
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: dashboard_app/static/dashboard_app/js/
@@ -99,6 +88,3 @@ debian:
     files:
       bootbox.js: bootbox.min.js
       bootstrap-3.3.7.js: bootstrap-3.3.7.min.js
-      jquery.validate.js: jquery.validate.min.js
-      jquery.pseudofocus.js: jquery.pseudofocus.min.js
-      jquery.steps.js: jquery.steps.min.js
