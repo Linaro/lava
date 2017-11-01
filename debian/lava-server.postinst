@@ -112,6 +112,8 @@ install_database()
     if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='devel'\"" | grep "devel"; then
         su postgres -c "createdb devel --owner devel"
     fi
+    # existing materialized views can interfere with migrations
+    lava-server manage drop_materialized_views
     # syncdb
     # fake-initial only in django 1.8 but needed for upgrades from 1.7 using 1.9
     if [ "`dpkg --compare-versions $(django-admin --version) gt '1.8' && echo $?`" = '0' ]; then
@@ -119,6 +121,7 @@ install_database()
     else
         lava-server manage migrate --noinput
     fi
+    # recreate materialized views after the migration changes are complete.
     lava-server manage refresh_queries --all
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
