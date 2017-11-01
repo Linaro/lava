@@ -286,14 +286,14 @@ class TestShellAction(TestAction):
                     # Only grab the feedbacks every test_connection.timeout
                     if feedbacks and time.time() - last_check > test_connection.timeout:
                         for feedback in feedbacks:
-                            self.logger.debug("Listening to namespace '%s'", feedback[0])
                             # The timeout is really small because the goal is only
                             # to clean the buffer of the feedback connections:
                             # the characters are already in the buffer.
                             # With an higher timeout, this can have a big impact on
                             # the performances of the overall loop.
-                            feedback[1].listen_feedback(timeout=1)
-                            self.logger.debug("Listening to namespace '%s' done", feedback[0])
+                            bytes_read = feedback[1].listen_feedback(timeout=1)
+                            if bytes_read > 1:
+                                self.logger.debug("Listened to connection for namespace '%s' done", feedback[0])
                         last_check = time.time()
         finally:
             if self.current_run is not None:
