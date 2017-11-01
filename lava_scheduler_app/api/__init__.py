@@ -986,6 +986,8 @@ class SchedulerAPI(ExposedAPI):
         """
         Name
         ----
+        DEPRECATED - use `get_device_config` instead.
+
         `get_pipeline_device_config` (`device_hostname`)
 
         Description
@@ -1001,16 +1003,52 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC binary data of output file.
         """
+        return get_device_config(device_hostname, context)
+
+    def get_device_config(self, device_hostname, context=None):
+        """
+        New in api_version 2 - see system.api_version()
+
+        Name
+        ----
+        `get_device_config` (`device_hostname`, context=None)
+
+        Description
+        -----------
+        Get the device configuration for given device hostname.
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname for which the configuration is required.
+
+        Some device templates need a context specified when processing the
+        device-type template. This can be specified as a YAML string:
+
+        `get_device_config` `('qemu01', '{arch: amd64}')`
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
         if not device_hostname:
             raise xmlrpclib.Fault(400, "Bad request: Device hostname was not "
                                   "specified.")
 
+        job_ctx = None
+        if context is not None:
+            try:
+                job_ctx = yaml.load(context)
+            except yaml.YAMLError as exc:
+                raise xmlrpclib.Fault(
+                    400,
+                    "Job context '%s' is not valid. %s" % (context, exc))
         try:
             device = Device.objects.get(hostname=device_hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified device not found.")
+            raise xmlrpclib.Fault(404, "Specified device was not found.")
 
-        config = device.load_configuration(output_format="yaml")
+        config = device.load_configuration(job_ctx=job_ctx, output_format="yaml")
 
         # validate against the device schema
         validate_device(yaml.load(config))
