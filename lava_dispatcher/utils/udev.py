@@ -131,6 +131,31 @@ class WaitDevicePathAction(Action):
         return connection
 
 
+class WaitDeviceBoardID(Action):
+
+    def __init__(self, board_id=None):
+        super(WaitDeviceBoardID, self).__init__()
+        self.name = "wait-device-boardid"
+        self.description = "wait for udev device with board ID"
+        self.summary = self.description
+        if not board_id:
+            self.board_id = self.job.device.get('board_id', None)
+        else:
+            self.board_id = board_id
+
+    def validate(self):
+        super(WaitDeviceBoardID, self).validate()
+        if not isinstance(self.board_id, str):
+            self.errors = "invalid board_id"
+        self.udev_device = {'ID_SERIAL_SHORT': str(self.board_id)}
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(WaitDeviceBoardID, self).run(connection, max_end_time, args)
+        self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
+        wait_udev_event(action='add', match_dict=self.udev_device)
+        return connection
+
+
 def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())

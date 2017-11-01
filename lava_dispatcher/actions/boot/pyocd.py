@@ -28,6 +28,8 @@ from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.strings import substitute
+from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 
 class PyOCD(Boot):
@@ -77,6 +79,9 @@ class BootPyOCDRetry(RetryAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        if self.job.device.hard_reset_command:
+            self.internal_pipeline.add_action(ResetDevice())
+            self.internal_pipeline.add_action(WaitDeviceBoardID(self.job.device.get('board_id', None)))
         self.internal_pipeline.add_action(FlashPyOCDAction())
         self.internal_pipeline.add_action(ConnectDevice())
 
