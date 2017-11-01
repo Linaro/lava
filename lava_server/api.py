@@ -85,6 +85,42 @@ class LavaSystemAPI(SystemAPI):
             return deb_version
         return ''
 
+    # Update the integer return value when adding arguments to
+    # existing functions anywhere in the XML-RPC API or
+    # deleting functions.
+    def api_version(self):
+        """
+        Name
+        ----
+        `system.api_version` ()
+
+        Description
+        -----------
+        Return the lava-server XML-RPC API version string.
+        Clients can check this string to know whether to
+        use particular arguments to available functions.
+
+        Note: For older instances which do not support this
+        call in the first place, check for this call in the
+        output of system.listMethods()
+
+        if 'system.api_version' in connection.system.listMethods():
+            api_version = int(connection.system.api_version())
+                if api_version >= 2:
+                    # safe to run the new API here.
+        else:
+            # use the old API
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        lava-server XML-RPC API version integer
+        """
+        return 2
+
     def user_can_view_jobs(self, job_list, username=None):
         """
         Name
