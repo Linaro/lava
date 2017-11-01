@@ -80,27 +80,13 @@ class DashboardAPI(ExposedAPI):
 
         Deprecated
         ----------
-        This function will cease to operate when V1 is disabled.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
 
-        Description
-        -----------
-        Return lava server version. The version is a string, which is the
-        Debian package version of lava-server pacakage.
-
-        Return value
-        -------------
-        Lava server version string
+        See system.api_version()
         """
-        cmd = ['dpkg-query', '-W', '-f', '${version}', 'lava-server']
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                stdin=subprocess.PIPE)
-        out, err = proc.communicate()
-
-        if not err:
-            return out
-        else:
-            return 'unknown'
+        return 'unknown'
 
     @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):
@@ -111,8 +97,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return ""
 
@@ -125,8 +114,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return ""
 
@@ -138,8 +130,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return ""
 
@@ -151,8 +146,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return ""
 
@@ -164,8 +162,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return {"content": "",
                 "content_filename": ""}
@@ -179,8 +180,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return []
 
@@ -192,8 +196,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         bundles = []
         return bundles
@@ -207,8 +214,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return []
 
@@ -220,8 +230,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return False
 
@@ -233,8 +246,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return ""
 
@@ -248,8 +264,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return []
 
@@ -263,8 +282,11 @@ class DashboardAPI(ExposedAPI):
 
         Removal of V1 support
         --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
+        This function has been disabled in api_version 2. It is
+        retained as a stub for older versions of clients. Please
+        update your tool to use LAVA V2.
+
+        See system.api_version()
         """
         return []
 
