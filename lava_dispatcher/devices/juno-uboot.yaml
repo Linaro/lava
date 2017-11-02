@@ -60,7 +60,7 @@ actions:
           - 'LogLevel=FATAL'
         user: root
         port: 22
-        identity_file: device/dynamic_vm_keys/lava
+        identity_file: dynamic_vm_keys/lava
       vemsd:
         parameters:
           mcc_prompt: 'Cmd>'

@@ -30,7 +30,7 @@ setup(
     namespace_packages=['lava'],
     package_data={
         'lava_dispatcher': [
-            'device/dynamic_vm_keys/lava*',
+            'dynamic_vm_keys/lava*',
             'devices/*.yaml',
             'lava_test_shell/lava-add-keys',
             'lava_test_shell/lava-add-sources',

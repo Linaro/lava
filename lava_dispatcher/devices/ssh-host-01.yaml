@@ -22,7 +22,7 @@ actions:
         port: 8022
         host: localhost
         user: root
-        identity_file: 'device/dynamic_vm_keys/lava'  # unit test support
+        identity_file: 'dynamic_vm_keys/lava'  # unit test support
 
   boot:
     connections:

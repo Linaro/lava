@@ -101,7 +101,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
                     '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
                     '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
                     '-o', 'LogLevel=FATAL', '-l', 'root ', '-p', 22],
-                'identity_file': 'device/dynamic_vm_keys/lava'
+                'identity_file': 'dynamic_vm_keys/lava'
             }
         }
         check = check_ssh_identity_file(params)
@@ -146,7 +146,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
                 '-o', 'LogLevel=FATAL'
             ],
-            'identity_file': 'device/dynamic_vm_keys/lava'}
+            'identity_file': 'dynamic_vm_keys/lava'}
         self.job.device['actions']['deploy']['methods']['ssh'] = bad_port
         with self.assertRaises(JobError):
             self.job.validate()

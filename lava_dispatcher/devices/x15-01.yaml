@@ -95,7 +95,7 @@ actions:
         host: ''
         port: 22
         user: root
-        identity_file: device/dynamic_vm_keys/lava
+        identity_file: dynamic_vm_keys/lava
       fastboot:
       u-boot:
         parameters:

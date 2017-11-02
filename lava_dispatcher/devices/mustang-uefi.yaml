@@ -45,7 +45,7 @@ actions:
           - '-p'
           - '22'
         host: 172.16.200.165
-        identity_file: device/dynamic_vm_keys/lava
+        identity_file: dynamic_vm_keys/lava
   boot:
     connections:
       serial:
