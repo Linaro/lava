@@ -17,6 +17,7 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import xmlrpclib
+import yaml
 
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
@@ -125,11 +126,14 @@ class SchedulerDevicesAPI(ExposedV2API):
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)
 
-    def get_dictionary(self, hostname, render=False):
+    def get_dictionary(self, hostname, render=False, context=None):
         """
         Name
         ----
-        `scheduler.devices.get_dictionary` (`hostname`, `render=False`)
+        `scheduler.devices.get_dictionary` (`hostname`, `render=False`, `context=None`)
+
+        Support for the context argument is new in api_version 2
+        see system.api_version().
 
         Description
         -----------
@@ -141,6 +145,10 @@ class SchedulerDevicesAPI(ExposedV2API):
           Hostname of the device
         `render`: bool
           Render the device configuration. By default, return the dictionary
+        `context`: string
+          Some device templates need a context specific when processing the
+          device-type template. This can be specified as a YAML string.
+          New in api_version 2 - see system.api_version()
 
         Return value
         ------------
@@ -157,7 +165,16 @@ class SchedulerDevicesAPI(ExposedV2API):
                 403, "Device '%s' not available to user '%s'." %
                 (hostname, self.user))
 
-        config = device.load_configuration(output_format="raw" if not render else "yaml")
+        job_ctx = None
+        if context is not None:
+            try:
+                job_ctx = yaml.load(context)
+            except yaml.YAMLError as exc:
+                raise xmlrpclib.Fault(
+                    400, "Job Context '%s' is not valid: %s" % (context, str(exc)))
+
+        config = device.load_configuration(job_ctx=job_ctx,
+                                           output_format="raw" if not render else "yaml")
         if config is None:
             raise xmlrpclib.Fault(
                 404, "Device '%s' does not have a configuration" % hostname)
