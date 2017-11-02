@@ -44,7 +44,7 @@ device: !!python/object/new:lava_dispatcher.device.PipelineDevice
         methods:
           ssh:
             host: 10.15.0.151
-            identity_file: device/dynamic_vm_keys/lava
+            identity_file: dynamic_vm_keys/lava
             options: [-o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL]
             port: '22'
             user: root
@@ -592,14 +592,14 @@ pipeline:
   name: login-ssh
   pipeline:
   - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
-      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
       -p, '22']
     connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
       duration: 300.0, name: null, protected: false}
     data: *id003
     description: copy a file to a known device using scp
     host: 10.15.0.151
-    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     key: overlay
     level: '2.1'
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.1-scp-deploy.log'
@@ -626,14 +626,14 @@ pipeline:
     timeout: {duration: 180.0, name: prepare-ssh}
     valid: true
   - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
-      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
       -p, '22']
     connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
       duration: 300.0, name: null, protected: false}
     data: *id003
     description: login to a known device using ssh
     host: 10.15.0.151
-    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     level: '2.3'
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.3-ssh-connection.log'
     max_retries: 1

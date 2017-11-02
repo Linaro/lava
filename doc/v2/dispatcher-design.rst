@@ -1282,10 +1282,10 @@ Sequence
    test image or manual setup. The server **must** be configured to allow the
    (insecure) LAVA automation SSH private key to log in as authorized - this
    key is available in the
-   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
+   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher `git
    tree
-   <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.
+   <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/dynamic_vm_keys>`_.
 
 #. The test image on the host device starts a test definition over the existing
    (typically serial) connection. At this point, the image file and overlay for

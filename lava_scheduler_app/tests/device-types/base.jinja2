@@ -24,7 +24,7 @@
 {% set ssh_port = '22' -%}
 
 {# This is no longer a requirement, to support devices that allow login without authentication #}
-{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' -%}
+{% set ssh_identity_file = 'dynamic_vm_keys/lava' -%}
 
 {% set schroot_options = (
 "          - 'schroot'
