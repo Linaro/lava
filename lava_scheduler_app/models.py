@@ -305,11 +305,6 @@ class DeviceType(models.Model):
         default=None
     )
 
-    # FIXME: deprecated, should be removed in 2017.5
-    # Replaced by Device.get_health_check()
-    health_check_job = models.TextField(
-        null=True, blank=True, default=None, validators=[validate_job])
-
     health_frequency = models.IntegerField(
         verbose_name="How often to run health checks",
         default=24
@@ -425,29 +420,12 @@ class Worker(models.Model):
         editable=True
     )
 
-    rpc2_url = models.CharField(
-        verbose_name=_(u"Master RPC2 URL"),
-        max_length=200,
-        null=True,
-        blank=True,
-        editable=True,
-        default=None,
-        help_text=("Corresponds to the master node's RPC2 url. Does not have"
-                   " any impact when set on a worker node.")
-    )
-
     display = models.BooleanField(
         default=True,
         help_text=("Should this be displayed in the GUI or not. This will be"
                    " useful when a worker needs to be removed but still"
                    " linked device status transitions and devices should be"
                    " intact."))
-
-    is_master = models.BooleanField(
-        verbose_name=_(u"Is Master?"),
-        default=False,
-        editable=True
-    )
 
     description = models.TextField(
         verbose_name=_(u"Worker Description"),
@@ -948,27 +926,6 @@ class Device(RestrictedResource):
             return None
 
 
-class TemporaryDevice(Device):
-    """
-    A temporary device which inherits all properties of a normal Device.
-    Heavily used by vm-groups implementation.
-
-    This uses "Multi-table inheritance" of django models, since we need a
-    separate table to maintain the temporary devices.
-    See: https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance
-    """
-    vm_group = models.CharField(
-        verbose_name=_(u"VM Group"),
-        blank=True,
-        max_length=64,
-        null=True,
-        default=None
-    )
-
-    class Meta:
-        pass
-
-
 class JobFailureTag(models.Model):
     """
     Allows us to maintain a set of common ways jobs fail. These can then be
@@ -1374,14 +1331,6 @@ class TestJob(RestrictedResource):
         default=None
     )
 
-    vm_group = models.CharField(
-        verbose_name=_(u"VM Group"),
-        blank=True,
-        max_length=64,
-        null=True,
-        default=None
-    )
-
     submitter = models.ForeignKey(
         User,
         verbose_name=_(u"Submitter"),
@@ -1505,11 +1454,6 @@ class TestJob(RestrictedResource):
     )
 
     multinode_definition = models.TextField(
-        editable=False,
-        blank=True
-    )
-
-    vmgroup_definition = models.TextField(
         editable=False,
         blank=True
     )

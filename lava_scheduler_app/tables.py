@@ -441,11 +441,7 @@ class DeviceHealthTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
-    {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
-    {% endif %}
     ''')
     health_status = tables.Column()
     last_report_time = tables.DateColumn(
@@ -508,7 +504,7 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = DeviceType
         exclude = [
-            'display', 'disable_health_check', 'health_check_job', 'owners_only',
+            'display', 'disable_health_check', 'owners_only',
             'architecture', 'health_denominator', 'health_frequency',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
@@ -530,11 +526,7 @@ class DeviceTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
-    {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
-    {% endif %}
     ''')
     device_type = tables.Column()
     status = ExpandedStatusColumn("status")
@@ -592,22 +584,16 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
         self.show_help = True
 
     hostname = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
-    {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    {% endif %}
     ''')
-
-    is_master = tables.Column()
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
         exclude = [
-            'rpc2_url', 'display'
+            'display'
         ]
         sequence = [
-            'hostname', 'description', 'is_master'
+            'hostname', 'description'
         ]
 
 
@@ -832,6 +818,6 @@ class RunningTable(LavaTable):
             'name', 'reserved', 'running', 'jobs'
         ]
         exclude = [
-            'display', 'disable_health_check', 'health_check_job', 'owners_only', 'architecture',
+            'display', 'disable_health_check', 'owners_only', 'architecture',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]

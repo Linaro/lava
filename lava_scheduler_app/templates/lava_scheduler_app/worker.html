@@ -22,8 +22,6 @@
   <div class="col-md-6">
     <h4 class="modal-header">LAVA details</h4>
     <dl class="dl-horizontal">
-      <dt>Is Master</dt>
-      <dd>{{ worker.is_master }}</dd>
       <dt>Description</dt>
       {% if can_admin %}
       <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">

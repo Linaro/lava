@@ -267,8 +267,7 @@ class DeviceTableView(JobTableView):
                                              "current_job__submitter",
                                              "user", "group") \
                              .prefetch_related("tags") \
-                             .filter(temporarydevice=None,
-                                     device_type__in=visible,
+                             .filter(device_type__in=visible,
                                      is_pipeline=True) \
                              .order_by("hostname")
 
@@ -637,9 +636,7 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.filter(
-            Q(temporarydevice=None) and ~Q(status__in=[Device.RETIRED])
-        ).order_by('hostname')
+        return Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])

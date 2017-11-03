@@ -286,7 +286,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {
-            'fields': ('description', 'tags', 'sub_id', 'target_group', 'vm_group')}),
+            'fields': ('description', 'tags', 'sub_id', 'target_group')}),
         ('Current status', {
             'fields': ('actual_device', 'status')}),
         ('Results & Failures', {
@@ -392,7 +392,7 @@ show_worker_action.short_description = "Show selected worker(s)"
 
 class WorkerAdmin(admin.ModelAdmin):
     actions = [hide_worker_action, show_worker_action]
-    list_display = ('hostname', 'display', 'is_master')
+    list_display = ('hostname', 'display')
     ordering = ['hostname']
 
 

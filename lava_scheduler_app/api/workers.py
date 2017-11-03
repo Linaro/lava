@@ -182,7 +182,6 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         return {"hostname": worker.hostname,
                 "description": worker.description,
-                "master": worker.is_master,
                 "hidden": not worker.display,
                 "devices": worker.device_set.count()}
 

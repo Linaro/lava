@@ -106,7 +106,6 @@ class Command(BaseCommand):
             raise CommandError("Unable to find worker '%s'" % hostname)
 
         self.stdout.write("hostname   : %s" % hostname)
-        self.stdout.write("master     : %s" % worker.is_master)
         self.stdout.write("display    : %s" % worker.display)
         self.stdout.write("description: %s" % worker.description)
         if not print_devices:
@@ -131,16 +130,12 @@ class Command(BaseCommand):
                 writer.writerow({
                     "hostname": worker.hostname,
                     "description": worker.description,
-                    "master": worker.is_master,
                     "hidden": not worker.display,
                     "devices": worker.device_set.count()})
         else:
             self.stdout.write("Workers:")
             for worker in workers:
-                string = "* %s (%d devices)"
-                if worker.is_master:
-                    string += " (master)"
-                self.stdout.write(string % (worker.hostname, worker.device_set.count()))
+                self.stdout.write("* %s (%d devices)" % (worker.hostname, worker.device_set.count()))
 
     def handle_set(self, hostname, description, display):
         """ Set worker properties """

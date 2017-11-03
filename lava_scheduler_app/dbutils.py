@@ -341,7 +341,7 @@ def get_job_queue():
         'requested_device', 'requested_device_type', 'actual_device')
     jobs = jobs.prefetch_related('tags')
     jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
-                         'vm_group', 'target_group', 'id')
+                         'target_group', 'id')
     # evaluate in database
     if len(jobs):
         logger.info("Job queue length: %d", len(jobs))
