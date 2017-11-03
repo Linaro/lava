@@ -1,4 +1,4 @@
-lava-dispatcher: non-standard-file-perm usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava 0600 != 0644
+lava-dispatcher: non-standard-file-perm usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava 0600 != 0644
 lava-dispatcher: binary-without-manpage usr/sbin/lava-run
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources

@@ -41,10 +41,10 @@ override_dh_auto_install:
 	mv -v debian/lava-dispatcher/usr/bin/lava-run debian/lava-dispatcher/usr/sbin/
 
 override_dh_fixperms:
-	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	# ssh connections use a shared private key - use the same location for debian & ubuntu
-	chmod 0600 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
-	chmod 0644 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava.pub
+	chmod 0600 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
+	chmod 0644 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
 
 override_dh_auto_clean:
 	dh_auto_clean
