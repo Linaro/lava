@@ -76,6 +76,7 @@ die() {
 
 install_database()
 {
+    VIEWS=$1
     # check postgres is not just installed but actually ready.
     pg=1
     limit=3
@@ -113,7 +114,10 @@ install_database()
         su postgres -c "createdb devel --owner devel"
     fi
     # existing materialized views can interfere with migrations
-    lava-server manage drop_materialized_views
+    if [ "$VIEWS" = "drop_views" ]; then
+        echo "Dropping materialized views ahead of migration."
+        lava-server manage drop_materialized_views
+    fi
     # syncdb
     # fake-initial only in django 1.8 but needed for upgrades from 1.7 using 1.9
     if [ "`dpkg --compare-versions $(django-admin --version) gt '1.8' && echo $?`" = '0' ]; then
@@ -122,6 +126,7 @@ install_database()
         lava-server manage migrate --noinput
     fi
     # recreate materialized views after the migration changes are complete.
+    echo "Refreshing all materialized views: lava-server manage refresh_queries --all"
     lava-server manage refresh_queries --all
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
@@ -172,7 +177,9 @@ case "$1" in
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/dispatcher-config/devices/
         # install database only on the master
         # FIXME: determine if postgresql is installed.
-        install_database
+        if dpkg --compare-versions "$2" ge "2017.7-1"; then
+            install_database 'drop_views'
+        fi
         # Allow lavaserver to write to all the log files
         touch /var/log/lava-server/django.log
         chown $LAVA_SYS_USER:adm /var/log/lava-server/django.log
