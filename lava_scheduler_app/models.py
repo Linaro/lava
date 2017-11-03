@@ -483,33 +483,6 @@ class Worker(models.Model):
         self.description = description
         self.save()
 
-    @classmethod
-    def get_master(cls):
-        """Returns the master node.
-        """
-        try:
-            worker = Worker.objects.get(is_master=True)
-            return worker
-        except:
-            raise ValueError("Unable to find master node")
-
-    @classmethod
-    def get_rpc2_url(cls):
-        """Returns the RPC2 URL of master node.
-        """
-        master = Worker.get_master()
-        return master.rpc2_url
-
-    @classmethod
-    def localhost(cls):
-        """Return self ie., the current worker object.
-        """
-        try:
-            localhost = Worker.objects.get(hostname=utils.get_fqdn())
-            return localhost
-        except Worker.DoesNotExist:
-            raise ValueError("Worker node unavailable")
-
 
 class Device(RestrictedResource):
     """
