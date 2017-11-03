@@ -19,7 +19,6 @@ from zope.interface import implements
 from lava_scheduler_app.models import (
     Device,
     TestJob,
-    TemporaryDevice,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
@@ -41,37 +40,6 @@ except ImportError:
 
     class OperationalError(Exception):
         pass
-
-
-def get_temporary_devices(devices):
-    """ Deprecated
-    :param devices: list of device HOSTNAMES
-    :return: list of HOSTNAMES with hostnames of temporary devices appended
-    """
-    tmp_device_list = set()
-    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
-    if type(devices) is not list:
-        logger.warning("Programming error: %s needs to be a list", devices)
-        return None
-    for dev in devices:
-        try:
-            device = Device.objects.get(hostname=dev)
-            if device.current_job and device.current_job.vm_group:
-                vm_group = device.current_job.vm_group
-                tmp_devices = TemporaryDevice.objects.filter(vm_group=vm_group)
-                for tmp_dev in tmp_devices:
-                    tmp_device_list.add(tmp_dev.hostname)
-        except Device.DoesNotExist:
-            # this will happen when you have configuration files for devices
-            # that are not in the database. You don't want the entire thing to
-            # crash if that is the case.
-            # can also happen if a programming error results in sending
-            # a list of devices, not a list of hostnames.
-            if type(dev) not in [unicode, str]:
-                logger.warning("Programming error: %s needs to be a list of hostnames")
-                return None
-            pass
-    return devices + list(tmp_device_list)
 
 
 class DatabaseJobSource(object):
@@ -97,7 +65,7 @@ class DatabaseJobSource(object):
                     assert connection.connection is not None
                 try:
                     return func(*args, **kw)
-                except (DatabaseError, OperationalError, InterfaceError), error:
+                except (DatabaseError, OperationalError, InterfaceError) as error:
                     message = str(error)
                     if message == 'connection already closed' or message.startswith(
                             'terminating connection due to administrator command') or message.startswith(
@@ -164,7 +132,7 @@ class DatabaseJobSource(object):
             assign_jobs()
 
         # from here on, ignore pipeline jobs.
-        my_devices = get_temporary_devices(self.my_devices())
+        my_devices = self.my_devices()
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
             actual_device_id__in=my_devices,
@@ -367,7 +335,7 @@ class DatabaseJobSource(object):
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d", len(cancel_list))
             for job in cancel_list:
-                device_list = get_temporary_devices(self.my_devices())
+                device_list = self.my_devices()
                 if job.actual_device and job.actual_device.hostname in device_list:
                     self.logger.debug("Looking for pid of dispatch job %s in %s", job.id, job.output_dir)
                     self._kill_canceling(job)

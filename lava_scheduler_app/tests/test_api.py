@@ -15,7 +15,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     Tag,
     TestJob,
-    TemporaryDevice,
     validate_yaml,
     Alias,
 )
