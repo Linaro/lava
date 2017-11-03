@@ -263,6 +263,7 @@ class ShellSession(Connection):
         Listen to output and log as feedback
         Returns the number of characters read.
         """
+        index = 0
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
