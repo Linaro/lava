@@ -1,0 +1,51 @@
+device_type: arduino101
+
+commands:
+  connections:
+    usb0:
+      connect: telnet ratchet 7001
+      tags:
+      - primary
+  hard_reset: curl -s -o /dev/null http://192.168.25.38/30000/09 && sleep 1 && curl -s -o /dev/null http://192.168.25.38/30000/08
+  power_off: curl -s -o /dev/null http://192.168.25.38/30000/08
+  power_on: curl -s -o /dev/null http://192.168.25.38/30000/09
+
+board_id: 'AE6642EK61803JN'
+usb_vendor_id: '8087'
+usb_product_id: '0aba'
+
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  boot-message: "Booting Linux"
+  cpu-reset-message: "Resetting CPU"
+  default-shell-prompt: "lava-test: # "
+  uboot-autoboot-prompt: "Hit any key to stop autoboot"
+  uboot-interrupt-character: " "
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      dfu:
+        parameters:
+          command:
+            dfu-util
+
+
+timeouts:
+  actions:
+    wait-dfu-device:
+      seconds: 20
+    flash-dfu:
+      seconds: 30
+  connections:
+    wait-dfu-device:
+      seconds: 20
+    flash-dfu:
+      seconds: 30

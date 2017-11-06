@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ls /var/log/packages/ | sed 's#-# #g' | awk '{print "package: " $1 " : "$2}'

@@ -21,8 +21,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 
 import optparse
 import yaml

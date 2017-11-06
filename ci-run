@@ -3,14 +3,62 @@
 set -x
 set -e
 
+PEP8=1
+PYTEST=0
+ALL=0
+
+while getopts ":pya" opt; do
+  case $opt in
+    p)
+      # pep8 only
+      PEP8=2
+      ;;
+    y)
+      # use py.test
+      PYTEST=1
+      ;;
+    a)
+      # python3 and python2
+      ALL=1
+      ;;
+    \?)
+      echo "Usage:"
+      echo "-p - pep8 only"
+      echo "-y - use py.test"
+      echo "-a - run all tests: pep8, python2 and python3"
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND -1))
+
 echo "Checking pep8"
 pep8 --ignore E501,E722 --exclude=".eggs/*" .
+
+if [ ${PEP8} = 2 ]; then
+    exit 0
+fi
+
+echo "Removing old .pyc files"
+echo
+find . -name '*.pyc' -delete
+rm -rf ./.cache/
 
 echo "Starting unit tests"
 echo
 
-python setup.py test "$@"
+if [ ${PYTEST} = 1 ]; then
+  py.test -v lava_dispatcher/test
+else
+  python setup.py test
+fi
 
-# to run python3 unit tests, you can use
-# python3 -m unittest discover -v lava_dispatcher.pipeline
-# but the python3 dependencies are not automatically installed.
+if [ ${ALL} = 1 ]; then
+  if [ ${PYTEST} = 1 ]; then
+    py.test-3 -v lava_dispatcher/test
+  else
+    python3 -m unittest discover -v lava_dispatcher/test
+  fi
+fi

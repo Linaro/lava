@@ -12,7 +12,7 @@
 #passed, nothing is printed.
 LAVA_MULTI_NODE_API="LAVA_WAIT"
 #MESSAGE_TIMEOUT=5
-#MESSAGE_NEED_ACK=yes
+MESSAGE_NEED_ACK=
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 
