@@ -179,6 +179,8 @@ case "$1" in
         # FIXME: determine if postgresql is installed.
         if dpkg --compare-versions "$2" ge "2017.7-1"; then
             install_database 'drop_views'
+        else
+            install_database ''
         fi
         # Allow lavaserver to write to all the log files
         touch /var/log/lava-server/django.log
