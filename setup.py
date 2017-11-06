@@ -122,7 +122,6 @@ setup(
         'lava_server/lava-daemon',
         'lava_server/lava-master',
         'lava_server/lava-publisher',
-        'share/lava-mount-masterfs',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.2',
