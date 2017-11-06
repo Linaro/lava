@@ -267,7 +267,8 @@ Debian for HiKey 6220 is provided using the following images::
  boot
  system (the rootfs of Debian system)
 
-The same issue with rebooting after flashing ptable and boot partitions applies to Debian images too.
+The same issue with rebooting after flashing ptable and boot partitions applies
+to Debian images too.
 
 Boot
 ====
@@ -331,7 +332,8 @@ In LAVA V2 we assume HiKeys have pins 5-6 shorted so that the HiKey gets into
 fastboot mode every time there is a reboot or a hard reset. With this
 assumption in place we carry on the following actions:
 
-Deploy the images using fastboot flashing since the device is in fastboot mode by default.
+Deploy the images using fastboot flashing since the device is in fastboot mode
+by default.
 
 Once the flashing is done, we “fastboot reboot” the device which will take it
 to fastboot mode again. If the test job specifies to boot android, fastboot

@@ -146,30 +146,30 @@ handed off to cope with particular tools:
 Following the code flow
 ***********************
 
-+------------------------------------------+---------------------------------------------------+
-|                Filename                  |   Role                                            |
-+==========================================+===================================================+
-| lava/dispatcher/commands.py              | Command line arguments, call to YAML parser       |
-+------------------------------------------+---------------------------------------------------+
-| lava_dispatcher/pipeline/device.py       | YAML Parser to create the Device object           |
-+------------------------------------------+---------------------------------------------------+
-| lava_dispatcher/pipeline/parser.py       | YAML Parser to create the Job object              |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/actions/deploy/             | Handlers for different deployment strategies      |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/actions/boot/               | Handlers for different boot strategies            |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/actions/test/               | Handlers for different LavaTestShell strategies   |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/actions/deploy/image.py     | DeployImages strategy creates DeployImagesAction  |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/actions/deploy/image.py     | DeployImagesAction.populate adds deployment       |
-|                                          | actions to the Job pipeline                       |
-+------------------------------------------+---------------------------------------------------+
-|   ***repeat for each strategy***         | each ``populate`` function adds more Actions      |
-+------------------------------------------+---------------------------------------------------+
-| ....pipeline/action.py                   | ``Pipeline.run_actions()`` to start               |
-+------------------------------------------+---------------------------------------------------+
++----------------------------------+---------------------------------------------------+
+|            Filename              | Role                                              |
++==================================+===================================================+
+| lava/dispatcher/commands.py      | Command line arguments, call to YAML parser       |
++----------------------------------+---------------------------------------------------+
+| lava_dispatcher/device.py        | YAML Parser to create the Device object           |
++----------------------------------+---------------------------------------------------+
+| lava_dispatcher/parser.py        | YAML Parser to create the Job object              |
++----------------------------------+---------------------------------------------------+
+| ....actions/deploy/              | Handlers for different deployment strategies      |
++----------------------------------+---------------------------------------------------+
+| ....actions/boot/                | Handlers for different boot strategies            |
++----------------------------------+---------------------------------------------------+
+| ....actions/test/                | Handlers for different LavaTestShell strategies   |
++----------------------------------+---------------------------------------------------+
+| ....actions/deploy/image.py      | DeployImages strategy creates DeployImagesAction  |
++----------------------------------+---------------------------------------------------+
+| ....actions/deploy/image.py      | DeployImagesAction.populate adds deployment       |
+|                                  | actions to the Job pipeline                       |
++----------------------------------+---------------------------------------------------+
+|   ***repeat for each strategy*** | each ``populate`` function adds more Actions      |
++----------------------------------+---------------------------------------------------+
+| ....action.py                    | ``Pipeline.run_actions()`` to start               |
++----------------------------------+---------------------------------------------------+
 
 The deployment is determined from the device_type specified in the Job (or the
 device_type of the specified target) by reading the list of support methods
@@ -1282,10 +1282,10 @@ Sequence
    test image or manual setup. The server **must** be configured to allow the
    (insecure) LAVA automation SSH private key to log in as authorized - this
    key is available in the
-   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
+   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher `git
    tree
-   <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.
+   <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/dynamic_vm_keys>`_.
 
 #. The test image on the host device starts a test definition over the existing
    (typically serial) connection. At this point, the image file and overlay for

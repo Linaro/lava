@@ -165,7 +165,7 @@ configuration. These are the raw forms which are used on the ``lava-dispatch``
 command line and are useful for debugging and starting to create support for
 your own devices.
 
-https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
+https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher
 
 The lava-server unit test support
 =================================
@@ -214,8 +214,8 @@ Current support includes:
 
 .. _pipeline_device_requirements:
 
-Requirements for a pipeline device
-**********************************
+Requirements for a LAVA device
+******************************
 
 The new design makes less assumptions about the software support on the device
 - principally only a *working* bootloader is required. The detail of *working*
@@ -313,7 +313,7 @@ Obtaining configuration of a known device
 The simplest way to start is to download the working configuration of a device
 of the same known device type using `XML-RPC
 <https://staging.validation.linaro.org/api/help/#scheduler.get_pipeline_device_config>`_
-or the :command:`lava-tool get-pipeline-device-config` command, see
+or the :command:`lava-tool device-dictionary` command, see
 :manpage:`lava-tool (1)`. This will (by default) write a new file in the
 current working directory containing the configuration.
 
@@ -418,8 +418,8 @@ Creating a device dictionary for the device
 Existing devices
 ================
 
-Admins are able to export the device dictionary of existing devices in the
-original ``jinja2`` syntax, ready for modification.
+Export the device dictionary of existing devices in the original ``jinja2``
+syntax, ready for modification.
 
 The local YAML file downloaded using :command:`get-pipeline-device-config`,
 whether XML-RPC or :file:`lava-tool` is the result of combining a device
@@ -431,10 +431,7 @@ stored as a :term:`device dictionary`.
 Compare with the existing device dictionary for the device. (If you do not have
 access, ask the admins for an export of the dictionary)::
 
- $ lava-server manage device-dictionary --hostname black01 --export
- {% extends 'beaglebone-black.jinja2' %}
- {% set ssh_host = '172.16.200.165' %}
- {% set connection_command = 'telnet localhost 6000' %}
+ $ lava-tool device-dictionary SERVER HOSTNAME --export > file.jinja2
 
 .. note:: the device dictionary can have a variety of values, according to the
    support available in the template specified in the **extends** setting.
@@ -502,7 +499,7 @@ Using lava-tool
 ===============
 
 .. note:: Ensure you update to the latest version of
-   :ref:`lava_tool <lava_tool>` (>= 0.14) support to use
+   :ref:`lava_tool <lava_tool>` (>= 0.23) to use
    the ``device-dictionary`` ``--update`` and ``--export``
    functions as superuser.
 

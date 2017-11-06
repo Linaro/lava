@@ -3,7 +3,6 @@ import os
 import shutil
 import urlparse
 import signal
-from dashboard_app.models import Bundle
 
 from django.db import connection
 from django.db import transaction
@@ -17,12 +16,9 @@ from twisted.internet.threads import deferToThread  # pylint: disable=unused-imp
 
 from zope.interface import implements
 
-import lava_dispatcher.config as dispatcher_config
-
 from lava_scheduler_app.models import (
     Device,
     TestJob,
-    TemporaryDevice,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
@@ -46,42 +42,6 @@ except ImportError:
         pass
 
 
-def get_configured_devices():
-    """ Deprecated """
-    return dispatcher_config.list_devices()
-
-
-def get_temporary_devices(devices):
-    """ Deprecated
-    :param devices: list of device HOSTNAMES
-    :return: list of HOSTNAMES with hostnames of temporary devices appended
-    """
-    tmp_device_list = set()
-    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
-    if type(devices) is not list:
-        logger.warning("Programming error: %s needs to be a list", devices)
-        return None
-    for dev in devices:
-        try:
-            device = Device.objects.get(hostname=dev)
-            if device.current_job and device.current_job.vm_group:
-                vm_group = device.current_job.vm_group
-                tmp_devices = TemporaryDevice.objects.filter(vm_group=vm_group)
-                for tmp_dev in tmp_devices:
-                    tmp_device_list.add(tmp_dev.hostname)
-        except Device.DoesNotExist:
-            # this will happen when you have configuration files for devices
-            # that are not in the database. You don't want the entire thing to
-            # crash if that is the case.
-            # can also happen if a programming error results in sending
-            # a list of devices, not a list of hostnames.
-            if type(dev) not in [unicode, str]:
-                logger.warning("Programming error: %s needs to be a list of hostnames")
-                return None
-            pass
-    return devices + list(tmp_device_list)
-
-
 class DatabaseJobSource(object):
     """ Deprecated """
 
@@ -90,7 +50,7 @@ class DatabaseJobSource(object):
     def __init__(self, my_devices=None):
         self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
         if my_devices is None:
-            self.my_devices = get_configured_devices
+            self.my_devices = lambda: []
         else:
             self.my_devices = my_devices
 
@@ -105,7 +65,7 @@ class DatabaseJobSource(object):
                     assert connection.connection is not None
                 try:
                     return func(*args, **kw)
-                except (DatabaseError, OperationalError, InterfaceError), error:
+                except (DatabaseError, OperationalError, InterfaceError) as error:
                     message = str(error)
                     if message == 'connection already closed' or message.startswith(
                             'terminating connection due to administrator command') or message.startswith(
@@ -172,7 +132,7 @@ class DatabaseJobSource(object):
             assign_jobs()
 
         # from here on, ignore pipeline jobs.
-        my_devices = get_temporary_devices(self.my_devices())
+        my_devices = self.my_devices()
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
             actual_device_id__in=my_devices,
@@ -279,16 +239,6 @@ class DatabaseJobSource(object):
             Device.STATUS_CHOICES[new_device_status][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
-        # Temporary devices should be marked as RETIRED once the job is
-        # complete or canceled.
-        if job.is_vmgroup:
-            try:
-                if device.temporarydevice:
-                    new_device_status = Device.RETIRED
-                    device.current_job = None
-            except TemporaryDevice.DoesNotExist:
-                self.logger.debug("%s is not a tmp device", device.hostname)
-
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
                 job.status = TestJob.COMPLETE
@@ -329,14 +279,6 @@ class DatabaseJobSource(object):
                 with open(bundle_file) as f:
                     results_link = f.read().strip()
                 job._results_link = results_link
-                sha1 = results_link.strip('/').split('/')[-1]
-                try:
-                    bundle = Bundle.objects.get(content_sha1=sha1)
-                except Bundle.DoesNotExist:
-                    pass
-                else:
-                    job._results_bundle = bundle
-                    device.device_version = _get_device_version(job.results_bundle)
         else:
             self.logger.warning("[%d] lacked a usable output_dir", job.id)
 
@@ -393,7 +335,7 @@ class DatabaseJobSource(object):
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d", len(cancel_list))
             for job in cancel_list:
-                device_list = get_temporary_devices(self.my_devices())
+                device_list = self.my_devices()
                 if job.actual_device and job.actual_device.hostname in device_list:
                     self.logger.debug("Looking for pid of dispatch job %s in %s", job.id, job.output_dir)
                     self._kill_canceling(job)
@@ -405,15 +347,6 @@ class DatabaseJobSource(object):
                     if device.status in [Device.RESERVED, Device.RUNNING]:
                         new_state = Device.IDLE
                         transition_device = True
-                    if job.is_vmgroup:
-                        try:
-                            # any canceled temporary device always goes to RETIRED
-                            # irrespective of previous state or code above
-                            if device.temporarydevice:
-                                new_state = Device.RETIRED
-                                transition_device = True
-                        except TemporaryDevice.DoesNotExist:
-                            self.logger.debug("%s is not a tmp device", device.hostname)
                     if transition_device:
                         device.current_job = None  # creating the transition calls save()
                         self.logger.debug("Transitioning %s to %s", device.hostname, new_state)
@@ -423,15 +356,3 @@ class DatabaseJobSource(object):
                         self.logger.info('job %s cancelled on %s', job.id, job.actual_device)
                     job.cancel()
                     self._commit_transaction(src='_handle_cancelling_jobs')
-
-
-def _get_device_version(bundle):
-    """ Deprecated """
-    if bundle is None:
-        return None
-    try:
-        lava_test_run = bundle.test_runs.filter(test__test_id='lava')[0]
-        version_attribute = lava_test_run.attributes.filter(name='target.device_version')[0]
-        return version_attribute.value
-    except IndexError:
-        return 'unknown'

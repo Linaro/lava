@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
@@ -83,7 +83,6 @@
 <script type="text/javascript">
   var remote_definition_url = '{% url 'lava.scheduler.get_remote_definition' %}';
 </script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.min.js"></script>
 {% if not job_id %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.min.js"></script>
 {% endif %}

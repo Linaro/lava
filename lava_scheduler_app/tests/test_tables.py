@@ -1,6 +1,6 @@
 import logging
 import sys
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
     Device,
@@ -14,13 +14,6 @@ from lava_scheduler_app.tables import (
     DeviceTable,
     all_jobs_with_custom_sort,
 )
-from dashboard_app.views.tables import (
-    BundleStreamTable,
-)
-from dashboard_app.views import (
-    BundleStreamView,
-)
-from dashboard_app.models import BundleStream
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
@@ -77,7 +70,7 @@ class TestDeviceTable(DeviceTable):
 class TestDeviceView(LavaView):
 
     def get_queryset(self):
-        visible = filter_device_types(None)
+        visible = filter_device_types(AnonymousUser())
         return Device.objects.select_related("device_type")\
             .order_by("hostname").filter(device_type__in=visible)
 
@@ -228,30 +221,3 @@ class TestHiddenDevicesInDeviceTable(TestCase):
         device.save()  # pylint: disable=no-member
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 0)
-
-
-class TestBundleStreamTable(BundleStreamTable):
-
-    def __init__(self, *args, **kwargs):
-        super(TestBundleStreamTable, self).__init__(*args, **kwargs)
-        self.length = 16
-
-
-class TestBundleStreamView(BundleStreamView):
-
-    def get_queryset(self):
-        if not self.request:
-            return BundleStream.objects.accessible_by_principal(None).order_by('pathname')
-        return BundleStream.objects.accessible_by_principal(self.request.user).order_by('pathname')
-
-
-class TestBundleStream(TestCase):
-
-    def test_bundle_stream_table(self):
-        logging.debug("testing bundlestreamtable")
-        view = TestBundleStreamView(None)
-        table = TestBundleStreamTable(view.get_table_data())
-        self.assertEqual(table.length, 16)
-        self.assertEqual(table.prepare_search_data(view), {'search': []})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': []})

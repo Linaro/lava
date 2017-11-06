@@ -20,37 +20,9 @@ import logging
 import urlparse
 
 from linaro_django_xmlrpc.models import AuthToken
-from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 from lava_scheduler_app.models import (
     User,
     Worker)
-
-
-def _get_scheduler_rpc():
-    """Returns the scheduler xmlrpc AuthicatingServerProxy object.
-    """
-    username = 'lava-health'  # We assume this user exists always.
-    user = User.objects.get(username=username)
-    rpc2_url = Worker.get_rpc2_url()
-
-    try:
-        token = AuthToken.objects.filter(user=user)[0]
-    except IndexError:
-        token = AuthToken.objects.create(user=user)
-        token.save()
-
-    parsed_server = urlparse.urlparse(rpc2_url)
-    server = '{0}://{1}:{2}@{3}'.format(parsed_server.scheme, username,
-                                        token.secret, parsed_server.hostname)
-    if parsed_server.port:
-        server += ':' + str(parsed_server.port)
-    server += parsed_server.path
-
-    auth_backend = MemoryAuthBackend([(username, rpc2_url, token.secret)])
-    server = AuthenticatingServerProxy(server, auth_backend=auth_backend)
-    server = server.scheduler
-
-    return server
 
 
 class WorkerData:
@@ -73,5 +45,3 @@ class WorkerData:
         """
         if not job_id:
             return
-        server = _get_scheduler_rpc()
-        server.notify_incomplete_job(job_id)

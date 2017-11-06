@@ -169,19 +169,19 @@ USB drives instead of SATA.
 Limitations
 -----------
 
-* **make sure all tools are installed** - the test job will download and apply
-   the image after completing a test shell, ensure ``wget`` is installed.
+* **Make sure all tools are installed** \- The test job will download and apply
+  the image after completing a test shell, ensure ``wget`` is installed.
 
-* **New image may include new UEFI or new UBoot** - the image to be deployed
+* **New image may include new UEFI or new UBoot** \- The image to be deployed
   will need to avoid overwriting the primary bootloader. (If your test job
   bricks the device, the admin could revoke or suspend your submission rights.)
 
-* **Production images can be a risk** - LAVA still needs to interrupt the
+* **Production images can be a risk** \- LAVA still needs to interrupt the
   primary bootloader and add files to the deployed image to be able to run test
   shell definitions. Production images often include security settings which
   will disable this access, causing your tests to fail.
 
-* **Single write operation** - LAVA downloads the image and then simply writes
+* **Single write operation** \- LAVA downloads the image and then simply writes
   the data to the media before rebooting. The image must be fully configured to
   work in this way, including raising usable network interfaces directly upon
   boot.
@@ -308,7 +308,8 @@ rootfs which provides enough support to complete this second deployment.
         os: debian
         # not a real job, just used for unit tests
         compression: gz
-        image: https://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+        image:
+          url: https://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download: /usr/bin/wget
 
@@ -333,14 +334,81 @@ rootfs which provides enough support to complete this second deployment.
 
 #. The download tool is specified as a full path which must exist inside the
    currently deployed system. This tool will be used to retrieve the
-   decompressed image from the dispatcher and pass STDOUT to ``dd``. If the
-   download tool is the default ``/usr/bin/wget``, LAVA will add the following
-   options: ``--no-check-certificate --no-proxy --connect-timeout=30 -S
+   decompressed image from the dispatcher and pass STDOUT to the writer tool,
+   ``dd`` by default. If the download tool is the default ``/usr/bin/wget``,
+   LAVA will add the following options:
+   ``--no-check-certificate --no-proxy --connect-timeout=30 -S
    --progress=dot:giga -O -`` If different download tools are required for
    particular images, these can be specified, however, if those tools require
-   options, the writer can either ensure that a script exists in the image
+   options, the test writer can either ensure that a script exists in the image
    which wraps those options or file a bug to have the alternative tool options
    supported.
+
+The default writer tool is ``dd`` but it is possible to specify an alternative
+one.  In particular, ``bmaptool`` is usually a much better choice for USB or SD
+card devices.  It will typically flash the image faster and extend the lifetime
+of the storage media.  It needs a ``.bmap`` file which contains a block map
+alongside the actual image file.  For this reason, two files need to be
+downloaded and stored in the same directory on the dispatcher.  The example
+below illustrates how to do this:
+
+.. code-block:: yaml
+
+    # secondary media deployment using bmaptool
+    - deploy:
+        timeout:
+          minutes: 10
+        to: usb
+        os: debian
+        # not a real job, just used for illustrative purposes
+        compression: gz
+        images:
+          image:
+            url: https://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+          bmap:
+            url: https://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.bmap
+        uniquify: false
+        device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+        writer:
+          tool: /usr/bin/bmaptool
+          options: copy {DOWNLOAD_URL} {DEVICE}
+          prompt: 'bmaptool: info'
+        tool:
+          prompts: ['copying time: [0-9ms\.\ ]+, copying speed [0-9\.]+ MiB\/sec']
+
+#. The ``images`` list needs to contain one ``image`` entry and can have others
+   as well such as ``bmap`` in this case.  They will all be downloaded
+   separately to the dispatcher and made available to the board via HTTP.  The
+   URL of the ``image`` file is available in the job definition as
+   ``{DOWNLOAD_URL}``.  The URL of the other images will need to be determined
+   by other means.  Say, the ``image`` file could be a manifest with the list
+   of the actual binary images (not the case with this ``bmaptool`` example).
+
+#. Each item in the ``images`` list is normally downloaded into a separate
+   sub-directory such as ``image`` or ``bmap`` in this example.  As the
+   ``bmaptool`` expects both files to be in the same path, the ``uniquify:
+   false`` option is used so all the files are downloaded directly at the root
+   of the job's ``storage-deploy-*`` directory.  Please note that if several
+   image files have the same name, they will overwrite each other when
+   ``uniquify`` is set to ``false``.  For this reason, if not specified in the
+   job it will be set to ``true`` by default.
+
+#. To use an alternative writer tool, the ``writer`` parameters are used.  The
+   absolute path to the tool must be provided with ``tool`` as well as the
+   ``options`` required to call it.  The ``prompt`` is used to detect that the
+   flashing has started.
+
+#. The ``writer`` tool will normally also be responsible for downloading the
+   image file, hence the ``{DOWNLOAD_URL}`` option passed to it in the example.
+   It is also possible to provide both ``download`` and ``writer`` parameters,
+   in which case the standard output of the downloader tool will be piped into
+   the standard input of the writer tool.
+
+#. The tool ``prompts`` parameter is to detect when the writer tool has
+   completed the flashing operation.  When LAVA has matched a prompt with the
+   tool output, it will then proceed with the secondary boot action.  The
+   ``prompts`` parameters defaults are to match the output of ``dd``, so they
+   should be defined appropriately when using an alternative writer tool.
 
 The kernel inside the initial deployment **MUST** support UUID when deployed on
 a device where UUID is required, as it is this kernel which needs to make
@@ -390,4 +458,3 @@ The dispatcher does NOT analyze the incoming image - internal UUIDs inside an
 image do not change as the refactored dispatcher does **not** break up or
 reorganise the partitions. Therefore, the UUIDs of partitions inside the image
 **MUST** be declared by the job submissions.
-

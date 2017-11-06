@@ -1,110 +1,14 @@
 .. _setting_up_pipeline_instance:
 
-Setting up a LAVA pipeline instance
-###################################
+Setting up a LAVA instance
+##########################
 
-.. _pipeline_install:
-
-What is the Pipeline?
-*********************
-
-.. note:: Linaro production systems in the Cambridge lab began to
-   migrate to the V2 Pipeline model with the 2016.2 production
-   release, while retaining support for the deprecated V1 model until
-   the migration is complete. The V1 support is due to be removed
-   in 2017.
-
-The :term:`dispatcher refactoring <refactoring>` in the V2 (Pipeline) model
-introduces changes and new elements which should not be confused with the
-previous production models. It is supported to install LAVA using solely the
-new design but there are some :ref:`pipeline_install_considerations` regarding
-your current device usage. Submission requirements and device support can
-change before and during a migration to the new design.
-
-This documentation includes notes on the new design, so to make things clearer,
-the following terms refer exclusively to the new design and have no bearing on
-`single_instance` or `distributed_instance` installation methods from V1 LAVA
-which are being used for current production instances in the Cambridge lab.
-
-#. :term:`pipeline`
-#. :term:`refactoring`
-#. :term:`device dictionary`
-#. :term:`ZMQ`
-
-The pipeline model also changes the way that results are gathered, exported and
-queried, replacing the `bundle stream`, `result bundle` and `filter` dashboard
-objects. This new :term:`results` functionality only operates on pipeline test
-jobs and is ongoing development, so some features are incomplete and likely to
-change in future releases. Admins can choose to not show the new results app,
-for example until pipeline devices are supported on that instance, by setting
-the ``PIPELINE`` to ``false`` in :file:`/etc/lava-server/settings.conf` - make
-sure the file validates as JSON before restarting apache::
-
- "PIPELINE": false
-
-If the value is not set or set to ``true``, the Results app will be displayed.
-
-.. seealso:: :ref:`setting_up_pipeline_instance`
-
-.. _pipeline_install_considerations:
-
-Initial considerations
-======================
-
-#. The default setup of the LAVA packages and codebase is for the current
-   dispatcher and the V1 distributed deployment but this will change during
-   2017 before the old code is removed. Until then, installations will continue
-   to provide both models.
-
-#. A LAVA pipeline instance can have existing remote worker support alongside
-   but uses a completely different mechanism to identify remote workers and run
-   jobs on pipeline devices.
-
-#. If both systems are enabled, devices can support both pipeline and current
-   JSON submissions. Devices can be made :term:`exclusive` to prevent JSON
-   submissions.
-
-#. The default setup provides both mechanisms, the only step required to allow
-   pipeline submissions to devices connected to ``http://localhost`` is to have
-   pipeline devices available.
-
-#. Distributed deployments need changes on each worker, see
-   :ref:`changing_existing_workers` but this can be avoided if all devices on
-   the instance are suitable for the pipeline.
-
-#. Pipeline setup is a much simplified task for admins but still contains some
-   manual steps. See :ref:`installing_pipeline_worker`.
-
-#. If only pipeline devices are to be supported, the dispatchers running
-   ``lava-slave`` do **not** need to have the ``lava-server`` package
-   installed. Each dispatcher does need to be able to connect to the ZMQ port
-   specified in the ``lava-master`` configuration of the instance (which is
-   then the only machine related to that instance which has ``lava-server``
-   installed). The ``lava-server`` package on the master should be installed as
-   a single master instance of LAVA.
-
-#. The :term:`ZMQ` protocol incorporates buffering at each end such that either
-   the ``lava-master`` or the ``lava-slave`` service can be restarted at any
-   time without affecting currently running jobs or requiring any changes or
-   restarts at the other end of the connection. There are no other connections
-   required between the slave and the master and the outgoing request from the
-   slave is initiated by the slave, so it is possible for the slave to be
-   behind a local firewall, as long as the relevant ports are open for outgoing
-   traffic. i.e. the slave pulls from the master, the master cannot push to the
-   slave. (This does then mean that a :term:`hacking session` would be
-   restricted to those with access through such a firewall.)
-
-.. _installing_pipeline_worker:
-
-Detailed changes
-****************
-
-The pipeline design designates the machine running Django and PostgreSQL as the
+The LAVA design designates the machine running Django and PostgreSQL as the
 ``lava-master`` and all other machines connected to that master which will
 actually be running the jobs are termed ``lava-slave`` machines.
 
 Dependencies and recommends
-===========================
+***************************
 
 Debian has the concept of Dependencies which must be installed and Recommends
 which are optional but expected to be useful by most users of the package in
@@ -114,7 +18,7 @@ the slaves (e.g. if using ARMv7 slaves or simply to reduce the complexity of
 the install) then Recommends can be omitted for the installation of these
 dependencies,
 
-The 2016.6 release adds a dependency on ``python-guestfs``. The Recommends for
+The 2016.6 release added a dependency on ``python-guestfs``. The Recommends for
 GuestFS can be omitted from the installation, if admins desire, but this needs
 to be done ahead of the upgrade to 2016.6::
 
@@ -123,11 +27,11 @@ to be done ahead of the upgrade to 2016.6::
 .. _configuring_lava_slave:
 
 Installing lava-dispatcher
-==========================
+**************************
 
-If this slave has no devices which will be used by the current dispatcher, only
-by the pipeline, i.e. :term:`exclusive` devices, only ``lava-dispatcher`` needs
-to be installed, not ``lava-server``::
+If this machine is only meant to be a dispatcher for connected devices, then
+just install ``lava-dispatcher``. The ``lava-server`` package is only needed on
+the master in each LAVA instance.
 
  $ sudo apt install lava-dispatcher
 
@@ -189,16 +93,15 @@ the serial connection for that device. The slave is responsible for ensuring
 that these ports are only visible to that slave. There is no need for any
 connections to be visible to the master.
 
-.. index:: worker - V2 only apache config
+.. index:: worker - apache config
 
 .. _apache2_on_v2_only_worker:
 
-Configuring apache2 on a V2 worker
-==================================
+Configuring apache2 on a worker
+*******************************
 
-If the worker is only to run V2, then some test job deployments will require a
-working Apache2 server to offer deployment files over the network to the
-device::
+Some test job deployments will require a working Apache2 server to offer
+deployment files over the network to the device::
 
     $ sudo cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
     $ sudo a2ensite lava-dispatcher
@@ -212,39 +115,34 @@ default apache2 installation::
     $ sudo a2dissite 000-default
     $ sudo service apache2 restart
 
-.. note:: If this worker also supports V1, then ``lava-server`` will also need
-   to be supported, so the apache2 configuration is more complex.
-
 .. seealso:: :ref:`disable_v1_worker`
 
 .. _adding_pipeline_workers:
 
-Adding pipeline workers to the master
-*************************************
+Adding workers to the master
+****************************
 
-A worker which only has :term:`exclusive` pipeline devices attached can be
-installed as a :ref:`pipeline worker <installing_pipeline_worker>`. These
-workers need to be manually added to the master so that the admins of the
+A new worker needs to be manually added to the master so that the admins of the
 master have the ability to assign devices in the database and enable or disable
 the worker.
 
-To add a new pipeline worker::
+To add a new worker::
 
  $ sudo lava-server manage workers add <HOSTNAME>
 
-To add a pipeline worker with a description::
+To add a worker with a description::
 
  $ sudo lava-server manage workers add --description <DESC> <HOSTNAME>
 
-To add a pipeline worker in a disabled state::
+To add a worker in a disabled state::
 
  $ sudo lava-server manage workers add --description <DESC> --disabled <HOSTNAME>
 
-Pipeline workers are enabled or disabled in the Django admin interface by
-changing the ``display`` field of the worker. Jobs submitted to devices on that
-worker will fail, so it is also recommended that the devices would be made
-offline at the same time. (The django admin interface has support for selecting
-devices by worker and taking all selected devices offline in a single action.)
+Workers are enabled or disabled in the Django admin interface by changing the
+``display`` field of the worker. Jobs submitted to devices on that worker will
+fail, so it is also recommended that the devices would be made offline at the
+same time. (The django admin interface has support for selecting devices by
+worker and taking all selected devices offline in a single action.)
 
 .. seealso:: :ref:`create_device_database`
 
@@ -430,59 +328,14 @@ is why the machine is called *playground*.)
 
 .. _adding_pipeline_devices_to_worker:
 
-Adding pipeline devices to a worker
-***********************************
+Adding devices to a worker
+**************************
 
 Admins use the Django admin interface to add devices to workers using the
 worker drop-down in the device detail page.
 
-It is up to the admin to ensure that pipeline devices are assigned to pipeline
-workers and devices which can run JSON jobs are assigned only to distributed
-deployment workers.
-
-.. note:: A pipeline worker may have a description but does not have a record
-   of the IP address, uptime or architecture in the Worker object.
-
-.. _changing_existing_workers:
-
-Changes for existing remote workers
-***********************************
-
-On an existing remote worker, a ``lava-master`` daemon will already be running
-on localhost (doing nothing). Once the migration to the :term:`pipeline` is
-complete, the ``lava-server`` package can be removed from all workers, so the
-above information relates to this endpoint. In the meantime, remote workers
-should have ``lava-master`` disabled on localhost once the slave has been
-directed at the real master as above.
-
-Disabling lava-master on workers
-================================
-
-.. note:: A pipeline worker will only have ``lava-dispatcher`` installed, so
-   there will be no ``lava-master`` daemon which is installed by
-   ``lava-server``.
-
-.. warning:: Only do this on the remote worker but make sure it is done on
-   **all** remote workers before submitting pipeline jobs which would need the
-   devices on those workers.
-
-If a **new** worker does not **need** to run jobs using the current dispatcher,
-i.e. if all devices on this worker are :term:`exclusive`, then ``lava-server``
-does not need to be installed and there is no ``lava-master`` daemon to
-disable.
-
-For existing workers, pipeline jobs will be likely be mixed with JSON jobs.
-This leads to ``lava-server`` being installed on the workers (solely to manage
-the JSON jobs). On such workers, ``lava-master`` should be **disabled** once
-``lava-slave`` has been reconfigured::
-
- $ sudo invoke-rc.d lava-master stop
- $ sudo update-rc.d lava-master remove
- $ sudo chmod a-x /etc/init.d/lava-master
- $ sudo service lava-master status
-
-Removing the executable bits stops the lava-master being re-enabled when the
-packages are updated.
+.. note:: A worker may have a description but does not have a record of the IP
+   address, uptime or architecture in the Worker object.
 
 .. index:: disable v1 worker, fuse, psql, sshfs
 
@@ -491,8 +344,8 @@ packages are updated.
 Disabling V1 on pipeline dispatchers
 ************************************
 
-Existing remote workers with both V1 and V2 devices will need to migrate to
-supporting V2 only. Once all devices on the worker can support V2, the admin
+Existing remote workers with both V1 and V2 device support will need to migrate
+to supporting V2 only. Once all devices on the worker can support V2, the admin
 can disable V1 test jobs on that worker.
 
 .. caution:: Due to the way that V1 remote workers are configured, it is
@@ -503,8 +356,6 @@ can disable V1 test jobs on that worker.
    any ``lava-server`` commands.
 
 #. All device types on the dispatcher must have V2 health checks configured.
-
-#. Make all devices on the dispatcher :term:`exclusive` to V2.
 
 #. Remove V1 configuration files from the dispatcher. Depending on local admin,
    this may involve tools like ``salt`` or ``ansible`` removing files from
@@ -559,7 +410,7 @@ can disable V1 test jobs on that worker.
 
      .. code-block:: shell
 
-      $ mountpoint /var/lib/lava-server/default/media
+      $ sudo mountpoint /var/lib/lava-server/default/media
       /var/lib/lava-server/default/media is a mountpoint
       $ sudo umount /var/lib/lava-server/default/media
       $ sudo ls -a /var/lib/lava-server/default/media

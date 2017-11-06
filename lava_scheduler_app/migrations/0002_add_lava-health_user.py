@@ -7,15 +7,15 @@ from django.db import (
     transaction,
     IntegrityError,
 )
+from django.utils import timezone
 
 import uuid
-import datetime
 
 
 def forwards_func(apps, schema_editor):
     User = apps.get_model("auth", "User")
     db_alias = schema_editor.connection.alias
-    now = datetime.datetime.utcnow()
+    now = timezone.now()
     password = uuid.uuid4().hex
     try:
         with transaction.atomic():
@@ -30,9 +30,9 @@ def forwards_func(apps, schema_editor):
         if new_user.password == '!':
             new_user.password = password
             new_user.save()
-            print "lava-health user exists, password updated ..."
+            print("lava-health user exists, password updated ...")
         else:
-            print "lava-health user exists, leaving it intact ..."
+            print("lava-health user exists, leaving it intact ...")
 
 
 def backwards_func(apps, schema_editor):

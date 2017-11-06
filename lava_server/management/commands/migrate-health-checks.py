@@ -23,7 +23,6 @@ from django.core.management.base import BaseCommand
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    is_deprecated_json
 )
 
 import errno
@@ -75,11 +74,6 @@ health check will be used for each variant."""
 
             if not dt.health_check_job or not dt.display or is_device_type_retired(dt):
                 dt_skipped.append((dt.name, False))
-                continue
-
-            # Check that the health-check is a v2 job
-            if is_deprecated_json(dt.health_check_job):
-                dt_skipped.append((dt.name, True))
                 continue
 
             # Dump to the filesystem

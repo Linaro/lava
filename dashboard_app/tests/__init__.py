@@ -23,10 +23,6 @@ TEST_MODULES = [
     'other.test_deserialization',
     'other.test_client',
     'regressions.test_LP658917',
-    'views.test_bundle_stream_list_view',
-    'views.test_run_detail_view',
-    'views.test_run_list_view',
-    'views.test_redirects',
 ]
 
 

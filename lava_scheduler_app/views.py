@@ -1,20 +1,17 @@
 # pylint: disable=too-many-lines,invalid-name
-from collections import defaultdict, OrderedDict
-import copy
+from collections import OrderedDict
 import yaml
 import jinja2
 import json
 import logging
 import os
 import simplejson
-import StringIO
 import datetime
 import urllib2
 import re
 import sys
 
 from django import forms
-from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.contenttypes.models import ContentType
@@ -24,7 +21,6 @@ from django.template.loader import render_to_string
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
@@ -48,11 +44,6 @@ from lava_server.bread_crumbs import (
 )
 
 from lava_scheduler_app.decorators import post_only
-from lava_scheduler_app.logfile_helper import (
-    formatLogFile,
-    getDispatcherErrors,
-    getDispatcherLogMessages
-)
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -72,7 +63,6 @@ from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     testjob_submission
 )
-from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaView
 from lava_results_app.utils import description_data, description_filename
@@ -81,23 +71,6 @@ from lava_results_app.models import (
     Query,
     QueryCondition,
     TestCase,
-)
-
-from lava_scheduler_app.template_helper import expand_template
-from lava_scheduler_app.job_templates import (
-    DEFAULT_TEMPLATE,
-    DEPLOY_IMAGE,
-    DEPLOY_IMAGE_HWPACK,
-    DEPLOY_IMAGE_KERNEL,
-    LAVA_TEST_SHELL_REPO,
-    LAVA_TEST_SHELL_URL,
-    ACTIONS_LINARO,
-    ACTIONS_LINARO_BOOT,
-    ACTIONS_LINARO_ANDROID_IMAGE,
-    COMMAND_SUBMIT_RESULTS,
-    COMMAND_TEST_SHELL,
-    ANDROID_BOOT_NO_CMDS,
-    ANDROID_BOOT_WITH_CMDS
 )
 
 from django.contrib.auth.models import User, Group
@@ -289,9 +262,14 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type", "current_job__submitter", "worker_host") \
-                             .order_by("hostname") \
-                             .filter(temporarydevice=None, device_type__in=visible)
+        return Device.objects.select_related("device_type", "worker_host",
+                                             "current_job__submitter",
+                                             "user", "group") \
+                             .prefetch_related("tags") \
+                             .filter(temporarydevice=None,
+                                     device_type__in=visible,
+                                     is_pipeline=True) \
+                             .order_by("hostname")
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -503,33 +481,11 @@ def active_device_list(request):
         request=request))
 
 
-@BreadCrumb("Pipeline Devices", parent=index)
-def pipeline_device_list(request):
-
-    data = PipelineDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data())
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
-        ptable)
-    template = loader.get_template("lava_scheduler_app/pipelinedevices.html")
-    return HttpResponse(template.render(
-        {
-            'pipeline_devices_table': ptable,
-            "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
-            "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                pipeline_device_list),
-        },
-        request=request))
-
-
 class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible)\
-            .exclude(status=Device.RETIRED).order_by("status")
+        q = super(OnlineDeviceView, self).get_queryset()
+        return q.exclude(status=Device.RETIRED)
 
 
 @BreadCrumb("Online Devices", parent=index)
@@ -550,14 +506,13 @@ def online_device_list(request):
         request=request))
 
 
-class PassingHealthTableView(JobTableView):
+class PassingHealthTableView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type")\
-            .order_by("-health_status", "device_type", "hostname")\
-            .filter(temporarydevice=None, device_type__in=visible)\
-            .exclude(status=Device.RETIRED)
+        q = super(PassingHealthTableView, self).get_queryset()
+        q = q.exclude(status=Device.RETIRED)
+        q = q.select_related("last_health_report_job", "last_health_report_job__actual_device")
+        return q.order_by("-health_status", "device_type", "hostname")
 
 
 @BreadCrumb("Passing Health Checks", parent=index)
@@ -659,27 +614,16 @@ def filter_device_types(user):
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible) \
-                             .exclude(status=Device.RETIRED) \
-                             .select_related("device_type", "current_job__submitter", "worker_host") \
-                             .order_by("hostname")
-
-
-class PipelineDeviceView(DeviceTableView):
-
-    def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return Device.objects.filter(device_type__in=visible,
-                                     is_pipeline=True)\
-                             .exclude(status=Device.RETIRED)\
-                             .order_by("hostname")
+        q = super(ActiveDeviceView, self).get_queryset()
+        return q.exclude(status=Device.RETIRED)
 
 
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
-        return super(DeviceHealthView, self).get_queryset().exclude(status=Device.RETIRED)
+        q = super(DeviceHealthView, self).get_queryset()
+        q = q.exclude(status=Device.RETIRED)
+        return q.select_related("last_health_report_job")
 
 
 class DeviceTypeOverView(JobTableView):
@@ -711,7 +655,7 @@ def device_type_detail(request, pk):
             raise Http404('No device type matches the given query.')
 
     # Get some test job statistics
-    now = timezone.now().date()
+    now = timezone.now()
     devices = list(Device.objects.filter(device_type=dt)
                    .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
@@ -968,6 +912,7 @@ def health_job_list(request, pk):
     discrete_data = trans_table.prepare_discrete_data(trans_data)
     discrete_data.update(health_table.prepare_discrete_data(health_data))
     template = loader.get_template("lava_scheduler_app/health_jobs.html")
+    device_can_admin = device.can_admin(request.user)
     return HttpResponse(template.render(
         {
             'device': device,
@@ -978,18 +923,17 @@ def health_job_list(request, pk):
             'transition_table': trans_table,
             'health_job_table': health_table,
             'show_forcehealthcheck':
-                not settings.ARCHIVED and
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
                 device.get_health_check(),
-            'can_admin': device.can_admin(request.user),
+            'can_admin': device_can_admin,
             'show_maintenance':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
-            'edit_description': device.can_admin(request.user),
+            'edit_description': device_can_admin,
             'show_online':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
@@ -999,13 +943,8 @@ def health_job_list(request, pk):
 class MyJobsView(JobTableView):
 
     def get_queryset(self):
-        jobs = TestJob.objects.select_related("actual_device", "requested_device",
-                                              "requested_device_type", "group")\
-            .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                          'requested_device_id, requested_device_type_id)',
-                           'duration_sort': 'end_time - start_time'}).all()\
-            .filter(submitter=self.request.user)
-        return jobs.order_by('-submit_time')
+        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        return query.filter(submitter=self.request.user)
 
 
 class LongestJobsView(JobTableView):
@@ -1023,25 +962,16 @@ class LongestJobsView(JobTableView):
 class FavoriteJobsView(JobTableView):
 
     def get_queryset(self):
+        user = self.user if self.user else self.request.user
 
-        user = self.user
-        if not user:
-            user = self.request.user
-
-        jobs = TestJob.objects.select_related("actual_device", "requested_device",
-                                              "requested_device_type", "group")\
-            .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                          'requested_device_id, requested_device_type_id)',
-                           'duration_sort': 'end_time - start_time'}).all()\
-            .filter(testjobuser__user=user,
-                    testjobuser__is_favorite=True)
-        return jobs.order_by('-submit_time')
+        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
 
 
 class AllJobsView(JobTableView):
 
     def get_queryset(self):
-        return all_jobs_with_custom_sort()
+        return all_jobs_with_custom_sort().filter(is_pipeline=True)
 
 
 @BreadCrumb("All Jobs", parent=index)
@@ -1078,7 +1008,6 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
-        use_wizard = request.POST.get("wizard", None)
 
         if request.is_ajax():
             try:
@@ -1087,21 +1016,6 @@ def job_submit(request):
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
                                     content_type="application/json")
-
-        elif use_wizard:
-            try:
-                if request.POST.get("create_stream"):
-                    BundleStream.create_from_pathname(
-                        request.POST.get("submit_stream"), request.user)
-            except Exception as e:
-                response_data["error"] = str(e)
-
-            job_definition = _prepare_template(request)
-            response_data["definition_input"] = str(job_definition).replace(
-                "'", '"')
-            template = loader.get_template("lava_scheduler_app/job_submit.html")
-            return HttpResponse(template.render(
-                response_data, request=request))
 
         else:
             try:
@@ -1122,14 +1036,8 @@ def job_submit(request):
                     testjob_user.is_favorite = True
                     testjob_user.save()
 
-                if job.is_pipeline:
-                    return HttpResponseRedirect(
-                        reverse('lava.scheduler.job.detail', args=[job.pk]))
-                else:
-                    template = loader.get_template(
-                        "lava_scheduler_app/job_submit.html")
-                    return HttpResponse(template.render(
-                        response_data, request=request))
+                return HttpResponseRedirect(
+                    reverse('lava.scheduler.job.detail', args=[job.pk]))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -1147,142 +1055,6 @@ def job_submit(request):
         return HttpResponse(template.render(response_data, request=request))
 
 
-def _prepare_template(request):
-
-    boot_type = request.POST.get("boot_type")
-
-    if boot_type == "android_image":
-        action_template = copy.deepcopy(ACTIONS_LINARO_ANDROID_IMAGE)
-
-        action_config = {
-            "BOOT_IMAGE_PARAMETER": str(request.POST.get("android_boot")),
-            "DATA_IMAGE_PARAMETER": str(request.POST.get("android_data")),
-            "SYSTEM_IMAGE_PARAMETER": str(request.POST.get("android_system")),
-            "TESTS_PARAMETER": [str(request.POST.get("test_name"))],
-            "TEST_NAME_PARAMETER": str(request.POST.get("test_name")),
-        }
-
-        if request.POST.get("boot_options") != "":
-            android_boot_template = copy.deepcopy(ANDROID_BOOT_WITH_CMDS)
-            boot_cmds = request.POST.get("boot_options").replace("\r", "")
-            android_boot_config = {
-                "ANDROID_BOOT_OPTIONS_PARAMETER":
-                [str(x) for x in boot_cmds.split("\n")]
-            }
-        else:
-            android_boot_template = copy.deepcopy(ANDROID_BOOT_NO_CMDS)
-            android_boot_config = {}
-
-        expand_template(android_boot_template, android_boot_config)
-        action_config["ANDROID_BOOT"] = android_boot_template
-
-    else:
-        image_template = None
-        image_config = None
-        deploy_command = None
-        if boot_type == "linaro_image":
-            image_template = copy.deepcopy(DEPLOY_IMAGE)
-            deploy_command = "deploy_linaro_image"
-            image_config = {
-                "PREBUILT_IMAGE_PARAMETER": str(request.POST.get("image_url"))
-            }
-        elif boot_type == "linaro_hwpack":
-            image_template = copy.deepcopy(DEPLOY_IMAGE_HWPACK)
-            deploy_command = "deploy_linaro_image"
-            image_config = {
-                "HWPACK_PARAMETER": str(request.POST.get("hwpack_url")),
-                "ROOTFS_PARAMETER": str(request.POST.get("rootfs_url"))
-            }
-        elif boot_type == "linaro_kernel":
-            image_template = copy.deepcopy(DEPLOY_IMAGE_KERNEL)
-            deploy_command = "deploy_linaro_kernel"
-            image_config = {
-                "KERNEL_PARAMETER": str(request.POST.get("kernel")),
-                "RAMDISK_PARAMETER": str(request.POST.get("ramdisk")),
-                "DTB_PARAMETER": str(request.POST.get("dtb")),
-                "ROOTFS_PARAMETER": str(request.POST.get("kernel_rootfs"))
-            }
-
-        expand_template(image_template, image_config)
-
-        command_test_shell = None
-        if request.POST.get("repo") or request.POST.get("testdef_url"):
-
-            if request.POST.get("testdef_type") == "repo":
-                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_REPO)
-                test_shell_config = {
-                    "REPO_PARAMETER": str(request.POST.get("repo")),
-                    "TESTDEF_PARAMETER": str(request.POST.get("testdef"))
-                }
-            else:
-                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_URL)
-                test_shell_config = {
-                    "TESTDEF_URLS_PARAMETER": [str(request.POST.get("testdef_url"))]
-                }
-
-            expand_template(test_shell_template, test_shell_config)
-
-            command_test_shell = copy.deepcopy(COMMAND_TEST_SHELL)
-            command_test_shell_config = {
-                "TEST_SHELL_PARAMETER": test_shell_template
-            }
-            expand_template(command_test_shell, command_test_shell_config)
-
-        if request.POST.get("boot_options") != "":
-            action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
-            boot_cmds = request.POST.get("boot_options").replace("\r", "")
-            action_config = {
-                "DEPLOY_COMMAND_PARAMETER": deploy_command,
-                "DEPLOY_PARAMETER": image_template,
-                "BOOT_OPTIONS_PARAMETER": [str(x) for x in boot_cmds.split("\n")],
-                "COMMAND_TEST_SHELL": command_test_shell
-            }
-
-        else:
-            action_template = copy.deepcopy(ACTIONS_LINARO)
-            action_config = {
-                "DEPLOY_COMMAND_PARAMETER": deploy_command,
-                "DEPLOY_PARAMETER": image_template,
-                "COMMAND_TEST_SHELL": command_test_shell
-            }
-
-    command_submit = None
-    if request.POST.get("submit_stream"):
-        command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
-        command_submit_config = {
-            "SUBMIT_SERVER": "http://{0}{1}RPC2".format(
-                utils.get_fqdn(),
-                reverse('lava.home')),
-            "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
-        }
-        expand_template(command_submit, command_submit_config)
-
-    action_config["COMMAND_SUBMIT_RESULTS"] = command_submit
-
-    expand_template(action_template, action_config)
-
-    notify = None
-    if request.POST.get("notify"):
-        notify = ["%s" % str(x.strip()) for x in request.POST.get("notify").split(",")]
-    device_tags = None
-    if request.POST.get("device_tags"):
-        device_tags = ["%s" % str(x.strip()) for x in request.POST.get("device_tags").split(",")]
-
-    job_template = copy.deepcopy(DEFAULT_TEMPLATE)
-    default_config = {
-        "JOBNAME_PARAMETER": str(request.POST.get("job_name")),
-        "TIMEOUT_PARAMETER": int(request.POST.get("timeout")),
-        "DEVICE_TYPE_PARAMETER": str(request.POST.get("device_type")),
-        "NOTIFY_ON_INCOMPLETE_PARAMETER": notify,
-        "ACTIONS_PARAMETER": action_template,
-        "TAGS_PARAMETER": device_tags,
-    }
-
-    expand_template(job_template, default_config)
-
-    return job_template
-
-
 def remove_broken_string(line):
     # Check that the string is valid unicode.
     # This is not needed for python3.
@@ -1294,10 +1066,15 @@ def remove_broken_string(line):
         line['msg'] = '<<lava: broken line>>'
 
 
-@BreadCrumb("Job", parent=index, needs=['pk'])
+@BreadCrumb("Job {pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
+    # Refuse non-pipeline jobs
+    if not job.is_pipeline:
+        raise Http404()
+
+    # Is the job favorite?
     is_favorite = False
     if request.user.is_authenticated():
         try:
@@ -1307,7 +1084,20 @@ def job_detail(request, pk):
         except TestJobUser.DoesNotExist:
             is_favorite = False
 
-    template = "lava_scheduler_app/job.html"
+    description = description_data(job)
+    job_data = description.get('job', {})
+    action_list = job_data.get('actions', [])
+    pipeline = description.get('pipeline', {})
+
+    deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
+    boot_list = [item['boot'] for item in action_list if 'boot' in item]
+    test_list = [item['test'] for item in action_list if 'test' in item]
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    default_section = 'boot'  # to come from user profile later.
+
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1324,139 +1114,94 @@ def job_detail(request, pk):
         'available_content_types': simplejson.dumps(
             QueryCondition.get_similar_job_content_types()
         ),
+        'device_data': description.get('device', {}),
+        'job_data': job_data,
+        'pipeline_data': pipeline,
+        'deploy_list': deploy_list,
+        'boot_list': boot_list,
+        'test_list': test_list,
+        'job_tags': job.tags.all(),
     }
-    if job.is_pipeline:
-        description = description_data(job)
-        job_data = description.get('job', {})
-        action_list = job_data.get('actions', [])
-        pipeline = description.get('pipeline', {})
 
-        deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
-        boot_list = [item['boot'] for item in action_list if 'boot' in item]
-        test_list = [item['test'] for item in action_list if 'test' in item]
-        sections = []
-        for action in pipeline:
-            if 'section' in action:
-                sections.append({action['section']: action['level']})
-        default_section = 'boot'  # to come from user profile later.
-
-        # Is it the old log format?
-        if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-            if 'section' in request.GET:
-                log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-            else:
-                log_data = utils.folded_logs(job, default_section, sections, summary=True)
-                if not log_data:
-                    default_section = 'deploy'
-                    log_data = utils.folded_logs(job, default_section, sections, summary=True)
+    # Is the old or new v2 format?
+    if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+        if 'section' in request.GET:
+            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
         else:
-            template = "lava_scheduler_app/job_pipeline.html"
-            try:
-                with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                    # Compute the size of the file
-                    f_in.seek(0, 2)
-                    job_file_size = f_in.tell()
-
-                    if job_file_size >= job.size_limit:
-                        log_data = []
-                    else:
-                        # Go back to the start and load the file
-                        f_in.seek(0, 0)
-                        log_data = yaml.load(f_in, Loader=yaml.CLoader)
-
-                for line in log_data:
-                    if line["lvl"] == "results":
-                        case_id = TestCase.objects.filter(
-                            suite__job=job,
-                            suite__name=line["msg"]["definition"],
-                            name=line["msg"]["case"]).values_list(
-                                "id", flat=True)
-                        if case_id:
-                            line["msg"]["case_id"] = case_id[0]
-
-                if sys.version_info < (3, 0):
-                    for line in log_data:
-                        remove_broken_string(line)
-
-            except IOError:
-                log_data = []
-            except yaml.YAMLError:
-                log_data = None
+            log_data = utils.folded_logs(job, default_section, sections, summary=True)
+            if not log_data:
+                default_section = 'deploy'
+                log_data = utils.folded_logs(job, default_section, sections, summary=True)
 
         data.update({
-            'device_data': description.get('device', {}),
-            'job_data': job_data,
-            'pipeline_data': pipeline,
-            'deploy_list': deploy_list,
-            'boot_list': boot_list,
-            'test_list': test_list,
             'log_data': log_data if log_data else [],
             'invalid_log_data': log_data is None,
-            'job_tags': job.tags.all(),
             'default_section': default_section,
         })
 
-    log_file = job.output_file()
-    if log_file:
-        # FIXME: remove this second setting of job_file_size when V1 is removed
-        with log_file as f:
-            f.seek(0, 2)
-            job_file_size = f.tell()
+        return render(request, "lava_scheduler_app/job.html", data)
 
-        if job_file_size >= job.size_limit:
-            data.update({
-                'job_file_present': True,
-                'job_log_messages': None,
-                'levels': None,
-                'size_warning': job.size_limit,
-                'job_file_size': job_file_size,
-            })
-            # Is it the old log format?
-            if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-                template = loader.get_template("lava_scheduler_app/job.html")
-            else:
-                template = loader.get_template("lava_scheduler_app/job_pipeline.html")
-            return HttpResponse(template.render(data, request=request))
-
-        if not job.failure_comment:
-            job_errors = getDispatcherErrors(job.output_file())
-            if len(job_errors) > 0:
-                msg = job_errors[-1]
-                if msg != "ErrorMessage: None":
-                    job.failure_comment = msg
-                    job.save()
-
-        job_log_messages = getDispatcherLogMessages(job.output_file())
-        levels = defaultdict(int)
-        for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-            levels[kl] = 0
-        for level, msg, _ in job_log_messages:
-            levels[level] += 1
-        levels = sorted(levels.items(), key=lambda tup: logging._levelNames.get(tup[0]))
-        data.update({
-            'job_file_present': True,
-            'job_log_messages': job_log_messages,
-            'levels': levels,
-            'job_file_size': job_file_size,
-        })
     else:
+        try:
+            with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+                # Compute the size of the file
+                f_in.seek(0, 2)
+                job_file_size = f_in.tell()
+
+                if job_file_size >= job.size_limit:
+                    log_data = []
+                    data["size_warning"] = job.size_limit
+                else:
+                    # Go back to the start and load the file
+                    f_in.seek(0, 0)
+                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
+
+            # list all related results
+            for line in log_data:
+                if line["lvl"] == "results":
+                    case_id = TestCase.objects.filter(
+                        suite__job=job,
+                        suite__name=line["msg"]["definition"],
+                        name=line["msg"]["case"]).values_list(
+                            "id", flat=True)
+                    if case_id:
+                        line["msg"]["case_id"] = case_id[0]
+
+            if sys.version_info < (3, 0):
+                for line in log_data:
+                    remove_broken_string(line)
+
+        except IOError:
+            log_data = []
+        except yaml.YAMLError:
+            log_data = None
+
+        # Get lava.job result if available
+        lava_job_result = None
+        try:
+            lava_job_obj = TestCase.objects.get(suite__job=job,
+                                                suite__name="lava",
+                                                name="job")
+            # Only print it if it's a failure
+            if lava_job_obj.result == TestCase.RESULT_FAIL:
+                lava_job_result = lava_job_obj.action_metadata
+        except TestCase.DoesNotExist:
+            pass
+
         data.update({
-            'job_file_present': False,
+            'log_data': log_data if log_data else [],
+            'invalid_log_data': log_data is None,
+            'lava_job_result': lava_job_result
         })
 
-    if "repeat_count" in job.definition:
-        data.update({
-            'expand': True,
-        })
-    template_obj = loader.get_template(template)
-    return HttpResponse(template_obj.render(data, request=request))
+        return render(request, "lava_scheduler_app/job_pipeline.html", data)
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
-    description = description_data(job) if job.is_pipeline else {}
+    description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
     return HttpResponse(template.render(
         {
@@ -1471,8 +1216,6 @@ def job_definition(request, pk):
 
 def job_description_yaml(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.is_pipeline:
-        raise Http404()
     filename = description_filename(job)
     if not filename:
         raise Http404()
@@ -1487,32 +1230,8 @@ def job_description_yaml(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
-    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
-    return response
-
-
-@BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
-def expanded_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
-    template = loader.get_template("lava_scheduler_app/expanded_job_definition.html")
-    return HttpResponse(template.render(
-        {
-            'job': job,
-            'job_file_present': bool(log_file),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(expanded_job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-        },
-        request=request))
-
-
-def expanded_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    response = HttpResponse(job.definition, content_type='text/plain')
-    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
-        job.id
     return response
 
 
@@ -1535,33 +1254,9 @@ def multinode_job_definition(request, pk):
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
-    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
         "attachment; filename=multinode_%s" % filename
-    return response
-
-
-@BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
-def vmgroup_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
-    template = loader.get_template("lava_scheduler_app/vmgroup_job_definition.html")
-    return HttpResponse(template.render(
-        {
-            'job': job,
-            'job_file_present': bool(log_file),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(vmgroup_job_definition, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-        },
-        request=request))
-
-
-def vmgroup_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
-    response['Content-Disposition'] = \
-        "attachment; filename=vmgroup_job_%d.json" % job.id
     return response
 
 
@@ -1632,8 +1327,6 @@ def favorite_jobs(request, username=None):
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.is_pipeline:
-        raise Http404
     # If this is a new log format, redirect to the job page
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
@@ -1662,16 +1355,13 @@ def job_complete_log(request, pk):
             'default_section': default_section,
             'log_data': log_data,
             'pipeline_data': pipeline,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
-            # 'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_complete_log, pk=pk),
         },
         request=request))
 
 
 def job_section_log(request, job, log_name):
     job = get_restricted_job(request.user, job, request=request)
-    if not job.is_pipeline:
-        raise Http404
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
@@ -1732,29 +1422,6 @@ def job_status(request, pk):
     return response
 
 
-def job_pipeline_sections(request, pk):
-    job = get_restricted_job(request.user, pk)
-    if not job.is_pipeline:
-        raise Http404
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        if 'section' in action:
-            sections.append({action['section']: action['level']})
-    template = loader.get_template("lava_scheduler_app/_section_logging.html")
-    response = HttpResponse(template.render(
-        {
-            'job': job,
-            'pipeline_data': pipeline,
-            'sections': sections,
-            'default_section': 'any',
-        }, request=request))
-    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response['X-Sections'] = '1'
-    return response
-
-
 def job_pipeline_timing(request, pk):
     job = get_restricted_job(request.user, pk)
     try:
@@ -1763,8 +1430,8 @@ def job_pipeline_timing(request, pk):
         raise Http404
 
     # start and end patterns
-    pattern_start = re.compile("^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)$")
-    pattern_end = re.compile('^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(duration (?P<duration>\\d+:\\d+:\\d+)\\)$')
+    pattern_start = re.compile("^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)")
+    pattern_end = re.compile('^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(duration (?P<duration>\\d+:\\d+:\\d+)\\)')
 
     timings = {}
     total_duration = 0
@@ -1837,74 +1504,6 @@ def job_pipeline_timing(request, pk):
     return HttpResponse(json.dumps(response_dict), content_type='text/json')
 
 
-def job_pipeline_incremental(request, pk):
-    # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
-    job = get_restricted_job(request.user, pk)
-    summary = int(request.GET.get('summary', 0)) == 1
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        if 'section' in action:
-            sections.append({action['section']: action['level']})
-    default_section = str(request.GET.get('section', 'deploy'))
-    if 'section' in request.GET:
-        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=summary)
-    else:
-        log_data = utils.folded_logs(job, default_section, sections, summary=summary, increment=True)
-        if not log_data:
-            default_section = 'deploy'
-            log_data = utils.folded_logs(job, default_section, sections, summary=summary)
-    template = loader.get_template("lava_scheduler_app/_structured_logdata.html")
-    response = HttpResponse(template.render(
-        {
-            'job': TestJob.objects.get(pk=pk),
-            'sections': sections,
-            'default_section': 'any',
-            'log_data': log_data,
-        },
-        request=request))
-    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
-@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
-def job_log_file(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    if job.is_pipeline:
-        return redirect(job_complete_log, pk=pk)
-    log_file = job.output_file()
-    if not log_file:
-        raise Http404
-
-    with log_file as f:
-        f.seek(0, 2)
-        job_file_size = f.tell()
-
-    size_warning = 0
-    if job_file_size >= job.size_limit:
-        size_warning = job.size_limit
-        content = None
-    else:
-        content = formatLogFile(job.output_file())
-    template = loader.get_template("lava_scheduler_app/job_log_file.html")
-    return HttpResponse(template.render(
-        {
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-            'job': job,
-            'job_file_present': bool(log_file),
-            'sections': content,
-            'size_warning': size_warning,
-            'job_file_size': job_file_size,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
-            'show_failure': job.can_annotate(request.user),
-            'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
-        },
-        request=request))
-
-
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     # Old style jobs
@@ -1923,21 +1522,6 @@ def job_log_file_plain(request, pk):
             return response
     except IOError:
         raise Http404
-
-
-def job_log_incremental(request, pk):
-    start = int(request.GET.get('start', 0))
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(start)
-    new_content = log_file.read()
-    m = getDispatcherLogMessages(StringIO.StringIO(new_content))
-    response = HttpResponse(
-        simplejson.dumps(m), content_type='application/json')
-    response['X-Current-Size'] = str(start + len(new_content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
 
 
 def job_log_pipeline_incremental(request, pk):
@@ -1989,62 +1573,6 @@ def job_log_pipeline_incremental(request, pk):
     return response
 
 
-def job_full_log_incremental(request, pk):
-    start = int(request.GET.get('start', 0))
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(start)
-    new_content = log_file.read()
-    nl_index = new_content.rfind('\n', -NEWLINE_SCAN_SIZE)
-    if nl_index >= 0:
-        new_content = new_content[:nl_index + 1]
-    m = formatLogFile(StringIO.StringIO(new_content))
-    response = HttpResponse(
-        simplejson.dumps(m), content_type='application/json')
-    response['X-Current-Size'] = str(start + len(new_content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
-LOG_CHUNK_SIZE = 512 * 1024
-NEWLINE_SCAN_SIZE = 80
-
-
-def job_output(request, pk):
-    start = request.GET.get('start', 0)
-    try:
-        start = int(start)
-    except ValueError:
-        return HttpResponseBadRequest("invalid start")
-    count_present = 'count' in request.GET
-    job = get_restricted_job(request.user, pk)
-    log_file = job.output_file()
-    log_file.seek(0, os.SEEK_END)
-    size = int(request.GET.get('count', log_file.tell()))
-    if size - start > LOG_CHUNK_SIZE and not count_present:
-        log_file.seek(-LOG_CHUNK_SIZE, os.SEEK_END)
-        content = log_file.read(LOG_CHUNK_SIZE)
-        nl_index = content.find('\n', 0, NEWLINE_SCAN_SIZE)
-        if nl_index > 0 and not count_present:
-            content = content[nl_index + 1:]
-        skipped = size - start - len(content)
-    else:
-        skipped = 0
-        log_file.seek(start, os.SEEK_SET)
-        content = log_file.read(size - start)
-    nl_index = content.rfind('\n', -NEWLINE_SCAN_SIZE)
-    if nl_index >= 0 and not count_present:
-        content = content[:nl_index + 1]
-    response = HttpResponse(content)
-    if skipped:
-        response['X-Skipped-Bytes'] = str(skipped)
-    response['X-Current-Size'] = str(start + len(content))
-    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
-        response['X-Is-Finished'] = '1'
-    return response
-
-
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
@@ -2053,11 +1581,6 @@ def job_cancel(request, pk):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
-        elif job.is_vmgroup:
-            vmgroup_jobs = TestJob.objects.filter(
-                vm_group=job.vm_group)
-            for vmgroup_job in vmgroup_jobs:
-                vmgroup_job.cancel(request.user)
         else:
             job.cancel(request.user)
         return redirect(job)
@@ -2092,14 +1615,8 @@ def job_resubmit(request, pk):
                 else:
                     response_data["job_id"] = job.id
 
-                if job.is_pipeline:
-                    return HttpResponseRedirect(
-                        reverse('lava.scheduler.job.detail', args=[job.pk]))
-                else:
-                    template = loader.get_template(
-                        "lava_scheduler_app/job_submit.html")
-                    return HttpResponse(
-                        template.render(response_data, request=request))
+                return HttpResponseRedirect(
+                    reverse('lava.scheduler.job.detail', args=[job.pk]))
 
             except Exception as e:
                 response_data["error"] = str(e)
@@ -2119,33 +1636,8 @@ def job_resubmit(request, pk):
                                         content_type="application/json")
             if job.is_multinode:
                 definition = job.multinode_definition
-            elif job.is_vmgroup:
-                definition = job.vmgroup_definition
             else:
                 definition = job.display_definition
-
-            if request.user != job.owner and not request.user.is_superuser \
-               and not utils.is_member(request.user, job.owner):
-                obj = simplejson.loads(definition)
-
-                # Iterate through the objects in the JSON and pop (remove)
-                # the bundle stream path in submit_results action once we find it.
-                for key in obj:
-                    if key == "actions":
-                        for i in xrange(len(obj[key])):
-                            if obj[key][i]["command"] == \
-                                    "submit_results_on_host" or \
-                                    obj[key][i]["command"] == "submit_results":
-                                for key1 in obj[key][i]:
-                                    if key1 == "parameters":
-                                        for key2 in obj[key][i][key1]:
-                                            if key2 == "stream":
-                                                obj[key][i][key1][key2] = ""
-                                                break
-                definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
-                response_data["resubmit_warning"] = \
-                    "The bundle stream was removed because you are neither the submitter "\
-                    "nor in the same group as the submitter. Please provide a bundle stream."
 
             try:
                 response_data["definition_input"] = definition
@@ -2298,20 +1790,7 @@ class RecentJobsView(JobTableView):
         self.device = device
 
     def get_queryset(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "requested_device",
-            "requested_device_type",
-            "submitter",
-            "user",
-            "group",
-        ).extra(
-            select={'duration_sort': 'end_time - start_time'}
-        ).filter(
-            actual_device=self.device
-        ).order_by(
-            '-submit_time'
-        )
+        return all_jobs_with_custom_sort().filter(actual_device=self.device)
 
 
 class TransitionView(JobTableView):
@@ -2359,12 +1838,12 @@ class DTHealthHistoryView(JobTableView):
         states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
 
         return DeviceStateTransition.objects.select_related(
-            'device__hostname', 'created_by'
+            'device', 'created_by'
         ).filter(
             (Q(old_state__in=states) | Q(new_state__in=states)),
             device__device_type=self.device_type
         ).order_by(
-            'device__hostname',
+            'device',
             '-created_on'
         )
 
@@ -2469,6 +1948,7 @@ def device_detail(request, pk):
             mismatch = not os.path.exists(devicetype_file)
 
     template = loader.get_template("lava_scheduler_app/device.html")
+    device_can_admin = device.can_admin(request.user)
     return HttpResponse(template.render(
         {
             'device': device,
@@ -2480,23 +1960,22 @@ def device_detail(request, pk):
             'transition_table': trans_table,
             'recent_job_table': recent_ptable,
             'show_forcehealthcheck':
-                not settings.ARCHIVED and
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status not in [Device.RETIRED] and
                 not device.device_type.disable_health_check and
                 device.get_health_check(),
-            'can_admin': device.can_admin(request.user),
+            'can_admin': device_can_admin,
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
             'show_maintenance':
-                device.can_admin(request.user) and
+                device_can_admin and
                 device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
-            'edit_description': device.can_admin(request.user),
-            'show_online': (device.can_admin(request.user) and
+            'edit_description': device_can_admin,
+            'show_online': (device_can_admin and
                             device.status in [Device.OFFLINE, Device.OFFLINING]),
-            'show_restrict': (device.is_public and device.can_admin(request.user) and
+            'show_restrict': (device.is_public and device_can_admin and
                               device.status not in [Device.RETIRED]),
-            'show_pool': (not device.is_public and device.can_admin(request.user) and
+            'show_pool': (not device.is_public and device_can_admin and
                           device.status not in [Device.RETIRED] and not
                           device.device_type.owners_only),
             'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
@@ -2787,33 +2266,6 @@ def healthcheck(request):
         request=request))
 
 
-class PipelineJobsView(JobTableView):
-
-    def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(is_pipeline=True)
-
-
-@BreadCrumb("Pipeline", parent=index)
-def pipeline(request):
-    pipeline_data = PipelineJobsView(request, model=TestJob,
-                                     table_class=JobTable)
-    pipeline_ptable = JobTable(pipeline_data.get_table_data(),)
-    config = RequestConfig(request,
-                           paginate={"per_page": pipeline_ptable.length})
-    config.configure(pipeline_ptable)
-    template = loader.get_template("lava_scheduler_app/pipelinejobs.html")
-    return HttpResponse(template.render(
-        {
-            "times_data": pipeline_ptable.prepare_times_data(pipeline_data),
-            "terms_data": pipeline_ptable.prepare_terms_data(pipeline_data),
-            "search_data": pipeline_ptable.prepare_search_data(pipeline_data),
-            "discrete_data": pipeline_ptable.prepare_discrete_data(pipeline_data),
-            'pipeline_table': pipeline_ptable,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(pipeline),
-        },
-        request=request))
-
-
 class QueueJobsView(JobTableView):
 
     def get_queryset(self):
@@ -2957,103 +2409,3 @@ def similar_jobs(request, pk):
         "%s?entity=%s&conditions=%s" % (
             reverse('lava.results.query_custom'),
             entity, conditions))
-
-
-@BreadCrumb("Migration", parent=index)
-def migration(request):
-    # with no devices, there is nothing to do, so start at 100%
-    # only once there are devices do the calculations make any sense.
-    active_percent = 100
-    exclusion = 100
-    hc_percent = 100
-    no_hc_percent = 100
-    v1_problems = {}
-    db_healthchecks = {}
-    no_healthcheck = {}
-    exclusive = {}
-
-    # total active
-    active = Device.objects.filter(
-        ~Q(status=Device.RETIRED),
-        Q(device_type__display=True))
-    active_count = len(active)
-
-    active_v1 = Device.objects.filter(
-        Q(is_pipeline=False), ~Q(status=Device.RETIRED),
-        Q(device_type__display=True)
-    )
-    active_v1_count = len(active_v1)
-    active_health = active.filter(device_type__disable_health_check=False)
-    active_h_count = active_health.count()
-
-    healthchecks = active_h_count
-
-    # all active devices (V1 and V2), including disabled healthchecks
-    for dev in active_v1:
-        # all active devices which support V1 at all need migration
-        v1_problems[dev.hostname] = dev.get_absolute_url()
-        if dev.device_type.health_check_job not in ['', None]:
-            # all active devices with a database health check need migration.
-            healthchecks -= 1
-            db_healthchecks[dev.hostname] = dev.get_absolute_url()
-
-    # check V2 exclusive, including disabled healthchecks
-    v2_devices = Device.objects.filter(
-        Q(is_pipeline=True), ~Q(status=Device.RETIRED),
-        Q(device_type__display=True))
-    for dev in v2_devices:
-        if not dev.is_exclusive:
-            # highlight devices which are not exclusive to V2
-            exclusive[dev.hostname] = dev.get_absolute_url()
-
-    # iterate over all devices, excluding disabled healthchecks
-    for dev in active_health:
-        hc = dev.get_health_check()
-        # Health checks are not pulled from the database anymore: only count
-        # device that are missing a health-check file.
-        if not hc:
-            no_healthcheck[dev.hostname] = dev.get_absolute_url()
-
-    if active_count:
-        active_percent = int(100 * (active_count - active_v1_count) / active_count)
-        exclusion = int(100 * (active_count - len(exclusive.keys())) / active_count)
-    if active_h_count:
-        hc_percent = int(100 * healthchecks / active_h_count)
-        no_hc_percent = int(100 * (active_h_count - len(no_healthcheck.keys())) / active_h_count)
-
-    templates = {}
-    # V2 devices without a health check
-    # lookup the appropriate health check filename
-    for hostname, _ in no_healthcheck.items():
-        device = Device.objects.get(hostname=hostname)
-        extends = device.get_extends()
-        if not extends:
-            templates[hostname] = ''
-            continue
-        templates[hostname] = "%s.yaml" % extends
-
-    template = loader.get_template("lava_scheduler_app/migration.html")
-    return HttpResponse(template.render(
-        {
-            # 'migration_table': migration_ptable,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(migration),
-            'v1_problems': v1_problems,
-            'db_healthchecks': db_healthchecks,
-            'no_healthcheck': no_healthcheck,
-            'exclusive_count': active_count - len(exclusive.keys()),
-            'exclusive': exclusive,
-            'exclusion': exclusion,
-            'active_devices': active_count,
-            'active_health': active_h_count,
-            'active_v1_devices': active_v1_count,
-            'active_level': active_count - active_v1_count,
-            'active_percent': active_percent,
-            'healthchecks': healthchecks,
-            'health_check_level': active_h_count - healthchecks,
-            'hc_percent': hc_percent,
-            'nonhc_devices': active_h_count - len(no_healthcheck.keys()),
-            'no_hc_percent': no_hc_percent,
-            'templates': templates,
-            'context_help': BreadCrumbTrail.show_help(migration),
-        },
-        request=request))

@@ -13,7 +13,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker
 )
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import infrastructure_error
 
 
 class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors

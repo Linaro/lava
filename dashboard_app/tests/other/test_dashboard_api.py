@@ -127,23 +127,6 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
         }),
     ]
 
-    def test_bundles(self):
-        """
-        Make a bunch of bundles (all in a public branch) and check that
-        they are returned by the XML-RPC request.
-        """
-        with fixtures.created_bundle_streams(self.bundle_streams), fixtures.created_bundles(self.bundles):
-            results = self.xml_rpc_call('bundles', self.query)
-            self.assertEqual(len(results), len(self.expected_results))
-            with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
-                for result, expected_result in loop_items:
-                    self.assertEqual(
-                        result['content_filename'],
-                        expected_result['content_filename'])
-                    self.assertEqual(
-                        result['content_sha1'],
-                        expected_result['content_sha1'])
-
 
 class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
 

@@ -1,5 +1,4 @@
 User-agent: *
-Disallow: /dashboard/
 Disallow: /scheduler/
 Disallow: /results/
 Disallow: /api/

@@ -7,12 +7,16 @@ import unittest
 import logging
 import tempfile
 # pylint: disable=superfluous-parens,ungrouped-imports
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
-from lava_dispatcher.pipeline.action import Timeout
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.test.utils import DummyLogger
+from lava_dispatcher.action import Timeout
+from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.test.utils import DummyLogger
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+)
 
 # pylint: disable=too-many-branches,too-many-public-methods
 # pylint: disable=too-many-nested-blocks
@@ -87,6 +91,35 @@ class TestTemplates(unittest.TestCase):
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
 
+    def test_all_template_connections(self):
+        path = os.path.dirname(CONFIG_PATH)
+        templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
+        self.assertNotEqual([], templates)
+        for template in templates:
+            name = os.path.basename(template)
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            data += "{% set connection_command = 'telnet calvin 6080' %}"
+            self.validate_data('device', data)
+            test_template = prepare_jinja_template('testing-01', data)
+            rendered = test_template.render()
+            template_dict = yaml.load(rendered)
+            self.assertIn('connect', template_dict['commands'])
+            self.assertNotIn(
+                'connections',
+                template_dict['commands'], msg="%s - failed support for connection_list syntax" % name)
+            data = "{%% extends '%s' %%}" % os.path.basename(template)
+            data += "{% set connection_list = ['uart0'] %}"
+            data += "{% set connection_commands = {'uart1': 'telnet calvin 6080'} %}"
+            data += "{% set connection_tags = {'uart1': ['primary']} %}"
+            self.validate_data('device', data)
+            test_template = prepare_jinja_template('testing-01', data)
+            rendered = test_template.render()
+            template_dict = yaml.load(rendered)
+            self.assertNotIn('connect', template_dict['commands'])
+            self.assertIn(
+                'connections',
+                template_dict['commands'], msg="%s - missing connection_list syntax" % name)
+
     def test_rendering(self):
         self.assertFalse(CONFIG_PATH.startswith('/etc/'))
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'db410c.jinja2')) as hikey:
@@ -108,6 +141,7 @@ class TestTemplates(unittest.TestCase):
         data = """{% extends 'nexus4.jinja2' %}
 {% set adb_serial_number = 'R42D300FRYP' %}
 {% set fastboot_serial_number = 'R42D300FRYP' %}
+{% set connection_command = 'adb -s ' + adb_serial_number +' shell' %}
 """
         test_template = prepare_jinja_template('nexus4-01', data)
         rendered = test_template.render()
@@ -626,6 +660,32 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('user', params)
         self.assertIn('options', params)
         self.assertIn('identity_file', params)
+
+    def test_hikey620_uarts(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        job_ctx = {}
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        validate_device(template_dict)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('commands', template_dict)
+        self.assertNotIn('connect', template_dict['commands'])
+        self.assertIn('connections', template_dict['commands'])
+        self.assertIn('uart0', template_dict['commands']['connections'])
+        self.assertIn('uart1', template_dict['commands']['connections'])
+        self.assertIn('tags', template_dict['commands']['connections']['uart1'])
+        self.assertIn('primary', template_dict['commands']['connections']['uart1']['tags'])
+        self.assertNotIn('tags', template_dict['commands']['connections']['uart0'])
+        self.assertEqual(
+            template_dict['commands']['connections']['uart0']['connect'],
+            'telnet localhost 4002')
+        self.assertEqual(
+            template_dict['commands']['connections']['uart1']['connect'],
+            'telnet 192.168.1.200 8001')
 
     def test_hikey960_grub(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi960-hikey-01.jinja2')) as hikey:
@@ -1152,4 +1212,19 @@ class TestTemplates(unittest.TestCase):
         template_dict = yaml.load(rendered)
         self.assertEqual('docker', template_dict['device_type'])
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
-        self.assertEqual({'docker': None}, template_dict['actions']['boot']['methods'])
+        self.assertEqual({'docker': {'options': {'cpus': 0.0, 'memory': 0, 'volumes': []}}},
+                         template_dict['actions']['boot']['methods'])
+
+        data = """{% extends 'docker.jinja2' %}
+{% set docker_cpus=2.1 %}
+{% set docker_memory="120M" %}
+{% set docker_volumes=["/home", "/tmp"] %}"""
+        self.assertTrue(self.validate_data('docker-01', data))
+        test_template = prepare_jinja_template('docker-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('docker', template_dict['device_type'])
+        self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
+        self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
+                                                 'volumes': ["/home", "/tmp"]}}},
+                         template_dict['actions']['boot']['methods'])

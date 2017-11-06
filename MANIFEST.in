@@ -24,19 +24,15 @@ recursive-include lava_scheduler_app/tests/device-types *.jinja2
 recursive-include lava_scheduler_app/tests/devices *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
-recursive-include doc/v1/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/examples *.yaml *.txt *.py
 recursive-include doc/v2/_templates *.html
 include instance.template
 include doc/*
 include doc/deprecated/*
-include doc/v1/*
 include doc/v2/*
 include doc/_static/*
-include doc/v1/_static/*
 include doc/v2/_static/*
-include doc/v1/linaro_dashboard_bundle/*
 include man/*
 include etc/lava-master
 include etc/lava-master.init

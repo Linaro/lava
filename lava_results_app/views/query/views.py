@@ -728,10 +728,10 @@ def _export_query(query_results, content_type, filename):
     # Remove non-relevant columns for CSV file.
     removed_fields = [
         # TestJob fields:
-        "_results_bundle", "_results_bundle_id", "_results_link", "user_id",
-        "actual_device_id", "definition", "group_id", "id",
-        "original_definition", "requested_device_id", "sub_id", "submit_token",
-        "submit_token_id", "submitter_id", "testdata", "testsuite",
+        "_results_link", "user_id", "actual_device_id", "definition",
+        "group_id", "id", "original_definition", "requested_device_id",
+        "sub_id", "submit_token", "submit_token_id", "submitter_id",
+        "testdata", "testsuite",
         # TestSuite fields:
         "job_id",
         # TestCase fields:

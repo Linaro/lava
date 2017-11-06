@@ -166,7 +166,7 @@ examples in the current unit tests.
 
 #. Create a device configuration using the download link of a real device
    dictionary which can run the testjob and save this file to
-   ``lava_dispatcher/pipeline/devices``.
+   ``lava_dispatcher/devices``.
 
 #. Add a function to a suitable Factory class to use the device config file to
    create a device and use the parser to create a Job instance by following the
@@ -674,7 +674,7 @@ https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
 
 LAVA dispatcher now supports python3 testing but **only** for the pipeline unit
 tests. Code changes to the V2 dispatcher code (i.e. in the
-``lava_dispatcher/pipeline`` tree) **must** be sufficiently aware of Python3 to
+``lava_dispatcher`` tree) **must** be sufficiently aware of Python3 to
 not break the unit tests when run using python3.
 
 LAVA is not yet ready to use python 3.x support at runtime, particularly in
@@ -690,7 +690,7 @@ The ``./ci-run`` script for ``lava-dispatcher`` shows how to run the python3
 unit tests::
 
  # to run python3 unit tests, you can use
- # python3 -m unittest discover -v lava_dispatcher.pipeline
+ # python3 -m unittest discover -v lava_dispatcher
  # but the python3 dependencies are not automatically installed.
 
 The list of python3 dependencies needed for the pipeline unit tests is

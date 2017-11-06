@@ -92,7 +92,6 @@ def check_packaging(app_configs, **kwargs):
     _package_status("lava-dispatcher", errors)
     _package_status("lava-server", errors)
 
-    _package_symlinks("dashboard_app", errors)
     _package_symlinks("lava_dispatcher", errors)
     _package_symlinks("lava_results_app", errors)
     _package_symlinks("lava_scheduler_app", errors)

@@ -63,7 +63,7 @@ Don't worry about running this example yourself at this stage. The files
 themselves may be useful for reference. The device YAML file comes from the
 lava-dispatcher unit tests:
 
-https://git.linaro.org/lava/lava-dispatcher.git/tree/lava_dispatcher/pipeline/devices/bbb-01.yaml
+https://git.linaro.org/lava/lava-dispatcher.git/tree/lava_dispatcher/devices/bbb-01.yaml
 
 The job submission YAML used in the example comes from the lava-team
 refactoring repository of functional tests:
@@ -72,7 +72,7 @@ https://git.linaro.org/lava-team/refactoring.git/tree/bbb-uboot-ramdisk.yaml
 
 .. code-block:: yaml
 
- device: !!python/object/new:lava_dispatcher.pipeline.device.NewDevice
+ device: !!python/object/new:lava_dispatcher.device.NewDevice
   dictitems:
     actions:
       boot:

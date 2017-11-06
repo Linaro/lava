@@ -12,10 +12,6 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, IntegrityError
 from lava_server.settings.getsettings import Settings
-from linaro_dashboard_bundle.errors import DocumentFormatError
-from linaro_dashboard_bundle.evolution import DocumentEvolution
-from linaro_dashboard_bundle.io import DocumentIO
-from json_schema_validator.extensions import datetime_extension, timedelta_extension
 
 
 PROFILE_LOGGING = False
@@ -962,7 +958,7 @@ def get_ldap_user_properties(ldap_user):
     user_properties = {}
     if server_uri is not None:
         conn = ldap.initialize(server_uri)
-        if bind_dn and bind_password:
+        if user_dn:
             conn.simple_bind_s(bind_dn, bind_password)
             try:
                 result = conn.search_s(user_dn, search_scope,

@@ -22,9 +22,9 @@ from lava_results_app.dbutils import (
     export_testcase,
 )
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.device import PipelineDevice
-from lava_dispatcher.pipeline.test.test_defs import allow_missing_path
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.test.test_defs import allow_missing_path
 
 if django.VERSION > (1, 10):
     from django.urls.exceptions import NoReverseMatch

@@ -37,7 +37,7 @@ import zmq.auth
 from zmq.auth.thread import ThreadAuthenticator
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
 from lava_scheduler_app.models import TestJob
@@ -247,6 +247,9 @@ class Command(BaseCommand):
         try:
             message_lvl = scanned["lvl"]
             message_msg = scanned["msg"]
+        except TypeError:
+            self.logger.error("[%s] not a dictionary, dropping", job_id)
+            return
         except KeyError:
             self.logger.error(
                 "[%s] Invalid log line, missing \"lvl\" or \"msg\" keys: %s",
@@ -744,7 +747,9 @@ class Command(BaseCommand):
                     self.handle_canceling()
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")
-                continue
+                # Closing the database connection will force Django to reopen
+                # the connection
+                connection.close()
 
         # Drop controler socket: the protocol does handle lost messages
         self.logger.info("[CLOSE] Closing the controler socket and dropping messages")

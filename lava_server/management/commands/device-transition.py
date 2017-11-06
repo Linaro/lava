@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
     def handle_export(self, old_state, new_state, format_as_csv):
         """ Output the device transitions """
-        print old_state, new_state, format_as_csv
+        print(old_state, new_state, format_as_csv)
 
         condition = Q()
         if old_state:
@@ -94,4 +94,4 @@ class Command(BaseCommand):
                 })
 
         else:
-            print serializers.serialize("yaml", transitions)
+            print(serializers.serialize("yaml", transitions))

@@ -8,17 +8,6 @@ debian:
       jquery-1.11.0.js: jquery.js
       jquery-1.11.0.min.js: jquery.min.js
     version: '1.10'
-  - package: libjs-jquery-cookie
-    directory: /usr/share/javascript/jquery-cookie/
-    lava_directory: lava_server/lava-server/js/
-    replacements:
-      jquery.cookie.js: jquery.cookie.js
-  - package: libjs-jquery-watermark
-    directory: /usr/share/javascript/jquery-watermark/
-    lava_directory: lava_server/lava-server/js/
-    replacements:
-      jquery.watermark.js: jquery.watermark.js
-      jquery.watermark.min.js: jquery.watermark.min.js
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: dashboard_app/static/dashboard_app/js/
@@ -29,10 +18,6 @@ debian:
       jquery.flot.canvas.js: jquery.flot.canvas.js
       jquery.flot.min.js: jquery.flot.min.js
       jquery.flot.js: jquery.flot.js
-      jquery.flot.selection.min.js: jquery.flot.selection.min.js
-      jquery.flot.selection.js: jquery.flot.selection.js
-      jquery.flot.stack.min.js: jquery.flot.stack.min.js
-      jquery.flot.stack.js: jquery.flot.stack.js
       jquery.flot.time.js: jquery.flot.time.js
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
@@ -41,12 +26,6 @@ debian:
       jquery.flot.min.js: jquery.flot.min.js
       jquery.flot.js: jquery.flot.js
       jquery.flot.stack.js: jquery.flot.stack.js
-  - package: libjs-excanvas
-    directory: /usr/share/javascript/excanvas/
-    lava_directory: dashboard_app/static/dashboard_app/js/
-    replacements:
-      excanvas.js: excanvas.js
-      excanvas.min.js: excanvas.min.js
   - package: libjs-jquery-ui
     directory: /usr/share/javascript/jquery-ui/ui/
     lava_directory: lava_server/lava-server/js/
@@ -62,10 +41,8 @@ debian:
       jquery-linedtextarea.js: jquery-linedtextarea.min.js
       job-submit.js: job-submit.min.js
       job-definition.js: job-definition.min.js
-      lava-job-polling.js: lava-job-polling.min.js
       favorite-jobs.js: favorite-jobs.min.js
       jquery.details.js: jquery.details.min.js
-      job-wizard.js: job-wizard.min.js
       similar-jobs.js: similar-jobs.min.js
       jquery.jeditable.js: jquery.jeditable.min.js
       anchor-v3.2.0.js: anchor-v3.2.0.min.js
@@ -73,20 +50,9 @@ debian:
     lava_directory: dashboard_app/static/dashboard_app/js/
     destination: dashboard_app/static/dashboard_app/js/
     files:
-      bug-links.js: bug-links.min.js
-      image-report-editor.js: image-report-editor.min.js
-      image-chart.js: image-chart.min.js
-      filter-edit.js: filter-edit.min.js
-      filter-detail.js: filter-detail.min.js
-      editable_attributes.js: editable_attributes.min.js
       jquery.flot.labels.js: jquery.flot.labels.min.js
       jquery.flot.dashes.js: jquery.flot.dashes.min.js
-      test_result_detail.js: test_result_detail.min.js
-      jquery.formset.js: jquery.formset.min.js
-      jstorage.js: jstorage.min.js
-      bootstrap-editable.js: bootstrap-editable.min.js
       jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
-      image-report.js: image-report.min.js
   - uglify:
     lava_directory: lava_results_app/static/lava_results_app/js/
     destination: lava_results_app/static/lava_results_app/js/
@@ -101,6 +67,3 @@ debian:
     files:
       bootbox.js: bootbox.min.js
       bootstrap-3.3.7.js: bootstrap-3.3.7.min.js
-      jquery.validate.js: jquery.validate.min.js
-      jquery.pseudofocus.js: jquery.pseudofocus.min.js
-      jquery.steps.js: jquery.steps.min.js

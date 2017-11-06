@@ -2,8 +2,8 @@
 
 .. _installation:
 
-First steps installing LAVA V2
-##############################
+First steps installing LAVA
+###########################
 
 Initial LAVA Installation
 *************************
@@ -134,25 +134,14 @@ To install a single master instance and create a superuser, refer to
 :ref:`debian_installation` installation.
 
 LAVA V1 used to support a `distributed_instance` installation method. This has
-been **deprecated** in V2; instead there is a much improved architecture for
+been **removed** in V2; instead there is a much improved architecture for
 remote workers using :term:`ZMQ`.
 
 Detailed instructions for setting up workers follows - first, think about the
 kind of configuration needed for your instance.
 
-Running V1 only
-===============
-
-If you only wish to use LAVA V1, then you're reading the wrong documentation -
-look at the `V1 docs <../v1/>`_ instead. But be aware that LAVA V1 will be
-reaching end of life soon, so this would be a *frozen* instance.
-
-.. warning:: Installing any updates of ``lava-server`` or ``lava-dispatcher``
-   onto a *frozen* instance after the removal of V1 support will cause
-   permanent data loss.
-
-Running V2 only
-===============
+Master with one or more workers
+===============================
 
 You can choose whether the master has devices configured locally or only uses
 devices via one or more remote workers. If you are installing and learning how
@@ -165,8 +154,8 @@ Configuration outline - start simple...
 * Configure the master as a :ref:`single_instance`. It will need the
   ``lava-server`` and ``lava-dispatcher`` packages installed.
 
-* Use the Django administrative interface to define the device types likely to
-  be used with this instance.
+* Use the Django administrative interface or command line tools to define the
+  device types likely to be used with this instance.
 
 * Prepare Device Dictionaries for your devices.
 
@@ -214,54 +203,6 @@ recommended to configure authentication and encryption for their ZMQ messages.
   are properly configured and working.
 
 * Repeat for additional workers as needed.
-
-Running a mix of V1 and V2
-==========================
-
-.. warning:: Administrators of instances which mix V1 and V2 must consider that
-   V1 support **will** be removed during 2017, while V2 support will continue.
-   If you are running a mixed installation, we **strongly** encourage you to
-   get involved in the migration to V2 and subscribe to the :ref:`support
-   mailing lists <mailing_lists>` to ensure a clean migration for your V1
-   devices before they stop working.
-
-Layout
-------
-
-* The master and **all** workers which will have any V1 devices
-  attached **must** use the V1 distributed deployment installation method as
-  described in the `V1 documentation <../v1/>`_
-
-* Selected devices can also have the ``pipeline`` support enabled in the django
-  administration interface. These devices will then accept both pipeline (YAML)
-  and V1 (JSON) job submissions.
-
-* Pipeline devices need a Device Dictionary to be able to run V2 job
-  submissions.
-
-* The Device Dictionary can include a setting to make the device **exclusive**
-  to V2 submissions, so V1 JSON submissions will not be allowed.
-
-* All workers which have any devices which are not **exclusive** in this way
-  **must** also have SSHFS and Postgres connections configured for V1 support.
-
-* Layouts which require workers to be geographically remote from the master are
-  recommended to **only** have **exclusive** devices to limit the known issues
-  with maintaining connections required for V1 across networks outside your
-  control.
-
-Configuration outline
----------------------
-
-The mixed configuration is the most complex to setup as it requires knowledge
-of both V1 and V2.
-
-* Follow all the documentation for V1 distributed deployments and ensure that
-  all V1 devices are working.
-
-* Configure the workers using V2. Remember that if a worker has V1 and V2
-  devices, that worker should be on the same network as the master due to known
-  limitations of the V1 configuration.
 
 .. index:: coordinator
 

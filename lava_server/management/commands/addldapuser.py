@@ -21,7 +21,7 @@ import ldap
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
-from dashboard_app.helpers import get_ldap_user_properties
+from lava_scheduler_app.utils import get_ldap_user_properties
 
 
 class Command(BaseCommand):

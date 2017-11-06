@@ -227,8 +227,8 @@ configuration management, e.g.:
 
 .. _admin_restore_backup:
 
-Restoring a V2 master from a backup
-###################################
+Restoring a master from a backup
+################################
 
 .. warning:: These steps **must** be done in order or data loss is likely,
    at which point the whole restoration process may have to start again.
@@ -321,8 +321,8 @@ Restoring a V2 master from a backup
    passed a health check, the holding page can be taken down and the normal
    access to the instance restored to users.
 
-Restoring a V2 worker from backups
-##################################
+Restoring a worker from backups
+###############################
 
 This is a much simpler process than a master (or a V1 worker which is arguably
 more complex to restore than a master).
@@ -347,26 +347,3 @@ be put back into place and ``lava-slave`` restarted.
  $ sudo service lava-slave restart
 
 The worker will now be able to respond to test job messages sent by the master.
-
-Restoring a V1 instance
-#######################
-
-Restoring a V1 master or remote worker is best done with a reinstall, following
-the original V1 instructions. Although there is a database on every V1 remote
-worker, that database is empty and does not need to be backed up or restored.
-After a full reinstall, the database cluster can be migrated.
-
-.. seealso:: :ref:`migrating_postgresql_versions` for how to drop the
-   initial cluster and replace with the cluster from a backup.
-
-* It remains essential that all V1 remote workers run the same version of
-  ``lava-server`` as the associated master.
-
-* Configuration management can help by restoring the device configurations on
-  the workers.
-
-* The SSH mountpoint and the postgresql permission changes described in the V1
-  installation notes will need to be re-checked and possibly restored manually,
-  possibly with a new SSH key for one or more remote workers.
-
-For full information, see the `LAVA V1 <../v1/index.html>`_ documentation.

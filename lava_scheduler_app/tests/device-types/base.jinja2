@@ -24,7 +24,7 @@
 {% set ssh_port = '22' -%}
 
 {# This is no longer a requirement, to support devices that allow login without authentication #}
-{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' -%}
+{% set ssh_identity_file = 'dynamic_vm_keys/lava' -%}
 
 {% set schroot_options = (
 "          - 'schroot'
@@ -94,10 +94,24 @@ constants:
 {% endblock constants -%}
 
 {% block commands %}
-{% if connection_command or user_commands %}
+{% if connection_command or user_commands or connection_list %}
 commands:
 {% if connection_command %}
     connect: {{ connection_command }}
+{% elif connection_list %}
+    connections:
+{% for hardware in connection_list %}
+        {{ hardware }}:
+            connect: {{ connection_commands.get(hardware) }}
+{% if hardware in connection_tags %}
+            tags:
+{% if connection_tags.get(hardware) is not string %}
+{% for tag in connection_tags.get(hardware) %}
+            - {{ tag }}
+{% endfor -%}  {# tag #}
+{% endif -%}  {# is list #}
+{% endif -%}  {# if hardware #}
+{% endfor %}
 {% endif -%}
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
