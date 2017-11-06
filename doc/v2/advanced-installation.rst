@@ -197,6 +197,8 @@ Authentication needs to be configured on the master first, then workers can be
 Other installation notes
 ************************
 
+.. index:: branding
+
 .. _branding:
 
 LAVA server branding support
@@ -380,6 +382,8 @@ messages will be lost until the queue overflows.
 
 .. seealso:: :ref:`publishing_events`
 
+.. index:: postgres configuration
+
 .. _postgres_db_port:
 
 PostgreSQL Port configuration
@@ -441,3 +445,29 @@ You should then restart *lava-server-gunicorn*.
 .. code-block:: shell
 
   $ sudo service lava-server-gunicorn restart
+
+.. index:: configuring display of logs, log size limit
+
+.. _log_size_limit:
+
+Configuring log file display
+****************************
+
+By default, test logs will be formatted and displayed for easy viewing
+in the browser and this should work fine for the majority of
+users. However, if your test jobs are creating very large test logs it
+can cause problems when trying to display them. Depending on network
+and client configuration, this might show up as timeouts when viewing
+or maybe error codes like "502 Proxy Error". If this is a problem,
+there is an option to control the maximum size of test log that will
+be displayed; any log larger than this will instead just be offered
+for direct download.
+
+Edit ``/etc/lava-server/settings.conf`` (JSON syntax) to set the
+limit, in MiB. For example::
+
+  "LOG_SIZE_LIMIT": "10",
+
+will limit the maximum display size to 10 MiB. To find the right size
+for your needs, check on the sizes of the ``output.yaml`` log files on
+your lava-master server.
