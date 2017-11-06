@@ -312,6 +312,12 @@ installed:
 
   pg_upgradecluster 8.2 main
 
+.. note:: Upgrading a cluster combines ``pg_dump`` and ``pg_restore`` (making
+          two copies of the database at one point). Ensure that you have enough
+          available space on the disc, especially with a large database. If
+          ``pg_upgradecluster`` is interrupted by the lack of disc space it will
+          not harm the system and full rollback will be applied automatically.
+
 See also
 https://askubuntu.com/questions/66194/how-do-i-migrate-my-postgres-data-from-8-4-to-9-1
 
