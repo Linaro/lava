@@ -8,7 +8,7 @@ License: AGPL-3.0
 
 Files: share/add_device.py lava_server/settings/secret_key.py
  lava_server/settings/getsettings.py lava_server/settings/config_file.py
- version.py share/lava-mount-masterfs
+ version.py
 Copyright: 2010-2016, Linaro Limited
 License: GPL-3.0+
 
