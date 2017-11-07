@@ -906,6 +906,9 @@ class Timeout(object):
             # If duration is lower than 0, then the timeout should be raised now.
             # Calling signal.alarm in this case will only deactivate the alarm
             # (by passing 0 or the unsigned value).
+            # Deactivate any previous alarm and set elapse_time prior to raise
+            signal.alarm(0)
+            self.elapsed_time = 0
             self._timed_out(None, None)
 
         signal.signal(signal.SIGALRM, self._timed_out)
@@ -913,8 +916,6 @@ class Timeout(object):
 
         try:
             yield max_end_time
-        except:
-            raise
         finally:
             # clear the timeout alarm, the action has returned
             signal.alarm(0)
