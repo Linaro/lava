@@ -21,34 +21,29 @@
 # pylint: disable=wrong-import-order
 
 import errno
-import fcntl
-import grp
 import jinja2
-import logging
 import lzma
 import os
-import pwd
-import signal
-import sys
 import time
 import yaml
 import zmq
 import zmq.auth
 from zmq.auth.thread import ThreadAuthenticator
 
-from django.core.management.base import BaseCommand
 from django.db import connection, transaction
 from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
-from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.utils import mkdir
+
+from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 from lava_scheduler_app.dbutils import (
     create_job, start_job,
     fail_job, cancel_job,
     parse_job_description,
     select_device,
 )
-from lava_results_app.dbutils import map_scanned_results, create_metadata_store
+from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.utils import mkdir
+from lava_server.cmdutils import LAVADaemonCommand
 
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
@@ -66,6 +61,7 @@ DB_LIMIT = 10
 # TODO: share this value with dispatcher-slave
 # This should be 3 times the slave ping timeout
 DISPATCHER_TIMEOUT = 3 * 10
+FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
 
 
 class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
@@ -115,13 +111,14 @@ def load_optional_yaml_file(filename):
         raise IOError("", "Not a valid YAML file", filename)
 
 
-class Command(BaseCommand):
+class Command(LAVADaemonCommand):
     """
     worker_host is the hostname of the worker this field is set by the admin
     and could therefore be empty in a misconfigured instance.
     """
     logger = None
     help = "LAVA dispatcher master"
+    default_logfile = "/var/log/lava-server/lava-master.log"
 
     def __init__(self, *args, **options):
         super(Command, self).__init__(*args, **options)
@@ -134,77 +131,39 @@ class Command(BaseCommand):
         self.dispatchers = {}
 
     def add_arguments(self, parser):
-        parser.add_argument('--master-socket',
-                            default='tcp://*:5556',
-                            help="Socket for master-slave communication. Default: tcp://*:5556")
-        parser.add_argument('--log-socket',
-                            default='tcp://*:5555',
-                            help="Socket waiting for logs. Default: tcp://*:5555")
-        parser.add_argument('--ipv6', default=False, action='store_true',
-                            help="Enable IPv6 on the listening sockets")
-        parser.add_argument('--encrypt', default=False, action='store_true',
-                            help="Encrypt messages")
-        parser.add_argument('--master-cert',
-                            default='/etc/lava-dispatcher/certificates.d/master.key_secret',
-                            help="Certificate for the master socket")
-        parser.add_argument('--slaves-certs',
-                            default='/etc/lava-dispatcher/certificates.d',
-                            help="Directory for slaves certificates")
-        parser.add_argument('-l', '--level',
-                            default='DEBUG',
-                            help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
-        parser.add_argument('-o', '--log-file',
-                            default='/var/log/lava-server/lava-master.log',
-                            help="Log file full path.")
-        parser.add_argument('--templates',
-                            default="/etc/lava-server/dispatcher-config/",
-                            help="Base directory for device configuration templates. "
-                                 "Default: /etc/lava-server/dispatcher-config/")
+        super(Command, self).add_arguments(parser)
         # Important: ensure share/env.yaml is put into /etc/ by setup.py in packaging.
-        parser.add_argument('--env',
+        config = parser.add_argument_group("dispatcher config")
+
+        config.add_argument('--env',
                             default="/etc/lava-server/env.yaml",
                             help="Environment variables for the dispatcher processes. "
                                  "Default: /etc/lava-server/env.yaml")
-        parser.add_argument('--env-dut',
+        config.add_argument('--env-dut',
                             default="/etc/lava-server/env.dut.yaml",
                             help="Environment variables for device under test. "
                                  "Default: /etc/lava-server/env.dut.yaml")
-        parser.add_argument('--dispatchers-config',
+        config.add_argument('--dispatchers-config',
                             default="/etc/lava-server/dispatcher.d",
                             help="Directory that might contain dispatcher specific configuration")
-        # User and group
-        parser.add_argument('-u', '--user',
-                            default='lavaserver',
-                            help="Run the process under this user. It should "
-                                 "be the same user as the gunicorn process.")
 
-        parser.add_argument('-g', '--group',
-                            default='lavaserver',
-                            help="Run the process under this group. It should "
-                                 "be the same group as the gunicorn process.")
-
-    def drop_privileges(self, user, group):
-        try:
-            user_id = pwd.getpwnam(user)[2]
-            group_id = grp.getgrnam(group)[2]
-        except KeyError:
-            self.logger.error("Unable to lookup the user or the group")
-            return False
-        self.logger.debug("Switching to (%s(%d), %s(%d))",
-                          user, user_id, group, group_id)
-
-        try:
-            os.setgid(group_id)
-            os.setuid(user_id)
-        except OSError:
-            self.logger.error("Unable to the set (user, group)=(%s, %s)",
-                              user, group)
-            return False
-
-        # Set a restrictive umask (rwxr-xr-x)
-        os.umask(0o022)
-
-        return True
+        net = parser.add_argument_group("network")
+        net.add_argument('--master-socket',
+                         default='tcp://*:5556',
+                         help="Socket for master-slave communication. Default: tcp://*:5556")
+        net.add_argument('--log-socket',
+                         default='tcp://*:5555',
+                         help="Socket waiting for logs. Default: tcp://*:5555")
+        net.add_argument('--ipv6', default=False, action='store_true',
+                         help="Enable IPv6 on the listening sockets")
+        net.add_argument('--encrypt', default=False, action='store_true',
+                         help="Encrypt messages")
+        net.add_argument('--master-cert',
+                         default='/etc/lava-dispatcher/certificates.d/master.key_secret',
+                         help="Certificate for the master socket")
+        net.add_argument('--slaves-certs',
+                         default='/etc/lava-dispatcher/certificates.d',
+                         help="Directory for slaves certificates")
 
     def send_status(self, hostname):
         """
@@ -597,30 +556,10 @@ class Command(BaseCommand):
             self.controler.send_multipart([str(worker_host.hostname),
                                            'CANCEL', str(job.id)])
 
-    def logging_support(self, log_file):
-        del logging.root.handlers[:]
-        del logging.root.filters[:]
-        # Create the logger
-        log_format = '%(asctime)-15s %(levelname)s %(message)s'
-        logging.basicConfig(format=log_format, filename=log_file)
-        self.logger = logging.getLogger('dispatcher-master')
-
     def handle(self, *args, **options):
         # Initialize logging.
-        self.logging_support(options["log_file"])
-        # Set the logging level
-        if options['level'] == 'ERROR':
-            self.logger.setLevel(logging.ERROR)
-        elif options['level'] == 'WARN':
-            self.logger.setLevel(logging.WARN)
-        elif options['level'] == 'INFO':
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger.setLevel(logging.DEBUG)
-
-        if os.path.exists('/etc/lava-server/worker.conf'):
-            self.logger.error("[FAIL] lava-master must not be run on a remote worker!")
-            sys.exit(2)
+        self.setup_logging("dispatcher-master", options["level"],
+                           options["log_file"], FORMAT)
 
         self.logger.info("Dropping privileges")
         if not self.drop_privileges(options['user'], options['group']):
@@ -670,21 +609,8 @@ class Command(BaseCommand):
         poller.register(self.pull_socket, zmq.POLLIN)
         poller.register(self.controler, zmq.POLLIN)
 
-        # Mask signals and create a pipe that will receive a bit for each
-        # signal received. Poll the pipe along with the zmq socket so that we
-        # can only be interupted while reading data.
-        (pipe_r, pipe_w) = os.pipe()
-        flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
-        fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-        def signal_to_pipe(signumber, _):
-            # Send the signal number on the pipe
-            os.write(pipe_w, chr(signumber))
-
-        signal.signal(signal.SIGHUP, signal_to_pipe)
-        signal.signal(signal.SIGINT, signal_to_pipe)
-        signal.signal(signal.SIGTERM, signal_to_pipe)
-        signal.signal(signal.SIGQUIT, signal_to_pipe)
+        # Translate signals into zmq messages
+        (pipe_r, _) = self.setup_zmq_signal_handler()
         poller.register(pipe_r, zmq.POLLIN)
 
         self.logger.info("[INIT] LAVA dispatcher-master has started.")
@@ -700,13 +626,8 @@ class Command(BaseCommand):
                     continue
 
                 if sockets.get(pipe_r) == zmq.POLLIN:
-                    signum = ord(os.read(pipe_r, 1))
-                    if signum == signal.SIGHUP:
-                        self.logger.info("[POLL] SIGHUP received, restarting loggers")
-                        self.logging_support(options["log_file"])
-                    else:
-                        self.logger.info("[POLL] Received a signal, leaving")
-                        break
+                    self.logger.info("[POLL] Received a signal, leaving")
+                    break
 
                 # Logging socket
                 if sockets.get(self.pull_socket) == zmq.POLLIN:
