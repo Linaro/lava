@@ -223,16 +223,6 @@ Example output
 
 * Time - the time that the exception was logged on the master. (UTC)
 
-:abbr:`CSV (Comma Separated Values)` format.
-
-* Job - Id of the test job which failed.
-
-* Type - type of the exception logged by the job. ``Infrastructure`` or ``Job``
-
-* Message - the message logged by the exception.
-
-* Time - the time that the exception was logged on the master. (UTC)
-
 .. code-block:: none
 
  Job, Type, Message, Time
