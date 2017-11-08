@@ -1360,8 +1360,8 @@ def job_complete_log(request, pk):
         request=request))
 
 
-def job_section_log(request, job, log_name):
-    job = get_restricted_job(request.user, job, request=request)
+def job_section_log(request, pk, log_name):
+    job = get_restricted_job(request.user, pk, request=request)
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
