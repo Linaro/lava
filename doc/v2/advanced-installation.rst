@@ -399,8 +399,8 @@ daemons:
  $ sudo service lava-server-gunicorn restart
  $ sudo service lava-master restart
 
-LAVA server performances
-************************
+LAVA server performance
+***********************
 
 If the load on the master becomes an issue, there may be some optimisations
 which can help.
