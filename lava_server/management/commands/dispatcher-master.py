@@ -329,50 +329,54 @@ class Command(LAVADaemonCommand):
         elif action == 'END':
             try:
                 job_id = int(msg[2])
-                job_status = int(msg[3])
+                # FIXME: should be removed as it's not needed anymore
+                # job_status = int(msg[3])
                 error_msg = msg[4]
                 compressed_description = msg[5]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
-            if job_status:
-                self.logger.info("[%d] %s => END (lava-run crashed)", job_id, hostname)
-                self.logger.error("[%d] Error: %s", job_id, error_msg)
-            else:
-                self.logger.info("[%d] %s => END", job_id, hostname)
 
-            # Find the corresponding job and update the status
             try:
-
-                # Save the description
                 job = TestJob.objects.get(id=job_id)
-                filename = os.path.join(job.output_dir, 'description.yaml')
-                try:
-                    # Create the directory if it was not already created
-                    mkdir(os.path.dirname(filename))
-                    description = lzma.decompress(compressed_description)
-                    with open(filename, 'w') as f_description:
-                        f_description.write(description)
-                    if description:
-                        parse_job_description(job)
-                except (IOError, lzma.error) as exc:
-                    self.logger.error("[%d] Unable to dump 'description.yaml'",
-                                      job_id)
-                    self.logger.exception(exc)
-
-                # Update status only if job_status is not 0.
-                # The slave send a non 0 if lava-run crashed and was not able
-                # to send the results.
-                if job_status:
-                    self.logger.error("[%d] lava-run crashed, marking job as INCOMPLETE", job_id)
-                    with transaction.atomic():
-                        job = TestJob.objects.select_for_update().get(id=job_id)
-                        if job.status == TestJob.CANCELING:
-                            cancel_job(job)
-                        fail_job(job, fail_msg=error_msg, job_status=TestJob.INCOMPLETE)
-
             except TestJob.DoesNotExist:
                 self.logger.error("[%d] Unknown job", job_id)
+            else:
+                filename = os.path.join(job.output_dir, 'description.yaml')
+                # If description.yaml already exists: a END was already received
+                if os.path.exists(filename):
+                    self.logger.info("[%d] %s => END (duplicated), skipping", job_id, hostname)
+                else:
+                    if compressed_description:
+                        self.logger.info("[%d] %s => END", job_id, hostname)
+                    else:
+                        self.logger.info("[%d] %s => END (lava-run crashed, mark job as INCOMPLETE)",
+                                         job_id, hostname)
+                        if error_msg:
+                            self.logger.error("[%d] Error: %s", job_id, error_msg)
+
+                        with transaction.atomic():
+                            job = TestJob.objects.select_for_update().get(id=job_id)
+                            if job.status == TestJob.CANCELING:
+                                cancel_job(job)
+                            fail_job(job, fail_msg=error_msg,
+                                     job_status=TestJob.INCOMPLETE)
+
+                    # Create description.yaml even if it's empty
+                    # Allows to know when END messages are duplicated
+                    try:
+                        # Create the directory if it was not already created
+                        mkdir(os.path.dirname(filename))
+                        description = lzma.decompress(compressed_description)
+                        with open(filename, 'w') as f_description:
+                            f_description.write(description)
+                        if description:
+                            parse_job_description(job)
+                    except (IOError, lzma.error) as exc:
+                        self.logger.error("[%d] Unable to dump 'description.yaml'",
+                                          job_id)
+                        self.logger.exception("[%d] %s", job_id, exc)
+
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
             self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
