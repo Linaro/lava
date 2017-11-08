@@ -551,8 +551,10 @@ def start_job(job):
     """
     Only for use with the lava-master
     """
+    # leave early if job is already running
+    if job.status == TestJob.RUNNING:
+        return
     job.status = TestJob.RUNNING
-    # TODO: Only if that was not already the case !
     job.start_time = timezone.now()
     device = job.actual_device
     msg = "Job %d running" % job.id
