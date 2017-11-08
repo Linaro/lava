@@ -296,12 +296,12 @@ message showing that encryption has been enabled on the master. e.g.
 .. code-block:: none
 
  2016-04-26 10:08:56,303 LAVA Daemon: lava-server manage --instance-template=/etc/lava-server/{{filename}}.conf
-  --instance=playground dispatcher-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
+  --instance=playground lava-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
   --slaves-certs /etc/lava-dispatcher/certificates.d pid: 17387
  2016-04-26 09:08:58,410 INFO Starting encryption
  2016-04-26 09:08:58,411 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key_secret
  2016-04-26 09:08:58,411 DEBUG Using slaves certificates from: /etc/lava-dispatcher/certificates.d
- 2016-04-26 09:08:58,411 INFO [INIT] LAVA dispatcher-master has started.
+ 2016-04-26 09:08:58,411 INFO [INIT] LAVA master has started.
 
 Now restart each slave in turn and watch for equivalent messages in the logs:
 

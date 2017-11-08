@@ -210,7 +210,7 @@ Pipeline construction and flow
 
 The pipeline is a FIFO_ and has branches which are handled as a `tree walk`_.
 The top level object is the job, based on the YAML definition supplied by the
-**dispatcher-master**. The definition is processed by the scheduler and the
+**lava-master**. The definition is processed by the scheduler and the
 submission interface with information specific to the actual device. The
 processed definition is parsed to generate the top level pipeline and
 :ref:`strategy classes <using_strategy_classes>`. Each strategy class adds a

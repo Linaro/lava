@@ -551,7 +551,7 @@ that check fails, the test job will not start and the failure will be logged:
 
 .. code-block:: none
 
- [WARNING] [dispatcher-master] [9] Refusing to reserve for broken V2 device intel-smecher
+ [WARNING] [lava-master] [9] Refusing to reserve for broken V2 device intel-smecher
 
 This message indicates that test job ID ``9`` will never start to run until the
 device dictionary and the device type template for the device ``intel-smecher``

@@ -562,7 +562,7 @@ class Command(LAVADaemonCommand):
 
     def handle(self, *args, **options):
         # Initialize logging.
-        self.setup_logging("dispatcher-master", options["level"],
+        self.setup_logging("lava-master", options["level"],
                            options["log_file"], FORMAT)
 
         self.logger.info("Dropping privileges")
@@ -617,7 +617,7 @@ class Command(LAVADaemonCommand):
         (pipe_r, _) = self.setup_zmq_signal_handler()
         poller.register(pipe_r, zmq.POLLIN)
 
-        self.logger.info("[INIT] LAVA dispatcher-master has started.")
+        self.logger.info("[INIT] LAVA master has started.")
         self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
 
         while True:

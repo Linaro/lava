@@ -248,7 +248,7 @@ the use of the following terms:
   without the server or the scheduler and a machine configured in this way is
   also called a *dispatcher*.
 
-**dispatcher-master** or simply **master**
+**lava-master** or simply **master**
   A singleton process which starts and monitors test jobs running on one or
   more dispatchers by communicating with the slave using ZMQ.
 
@@ -295,8 +295,8 @@ the use of the following terms:
 
 **slave**
   A daemon running on each dispatcher machine which communicates with the
-  dispatcher-master using ZMQ. The slave in LAVA V2 uses whatever device
-  configuration the dispatcher-master provides.
+  lava-master using ZMQ. The slave in LAVA V2 uses whatever device
+  configuration the lava-master provides.
 
 **test job**
   A database object which is created for each submission and retains the logs
@@ -374,10 +374,10 @@ Compatibility
 
 .. seealso:: :ref:`compatibility_failures`
 
-The compatibility mechanism allows the dispatcher-master daemon to prevent
-issues that would arise if the worker is running older software. A job with a
-lower compatibility may fail much, much later but this allows the job to fail
-early. In future, support is to be added for re-queuing such jobs.
+The compatibility mechanism allows the lava-master daemon to prevent issues
+that would arise if the worker is running older software. A job with a lower
+compatibility may fail much, much later but this allows the job to fail early.
+In future, support is to be added for re-queuing such jobs.
 
 Developers need to take note that in the code, compatibility should reflect the
 removal of support for particular elements, similar to handling a SONAME when

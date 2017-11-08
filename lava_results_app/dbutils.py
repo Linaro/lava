@@ -54,7 +54,7 @@ def _check_for_testset(result_dict, suite):
     :param result_dict: lava-test-shell results
     :param suite: current test suite
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     testset = None
     if 'set' in result_dict:
         set_name = result_dict['set']
@@ -69,7 +69,7 @@ def _check_for_testset(result_dict, suite):
 
 
 def append_failure_comment(job, msg):
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if not job.failure_comment:
         job.failure_comment = ''
     job.failure_comment += msg[:256]
@@ -87,7 +87,7 @@ def create_metadata_store(results, job):
     if level is None:
         return None
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
     if not os.path.exists(os.path.dirname(meta_filename)):
@@ -117,7 +117,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     :param meta_filename: YAML store for results metadata
     :return: False on error, else True
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
 
     if not isinstance(results, dict):
         append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
@@ -289,7 +289,7 @@ def _get_device_metadata(data):
 
 def build_action(action_data, testdata, submission):
     # test for a known section
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if 'section' not in action_data:
         logger.warning("Invalid action data - missing section")
         return
@@ -349,7 +349,7 @@ def map_metadata(description, job):
     :param job: the TestJob to associate
     :return: True on success, False on error
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     try:
         submission_data = yaml.load(job.definition)
         description_data = yaml.load(description)

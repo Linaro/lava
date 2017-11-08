@@ -13,7 +13,7 @@ Usage
 #####
 
 ``lava-master`` passes all arguments down to the wrapped process, in the
-case of LAVA, this is ``lava-server manage dispatcher-master``.
+case of LAVA, this is ``lava-server manage lava-master``.
 
 Options
 #######

@@ -122,11 +122,11 @@ class DatabaseJobSource(object):
         It's goal is to return a list of jobs that are ready to be started.
         Note: handles both old and pipeline jobs but only so far as putting
         devices into a Reserved state. Running pipeline jobs from Reserved
-        is the sole concern of the dispatcher-master.
+        is the sole concern of the lava-master.
         """
         self._handle_cancelling_jobs()
 
-        # FIXME: to move into the dispatcher-master
+        # FIXME: to move into the lava-master
         if utils.is_master():
             submit_health_check_jobs()
             assign_jobs()

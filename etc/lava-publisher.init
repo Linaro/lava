@@ -13,7 +13,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 
 # example command:
-# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{{filename}}.conf dispatcher-master
+# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{{filename}}.conf lava-publisher
 . /etc/lava-server/instance.conf
 LOGLEVEL="--level DEBUG"
 

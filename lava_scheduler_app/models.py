@@ -737,7 +737,7 @@ class Device(RestrictedResource):
 
     def state_transition_to(self, new_status, user=None, message=None,
                             job=None, master=False):
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         try:
             dst_obj = DeviceStateTransition.objects.create(
                 created_by=user, device=self, old_state=self.status,
@@ -763,7 +763,7 @@ class Device(RestrictedResource):
         the status will be OFFLINING.
         Returns False if the device status is unchanged (retired devices)
         """
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         if self.status == self.RETIRED:
             return False
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -786,7 +786,7 @@ class Device(RestrictedResource):
         return True
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         if self.status == self.RETIRED:
             return False
         if self.status == Device.OFFLINING and self.current_job is not None:
@@ -807,7 +807,7 @@ class Device(RestrictedResource):
     def put_into_looping_mode(self, user, reason):
         if self.status != Device.OFFLINE:
             return
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         self.health_status = Device.HEALTH_LOOPING
 
         self.state_transition_to(self.IDLE, user=user, message=reason)
@@ -819,7 +819,7 @@ class Device(RestrictedResource):
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
             return
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         self.state_transition_to(self.IDLE, user=user, message=reason)
         if user:
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
@@ -1202,7 +1202,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
     and the checks are done again before the job starts.
 
     Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
-    this migrates into dispatcher-master.
+    this migrates into lava-master.
 
     params:
       job_data - dictionary of the submission YAML
@@ -1993,7 +1993,7 @@ class TestJob(RestrictedResource):
             :param device: the actual device for this job, or None
             :return: True if there is a device and that device is status Reserved
             """
-            logger = logging.getLogger('dispatcher-master')
+            logger = logging.getLogger('lava-master')
             if not job.actual_device:
                 return False
             if job.actual_device.current_job and job.actual_device.current_job != job:

@@ -364,7 +364,7 @@ def testcase(request, case_id, job=None, pk=None):
     else:
         test_cases = TestCase.objects.filter(name=case.name, suite=test_suite)
     extra_source = {}
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     for extra_case in test_cases:
         try:
             f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)

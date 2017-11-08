@@ -14,7 +14,7 @@
 # One day, this daemon will replace scheduler-monitor
 
 # example command:
-# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{filename}.conf dispatcher-master
+# /usr/bin/lava-master manage --instance-template=/etc/lava-server/{filename}.conf lava-master
 INST_TMPL="--instance-template=/etc/lava-server/{filename}.conf"
 MASTER_SOCKET=""
 LOGGER_SOCKET=""
@@ -26,7 +26,7 @@ SLAVES_CERTS=""
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="lava-server manage dispatcher-master"          # short description
+DESC="lava-server manage lava-master"                # short description
 NAME=lava-master                                     # short server's name
 DAEMON="/usr/bin/lava-master"                        # server's location
 PIDFILE=/var/run/lava-master.pid
@@ -39,7 +39,7 @@ SCRIPTNAME=/etc/init.d/lava-master
 
 # Build the command line
 OPTIONS="$MASTER_SOCKET $LOGGER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS"
-DAEMON_ARGS="manage ${INST_TMPL} dispatcher-master --level $LOGLEVEL $OPTIONS"  # Arguments to run the daemon with
+DAEMON_ARGS="manage ${INST_TMPL} lava-master --level $LOGLEVEL $OPTIONS"  # Arguments to run the daemon with
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0

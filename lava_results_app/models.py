@@ -559,7 +559,7 @@ class MetaType(models.Model):
         """
         Return the section_name to lookup metadata for the associated action.
         """
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         section = action_data['section']
         level = action_data['level'].split('.')[0]
         name = action_data['name']

@@ -56,7 +56,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
 
     def setUp(self):
         super(TestSchedulerAPI, self).setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
         logger = logging.getLogger('lava_scheduler_app')
         logger.disabled = True
