@@ -1,3 +1,99 @@
+lava-server (2017.11-1) unstable; urgency=medium
+
+  * New production release
+    a799fc6c Fix links back to the main instance
+    5b9656b6 Fix broken plural in header
+    b21f8c8f Fix crash in job_section_log
+    c9526f01 Document the LOG_SIZE_LIMIT setting in settings.conf
+    63b57c94 Remove lava-mount-masterfs
+    75b403f4 Remove add_device script
+    8ddea823 Add description about the disc space requirement for pg_upgradecluster.
+    5c9dceb2 Remove TemporaryDevice imports
+    9b21ea48 Removed unused Worker functions
+    2accb4c3 Matching change to templates for directory change
+    1d384c4a Update docs regarding device-dictionary lava-server manage command.
+    32472fac Port 77fd10e2 to scheduler.devices.get_dictionary
+    114bbfa5 LAVA-1093 - Add a management command to drop all materialized views
+    8bc9d83a Update dashboard XML-RPC API help for api_version
+    bb090e96 LAVA-552 - add system.api_version support
+    77fd10e2 LAVA-1092 support passing a context to device_config
+    de7ad3aa Remove dashboard_app views and static files.
+    4bc68531 Remove templates from dashboard_app.
+    1a618c27 Remove unused functions
+    d50deca7 api: limit the number of jobs returned
+    59880e14 Fix HTTP 500 on devicetype health history
+    a39fecf5 Remove unused resources (css, js and images)
+    a32ac3b6 Rename base-bootstrap and content-bootstrap
+    7c108de1 job: print lava.job result in case of failure
+    b51c419f Remove old templates
+    a9139c1f Use bootstrap template
+    7915f18f Remove unused ressources
+    7331901a scheduler.api.jobs.show: add failure_comment
+    71233bff Fix print syntax for python3 compatibility
+    936d5eca Remove unused tags
+    4ebb2a39 Remove unused sources
+    21a7eb18 Save more sql queries by caching values
+    4d0d867e Remove non pipeline jobs support
+    a6648dbd Retain docs on disabling V1 workers
+    8eac0d74 Revert "LAVA-950 set the master identity"
+    68573b1a Remove V1 dependencies
+    a8151559 timing: handle new start/end line format
+    26cc3ad0 Remove unnecessary js lib beautify.
+    c44009fa Simplify job view
+    e1da85d4 Fix loading of description.yaml
+    7b41f7ef Add documentation for secondary media writer parameters
+    1b4d3dd5 LAVA-1081 migrate instance name to settings
+    f3dc1987 Fix up typos from earlier changes
+    faa24f59 LAVA-1079 - remove HIDE_V1 and HIDE_V2 doc options
+    942b84c3 Remove unused functions and imports
+    e61a4831 LAVA-1056 Drop V1 documentation
+    126dce0c Fix crash introduced by 42451c9cc
+    f0b28214 Remove v1 codebase
+    31bb1bf0 Fix notification exception when query is used for data comparison.
+    a6cff700 Remove last references to lava_dispatcher v1
+    043690d9 Remove references to lava_dispatcher v1
+    4c9e493c Remove dashboard_app traces from rest of the codebase.
+    c371b8ca drop link to removed page
+    1b1b638e LAVA-876 - Return empty data stubs for dashboard API calls.
+    919c10c2 Remove links to dashboard_app in the scheduler_app
+    1483e9fb Remove leftover from job wizard
+    f7a1c976 docker: allow to pass extra options
+    42451c9c Use all_jobs_with_custom_sort when applicable
+    cc4ffd64 Fix broken links in example test job
+    0ca5d75c Drop the migration status page.
+    b37fe944 Add a device-type config for the rpi-3b in armv7 32bit mode
+    9e904a18 Revert "LAVA-876 - Remove access to Dashboard"
+    f07e0950 Fix warning regarding naive datetime
+    e8348425 Remove more references to dashboard_app
+    103a44be LAVA-876 - Remove access to Dashboard
+    d33c9c98 LAVA-876 - Remove access to Dashboard
+    b6fc46aa Revert "LAVA-1038 add a settings to archive the instance"
+    f75a333d Do not run dashboard test anymore
+    d9163445 Remove references to v1 jobs
+    addb61d9 bug 3268: fix lava-master crash with invalid logs
+    febf91b1 Improve advice on api/help
+    ac8b7df3 fix pep8 error
+    64025cf3 LAVA-1072 test all template connection syntax
+    10d5fbe1 Adjust U-Boot load addresses for tegra124 devices to allow bigger kernels
+    f30ef936 LAVA-1065 - Remove dashboard_app urls server wide.
+    096a2f1c LAVA-1049 - Allow for .yml as well as .yaml for healthchecks
+    918f0bc7 Fix logic so addldapuser and mergeldapuser work for all LDAP configs
+    36fcb3c2 Documentation changes for multiple uarts
+    b1de8acf Update instructions for migrating postgres
+    0ff08373 LAVA-1053 Results limit does not work for queries
+    f9e64aa1 Fix SQL request storm when listing jobs
+    2d9c4757 No need to save after get_or_create or Create()
+    8988cb36 LAVA-896 fix level in result export
+    219fa3dd LAVA-1073 - support for a second UART on a device
+    c934bbbe master: fix database reconnection
+    4f0e0e62 LAVA-950 set the master identity
+    316d77fb Expand the device integration guidance.
+  * LAVA-1099 support old and new package versions
+  * Fix missing call to install_database
+  * Drop copyright references to removed files
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 10 Nov 2017 13:16:01 +0000
+
 lava-server (2017.10-1) unstable; urgency=medium
 
   * New production release
