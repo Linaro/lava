@@ -66,7 +66,7 @@ from lava_dispatcher.job import ZMQConfig
 # pylint: disable=too-many-statements
 
 # Default values for:
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 # timeouts (in seconds)
 TIMEOUT = 5
 JOBS_CHECK_INTERVAL = 5
@@ -103,6 +103,9 @@ class Master(object):
         self.last_msg = 0
         self.last_ping = 0
         self.online = False
+        # Start with TIMEOUT. Master will send the right value to use
+        # afterward.
+        self.ping_interval = TIMEOUT
 
     def received_msg(self):
         """We received a valid message from the master."""
@@ -501,10 +504,21 @@ def handle_hello_ok():
     LOG.debug("Received HELLO_OK from master - nothing do to")
 
 
-def handle_pong(master):
+def handle_pong(msg, master):
     """ handle PONG messages by marking the master as alive """
-    LOG.debug("master => PONG")
+    try:
+        ping_interval = int(msg[1])
+    except (IndexError, ValueError):
+        LOG.error("Invalid message '%s'", msg)
+        return
+
+    if ping_interval < TIMEOUT:
+        LOG.error("invalid ping interval (%d) too small", ping_interval)
+        return
+
+    LOG.debug("master => PONG(%d)", ping_interval)
     master.received_msg()
+    master.ping_interval = ping_interval
 
 
 def handle_start(msg, jobs, sock, master, zmq_config):
@@ -641,7 +655,7 @@ def listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout):
         elif action == "HELLO_OK":
             handle_hello_ok()
         elif action == "PONG":
-            handle_pong(master)
+            handle_pong(msg, master)
         elif action == "START":
             handle_start(msg, jobs, sock, master, zmq_config)
         elif action == "STATUS":
@@ -696,7 +710,7 @@ def check_job_status(jobs, sock, last_jobs_check):
     return now
 
 
-def ping_master(master, sock, timeout):
+def ping_master(master, sock):
     """PING the master whnever needed
     Send a PING only if we haven't received a message from the master nor sent
     a PING for a long time.
@@ -706,9 +720,9 @@ def ping_master(master, sock, timeout):
     :param timeout: the time to wait to flag the master as offline
     """
     now = time.time()
-    if now - max(master.last_msg, master.last_ping) > timeout:
+    if now - max(master.last_msg, master.last_ping) > master.ping_interval:
         # Is the master offline ?
-        if master.online and now - master.last_msg > 4 * timeout:
+        if master.online and now - master.last_msg > 4 * master.ping_interval:
             LOG.warning("Master goes OFFLINE")
             master.online = False
 
@@ -808,7 +822,7 @@ def main():
     while True:
         listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout)
         last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
-        ping_master(master, sock, timeout)
+        ping_master(master, sock)
 
 
 if __name__ == "__main__":
