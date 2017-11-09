@@ -17,6 +17,7 @@ adb_serial_number: 0123456789
 fastboot_serial_number: 96B0201601000691
 fastboot_options: ['-S', '256M']
 device_info: [{'board_id': '96B0201601000691'}]
+static_info: [{'board_id': 'S/NO62200001'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
                   'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
                   'vendor', 'system', 'cache', 'userdata', ]
