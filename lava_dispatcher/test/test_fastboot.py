@@ -181,11 +181,11 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         job.validate()
         self.assertEqual(
             {
-                '1.8.3.20': '4_android-optee',
-                '1.8.3.4': '0_get-adb-serial',
-                '1.8.3.12': '2_android-busybox',
-                '1.8.3.8': '1_android-meminfo',
-                '1.8.3.16': '3_android-ping-dns'},
+                '1.9.3.20': '4_android-optee',
+                '1.9.3.4': '0_get-adb-serial',
+                '1.9.3.12': '2_android-busybox',
+                '1.9.3.8': '1_android-meminfo',
+                '1.9.3.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
         for testdef in testdef.test_list[0]:
             self.assertEqual('git', testdef['from'])
@@ -206,7 +206,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 if action.parameters['namespace'] == 'tlxc':
-                    overlay = action.pipeline.actions[7]
+                    overlay = [action for action in action.pipeline.actions if action.name == 'lava-overlay'][0]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
