@@ -19,8 +19,8 @@ Navigation
 **********
 
 [ `Home <../../../>`_ ]
-[ `Results <../../../results/>`_ ]
-[ `Scheduler <../../scheduler/>`_ ]
+[ `Results <../../../../results/>`_ ]
+[ `Scheduler <../../../scheduler/>`_ ]
 [ `API <../../../api/help/>`_ ]
 [ `Help Index <genindex.html>`_ ]
 [ `Help Contents <contents.html>`_ ]
