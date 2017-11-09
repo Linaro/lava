@@ -228,10 +228,8 @@ class Command(LAVADaemonCommand):
         elif action == 'END':
             try:
                 job_id = int(msg[2])
-                # FIXME: should be removed as it's not needed anymore
-                # job_status = int(msg[3])
-                error_msg = msg[4]
-                compressed_description = msg[5]
+                error_msg = msg[3]
+                compressed_description = msg[4]
             except (IndexError, ValueError):
                 self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                 return False
