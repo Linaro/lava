@@ -51,15 +51,17 @@ from lava_server.cmdutils import LAVADaemonCommand
 # The slave does send the protocol version along with the HELLO and HELLO_RETRY
 # messages. If both version are not identical, the connection is refused by the
 # master.
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 # TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
 DB_LIMIT = 10
 
-# TODO: share this value with dispatcher-slave
-# This should be 3 times the slave ping timeout
-DISPATCHER_TIMEOUT = 3 * 10
+# Slave ping interval and timeout
+PING_INTERVAL = 20
+DISPATCHER_TIMEOUT = 3 * PING_INTERVAL
+
+# Log format
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
 
 
@@ -220,7 +222,7 @@ class Command(LAVADaemonCommand):
         elif action == 'PING':
             self.logger.debug("%s => PING", hostname)
             # Send back a signal
-            self.controler.send_multipart([hostname, 'PONG'])
+            self.controler.send_multipart([hostname, 'PONG', str(PING_INTERVAL)])
             self.dispatcher_alive(hostname)
 
         elif action == 'END':
