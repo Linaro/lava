@@ -271,15 +271,11 @@ def send_multipart_u(sock, data):
 def send_end(sock, job_id, job, print_exception=False):
     err = job.errors()
     description = job.description()
-    if description is not None:
-        job_status = 0
-    else:
+    if description is None:
         LOG.error("[%d] lava-run crashed", job_id)
         description = ""
-        job_status = 2
 
-    send_multipart_u(sock, ["END", str(job_id), str(job_status), err,
-                            description])
+    send_multipart_u(sock, ["END", str(job_id), err, description])
 
 
 def create_zmq_context(master_uri, hostname, ipv6, encrypt,
