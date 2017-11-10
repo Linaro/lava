@@ -7,7 +7,8 @@ lava-server (2017.11-1) unstable; urgency=medium
     c9526f01 Document the LOG_SIZE_LIMIT setting in settings.conf
     63b57c94 Remove lava-mount-masterfs
     75b403f4 Remove add_device script
-    8ddea823 Add description about the disc space requirement for pg_upgradecluster.
+    8ddea823 Add description about the disc space requirement
+        for pg_upgradecluster.
     5c9dceb2 Remove TemporaryDevice imports
     9b21ea48 Removed unused Worker functions
     2accb4c3 Matching change to templates for directory change
@@ -27,7 +28,7 @@ lava-server (2017.11-1) unstable; urgency=medium
     7c108de1 job: print lava.job result in case of failure
     b51c419f Remove old templates
     a9139c1f Use bootstrap template
-    7915f18f Remove unused ressources
+    7915f18f Remove unused resources
     7331901a scheduler.api.jobs.show: add failure_comment
     71233bff Fix print syntax for python3 compatibility
     936d5eca Remove unused tags
@@ -74,10 +75,12 @@ lava-server (2017.11-1) unstable; urgency=medium
     febf91b1 Improve advice on api/help
     ac8b7df3 fix pep8 error
     64025cf3 LAVA-1072 test all template connection syntax
-    10d5fbe1 Adjust U-Boot load addresses for tegra124 devices to allow bigger kernels
+    10d5fbe1 Adjust U-Boot load addresses for tegra124 devices
+        to allow bigger kernels
     f30ef936 LAVA-1065 - Remove dashboard_app urls server wide.
     096a2f1c LAVA-1049 - Allow for .yml as well as .yaml for healthchecks
-    918f0bc7 Fix logic so addldapuser and mergeldapuser work for all LDAP configs
+    918f0bc7 Fix logic so addldapuser and mergeldapuser work for
+        all LDAP configs
     36fcb3c2 Documentation changes for multiple uarts
     b1de8acf Update instructions for migrating postgres
     0ff08373 LAVA-1053 Results limit does not work for queries
