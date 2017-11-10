@@ -115,12 +115,12 @@ setup(
          ['instance.template']),
         ('/usr/share/lava-server',
          ['etc/lava-master.service',
+          'etc/lava-publisher.service',
+          'etc/lava-logs.service',
           'share/render-template.py']),
     ].extend(DEVICE_TYPE_TEMPLATES),
     scripts=[
         'lava_server/lava-daemon',
-        'lava_server/lava-master',
-        'lava_server/lava-publisher',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.2',

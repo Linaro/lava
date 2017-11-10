@@ -1,10 +1,15 @@
 [Unit]
-Description=Pipeline lava-server manage lava-logs
-After=remote-fs.target
+Description=LAVA logs handler
+After=network.target remote-fs.target
 
 [Service]
-ExecStart=/usr/bin/lava-server manage lava-logs
 Type=simple
+Environment=LOGLEVEL=DEBUG
+EnvironmentFile=-/etc/default/lava-logs
+EnvironmentFile=-/etc/lava-server/lava-logs
+ExecStart=/usr/bin/lava-server manage lava-logs --level $LOGLEVEL $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
+TimeoutStopSec=20
+Restart=always
 
 [Install]
-WantedBy=network.target
+WantedBy=multi-user.target
