@@ -149,9 +149,16 @@ commands:
 {% endblock commands -%}
 
 {% if device_info %}
-{# LXC support for adding energy probes, usb devices etc. #}
+{# LXC support for dynamic devices over usb etc. #}
 {# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
 device_info: {{ device_info }}
+{% endif -%}
+
+{% if static_info %}
+{# LXC support for adding static devices like energy probes. #}
+{# Also used for some phones which need to stay in the bootloader to charge. #}
+{# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
+static_info: {{ device_info }}
 {% endif -%}
 
 {% block fastboot %}
