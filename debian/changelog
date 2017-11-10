@@ -58,7 +58,7 @@ lava-server (2017.11-1) unstable; urgency=medium
     1b1b638e LAVA-876 - Return empty data stubs for dashboard API calls.
     919c10c2 Remove links to dashboard_app in the scheduler_app
     1483e9fb Remove leftover from job wizard
-    f7a1c976 docker: allow to pass extra options
+    f7a1c976 docker: allow passing extra options
     42451c9c Use all_jobs_with_custom_sort when applicable
     cc4ffd64 Fix broken links in example test job
     0ca5d75c Drop the migration status page.
