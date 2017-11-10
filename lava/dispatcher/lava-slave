@@ -1,40 +1,825 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-#  lava-daemon.py
+# Copyright (C) 2015 Linaro Limited
 #
-#  Copyright 2013 Linaro Limited
-#  Author: Neil Williams <neil.williams@linaro.org>
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+# This file is part of LAVA Dispatcher.
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#  MA 02110-1301, USA.
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses>.
 
-# Daemonise support for lava-slave, copied from
-# lava-coordinator.
+"""
+Start the lava dispatcher and the zmq messager.
 
-from lava.dispatcher.daemonise import daemonise
+Slaves are allowed to connect over ZMQ, but devices can only
+be assigned to known slaves by the admin of the instance
+(by selecting the worker_host for each pipeline device.
+Initially, the details of the workers will be configured
+via the current dispatcher support.
+"""
 
-PIDFILE = '/var/run/lava-slave.pid'
-LOGFILE = '/var/log/lava-dispatcher/lava-slave.log'
+import argparse
+import atexit
+import errno
+import fcntl
+import logging
+import lzma
+import os
+import re
+import shutil
+import signal
+import socket
+import subprocess
+import sys
+import time
+import traceback
+import yaml
+import zmq
+import zmq.auth
+from zmq.utils.strtypes import b, u
+
+if sys.version >= '3':
+    LZMAError = lzma.LZMAError
+else:
+    LZMAError = lzma.error
+
+from lava_dispatcher.job import ZMQConfig
+
+# pylint: disable=no-member
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-statements
+
+# Default values for:
+PROTOCOL_VERSION = 2
+# timeouts (in seconds)
+TIMEOUT = 5
+JOBS_CHECK_INTERVAL = 5
+FINISH_MAX_DURATION = 60
+# zmq socket send high water mark
+SEND_QUEUE = 10
+
+# FIXME: This is a temporary fix until the overlay is sent to the master
+# The job.yaml and device.yaml are retained so that lava-dispatch can be re-run manually
+# (at least until the slave is rebooted).
+TMP_DIR = "/var/lib/lava/dispatcher/slave/tmp"
+
+# Create the logger that will be configured after arguments parsing
+FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
+# Set logging timezone to UTC
+logging.Formatter.converter = time.gmtime
+LOG = logging.getLogger("lava-slave")
+
+
+def mkdir(path):
+    """Create a directory only if needed."""
+    try:
+        os.makedirs(path, mode=0o755)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
+class Master(object):
+    """Store information about the master status."""
+    def __init__(self):
+        self.last_msg = 0
+        self.last_ping = 0
+        self.online = False
+        # Start with TIMEOUT. Master will send the right value to use
+        # afterward.
+        self.ping_interval = TIMEOUT
+
+    def received_msg(self):
+        """We received a valid message from the master."""
+        self.last_msg = time.time()
+        if not self.online:
+            LOG.info("Master is ONLINE")
+        self.online = True
+
+
+class Job(object):
+    """Wrapper around a job process."""
+
+    RUNNING = 1
+    FINISHING = 2
+    ENDING = 3
+
+    def __init__(self, job_id, definition, device_definition,
+                 zmq_config, dispatcher_config, env, env_dut):
+        self.job_id = job_id
+        self.zmq_config = zmq_config
+        self.env = env
+        self.env_dut = env_dut
+        self.proc = None
+        self.status = Job.RUNNING
+        self.finish_time = 0
+        self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
+        mkdir(self.base_dir)
+
+        # Write back the job and device configuration
+        with open(os.path.join(self.base_dir, "job.yaml"), "w") as f_job:
+            f_job.write(definition)
+        with open(os.path.join(self.base_dir, "device.yaml"), "w") as f_device:
+            # Will be empty for secondary connections
+            f_device.write(device_definition)
+        with open(os.path.join(self.base_dir, "dispatcher.yaml"), "w") as f_job:
+            f_job.write(dispatcher_config)
+
+    def create_environ(self):
+        """Generate the env variables for the job."""
+        conf = None
+        environ = {}
+        # env is optional parameter and there is a possibility to get empty
+        # string, if there was an IOError.
+        if self.env:
+            conf = yaml.load(self.env)
+        else:
+            environ = dict(os.environ)
+
+        if conf:
+            if conf.get("purge", False):
+                environ = {}
+            # Remove some variables (that might not exist)
+            for var in conf.get("removes", {}):
+                try:
+                    del environ[var]
+                except KeyError:
+                    pass
+            # Override
+            environ.update(conf.get("overrides", {}))
+        return environ
+
+    def errors(self):
+        try:
+            return open(os.path.join(self.base_dir, "err"), 'r').read()
+        except IOError:
+            return ''
+
+    def description(self):
+        try:
+            filename = os.path.join(self.base_dir, "description.yaml")
+            data = open(filename, 'r').read()
+            return lzma.compress(b(data))
+        except (IOError, LZMAError) as exc:
+            LOG.error("[%d] Unable to read 'description.yaml'", self.job_id)
+            LOG.exception(exc)
+            return None
+
+    def start(self):
+        """Start the process."""
+        out_file = os.path.join(self.base_dir, "out")
+        err_file = os.path.join(self.base_dir, "err")
+        env_dut = os.path.join(self.base_dir, "env.dut.yaml")
+
+        # Dump the environment variables in the tmp file.
+        if self.env_dut:
+            with open(env_dut, 'w') as f_env:
+                f_env.write(self.env_dut)
+
+        try:
+            env = self.create_environ()
+            args = [
+                "lava-run",
+                "--device=%s" % os.path.join(self.base_dir, "device.yaml"),
+                "--dispatcher=%s" % os.path.join(self.base_dir, "dispatcher.yaml"),
+                "--output-dir=%s" % self.base_dir,
+                "--job-id=%s" % self.job_id,
+                "--logging-url=%s" % self.zmq_config.logging_url,
+                os.path.join(self.base_dir, "job.yaml"),
+            ]
+
+            if self.zmq_config.ipv6:
+                args.append("--ipv6")
+
+            # Use certificates if defined
+            if self.zmq_config.master_cert is not None and \
+               self.zmq_config.slave_cert is not None:
+                args.extend(["--master-cert", self.zmq_config.master_cert,
+                             "--slave-cert", self.zmq_config.slave_cert])
+            if self.env_dut:
+                args.append("--env-dut=%s" % env_dut)
+
+            self.proc = subprocess.Popen(
+                args,
+                stdout=open(out_file, "w"),
+                stderr=open(err_file, "w"), env=env)
+        except Exception as exc:  # pylint: disable=broad-except
+            LOG.error("[%d] Unable to start: %s", self.job_id, args)
+            # daemon must always continue running even if the job crashes
+            if hasattr(exc, "child_traceback"):
+                LOG.exception("[%d] %s", self.job_id, exc.child_traceback)
+            else:
+                LOG.exception("[%d] %s", self.job_id, exc)
+            with open(err_file, "a") as errlog:
+                errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
+            # The process has not started
+            # The END message will be sent the next time
+            # check_job_status is run
+            self.status = Job.ENDING
+
+    def cancel(self):
+        """Cancel the job and kill the process."""
+        # self.proc can be None as cancel() is also called when the process
+        # fails to start.
+        if self.proc is not None:
+            self.proc.send_signal(signal.SIGINT)
+        # Set the status and store the time
+        if self.status != Job.FINISHING:
+            self.finish_time = time.time()
+            self.status = Job.FINISHING
+
+
+def get_fqdn():
+    """Return the fully qualified domain name."""
+    host = socket.getfqdn()
+    try:
+        if bool(re.match("[-_a-zA-Z0-9.]+$", host)):
+            return host
+        else:
+            raise ValueError("Your FQDN contains invalid characters")
+    except ValueError as exc:
+        raise exc
+
+
+def send_multipart_u(sock, data):
+    """ Wrapper around send_multipart that encode data as bytes.
+
+    :param sock: The socket to use
+    :param data: Data to convert to byte strings
+    """
+    return sock.send_multipart([b(d) for d in data])
+
+
+def send_end(sock, job_id, job, print_exception=False):
+    err = job.errors()
+    description = job.description()
+    if description is None:
+        LOG.error("[%d] lava-run crashed", job_id)
+        description = ""
+
+    send_multipart_u(sock, ["END", str(job_id), err, description])
+
+
+def create_zmq_context(master_uri, hostname, ipv6, encrypt,
+                       master_cert, slave_cert):
+    """Create the ZMQ context and necessary accessories.
+
+    :param master_uri: The URI where the sokect should be connected.
+    :type master_uri: string
+    :param hostname: The name of this host.
+    :type hostname: string
+    :param encrypt: encrypt (or not) the zmq messages
+    :param master_cert: the master certificate file
+    :param slave_cert: the slave certificate file
+    :return A tuple with: the zmq context, the zmq socket, the zmq poller, a
+    read pipe and a write pipe.
+    """
+    # Connect to the master dispatcher.
+    context = zmq.Context()
+    # TODO: use a ROUTER socket
+    sock = context.socket(zmq.DEALER)
+    sock.setsockopt(zmq.IDENTITY, b(hostname))
+    sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
+
+    if ipv6:
+        LOG.info("[INIT] Enabling IPv6")
+        sock.setsockopt(zmq.IPV6, 1)
+
+    # If needed, load certificates
+    if not encrypt:
+        LOG.debug("[INIT] Connection is not encrypted")
+    else:
+        LOG.info("[INIT] Starting encryption")
+        try:
+            LOG.debug("Opening slave certificate: %s", slave_cert)
+            (client_public, client_private) = zmq.auth.load_certificate(slave_cert)
+            sock.curve_publickey = client_public
+            sock.curve_secretkey = client_private
+            LOG.debug("Opening master certificate: %s", master_cert)
+            (server_public, _) = zmq.auth.load_certificate(master_cert)
+            sock.curve_serverkey = server_public
+        except IOError as err:
+            LOG.error(err)
+            sock.close()
+            context.term()
+            sys.exit(1)
+
+    sock.connect(master_uri)
+
+    # Poll on the socket and the pipe (signal).
+    poller = zmq.Poller()
+    poller.register(sock, zmq.POLLIN)
+
+    # Mask signals and create a pipe that will receive a bit for each signal
+    # received. Poll the pipe along with the zmq socket so that we can only be
+    # interrupted while reading data.
+    (pipe_r, pipe_w) = os.pipe()
+    flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
+    fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+    def signal_to_pipe(signum, _):
+        # Send the signal number on the pipe
+        os.write(pipe_w, b(chr(signum)))
+
+    signal.signal(signal.SIGHUP, signal_to_pipe)
+    signal.signal(signal.SIGINT, signal_to_pipe)
+    signal.signal(signal.SIGTERM, signal_to_pipe)
+    signal.signal(signal.SIGQUIT, signal_to_pipe)
+    poller.register(pipe_r, zmq.POLLIN)
+
+    return context, sock, poller, pipe_r, pipe_w
+
+
+def destroy_zmq_context(context, sock, read_pipe, write_pipe):
+    """Clean up function to close ZMQ and related objects.
+
+    :param context: The zmq context to terminate.
+    :param sock: The zmq socket to close.
+    :param read_pipe: The read pipe to close.
+    :param write_pipe: The write pipe to close.
+    """
+    LOG.info("Closing sock and pipes, dropping messages")
+    try:
+        os.close(read_pipe)
+        os.close(write_pipe)
+    except OSError:
+        # Silently ignore possible errors.
+        pass
+    sock.close(linger=0)
+    context.term()
+
+
+def configure_logger(log_file, level):
+    """Configure the logger
+
+    :param log_file: the log_file or "-" for sys.stdout
+    :param level: the log level
+    """
+    # Configure the log handler
+    if log_file == "-":
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.FileHandler(log_file, "a")
+    handler.setFormatter(logging.Formatter(FORMAT))
+    LOG.addHandler(handler)
+
+    # Set-up the LOG level
+    if level == "ERROR":
+        LOG.setLevel(logging.ERROR)
+    elif level == "WARN":
+        LOG.setLevel(logging.WARN)
+    elif level == "INFO":
+        LOG.setLevel(logging.INFO)
+    else:
+        LOG.setLevel(logging.DEBUG)
+
+
+def connect_to_master(master, poller, pipe_r, sock, timeout):
+    """ Connect to master and wait for the answer
+
+    :param master: the master structure to fill when done
+    :param poller: the structure to poll for messages
+    :param pipe_r: the read pipe for signals
+    :param sock: the zmq socket
+    :param timeout: the poll timeout
+    :return: True if the master had answered
+    """
+    retry_msg = "HELLO_RETRY"
+    try:
+        sockets = dict(poller.poll(timeout * 1000))
+    except zmq.error.ZMQError:
+        # This might happend when receving a signal, just ignore the error
+        LOG.error("[INIT] a zmq error was raised: ignoring")
+        return False
+
+    if sockets.get(pipe_r) == zmq.POLLIN:
+        LOG.info("[INIT] Received a signal, leaving")
+        sys.exit(0)
+
+    elif sockets.get(sock) == zmq.POLLIN:
+        msg = sock.recv_multipart()
+
+        try:
+            message = u(msg[0])
+        except (IndexError, TypeError):
+            LOG.error("[INIT] Invalid message from master: %s", msg)
+        else:
+            if message == "HELLO_OK":
+                LOG.info("[INIT] Connection with master established")
+                # Mark master as alive.
+                master.received_msg()
+                return True
+            else:
+                LOG.info("[INIT] Unexpected message from master: %s", message)
+
+    LOG.info("[INIT] Greeting master => '%s' (using the same version?)",
+             retry_msg)
+    send_multipart_u(sock, [retry_msg, str(PROTOCOL_VERSION)])
+    return False
+
+
+def handle_cancel(msg, jobs, sock, master):
+    """
+    Parse the cancel message
+
+    Check if the job is known and started and cancel the process. In any cases,
+    notify the master that the job is ending.
+    """
+
+    try:
+        job_id = int(msg[1])
+    except (IndexError, ValueError):
+        LOG.error("Invalid message '%s'", msg)
+        return
+    LOG.info("master => CANCEL(%d)", job_id)
+
+    if job_id in jobs:
+        if jobs[job_id].status == Job.RUNNING:
+            # TODO: do not send the END message now. We don't know if the
+            # process will leave right now.
+            LOG.debug("[%d] canceling", job_id)
+            jobs[job_id].cancel()
+        else:
+            LOG.debug("[%d] Job already canceled", job_id)
+    else:
+        LOG.debug("[%d] Unknown job, sending END", job_id)
+        jobs[job_id] = Job(job_id, "", "", None, "", None, None)
+        jobs[job_id].status = Job.ENDING
+    # Send the END message anyway
+    send_end(sock, job_id, jobs[job_id])
+
+    # Mark the master as alive
+    master.received_msg()
+
+
+def handle_end_ok(msg, jobs):
+    """ Handle END_OK by removing the job from the table """
+    try:
+        job_id = int(msg[1])
+    except (IndexError, ValueError):
+        LOG.error("Invalid message '%s'", msg)
+        return
+    LOG.info("master => END_OK(%d)", job_id)
+
+    if job_id in jobs:
+        LOG.debug("[%d] Job END acked", job_id)
+        del jobs[job_id]
+    else:
+        LOG.debug("[%d] Unknown job", job_id)
+
+    # Remove the tmp directory without checking for errors
+    job_dir = os.path.join(TMP_DIR, str(job_id))
+    LOG.debug("[%d] Removing %s", job_id, job_dir)
+    shutil.rmtree(job_dir, ignore_errors=True)
+
+    # Do not mark the master as alive. In fact we are not sending
+    # back any data so the master will not be able to mark the
+    # slave as alive.
+
+
+def handle_hello_ok():
+    """ Handle HELLO_OK messages (nothing to do) """
+    LOG.debug("Received HELLO_OK from master - nothing do to")
+
+
+def handle_pong(msg, master):
+    """ handle PONG messages by marking the master as alive """
+    try:
+        ping_interval = int(msg[1])
+    except (IndexError, ValueError):
+        LOG.error("Invalid message '%s'", msg)
+        return
+
+    if ping_interval < TIMEOUT:
+        LOG.error("invalid ping interval (%d) too small", ping_interval)
+        return
+
+    LOG.debug("master => PONG(%d)", ping_interval)
+    master.received_msg()
+    master.ping_interval = ping_interval
+
+
+def handle_start(msg, jobs, sock, master, zmq_config):
+    """
+    Start jobs when requested by the master.
+
+    If the job was already started or finished, then send the corresponding
+    message back to the master.
+    """
+    try:
+        job_id = int(msg[1])
+        (job_definition, device_definition,
+         dispatcher_config, env, env_dut) = (u(m) for m in msg[2:])
+    except (IndexError, ValueError) as exc:
+        LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
+        return
+
+    LOG.info("master => START(%d)", job_id)
+
+    # Pretty print configuration
+    dispatcher_str = str(yaml.load(dispatcher_config)) if dispatcher_config else ""
+    env_str = str(yaml.load(env)) if env else ""
+    env_dut_str = str(yaml.load(env_dut)) if env_dut else ""
+
+    # Check if the job is known and started. In this case, send
+    # back the right signal (ignoring the duplication or signaling
+    # the end of the job).
+    if job_id in jobs:
+        if jobs[job_id].status == Job.ENDING:
+            LOG.warning("[%d] Job has already ended", job_id)
+            send_end(sock, job_id, jobs[job_id])
+        else:
+            LOG.debug("[%d] Job has already been started", job_id)
+            send_multipart_u(sock, ["START_OK", str(job_id)])
+    else:
+        LOG.info("[%d] Starting job", job_id)
+        LOG.debug("[%d]         : %s", job_id, yaml.load(job_definition))
+        LOG.debug("[%d] device  : %s", job_id, device_definition)
+        LOG.debug("[%d] dispatch: %s", job_id, dispatcher_str)
+        LOG.debug("[%d] env     : %s", job_id, env_str)
+        LOG.debug("[%d] env-dut : %s", job_id, env_dut_str)
+
+        jobs[job_id] = Job(job_id, job_definition, device_definition,
+                           zmq_config, dispatcher_config, env, env_dut)
+        jobs[job_id].start()
+        send_multipart_u(sock, ["START_OK", str(job_id)])
+
+    # Mark the master as alive
+    master.received_msg()
+
+
+def handle_status(msg, jobs, sock, master):
+    """
+    Parse STATUS messages
+
+    Return START_OK or END depending on the job (running, unknown or ended).
+    """
+    try:
+        job_id = int(msg[1])
+    except (IndexError, ValueError):
+        LOG.error("Invalid message '%s'", msg)
+        return
+    LOG.info("master => STATUS(%d)", job_id)
+
+    if job_id in jobs:
+        if jobs[job_id].status == Job.ENDING:
+            # The job has already ended
+            LOG.debug("[%d] job has ended", job_id)
+            send_end(sock, job_id, jobs[job_id])
+        else:
+            # The job is still running
+            LOG.debug("[%d] job is running", job_id)
+            send_multipart_u(sock, ["START_OK", str(job_id)])
+    else:
+        # Unknown job: return END anyway
+        LOG.debug("[%d] Unknown job, sending END after STATUS", job_id)
+        jobs[job_id] = Job(job_id, "", "", None, "", None, None)
+        jobs[job_id].status = Job.ENDING
+        send_end(sock, job_id, jobs[job_id])
+
+    # Mark the master as alive
+    master.received_msg()
+
+
+def listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout):
+    """Listen for master orders
+
+    :param master: the master structure
+    :param jobs: the list of jobs
+    :param pipe_r: the read pipe for signals
+    :param sock: the zmq socket
+    :param zmq_config: the zmq configuration for lava-dispatch
+    :param timeout: the poll timeout
+    """
+    try:
+        sockets = dict(poller.poll(timeout * 1000))
+    except zmq.error.ZMQError:
+        # TODO: tests needed to understand cases where ZMQError is raised.
+        LOG.error("a zmq error was raised: ignoring")
+        return
+
+    if sockets.get(pipe_r) == zmq.POLLIN:
+        signum = ord(os.read(pipe_r, 1))
+        if signum == signal.SIGHUP:
+            LOG.info("SIGHUP received, restarting loggers")
+            handler = LOG.handlers[0]
+            if isinstance(handler, logging.FileHandler):
+                # Keep the filename and remove the handler
+                log_file = handler.baseFilename
+                LOG.removeHandler(handler)
+                # Re-create the handler
+                handler = logging.FileHandler(log_file, "a")
+                handler.setFormatter(logging.Formatter(FORMAT))
+                LOG.addHandler(handler)
+        else:
+            LOG.info("Received a signal, leaving")
+            sys.exit(0)
+
+    if sockets.get(sock) == zmq.POLLIN:
+        msg = sock.recv_multipart()
+
+        # 1: the action
+        try:
+            action = u(msg[0])
+        except (IndexError, TypeError):
+            LOG.error("Invalid message from master: %s", msg)
+            return
+
+        # 2: handle the action
+        if action == "CANCEL":
+            handle_cancel(msg, jobs, sock, master)
+        elif action == "END_OK":
+            handle_end_ok(msg, jobs)
+        elif action == "HELLO_OK":
+            handle_hello_ok()
+        elif action == "PONG":
+            handle_pong(msg, master)
+        elif action == "START":
+            handle_start(msg, jobs, sock, master, zmq_config)
+        elif action == "STATUS":
+            handle_status(msg, jobs, sock, master)
+        else:
+            # Do not tag the master as alive as the message does not mean
+            # anything.
+            LOG.error("Unknown action: '%s', args=(%s)",
+                      action, msg[1:])
+
+
+def check_job_status(jobs, sock, last_jobs_check):
+    """Look for finished jobs
+
+    :param jobs: the list of jobs
+    :param sock: the zmq socket
+    :param last_jobs_check: the last time the job where checked
+    """
+    now = time.time()
+    if now - last_jobs_check < JOBS_CHECK_INTERVAL:
+        return last_jobs_check
+
+    # Loop on all running jobs
+    for job_id in jobs.keys():
+        status = jobs[job_id].status
+        if status == Job.RUNNING:
+            ret = jobs[job_id].proc.poll()
+            # Job has finished
+            if ret is not None:
+                LOG.info("[%d] Job END", job_id)
+                jobs[job_id].status = Job.ENDING
+                send_end(sock, job_id, jobs[job_id])
+
+        elif status == Job.FINISHING:
+            # Terminate processes that where not collected last time and that are
+            # too long to end.
+            if now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
+                LOG.info("[%d] Job not finishing => terminating", job_id)
+                # Just terminate the proc and let the next iteration will send the
+                # signal for us.
+                jobs[job_id].proc.terminate()
+                jobs[job_id].proc.wait()
+                LOG.info("[%d] Job END", job_id)
+                jobs[job_id].status = Job.ENDING
+                send_end(sock, job_id, jobs[job_id])
+
+        else:
+            # Re-send the END message (the server hasn't answered yet)
+            LOG.info("[%d] Job END (resend)", job_id)
+            send_end(sock, job_id, jobs[job_id])
+
+    return now
+
+
+def ping_master(master, sock):
+    """PING the master whnever needed
+    Send a PING only if we haven't received a message from the master nor sent
+    a PING for a long time.
+
+    :param master: the master structure
+    :param sock: the zmq socket
+    :param timeout: the time to wait to flag the master as offline
+    """
+    now = time.time()
+    if now - max(master.last_msg, master.last_ping) > master.ping_interval:
+        # Is the master offline ?
+        if master.online and now - master.last_msg > 4 * master.ping_interval:
+            LOG.warning("Master goes OFFLINE")
+            master.online = False
+
+        LOG.debug("PING => master (last message %ss ago)",
+                  int(now - master.last_msg))
+
+        send_multipart_u(sock, ["PING"])
+        master.last_ping = now
 
 
 def main():
-    # arguments are supplied by the init script and read inside the daemon
-    # dispatcher-slave.py --hostname sylvester.codehelp --master tcp://localhost:5556 --socket-addr tcp://localhost:5555 --level DEBUG
-    return daemonise(PIDFILE, LOGFILE)
+    """Set up and start the dispatcher slave."""
+    parser = argparse.ArgumentParser(description="LAVA Dispatcher Slave")
+    parser.add_argument(
+        "--hostname", default=get_fqdn(), type=str, help="Name of the slave")
+    parser.add_argument(
+        "--master", type=str, help="Main master socket", required=True)
+    parser.add_argument(
+        "--socket-addr", type=str, help="Log socket", required=True)
+    parser.add_argument(
+        "--log-file", type=str, help="Log file for the slave logs",
+        default="/var/log/lava-dispatcher/lava-slave.log")
+    parser.add_argument(
+        "--level", "-l",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "ERROR", "INFO", "WARN"],
+        help="Log level (DEBUG, ERROR, INFO, WARN); default to INFO"
+    )
+    parser.add_argument(
+        "--timeout", "-t",
+        type=int,
+        default=TIMEOUT,
+        help="Socket connection timeout in seconds; default to %d" % TIMEOUT,
+    )
+    parser.add_argument(
+        "--ipv6", default=False, action="store_true",
+        help="Enable IPv6"
+    )
 
-if __name__ == '__main__':
+    parser.add_argument(
+        "--encrypt", default=False, action="store_true",
+        help="Encrypt messages"
+    )
+    parser.add_argument(
+        "--master-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/master.key",
+        help="Master certificate file",
+    )
+    parser.add_argument(
+        "--slave-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/slave.key_secret",
+        help="Slave certificate file",
+    )
+    args = parser.parse_args()
+
+    # Parse the command line
+    timeout = args.timeout
+    host_name = args.hostname
+    master_uri = args.master
+
+    # configure logger
+    configure_logger(args.log_file, args.level)
+    LOG.info("[INIT] LAVA slave has started.")
+    LOG.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
+
+    # Create the zmq context
+    context, sock, poller, pipe_r, pipe_w = create_zmq_context(
+        master_uri, host_name, args.ipv6, args.encrypt,
+        args.master_cert, args.slave_cert)
+
+    # Register cleanup function to be run at exit.
+    atexit.register(destroy_zmq_context, context, sock, pipe_r, pipe_w)
+
+    # Collect every server data and list of jobs
+    master = Master()
+    jobs = {}
+    last_jobs_check = time.time()
+
+    # Connect to the master and wait for the reply
+    LOG.info("[INIT] Connecting to master as <%s>", host_name)
+    if not args.encrypt:
+        # Set to None to disable encryption in the logger
+        args.slave_cert = None
+        args.master_cert = None
+
+    LOG.info("[INIT] Greeting the master => 'HELLO'")
+    send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION)])
+
+    while not connect_to_master(master, poller, pipe_r, sock, timeout):
+        pass
+
+    # Loop for server instructions
+    LOG.info("Waiting for instructions")
+    zmq_config = ZMQConfig(args.socket_addr, args.master_cert, args.slave_cert,
+                           args.ipv6)
+    while True:
+        listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout)
+        last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
+        ping_master(master, sock)
+
+
+if __name__ == "__main__":
     main()

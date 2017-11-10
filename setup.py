@@ -92,14 +92,11 @@ setup(
             ['etc/lava-modules.conf']),
         ('/etc/logrotate.d/',
             ['etc/logrotate.d/lava-slave-log']),
-        ('/etc/init.d/',
-            ['etc/lava-slave.init']),
         ('/usr/share/lava-dispatcher/',
             ['etc/lava-slave.service'])
     ],
     scripts=[
         'lava/dispatcher/lava-run',
-        'lava/dispatcher/lava-dispatcher-slave',
         'lava/dispatcher/lava-slave'
     ],
 )
