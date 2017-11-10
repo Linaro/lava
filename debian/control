@@ -47,9 +47,9 @@ Description: Linaro Automated Validation Architecture server
  instance as a lava-server virtual host as well as the scheduler
  and dispatcher.
  .
- This package can be configured as the master scheduler or as a
- remote worker, although design limitations mean that it always
- installs a database (unused on a remote worker).
+ This package no longer supports configuration as a
+ remote worker and needs to be removed from existing workers.
+ Workers must only install lava-dispatcher.
 
 Package: lava
 Architecture: all
