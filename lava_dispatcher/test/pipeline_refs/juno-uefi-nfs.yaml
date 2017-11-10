@@ -1,0 +1,51 @@
+- class: actions.deploy.vemsd.VExpressMsdAction
+  name: vexpress-fw-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image}
+  - {class: actions.deploy.vemsd.EnterVExpressMCC, name: enter-vexpress-mcc}
+  - {class: actions.deploy.vemsd.EnableVExpressMassStorage, name: enable-vexpress-usbmsd}
+  - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
+  - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
+  - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
+  - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
+  - {class: actions.deploy.vemsd.VExpressFlashErase, name: erase-vexpress-flash}
+- class: actions.deploy.nfs.NfsAction
+  name: nfs-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, name: extract-nfsrootfs}
+  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
+  - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+  - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+- class: actions.boot.uefi.UefiShellAction
+  name: uefi-shell-main-action
+  pipeline:
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: menus.menus.MenuConnect, name: menu-connect}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: actions.boot.uefi.UefiShellMenuInterrupt, name: uefi-shell-menu-interrupt}
+  - {class: actions.boot.uefi.UefiShellMenuSelector, name: uefi-shell-menu-selector}
+  - {class: actions.boot.uefi.UefiShellInterrupt, name: uefi-shell-interrupt}
+  - {class: actions.boot.uefi.UefiBootloaderCommandsAction, name: bootloader-commands}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

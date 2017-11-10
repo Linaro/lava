@@ -1,0 +1,255 @@
+commands:
+    connections:
+      uart0:
+        connect: telnet localhost 7020
+        tags:
+        - primary
+    hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 5 --delay 20
+    power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+device_type: x15
+constants:
+     # OS shutdown message
+     # Override: set as the shutdown-message parameter of an Action.
+     # SHUTDOWN_MESSAGE
+     shutdown-message: 'The system is going down for reboot NOW'
+
+     # Kernel starting message
+     # BOOT_MESSAGE
+     boot-message: 'Booting Linux'
+
+     # CPU reset message
+     # CPU_RESET_MESSAGE
+     cpu-reset-message: 'Resetting CPU'
+
+     # Default shell prompt for AutoLogin
+     # DEFAULT_SHELL_PROMPT
+     default-shell-prompt: 'lava-test: # '
+
+     # u-boot auto boot prompt
+     # UBOOT_AUTOBOOT_PROMPT
+     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
+
+     # u-boot interrupt character
+     # UBOOT_INTERRUPT_CHARACTER = ' '
+     uboot-interrupt-character: ' '
+
+     # GRUB_BOOT_PROMPT
+     grub-autoboot-prompt: 'Press enter to boot the selected OS'
+     grub-interrupt-character: 'c'
+
+device_info: [{'board_id': 'R32D300FRYP'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor', 'system', 'cache', 'userdata']
+parameters:
+  # interfaces or device_ip or device_mac
+
+  pass: # sata_uuid_sd_uuid_usb_uuid
+
+  uimage:
+    kernel: '0x82000000'
+    ramdisk: '0x88080000'
+    dtb: '0x88000000'
+  bootm:
+    kernel: '0x82000000'
+    ramdisk: '0x88080000'
+    dtb: '0x88000000'
+  zimage:
+    kernel: '0x82000000'
+    ramdisk: '0x88080000'
+    dtb: '0x88000000'
+  bootz:
+    kernel: '0x82000000'
+    ramdisk: '0x88080000'
+    dtb: '0x88000000'
+
+adb_serial_number: R32D300FRYP
+fastboot_serial_number: R32D300FRYP
+fastboot_options: []
+# This attribute identifies whether a device should get into fastboot mode by
+# interrupting uboot and issuing commands at the bootloader prompt.
+fastboot_via_uboot: True
+
+actions:
+  deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
+      append_dtb: False
+      use_xip: False
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      tftp:
+      nbd:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+
+        host: ''
+        port: 22
+        user: root
+        identity_file: dynamic_vm_keys/lava
+      fastboot:
+      u-boot:
+        parameters:
+          bootloader_prompt: '=>'
+          interrupt_prompt: 'Hit any key to stop autoboot: '
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char:
+          send_char: False
+          # method specific stanza
+          fastboot:
+            commands:
+              - fastboot 1
+
+
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      minimal:
+      ssh:
+      fastboot: ['reboot', 'auto-login', 'shell-session', 'export-env']
+      u-boot:
+        parameters:
+          mkimage_arch: arm
+          bootloader_prompt: =>
+          interrupt_prompt: Hit any key to stop autoboot
+          # character needed to interrupt u-boot, single whitespace by default
+          interrupt_char: ""
+          boot_message: Booting Linux
+
+        # method specific stanza
+        mmc:
+          commands:
+          - run findfdt
+          - setenv console ttyS2,115200n8
+          - setenv mmcdev 1
+          - "setenv bootpart 1:e"
+          - run mmcboot
+
+          # method specific stanza
+        nfs:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high 0xffffffff
+          - setenv fdt_high 0xffffffff
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console=ttyS0,115200n8 root=/dev/nfs rw
+            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; run loadfdt; {BOOTX}'
+          - run bootcmd
+        nbd:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high 0xffffffff
+          - setenv fdt_high 0xffffffff
+
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - setenv nbdkbootargs ' ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp'
+          - setenv bootargs verbose console=ttyS0,115200n8 rw ${nbdbasekargs} ${nbdkbootargs}
+          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
+          - setenv verify no
+          - setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'
+          - run bootcmd
+
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high 0xffffffff
+          - setenv fdt_high 0xffffffff
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          - "setenv bootargs 'console=ttyS0,115200n8 root=/dev/ram0  ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+        usb:
+          commands:
+          - usb start
+          - setenv autoload no
+
+          - "setenv loadkernel 'load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console=ttyS0,115200n8 root={ROOT}  ip=dhcp'"
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+        sata:
+          commands:
+          - scsi scan
+          - setenv autoload no
+          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console=ttyS0,115200n8 root={ROOT}  ip=dhcp'"
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    lava-test-shell:
+      seconds: 10

@@ -7,18 +7,21 @@
 #
 # This file is part of LAVA Dispatcher.
 #
-# LAVA Coordinator is free software; you can redistribute it and/or modify
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# LAVA Coordinator is distributed in the hope that it will be useful,
+# LAVA Dispatcher is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
+
+# pylint: disable=wrong-import-order,superfluous-parens,too-many-statements
+# pylint: disable=missing-docstring
 
 import argparse
 import errno
@@ -30,15 +33,15 @@ import sys
 import traceback
 import yaml
 
-from lava_dispatcher.pipeline.action import (
+from lava_dispatcher.action import (
     InfrastructureError,
     JobCanceled,
     LAVABug,
     LAVAError
 )
-from lava_dispatcher.pipeline.log import YAMLLogger
-from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.log import YAMLLogger
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 
 
 def parser():
@@ -57,11 +60,11 @@ def parser():
     group = p_obj.add_argument_group("logging")
     group.add_argument("--logging-url", metavar="URL", default=None,
                        help="URL of the ZMQ socket to send the logs to the master")
+    # zmq.auth.load_certificate expects a filename, avoid opening the file here
     group.add_argument("--master-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Master certificate file")
+    # zmq.auth.load_certificate expects a filename, avoid opening the file here
     group.add_argument("--slave-cert", default=None, metavar="PATH",
-                       type=argparse.FileType("r"),
                        help="Slave certificate file")
     group.add_argument("--ipv6", action="store_true", default=False,
                        help="Enable IPv6")
@@ -91,6 +94,9 @@ def setup_logger(options):
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger('dispatcher')
     if options.logging_url is not None:
+        if options.master_cert and options.slave_cert:
+            if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
+                return None
         # pylint: disable=no-member
         logger.addZMQHandler(options.logging_url,
                              options.master_cert,
@@ -161,6 +167,9 @@ def main():
 
     # Setup the logger as early as possible
     logger = setup_logger(options)
+    if not logger:
+        print("lava-run failed to setup logging")
+        return 1
 
     # By default, that's a failure
     description = ""
@@ -195,7 +204,7 @@ def main():
         error_help = exc.error_help
         error_msg = str(exc)
         error_type = exc.error_type
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
         logger.exception(traceback.format_exc())
         error_help = LAVABug.error_help
         error_msg = str(exc)
@@ -213,10 +222,10 @@ def main():
             result_dict["error_msg"] = error_msg
             result_dict["error_type"] = error_type
             logger.error(error_help)
-        logger.results(result_dict)
+        logger.results(result_dict)  # pylint: disable=no-member
 
     # Closing the socket. We are now sure that all messages where sent.
-    logger.close()
+    logger.close()  # pylint: disable=no-member
 
     # Generate the description
     # A missing description.yaml indicate that lava-run crashed

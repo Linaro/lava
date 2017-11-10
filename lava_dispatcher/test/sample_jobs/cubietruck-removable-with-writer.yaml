@@ -1,0 +1,100 @@
+device_type: cubietruck
+
+job_name: cubie-uboot-usb-with-writer
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  actions:
+    dd-image:
+      minutes: 8
+priority: medium
+visibility: public
+
+actions:
+  - deploy:
+      parameters:
+        mkimage_arch: arm # uses 32bit UBoot
+      namespace: boot1
+      timeout:
+        minutes: 4
+      to: tftp
+      kernel:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+        type: zimage
+      ramdisk:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+        compression: gz
+        # the bootloader needs a u-boot header on the modified ramdisk
+        add-header: u-boot
+      modules:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+        compression: gz
+      nfsrootfs:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+        compression: gz
+      os: debian
+      dtb:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/sun7i-a20-cubietruck.dtb
+
+  - boot:
+      namespace: boot1
+      method: u-boot
+      commands: nfs
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+      prompts:
+      - 'root@jessie:'
+      timeout:
+        minutes: 2
+
+  - test:
+      namespace: boot1
+      timeout:
+        minutes: 5
+      definitions:
+      - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/smoke-tests-basic.yaml
+        name: smoke-tests
+
+    # secondary media - use the first deploy to get to a system which can
+    # deploy the next in testing, assumed to already be deployed
+  - deploy:
+        namespace: boot2
+        timeout:
+          minutes: 10
+        to: usb
+        os: debian
+        images:
+          image:
+            url: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
+            compression: gz
+          bmap:
+            url: file:///dev/null
+        uniquify: false
+        device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+        writer:
+          tool: /usr/bin/bmaptool
+          options: copy {DOWNLOAD_URL} {DEVICE}
+          prompt: 'bmaptool: info'
+
+  - boot:
+        namespace: boot2
+        method: u-boot
+        commands: usb
+        parameters:
+          shutdown-message: "reboot: Restarting system"
+        # These files are part of the image already deployed and are known to
+        # the test writer.
+        kernel: /boot/vmlinuz-3.16.0-4-armmp-lpae
+        ramdisk: /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot
+        dtb: /boot/dtb-3.16.0-4-armmp-lpae
+        root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe
+        boot_part: 1
+        kernel_type: zimage
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
