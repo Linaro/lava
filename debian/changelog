@@ -1,3 +1,56 @@
+lava-dispatcher (2017.11-1) unstable; urgency=medium
+
+  * New production release
+    d91a5b99 Revert "Stop parsing kernel messages when the end of a
+        panic has been found"
+    1451e3a4 LAVA-1098 unassigned variable in read_feedback
+    437d57ba Rationalise the devices directory structure
+    bdffb3bf Add power control to pyocd
+    d9553680 Add feedback check to test shell
+    06588ddf Receive the udev device directly from the udev rule
+    d811b2a8 Fix license
+    65d6c6a6 Move arduino101 dfu example urls to images.v.l.o
+    61cff41c Only log when feedback content was found
+    0ba35392 Move juno removable URLs to images.validation.linaro.org
+    cb983d97 Cleanup after pytest runs
+    997265c2 LAVA-1086 add handler to listen to feedback
+    29a60e38 Add ConfigObj dependency for TFTP check
+    70bd3fab Fix prospector warnings
+    6edb8ef9 Fix missing import and other pylint issues
+    6f7f5f05 Remove lava-lxc-device-* scripts which are unused.
+    578b054b Use py.test
+    65c03eca docker: allow to pass extra options
+    7b7d920a device-info should be yaml
+    ef8f7d4c Remove deprecated function
+    165e14f8 Fix linger period: set it to 10s instead of 5ms
+    49c500ac Fix double crash when the process crash early
+    7dbdc2b6 Add test case for secondary deployment writer tool parameters
+    969459c6 LAVA-1069 - migrate dispatcher device configs
+    9e8e5258 Use optargs to extend ci-run for python3
+    e1c1561b Fix python3 breakage in unit test
+    69277753 Read feedback when finalising connections
+    0fb44088 LAVA-1067 Refactor fastboot flash operations
+    9ac71872 Add missing import
+    94430958 Ensure finalize always finalises protocols
+    9d712364 Add option to not uniquify secondary image download paths
+    cdfd5909 Fix master cert handling for lava-run and lxc helper
+    73548f7a Rename dd params to tool for removable media
+    1802c3e8 Handle master and slave certs as filenames only
+    ed306477 Do not rely on SysV runlevel to ensure container is ready.
+    75b47c6a Remove loop mounts via guestfs, while applying
+        overlay to sparse image.
+    cd1152e3 Support archlinux and slackware rootfs
+    6fc024a5 Remove deprecated modules
+    ddf5d2fc Remove v1 code
+    5561be23 LAVA-1074 - second UART support
+    758a41a6 Allow configurable writes for secondary storage deployment
+    fb75db4a Add flag to disable uniquifying the download paths
+  * Update for removal of V1 files
+  * Update packaging of insecure keys
+  * Remove dependency on kpartx and parted due to removal of V1.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 06 Nov 2017 16:11:31 +0000
+
 lava-dispatcher (2017.10-1) unstable; urgency=medium
 
   * New production release
