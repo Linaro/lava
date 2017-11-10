@@ -19,7 +19,7 @@ lava-dispatcher (2017.11-1) unstable; urgency=medium
     6edb8ef9 Fix missing import and other pylint issues
     6f7f5f05 Remove lava-lxc-device-* scripts which are unused.
     578b054b Use py.test
-    65c03eca docker: allow to pass extra options
+    65c03eca docker: allow passing extra options
     7b7d920a device-info should be yaml
     ef8f7d4c Remove deprecated function
     165e14f8 Fix linger period: set it to 10s instead of 5ms
