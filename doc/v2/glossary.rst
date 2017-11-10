@@ -61,6 +61,8 @@ Glossary of terms
 **T** [ :term:`target_group` ] [ :term:`test run` ] [ :term:`test shell` ]
 [ :term:`test suite` ] [ :term:`tftp` ] [ :term:`token` ]
 
+**U** [ :term:`UART` ]
+
 **V** [ :term:`VLANd` ]
 
 **W** [ :term:`worker` ]
@@ -349,7 +351,8 @@ Glossary of terms
     .. seealso:: :ref:`job_metadata`
 
   MultiNode
-     A single test job which runs across multiple devices.
+     A single test job which runs across multiple devices, or using
+     multiple independent connections to the same device.
 
      .. seealso:: :ref:`multinode_api`.
 
@@ -542,6 +545,16 @@ Glossary of terms
     LAVA uses tokens to authenticate users via the :ref:`xml_rpc` and REST APIs.
 
     .. seealso:: :ref:`authentication_tokens`
+
+  UART
+    A :abbr:`UART (Universal asynchronous receiver-transmitter)` is the most
+    common way to make a serial connection to a :term:`DUT`. Some devices can
+    support multiple UARTs. This can be useful as a way to isolate the test
+    shell processing from kernel messages.
+
+    .. seealso:: `UART article on Wikipedia
+       <https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter>`_
+       and :ref:`multiple_serial_support`.
 
   VLANd
     VLANd is a daemon to support virtual local area networks in LAVA. This

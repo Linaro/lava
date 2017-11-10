@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 {% load i18n %}
 {% load utils %}
 
@@ -11,11 +11,7 @@
 
 <p>LAVA is an automated validation architecture primarily aimed at testing deployments of systems based around the
 Linux kernel on ARM devices, specifically ARMv7 and later. The current range of boards (<a
-{% if not 'HIDE_V2_DOCS'|get_settings %}
 href="{{ STATIC_URL }}docs/v2/glossary.html#term-device-type"
-{% else %}
-href="{{ STATIC_URL }}docs/v1/glossary.html#term-device-type"
-{% endif %}
 >device types</a>) supported by this LAVA instance can be seen
 on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
 of each type are available for tests and currently running jobs.</p>
@@ -27,22 +23,10 @@ of each type are available for tests and currently running jobs.</p>
 <h3>LAVA components</h3>
 <ul>
     <li>
-        <span class="glyphicon glyphicon-dashboard"></span>
-        <b><a href="{% url 'lava_dashboard' %}">Dashboard</a></b> - viewing
-        results of tests run by you or others, depending on your group
-        membership.
-{% if 'PIPELINE'|get_settings %}
-    (JSON submissions only)
-{% endif %}
-    </li>
-{% if 'PIPELINE'|get_settings %}
-    <li>
         <span class="glyphicon glyphicon-signal"></span>
-        <b><a href="{% url 'lava_results' %}">Results</a></b> - viewing
-        results of pipeline tests run by you or others. (YAML pipeline
-    submissions only.)
+        <b><a href="{% url 'lava_results' %}">Results</a></b> - viewing results
+        of tests run by you or others.
     </li>
-{% endif %}
     <li>
         <span class="glyphicon glyphicon-calendar"></span>
         <b><a href="{% url 'lava.scheduler' %}">Scheduler</a></b> - jobs
@@ -83,16 +67,12 @@ of each type are available for tests and currently running jobs.</p>
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{{ STATIC_URL }}docs/index.html"
+          <li><a href="{{ STATIC_URL }}docs/v2/index.html"
               class="btn btn-primary">
               <span class="glyphicon glyphicon-question-sign"></span>
               Introduction to LAVA</a></li>
           <li><a
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
           href="{{ STATIC_URL }}docs/v2/simple-admin.html"
-          {% else %}
-          href="{{ STATIC_URL }}docs/v1/index.html#lava-administrator-guide"
-          {% endif %}
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Administering a LAVA instance</a></li>
@@ -104,11 +84,7 @@ of each type are available for tests and currently running jobs.</p>
               class="btn btn-default">
               More about LAVA &amp; Linaro</a></li>
           <li><a
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
           href="{{ STATIC_URL }}docs/v2/development-intro.html"
-          {% else %}
-          href="{{ STATIC_URL }}docs/v1/index.html#developer-guides"
-          {% endif %}
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Developing LAVA</a></li>
@@ -122,20 +98,12 @@ of each type are available for tests and currently running jobs.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
           href="{{ STATIC_URL }}docs/v2/first-job.html"
-          {% else %}
-          href="{{ STATIC_URL }}docs/v1/multinode-usecases.html"
-          {% endif %}
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Use cases and worked examples.</a></li>
           <li><a
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
           href="{{ STATIC_URL}}docs/v2/hacking-session.html"
-          {% else %}
-          href="{{ STATIC_URL}}docs/v1/hacking-session.html"
-          {% endif %}
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Logging into a LAVA device.</a></li>
@@ -144,11 +112,7 @@ of each type are available for tests and currently running jobs.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a
-          {% if not 'HIDE_V2_DOCS'|get_settings %}
           href="{{ STATIC_URL }}docs/v2/writing-tests.html"
-          {% else %}
-          href="{{ STATIC_URL }}docs/v1/writing-tests.html"
-          {% endif %}
               class="btn btn-success">
               <span class="glyphicon glyphicon-question-sign"></span>
               Writing a LAVA test definition.</a></li>
@@ -177,18 +141,8 @@ of each type are available for tests and currently running jobs.</p>
    <h4 class="modal-header">Your results</h4>
     <ul class="nav nav-pills nav-stacked">
       <li>
-        <a href="{% url 'lava_dashboard_mybundlestreams' %}"><span
-            class="glyphicon glyphicon-folder-open pull-right"></span> Your bundle streams</a>
-      </li>
-{% if 'PIPELINE'|get_settings %}
-      <li>
         <a href="{% url 'lava_results' %}"><span
-            class="glyphicon glyphicon-signal pull-right"></span> Your pipeline results</a>
-      </li>
-{% endif %}
-      <li>
-        <a href="{% url 'lava_dashboard_my_subscriptions' %}"><span
-            class="glyphicon glyphicon-pencil pull-right"></span> Your subscriptions</a>
+            class="glyphicon glyphicon-signal pull-right"></span> Your results</a>
       </li>
      </ul>
     </div>

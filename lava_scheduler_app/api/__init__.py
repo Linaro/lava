@@ -11,7 +11,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
-    is_deprecated_json,
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
@@ -75,10 +74,6 @@ class SchedulerAPI(ExposedAPI):
         If the job is a multinode job, this function returns the list of created
         job IDs.
         """
-        # Reject v1 jobs
-        if is_deprecated_json(job_data):
-            raise xmlrpclib.Fault(400, "v1 jobs cannot be submitted to this instance")
-
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
             raise xmlrpclib.Fault(
@@ -89,6 +84,7 @@ class SchedulerAPI(ExposedAPI):
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
             raise xmlrpclib.Fault(400, "Problem with submitted job data: %s" % exc)
+        # FIXME: json error is not needed anymore
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
             raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
@@ -132,14 +128,8 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
-        # Reject v1 jobs
-        if not job.is_pipeline:
-            raise xmlrpclib.Fault(400, "v1 jobs cannot be submitted to this instance")
-
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
-        elif job.is_vmgroup:
-            return self.submit_job(job.vmgroup_definition)
         else:
             return self.submit_job(job.definition)
 
@@ -184,9 +174,6 @@ class SchedulerAPI(ExposedAPI):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(self.user)
-        elif job.is_vmgroup:
-            for vmgroup_job in job.sub_jobs_list:
-                vmgroup_job.cancel(self.user)
         else:
             job.cancel(self.user)
         return True
@@ -781,12 +768,12 @@ class SchedulerAPI(ExposedAPI):
 
         The elements available in XML-RPC structure include:
         _results_link, _state, submitter_id, submit_token_id, is_pipeline,
-        id, failure_comment, multinode_definition, user_id, vmgroup_definition,
+        id, failure_comment, multinode_definition, user_id,
         priority, _actual_device_cache, vm_group, original_definition,
         status, health_check, description, admin_notifications, start_time,
         target_group, visibility, requested_device_id, pipeline_compatibility,
         submit_time, is_public, _old_status, actual_device_id, definition,
-        sub_id, requested_device_type_id, _results_bundle_id, end_time,
+        sub_id, requested_device_type_id, end_time,
         group_id, absolute_url, submitter_username
         """
         self._authenticate()
@@ -999,6 +986,8 @@ class SchedulerAPI(ExposedAPI):
         """
         Name
         ----
+        DEPRECATED - use `get_device_config` instead.
+
         `get_pipeline_device_config` (`device_hostname`)
 
         Description
@@ -1014,16 +1003,52 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC binary data of output file.
         """
+        return get_device_config(device_hostname, context)
+
+    def get_device_config(self, device_hostname, context=None):
+        """
+        New in api_version 2 - see system.api_version()
+
+        Name
+        ----
+        `get_device_config` (`device_hostname`, context=None)
+
+        Description
+        -----------
+        Get the device configuration for given device hostname.
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname for which the configuration is required.
+
+        Some device templates need a context specified when processing the
+        device-type template. This can be specified as a YAML string:
+
+        `get_device_config` `('qemu01', '{arch: amd64}')`
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
         if not device_hostname:
             raise xmlrpclib.Fault(400, "Bad request: Device hostname was not "
                                   "specified.")
 
+        job_ctx = None
+        if context is not None:
+            try:
+                job_ctx = yaml.load(context)
+            except yaml.YAMLError as exc:
+                raise xmlrpclib.Fault(
+                    400,
+                    "Job context '%s' is not valid. %s" % (context, exc))
         try:
             device = Device.objects.get(hostname=device_hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified device not found.")
+            raise xmlrpclib.Fault(404, "Specified device was not found.")
 
-        config = device.load_configuration(output_format="yaml")
+        config = device.load_configuration(job_ctx=job_ctx, output_format="yaml")
 
         # validate against the device schema
         validate_device(yaml.load(config))

@@ -1,0 +1,155 @@
+{% extends "layouts/base.html" %}
+{% load i18n %}
+{% load utils %}
+
+{% block title %}{{ bread_crumb_trail|join:" | " }}{% endblock %}
+
+
+{% block body %}
+  {% block header %}
+  <!-- header -->
+  {% block menu %}
+  <!-- menu -->
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        {% if 'lava-server/images' in lava.branding_icon %}
+        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
+                width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+        {% else %}
+        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
+                width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+        {% endif %}
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava_results' %}">Results</a></li>
+              <li><a href="{% url 'lava.results.query_list' %}">Queries</a></li>
+              <li><a href="{% url 'lava.results.chart_list' %}">Charts</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
+              <li><a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.healthcheck' %}">Healthcheck Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
+              <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
+              <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                  <li><a href="{{ STATIC_URL }}docs/v2">Help</a></li>
+              {% assign_setting 'CUSTOM_DOCS' as userdocs %}
+                  {% if userdocs %}
+                      {% for label, url in userdocs.items %}
+                          {% if label and url %}
+                            <li role="separator" class="divider"></li>
+                            <li><a href="{{ url }}">{{ label }}</a></li>
+                          {% endif %}
+                      {% endfor %}
+                  {% endif %}
+              </ul>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {% if lava.instance_name %}
+          <li class="hidden-sm"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ user.get_full_name|default:user.username }} <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.me' %}"><span class="glyphicon glyphicon-cog"></span> Profile</a></li>
+              <li><a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks"></span> Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span class="glyphicon glyphicon-time"></span> Devices Health History</a></li>
+              {% if user.is_staff %}
+              <li class="divider"></li>
+              <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
+              {% endif %}
+              <li class="divider"></li>
+              <li><a href="{% url 'logout' %}?next={% url 'lava.home' %}"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
+            </ul>
+          </li>
+          {% else %}
+          <li><p class="navbar-text">
+          {% if request.get_full_path == "/accounts/logout/" %}
+            <a href="{% url 'login' %}">{% trans "Sign In" %}</a>
+           {% else %}
+            <a href="{% url 'login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
+           {% endif %}
+          </p></li>
+          {% endif %}
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+  {% endblock menu %}
+  {% endblock header %}
+
+<!-- lava-container -->
+<div class="container">
+  {% block breadcrumb_container %}
+    {% if context_help %}
+       <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a target="_blank"
+           href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
+           ><b>Help</b></a></span>
+    {% endif %}
+  <ul class="breadcrumb">
+    {% block breadcrumbs %}
+    {% for bread_crumb in bread_crumb_trail %}
+    <li><a href="{{ bread_crumb.get_absolute_url }}">{{ bread_crumb.get_name }}</a></li>
+    {% endfor %}
+    {% endblock breadcrumbs %}
+  </ul>
+  {% endblock breadcrumb_container %}
+
+  {% block before_content %}
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<div id="footer">
+  <div class="container">
+    <p class="text-center"><a
+            href="{{ lava.branding_bug_url }}">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a
+            href="{{ STATIC_URL }}docs/index.html#getting-support">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a
+            href="{{ lava.branding_source_url }}">Source code</a></p>
+    <p class="text-muted text-center">LAVA Server is free software developed by <a
+            href="http://linaro.org">Linaro</a>. It is distributed under the terms of the <a
+            href="http://www.gnu.org/licenses/agpl-3.0.html" >GNU Affero General Public License version 3</a>.<br />
+        <strong>You have the right to obtain source code of any server side installations of this software that you interact with.</strong></p>
+  </div>
+</div>
+{% endblock body %}

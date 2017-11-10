@@ -9,8 +9,8 @@ Test Writer use cases
 
 .. _writing_pipeline_submission:
 
-Writing a pipeline job submission
-*********************************
+Writing a LAVA job submission
+******************************
 
 Numerous changes have been made compared with the previous JSON submission
 format. There is no compatibility between the old JSON files and the new

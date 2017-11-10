@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 {% load utils %}
 {% block styles %}
 <style>
@@ -26,14 +26,14 @@
     <dl class="dl-horizontal">
     {% if job.actual_device %}
       <dt>Name</dt>
-      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>{% if not job.is_vmgroup %} <a
-      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a>{% endif %}</dd>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a></dd>
     {% endif %}
 
     {% if job.requested_device %}
       <dt>Type</dt>
-      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>{% if not job.is_vmgroup %} <a
-      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a>{% endif %}</dd>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a> <a
+      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a></dd>
     {% elif job.requested_device_type %}
       <dt>Requested type</dt>
       <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
@@ -43,28 +43,11 @@
   <div class="col-md-4">
     <h4 class="modal-header">Logs</h4>
     <div class="row">
-    {% if not job.is_pipeline %}
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present %}
-          <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
-        {% endif %}
-        </ul>
-      </div>
-    {% endif %}
-      <div class="col-md-6">
-        <ul class="nav nav-pills nav-stacked">
-        {% if job.is_pipeline %}
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Complete log</a></li>
-        {% elif job_file_present %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
-        {% endif %}
         {% if job.results_link %}
-            {% if job.is_pipeline %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
-            {% else %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
-            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -75,7 +58,7 @@
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if show_resubmit and not job.is_multinode and not job.is_vmgroup %}
+        {% if show_resubmit and not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         {% if user.is_authenticated %}
@@ -93,15 +76,13 @@
         <ul class="nav nav-pills nav-stacked">
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
-        {% elif job.is_vmgroup %}
-           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% endif %}
         </ul>
       </div>
     </div>
   </div>
 </div>
-{% if job.is_multinode or job.is_vmgroup %}
+{% if job.is_multinode %}
 <div class="row">
   <div class="col-md-6">
     <h4 class="modal-header">Sub jobs</h4>
@@ -126,7 +107,6 @@
 </div>
 {% endif %}
 
-{% if job.is_pipeline %}
 <ul class="nav nav-tabs">
   <li class="active"><a href="#YAML" data-toggle="tab">Definition</a></li>
   <li><a href="#pipeline" data-toggle="tab">Pipeline</a></li>
@@ -232,17 +212,6 @@ timeouts:
 
   </div>
 </div>
-{% else %}
-<h4 class="modal-header">Definition</h4>
-{% if job.is_multinode %}
-<pre>{{ job.display_definition }}</pre>
-{% else %}
-<pre><div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
-   class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
-    id="job_definition_text">{{ job.display_definition }}</span>
-</pre>
-{% endif %}
-{% endif %}
 {% endblock content %}
 
 {% block scripts %}

@@ -17,7 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
+from lava_server.settings.config_file import ConfigFile
 from lava_server.settings.common import *
 
 # Top-level directory of the project.
@@ -94,7 +94,6 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_server', 'templates'),
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-            os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
             os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
             os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
         ],
@@ -151,6 +150,14 @@ BRANDING_BUG_URL = "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framewo
 BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
 BRANDING_MESSAGE = ''
 
+instance_name = 'default'
+instance_path = "/etc/lava-server/instance.conf"
+if os.path.exists(instance_path):
+    instance_config = ConfigFile.load(instance_path)
+    instance_name = instance_config.LAVA_INSTANCE
+
+INSTANCE_NAME = instance_name
+
 # Logging
 
 LOGGING = {
@@ -185,11 +192,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'dashboard_app': {
-            'handlers': ['logfile'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'lava_scheduler_app': {
             'handlers': ['logfile'],
             'level': 'INFO',
@@ -198,5 +200,9 @@ LOGGING = {
     }
 }
 
-# Do not make the test instance read only
-ARCHIVED = False
+# Do not use caching as it interfere with test
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}

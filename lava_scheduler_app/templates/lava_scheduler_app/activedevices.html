@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 {% load django_tables2 %}
 
 {% block content %}
@@ -10,8 +10,6 @@
         <a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></span></li>
     <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-play">
         <a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-tasks">
-        <a href="{% url 'lava.scheduler.pipeline_devices' %}">Pipeline Devices</a></span></li>
 </ul>
 
 

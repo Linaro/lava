@@ -9,11 +9,11 @@ import uuid
 import simplejson
 import urllib
 import urllib2
-import urlparse
 import smtplib
 import socket
 import sys
 import yaml
+
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -21,7 +21,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
-from django.utils.safestring import mark_safe
+from django.core.cache import cache
 from django.core.exceptions import (
     ImproperlyConfigured,
     ValidationError,
@@ -34,9 +34,10 @@ from django.core.validators import validate_email
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
-from django.shortcuts import get_object_or_404
+from django.utils.safestring import mark_safe
 
 
 from django_restricted_resource.models import (
@@ -49,13 +50,7 @@ from lava_scheduler_app.schema import (
     handle_include_option,
     SubmissionException
 )
-from dashboard_app.models import (
-    Bundle,
-    BundleStream,
-    get_domain
-)
 
-from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.schema import validate_device
@@ -108,28 +103,10 @@ class Tag(models.Model):
         return self.name.lower()
 
 
-def is_deprecated_json(data):
-    """ Deprecated """
-    deprecated_json = True
-    try:
-        ob = simplejson.loads(data)
-        # calls deprecated lava_dispatcher code
-        validate_job_data(ob)
-    except (AttributeError, simplejson.JSONDecodeError, ValueError):
-        deprecated_json = False
-    return deprecated_json
-
-
 def validate_job(data):
-    if is_deprecated_json(data):
-        raise SubmissionException("v1 jobs cannot be submitted to this instance")
-
     try:
-        # only try YAML if this is not JSON
-        # YAML can parse JSON as YAML, JSON cannot parse YAML at all
         yaml_data = yaml.load(data)
     except yaml.YAMLError as exc:
-        # neither yaml nor json loaders were able to process the submission.
         raise SubmissionException("Loading job submission failed: %s." % exc)
 
     # validate against the submission schema.
@@ -192,15 +169,6 @@ def validate_yaml(yaml_data):
                     )
                 except Exception as e:
                     raise SubmissionException(e)
-
-
-def validate_job_json(data):
-    """ Deprecated """
-    try:
-        ob = simplejson.loads(data)
-        validate_job_data(ob)
-    except ValueError as e:
-        raise ValidationError(e)
 
 
 class Architecture(models.Model):
@@ -402,16 +370,27 @@ class DeviceType(models.Model):
         :param user: User to check
         :return: True if some devices of this DeviceType are visible
         """
+        # Grab the key from the cache if available
+        version = user.id if user.id is not None else -1
+        cached_value = cache.get(self.name, version=version)
+        if cached_value is not None:
+            return cached_value
+
         devices = Device.objects.filter(device_type=self) \
                                 .only('user', 'group') \
                                 .select_related('user', 'group')
+
         if self.owners_only:
+            result = False
             for d in devices:
                 if d.is_owned_by(user):
-                    return True
-            return False
+                    result = True
+                    break
         else:
-            return devices.exists()
+            result = devices.exists()
+        # Cache the value for 30 seconds
+        cache.set(self.name, result, 30, version=version)
+        return result
 
 
 class DefaultDeviceOwner(models.Model):
@@ -503,33 +482,6 @@ class Worker(models.Model):
     def update_description(self, description):
         self.description = description
         self.save()
-
-    @classmethod
-    def get_master(cls):
-        """Returns the master node.
-        """
-        try:
-            worker = Worker.objects.get(is_master=True)
-            return worker
-        except:
-            raise ValueError("Unable to find master node")
-
-    @classmethod
-    def get_rpc2_url(cls):
-        """Returns the RPC2 URL of master node.
-        """
-        master = Worker.get_master()
-        return master.rpc2_url
-
-    @classmethod
-    def localhost(cls):
-        """Return self ie., the current worker object.
-        """
-        try:
-            localhost = Worker.objects.get(hostname=utils.get_fqdn())
-            return localhost
-        except Worker.DoesNotExist:
-            raise ValueError("Worker node unavailable")
 
 
 class Device(RestrictedResource):
@@ -984,8 +936,11 @@ class Device(RestrictedResource):
         if not extends:
             return None
 
-        filename = os.path.join(Device.HEALTH_CHECK_PATH,
-                                "%s.yaml" % extends)
+        filename = os.path.join(Device.HEALTH_CHECK_PATH, "%s.yaml" % extends)
+        # Try if health check file is having a .yml extension
+        if not os.path.exists(filename):
+            filename = os.path.join(Device.HEALTH_CHECK_PATH,
+                                    "%s.yml" % extends)
         try:
             with open(filename, "r") as f_in:
                 return f_in.read()
@@ -1089,31 +1044,6 @@ def _check_tags(taglist, device_type=None, hostname=None):
     return list(set(matched_devices))
 
 
-def _check_exclusivity(device_list, pipeline=True):
-    """
-    Checks whether the device is exclusive to the pipeline.
-    :param device_list: A list of device objects to check
-    :param pipeline: whether the job being checked is a pipeline job
-    :return: a subset of the device_list to which the job can be submitted.
-    """
-    allow = []
-    check_type = "YAML" if pipeline else "JSON"
-    if len(device_list) == 0:
-        # logic error
-        return allow
-    for device in device_list:
-        if pipeline and not device.is_pipeline:
-            continue
-        if not pipeline and device.is_exclusive:
-            # devices which are exclusive to the pipeline cannot accept non-pipeline jobs.
-            continue
-        allow.append(device)
-    if len(allow) == 0:
-        raise DevicesUnavailableException(
-            "No devices of the requested type are currently available for %s submissions" % check_type)
-    return allow
-
-
 def _check_submit_to_device(device_list, user):
     """
     Handles the affects of Device Ownership on job submission
@@ -1181,39 +1111,6 @@ def _get_device_type(user, name):
         logger.error(msg)
         raise DevicesUnavailableException(msg)
     return device_type
-
-
-def _check_device_types(user):
-    """
-    Filters the list of device types to exclude types which are
-    owner_only if the user is not an owner of one of those devices.
-    :param user: the user submitting the TestJob
-    """
-
-    # Get all device types that are available for scheduling.
-    device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) |
-        models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED) |
-        models.Q(device__status=Device.OFFLINE) |
-        models.Q(device__status=Device.OFFLINING))\
-        .annotate(num_count=models.Count('name')).order_by('name')
-
-    # Count each of the device types available.
-    # reduce the count by the number of devices available to that user
-    # if this type is hidden  Skip if this results in zero devices of that type.
-    all_devices = {}
-    for dt in device_types:
-        # dt[0] -> device type name
-        # dt[1] -> device type count
-        device_type = DeviceType.objects.get(name=dt[0])
-        if device_type.owners_only:
-            count = device_type.num_devices_visible_to(user)
-            if count > 0:
-                all_devices[dt[0]] = count
-        if dt[1] > 0:
-            all_devices[dt[0]] = dt[1]
-    return all_devices
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -1675,22 +1572,6 @@ class TestJob(RestrictedResource):
 
         return self.id <= last_archived_job
 
-    def archived_bundle(self):
-        """
-        DEPRECATED
-
-        Checks if the current bundle file was archived.
-        """
-        last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
-
-        if not os.path.exists(last_info):
-            return False
-
-        with open(last_info, 'r') as last:
-            last_archived_bundle = int(last.read())
-
-        return self.id <= last_archived_bundle
-
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
     failure_comment = models.TextField(null=True, blank=True)
@@ -1698,24 +1579,16 @@ class TestJob(RestrictedResource):
     _results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
 
-    _results_bundle = models.OneToOneField(
-        Bundle, null=True, blank=True, db_column="results_bundle_id",
-        on_delete=models.SET_NULL)
-
     @property
     def results_link(self):
-        if self._results_bundle:
-            return self._results_bundle.get_permalink()
-        elif self._results_link:
-            return self._results_link
-        elif self.is_pipeline:
+        if self.is_pipeline:
             return u'/results/%s' % self.id
         else:
             return None
 
     @property
     def essential_role(self):  # pylint: disable=too-many-return-statements
-        if not (self.is_multinode or self.is_vmgroup or self.is_pipeline):
+        if not self.is_multinode:
             return False
         data = yaml.load(self.definition)
         # would be nice to use reduce here but raising and catching TypeError is slower
@@ -1732,33 +1605,16 @@ class TestJob(RestrictedResource):
 
     @property
     def device_role(self):  # pylint: disable=too-many-return-statements
-        if not (self.is_multinode or self.is_vmgroup):
+        if not self.is_multinode:
             return "Error"
-        if self.is_pipeline:
-            data = yaml.load(self.definition)
-            if 'protocols' not in data:
-                return 'Error'
-            if 'lava-multinode' not in data['protocols']:
-                return 'Error'
-            if 'role' not in data['protocols']['lava-multinode']:
-                return 'Error'
-            return data['protocols']['lava-multinode']['role']
-        json_data = simplejson.loads(self.definition)
-        if 'role' not in json_data:
-            return "Error"
-        return json_data['role']
-
-    @property
-    def results_bundle(self):
-        if self._results_bundle:
-            return self._results_bundle
-        if not self.results_link:
-            return None
-        sha1 = self.results_link.strip('/').split('/')[-1]
-        try:
-            return Bundle.objects.get(content_sha1=sha1)
-        except Bundle.DoesNotExist:
-            return None
+        data = yaml.load(self.definition)
+        if 'protocols' not in data:
+            return 'Error'
+        if 'lava-multinode' not in data['protocols']:
+            return 'Error'
+        if 'role' not in data['protocols']['lava-multinode']:
+            return 'Error'
+        return data['protocols']['lava-multinode']['role']
 
     def log_admin_entry(self, user, reason):
         testjob_ct = ContentType.objects.get_for_model(TestJob)
@@ -1839,447 +1695,6 @@ class TestJob(RestrictedResource):
             job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
         return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
-
-    # pylint: disable=too-many-statements,too-many-branches,too-many-locals
-    @classmethod
-    def from_json_and_user(cls, json_data, user, health_check=False):
-        """
-        Deprecated
-
-        Constructs one or more TestJob objects from a JSON data and a submitting
-        user. Handles multinode jobs and creates one job for each target
-        device.
-
-        For single node jobs, returns the job object created. For multinode
-        jobs, returns an array of test objects.
-
-        :return: a single TestJob object or a list
-        (explicitly, a list, not a QuerySet) of evaluated TestJob objects
-        """
-        job_data = simplejson.loads(json_data)
-        validate_job_data(job_data)
-        logger = logging.getLogger('lava_scheduler_app')
-
-        # Validate job, for parameters, specific to multinode that has been
-        # input by the user. These parameters are reserved by LAVA and
-        # generated during job submissions.
-        reserved_job_params = ["group_size", "role", "sub_id", "target_group"]
-        reserved_params_found = set(reserved_job_params).intersection(
-            set(job_data.keys()))
-        if reserved_params_found:
-            raise JSONDataError("Reserved parameters found in job data %s" %
-                                str([x for x in reserved_params_found]))
-
-        taglist = _get_tag_list(job_data.get('tags', []))
-
-        if 'target' in job_data:
-            if 'device_type' in job_data:
-                del job_data['device_type']
-            device_type = None
-            try:
-                target = Device.objects.filter(
-                    ~models.Q(status=Device.RETIRED))\
-                    .get(hostname=job_data['target'])
-            except Device.DoesNotExist:
-                logger.info("Requested device %s is unavailable.", job_data['target'])
-                raise DevicesUnavailableException(
-                    "Requested device %s is unavailable." % job_data['target'])
-            _check_exclusivity([target], False)
-            _check_submit_to_device([target], user)
-            _check_tags_support(_check_tags(taglist, hostname=target), _check_submit_to_device([target], user))
-        elif 'device_type' in job_data:
-            target = None
-            device_type = _get_device_type(user, job_data['device_type'])
-            allow = _check_submit_to_device(list(Device.objects.filter(
-                device_type=device_type)), user)
-            allow = _check_exclusivity(allow, False)
-            _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
-        elif 'device_group' in job_data:
-            target = None
-            device_type = None
-            requested_devices = {}
-
-            # Check if the requested devices are available for job run.
-            for device_group in job_data['device_group']:
-                device_type = _get_device_type(user, device_group['device_type'])
-                count = device_group['count']
-                taglist = _get_tag_list(device_group.get('tags', []))
-                allow = _check_submit_to_device(list(Device.objects.filter(
-                    device_type=device_type)), user)
-                allow = _check_exclusivity(allow, False)
-                _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
-                if device_type in requested_devices:
-                    requested_devices[device_type] += count
-                else:
-                    requested_devices[device_type] = count
-
-            all_devices = _check_device_types(user)
-            for board, count in requested_devices.iteritems():
-                if all_devices.get(board.name, None) and \
-                        count <= all_devices[board.name]:
-                    continue
-                else:
-                    raise DevicesUnavailableException(
-                        "Requested %d %s device(s) - only %d available." %
-                        (count, board, all_devices.get(board.name, 0)))
-        elif 'vm_group' in job_data:
-            target = None
-            requested_devices = {}
-            vm_group = job_data['vm_group']
-
-            # Check if the requested device is available for job run.
-            try:
-                device_type = DeviceType.objects.get(
-                    name=vm_group['host']['device_type'])
-            except Device.DoesNotExist as e:
-                raise DevicesUnavailableException(
-                    "Device type '%s' is unavailable. %s" %
-                    (vm_group['host']['device_type'], e))
-            role = vm_group['host'].get('role', None)
-            allow = _check_submit_to_device(
-                list(Device.objects.filter(device_type=device_type)), user)
-            _check_exclusivity(allow, False)
-            requested_devices[device_type.name] = (1, role)
-
-            # Validate and get the list of vms requested. These are dynamic vms
-            # that will be created by the above vm_group host, so we need not
-            # bother about whether this vm device exists at this point of time
-            # (they won't since they will be created dynamically).
-            vms_list = vm_group['vms']
-            for vm in vms_list:
-                dtype = vm['device_type']
-                count = vm.get('count', 1)
-                role = vm.get('role', None)
-                # Right now we support only 'kvm' type vms.
-                #
-                # FIXME: Once we have support for 'xen' augment this list
-                if dtype in ['kvm', 'kvm-arm', 'kvm-aarch32', 'kvm-aarch64']:
-                    if dtype in requested_devices:
-                        count = count + requested_devices[dtype][0]
-                        requested_devices[dtype] = (count, role)
-                    else:
-                        requested_devices[dtype] = (count, role)
-                else:
-                    raise DevicesUnavailableException(
-                        "Device type '%s' is not a supported VMs type" %
-                        dtype)
-        else:
-            raise JSONDataError(
-                "No 'target' or 'device_type', 'device_group' or 'vm_group' "
-                "are found in job data.")
-
-        priorities = dict([(j.upper(), i) for i, j in cls.PRIORITY_CHOICES])
-        priority = cls.MEDIUM
-        if 'priority' in job_data:
-            priority_key = job_data['priority'].upper()
-            if priority_key not in priorities:
-                raise JSONDataError("Invalid job priority: %r" % priority_key)
-            priority = priorities[priority_key]
-
-        for email_field in 'notify', 'notify_on_incomplete':
-            if email_field in job_data:
-                value = job_data[email_field]
-                msg = ("%r must be a list of email addresses if present"
-                       % email_field)
-                if not isinstance(value, list):
-                    raise ValueError(msg)
-                for address in value:
-                    if not isinstance(address, basestring):
-                        raise ValueError(msg)
-                    try:
-                        validate_email(address)
-                    except ValidationError:
-                        raise ValueError(
-                            "%r is not a valid email address." % address)
-
-        if job_data.get('health_check', False) and not health_check:
-            raise ValueError(
-                "cannot submit a job with health_check: true via the api.")
-
-        job_name = job_data.get('job_name', '')
-
-        submitter = user
-        group = None
-        is_public = True
-
-        for action in job_data['actions']:
-            if not action['command'].startswith('submit_results'):
-                continue
-            stream = action['parameters']['stream']
-            try:
-                bundle_stream = BundleStream.objects.get(pathname=stream)
-            except BundleStream.DoesNotExist:
-                raise ValueError("stream %s not found" % stream)
-            if not bundle_stream.can_upload(submitter):
-                raise ValueError(
-                    "you cannot submit to the stream %s" % stream)
-            # NOTE: this *overwrites* the HTTP:Request.user with the BundleStream.user
-            # use the cached submitter value for user checks.
-            if not bundle_stream.is_anonymous:
-                user, group, is_public = (bundle_stream.user,
-                                          bundle_stream.group,
-                                          bundle_stream.is_public)
-            server = action['parameters']['server']
-            parsed_server = urlparse.urlsplit(server)
-            action["parameters"]["server"] = utils.rewrite_hostname(server)
-            if parsed_server.hostname is None:
-                raise ValueError("invalid server: %s" % server)
-
-        # hidden device types must have a private stream
-        # we need to have already prevented other users from
-        # seeing this device_type before getting to this point.
-        check_type = target.device_type if target else device_type
-        if isinstance(check_type, unicode):
-            check_type = DeviceType.objects.get(name=check_type)
-        if check_type.owners_only and is_public:
-            raise DevicesUnavailableException(
-                "%s is a hidden device type and must have a private bundle stream" %
-                check_type)
-
-        # MultiNode processing - tally allowed devices with the
-        # device_types requested per role.
-        allowed_devices = {}
-        orig_job_data = job_data
-        job_data = utils.process_repeat_parameter(job_data)  # pylint: disable=redefined-variable-type
-        if 'device_group' in job_data:
-            device_count = {}
-            target = None  # prevent multinode jobs reserving devices which are currently running.
-            for clients in job_data["device_group"]:
-                device_type = str(clients['device_type'])
-                if device_type not in allowed_devices:
-                    allowed_devices[device_type] = []
-                count = int(clients["count"])
-                if device_type not in device_count:
-                    device_count[device_type] = 0
-                device_count[device_type] += count
-
-                device_list = Device.objects.filter(device_type=device_type)
-                for device in device_list:
-                    if device.can_submit(submitter):
-                        allowed_devices[device_type].append(device)
-                if len(allowed_devices[device_type]) < device_count[device_type]:
-                    raise DevicesUnavailableException("Not enough devices of type %s are currently "
-                                                      "available to user %s"
-                                                      % (device_type, submitter))
-
-            target_group = str(uuid.uuid4())
-            node_json = utils.split_multi_job(job_data, target_group)
-            job_list = []
-            # parent_id must be the id of the .0 sub_id
-            # each sub_id must relate back to that parent
-            # this is fixed in V2 in a much cleaner way.
-            role = node_json.keys()[0]
-
-            device_type = DeviceType.objects.get(
-                name=node_json[role][0]["device_type"])
-            # cannot set sub_id until parent_id is known.
-            job = TestJob(
-                submitter=submitter,
-                requested_device=target,
-                description=job_name,
-                requested_device_type=device_type,
-                definition=simplejson.dumps(node_json[role][0],
-                                            sort_keys=True,
-                                            indent=4 * ' '),
-                original_definition=simplejson.dumps(json_data,
-                                                     sort_keys=True,
-                                                     indent=4 * ' '),
-                multinode_definition=json_data,
-                health_check=health_check, user=user, group=group,
-                is_public=is_public,
-                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
-                target_group=target_group)
-            job.save()
-            # Add tags as defined per role for each job.
-            taglist = _get_tag_list(node_json[role][0].get("tags", []))
-            if taglist:
-                for tag in Tag.objects.filter(name__in=taglist):
-                    job.tags.add(tag)
-            # This save is important though we have one few lines
-            # above, because, in order to add to the tags table we need
-            # a foreign key reference from the jobs table which happens
-            # with the previous job.save(). The following job.save()
-            # ensures the tags are saved properly with references.
-            job.save()
-            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
-            job.sub_id = "%d.0" % parent_id
-            # Add sub_id to the generated job dictionary.
-            node_json[role][0]["sub_id"] = job.sub_id
-            job.definition = simplejson.dumps(node_json[role][0],
-                                              sort_keys=True,
-                                              indent=4 * ' ')
-            job.save(update_fields=['sub_id', 'definition'])
-            job_list.append(job)
-            child_id = 0
-
-            # node_json is a dictionary, not a list.
-            for role in node_json:
-                role_count = len(node_json[role])
-                for c in range(0, role_count):
-                    if child_id == 0:
-                        # already done .0 to get the parent_id
-                        child_id = 1
-                        continue
-                    device_type = DeviceType.objects.get(
-                        name=node_json[role][c]["device_type"])
-                    sub_id = '.'.join([str(parent_id), str(child_id)])
-
-                    # Add sub_id to the generated job dictionary.
-                    node_json[role][c]["sub_id"] = sub_id
-
-                    job = TestJob(
-                        sub_id=sub_id, submitter=submitter,
-                        requested_device=target,
-                        description=job_name,
-                        requested_device_type=device_type,
-                        definition=simplejson.dumps(node_json[role][c],
-                                                    sort_keys=True,
-                                                    indent=4 * ' '),
-                        original_definition=simplejson.dumps(json_data,
-                                                             sort_keys=True,
-                                                             indent=4 * ' '),
-                        multinode_definition=json_data,
-                        health_check=health_check, user=user, group=group,
-                        is_public=is_public,
-                        priority=TestJob.MEDIUM,  # multinode jobs have fixed priority
-                        target_group=target_group)
-                    job.save()
-
-                    # Add tags as defined per role for each job.
-                    taglist = _get_tag_list(node_json[role][c].get("tags", []))
-                    if taglist:
-                        for tag in Tag.objects.filter(name__in=taglist):
-                            job.tags.add(tag)
-                    # This save is important though we have one few lines
-                    # above, because, in order to add to the tags table we need
-                    # a foreign key reference from the jobs table which happens
-                    # with the previous job.save(). The following job.save()
-                    # ensures the tags are saved properly with references.
-                    job.save()
-                    job_list.append(job)
-                    child_id += 1
-            return job_list
-
-        elif 'vm_group' in job_data:
-            # deprecated support
-            target = None
-            vm_group = str(uuid.uuid4())
-            node_json = utils.split_vm_job(job_data, vm_group)
-            job_list = []
-            # parent_id must be the id of the .0 sub_id
-            # each sub_id must relate back to that parent
-            # this is fixed in V2 in a much cleaner way.
-
-            role = node_json.keys()[0]
-            device_type = DeviceType.objects.get(
-                name=node_json[role][0]["device_type"])
-            # cannot set sub_id until parent_id is known.
-            job = TestJob(
-                submitter=submitter,
-                requested_device=target,
-                description=job_name,
-                requested_device_type=device_type,
-                definition=simplejson.dumps(node_json[role][0],
-                                            sort_keys=True,
-                                            indent=4 * ' '),
-                original_definition=simplejson.dumps(json_data,
-                                                     sort_keys=True,
-                                                     indent=4 * ' '),
-                vmgroup_definition=json_data,
-                health_check=health_check, user=user, group=group,
-                is_public=is_public,
-                priority=TestJob.MEDIUM,  # V1 multinode jobs have fixed priority
-                vm_group=vm_group)
-            job.save()
-            # Add tags as defined per role for each job.
-            taglist = _get_tag_list(node_json[role][0].get("tags", []))
-            if taglist:
-                for tag in Tag.objects.filter(name__in=taglist):
-                    job.tags.add(tag)
-            job.save()
-            parent_id = job.id  # all jobs in this group must share this as part of the sub_id
-            job.sub_id = "%d.0" % parent_id
-            # Add sub_id to the generated job dictionary.
-            node_json[role][0]["sub_id"] = job.sub_id
-            job.definition = simplejson.dumps(node_json[role][0],
-                                              sort_keys=True,
-                                              indent=4 * ' ')
-            job.save(update_fields=['sub_id', 'definition'])
-            job_list.append(job)
-            child_id = 0
-
-            for role in node_json:
-                role_count = len(node_json[role])
-                for c in range(0, role_count):
-                    if child_id == 0:
-                        # already done .0 to get the parent_id
-                        child_id = 1
-                        continue
-                    name = node_json[role][c]["device_type"]
-                    try:
-                        device_type = DeviceType.objects.get(name=name)
-                    except DeviceType.DoesNotExist:
-                        if name != "dynamic-vm":
-                            raise DevicesUnavailableException("device type %s does not exist" % name)
-                        else:
-                            device_type = DeviceType.objects.create(name="dynamic-vm")
-                    sub_id = '.'.join([str(parent_id), str(child_id)])
-
-                    is_vmhost = False
-                    if 'is_vmhost' in node_json[role][c]:
-                        is_vmhost = node_json[role][c]['is_vmhost']
-                    if not is_vmhost:
-                        description = "tmp device for %s vm-group" % vm_group
-                        node_json[role][c]["target"] = '%s-job%s' % \
-                            (node_json[role][c]['target'], sub_id)
-                        target = TemporaryDevice(
-                            hostname=node_json[role][c]["target"], is_public=True,
-                            device_type=device_type, description=description,
-                            worker_host=None, vm_group=vm_group)
-                        target.save()
-
-                    # Add sub_id to the generated job dictionary.
-                    node_json[role][c]["sub_id"] = sub_id
-
-                    job = TestJob(
-                        sub_id=sub_id, submitter=submitter,
-                        requested_device=target,
-                        description=job_name,
-                        requested_device_type=device_type,
-                        definition=simplejson.dumps(node_json[role][c],
-                                                    sort_keys=True,
-                                                    indent=4 * ' '),
-                        original_definition=simplejson.dumps(json_data,
-                                                             sort_keys=True,
-                                                             indent=4 * ' '),
-                        vmgroup_definition=json_data,
-                        health_check=health_check, user=user, group=group,
-                        is_public=is_public,
-                        priority=TestJob.MEDIUM,  # vm_group jobs have fixed priority
-                        vm_group=vm_group)
-                    job.save()
-                    job_list.append(job)
-                    child_id += 1
-
-                    # Reset values if already set
-                    target = None
-            return job_list
-
-        else:
-            job_data = simplejson.dumps(job_data, sort_keys=True,
-                                        indent=4 * ' ')
-            orig_job_data = simplejson.dumps(orig_job_data, sort_keys=True,
-                                             indent=4 * ' ')
-            job = TestJob(
-                definition=job_data, original_definition=orig_job_data,
-                submitter=submitter, requested_device=target,
-                requested_device_type=device_type, description=job_name,
-                health_check=health_check, user=user, group=group,
-                is_public=is_public, priority=priority)
-            job.save()
-            for tag in Tag.objects.filter(name__in=taglist):
-                job.tags.add(tag)
-            return job
 
     def clean(self):
         """
@@ -2364,22 +1779,13 @@ class TestJob(RestrictedResource):
         """
         Permission required for user to add failure information to a job
         """
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
         return self._can_admin(user) and self.status in states
 
     def can_cancel(self, user):
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        # Make the instance read only
-        if settings.ARCHIVED:
-            return False
         return self.is_pipeline and \
             (user.is_superuser or
              user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
@@ -2513,10 +1919,6 @@ class TestJob(RestrictedResource):
             jobs = TestJob.objects.filter(
                 target_group=self.target_group).order_by('id')
             return jobs
-        elif self.is_vmgroup:
-            jobs = TestJob.objects.filter(
-                vm_group=self.vm_group).order_by('id')
-            return jobs
         else:
             return None
 
@@ -2545,13 +1947,6 @@ class TestJob(RestrictedResource):
         return parent.actual_device.worker_host
 
     @property
-    def is_vmgroup(self):
-        if self.is_pipeline:
-            return False
-        else:
-            return bool(self.vm_group)
-
-    @property
     def display_id(self):
         if self.sub_id:
             return self.sub_id
@@ -2578,8 +1973,7 @@ class TestJob(RestrictedResource):
         which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
         before this attribute was introduced, return the DEFINITION.
         """
-        if self.original_definition and\
-                not (self.is_multinode or self.is_vmgroup):
+        if self.original_definition and not self.is_multinode:
             return self.original_definition
         else:
             return self.definition
@@ -2618,7 +2012,7 @@ class TestJob(RestrictedResource):
         def ready_or_running(job):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
-        if self.is_multinode or self.is_vmgroup:
+        if self.is_multinode:
             # FIXME: bad use of map - use list comprehension
             return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
@@ -2852,14 +2246,14 @@ class TestJob(RestrictedResource):
     def create_irc_notification(self):
         kwargs = {}
         kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
         return self.create_notification_body(
             Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
 
     def get_notification_args(self):
         kwargs = {}
         kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % get_domain()
+        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
             kwargs["query"]["results"] = self.notification.get_query_results()
@@ -3238,7 +2632,7 @@ class Notification(models.Model):
             query = Query.objects.get(name=self.query_name,
                                       owner=self.query_owner)
             # We use query_owner as user here since we show only status.
-            return query.get_results(self.query_owner, self.QUERY_LIMIT)
+            return query.get_results(self.query_owner)[:self.QUERY_LIMIT]
         else:
             return Query.get_queryset(
                 self.entity,

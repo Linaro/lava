@@ -2,9 +2,9 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyS0') %}
-{% set bootm_kernel_addr = '0x81000000' %}
-{% set bootm_ramdisk_addr = '0x82100000' %}
-{% set bootm_dtb_addr = '0x82000000' %}
+{% set bootm_kernel_addr =  '0x81000000' %}
+{% set bootm_ramdisk_addr = '0x82800000' %}
+{% set bootm_dtb_addr =     '0x83f80000' %}
 {% set bootz_kernel_addr = bootm_kernel_addr %}
 {% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
 {% set bootz_dtb_addr = bootm_dtb_addr %}

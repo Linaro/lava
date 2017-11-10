@@ -73,16 +73,16 @@ can be hard to estimate a reasonable timeout. If test jobs start to fail during
 such operations, investigate whether the connection to the third party service
 can be improved, cached or fixed.
 
-Duration of actions in V2
-=========================
+Duration of actions
+===================
 
-The duration of every action in a V2 test job is tracked and recorded. This
-allows test writers to look at other similar jobs and evaluate the actual
-duration of any operation within that testjob. Equally, it allows lab admins to
-compare your timeouts against the actual duration of the operation. If your
-jobs start to fail and sit idle for long periods waiting for a timeout, you
-have the information to hand to fix the timeouts yourself before you get a
-prompt from the admins.
+The duration of every action in a test job is tracked and recorded. This allows
+test writers to look at other similar jobs and evaluate the actual duration of
+any operation within that testjob. Equally, it allows lab admins to compare
+your timeouts against the actual duration of the operation. If your jobs start
+to fail and sit idle for long periods waiting for a timeout, you have the
+information to hand to fix the timeouts yourself before you get a prompt from
+the admins.
 
 .. _test_shell_timeouts:
 
@@ -122,8 +122,8 @@ health checks).
 
 .. _job_timeout:
 
-Job timeouts in V2
-******************
+Job timeouts
+************
 
 The entire test job has a single over-arching timeout. This means that no
 matter how long any action or connection timeout is set within the test job, if

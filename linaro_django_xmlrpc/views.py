@@ -147,6 +147,8 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pyl
     return render(request, template_name,
                   {'methods': methods,
                    'context_help': ['data-export'],
+                   'site_scheme': scheme,
+                   'site_domain': domain,
                    'site_url': "{scheme}://{domain}".format(scheme=scheme,
                                                             domain=domain)})
 

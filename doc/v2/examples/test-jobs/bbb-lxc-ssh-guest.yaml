@@ -14,9 +14,8 @@ metadata:
   # please change these fields when modifying this job for your own tests.
   docs-source: writing-multinode
   docs-filename: examples/test-jobs/bbb-lxc-ssh-guest.yaml
-  build-readme: http://snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/2/debian-stretch-armmp-armhf-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-armmp-armhf/2/console
-  build-script: http://snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/2/armmp-nfs.sh
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
+  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
 
 # PROTOCOL_BLOCK
 protocols:

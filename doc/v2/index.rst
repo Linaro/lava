@@ -12,20 +12,18 @@
 
 .. _toc:
 
-LAVA V2 - Pipeline model
-########################
+Introduction to LAVA
+####################
 
 Navigation
 **********
 
-[ `Help Overview <../>`_]
-[ `Help V1 <../v1/>`_]
 [ `Home <../../../>`_ ]
-[ `Results <../../../results/>`_ ]
+[ `Results <../../../../results/>`_ ]
 [ `Scheduler <../../../scheduler/>`_ ]
 [ `API <../../../api/help/>`_ ]
-[ `V2 Help Index <genindex.html>`_ ]
-[ `V2 Help Contents <contents.html>`_ ]
+[ `Help Index <genindex.html>`_ ]
+[ `Help Contents <contents.html>`_ ]
 
 Use the navigation bar at the top of the page to quickly navigate between
 sections of the documentation.
@@ -65,7 +63,7 @@ End Of Life for LAVA V1
 
 Migration to V2 started with the 2016.2 release as the new codebase
 grew and improved. We are now reaching the end of this long
-process. As `announced`_, LAVA V1 is now (September 2017) being
+process. As `announced`_, LAVA V1 has now (November 2017) being
 retired, in the following steps:
 
 * **2017.9** is the last release of LAVA which will support running V1
@@ -76,7 +74,7 @@ retired, in the following steps:
   data<archiving_v1>`.
 
 * **2017.11** will be the first release of LAVA which is V2 **only**. It
-  will contain no support for accessing V1 data.
+  will contain no support for accessing V1 data or documentation.
 
 * **2017.12** will **permanently delete all V1 test data** from the database
   upon installation.
@@ -220,6 +218,6 @@ Support
 Full documentation
 ******************
 
-LAVA V2 comes with :ref:`comprehensive documentation <contents_top>`
+LAVA  comes with :ref:`comprehensive documentation <contents_top>`
 about use and installation, including advice on how to manage a test
 lab.

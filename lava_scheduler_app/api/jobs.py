@@ -83,27 +83,33 @@ class SchedulerJobsAPI(ExposedV2API):
         else:
             return xmlrpclib.Binary(job.original_definition)
 
-    def list(self, limit=25):
+    def list(self, start=0, limit=25):
         """
         Name
         ----
-        `scheduler.jobs.list` (`limit=25`)
+        `scheduler.jobs.list` (`start=0`, `limit=25`)
 
         Description
         -----------
-        List the last jobs according to the criteria
+        List the last jobs, within the specified range,
+        in descending order of job ID.
 
         Arguments
         ---------
+        `start`: int
+          Skip the first job in the list
         `limit`: int
-          Max number of jobs to return
+          Max number of jobs to return.
+          This value will be clamped to 100
 
         Return value
         ------------
         This function returns an array of jobs
         """
         ret = []
-        for job in TestJob.objects.all().order_by('-id')[:limit]:
+        start = max(0, start)
+        limit = min(limit, 100)
+        for job in TestJob.objects.all().order_by('-id')[start:start + limit]:
             device_type = None
             if job.requested_device_type is not None:
                 device_type = job.requested_device_type.name
@@ -211,6 +217,7 @@ class SchedulerJobsAPI(ExposedV2API):
                 "end_time": job.end_time,
                 "tags": [t.name for t in job.tags.all()],
                 "visibility": job.get_visibility_display(),
+                "failure_comment": job.failure_comment,
                 }
 
     def resubmit(self, job_id):

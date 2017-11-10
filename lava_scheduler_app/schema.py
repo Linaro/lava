@@ -336,9 +336,19 @@ def _device_user_commands():
     })
 
 
+def _device_connections_commands():
+    return Schema({
+        All(str): {
+            'connect': str,
+            Optional('tags'): list
+        }
+    })
+
+
 def _device_commands_schema():
     return Schema({
-        All(str): Any(list, str),
+        All(str): Any(list, dict, str),
+        Optional('connections'): _device_connections_commands(),
         Optional('users'): _device_user_commands()
     })
 

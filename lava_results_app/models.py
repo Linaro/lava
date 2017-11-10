@@ -45,6 +45,8 @@ from django.core.validators import (
 from django.db import models, connection, transaction
 from django.db.models import Q, Lookup
 from django.db.models.fields import Field
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
@@ -832,12 +834,8 @@ class Query(models.Model):
     def has_view(self):
         return QueryMaterializedView.view_exists(self.id)
 
-    def get_results(self, user, limit=None, order_by=['-id']):
-        """ Used to get query results for persistant queries.
-
-        Limit parameter should not be used in views where django tables are
-        used.
-        """
+    def get_results(self, user, order_by=['-id']):
+        """ Used to get query results for persistant queries. """
 
         omitted_list = QueryOmitResult.objects.filter(
             query=self).values_list('object_id', flat=True)
@@ -846,7 +844,7 @@ class Query(models.Model):
             return Query.get_queryset(
                 self.content_type,
                 self.querycondition_set.all(),
-                limit, order_by=order_by).exclude(
+                order_by=order_by).exclude(
                     id__in=omitted_list).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
@@ -858,7 +856,7 @@ class Query(models.Model):
 
             return view.__class__.objects.all().exclude(
                 id__in=omitted_list).order_by(*order_by).visible_by_user(
-                    user)[:limit]
+                    user)
 
     @classmethod
     def get_queryset(cls, content_type, conditions, limit=None,
@@ -871,8 +869,8 @@ class Query(models.Model):
         This method is used for custom and live queries since they are do not
         have corresponding materialized views.
 
-        Limit parameter should not be used in views where django tables are
-        used.
+        Mind that if you need to further modify the queryset (as we do in table
+        views), omit the limit parameter as this is not supported in django.
         """
 
         logger = logging.getLogger('lava_results_app')
@@ -1110,6 +1108,17 @@ class Query(models.Model):
         return (
             "lava.results.query_display",
             [self.owner.username, self.name])
+
+
+@receiver(pre_save, sender=Query)
+def limit_update_signal(sender, instance, **kwargs):
+    try:
+        query = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        pass  # New query, ignore.
+    else:
+        if not query.limit == instance.limit:  # Field has changed
+            instance.is_changed = True
 
 
 class QueryCondition(models.Model):

@@ -27,13 +27,41 @@ def description_filename(job):
     return filename
 
 
+class V2Loader(yaml.Loader):
+    def remove_pipeline_module(self, suffix, node):
+        if 'lava_dispatcher.pipeline' in suffix:
+            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        return self.construct_python_object(suffix, node)
+
+    def remove_pipeline_module_name(self, suffix, node):
+        if 'lava_dispatcher.pipeline' in suffix:
+            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        return self.construct_python_name(suffix, node)
+
+    def remove_pipeline_module_new(self, suffix, node):
+        if 'lava_dispatcher.pipeline' in suffix:
+            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        return self.construct_python_object_new(suffix, node)
+
+
+V2Loader.add_multi_constructor(
+    u'tag:yaml.org,2002:python/name:',
+    V2Loader.remove_pipeline_module_name)
+V2Loader.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object:',
+    V2Loader.remove_pipeline_module)
+V2Loader.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object/new:',
+    V2Loader.remove_pipeline_module_new)
+
+
 def description_data(job):
     logger = logging.getLogger('lava_results_app')
     filename = description_filename(job)
     if not filename:
         return {}
     try:
-        data = yaml.load(open(filename, 'r'))
+        data = yaml.load(open(filename, 'r'), Loader=V2Loader)
     except yaml.YAMLError:
         logger.error("Unable to parse description for %s" % job.id)
         return {}

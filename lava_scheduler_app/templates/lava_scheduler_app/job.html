@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 {% load utils %}
 {% load django_tables2 %}
 
@@ -40,10 +40,6 @@
 {% endblock %}
 
 {% block content %}
-{% if job.status >= job.RUNNING and not job.is_pipeline %}
-<a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a>
-{% endif %}
-
 <div class="row" id="top">
   <div class="col-md-4">
     <h4 class="modal-header">Job information</h4>
@@ -89,34 +85,18 @@
         <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.sub_id %}" class="btn btn-info">Multinode Definition</a></li>
-        {% elif job.is_vmgroup %}
-           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
-        {% elif expand %}
-          <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
         {% endif %}
         </ul>
       </div>
       <div class="col-md-3">
         <ul class="nav nav-pills nav-stacked">
-        {% if job.is_pipeline %}
-          {% if job.is_multinode %}
+        {% if job.is_multinode %}
             <li><a href="{% url 'lava.scheduler.job.complete_log' job.sub_id %}" class="btn btn-primary">Complete log</a></li>
-          {% else %}
+        {% else %}
             <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
-          {% endif %}
-        {% elif job_file_present and not job.archived_job_file %}
-          {% if job.is_multinode %}
-            <li><a href="{% url 'lava.scheduler.job.log_file' job.sub_id %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
-          {% else %}
-            <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
-          {% endif %}
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
-            {% if job.is_pipeline %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results <span class="glyphicon glyphicon-signal"></span></a></li>
-            {% else %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle <span class="glyphicon glyphicon-signal"></span></a></li>
-            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -162,19 +142,12 @@
         {% endif %}
         </ul>
         {% endif %}
-        {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
-        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.id %}" id="priority-choice">
-          {% csrf_token %}
-          <button id="priority-button" class="btn btn-default">Set priority</button><br />
-          {{ job.priority|get_priority_select }}
-        </form>
-        {% endif %}
       </div>
     </div>
   </div>
 </div>
 <hr/>
-{% if job.is_multinode or job.is_vmgroup %}
+{% if job.is_multinode %}
 <div class="row">
   <div class="col-md-6">
     <h4 class="modal-header">Sub jobs</h4>
@@ -202,19 +175,14 @@
 </div>
 {% endif %}
 
-{% if job.is_pipeline %}
 <ul class="nav nav-tabs">
   <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
   <li><a href="#Description" data-toggle="tab">Job description</a></li>
 </ul>
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
-{% endif %}
 
-{% if job.status < job.RUNNING and not job.is_pipeline %}
-<h4 class="modal-header">Dispatcher Log messages</h4>
-<i>No log file yet.</i>
-{% elif job.archived_job_file %}
+{% if job.archived_job_file %}
 <i>Job log file archived. Please contact the administrator for job log file.</i>
 {% else %}
 {% if job_file_present and not job.archived_job_file %}
@@ -244,31 +212,11 @@
     It can only be downloaded.</p>
 </div>
 {% endif %}
-{% if not job.is_pipeline %}
-<h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a
-        class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"
-        title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
-<a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
-
-<div class="btn-group" data-toggle="buttons" id="logbuttons">
-{% for level in levels %}
-{% if level.1 %}
-  <label class="btn btn-primary" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
-{% else %}
-  <label class="btn btn-primary disabled" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
-
-{% endif %}
-{% endfor %}
-</div>
-{% endif %}
 
 <div id="log-messages">
   {% for log in job_log_messages %}
     <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
   {% endfor %}
-  {% if job.status == job.RUNNING and not job.is_pipeline %}
-  <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
-  {% endif %}
 </div>
 {% else %}
 {% if job.failure_comment %}
@@ -280,7 +228,6 @@
 {% endif %}
 {% endif %}
 
-{% if job.is_pipeline %}
 <div class="row" id="sectionlogs">
 {% spaceless %}
   {% get_pipeline_sections pipeline_data as sections %}
@@ -347,13 +294,6 @@
 <div id="log_data">
 {% include 'lava_scheduler_app/_structured_logdata.html' %}
 </div>
-  <div class="row" id="log_progress">
-  <div class="col-md-8 col-md-offset-2">
-  {% if job.status != job.COMPLETE and job.status != job.INCOMPLETE and job.status != job.CANCELED %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
-  {% endif %}
-  </div>
-  </div>
 <hr/>
 <p>Each action is displayed relative to the timeline of the job,
 according to the logging level of the message from that action.
@@ -364,9 +304,7 @@ There is often a lag between the dispatcher message describing
 an operation and the message from the target processing that
 operation.</p>
 </div> {% comment %}log messages{% endcomment %}
-{% endif %}
 
-{% if job.is_pipeline %}
 {% spaceless %}
   </div>
   <div class="tab-pane" id="Description">
@@ -605,14 +543,9 @@ operation.</p>
   </div>
     </div>
 {% endspaceless %}
-{% endif %}
 
 
-{% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 and not job.archived_job_file %}
-{% if not job.is_pipeline %}
-<a class="btn btn-sm btn-default" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
-<br/><br/>
-{% endif %}
+{% if job_file_present and job_file_size > 0 and not job.archived_job_file %}
 <hr/>
 <div class="row">
   <div class="col-md-6">
@@ -627,8 +560,6 @@ operation.</p>
         <ul class="nav nav-pills nav-stacked">
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.sub_id %}" class="btn btn-info">Multinode Definition</a></li>
-        {% elif job.is_vmgroup %}
-           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% else %}
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% endif %}
@@ -636,11 +567,7 @@ operation.</p>
       </div>
       <div class="col-md-4">
         <ul class="nav nav-pills nav-stacked">
-        {% if job.is_pipeline %}
           <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
-        {% elif job_file_present %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}#bottom" class="btn btn-primary">Complete log</a></li>
-        {% endif %}
         </ul>
       </div>
     </div>
@@ -650,11 +577,7 @@ operation.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link %}
-            {% if job.is_pipeline %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
-            {% else %}
-          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
-            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -688,61 +611,4 @@ Each JS id relates to a HTML block of polled content.
     }
   });
 </script>
-{% if job.is_pipeline %}
-{% if job.status == job.SUBMITTED or job.status == job.RUNNING or job.status == job.CANCELING %}
-<script type="text/javascript">
-
-    var job_status_url = '{% url 'lava.scheduler.job_status' pk=job.pk %}';
-    var logs_url = '{% url 'lava.scheduler.job_pipeline_incremental' pk=job.pk %}{% querystring 'summary'=1 %}';
-    var section_url = '{% url 'lava.scheduler.job_pipeline_sections' pk=job.pk %}';
-
-</script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/lava-job-polling.min.js"></script>
-{% endif %}
-{% else %}
-{% if job.status == job.RUNNING and job_file_present %}
-<script type="text/javascript">
-var pollTimer = null, logLenth = '{{ job_file_size }}';
-
-function poll (start) {
-  $.ajax({
-    url: '{% url 'lava_scheduler_app.views.job_log_incremental' pk=job.pk %}?start=' + logLenth,
-    dataType: 'json',
-    global: false,
-    success: function (data, success, xhr) {
-      var progressNode = $('#log-messages img');
-      for (var i = 0; i < data.length; i++) {
-          var d = data[i];
-          var node = $('<code class="log"></code>');
-          node.addClass(d[0]);
-          node.text(d[1]);
-
-          // if the button is checked we should hide the new elements
-          var button = $('input#' + d[0]);
-          if (button.is(':checked')) {
-            node.css('display', 'none');
-          }
-          node.insertBefore(progressNode);
-
-          // Activate the label if needed
-          var label = $('label#' + d[0] + '_label');
-          label.removeClass('disabled');
-      }
-      logLenth = xhr.getResponseHeader('X-Current-Size');
-      if (xhr.getResponseHeader('X-Is-Finished')) {
-        $('#log-messages img').css('display', 'none');
-      } else {
-        pollTimer = setTimeout(poll, 1000);
-      }
-    }
-  });
-}
-$(document).ready(
-function () {
-pollTimer = setTimeout(poll, 1000);
-}
-);
-</script>
-{% endif %}
-{% endif %}
 {% endblock scripts %}

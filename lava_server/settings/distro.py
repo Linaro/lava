@@ -1,9 +1,11 @@
 # Django settings for django_hello project used on Debian systems.
 
+import os
 import re
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.production import *
 from django.db.backends.signals import connection_created
+from lava_server.settings.config_file import ConfigFile
 
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
@@ -164,8 +166,12 @@ BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", "https://bugs
 BRANDING_SOURCE_URL = distro_settings.get_setting("BRANDING_SOURCE_URL", "https://git.linaro.org/lava")
 BRANDING_MESSAGE = distro_settings.get_setting("BRANDING_MESSAGE", '')
 
-HIDE_V1_DOCS = distro_settings.get_setting("HIDE_V1_DOCS", False)
-HIDE_V2_DOCS = distro_settings.get_setting("HIDE_V2_DOCS", False)
+instance_path = "/etc/lava-server/instance.conf"
+if os.path.exists(instance_path):
+    instance_config = ConfigFile.load(instance_path)
+    instance_name = instance_config.LAVA_INSTANCE
+
+INSTANCE_NAME = distro_settings.get_setting("INSTANCE_NAME", instance_name)
 CUSTOM_DOCS = distro_settings.get_setting("CUSTOM_DOCS", {})
 
 # Logging
@@ -212,11 +218,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'dashboard_app': {
-            'handlers': ['logfile'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'lava_scheduler_app': {
             'handlers': ['logfile'],
             'level': 'INFO',
@@ -229,13 +230,6 @@ LOGGING = {
         }
     }
 }
-
-# pipeline results display
-# set to false in /etc/lava-server/settings.conf to hide the Results menu
-PIPELINE = distro_settings.get_setting("PIPELINE", True)
-
-# Make this instance read only
-ARCHIVED = distro_settings.get_setting("ARCHIVED", False)
 
 # Scheduler options
 SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))

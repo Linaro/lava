@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 {% load django_tables2 %}
 
 {% block content %}
@@ -10,7 +10,7 @@
 </div>
 {% endif %}
 
-{% if can_admin and device.is_pipeline and template_mismatch %}
+{% if can_admin and template_mismatch %}
   <div class="alert alert-warning">
     <strong>Configuration Error: template-mismatch.</strong>
   <p>The '{{ device.device_type }}' device type has no matching jinja2 template.
@@ -83,18 +83,8 @@
       {% endif %}
       <dt>Worker</dt>
       <dd><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></dd>
-      <dt>Support</dt>
-      {% if exclusive %}
-      <dd>v2 only</dd>
-      {% elif pipeline %}
-      <dd>v1 and v2</dd>
-      {% else %}
-      <dd>v1 only</dd>
-      {% endif %}
-      {% if device.is_pipeline %}
       <dt>Device dictionary</dt>
       <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
-      {% endif %}
     </dl>
   </div>
   <div class="col-md-4">

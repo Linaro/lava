@@ -280,7 +280,6 @@ class TestJobAdmin(admin.ModelAdmin):
     form = VisibilityForm
     actions = [cancel_action]
     list_filter = ('status', RequestedDeviceTypeFilter, RequestedDeviceFilter, ActualDeviceFilter)
-    raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
             'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'visibility', 'viewing_groups')}),
@@ -291,7 +290,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Current status', {
             'fields': ('actual_device', 'status')}),
         ('Results & Failures', {
-            'fields': ('failure_tags', 'failure_comment', '_results_link', '_results_bundle')}),
+            'fields': ('failure_tags', 'failure_comment', '_results_link')}),
     )
     list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname',
                     'actual_device', 'health_check', 'submit_time', 'start_time', 'end_time')

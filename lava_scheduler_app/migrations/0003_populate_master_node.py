@@ -32,7 +32,7 @@ def forwards_func(apps, schema_editor):
             worker.rpc2_url = rpc2_url
             worker.save()
     except:
-        print "Identifying master node failed ..."
+        print("Identifying master node failed ...")
 
 
 def backwards_func(apps, schema_editor):

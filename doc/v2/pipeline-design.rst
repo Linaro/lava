@@ -5,8 +5,8 @@
 Pipeline Design
 ###############
 
-Principles of the V2 design
-***************************
+Principles of the LAVA design
+*****************************
 
 Test Writer aspects
 ===================

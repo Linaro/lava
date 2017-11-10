@@ -141,14 +141,14 @@ Requirements and Limitations
 Namespaces
 ==========
 
-Namespaces were introduced to handle use-cases specific to LXC, but it can be
-expanded to other use-cases as and when required. The primary purpose of
-namespaces is to tie related actions together. In a typical job definition
-where more than one deploy, boot and test actions are specified there should be
-a mechanism to relate which deploy is connected with a boot and test action.
-This is important since an overlay created during a deploy action will be
-consumed by a test action somewhere down the job definition. A namespace comes
-into place to connect these actions together.
+Namespaces were introduced to handle use-cases specific to LXC, but it
+can be expanded to other use-cases as and when required. In a job
+definition where multiple deploy, boot and test actions are specified,
+there must be a mechanism to describe how the actions are
+connected. This is the primary purpose of a namespace; it is the way
+to tie related actions together. This is important - consider how an
+overlay created during a deploy action will be consumed by a test
+action somewhere down the job definition, for example.
 
 Protocol elements
 =================

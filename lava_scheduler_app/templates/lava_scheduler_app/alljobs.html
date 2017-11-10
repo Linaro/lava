@@ -1,4 +1,4 @@
-{% extends "layouts/content-bootstrap.html" %}
+{% extends "layouts/content.html" %}
 
 {% load django_tables2 %}
 
@@ -12,8 +12,6 @@
         <a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></span></li>
     <li class="btn btn-sm"><span class="glyphicon glyphicon-pause">
         <a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-tasks">
-        <a href="{% url 'lava.scheduler.pipeline' %}">Pipeline Jobs</a></span></li>
     <li class="btn btn-sm"><span class="glyphicon glyphicon-heart">
         <a href="{% url 'lava.scheduler.healthcheck' %}">Healthcheck Jobs</a></span></li>
 </ul>

@@ -630,8 +630,8 @@ TestJob data
 
 .. _admin_configuration_files:
 
-V2 configuration files
-======================
+LAVA configuration files
+========================
 
 .. seealso:: :ref:`admin_backups`
 
@@ -651,8 +651,6 @@ lava-coordinator
      running MultiNode test job. However, changes to
      ``/etc/lava-coordinator/lava-coordinator.conf`` on a worker can be made
      without needing to restart the ``lava-coordinator`` daemon itself.
-
-  .. seealso:: :ref:`disable_v1_worker`
 
 lava-dispatcher
 ---------------

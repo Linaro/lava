@@ -409,6 +409,35 @@ lxc
     timeout:
       minutes: 5
 
+.. index:: boot method console
+
+.. _boot_method_console:
+
+new_connection
+==============
+
+The ``new_connection`` boot method takes no arguments or
+parameters. This method can be used to switch to a new connection,
+allowing a test to isolate test and kernel messages (if the kernel and
+the device are both appropriately configured).
+
+.. include:: examples/test-jobs/hikey-new-connection.yaml
+     :code: yaml
+     :start-after: # boot uart0 block
+     :end-before: # boot hikey block
+
+.. note:: The ``new_connection`` boot method **must** use a different
+   :term:`namespace` to all other actions in the test job. The test
+   shell(s) must pass this namespace label as the
+   ``connection-namespace``.
+
+.. seealso:: :ref:`boot_connection_namespace`
+
+.. include:: examples/test-jobs/hikey-new-connection.yaml
+     :code: yaml
+     :start-after: # test isolation block
+     :end-before: # test lxc block
+
 .. index:: boot method qemu
 
 .. _boot_method_qemu:
