@@ -20,8 +20,6 @@ set -e
 
 case "$1" in
     purge)
-      rm -f /etc/lava-server/instance.conf
-      rm -f /etc/lava-server/secret_key.conf
       rm -rf /var/lib/lava-server/home/
       rm -rf /var/log/lava-server/
       # explicitly not deleting /var/lib/lava-server/default
@@ -29,20 +27,26 @@ case "$1" in
       # Not dropping the database unless there are no job output files.
       MEDIADIR="/var/lib/lava-server/default/"
       if [ -d $MEDIADIR ]; then
+          echo "checking ${MEDIADIR}"
           if [ ! `mountpoint $MEDIADIR >/dev/null; echo $?` ]; then
             # not an sshfs mountpoint, check for only empty directories.
-            EMPTY=`find $MEDIADIR -type f | grep -v $MEDIADIR/media/.mounted`
-            if [ "$EMPTY" ]; then
-                rm -rf $MEDIADIR
+            echo "Not an SSHFS mountpoint"
+            EMPTY=`find ${MEDIADIR} -type f | grep -v ${MEDIADIR}/media/.mounted || true`
+            if [ -z "${EMPTY}" ]; then
+                echo "Removing ${MEDIADIR}"
+                rm -rf ${MEDIADIR}
+                echo "Dropping lavaserver database and user"
                 sudo su postgres -c "dropdb lavaserver" || true
                 sudo su postgres -c "dropuser lavaserver" || true
+                rm -f /etc/lava-server/instance.conf
+                rm -f /etc/lava-server/secret_key.conf
             fi
           fi
       fi
       # Source debconf library.
       # Remove my changes to the db.
-      . /usr/share/debconf/confmodule
-      db_purge
+      # . /usr/share/debconf/confmodule
+      # db_purge
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
