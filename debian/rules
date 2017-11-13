@@ -59,6 +59,9 @@ override_dh_auto_install:
 	dh_systemd_start --name lava-publisher
 	dh_systemd_start --name lava-master
 
+override_dh_installinit:
+	dh_installinit -Nlava-server
+
 override_dh_compress:
 	dh_compress -X.yaml
 
