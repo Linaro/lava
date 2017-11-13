@@ -36,6 +36,9 @@ override_dh_auto_install:
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 	mv -v debian/lava-dispatcher/usr/bin/lava-run debian/lava-dispatcher/usr/sbin/
+	cp ./etc/lava-slave.service debian/
+	dh_systemd_enable --name lava-slave
+	dh_systemd_start --name lava-slave
 
 override_dh_fixperms:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
@@ -47,5 +50,6 @@ override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/
 	$(RM) -r versiontools-*.egg/ doc/build/ doc/html/
+	$(RM) debian/lava-slave.service
 	[ ! -f man/Makefile ] || make -C man/ clean
 
