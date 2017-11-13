@@ -777,7 +777,7 @@ def main():
 
     # Parse the command line
     timeout = args.timeout
-    host_name = args.hostname
+    hostname = args.hostname
     master_uri = args.master
 
     # configure logger
@@ -785,9 +785,13 @@ def main():
     LOG.info("[INIT] LAVA slave has started.")
     LOG.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
 
+    if hostname == "lava-logs":
+        LOG.error("'lava-logs' is a reserved hostname")
+        sys.exit(1)
+
     # Create the zmq context
     context, sock, poller, pipe_r, pipe_w = create_zmq_context(
-        master_uri, host_name, args.ipv6, args.encrypt,
+        master_uri, hostname, args.ipv6, args.encrypt,
         args.master_cert, args.slave_cert)
 
     # Register cleanup function to be run at exit.
@@ -799,7 +803,7 @@ def main():
     last_jobs_check = time.time()
 
     # Connect to the master and wait for the reply
-    LOG.info("[INIT] Connecting to master as <%s>", host_name)
+    LOG.info("[INIT] Connecting to master as <%s>", hostname)
     if not args.encrypt:
         # Set to None to disable encryption in the logger
         args.slave_cert = None
