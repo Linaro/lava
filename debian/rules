@@ -59,7 +59,6 @@ override_dh_auto_install:
 	dh_systemd_start --name lava-publisher
 	dh_systemd_start --name lava-master
 
-
 override_dh_compress:
 	dh_compress -X.yaml
 
@@ -67,6 +66,7 @@ override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
 	$(RM) -r versiontools-*.egg/
+	$(RM) debian/*.service
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
