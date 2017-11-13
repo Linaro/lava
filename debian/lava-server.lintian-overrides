@@ -1,4 +1,2 @@
 # these are symlinks created by dh_python.
 lava-server: image-file-in-usr-lib *
-# no docs available yet
-lava-server: binary-without-manpage usr/bin/lava-publisher
