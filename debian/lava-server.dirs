@@ -8,3 +8,4 @@
 /var/log/lava-server/
 /var/lib/lava-server/default/media/
 /var/lib/lava-server/default/archive/job-output/
+/usr/bin/
