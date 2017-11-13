@@ -590,6 +590,11 @@ Log files
 
     /var/log/lava-server/lava-master.log
 
+* **lava-logs** - aggregate the test job logs produced by the dispatchers.
+  Logs are created on the master::
+
+    /var/log/lava-server/lava-logs.log
+
 * **lava-scheduler** - controls how all devices are assigned. Control will be
   handed over to ``lava-master`` once V1 code is removed. Logs are created on
   the master::

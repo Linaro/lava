@@ -67,12 +67,16 @@ class Command(LAVADaemonCommand):
     def __init__(self, *args, **options):
         super(Command, self).__init__(*args, **options)
         self.logger = logging.getLogger("lava-logs")
-        self.pull_socket = None
+        self.log_socket = None
+        self.controler = None
         self.pipe_r = None
         self.poller = None
         self.options = None
         # List of logs
         self.jobs = {}
+        # Master status
+        self.last_ping = 0
+        self.ping_interval = TIMEOUT
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -81,6 +85,9 @@ class Command(LAVADaemonCommand):
         net.add_argument('--socket',
                          default='tcp://*:5555',
                          help="Socket waiting for logs. Default: tcp://*:5555")
+        net.add_argument('--master-socket',
+                         default='tcp://localhost:5556',
+                         help="Socket for master-slave communication. Default: tcp://localhost:5556")
         net.add_argument('--ipv6', default=False, action='store_true',
                          help="Enable IPv6 on the listening sockets")
         net.add_argument('--encrypt', default=False, action='store_true',
@@ -105,11 +112,15 @@ class Command(LAVADaemonCommand):
         auth = None
         # Create the sockets
         context = zmq.Context()
-        self.pull_socket = context.socket(zmq.PULL)
+        self.log_socket = context.socket(zmq.PULL)
+        # TODO: use a ROUTER socket
+        self.controler = context.socket(zmq.DEALER)
+        self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")
-            self.pull_socket.setsockopt(zmq.IPV6, 1)
+            self.log_socket.setsockopt(zmq.IPV6, 1)
+            self.controler.setsockopt(zmq.IPV6, 1)
 
         if options['encrypt']:
             self.logger.info("[INIT] Starting encryption")
@@ -124,22 +135,30 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[INIT] %s", err)
                 auth.stop()
                 return
-            self.pull_socket.curve_publickey = master_public
-            self.pull_socket.curve_secretkey = master_secret
-            self.pull_socket.curve_server = True
+            self.log_socket.curve_publickey = master_public
+            self.log_socket.curve_secretkey = master_secret
+            self.log_socket.curve_server = True
+            self.controler.curve_publickey = master_public
+            self.controler.curve_secretkey = master_secret
+            self.controler.curve_serverkey = master_public
 
-        self.pull_socket.bind(options['socket'])
+        self.log_socket.bind(options['socket'])
+        self.controler.connect(options['master_socket'])
 
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         self.poller = zmq.Poller()
-        self.poller.register(self.pull_socket, zmq.POLLIN)
+        self.poller.register(self.log_socket, zmq.POLLIN)
+        self.poller.register(self.controler, zmq.POLLIN)
 
         # Translate signals into zmq messages
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
         self.poller.register(self.pipe_r, zmq.POLLIN)
 
         self.logger.info("[INIT] listening for logs")
+        # PING right now: the master is waiting for this message to start
+        # scheduling.
+        self.controler.send_multipart([b"PING"])
 
         # Wait for messages
         last_gc = time.time()
@@ -154,18 +173,27 @@ class Command(LAVADaemonCommand):
                         self.jobs[job_id].close()
                         del self.jobs[job_id]
 
+            if now - self.last_ping > self.ping_interval:
+                self.logger.debug("PING => master")
+                self.last_ping = now
+                self.controler.send_multipart([b"PING"])
+
+        # Close the controler socket
+        self.controler.close(linger=0)
+        self.poller.unregister(self.controler)
+
         # Carefully close the logging socket as we don't want to lose messages
         self.logger.info("[EXIT] Disconnect logging socket and process messages")
-        endpoint = self.pull_socket.getsockopt(zmq.LAST_ENDPOINT)
+        endpoint = self.log_socket.getsockopt(zmq.LAST_ENDPOINT)
         self.logger.debug("[EXIT] unbinding from '%s'", endpoint)
-        self.pull_socket.unbind(endpoint)
+        self.log_socket.unbind(endpoint)
 
         # Empty the queue
         while self.wait_for_messages(True):
             pass
 
         self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
-        self.pull_socket.close()
+        self.log_socket.close()
         if options['encrypt']:
             auth.stop()
         context.term()
@@ -179,7 +207,7 @@ class Command(LAVADaemonCommand):
                 return True
 
             # Messages
-            if sockets.get(self.pull_socket) == zmq.POLLIN:
+            if sockets.get(self.log_socket) == zmq.POLLIN:
                 self.logging_socket()
                 return True
 
@@ -195,6 +223,11 @@ class Command(LAVADaemonCommand):
                     self.logger.warning("[POLL] signal already handled, please wait for the process to exit")
                     return True
 
+            # Pong received
+            elif sockets.get(self.controler) == zmq.POLLIN:
+                self.controler_socket()
+                return True
+
             # Nothing received
             else:
                 return not leaving
@@ -205,7 +238,7 @@ class Command(LAVADaemonCommand):
         return True
 
     def logging_socket(self):
-        msg = self.pull_socket.recv_multipart()
+        msg = self.log_socket.recv_multipart()
         try:
             (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
@@ -285,3 +318,18 @@ class Command(LAVADaemonCommand):
 
         # Write data
         self.jobs[job_id].write(message)
+
+    def controler_socket(self):
+        msg = self.controler.recv_multipart()
+        try:
+            ping_interval = int(msg[1])
+        except (IndexError, ValueError):
+            self.logger.error("Invalid message '%s'", msg)
+            return
+
+        if ping_interval < TIMEOUT:
+            self.logger.error("invalid ping interval (%d) too small", ping_interval)
+            return
+
+        self.logger.debug("master => PONG(%d)", ping_interval)
+        self.ping_interval = ping_interval

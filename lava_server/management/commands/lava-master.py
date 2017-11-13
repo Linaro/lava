@@ -67,13 +67,13 @@ FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
 
 class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
-    def __init__(self, hostname, online=False):
-        self.hostname = hostname
+    def __init__(self, online=True):
         self.last_msg = time.time() if online else 0
         self.online = online
 
     def alive(self):
         self.last_msg = time.time()
+        self.online = True
 
 
 def load_optional_yaml_file(filename):
@@ -112,7 +112,7 @@ class Command(LAVADaemonCommand):
         # List of logs
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
-        self.dispatchers = {}
+        self.dispatchers = {"lava-logs": SlaveDispatcher(online=False)}
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -162,7 +162,7 @@ class Command(LAVADaemonCommand):
         if hostname not in self.dispatchers:
             # The server crashed: send a STATUS message
             self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-            self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
+            self.dispatchers[hostname] = SlaveDispatcher()
             self.send_status(hostname)
 
         # Mark the dispatcher as alive
@@ -178,6 +178,13 @@ class Command(LAVADaemonCommand):
         hostname = msg[0]
         # 2: the action
         action = msg[1]
+
+        # Check that lava-logs only send PINGs
+        if hostname == "lava-logs" and action != "PING":
+            self.logger.error("%s => %s Invalid action from log daemon",
+                              hostname, action)
+            return False
+
         # Handle the actions
         if action == 'HELLO' or action == 'HELLO_RETRY':
             self.logger.info("%s => %s", hostname, action)
@@ -209,7 +216,7 @@ class Command(LAVADaemonCommand):
                 # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
                 # message.
                 self.logger.warning("New dispatcher <%s>", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
+                self.dispatchers[hostname] = SlaveDispatcher()
 
             if action == 'HELLO':
                 # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
@@ -220,7 +227,7 @@ class Command(LAVADaemonCommand):
             self.dispatchers[hostname].alive()
 
         elif action == 'PING':
-            self.logger.debug("%s => PING", hostname)
+            self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
             # Send back a signal
             self.controler.send_multipart([hostname, 'PONG', str(PING_INTERVAL)])
             self.dispatcher_alive(hostname)
@@ -532,7 +539,10 @@ class Command(LAVADaemonCommand):
                 now = time.time()
                 for hostname, dispatcher in self.dispatchers.iteritems():
                     if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
-                        self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
+                        if hostname == "lava-logs":
+                            self.logger.error("[STATE] lava-logs goes OFFLINE", hostname)
+                        else:
+                            self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
                         self.dispatchers[hostname].online = False
                         # TODO: DB: mark the dispatcher as offline and attached
                         # devices
@@ -542,9 +552,12 @@ class Command(LAVADaemonCommand):
                 if now - last_db_access > DB_LIMIT:
                     last_db_access = now
 
-                    # TODO: make this atomic
-                    # Dispatch pipeline jobs with devices in Reserved state
-                    self.process_jobs(options)
+                    if self.dispatchers["lava-logs"].online:
+                        # TODO: make this atomic
+                        # Dispatch pipeline jobs with devices in Reserved state
+                        self.process_jobs(options)
+                    else:
+                        self.logger.warning("lava-logs is offline: can't schedule jobs")
 
                     # Handle canceling jobs
                     self.handle_canceling()
