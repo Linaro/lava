@@ -46,6 +46,19 @@ override_dh_auto_install:
 	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
+	# handle systemd services
+	cp ./etc/*.service debian/
+	dh_systemd_enable --name lava-server-gunicorn
+	dh_systemd_enable --name lava-logs
+	dh_systemd_enable --name lava-server
+	dh_systemd_enable --name lava-publisher
+	dh_systemd_enable --name lava-master
+	dh_systemd_start --name lava-server-gunicorn
+	dh_systemd_start --name lava-logs
+	dh_systemd_start --name lava-server
+	dh_systemd_start --name lava-publisher
+	dh_systemd_start --name lava-master
+
 
 override_dh_compress:
 	dh_compress -X.yaml
