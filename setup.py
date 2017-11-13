@@ -119,9 +119,6 @@ setup(
           'etc/lava-logs.service',
           'share/render-template.py']),
     ].extend(DEVICE_TYPE_TEMPLATES),
-    scripts=[
-        'lava_server/lava-daemon',
-    ],
     tests_require=[
         'django-testscenarios >= 0.7.2',
     ],
