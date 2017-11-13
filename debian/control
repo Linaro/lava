@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
 Uploaders: Neil Williams <codehelp@debian.org>,
  Senthil Kumaran S (stylesen) <stylesen@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), dh-python, dh-systemd (>= 1.5),
+Build-Depends: debhelper (>= 9.20160709), dh-python,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
  python-setuptools (>= 3)
