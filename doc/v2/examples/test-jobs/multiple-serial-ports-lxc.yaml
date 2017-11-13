@@ -11,8 +11,9 @@ priority: medium
 visibility: public
 
 metadata:
+  # please change these fields when modifying this job for your own tests.
   docs-source: connections
-  docs-filename: examples/test-jobs/multiple-serial-ports.yaml
+  docs-filename: examples/test-jobs/multiple-serial-ports-lxc.yaml
   build: morty-mainline-337
   original.build: http://snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/337/
   reference.job: https://staging.validation.linaro.org/scheduler/job/192744/definition

@@ -175,7 +175,9 @@ zmq_client.py script:
    :start-after: # START_CLIENT
    :end-before: # END_CLIENT
 
-`Download or view zmq_client.py <examples/source/zmq_client.py>`_
+Download or view the complete example:
+`examples/source/zmq_client.py
+<examples/source/zmq_client.py>`_
 
 If you are interested in using event notifications for a custom
 :term:`frontend`, you may want also to look at the code for the
