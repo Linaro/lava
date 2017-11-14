@@ -79,12 +79,10 @@ class OverlayAction(DeployAction):
 
     def validate(self):
         super(OverlayAction, self).validate()
-        self.scripts_to_copy = glob.glob(os.path.join(self.lava_test_dir, 'lava-*'))
+        self.scripts_to_copy = sorted(glob.glob(os.path.join(self.lava_test_dir, 'lava-*')))
         # Distro-specific scripts override the generic ones
         if not self.test_needs_overlay(self.parameters):
             return
-        distro = self.parameters['deployment_data']['distro']
-        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='shared', key='lava_test_results_dir',
@@ -92,8 +90,13 @@ class OverlayAction(DeployAction):
         lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
         self.set_namespace_data(action='test', label='shared', key='lava_test_sh_cmd',
                                 value=lava_test_sh_cmd)
-        for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
-            self.scripts_to_copy.append(script)
+
+        # Add distro support scripts
+        distro = self.parameters['deployment_data']['distro']
+        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+        self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
+                                                              'lava-*')))
+
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
         if self.job.parameters.get('output_dir', None) is None:
@@ -143,7 +146,11 @@ class OverlayAction(DeployAction):
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
                 output_file = '%s/bin/%s' % (lava_path, foutname)
-                self.logger.debug("Updating %s", output_file)
+                if "distro" in fname:
+                    distribution = os.path.basename(os.path.dirname(fname))
+                    self.logger.debug("Updating %s (%s)", output_file, distribution)
+                else:
+                    self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     if foutname == 'lava-target-mac':
