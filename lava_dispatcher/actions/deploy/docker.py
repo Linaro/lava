@@ -21,7 +21,7 @@
 import re
 import subprocess
 
-from lava_dispatcher.action import JobError, Pipeline
+from lava_dispatcher.action import InfrastructureError, JobError, Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -45,12 +45,15 @@ class DockerAction(DeployAction):
             return
 
         # Print docker version
-        out = subprocess.check_output(["docker", "version", "-f", "{{.Server.Version}}"])
-        out = out.strip("\n").decode("utf-8")
-        self.logger.debug("docker server, installed at version: %s", out)
-        out = subprocess.check_output(["docker", "version", "-f", "{{.Client.Version}}"])
-        out = out.strip("\n").decode("utf-8")
-        self.logger.debug("docker client, installed at version: %s", out)
+        try:
+            out = subprocess.check_output(["docker", "version", "-f", "{{.Server.Version}}"])
+            out = out.strip("\n").decode("utf-8")
+            self.logger.debug("docker server, installed at version: %s", out)
+            out = subprocess.check_output(["docker", "version", "-f", "{{.Client.Version}}"])
+            out = out.strip("\n").decode("utf-8")
+            self.logger.debug("docker client, installed at version: %s", out)
+        except subprocess.CalledProcessError as exc:
+            raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
 
         # Add the lava_test_results_dir to the right namespace
         if self.test_needs_deployment(self.parameters):
