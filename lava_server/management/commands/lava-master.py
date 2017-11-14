@@ -469,9 +469,9 @@ class Command(LAVADaemonCommand):
         self.setup_logging("lava-master", options["level"],
                            options["log_file"], FORMAT)
 
-        self.logger.info("Dropping privileges")
+        self.logger.info("[INIT] Dropping privileges")
         if not self.drop_privileges(options['user'], options['group']):
-            self.logger.error("Unable to drop privileges")
+            self.logger.error("[INIT] Unable to drop privileges")
             return
 
         auth = None
@@ -480,17 +480,17 @@ class Command(LAVADaemonCommand):
         self.controler = context.socket(zmq.ROUTER)
 
         if options['ipv6']:
-            self.logger.info("Enabling IPv6")
+            self.logger.info("[INIT] Enabling IPv6")
             self.controler.setsockopt(zmq.IPV6, 1)
 
         if options['encrypt']:
-            self.logger.info("Starting encryption")
+            self.logger.info("[INIT] Starting encryption")
             try:
                 auth = ThreadAuthenticator(context)
                 auth.start()
-                self.logger.debug("Opening master certificate: %s", options['master_cert'])
+                self.logger.debug("[INIT] Opening master certificate: %s", options['master_cert'])
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
-                self.logger.debug("Using slaves certificates from: %s", options['slaves_certs'])
+                self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
                 auth.configure_curve(domain='*', location=options['slaves_certs'])
             except IOError as err:
                 self.logger.error(err)
