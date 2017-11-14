@@ -295,7 +295,9 @@ def metadata_export(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     # testdata from job & export
-    testdata = get_object_or_404(TestData, testjob=job)
+    testdata = TestData.objects.filter(testjob=job).first()
+    if not testdata:
+        raise Http404("No TestData matches the given query.")
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_metadata_%s.yaml" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
