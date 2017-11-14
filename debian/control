@@ -16,7 +16,7 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 mipsel powerpc ppc64el s390x ppc64
-Depends: file, lsb-base (>= 4), python-serial (>= 2.6), python-setuptools,
+Depends: file, systemd-sysv, python-serial (>= 2.6), python-setuptools,
  python-daemon, python-guestfs, tar (>= 1.27),
  sudo, telnet, ${python:Depends}, ${misc:Depends}
 Conflicts: python-linaro-dashboard-bundle
