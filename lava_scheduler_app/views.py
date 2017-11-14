@@ -66,7 +66,11 @@ from lava_scheduler_app.dbutils import (
 )
 
 from lava.utils.lavatable import LavaView
-from lava_results_app.utils import description_data, description_filename
+from lava_results_app.utils import (
+    check_request_auth,
+    description_data,
+    description_filename
+)
 from lava_results_app.models import (
     NamedTestAttribute,
     Query,
@@ -1197,7 +1201,8 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     log_file = job.output_file()
     description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
@@ -1213,7 +1218,8 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     filename = description_filename(job)
     if not filename:
         raise Http404()
@@ -1226,7 +1232,8 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     response = HttpResponse(job.display_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
@@ -1235,7 +1242,8 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     log_file = job.output_file()
     template = loader.get_template("lava_scheduler_app/multinode_job_definition.html")
     return HttpResponse(template.render(
@@ -1250,7 +1258,8 @@ def multinode_job_definition(request, pk):
 
 
 def multinode_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
@@ -1503,7 +1512,8 @@ def job_pipeline_timing(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_object_or_404(TestJob, pk=pk)
+    check_request_auth(request, job)
     # Old style jobs
     log_file = job.output_file()
     if log_file:
