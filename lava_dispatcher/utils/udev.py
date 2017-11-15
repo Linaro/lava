@@ -206,9 +206,13 @@ def get_udev_devices(job=None, logger=None, device_info=None):
     """
     context = pyudev.Context()
     device_paths = set()
-    if job or device_info:
-        devices = job.device.get('device_info', []) if job else device_info
-    else:
+    devices = []
+    if job:
+        devices = job.device.get('device_info', [])
+    # device_info argument overrides job device_info
+    if device_info:
+        devices = device_info
+    if not devices:
         return []
     for usb_device in devices:
         board_id = str(usb_device.get('board_id', ''))

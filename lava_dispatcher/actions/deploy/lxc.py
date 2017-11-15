@@ -42,7 +42,7 @@ from lava_dispatcher.utils.constants import (
     LXC_DEFAULT_PACKAGES,
     UDEV_RULES_DIR,
 )
-from lava_dispatcher.utils.udev import lxc_udev_rule, get_udev_devices
+from lava_dispatcher.utils.udev import lxc_udev_rule
 from lava_dispatcher.utils.filesystem import (
     debian_package_version,
     lxc_path,
@@ -116,7 +116,6 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                                           parameters=parameters)
         self.internal_pipeline.add_action(LxcCreateAction())
         self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
-        self.internal_pipeline.add_action(LxcAddStaticDevices())
         if 'packages' in parameters:
             self.internal_pipeline.add_action(LxcStartAction())
             self.internal_pipeline.add_action(LxcAptUpdateAction())
@@ -127,62 +126,6 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
             self.internal_pipeline.add_action(ApplyLxcOverlay())
-
-
-class LxcAddStaticDevices(DeployAction):
-    """
-    Identifies permanently powered devices which are relevant
-    to this LXC and adds the devices to the LXC at startup.
-    e.g. Devices providing a tty are often powered from the
-    worker.
-    """
-
-    def __init__(self):
-        super(LxcAddStaticDevices, self).__init__()
-        self.name = 'lxc-add-static'
-        self.description = 'Add devices which are permanently powered by the worker to the LXC'
-        self.summary = 'Add static devices to the LXC'
-        self.lxc_data = {}
-
-    def _set_lxc_data(self):
-        protocols = [protocol for protocol in self.job.protocols
-                     if protocol.name == LxcProtocol.name]
-        if protocols:
-            protocol = protocols[0]
-            self.set_namespace_data(action=self.name, label='lxc', key='name', value=protocol.lxc_name)
-            self.lxc_data['lxc_name'] = protocol.lxc_name
-
-    def validate(self):
-        super(LxcAddStaticDevices, self).validate()
-        # set lxc_data
-        self._set_lxc_data()
-        # If there is no static_info then this action should be idempotent.
-        try:
-            if 'static_info' in self.job.device:
-                for usb_device in self.job.device['static_info']:
-                    if usb_device.get('board_id', '') in ['', '0000000000']:
-                        self.errors = "board_id unset"
-                    if usb_device.get('usb_vendor_id', '') == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_device.get('usb_product_id', '') == '0000':
-                        self.errors = 'usb_product_id unset'
-        except TypeError:
-            self.errors = "Invalid parameters for %s" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAddStaticDevices, self).run(connection, max_end_time, args)
-        # If there is no static_info then this action should be idempotent.
-        if 'static_info' not in self.job.device:
-            return connection
-        device_list = get_udev_devices(
-            job=self.job, logger=self.logger,
-            device_info=self.job.device.get('static_info'))
-        for link in device_list:
-            lxc_cmd = 'lxc-device -n %s add %s' % (self.lxc_data['lxc_name'], link)
-            cmd_out = self.run_command(lxc_cmd, allow_silent=True)
-            if cmd_out:
-                self.logger.debug(cmd_out)
-        return connection
 
 
 class LxcCreateAction(DeployAction):
