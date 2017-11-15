@@ -160,6 +160,37 @@ class Command(LAVADaemonCommand):
         # scheduling.
         self.controler.send_multipart([b"PING"])
 
+        try:
+            self.main_loop()
+        except BaseException as exc:
+            self.logger.error("[EXIT] Unknown exception raised, leaving!")
+            self.logger.exception(exc)
+
+        # Close the controler socket
+        self.controler.close(linger=0)
+        self.poller.unregister(self.controler)
+
+        # Carefully close the logging socket as we don't want to lose messages
+        self.logger.info("[EXIT] Disconnect logging socket and process messages")
+        endpoint = self.log_socket.getsockopt(zmq.LAST_ENDPOINT)
+        self.logger.debug("[EXIT] unbinding from '%s'", endpoint)
+        self.log_socket.unbind(endpoint)
+
+        # Empty the queue
+        try:
+            while self.wait_for_messages(True):
+                pass
+        except BaseException as exc:
+            self.logger.error("[EXIT] Unknown exception raised, leaving!")
+            self.logger.exception(exc)
+        finally:
+            self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
+            self.log_socket.close()
+            if options['encrypt']:
+                auth.stop()
+            context.term()
+
+    def main_loop(self):
         # Wait for messages
         last_gc = time.time()
         while self.wait_for_messages(False):
@@ -177,26 +208,6 @@ class Command(LAVADaemonCommand):
                 self.logger.debug("PING => master")
                 self.last_ping = now
                 self.controler.send_multipart([b"PING"])
-
-        # Close the controler socket
-        self.controler.close(linger=0)
-        self.poller.unregister(self.controler)
-
-        # Carefully close the logging socket as we don't want to lose messages
-        self.logger.info("[EXIT] Disconnect logging socket and process messages")
-        endpoint = self.log_socket.getsockopt(zmq.LAST_ENDPOINT)
-        self.logger.debug("[EXIT] unbinding from '%s'", endpoint)
-        self.log_socket.unbind(endpoint)
-
-        # Empty the queue
-        while self.wait_for_messages(True):
-            pass
-
-        self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
-        self.log_socket.close()
-        if options['encrypt']:
-            auth.stop()
-        context.term()
 
     def wait_for_messages(self, leaving):
         try:

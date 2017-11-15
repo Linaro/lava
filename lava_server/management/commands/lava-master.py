@@ -507,31 +507,45 @@ class Command(LAVADaemonCommand):
 
         self.controler.bind(options['master_socket'])
 
-        # Last access to the database for new jobs and cancelations
-        last_db_access = 0
-
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
-        poller = zmq.Poller()
-        poller.register(self.controler, zmq.POLLIN)
+        self.poller = zmq.Poller()
+        self.poller.register(self.controler, zmq.POLLIN)
 
         # Translate signals into zmq messages
-        (pipe_r, _) = self.setup_zmq_signal_handler()
-        poller.register(pipe_r, zmq.POLLIN)
+        (self.pipe_r, _) = self.setup_zmq_signal_handler()
+        self.poller.register(self.pipe_r, zmq.POLLIN)
 
         self.logger.info("[INIT] LAVA master has started.")
         self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
+
+        try:
+            self.main_loop(options)
+        except BaseException as exc:
+            self.logger.error("[CLOSE] Unknown exception raised, leaving!")
+            self.logger.exception(exc)
+        finally:
+            # Drop controler socket: the protocol does handle lost messages
+            self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
+            self.controler.close(linger=0)
+            if options['encrypt']:
+                auth.stop()
+            context.term()
+
+    def main_loop(self, options):
+        # Last access to the database for new jobs and cancelations
+        last_db_access = 0
 
         while True:
             try:
                 try:
                     # TODO: Fix the timeout computation
                     # Wait for data or a timeout
-                    sockets = dict(poller.poll(TIMEOUT * 1000))
+                    sockets = dict(self.poller.poll(TIMEOUT * 1000))
                 except zmq.error.ZMQError:
                     continue
 
-                if sockets.get(pipe_r) == zmq.POLLIN:
+                if sockets.get(self.pipe_r) == zmq.POLLIN:
                     self.logger.info("[POLL] Received a signal, leaving")
                     break
 
@@ -571,10 +585,3 @@ class Command(LAVADaemonCommand):
                 # Closing the database connection will force Django to reopen
                 # the connection
                 connection.close()
-
-        # Drop controler socket: the protocol does handle lost messages
-        self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
-        self.controler.close(linger=0)
-        if options['encrypt']:
-            auth.stop()
-        context.term()
