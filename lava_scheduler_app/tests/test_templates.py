@@ -615,7 +615,7 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(template_dict['device_info'][0]['board_id'],
                          '0123456789')
         self.assertEqual(template_dict['static_info'][0]['board_id'],
-                         '0123456789')
+                         'S_N0123456')
         self.assertIsInstance(template_dict['fastboot_options'], list)
         self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
         order = template_dict['flash_cmds_order']

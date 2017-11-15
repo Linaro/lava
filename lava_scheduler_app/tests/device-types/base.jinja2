@@ -158,7 +158,7 @@ device_info: {{ device_info }}
 {# LXC support for adding static devices like energy probes. #}
 {# Also used for some phones which need to stay in the bootloader to charge. #}
 {# admins need to ensure that the device dictionary sets this as a list of dictionaries, where each dictionary value can contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id'  #}
-static_info: {{ device_info }}
+static_info: {{ static_info }}
 {% endif -%}
 
 {% block fastboot %}
