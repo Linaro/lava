@@ -42,21 +42,6 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 
 
-class CustomisationAction(DeployAction):
-
-    def __init__(self):
-        super(CustomisationAction, self).__init__()
-        self.name = "customise"
-        self.description = "customise image during deployment"
-        self.summary = "customise image"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(CustomisationAction, self).run(connection, max_end_time, args)
-        self.logger.debug("Customising image...")
-        # FIXME: implement
-        return connection
-
-
 # pylint: disable=too-many-instance-attributes
 class OverlayAction(DeployAction):
     """

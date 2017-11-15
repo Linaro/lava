@@ -32,10 +32,7 @@ from lava_dispatcher.action import (
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlaySparseImage
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.deploy.overlay import (
-    CustomisationAction,
-    OverlayAction,
-)
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import (
     DownloaderAction,
 )
@@ -108,7 +105,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(CustomisationAction())
             self.internal_pipeline.add_action(OverlayAction())
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.

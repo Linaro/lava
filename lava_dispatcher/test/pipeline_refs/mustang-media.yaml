@@ -77,10 +77,7 @@
   name: lava-test-retry
   pipeline:
   - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
-- class: actions.deploy.removable.MassStorage
-  name: storage-deploy
-  pipeline:
-  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
+- {class: actions.deploy.removable.MassStorage, name: storage-deploy}
 - class: actions.boot.grub.GrubMainAction
   name: grub-main-action
   pipeline:

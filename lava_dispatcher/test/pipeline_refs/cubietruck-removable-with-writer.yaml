@@ -75,7 +75,6 @@
 - class: actions.deploy.removable.MassStorage
   name: storage-deploy
   pipeline:
-  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
     pipeline:

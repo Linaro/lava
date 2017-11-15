@@ -83,7 +83,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.actions[3]
+                overlay = action.pipeline.actions[2]
                 testdef = overlay.internal_pipeline.actions[2]
         self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
