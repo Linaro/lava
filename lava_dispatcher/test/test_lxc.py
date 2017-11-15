@@ -217,9 +217,8 @@ class TestLxcWithDevices(StdoutTestCase):
     def test_lxc_with_static_device(self):  # pylint: disable=too-many-locals
         self.job = self.factory.create_hikey_aep_job('sample_jobs/hi6220-hikey.yaml', mkdtemp())
         self.job.validate()
-        lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
-        lxc_static = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lxc-add-static'][0]
-        self.assertIsNotNone(lxc_static.lxc_data)
+        lxc_boot = [action for action in self.job.pipeline.actions if action.name == 'lxc-boot'][0]
+        lxc_static = [action for action in lxc_boot.internal_pipeline.actions if action.name == 'lxc-add-static'][0]
         self.assertIsInstance(self.job.device.get('static_info'), list)
         self.assertEqual(len(self.job.device.get('static_info')), 1)
         for board in self.job.device.get('static_info'):
