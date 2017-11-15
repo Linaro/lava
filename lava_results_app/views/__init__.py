@@ -24,6 +24,7 @@ Keep to just the response rendering functions
 import os
 import csv
 import logging
+import re
 import simplejson
 import yaml
 from collections import OrderedDict
@@ -189,16 +190,18 @@ def testjob_csv(request, job):
 def testjob_yaml(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
-    response = HttpResponse(content_type='text/yaml')
-    filename = "lava_%s.yaml" % job.id
-    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
     suites = job.testsuite_set.all().prefetch_related(
         'test_sets__test_cases__actionlevels')
     for test_suite in suites:
         for test_case in test_suite.testcase_set.all():
             yaml_list.append(export_testcase(test_case))
-    yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
+    response = StreamingHttpResponse(
+        (line for line in re.split('(\n)', yaml.dump(
+            yaml_list, Dumper=yaml.CDumper))),
+        content_type="text/yaml")
+    filename = "lava_%s.yaml" % job.id
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
 
 

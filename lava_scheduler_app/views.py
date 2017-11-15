@@ -24,6 +24,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
+from django.http.response import StreamingHttpResponse
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -1509,7 +1510,9 @@ def job_log_file_plain(request, pk):
     # Old style jobs
     log_file = job.output_file()
     if log_file:
-        response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+        response = StreamingHttpResponse(
+            log_file,
+            content_type='text/plain; charset=utf-8')
         response['Content-Transfer-Encoding'] = 'quoted-printable'
         response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
         return response
@@ -1517,7 +1520,8 @@ def job_log_file_plain(request, pk):
     # New pipeline jobs
     try:
         with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
-            response = HttpResponse(log_file, content_type='application/yaml')
+            response = StreamingHttpResponse(log_file.readlines(),
+                                             content_type="application/yaml")
             response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
             return response
     except IOError:
