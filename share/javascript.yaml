@@ -53,7 +53,6 @@ debian:
       bug-links.js: bug-links.min.js
       jquery.flot.labels.js: jquery.flot.labels.min.js
       jquery.flot.dashes.js: jquery.flot.dashes.min.js
-      jquery.formset.js: jquery.formset.min.js
       jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
       query.js: query.min.js
       chart.js: chart.min.js
