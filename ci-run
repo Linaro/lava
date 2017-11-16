@@ -6,6 +6,10 @@ set -e
 echo "Checking pep8"
 pep8 --ignore E501,E722 .
 
+echo "Removing old .pyc files"
+echo
+find . -name '*.pyc' -delete
+
 if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
   echo "If it exists, a broken test database will be deleted without prompting."
   NOINPUT='--noinput -v2'
