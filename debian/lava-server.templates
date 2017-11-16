@@ -1,7 +1,8 @@
 Template: lava-server/removev1
 Type: boolean
 Default: true
-_Description: Do you want to continue the upgrade and remove all V1
+_Description: Remove V1 data from database?
+ Do you want to continue this upgrade and remove all V1
  test data?
  .
  V2 test data will not be affected. If you have remaining
