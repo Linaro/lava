@@ -7,7 +7,7 @@ Uploaders: Neil Williams <codehelp@debian.org>,
 Build-Depends: debhelper (>= 9.20160709), dh-python,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
- python | python-all | python-dev | python-all-dev,
+ python | python-all | python-dev | python-all-dev, po-debconf,
  python-sphinx (>= 1.4), python-sphinx-bootstrap-theme,
  python-mocker, python-setuptools (>= 3), python-yaml
 X-Python-Version: 2.7
