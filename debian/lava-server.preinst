@@ -1,0 +1,15 @@
+#!/bin/sh
+# preinst script for lava-server
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_get lava-server/removev1
+if [ "${RET}" = 'false' ]; then
+    exit 42
+fi
+

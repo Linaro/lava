@@ -1,0 +1,9 @@
+Template: lava-server/removev1
+Type: boolean
+Default: true
+_Description: Do you want to continue the upgrade and remove all V1
+ test data?
+.
+ V2 test data will not be affected. If you have remaining
+ V1 test data that you care about, make sure it is backed
+ up before you continue here.
