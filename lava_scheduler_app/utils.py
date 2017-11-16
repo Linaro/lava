@@ -22,10 +22,7 @@ import errno
 import jinja2
 import ldap
 import logging
-import netifaces
 import os
-import re
-import socket
 import subprocess
 import yaml
 
@@ -57,19 +54,6 @@ class IRCHandleNotFoundError(IRCSendError):
     """Error raised when user handle is not found on specific server."""
 
 
-def get_fqdn():
-    """Returns the fully qualified domain name.
-    """
-    host = socket.getfqdn()
-    try:
-        if bool(re.match("[-_a-zA-Z0-9.]+$", host)):
-            return host
-        else:
-            raise ValueError("Your FQDN contains invalid characters")
-    except ValueError as exc:
-        raise exc
-
-
 def get_domain():
     domain = '???'
     try:
@@ -80,25 +64,6 @@ def get_domain():
         domain = site.domain
 
     return domain
-
-
-# pylint gets confused with netifaces
-def get_ip_address():  # pylint: disable=no-member
-    """Returns the IP address of the default interface, if found.
-    """
-    ip = '0.0.0.0'
-    gateways = netifaces.gateways()
-    if gateways:
-        default_gateway = gateways.get('default')
-        if default_gateway:
-            default_interface = default_gateway.get(netifaces.AF_INET)[1]
-            if default_interface:
-                default_interface_values = netifaces.ifaddresses(
-                    default_interface)
-                if default_interface_values:
-                    ip = default_interface_values.get(
-                        netifaces.AF_INET)[0].get('addr')
-    return ip
 
 
 def is_member(user, group):

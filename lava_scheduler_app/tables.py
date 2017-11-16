@@ -2,6 +2,7 @@ import os
 import logging
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
@@ -13,7 +14,6 @@ from lava_scheduler_app.models import (
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
-from markupsafe import escape
 
 
 # The query_set is based in the view, so split that into a View class
