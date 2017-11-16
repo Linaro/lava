@@ -122,8 +122,6 @@ def submit_health_check_jobs():
             logger.debug("Last health report job [%d] has no end_time", device.last_health_report_job.id)
         else:
             if time_denominator:
-                if not run_health_check:
-                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:

@@ -251,6 +251,11 @@ the use of the following terms:
 **lava-master** or simply **master**
   A singleton process which starts and monitors test jobs running on one or
   more dispatchers by communicating with the slave using ZMQ.
+  This process is solely responsible for assigning a device to a test job. The
+  scheduler performs checks on submission restrictions, device availability,
+  device tags and schema compliance.
+
+  .. seealso:: :term:`device tag`
 
 **dynamic data** - the Action base class provides access to dynamic data stores
   which other actions can access. This provides the way for action classes to
@@ -279,14 +284,6 @@ the use of the following terms:
   external systems and daemons when a shell like environment is not supported.
   Protocols need to be supported within the python codebase and currently
   include multinode, LXC and vland.
-
-**scheduler**
-  A singleton process which is solely responsible for assigning a device to a
-  test job. The scheduler is common to LAVA V1 and LAVA V2 and performs checks
-  on submission restrictions, device availability, device tags and schema
-  compliance.
-
-  .. seealso:: :term:`device tag`
 
 **server**
   The server software relates to the ``lava-server`` source package in git and

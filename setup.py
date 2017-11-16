@@ -97,7 +97,6 @@ setup(
         # scheduler
         "lava-dispatcher",
         "simplejson",
-        "twisted",
     ],
     data_files=[
         ('/etc/lava-server',
@@ -109,7 +108,6 @@ setup(
          ['etc/logrotate.d/django-log',
           'etc/logrotate.d/lava-master-log',
           'etc/logrotate.d/lava-publisher-log',
-          'etc/logrotate.d/lava-scheduler-log',
           'etc/logrotate.d/lava-server-gunicorn-log']),
         ('/usr/share/lava-server',
          ['instance.template']),

@@ -251,7 +251,6 @@ templates/\*/\*.html     next browser refresh (F5/Ctrl-R)
 device-types/\*.jinja2   next testjob submission
 devices/\*.jinja2        next testjob submission
 \*_app/\*.py             ``$ sudo apache2ctl restart``
-\*_daemon/\*.py          ``$ sudo service lava-server restart``
 ====================== ==============================================
 
 .. index:: postgres migration, migrate postgres
@@ -539,7 +538,7 @@ in debug mode for the toolbar to be loaded at all.
 Restart the ``django`` related services to complete the installation of the
 toolbar::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart
 
 Installation can be checked using ``lava-server manage shell``::
@@ -576,7 +575,7 @@ previous versions of LAVA installer that is not needed anymore.
 Once the changes are complete, ensure the settings are loaded by restarting
 both apache2 and django::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart
 
 Performance overhead
@@ -592,5 +591,5 @@ value of ``USE_DEBUG_TOOLBAR`` in ``/etc/lava-server/settings.conf`` to
 
 Ensure the settings are reloaded by restarting both apache2 and django::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart

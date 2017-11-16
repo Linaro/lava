@@ -82,17 +82,6 @@ def get_domain():
     return domain
 
 
-def is_master():
-    """Checks if the current machine is the master.
-    """
-    worker_config_path = '/etc/lava-server/worker.conf'
-    if "VIRTUAL_ENV" in os.environ:
-        worker_config_path = os.path.join(os.environ["VIRTUAL_ENV"],
-                                          worker_config_path[1:])
-
-    return not os.path.exists(worker_config_path)
-
-
 # pylint gets confused with netifaces
 def get_ip_address():  # pylint: disable=no-member
     """Returns the IP address of the default interface, if found.

@@ -261,11 +261,11 @@ Restoring a master from a backup
 #. **Stop all LAVA services** - until the database state can be updated, there
    must be no attempt to reserve devices for jobs in the queue.
 
-   * ``service lava-server stop``
-
    * ``service lava-server-gunicorn stop``
 
    * ``service lava-master stop``
+
+   * ``service lava-logs stop``
 
    * ``service lava-slave stop``
 
@@ -301,11 +301,11 @@ Restoring a master from a backup
 
 #. Start all LAVA services
 
-   * ``service lava-server start``
-
    * ``service lava-server-gunicorn start``
 
    * ``service lava-master start``
+
+   * ``service lava-logs start``
 
    * ``service lava-slave start``
 

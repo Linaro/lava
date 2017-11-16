@@ -35,10 +35,12 @@ from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
 
 from lava_scheduler_app.dbutils import (
+    assign_jobs,
     create_job, start_job,
     fail_job, cancel_job,
     parse_job_description,
     select_device,
+    submit_health_check_jobs,
 )
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
@@ -55,7 +57,7 @@ PROTOCOL_VERSION = 2
 # TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
-DB_LIMIT = 10
+DB_LIMIT = 20
 
 # Slave ping interval and timeout
 PING_INTERVAL = 20
@@ -568,11 +570,11 @@ class Command(LAVADaemonCommand):
 
                 # Limit accesses to the database. This will also limit the rate of
                 # CANCEL and START messages
-                if now - last_db_access > DB_LIMIT:
-                    last_db_access = now
-
+                if time.time() - last_db_access > DB_LIMIT:
+                    # TODO: make this atomic
                     if self.dispatchers["lava-logs"].online:
-                        # TODO: make this atomic
+                        submit_health_check_jobs()
+                        assign_jobs()
                         # Dispatch pipeline jobs with devices in Reserved state
                         self.process_jobs(options)
                     else:
@@ -580,6 +582,10 @@ class Command(LAVADaemonCommand):
 
                     # Handle canceling jobs
                     self.handle_canceling()
+
+                    # Do not count the time taken to schedule jobs
+                    last_db_access = time.time()
+
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")
                 # Closing the database connection will force Django to reopen

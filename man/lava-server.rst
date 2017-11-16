@@ -206,28 +206,6 @@ lava_scheduler_app
                                 optional description of the new worker
           --disable             prevent pipeline jobs running on this worker.
 
-    scheduler
-      Run the LAVA test job scheduler
-
-      Usage:
-        lava-server manage scheduler [options]
-      Options:
-         --use-fake            Use fake dispatcher (for testing)
-         --dispatcher DISPATCHER
-                             Dispatcher command to invoke
-
-    schedulermonitor
-     Run the LAVA test job scheduler
-
-     Usage:
-       lava-server manage schedulermonitor [options]
-
-     Options:
-       -l LOGLEVEL, --loglevel=LOGLEVEL
-                        Log level, default is taken from settings.
-       -f LOGFILE, --logfile=LOGFILE
-                        Path to log file, default is taken from settings.
-
     test
       Runs the test suite for the specified applications, or the entire site
       if no apps are specified.

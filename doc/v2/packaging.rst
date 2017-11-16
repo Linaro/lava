@@ -67,11 +67,6 @@ advance.
 Daemon renaming
 ===============
 
-The main scheduler daemon is now explicitly named and only restarts the
-scheduler daemon::
-
- $ sudo service lava-server restart
-
 The web application itself is handled within apache, so to refresh the code
 running behind the front end, use::
 
