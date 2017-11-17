@@ -477,8 +477,7 @@ can exist within a single Story.
 This information is made available for interest and to make our development
 process open to the community. If you have comments or questions about anything
 visible within the LAVA project, please subscribe to one of the :ref:`mailing
-lists <mailing_lists>` and ask your questions there. For bugs in the current
-release, please continue to file bug reports using Bugzilla_.
+lists <mailing_lists>` and ask your questions there.
 
 Many stories contain comments linking directly to one or more gerrit reviews
 related to that story. When the review is merged, the story will be marked as
@@ -486,7 +485,40 @@ resolved with a *Fix Version* matching the git tag of the release containing
 the fix from the review.
 
 .. _Jira: http://www.atlassian.com/jira-software
-.. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+
+.. index:: bug reporting
+
+.. _bug_reporting:
+
+Report a Bug
+============
+
+The LAVA software team use Jira_ to track bugs. Bugs / issues, feature
+requests, enhancements and problems can be either reported directly into JIRA
+using a CTT_ ticket or via the lava-users_ mailing list. Updates to each
+``JIRA`` ticket will be sent to the lava-users_ mailing list.
+
+If you do not already have a Linaro account, you can choose to :ref:`register`
+in order to file a new CTT_ ticket. It is often useful to discuss the full
+details of the problem on the lava-users_ mailing list before creating a
+ticket. One of the LAVA software team member can then create a ticket on your
+behalf and keep the list updated as the work progresses.
+
+
+.. note:: CTT_ tickets are only visible with a JIRA login. However, the LAVA
+          software team will create LAVA stories which are public.
+
+LAVA stories in JIRA can be tracked on the public LAVA Dashboard_ which
+includes a view of all the current stories generated from the lava-users_
+mailing list as well as views relating to internal stories and progress towards
+releases.
+
+.. note:: The old Bugzilla system is deprecated and reporting bugs in the old
+          Bugzilla system will not be tracked by the LAVA team.
+
+.. _lava-users: https://lists.linaro.org/mailman/listinfo/lava-users
+.. _CTT: https://projects.linaro.org/servicedesk/customer/portal/1/create/34
+.. _Dashboard: https://projects.linaro.org/secure/Dashboard.jspa?selectPageId=11603
 
 .. index:: community contributions
 
