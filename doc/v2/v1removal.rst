@@ -85,7 +85,7 @@ To delete the test job log files and the ``TestJob`` database objects, use the
 
 .. code-block:: none
 
-  $ sudo lava-server manage jobs rm --older-than 0d --v1
+  $ sudo lava-server manage jobs rm --v1
 
 Bundles and attachments can be deleted simply by removing the directories:
 
