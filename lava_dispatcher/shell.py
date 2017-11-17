@@ -272,9 +272,10 @@ class ShellSession(Connection):
                 [pexpect.EOF, pexpect.TIMEOUT], timeout=timeout)
         finally:
             self.raw_connection.logfile.is_feedback = False
-            if index == 1:
-                return len(self.raw_connection.before)
-            return index
+
+        if index == 1:
+            return len(self.raw_connection.before)
+        return index
 
 
 class ExpectShellSession(Action):
