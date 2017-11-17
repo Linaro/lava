@@ -271,10 +271,10 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
     logger = logging.getLogger('dispatcher')
     if src == dst:
-        logger.debug("Not copying since src: '%s' and dst: '%s' are same" %
-                     (src, dst))
+        logger.debug("Not copying since src: '%s' and dst: '%s' are same",
+                     src, dst)
     else:
-        logger.debug("Copying %s to %s" % (filename, lxc_name))
+        logger.debug("Copying %s to %s", filename, lxc_name)
         try:
             shutil.copyfile(src, dst)
         except IOError:
@@ -349,7 +349,7 @@ def copy_directory_contents(root_dir, dst_dir):
     files_to_copy = glob.glob(os.path.join(root_dir, '*'))
     logger = logging.getLogger('dispatcher')
     for fname in files_to_copy:
-        logger.debug("copying %s to %s" % (fname, os.path.join(dst_dir, os.path.basename(fname))))
+        logger.debug("copying %s to %s", fname, os.path.join(dst_dir, os.path.basename(fname)))
         if os.path.isdir(fname):
             shutil.copytree(fname, os.path.join(dst_dir, os.path.basename(fname)))
         else:
@@ -363,7 +363,7 @@ def remove_directory_contents(root_dir):
     files_to_remove = glob.glob(os.path.join(root_dir, '*'))
     logger = logging.getLogger('dispatcher')
     for fname in files_to_remove:
-        logger.debug("removing %s" % fname)
+        logger.debug("removing %s", fname)
         if os.path.isdir(fname):
             shutil.rmtree(fname)
         else:

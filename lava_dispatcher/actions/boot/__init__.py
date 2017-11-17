@@ -410,7 +410,7 @@ class BootloaderCommandOverlay(Action):
             self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
             substitutions['{KERNEL}'] = prepared_kernel
         if self.bootcommand:
-            self.logger.debug("%s" % self.job.device['parameters'])
+            self.logger.debug("%s", self.job.device['parameters'])
             kernel_addr = self.job.device['parameters'][self.bootcommand]['kernel']
             dtb_addr = self.job.device['parameters'][self.bootcommand]['dtb']
             ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
