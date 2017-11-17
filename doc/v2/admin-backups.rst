@@ -134,11 +134,12 @@ archive for the month in which the backup is made and add that to the backup.)
 Issues with the base suite
 ==========================
 
-Ensure that the base system also matches the suite from which the backup was
-made. It is **not safe** to restore a backup of a system which was running with
-packages from ``jessie-backports`` onto a jessie system without those same
-packages being updated from ``jessie-backports`` prior to restoration. The same
-will apply for Stretch and ``stretch-backports`` when that becomes available.
+Ensure that the base system also matches the suite from which the
+backup was made. It is **not safe** to restore a backup of a system
+which was running with packages from ``jessie-backports`` onto a
+jessie system without those same packages being updated from
+``jessie-backports`` prior to restoration. The same applies for
+Stretch and ``stretch-backports``.
 
 .. _admin_configuration_management:
 

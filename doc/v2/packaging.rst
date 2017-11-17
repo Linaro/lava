@@ -33,7 +33,7 @@ Instance name
 Further information
 ###################
 
-* http://wiki.debian.org/LAVA
+* https://wiki.debian.org/LAVA
 * https://github.com/Linaro
 
 .. _packaging_components:

@@ -42,9 +42,9 @@ has an account.::
   $ sudo apt update
   $ sudo apt install lava-tool
 
-(If you are installing on Debian Jessie, you may want to first enable
-``jessie-backports`` to install an updated ``lava-tool`` to use some superuser
-operations or for other updates.)
+(If you are installing on Debian Jessie or Stretch, you may want to
+first enable ``backports`` to install an updated ``lava-tool`` to use
+some superuser operations or for other updates.)
 
 .. important:: ``lava-tool`` is being updated and new features are being added
    as the migration to V2 continues. It is important that all users update

@@ -161,8 +161,8 @@ Protocol elements
      template: debian
      distribution: debian
      release: sid
-     mirror: http://ftp.us.debian.org/debian/
-     security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+     mirror: http://deb.debian.org/debian/
+     security_mirror: http://deb.debian.org/debian-security/
 
   actions:
   - deploy:

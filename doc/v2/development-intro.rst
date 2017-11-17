@@ -542,7 +542,7 @@ local git configuration. (This can take a little time.)::
  $ git review -s
 
 .. important:: **All** changes need to support both Debian unstable
-   **and** Debian stable - currently Jessie. This often includes multiple
+   **and** Debian stable - currently Stretch. This often includes multiple
    versions of django and other supporting packages. Automated unit tests are
    run on stable (with backports).
 
