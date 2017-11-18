@@ -1,4 +1,4 @@
-type: dragonboard-410c
+device_type: dragonboard-410c
 job_name: Boot artifact conversion in LXC with db410c
 timeouts:
   job:
@@ -73,7 +73,7 @@ actions:
     to: download
     images:
       rootfs:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
       partition:
         url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin
@@ -92,7 +92,7 @@ actions:
       aboot:
         url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn
       boot:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
     os: debian
 
@@ -141,6 +141,12 @@ actions:
         url: lxc:///linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
         apply-overlay: true
     os: debian
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
 
 - boot:
     namespace: droid
@@ -149,6 +155,12 @@ actions:
     timeout:
       minutes: 15
     method: fastboot
+    protocols:
+      lava-lxc:
+      - action: auto-login-action
+        request: pre-os-command
+        timeout:
+          minutes: 2
 
 - test:
     namespace: droid
