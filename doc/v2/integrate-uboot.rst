@@ -124,6 +124,34 @@ an existing value.
     {% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
     {% set bootz_dtb_addr = bootm_dtb_addr %}
 
+.. _uboot_requirements:
+
+Required configuration
+======================
+
+At a minimum, any new U-Boot device requires the following pieces of
+configuration:
+
+* **console device** - There seems to be no standard or default here, so
+  **every** request needs to specify the argument to pass to ``console=``
+  on the kernel command line, including baud rate.
+
+* **load addresses** - Kernel, ramdisk and DTB load addresses.
+
+* **mkimage arch** - the architecture value to pass to mkimage when preparing
+  modified uImage or uboot headers.
+
+* **MAC address** - if the MAC address is not pre-configured as a guaranteed
+  unique address, a way of setting a fixed and unique MAC address must be
+  provided.
+
+* **boot methods** - ``booti``, ``bootz`` and ``bootm`` - which ones are
+  supported on this device?
+
+* **prompts** - What is the configured U-Boot prompt on the required build of
+  U-Boot for the device. Has the autoboot prompt been modified and if so, what
+  is the autoboot prompt?
+
 .. _uboot_magic:
 
 Booting the kernel
