@@ -206,7 +206,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 if action.parameters['namespace'] == 'tlxc':
-                    overlay = action.pipeline.actions[7]
+                    overlay = [action for action in action.pipeline.actions if action.name == 'lava-overlay'][0]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))

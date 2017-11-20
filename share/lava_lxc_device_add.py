@@ -21,10 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-# Reads content of device-info-file and adds the given devices to lxc
-# identified by lxc-name
+# Adds the device matching the device-node
+# to the lxc identified by lxc-name
 #
-# Usage: lava_lxc_device_add.py <lxc-name> <device-info-file>
+# Usage: lava_lxc_device_add.py <lxc-name> <device-node>
 
 import os
 import argparse

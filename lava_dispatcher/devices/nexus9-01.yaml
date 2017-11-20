@@ -3,6 +3,7 @@ adb_serial_number: HT4B7JT01005
 fastboot_serial_number: HT4B7JT01005
 fastboot_options: []
 device_info: [{'board_id': 'HT4B7JT01005'}]
+static_info: [{'board_id': 'HT4B7JT01005'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system']
 
 constants:

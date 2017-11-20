@@ -73,6 +73,17 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
         job.logger = DummyLogger()
         return job
 
+    def create_hikey_aep_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__),
+                                        '../devices/hi6220-hikey-01.yaml'))
+        job_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(job_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4577, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
+        return job
+
 
 class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -137,8 +148,8 @@ class TestLxcWithDevices(StdoutTestCase):
 
     def setUp(self):
         super(TestLxcWithDevices, self).setUp()
-        factory = LxcFactory()
-        self.job = factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
+        self.factory = LxcFactory()
+        self.job = self.factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
 
     def test_lxc_feedback(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
@@ -202,6 +213,19 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [action for action in test_def.internal_pipeline.actions if action.name == 'test-runscript-overlay'][0]
         self.assertIsNotNone(runner.testdef_levels)
+
+    def test_lxc_with_static_device(self):  # pylint: disable=too-many-locals
+        self.job = self.factory.create_hikey_aep_job('sample_jobs/hi6220-hikey.yaml', mkdtemp())
+        self.job.validate()
+        lxc_boot = [action for action in self.job.pipeline.actions if action.name == 'lxc-boot'][0]
+        lxc_static = [action for action in lxc_boot.internal_pipeline.actions if action.name == 'lxc-add-static'][0]
+        self.assertIsInstance(self.job.device.get('static_info'), list)
+        self.assertEqual(len(self.job.device.get('static_info')), 1)
+        for board in self.job.device.get('static_info'):
+            self.assertIsInstance(board, dict)
+            self.assertIn('board_id', board)
+            self.assertEqual(board['board_id'], 'S/NO62200001')
+        description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=self.job)
 
     def test_lxc_without_lxctest(self):  # pylint: disable=too-many-locals
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc-notest.yaml')

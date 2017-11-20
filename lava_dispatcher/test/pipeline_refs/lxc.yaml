@@ -23,6 +23,7 @@
   name: lxc-boot
   pipeline:
   - {class: actions.boot.lxc.LxcStartAction, name: boot-lxc}
+  - {class: actions.boot.lxc.LxcAddStaticDevices, name: lxc-add-static}
   - {class: connections.lxc.ConnectLxc, name: connect-lxc}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
