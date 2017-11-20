@@ -420,12 +420,23 @@ class Worker(models.Model):
         editable=True
     )
 
-    display = models.BooleanField(
-        default=True,
-        help_text=("Should this be displayed in the GUI or not. This will be"
-                   " useful when a worker needs to be removed but still"
-                   " linked device status transitions and devices should be"
-                   " intact."))
+    STATE_ONLINE, STATE_OFFLINE = range(2)
+    STATE_CHOICES = (
+        (STATE_ONLINE, "Online"),
+        (STATE_OFFLINE, "Offline"),
+    )
+    state = models.IntegerField(choices=STATE_CHOICES,
+                                default=STATE_OFFLINE,
+                                editable=False)
+
+    HEALTH_ACTIVE, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(3)
+    HEALTH_CHOICES = (
+        (HEALTH_ACTIVE, "Active"),
+        (HEALTH_MAINTENANCE, "Maintenance"),
+        (HEALTH_RETIRED, "Retired"),
+    )
+    health = models.IntegerField(choices=HEALTH_CHOICES,
+                                 default=HEALTH_ACTIVE)
 
     description = models.TextField(
         verbose_name=_(u"Worker Description"),
@@ -460,6 +471,39 @@ class Worker(models.Model):
     def update_description(self, description):
         self.description = description
         self.save()
+
+    def go_health_active(self):
+        if self.health == Worker.HEALTH_ACTIVE:
+            return False
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_ACTIVE
+        return True
+
+    def go_health_maintenance(self):
+        if self.health == Worker.HEALTH_MAINTENANCE:
+            return False
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_MAINTENANCE
+        return True
+
+    def go_health_retired(self):
+        if self.health == Worker.HEALTH_RETIRED:
+            return False
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_RETIRED
+        return True
+
+    def go_state_offline(self):
+        if self.state == Worker.STATE_OFFLINE:
+            return False
+        # TODO: send the right signal to the attached devices
+        self.state = Worker.STATE_OFFLINE
+
+    def go_state_online(self):
+        if self.state == Worker.STATE_ONLINE:
+            return False
+        # TODO: send the right signal to the attached devices
+        self.state = Worker.STATE_ONLINE
 
 
 class Device(RestrictedResource):

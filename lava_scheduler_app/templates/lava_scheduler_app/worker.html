@@ -15,26 +15,80 @@
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-danger">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>{{ message.tags|capfirst }}:</strong> {{ message }}
+</div>
+{% endfor %}
+{% endif %}
 <h2>Worker: {{ worker }}
 </h2>
 
 <div class="row">
   <div class="col-md-6">
-    <h4 class="modal-header">LAVA details</h4>
+    <h4 class="modal-header">Details</h4>
     <dl class="dl-horizontal">
+      <dt>State</dt>
+        {% if worker.state == worker.STATE_ONLINE %}
+      <dd class="text-success">
+        {% else %}
+      <dd class="text-danger">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="glyphicon glyphicon-fire"></div>{% endif %}
+        {% endif %}
+        {{ worker.get_state_display }}</dd>
+      <dt>Health</dt>
+        {% if worker.health == worker.HEALTH_ACTIVE %}
+      <dd class="text-success">
+        {% elif worker.health == worker.HEALTH_MAINTENANCE %}
+      <dd class="text-warning"><div class="glyphicon glyphicon-wrench"></div>
+        {% else %}
+      <dd class="text-danger"><div class="glyphicon glyphicon-fire"></div>
+        {% endif %}
+        {{ worker.get_health_display }}</dd>
       <dt>Description</dt>
       {% if can_admin %}
       <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
         <dd>
           {% csrf_token %}
-          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"..." }}</div>
+          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"<i>...</i>" }}</div>
         </dd>
       </form>
       {% else %}
-      <dd>{{ worker.get_description|default:"<i>empty</i>" }}</dd>
+      <dd>{{ worker.get_description|default:"<i>...</i>" }}</dd>
       {% endif %}
     </dl>
   </div>
+  {% if can_admin %}
+  <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6">
+        <h4 class="modal-header">Actions</h4>
+        {% if worker.health != worker.HEALTH_ACTIVE %}
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <a class="btn btn-success" href="{% url "lava.scheduler.worker.activate" worker.pk %}">Activate</a>
+          </div>
+        </div>
+        {% endif %}
+        {% if worker.health != worker.HEALTH_MAINTENANCE %}
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <a class="btn btn-warning" href="{% url "lava.scheduler.worker.maintenance" worker.pk %}">Maintenance</a>
+          </div>
+        </div>
+        {% endif %}
+        {% if worker.health != worker.HEALTH_RETIRED %}
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <a class="btn btn-danger" href="{% url "lava.scheduler.worker.retire" worker.pk %}">Retire</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <h3 class="modal-header">Devices Attached</h3>

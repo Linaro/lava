@@ -20,6 +20,7 @@
 
 # pylint: disable=wrong-import-order
 
+from contextlib import contextmanager
 import errno
 import jinja2
 import lzma
@@ -42,7 +43,7 @@ from lava_scheduler_app.dbutils import (
     select_device,
     submit_health_check_jobs,
 )
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.utils import mkdir
 from lava_server.cmdutils import LAVADaemonCommand
 
@@ -67,15 +68,44 @@ DISPATCHER_TIMEOUT = 3 * PING_INTERVAL
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
 
 
+@contextmanager
+def suppress(kls):
+    """ Suppress the given exception """
+    try:
+        yield
+    except kls:
+        pass
+
+
 class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
-    def __init__(self, online=True):
+    def __init__(self, hostname, online=True):
+        self.hostname = hostname
         self.last_msg = time.time() if online else 0
-        self.online = online
+        # Set the opposite for alive and go_offline to work
+        self.online = not online
+        # lookup the worker and set the state
+        if online:
+            self.alive()
+        else:
+            self.go_offline()
 
     def alive(self):
         self.last_msg = time.time()
-        self.online = True
+        if not self.online:
+            self.online = True
+            with suppress(Worker.DoesNotExist), transaction.atomic():
+                worker = Worker.objects.select_for_update().get(hostname=self.hostname)
+                worker.go_state_online()
+                worker.save()
+
+    def go_offline(self):
+        if self.online:
+            self.online = False
+            with suppress(Worker.DoesNotExist), transaction.atomic():
+                worker = Worker.objects.select_for_update().get(hostname=self.hostname)
+                worker.go_state_offline()
+                worker.save()
 
 
 def load_optional_yaml_file(filename):
@@ -114,7 +144,7 @@ class Command(LAVADaemonCommand):
         # List of logs
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
-        self.dispatchers = {"lava-logs": SlaveDispatcher(online=False)}
+        self.dispatchers = {"lava-logs": SlaveDispatcher("lava-logs", online=False)}
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -164,7 +194,7 @@ class Command(LAVADaemonCommand):
         if hostname not in self.dispatchers:
             # The server crashed: send a STATUS message
             self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-            self.dispatchers[hostname] = SlaveDispatcher()
+            self.dispatchers[hostname] = SlaveDispatcher(hostname)
             self.send_status(hostname)
 
         # Mark the dispatcher as alive
@@ -223,7 +253,7 @@ class Command(LAVADaemonCommand):
                 # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
                 # message.
                 self.logger.warning("New dispatcher <%s>", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher()
+                self.dispatchers[hostname] = SlaveDispatcher(hostname)
 
             if action == 'HELLO':
                 # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
@@ -231,7 +261,7 @@ class Command(LAVADaemonCommand):
                 self._cancel_slave_dispatcher_jobs(hostname)
 
             # Mark the dispatcher as alive
-            self.dispatchers[hostname].alive()
+            self.dispatcher_alive(hostname)
 
         elif action == 'PING':
             self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
@@ -481,6 +511,12 @@ class Command(LAVADaemonCommand):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
+        self.logger.info("[INIT] Marking all workers as offline")
+        with transaction.atomic():
+            for worker in Worker.objects.select_for_update().all():
+                worker.go_state_offline()
+                worker.save()
+
         auth = None
         # Create the sockets
         context = zmq.Context()
@@ -564,9 +600,7 @@ class Command(LAVADaemonCommand):
                             self.logger.error("[STATE] lava-logs goes OFFLINE", hostname)
                         else:
                             self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
-                        self.dispatchers[hostname].online = False
-                        # TODO: DB: mark the dispatcher as offline and attached
-                        # devices
+                        self.dispatchers[hostname].go_offline()
 
                 # Limit accesses to the database. This will also limit the rate of
                 # CANCEL and START messages

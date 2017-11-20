@@ -587,13 +587,26 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
 
+    def render_state(self, record):
+        if record.state == Worker.STATE_ONLINE:
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_state_display())
+        elif record.health == Worker.HEALTH_ACTIVE:
+            return mark_safe('<span class="glyphicon glyphicon-fire text-danger"></span> %s' % record.get_state_display())
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_state_display())
+
+    def render_health(self, record):
+        if record.health == Worker.HEALTH_ACTIVE:
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_health_display())
+        elif record.health == Worker.HEALTH_MAINTENANCE:
+            return mark_safe('<span class="glyphicon glyphicon-wrench text-warning"></span> %s' % record.get_health_display())
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())
+
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
-        exclude = [
-            'display'
-        ]
         sequence = [
-            'hostname', 'description'
+            'hostname', 'state', 'health', 'description'
         ]
 
 

@@ -5,7 +5,6 @@ from django.db import models, migrations, DEFAULT_DB_ALIAS, connections
 from django.db.migrations.recorder import MigrationRecorder
 import django.db.models.deletion
 from django.conf import settings
-import lava_scheduler_app.models
 
 
 connection = connections[DEFAULT_DB_ALIAS]
