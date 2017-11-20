@@ -196,6 +196,8 @@ class TestTemplates(unittest.TestCase):
         data = """{% extends 'nexus4.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set device_info = [{'board_id': 'R32D300FRYP'}] %}
+{% set static_info = [{'board_id': 'R32D300FRYP'}] %}
 """
         self.assertTrue(self.validate_data('nexus4-01', data))
         test_template = prepare_jinja_template('nexus4-01', data)
@@ -205,6 +207,9 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
+        self.assertIsNotNone(template_dict)
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
 
     def test_x15_template(self):
         data = """{% extends 'x15.jinja2' %}
@@ -269,13 +274,22 @@ class TestTemplates(unittest.TestCase):
                 self.assertIn('bootm', line)
 
     def test_nexus10_template(self):
-        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
+        data = """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 {% set connection_command = 'adb -s R32D300FRYP shell' %}
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
-"""))
+{% set static_info = [{'board_id': 'R32D300FRYP'}] %}
+"""
+        self.assertTrue(self.validate_data('staging-nexus10-01', data))
+        test_template = prepare_jinja_template(
+            'staging-pixel-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
 
     def test_x86_template(self):
         data = """{% extends 'x86.jinja2' %}
@@ -597,8 +611,11 @@ class TestTemplates(unittest.TestCase):
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
         self.assertEqual(template_dict['device_info'][0]['board_id'],
                          '0123456789')
+        self.assertEqual(template_dict['static_info'][0]['board_id'],
+                         'S_N0123456')
         self.assertIsInstance(template_dict['fastboot_options'], list)
         self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
         order = template_dict['flash_cmds_order']
@@ -1131,18 +1148,36 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(30, template_dict['character_delays']['boot'])
 
     def test_nexus5x_template(self):
-        self.assertTrue(self.validate_data('staging-nexus5x-01', """{% extends 'nexus5x.jinja2' %}
+        data = """{% extends 'nexus5x.jinja2' %}
 {% set adb_serial_number = '10de1214adae123' %}
 {% set fastboot_serial_number = '10de1214adae123' %}
 {% set device_info = [{'board_id': '10de1214adae123'}] %}
-"""))
+{% set static_info = [{'board_id': '10de1214adae123'}] %}
+"""
+        self.assertTrue(self.validate_data('staging-nexus5x-01', data))
+        test_template = prepare_jinja_template(
+            'staging-pixel-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
 
     def test_pixel_template(self):
-        self.assertTrue(self.validate_data('staging-pixel-01', """{% extends 'pixel.jinja2' %}
+        data = """{% extends 'pixel.jinja2' %}
 {% set adb_serial_number = 'FDAC1231DAD' %}
 {% set fastboot_serial_number = 'FDAC1231DAD' %}
 {% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
-"""))
+{% set static_info = [{'board_id': 'FDAC1231DAD'}] %}
+"""
+        self.assertTrue(self.validate_data('staging-pixel-01', data))
+        test_template = prepare_jinja_template(
+            'staging-pixel-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
 
     def test_nuc_template(self):
         self.assertTrue(self.validate_data('staging-nuc-01', """{% extends 'adb-nuc.jinja2' %}
