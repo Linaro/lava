@@ -22,9 +22,7 @@ import os
 import yaml
 import urllib
 import logging
-import django
 import decimal
-from django.db import transaction
 from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
     TestSuite,
@@ -37,13 +35,6 @@ from lava_results_app.models import (
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.action import Timeout
-
-if django.VERSION > (1, 10):
-    from django.urls.exceptions import NoReverseMatch
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
-    from django.core.urlresolvers import NoReverseMatch
 
 
 def _check_for_testset(result_dict, suite):
