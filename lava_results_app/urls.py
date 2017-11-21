@@ -34,6 +34,7 @@ from lava_results_app.views import (
     testjob,
     testjob_csv,
     testjob_yaml,
+    testjob_yaml_summary,
     testset,
 )
 from lava_results_app.views.query.views import (
@@ -118,6 +119,7 @@ urlpatterns = [
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)$', testjob, name='lava.results.testjob'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/csv$', testjob_csv, name='lava.results.testjob_csv'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml$', testjob_yaml, name='lava.results.testjob_yaml'),
+    url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml_summary$', testjob_yaml_summary, name='lava.results.testjob_yaml_summary'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/metadata$',
         metadata_export, name='lava.results.job.metadata'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$', suite, name='lava.results.suite'),

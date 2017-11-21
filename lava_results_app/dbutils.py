@@ -441,3 +441,17 @@ def export_testcase(testcase):
         'metadata': metadata,
     }
     return casedict
+
+
+def export_testsuite(testsuite):
+    """
+    Returns string versions of selected elements of a TestSuite
+    :param testsuite: TestSuite object
+    :return: Dictionary containing relevant information formatted for export
+    """
+    suitedict = {
+        'name': str(testsuite.name),
+        'job': str(testsuite.job_id),
+        'id': str(testsuite.id),
+    }
+    return suitedict
