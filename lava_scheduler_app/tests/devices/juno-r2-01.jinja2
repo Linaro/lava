@@ -1,0 +1,13 @@
+{% extends 'juno.jinja2' %}
+{% set exclusive = 'True' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command reboot --port 21 --delay 10' %}
+{% set usb_device_id = 0 %}
+{% set usb_label = 'SanDiskCruzerBlade' %}
+{% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20043514231B72033C42-0:0' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command off --port 21' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command on --port 21' %}
+{% set connection_command = 'telnet localhost 7160' %}
+{% set usb_filesystem_label = 'JUNOR201' %}
+{% set device_ip = '10.66.16.33' %}
+{% set device_mac = '00:02:f7:00:68:3f' %}
+{% set vexpress_sky2_mac = '0x00,0x02,0xF7,0x00,0x68,0x3F' %}

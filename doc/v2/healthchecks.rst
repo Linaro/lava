@@ -35,11 +35,11 @@ used by the device. Health checks are run as the lava-health user.
 
 .. _yaml_health_checks:
 
-Pipeline YAML health checks
-===========================
+LAVA YAML health checks
+=======================
 
-.. note:: Before enabling a pipeline health check, ensure that all devices of
-   the specified type have been enabled as pipeline devices or the health check
+.. note:: Before enabling a health check, ensure that all devices of the
+   specified type have been enabled as pipeline devices or the health check
    will force any remaining devices **offline**.
 
 It is recommended that the YAML health check follows these guidelines:
@@ -49,6 +49,34 @@ It is recommended that the YAML health check follows these guidelines:
 * It uses :ref:`gold standard files <providing_gold_standard_files>`
 
 The rest of the job needs no changes.
+
+.. _health_check_device_type:
+
+Device Types and templates
+--------------------------
+
+Some jinja2 device-type templates use multiple inheritance, e.g. ``juno``. This
+is to allow devices to use multiple types of firmware in test jobs. Admins need
+to be aware that the ``device_type`` specified in the health check YAML must
+match a DeviceType name which exists in the database and which has devices
+available for health-check submissions. This can cause issues where admins want
+to share health checks between multiple instances.
+
+For example, if the DeviceType database object has the name ``juno-r2``, the
+device dictionary can use:
+
+.. code-block:: jinja
+
+ {% extends 'juno.jinja2' %}
+
+However, the health check YAML needs to use ``device_type: juno-r2`` or the
+health check will not run.
+
+Check ``/var/log/lava-server/django.log`` if you get a 404 when trying to force
+a health check.
+
+This situation can be avoided by converting a working test job into the health
+check on the same instance.
 
 Tasks within health checks
 ==========================
