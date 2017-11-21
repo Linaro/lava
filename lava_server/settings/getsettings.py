@@ -295,7 +295,7 @@ class Settings(object):
         ]
 
         value = self._settings.get("ADMINS", default)
-        # In Django < 1.9, this a tuple of tuples
+        # In Django < 1.9, this is a tuple of tuples
         # In Django >= 1.9 this is a list of tuples
         # See https://docs.djangoproject.com/en/1.8/ref/settings/#admins
         # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
