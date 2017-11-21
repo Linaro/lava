@@ -101,14 +101,31 @@ need the ``archive`` option specified to unpack the system image correctly.
 apply-overlay
 ^^^^^^^^^^^^^
 
-Some system images are shipped as sparse images which needs special handling
-with tools such as `simg2img` and `img2simg`, in order to apply LAVA specific
-overlays to it. This should be explicitly mentioned, so that LAVA will take
-necessary action to handle these type of images.
+Use this to apply LAVA specific overlays to image.
 
 ::
 
    apply-overlay: true
+
+.. _deploy_to_fastboot_images_sparse:
+
+sparse
+^^^^^^
+
+The default value for this parameter is ``true``. Some system images are
+shipped as sparse images which needs special handling with tools such as
+``simg2img`` and ``img2simg``, in order to apply LAVA specific overlays to it.
+By default LAVA assumes the image to which ``apply-overlay`` is specified is a
+sparse image.
+
+.. seealso:: :ref:`deploy_to_fastboot_images_apply-overlay`
+
+If the image is not a sparse image then this should be explicitly mentioned,
+so that LAVA will treat the image as non-sparse ext4 image.
+
+::
+
+   sparse: false
 
 .. seealso:: The sparse image format is defined in sparse_format_ in the
    Android platform source code.
