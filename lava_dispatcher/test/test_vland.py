@@ -211,6 +211,30 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         # this device only has one interface with interface tags
         self.assertEqual(names, ['vlan_one,eth1'])
 
+    def test_vland_overlay(self):
+        with open(self.filename) as yaml_data:
+            alpha_data = yaml.load(yaml_data)
+        for vlan_key, _ in alpha_data['protocols'][VlandProtocol.name].items():
+            alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': []}
+        # removed tags from original job to simulate job where any interface tags will be acceptable
+        self.assertEqual(
+            alpha_data['protocols'][VlandProtocol.name],
+            {'vlan_one': {'tags': []}}
+        )
+        parser = JobParser()
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job.logger = DummyLogger()
+        job.validate()
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        vland = [action for action in overlay.internal_pipeline.actions if action.name == 'lava-vland-overlay'][0]
+        self.assertTrue(os.path.exists(vland.lava_vland_test_dir))
+        vland_files = os.listdir(vland.lava_vland_test_dir)
+        self.assertIn('lava-vland-names', vland_files)
+        self.assertIn('lava-vland-tags', vland_files)
+        self.assertIn('lava-vland-self', vland_files)
+
     def test_job_no_tags(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml.load(yaml_data)

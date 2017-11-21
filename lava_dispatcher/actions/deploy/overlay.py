@@ -275,7 +275,7 @@ class VlandOverlayAction(OverlayAction):
 
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
-            '%s/../../../lava_test_shell/vland' % os.path.dirname(__file__))
+            '%s/../../lava_test_shell/vland' % os.path.dirname(__file__))
         self.lava_vland_cache_file = '/tmp/lava_vland_cache.txt'
         self.params = {}
         self.sysfs = []
