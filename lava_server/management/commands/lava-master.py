@@ -597,7 +597,7 @@ class Command(LAVADaemonCommand):
                 for hostname, dispatcher in self.dispatchers.iteritems():
                     if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
                         if hostname == "lava-logs":
-                            self.logger.error("[STATE] lava-logs goes OFFLINE", hostname)
+                            self.logger.error("[STATE] lava-logs goes OFFLINE")
                         else:
                             self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
                         self.dispatchers[hostname].go_offline()
