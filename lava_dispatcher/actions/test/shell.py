@@ -567,6 +567,8 @@ class TestShellAction(TestAction):
                 ret = self.signal_test_set(params)
                 if ret:
                     name = ret
+            elif name == "TESTRAISE":
+                raise TestError(' '.join(params))
 
             self.signal_director.signal(name, params)
             ret_val = True
