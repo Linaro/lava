@@ -7,7 +7,7 @@ import uuid
 import zmq
 from zmq.utils.strtypes import b
 
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, TestJob, Worker
 
 
 # Thread local storage for zmq socket and context
@@ -123,7 +123,39 @@ def testjob_post_handler(sender, **kwargs):
         send_event(".testjob", str(instance.submitter), data)
 
 
+def worker_init_handler(sender, **kwargs):
+    # This function is called for every testJob object created
+    # Save the old status
+    instance = kwargs["instance"]
+    instance._old_health = instance.health
+    instance._old_state = instance.state
+
+
+def worker_post_handler(sender, **kwargs):
+    # Called only when a Worker is saved into the database
+    instance = kwargs["instance"]
+
+    if (instance.health != instance._old_health) or (instance.state != instance._old_state):
+        # Update the states as some objects are save many times.
+        # Even if an object is saved many time, we will send messages only when
+        # the state change.
+        instance._old_health = instance.health
+        instance._old_state = instance.state
+
+        # Create the message
+        data = {
+            "hostname": instance.hostname,
+            "health": instance.get_health_display(),
+            "state": instance.get_state_display(),
+        }
+
+        # Send the event
+        send_event(".worker", "lavaserver", data)
+
+
 post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
 post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
 post_init.connect(testjob_init_handler, sender=TestJob, weak=False, dispatch_uid="testjob_init_handler")
 post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
+post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
+post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")
