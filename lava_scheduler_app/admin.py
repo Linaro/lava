@@ -373,6 +373,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
 
 class WorkerAdmin(admin.ModelAdmin):
     list_display = ('hostname', 'state', 'health')
+    readonly_fields = ('state', )
     ordering = ['hostname']
 
 
