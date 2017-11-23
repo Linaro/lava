@@ -14,10 +14,10 @@ import sys
 from django import forms
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
-from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.core.urlresolvers import reverse
+from django.db import connection, transaction
 from django.template.loader import render_to_string
 from django.http import (
     Http404,
@@ -2223,31 +2223,43 @@ def worker_detail(request, pk):
         request=request))
 
 
-def worker_activate(request, pk):
-    # TODO: do we have to lock the object?
-    worker = get_object_or_404(Worker, pk=pk)
-    if not worker.go_health_active():
-        messages.error(request, "Unable to activate the worker")
-    worker.save(update_fields=["health"])
-    return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+def worker_active(request, pk):
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_active()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
 
 
 def worker_maintenance(request, pk):
-    # TODO: do we have to lock the object?
-    worker = get_object_or_404(Worker, pk=pk)
-    if not worker.go_health_maintenance():
-        messages.error(request, "Unable to put the worker into maintenance")
-    worker.save(update_fields=["health"])
-    return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_maintenance()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
 
 
-def worker_retire(request, pk):
-    # TODO: do we have to lock the object?
-    worker = get_object_or_404(Worker, pk=pk)
-    if not worker.go_health_retired():
-        messages.error(request, "Unable to retire the worker")
-    worker.save(update_fields=["health"])
-    return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+def worker_retired(request, pk):
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_retired()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
 
 
 @post_only

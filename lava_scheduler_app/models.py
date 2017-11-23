@@ -472,36 +472,26 @@ class Worker(models.Model):
         self.description = description
         self.save()
 
+    def retired_devices_count(self):
+        return self.device_set.filter(status=Device.RETIRED).count()
+
     def go_health_active(self):
-        if self.health == Worker.HEALTH_ACTIVE:
-            return False
         # TODO: send the right signal to the attached devices
         self.health = Worker.HEALTH_ACTIVE
-        return True
 
     def go_health_maintenance(self):
-        if self.health == Worker.HEALTH_MAINTENANCE:
-            return False
         # TODO: send the right signal to the attached devices
         self.health = Worker.HEALTH_MAINTENANCE
-        return True
 
     def go_health_retired(self):
-        if self.health == Worker.HEALTH_RETIRED:
-            return False
         # TODO: send the right signal to the attached devices
         self.health = Worker.HEALTH_RETIRED
-        return True
 
     def go_state_offline(self):
-        if self.state == Worker.STATE_OFFLINE:
-            return False
         # TODO: send the right signal to the attached devices
         self.state = Worker.STATE_OFFLINE
 
     def go_state_online(self):
-        if self.state == Worker.STATE_ONLINE:
-            return False
         # TODO: send the right signal to the attached devices
         self.state = Worker.STATE_ONLINE
 
