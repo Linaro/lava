@@ -310,26 +310,6 @@ def index(request):
         })
 
 
-@BreadCrumb("Active jobs", parent=index)
-def active_jobs(request):
-    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    ptable = IndexJobTable(data.get_table_data())
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-
-    return render(
-        request,
-        "lava_scheduler_app/active_jobs.html",
-        {
-            'active_jobs_table': ptable,
-            "sort": '-submit_time',
-            "terms_data": ptable.prepare_terms_data(data),
-            "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
-            "times_data": ptable.prepare_times_data(data),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
-        })
-
-
 @BreadCrumb("Workers", parent=index)
 def workers(request):
     data = WorkerView(request, model=None, table_class=WorkerTable)
@@ -447,7 +427,7 @@ def failure_report(request):
         })
 
 
-@BreadCrumb("All Devices", parent=index)
+@BreadCrumb("Devices", parent=index)
 def device_list(request):
 
     data = DeviceTableView(request, model=Device, table_class=DeviceTable)
@@ -466,7 +446,7 @@ def device_list(request):
         request=request))
 
 
-@BreadCrumb("Active Devices", parent=index)
+@BreadCrumb("Active", parent=device_list)
 def active_device_list(request):
 
     data = ActiveDeviceView(request, model=Device, table_class=DeviceTable)
@@ -807,7 +787,7 @@ def device_type_detail(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
+@BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     prefix = "dthealthhistory_"
@@ -831,7 +811,7 @@ def device_type_health_history_log(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device type report", parent=device_type_detail, needs=['pk'])
+@BreadCrumb("Report", parent=device_type_detail, needs=['pk'])
 def device_type_reports(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     health_day_report = []
@@ -976,7 +956,7 @@ class AllJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(is_pipeline=True)
 
 
-@BreadCrumb("All Jobs", parent=index)
+@BreadCrumb("Jobs", parent=index)
 def job_list(request):
 
     data = AllJobsView(request, model=TestJob, table_class=JobTable)
@@ -996,7 +976,27 @@ def job_list(request):
         request=request))
 
 
-@BreadCrumb("Submit Job", parent=index)
+@BreadCrumb("Active", parent=job_list)
+def active_jobs(request):
+    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
+    ptable = IndexJobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+
+    return render(
+        request,
+        "lava_scheduler_app/active_jobs.html",
+        {
+            'active_jobs_table': ptable,
+            "sort": '-submit_time',
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
+        })
+
+
+@BreadCrumb("Submit", parent=job_list)
 def job_submit(request):
 
     is_authorized = False
@@ -1068,7 +1068,7 @@ def remove_broken_string(line):
         line['msg'] = '<<lava: broken line>>'
 
 
-@BreadCrumb("Job {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
@@ -1879,7 +1879,7 @@ class MyDevicesHealthHistoryView(JobTableView):
         )
 
 
-@BreadCrumb("Device {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=device_list, needs=['pk'])
 def device_detail(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
@@ -2000,7 +2000,7 @@ def device_detail(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
+@BreadCrumb("dictionary", parent=device_detail, needs=['pk'])
 def device_dictionary(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
@@ -2055,7 +2055,7 @@ def device_dictionary(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device report", parent=device_detail, needs=['pk'])
+@BreadCrumb("Report", parent=device_detail, needs=['pk'])
 def device_reports(request, pk):
     device = get_object_or_404(Device, pk=pk)
     health_day_report = []
@@ -2200,7 +2200,7 @@ def device_health_history_log(request, pk):
         request=request))
 
 
-@BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=workers, needs=['pk'])
 def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
     data = DeviceTableView(request)
@@ -2256,7 +2256,7 @@ class HealthCheckJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(health_check=True)
 
 
-@BreadCrumb("Healthcheck", parent=index)
+@BreadCrumb("Healthcheck", parent=job_list)
 def healthcheck(request):
     health_check_data = HealthCheckJobsView(request, model=TestJob,
                                             table_class=JobTable)
@@ -2283,7 +2283,7 @@ class QueueJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(status=TestJob.SUBMITTED)
 
 
-@BreadCrumb("Queue", parent=index)
+@BreadCrumb("Queue", parent=job_list)
 def queue(request):
     queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
     queue_ptable = QueueJobsTable(
