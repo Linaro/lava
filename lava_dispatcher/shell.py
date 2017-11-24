@@ -188,9 +188,10 @@ class ShellSession(Connection):
         self.__runner__ = None
         self.timeout = shell_command.lava_timeout
 
-    def disconnect(self, reason):
-        # FIXME
-        pass
+    def disconnect(self, reason=''):
+        logger = logging.getLogger('dispatcher')
+        logger.debug("Disconnecting %s", self.name)
+        super(ShellSession, self).disconnect(reason)
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property

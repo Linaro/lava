@@ -42,6 +42,7 @@ class SShSession(ShellSession):
         super(SShSession, self).finalise()
 
     def disconnect(self, reason):
+        # FIXME: handle super if tags are present.
         self.sendline('logout', disconnecting=True)
         self.connected = False
 

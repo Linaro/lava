@@ -284,6 +284,13 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
 class TestConsoleConnections(StdoutTestCase):
 
+    def setUp(self):
+        super(TestConsoleConnections, self).setUp()
+        factory = ConnectionFactory()
+        self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
+        self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
+
     def test_device_commands(self):
         device_data = """
 commands:
@@ -308,6 +315,26 @@ commands:
                 self.assertEqual('uart1', hardware)
             else:
                 self.assertEqual('uart0', hardware)
+
+    def test_connection_tags(self):
+        factory = ConnectionFactory()
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        job.validate()
+        self.assertIsNotNone(job.device['commands']['connections'].items())
+        for hardware, value in job.device['commands']['connections'].items():
+            self.assertEqual('uart0', hardware)
+            self.assertIn('connect', value)
+            self.assertIn('tags', value)
+            self.assertEqual(['primary', 'telnet'], value['tags'])
+        boot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        connect = [action for action in boot.internal_pipeline.actions if action.name == 'connect-device'][0]
+        for hardware, value in connect.tag_dict.items():
+            self.assertEqual('uart0', hardware)
+            self.assertNotIn('connect', value)
+            self.assertNotIn('tags', value)
+            self.assertEqual(['primary', 'telnet'], value)
+        self.assertIn(connect.hardware, connect.tag_dict)
+        self.assertEqual(['primary', 'telnet'], connect.tag_dict[connect.hardware])
 
 
 class TestTimeouts(StdoutTestCase):
