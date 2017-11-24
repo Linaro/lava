@@ -946,7 +946,7 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct().order_by(*order_by).extra(select={
+            **filters).distinct('id').order_by(*order_by).extra(select={
                 '%s_ptr_id' % content_type.model:
                 '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
