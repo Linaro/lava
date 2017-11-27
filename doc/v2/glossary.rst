@@ -366,8 +366,9 @@ Glossary of terms
     for example, the test runner is able to execute the correct test definition
     YAML. Namespaces are set in the test job submission.
 
-    .. seealso:: :term:`protocol`, :ref:`deploy_using_lxc` and
-       :ref:`lava_lxc_protocol_android`
+    .. seealso:: :term:`protocol in the glossary <protocol>`,
+      :ref:`namespaces_with_lxc`, :ref:`deploy_using_lxc` and
+      :ref:`lava_lxc_protocol_android`
 
   offline
     A status of a device which allows jobs to be submitted and reserved for the
