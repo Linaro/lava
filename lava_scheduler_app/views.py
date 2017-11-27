@@ -568,16 +568,16 @@ def mydevices_health_history_log(request):
 
 def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
-    accessibility to the object.
+    accessibility to the object via the UI login AND via the REST API.
     """
     try:
         job = TestJob.get_by_job_number(pk)
     except TestJob.DoesNotExist:
         raise Http404("No TestJob matches the given query.")
-    if job.can_view(user):
-        return job
-    else:
-        raise PermissionDenied()
+    # handle REST API querystring as well as UI logins
+    if request:
+        check_request_auth(request, job)
+    return job
 
 
 def filter_device_types(user):
@@ -1202,8 +1202,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
     description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
@@ -1219,8 +1218,7 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk, request=request)
     filename = description_filename(job)
     if not filename:
         raise Http404()
@@ -1233,8 +1231,7 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename
@@ -1243,8 +1240,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
     template = loader.get_template("lava_scheduler_app/multinode_job_definition.html")
     return HttpResponse(template.render(
@@ -1259,8 +1255,7 @@ def multinode_job_definition(request, pk):
 
 
 def multinode_job_definition_plain(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
@@ -1334,7 +1329,7 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     # If this is a new log format, redirect to the job page
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
@@ -1369,7 +1364,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, pk, log_name):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
@@ -1431,7 +1426,7 @@ def job_status(request, pk):
 
 
 def job_pipeline_timing(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     try:
         logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")))
     except IOError:
@@ -1513,8 +1508,7 @@ def job_pipeline_timing(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk, request=request)
     # Old style jobs
     log_file = job.output_file()
     if log_file:
