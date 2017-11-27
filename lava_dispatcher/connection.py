@@ -179,7 +179,6 @@ class Connection(object):
             if self.tags:
                 self.disconnect(reason='Finalise')
         if self.raw_connection:
-            logger.warning("No connection tags have been set. Killing connection.")
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
                 # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
