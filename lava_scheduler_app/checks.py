@@ -23,6 +23,7 @@ from django.core.checks import Debug, Error, register
 from django.db.models import Q
 from lava_scheduler_app.models import Device, validate_job
 from lava_scheduler_app.schema import SubmissionException
+#pylint: disable=unused-argument,missing-docstring,invalid-name
 
 
 @register(deploy=True)
@@ -98,4 +99,24 @@ def check_packaging(app_configs, **kwargs):
     _package_symlinks("lava_server", errors)
     _package_symlinks("", errors)
 
+    return errors
+
+
+@register(deploy=True)
+def check_services(app_configs, **kwargs):
+
+    errors = []
+    services = [
+        'lava-server-gunicorn',
+        'lava-master',
+        'lava-slave',
+        'lava-publisher',
+        'lava-logs',
+    ]
+
+    for service in services:
+        try:
+            subprocess.check_call(['systemctl', '-q', 'is-active', service])
+        except subprocess.CalledProcessError:
+            errors.append(Error("%s service is not active." % service, obj="lava service"))
     return errors
