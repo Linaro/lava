@@ -2029,18 +2029,23 @@ def device_dictionary(request, pk):
 
     dictionary = OrderedDict()
     vland = OrderedDict()
+    connections = OrderedDict()
     extra = {}
     sequence = utils.device_dictionary_sequence()
     for item in sequence:
         if item in device_dict.keys():
             dictionary[item] = device_dict[item]
+    connect_sequence = utils.device_dictionary_connections()
+    for item in connect_sequence:
+        if item in device_dict.keys():
+            connections[item] = yaml.dump(device_dict[item], default_flow_style=False)
     vlan_sequence = utils.device_dictionary_vlan()
     for item in vlan_sequence:
         if item in device_dict.keys():
             vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
-    for item in set(device_dict.keys()) - set(sequence) - set(vlan_sequence):
+    for item in set(device_dict.keys()) - set(sequence) - set(connect_sequence) - set(vlan_sequence):
         extra[item] = device_dict[item]
-    # Exclusive is already handled
+    # Exclusive is ignored
     if 'exclusive' in extra:
         del extra['exclusive']
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
@@ -2048,6 +2053,7 @@ def device_dictionary(request, pk):
         {
             'device': device,
             'dictionary': dictionary,
+            'connections': connections,
             'vland': vland,
             'extra': extra,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_dictionary, pk=pk),

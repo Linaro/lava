@@ -340,7 +340,6 @@ def device_dictionary_to_dict(ast):
 
 def device_dictionary_sequence():
     return [
-        'connection_command',
         'power_on_command',
         'power_off_command',
         'soft_reset_command',
@@ -351,6 +350,15 @@ def device_dictionary_sequence():
         'fastboot_options',
         'fastboot_serial_number',
         'device_info',
+        'static_info',
+    ]
+
+
+def device_dictionary_connections():
+    return [
+        'connection_list',
+        'connection_commands',
+        'connection_tags'
     ]
 
 

@@ -572,7 +572,6 @@ the other unit tests in ``test_templates.py`` to see how this is done.
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}
- {% set exclusive = 'True' %}
  {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
  {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}

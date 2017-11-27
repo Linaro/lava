@@ -188,34 +188,13 @@ Glossary of terms
     Device Under Test - a quick way to refer to the :term:`device` in LAVA.
 
   exclusive
-    Until the Pipeline (V2) migration is complete, a device can have **three**
-    states:
+    The Pipeline (V2) migration is complete, so this field is now ignored.
 
-    * JSON only - V1 dispatcher jobs only, V2 pipeline jobs rejected.
-    * JSON and Pipeline support - both models supported.
-    * Pipeline only - JSON submissions rejected.
+    Device dictionaries no longer need to include this setting:
 
-    If the device is marked as ``pipeline`` in the admin interface and has a
-    :term:`device dictionary`, that device can support pipeline submissions. If
-    the device dictionary marks the device as **exclusive**, then the device
-    can only support pipeline submissions::
+    .. code-block:: jinja
 
      {% set exclusive = "True" %}
-
-    The state of the device is indicated in the device type and device detail
-    pages. Accepted submissions are marked with a tick, rejected submissions
-    marked with a cross. See also :ref:`device_owner_help`.
-
-    Exclusive devices are intended to allow admins and developers to make
-    changes without being limited by having to retain compatibility with the V1
-    support, e.g. to update the bootloader, to support new devices not
-    supported by the current dispatcher at all or to indicate that the devices
-    have completed a migration to the pipeline and prevent users mistakenly
-    submitting old jobs.
-
-    It is recommended to have pipeline support for all devices of the relevant
-    device type before enabling exclusive pipeline support, especially if the
-    device type has a :ref:`yaml_health_checks`
 
   frontend
     ``lava-server`` provides a generic `frontend` consisting of the Results,

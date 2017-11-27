@@ -33,8 +33,6 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
   </div>
   <div class="col-md-6">
     <dl class="dl-horizontal">
-      <dt>Exclusive</dt>
-      <dd>{{ device.is_exclusive }}</dd>
       <dt>Extends</dt>
       <dd>{{ device.get_extends }}</dd>
     </dl>
@@ -43,6 +41,7 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
 
 
 <div class="container-fluid">
+{% if dictionary %}
 <div class="row">
     <h4 class="modal-header">Commands</h4>
     <dl class="dl-horizontal">
@@ -52,6 +51,19 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
     {% endfor %}
     </dl>
 </div>
+{% endif %}
+
+{% if connections %}
+<div class="row">
+    <h4 class="modal-header">Connections</h4>
+    <dl class="dl-horizontal">
+    {% for key, value in connections.items %}
+        <dt>{{ key }}</dt>
+        <dd><pre>{{ value }}</pre></dd>
+    {% endfor %}
+    </dl>
+</div>
+{% endif %}
 
 {% if extra %}
 <div class="row">
@@ -67,7 +79,7 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
 
 {% if vland %}
 <div class="row">
-    <h4 class="modal-header">VLANd parameters</h4>
+    <h4 class="modal-header">Networking parameters</h4>
     <dl class="dl-horizontal">
     {% for key, value in vland.items %}
         <dt>{{ key }}</dt>

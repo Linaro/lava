@@ -285,12 +285,14 @@ serial connections over one cable.
 Configuring serial ports
 ========================
 
-The traditional way for an admin to configure how to connect to a
-serial port in LAVA is using the ``connection_command`` variable in
-the :ref:`device dictionary <device_dictionary_commands>`. LAVA will
-use this command to open the connection early in test job startup (in
-the first ``boot`` action) , and will keep this connection open right
-until the end of the test job. A simple example:
+To configure LAVA to connect to one or more serial ports of a device, create a
+list of ``connection_commands`` in the :ref:`device dictionary
+<device_dictionary_connections>`. LAVA will use the command tagged with
+``primary`` to open the connection early in test job startup (in the first
+``boot`` action) , and will keep this connection open right until the end of
+the test job.
+
+In earler versions of LAVA, only a single connection command could be used:
 
 .. code-block:: jinja
 
@@ -300,9 +302,10 @@ until the end of the test job. A simple example:
  {% set connection_command = 'telnet dispatcher01 7001' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
 
-This works fine when just using a single serial connection but won't
-work with more than one. There is now a better way to configure serial
-ports more flexibly:
+This has worked fine when just using a single serial connection but is now
+deprecated to support working with more than one and other improvements in
+connection handling. The ``connection_list`` is a more flexible way to
+configure one or more serial ports:
 
 .. code-block:: jinja
 
@@ -310,9 +313,29 @@ ports more flexibly:
  {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
- {% set connection_list = [‘uart0’, ‘uart1’] %}
- {% set connection_commands = {‘uart0’: ‘telnet dispatcher01 7001’, ‘uart1’: ‘telnet dispatcher01 7002’} %}
- {% set connection_tags = {‘uart0’: [‘primary’]} %}
+ {% set connection_list = ['uart0'] %}
+ {% set connection_commands = {'uart0': 'telnet dispatcher01 7001'} %}
+ {% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+
+``primary`` denotes the serial connection which will be started automatically
+with each test job.
+
+Other tags describe how LAVA should close the connection at the end of the
+test job, possible values are ``telnet``, ``ssh``. If your connection command
+does not use ``telnet`` or ``ssh``, the connection will be forcibly closed
+using ``kill -9``.
+
+Or with two serial connections:
+
+.. code-block:: jinja
+
+ {% extends 'beaglebone-black.jinja2' %}
+ {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
+ {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
+ {% set connection_list = ['uart0', 'uart1'] %}
+ {% set connection_commands = {'uart0': 'telnet dispatcher01 7001', 'uart1': 'telnet dispatcher01 7002'} %}
+ {% set connection_tags = {'uart0': ['primary', 'telnet'], 'uart1': ['telnet']} %}
 
 This defines two serial ports (labelled ``uart0`` and ``uart``), then
 describes how to connect to each one. Finally, it sets a ``tag`` of
