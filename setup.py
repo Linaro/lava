@@ -48,6 +48,7 @@ setup(
             'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-case-metadata',
             'lava_test_shell/lava-test-feedback',
+            'lava_test_shell/lava-test-raise',
             'lava_test_shell/lava-test-reference',
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
