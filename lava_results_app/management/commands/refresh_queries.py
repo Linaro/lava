@@ -21,7 +21,11 @@
 
 import sys
 from django.core.management.base import BaseCommand
-from lava_results_app.models import Query
+from lava_results_app.models import (
+    Query,
+    QueryUpdatedError,
+    RefreshLiveQueryError
+)
 
 
 class Command(BaseCommand):
@@ -51,13 +55,24 @@ class Command(BaseCommand):
                 self.stderr.write("Named queries need a username to make a unique match.")
                 sys.exit(2)
             try:
-                query = Query.objects.get(name=query_name, is_live=False, owner__username=options['username'])
+                query = Query.objects.get(name=query_name,
+                                          owner__username=options['username'])
             except Query.DoesNotExist:
                 self.stderr.write(
-                    "Error: A cached query with name %s does not exist for user %s." % (
+                    "Error: Query with name %s does not exist for user %s." % (
                         query_name, options['username']))
                 sys.exit(1)
-            query.refresh_view()
+            self._refresh_query(query)
         else:
             for query in Query.objects.all().filter(is_live=False):
-                query.refresh_view()
+                self._refresh_query(query)
+
+    def _refresh_query(self, query):
+        try:
+            query.refresh_view()
+        except QueryUpdatedError as e:
+            self.stderr.write("Query with name %s owned by user %s was recently refreshed." % (query.name, query.owner.username))
+        except RefreshLiveQueryError as e:
+            self.stderr.write("Query with name %s owned by user %s cannot be refreshed since it's a live query." % (query.name, query.owner.username))
+        except Exception as e:
+            self.stderr.write("Refresh operation for query with name %s owned by user %s failed: %s" % (query.name, query.owner.username, str(e)))

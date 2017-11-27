@@ -30,6 +30,7 @@ from lava_results_app.models import (
     Query,
     QueryCondition,
     RefreshLiveQueryError,
+    QueryUpdatedError,
     TestCase,
     TestSuite,
     TestData,
@@ -201,7 +202,17 @@ class ResultsAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 401, "Permission denied for user to query %s" % query_name)
 
-        query.refresh_view()
+        try:
+            query.refresh_view()
+        except QueryUpdatedError as e:
+            raise xmlrpclib.Fault(
+                400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
+        except RefreshLiveQueryError as e:
+            raise xmlrpclib.Fault(
+                400, "Query with name %s owned by user %s cannot be refreshed since it's a live query." % (query_name, username))
+        except Exception as e:
+            raise xmlrpclib.Fault(
+                401, "Query refresh failed. Please contact system administrator: %s" % str(e))
 
     def refresh_all_queries(self):
         """
@@ -228,11 +239,15 @@ class ResultsAPI(ExposedAPI):
                 401, "Permission denied for user %s. Must be a superuser to "
                 "refresh all queries." % self.user.username)
 
-        for query in Query.objects.all():
+        for query in Query.objects.all().filter(is_live=False):
             try:
                 query.refresh_view()
-            except RefreshLiveQueryError:
-                pass
+            except QueryUpdatedError as e:
+                raise xmlrpclib.Fault(
+                    400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
+            except Exception as e:
+                raise xmlrpclib.Fault(
+                    401, "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s" % (query.name, query.owner.username, str(e)))
 
     def get_testjob_results_yaml(self, job_id):
         """

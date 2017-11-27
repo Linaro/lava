@@ -484,7 +484,8 @@ def query_refresh(request, name, username):
         error_msg = str(e)
         success = False
     except Exception as e:
-        raise
+        success = False
+        error_msg = "%s<br>Please contact system administrator." % str(e)
 
     last_updated = defaultfilters.date(query.last_updated, "DATETIME_FORMAT")
     return HttpResponse(simplejson.dumps([success, str(last_updated),
