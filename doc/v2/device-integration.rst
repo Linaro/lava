@@ -284,6 +284,10 @@ is made, then these resets **must** completely reset the device so as to clear
 all buffers from previous test runs or deployments, **including** when such
 test runs or deployments failed in unexpected ways.
 
+.. note:: It is recommended for all devices that admins disable ability of the
+   device to automatically boot anything, but rather simply drop to the
+   bootloader prompt.
+
 .. index:: device integration - networking
 
 .. _integration_networking:
