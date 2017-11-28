@@ -233,12 +233,34 @@ can be disabled using::
  $ sudo a2dismod proxy
  $ sudo a2dismod proxy_http
 
+.. _installation_configuration:
+
+Configuring the installation
+============================
+
+If the installation uses ``http://localhost``, the remaining configuration is to
+disable some of the Django security checks which expect ``https``.
+
+.. seealso:: :ref:`check_instance`
+
+If the installation uses a remote slave, then :ref:`zmq_curve` should be enabled.
+
+The configuration defaults of ``lava-master``, ``lava-logs`` and ``lava-slave``
+should also be checked. On the master, these files can often be the same content:
+
+* ``/etc/default/lava-master`` or ``/etc/lava-server/lava-master``
+* ``/etc/default/lava-logs`` or ``/etc/lava-server/lava-logs``
+
+Each master has a local ``lava-slave`` even if that slave has no devices configured.
+
+* ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
+
 .. index:: tftpd-hpa
 
 .. _tftp_support:
 
 TFTP support requirement
-------------------------
+========================
 
 LAVA uses :term:`tftp` to serve files to a variety of device types.
 
