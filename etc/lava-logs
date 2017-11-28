@@ -2,6 +2,7 @@
 
 # Socket addresses of the logger (IPv4 only)
 # SOCKET="--socket tcp://*:5555"
+# MASTER_SOCKET="--master-socket tcp://localhost:5556"
 
 # Uses ipv6 (default to ipv4 only)
 # IPV6="--ipv6"

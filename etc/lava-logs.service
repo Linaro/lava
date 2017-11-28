@@ -7,7 +7,7 @@ Type=simple
 Environment=LOGLEVEL=DEBUG
 EnvironmentFile=-/etc/default/lava-logs
 EnvironmentFile=-/etc/lava-server/lava-logs
-ExecStart=/usr/bin/lava-server manage lava-logs --level $LOGLEVEL $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
+ExecStart=/usr/bin/lava-server manage lava-logs --level $LOGLEVEL $SOCKET $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
 TimeoutStopSec=20
 Restart=always
 
