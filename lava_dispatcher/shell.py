@@ -265,6 +265,9 @@ class ShellSession(Connection):
         Returns the number of characters read.
         """
         index = 0
+        if not self.raw_connection:
+            # connection has already been closed.
+            return index
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
