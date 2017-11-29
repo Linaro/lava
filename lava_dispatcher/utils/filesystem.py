@@ -28,6 +28,7 @@ import subprocess
 import glob
 import logging
 import magic
+import errno
 from configobj import ConfigObj
 
 from lava_dispatcher.action import InfrastructureError, JobError, LAVABug
@@ -295,6 +296,44 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
             raise JobError("Unable to copy image: %s" % src)
 
     return os.path.join(LAVA_LXC_HOME, filename)
+
+
+def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
+    """Copies given overlay tar file in SRC to LAVA_LXC_HOME with the provided
+    LXC_NAME and configured lxc_path
+
+    For example,
+
+    SRC such as:
+    '/var/lib/lava/dispatcher/slave/tmp/523/overlay-1.8.4.tar.gz'
+
+    will get copied to:
+    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
+
+    where,
+    '/var/lib/lxc' is the lxc_path
+    'db410c-523' is the LXC_NAME
+    ${namespace} is the given NAMESPACE
+
+    Returns the destination path. For example,
+    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
+
+    Raises JobError if the copy failed.
+    """
+    dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), 'overlays',
+                       namespace, 'overlay.tar.gz')
+    logger = logging.getLogger('dispatcher')
+    logger.debug("Copying %s to %s", os.path.basename(src), dst)
+    try:
+        shutil.copy(src, dst)
+    except IOError as exc:
+        # ENOENT(2): No such file or directory
+        if exc.errno != errno.ENOENT:
+            raise JobError("Unable to copy image: %s" % src)
+        # try creating parent directories
+        os.makedirs(os.path.dirname(dst), 0o755)
+        shutil.copy(src, dst)
+    return dst
 
 
 @replace_exception(RuntimeError, JobError)
