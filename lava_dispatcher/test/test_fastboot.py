@@ -265,3 +265,29 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                                             mkdtemp())
         description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_flash_cmds_order(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml',
+                                             mkdtemp())
+        # The expected_flash_cmds list ensures the following:
+        # 1. Order of flash commands.
+        # 2. Number / Count of flash commands.
+        # 3. 'cdt' flash command is not part of draganboard-410c's device
+        #    dictionary, but ensure that it gets added in the final flash
+        #    commands list.
+        expected_flash_cmds = ['partition', 'hyp', 'rpm', 'sbl1', 'tz',
+                               'aboot', 'boot', 'rootfs', 'cdt']
+        flash_order = None
+        for action in job.pipeline.actions:
+            self.assertIsNotNone(action.name)
+            if isinstance(action, DeployAction):
+                if action.name == 'fastboot-deploy':
+                    flash_order = [action for action in
+                                   action.pipeline.actions if action.name ==
+                                   'fastboot-flash-order-action'][0]
+                    flash_cmds = [action.command for action in
+                                  flash_order.pipeline.actions if
+                                  action.name == 'fastboot-flash-action']
+        self.assertIsNotNone(flash_order)
+        self.assertEqual(expected_flash_cmds, flash_cmds)

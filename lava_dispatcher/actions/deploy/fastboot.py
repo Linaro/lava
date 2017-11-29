@@ -162,7 +162,7 @@ class FastbootFlashOrderAction(DeployAction):
         flash_cmds = set(userlist).difference(set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
         self.internal_pipeline.add_action(ReadFeedback(repeat=True))
-        for flash_cmd in flash_cmds_order:
+        for flash_cmd in flash_cmds:
             if flash_cmd not in parameters['images']:
                 continue
             self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))

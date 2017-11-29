@@ -98,16 +98,10 @@
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-  - class: actions.deploy.download.DownloaderAction
-    name: download-retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.fastboot.FastbootFlashOrderAction
     name: fastboot-flash-order-action
     pipeline:
     - {class: power.ReadFeedback, name: read-feedback}
-    - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}

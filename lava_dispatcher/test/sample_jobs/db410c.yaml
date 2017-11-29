@@ -50,26 +50,24 @@ actions:
     namespace: droid
     images:
       partition:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin
       hyp:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/hyp.mbn
-      modem:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/NON-HLOS.bin
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn
+      cdt:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbc_1.0_8016.bin
       rpm:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/rpm.mbn
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn
       sbl1:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/sbl1.mbn
-      sec:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/sec.dat
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn
       tz:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/tz.mbn
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn
       aboot:
-        url: http://images-internal/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn
       boot:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/boot-linaro-buster-dragonboard-410c-305.img.gz
         compression: gz
       rootfs:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/linaro-buster-alip-dragonboard-410c-305.img.gz
         compression: gz
     os: debian
 
