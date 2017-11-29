@@ -425,6 +425,17 @@ def testcase(request, case_id, job=None, pk=None):
         }, request=request))
 
 
+def testcase_yaml(request, pk):
+    testcase = get_object_or_404(TestCase, pk=pk)
+    check_request_auth(request, testcase.suite.job)
+    response = HttpResponse(content_type='text/yaml')
+    filename = "lava_%s.yaml" % testcase.name
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    yaml.dump(export_testcase(testcase, with_buglinks=True), response,
+              Dumper=yaml.CDumper)
+    return response
+
+
 @login_required
 @post_only
 def get_bug_links_json(request):

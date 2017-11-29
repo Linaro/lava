@@ -409,7 +409,7 @@ def testcase_export_fields():
     ]
 
 
-def export_testcase(testcase):
+def export_testcase(testcase, with_buglinks=False):
     """
     Returns string versions of selected elements of a TestCase
     Unicode causes issues with CSV and can complicate YAML parsing
@@ -440,6 +440,9 @@ def export_testcase(testcase):
         'logged': str(testcase.logged),
         'metadata': metadata,
     }
+    if with_buglinks:
+        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
+
     return casedict
 
 
