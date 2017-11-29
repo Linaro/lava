@@ -23,7 +23,7 @@ from django.core.checks import Debug, Error, register
 from django.db.models import Q
 from lava_scheduler_app.models import Device, validate_job
 from lava_scheduler_app.schema import SubmissionException
-#pylint: disable=unused-argument,missing-docstring,invalid-name
+# pylint: disable=unused-argument,missing-docstring,invalid-name
 
 
 @register(deploy=True)
