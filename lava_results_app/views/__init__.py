@@ -229,8 +229,7 @@ def testjob_yaml_summary(request, job):
 
 @BreadCrumb("Suite {pk}", parent=testjob, needs=['job', 'pk'])
 def suite(request, job, pk):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
@@ -378,6 +377,8 @@ def testcase(request, case_id, job=None, pk=None):
                     "No TestCase/TestSet matches the given parameters.")
     if not job:
         job = case.suite.job
+        # Auth check purposes only.
+        job = get_restricted_job(request.user, pk=job.id, request=request)
     else:
         job = get_restricted_job(request.user, pk=job, request=request)
     if not pk:
