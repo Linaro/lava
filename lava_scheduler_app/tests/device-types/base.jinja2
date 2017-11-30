@@ -76,7 +76,9 @@ constants:
      cpu-reset-messages:
        - 'Resetting CPU'
        - 'Must RESET board to recover'
-       - '{{ extra_cpu_reset_message | default("") }}'
+{% if extra_cpu_reset_message %}
+       - '{{ extra_cpu_reset_message }}'
+{% endif -%}
 
      # Default shell prompt for AutoLogin
      # DEFAULT_SHELL_PROMPT
