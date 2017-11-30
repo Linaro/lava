@@ -550,7 +550,7 @@ def start_job(job):
     Only for use with the lava-master
     """
     # leave early if job is already running
-    if job.status == TestJob.RUNNING:
+    if job.status != TestJob.SUBMITTED:
         return
     job.status = TestJob.RUNNING
     job.start_time = timezone.now()
