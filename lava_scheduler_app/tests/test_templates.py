@@ -1223,7 +1223,7 @@ class TestTemplates(unittest.TestCase):
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
-        self.assertIn('cpu-reset-message', template_dict['constants'])
+        self.assertIn('cpu-reset-messages', template_dict['constants'])
 
     def test_db820c_template(self):
         data = """{% extends 'dragonboard-820c.jinja2' %}
