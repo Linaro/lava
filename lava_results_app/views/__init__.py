@@ -39,7 +39,12 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
+from lava_results_app.tables import (
+    ResultsTable,
+    SuiteTable,
+    ResultsIndexTable,
+    TestJobResultsTable
+)
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import (
     export_testcase,
@@ -111,8 +116,9 @@ def query(request):
 @BreadCrumb("Test job {job}", parent=index, needs=['job'])
 def testjob(request, job):
     job = get_restricted_job(request.user, pk=job, request=request)
-    data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    suite_table = ResultsTable(
+    data = ResultsView(request, model=TestSuite,
+                       table_class=TestJobResultsTable)
+    suite_table = TestJobResultsTable(
         data.get_table_data().filter(job=job)
     )
     failed_definitions = []
