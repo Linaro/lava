@@ -12,7 +12,6 @@
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.iso.IsoPullInstaller, name: pull-installer-files}
   - {class: actions.deploy.iso.QemuCommandLine, name: prepare-qemu-commands}
-  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:

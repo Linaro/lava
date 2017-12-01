@@ -42,21 +42,6 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 
 
-class CustomisationAction(DeployAction):
-
-    def __init__(self):
-        super(CustomisationAction, self).__init__()
-        self.name = "customise"
-        self.description = "customise image during deployment"
-        self.summary = "customise image"
-
-    def run(self, connection, max_end_time, args=None):
-        connection = super(CustomisationAction, self).run(connection, max_end_time, args)
-        self.logger.debug("Customising image...")
-        # FIXME: implement
-        return connection
-
-
 # pylint: disable=too-many-instance-attributes
 class OverlayAction(DeployAction):
     """
@@ -94,12 +79,10 @@ class OverlayAction(DeployAction):
 
     def validate(self):
         super(OverlayAction, self).validate()
-        self.scripts_to_copy = glob.glob(os.path.join(self.lava_test_dir, 'lava-*'))
+        self.scripts_to_copy = sorted(glob.glob(os.path.join(self.lava_test_dir, 'lava-*')))
         # Distro-specific scripts override the generic ones
         if not self.test_needs_overlay(self.parameters):
             return
-        distro = self.parameters['deployment_data']['distro']
-        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='shared', key='lava_test_results_dir',
@@ -107,8 +90,13 @@ class OverlayAction(DeployAction):
         lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
         self.set_namespace_data(action='test', label='shared', key='lava_test_sh_cmd',
                                 value=lava_test_sh_cmd)
-        for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
-            self.scripts_to_copy.append(script)
+
+        # Add distro support scripts
+        distro = self.parameters['deployment_data']['distro']
+        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+        self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
+                                                              'lava-*')))
+
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
         if self.job.parameters.get('output_dir', None) is None:
@@ -158,7 +146,11 @@ class OverlayAction(DeployAction):
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
                 output_file = '%s/bin/%s' % (lava_path, foutname)
-                self.logger.debug("Updating %s", output_file)
+                if "distro" in fname:
+                    distribution = os.path.basename(os.path.dirname(fname))
+                    self.logger.debug("Updating %s (%s)", output_file, distribution)
+                else:
+                    self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     if foutname == 'lava-target-mac':
@@ -283,7 +275,7 @@ class VlandOverlayAction(OverlayAction):
 
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
-            '%s/../../../lava_test_shell/vland' % os.path.dirname(__file__))
+            '%s/../../lava_test_shell/vland' % os.path.dirname(__file__))
         self.lava_vland_cache_file = '/tmp/lava_vland_cache.txt'
         self.params = {}
         self.sysfs = []

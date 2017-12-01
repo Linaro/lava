@@ -9,7 +9,9 @@ flash_cmds_order: ['update', 'ptable', 'partition', 'cache', 'userdata', 'system
 constants:
   shutdown-message: "The system is going down for reboot NOW"
   boot-message: "Booting Linux"
-  cpu-reset-message: "Resetting CPU"
+  cpu-reset-messages:
+    - "Resetting CPU"
+    - "Must RESET board to recover"
   default-shell-prompt: "lava-test: # "
   uboot-autoboot-prompt: "Hit any key to stop autoboot"
   uboot-interrupt-character: " "

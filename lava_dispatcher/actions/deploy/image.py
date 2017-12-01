@@ -28,10 +28,7 @@ from lava_dispatcher.actions.deploy.download import (
 )
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.deploy.overlay import (
-    CustomisationAction,
-    OverlayAction,
-)
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.utils.compression import untar_file
 
@@ -61,7 +58,6 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
                 if parameters['images'][image].get('format', '') == 'qcow2':
                     self.internal_pipeline.add_action(QCowConversionAction(image))
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(CustomisationAction())
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
             self.internal_pipeline.add_action(ApplyOverlayGuest())
         if self.test_needs_deployment(parameters):

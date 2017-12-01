@@ -410,7 +410,7 @@ class BootloaderCommandOverlay(Action):
             self.logger.info("Using kernel file from prepare-kernel: %s", prepared_kernel)
             substitutions['{KERNEL}'] = prepared_kernel
         if self.bootcommand:
-            self.logger.debug("%s" % self.job.device['parameters'])
+            self.logger.debug("%s", self.job.device['parameters'])
             kernel_addr = self.job.device['parameters'][self.bootcommand]['kernel']
             dtb_addr = self.job.device['parameters'][self.bootcommand]['dtb']
             ramdisk_addr = self.job.device['parameters'][self.bootcommand]['ramdisk']
@@ -601,13 +601,14 @@ class BootloaderCommandsAction(Action):
         if self.parameters.get('prompts', None):
             connection.prompt_str = [
                 self.params.get('boot_message',
-                                self.job.device.get_constant('boot-message')),
-                self.job.device.get_constant('cpu-reset-message')
-            ]
+                                self.job.device.get_constant('boot-message'))]
+            connection.prompt_str.extend(
+                self.job.device.get_constant('cpu-reset-messages'))
+
             self.logger.debug("Changing prompt to boot_message %s",
                               connection.prompt_str)
             index = self.wait(connection)
-            if connection.prompt_str[index] == self.job.device.get_constant('cpu-reset-message'):
+            if connection.prompt_str[index] in self.job.device.get_constant('cpu-reset-messages'):
                 self.logger.error("Bootloader reset detected: Bootloader "
                                   "failed to load the required file into "
                                   "memory correctly so the bootloader reset "

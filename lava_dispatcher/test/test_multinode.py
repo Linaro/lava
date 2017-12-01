@@ -27,7 +27,10 @@ import logging
 from lava_dispatcher.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
-from lava_dispatcher.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction, CustomisationAction
+from lava_dispatcher.actions.deploy.overlay import (
+    OverlayAction,
+    MultinodeOverlayAction,
+)
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
@@ -433,32 +436,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_protocol_action(self):
         deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImagesAction)][0]
-        customise = [action for action in deploy.internal_pipeline.actions if isinstance(action, CustomisationAction)][0]
         self.assertIn('protocols', deploy.parameters)
-        self.assertIn('protocols', customise.parameters)
-        self.assertIn(MultinodeProtocol.name, customise.parameters['protocols'])
-        customise_params = [
-            params for params in customise.parameters['protocols'][MultinodeProtocol.name] if params['action'] == customise.name
-        ][0]
-        self.assertIn('action', customise_params)
-        self.assertEqual(customise.name, customise_params['action'])
-        multinode_protocol = [protocol for protocol in customise.job.protocols if protocol.name == MultinodeProtocol.name][0]
-        self.assertIs(multinode_protocol.name, MultinodeProtocol.name)
-
-        # yaml_line gets ignored by the api
-        self.assertEqual(
-            customise_params,
-            {
-                'action': customise.name,
-                'request': 'lava-send',
-                'messageID': 'test',
-                'yaml_line': 46,
-                'message': {
-                    'key': 'value',
-                    'yaml_line': 48
-                },
-            }
-        )
         client_calls = {}
         for action in deploy.internal_pipeline.actions:
             if 'protocols' in action.parameters:
@@ -467,19 +445,6 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                         api_calls = [params for name in params if name == 'action' and params[name] == action.name]
                         for call in api_calls:
                             client_calls.update(call)
-        self.assertEqual(
-            client_calls,
-            {
-                'action': 'customise',
-                'message': {
-                    'key': 'value',
-                    'yaml_line': 48
-                },
-                'messageID': 'test',
-                'request': 'lava-send',
-                'yaml_line': 46
-            }
-        )
 
     def test_protocol_variables(self):  # pylint: disable=too-many-locals
         boot = [action for action in self.client_job.pipeline.actions if isinstance(action, BootAction)][0]

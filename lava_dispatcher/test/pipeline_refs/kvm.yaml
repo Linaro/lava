@@ -9,7 +9,6 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:

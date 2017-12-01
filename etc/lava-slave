@@ -9,6 +9,8 @@
 
 # Slave hostname
 # Should be set for host that have random hostname (containers, ...)
+# The hostname can be any unique string, except "lava-logs" which is reserved
+# for the lava-logs daemon.
 # HOSTNAME="--hostname <hostname.fqdn>"
 
 # Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)

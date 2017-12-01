@@ -12,7 +12,9 @@ constants:
 
      # CPU reset message
      # CPU_RESET_MESSAGE
-     cpu-reset-message: 'Resetting CPU'
+     cpu-reset-messages:
+       - 'Resetting CPU'
+       - 'Must RESET board to recover'
 
      # Default shell prompt for AutoLogin
      # DEFAULT_SHELL_PROMPT

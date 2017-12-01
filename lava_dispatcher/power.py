@@ -199,6 +199,8 @@ class ReadFeedback(Action):
                 deepcopy=False, parameters={"namespace": feedback_ns})
             if feedback_connection:
                 feedbacks.append((feedback_ns, feedback_connection))
+            else:
+                self.logger.warning("No connection for namespace %s", feedback_ns)
         for feedback in feedbacks:
             bytes_read = feedback[1].listen_feedback(timeout=self.duration)
             # ignore empty or single newline-only content
@@ -206,8 +208,10 @@ class ReadFeedback(Action):
                 self.logger.debug(
                     "Listened to connection for namespace '%s' for %ds", feedback[0], self.duration)
             if self.finalize:
+                self.logger.info("Finalising connection for namespace '%s'", feedback[0])
                 # Finalize all connections associated with each namespace.
                 feedback[1].finalise()
+        super(ReadFeedback, self).run(connection, max_end_time, args)
         return connection
 
 
@@ -229,7 +233,7 @@ class FinalizeAction(Action):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
         self.internal_pipeline.add_action(PowerOff())
-        self.internal_pipeline.add_action(ReadFeedback(finalize=True))
+        self.internal_pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
 
     def run(self, connection, max_end_time, args=None):
         """

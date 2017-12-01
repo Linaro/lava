@@ -30,10 +30,7 @@ from lava_dispatcher.action import (
 )
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.overlay import (
-    CustomisationAction,
-    OverlayAction,
-)
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
 )
@@ -300,7 +297,6 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         """
         self.image_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(CustomisationAction())
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         uniquify = parameters.get('uniquify', True)
@@ -312,7 +308,7 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
                     k, path=self.image_path, uniquify=uniquify))
                 if parameters['images'][k].get('apply-overlay', False):
                     if self.test_needs_overlay(parameters):
-                        self.internal_pipeline.add_action(ApplyOverlayImage(k))
+                        self.internal_pipeline.add_action(ApplyOverlayImage())
             self.internal_pipeline.add_action(DDAction())
         elif 'image' in parameters:
             self.internal_pipeline.add_action(DownloaderAction(

@@ -48,6 +48,7 @@ setup(
             'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-case-metadata',
             'lava_test_shell/lava-test-feedback',
+            'lava_test_shell/lava-test-raise',
             'lava_test_shell/lava-test-reference',
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
@@ -92,14 +93,11 @@ setup(
             ['etc/lava-modules.conf']),
         ('/etc/logrotate.d/',
             ['etc/logrotate.d/lava-slave-log']),
-        ('/etc/init.d/',
-            ['etc/lava-slave.init']),
         ('/usr/share/lava-dispatcher/',
             ['etc/lava-slave.service'])
     ],
     scripts=[
         'lava/dispatcher/lava-run',
-        'lava/dispatcher/lava-dispatcher-slave',
         'lava/dispatcher/lava-slave'
     ],
 )
