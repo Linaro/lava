@@ -187,7 +187,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.actions[3]
+                overlay = action.pipeline.actions[2]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -334,9 +334,9 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
         inline_repo = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                self.assertIsNotNone(action.internal_pipeline.actions[2])
-                overlay = action.pipeline.actions[2]
-                self.assertIsNotNone(overlay.internal_pipeline.actions[2])
+                self.assertIsNotNone(action.internal_pipeline.actions[1])
+                overlay = action.pipeline.actions[1]
+                self.assertIsNotNone(overlay.internal_pipeline.actions[1])
                 testdef = overlay.internal_pipeline.actions[2]
                 self.assertIsNotNone(testdef.internal_pipeline.actions[0])
                 inline_repo = testdef.internal_pipeline.actions[0]

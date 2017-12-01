@@ -34,7 +34,6 @@
 - class: actions.deploy.fastboot.FastbootAction
   name: fastboot-deploy
   pipeline:
-  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:

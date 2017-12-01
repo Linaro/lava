@@ -50,6 +50,7 @@ class ConnectDevice(Action):
         self.hardware = None
         self.primary = True
         self.message = 'Connecting to device using'
+        self.tag_dict = {}
 
     def _check_command(self):
         exe = ''
@@ -77,6 +78,7 @@ class ConnectDevice(Action):
                 if self.primary:
                     if 'primary' in value.get('tags', []):
                         self.hardware = hardware
+                        self.tag_dict[hardware] = value.get('tags', [])
                         break
                 else:
                     if 'tags' in value:
@@ -87,10 +89,12 @@ class ConnectDevice(Action):
                             # allow tags other than primary
                             if hardware == self.hardware:
                                 matched = True
+                                self.tag_dict[hardware] = value.get('tags', [])
                                 break
                     else:
                         # allow for no tags
                         matched = True
+                        self.tag_dict[hardware] = value.get('tags', [])
                         break
             if self.primary:
                 if not self.hardware:
@@ -126,6 +130,8 @@ class ConnectDevice(Action):
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
+        if self.hardware:
+            connection.tags = self.tag_dict[self.hardware]
         connection = super(ConnectDevice, self).run(connection, max_end_time, args)
         if not connection.prompt_str:
             connection.prompt_str = [self.job.device.get_constant(

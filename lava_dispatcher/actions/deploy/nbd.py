@@ -168,7 +168,8 @@ class XnbdAction(DeployAction):
         self.nbd_server_port = self.parameters['lava-xnbd']['port']
         self.nbd_server_ip = self.parameters['lava-xnbd']['ip']
         self.nbd_root = self.parameters['lava-xnbd']['nbdroot']
-        self.logger.debug("NBD-IP: %s, NBD-PORT: %s, NBD-ROOT: %s" % (self.nbd_server_ip, self.nbd_server_port, self.nbd_root))
+        self.logger.debug("NBD-IP: %s, NBD-PORT: %s, NBD-ROOT: %s",
+                          self.nbd_server_ip, self.nbd_server_port, self.nbd_root)
         nbd_cmd = ['xnbd-server', '--logpath', '/tmp/xnbd.log.%s' % self.nbd_server_port,
                    '--daemon', '--target', '--lport', '%s' % self.nbd_server_port,
                    '%s/%s' % (os.path.realpath(tftpd_dir()),

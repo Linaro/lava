@@ -60,7 +60,7 @@ class UBootPrepareKernelAction(Action):
         self.mkimage_conversion = False
 
     def append_dtb(self, kernel_file, dtb_file, dest_file):
-        self.logger.info("Appending %s to %s" % (dtb_file, kernel_file))
+        self.logger.info("Appending %s to %s", dtb_file, kernel_file)
         # Can't use cat here because it will be called with subprocess.check_output that catches stdout
         cmd = ["dd", "if=%s" % kernel_file, "of=%s" % dest_file]
         cmd2 = ["dd", "if=%s" % dtb_file, "of=%s" % dest_file, "oflag=append", "conv=notrunc"]

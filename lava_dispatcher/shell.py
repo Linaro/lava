@@ -188,9 +188,10 @@ class ShellSession(Connection):
         self.__runner__ = None
         self.timeout = shell_command.lava_timeout
 
-    def disconnect(self, reason):
-        # FIXME
-        pass
+    def disconnect(self, reason=''):
+        logger = logging.getLogger('dispatcher')
+        logger.debug("Disconnecting %s", self.name)
+        super(ShellSession, self).disconnect(reason)
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property
@@ -264,6 +265,9 @@ class ShellSession(Connection):
         Returns the number of characters read.
         """
         index = 0
+        if not self.raw_connection:
+            # connection has already been closed.
+            return index
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
@@ -272,9 +276,10 @@ class ShellSession(Connection):
                 [pexpect.EOF, pexpect.TIMEOUT], timeout=timeout)
         finally:
             self.raw_connection.logfile.is_feedback = False
-            if index == 1:
-                return len(self.raw_connection.before)
-            return index
+
+        if index == 1:
+            return len(self.raw_connection.before)
+        return index
 
 
 class ExpectShellSession(Action):

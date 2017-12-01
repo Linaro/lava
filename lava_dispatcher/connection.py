@@ -132,6 +132,7 @@ class Connection(object):
         self.match = None
         self.connected = True
         self.check_char = '#'
+        self.tags = []
 
     def corruption_check(self):
         self.sendline(self.check_char)
@@ -155,9 +156,28 @@ class Connection(object):
         raise LAVABug("'wait' not implemented")
 
     def disconnect(self, reason):
-        raise LAVABug("'disconnect' not implemented")
+        logger = logging.getLogger('dispatcher')
+        if not self.tags:
+            raise LAVABug("'disconnect' not implemented")
+        if 'telnet' in self.tags:
+            logger.info("Disconnecting from telnet: %s", reason)
+            self.sendcontrol(']')
+            self.sendline('quit', disconnecting=True)
+        elif 'ssh' in self.tags:
+            logger.info("Disconnecting from ssh: %s", reason)
+            self.sendline('', disconnecting=True)
+            self.sendline('~.', disconnecting=True)
+        else:
+            raise LAVABug("'disconnect' not supported for %s" % self.tags)
+        self.connected = False
+        self.raw_connection.close(force=True)
+        self.raw_connection = None
 
     def finalise(self):
+        logger = logging.getLogger('dispatcher')
+        if self.raw_connection:
+            if self.tags:
+                self.disconnect(reason='Finalise')
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)

@@ -26,10 +26,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.deploy.overlay import (
-    CustomisationAction,
-    OverlayAction,
-)
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.filesystem import (
     prepare_install_base,
     copy_out_files
@@ -71,7 +68,6 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
         self.internal_pipeline.add_action(IsoPullInstaller())
         self.internal_pipeline.add_action(QemuCommandLine())
         # prepare overlay at this stage - make it available after installation.
-        self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         self.internal_pipeline.add_action(ApplyOverlayGuest())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())

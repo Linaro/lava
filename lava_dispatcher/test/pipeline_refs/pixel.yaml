@@ -63,6 +63,7 @@
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
+    - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot-boot
   pipeline:

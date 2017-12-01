@@ -38,6 +38,7 @@ import zlib
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.action import (
     Action,
@@ -54,6 +55,7 @@ from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.filesystem import (
     copy_to_lxc,
     lava_lxc_home,
+    copy_overlay_to_lxc,
 )
 from lava_dispatcher.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
@@ -681,6 +683,8 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             if image != 'yaml_line':
                 self.internal_pipeline.add_action(DownloaderAction(
                     image, self.download_dir))
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(CopyToLxcAction())
 
 
@@ -722,4 +726,11 @@ class CopyToLxcAction(DeployAction):
             if not src:
                 continue
             copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
+        overlay_file = self.get_namespace_data(action='compress-overlay',
+                                               label='output', key='file')
+        if overlay_file is None:
+            self.logger.debug("skipped %s", self.name)
+        else:
+            copy_overlay_to_lxc(lxc_name, overlay_file,
+                                self.job.parameters['dispatcher'], namespace)
         return connection

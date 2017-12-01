@@ -28,6 +28,7 @@ import subprocess
 import glob
 import logging
 import magic
+import errno
 from configobj import ConfigObj
 
 from lava_dispatcher.action import InfrastructureError, JobError, LAVABug
@@ -36,6 +37,7 @@ from lava_dispatcher.utils.constants import (
     LAVA_LXC_HOME,
 )
 from lava_dispatcher.utils.compression import decompress_file
+from lava_dispatcher.utils.decorator import replace_exception
 
 
 def rmtree(directory):
@@ -113,6 +115,7 @@ def write_bootscript(commands, filename):
         bootscript.close()
 
 
+@replace_exception(RuntimeError, JobError)
 def prepare_guestfs(output, overlay, size):
     """
     Applies the overlay, offset by one directory.
@@ -153,6 +156,7 @@ def prepare_guestfs(output, overlay, size):
     return guest.blkid(guest_device)['UUID']
 
 
+@replace_exception(RuntimeError, JobError)
 def prepare_install_base(output, size):
     """
     Create an empty image of the specified size (in bytes),
@@ -169,6 +173,7 @@ def prepare_install_base(output, size):
     guest.shutdown()
 
 
+@replace_exception(RuntimeError, JobError)
 def copy_out_files(image, filenames, destination):
     """
     Copies a list of files out of the image to the specified
@@ -193,19 +198,30 @@ def copy_out_files(image, filenames, destination):
     guest.shutdown()
 
 
+@replace_exception(RuntimeError, JobError)
 def copy_in_overlay(image, root_partition, overlay):
     """
     Mounts test image partition as specified by the test
-    writer and extracts overlay at the root
+    writer and extracts overlay at the root, if root_partition
+    is None the image is handled as a filesystem instead of
+    partitioned image.
     """
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
     guest.launch()
-    partitions = guest.list_partitions()
-    if not partitions:
-        raise InfrastructureError("Unable to prepare guestfs")
-    guest_partition = partitions[root_partition]
-    guest.mount(guest_partition, '/')
+
+    if root_partition:
+        partitions = guest.list_partitions()
+        if not partitions:
+            raise InfrastructureError("Unable to prepare guestfs")
+        guest_partition = partitions[root_partition]
+        guest.mount(guest_partition, '/')
+    else:
+        devices = guest.list_devices()
+        if not devices:
+            raise InfrastructureError("Unable to prepare guestfs")
+        guest.mount(devices[0], '/')
+
     # FIXME: max message length issues when using tar_in
     # on tar.gz.  Works fine with tar so decompressing
     # overlay first.
@@ -213,7 +229,11 @@ def copy_in_overlay(image, root_partition, overlay):
         os.unlink(overlay[:-3])
     decompressed_overlay = decompress_file(overlay, 'gz')
     guest.tar_in(decompressed_overlay, '/')
-    guest.umount(guest_partition)
+
+    if root_partition:
+        guest.umount(guest_partition)
+    else:
+        guest.umount(devices[0])
 
 
 def lxc_path(dispatcher_config):
@@ -266,10 +286,10 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
     logger = logging.getLogger('dispatcher')
     if src == dst:
-        logger.debug("Not copying since src: '%s' and dst: '%s' are same" %
-                     (src, dst))
+        logger.debug("Not copying since src: '%s' and dst: '%s' are same",
+                     src, dst)
     else:
-        logger.debug("Copying %s to %s" % (filename, lxc_name))
+        logger.debug("Copying %s to %s", filename, lxc_name)
         try:
             shutil.copyfile(src, dst)
         except IOError:
@@ -278,6 +298,45 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     return os.path.join(LAVA_LXC_HOME, filename)
 
 
+def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
+    """Copies given overlay tar file in SRC to LAVA_LXC_HOME with the provided
+    LXC_NAME and configured lxc_path
+
+    For example,
+
+    SRC such as:
+    '/var/lib/lava/dispatcher/slave/tmp/523/overlay-1.8.4.tar.gz'
+
+    will get copied to:
+    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
+
+    where,
+    '/var/lib/lxc' is the lxc_path
+    'db410c-523' is the LXC_NAME
+    ${namespace} is the given NAMESPACE
+
+    Returns the destination path. For example,
+    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
+
+    Raises JobError if the copy failed.
+    """
+    dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), 'overlays',
+                       namespace, 'overlay.tar.gz')
+    logger = logging.getLogger('dispatcher')
+    logger.debug("Copying %s to %s", os.path.basename(src), dst)
+    try:
+        shutil.copy(src, dst)
+    except IOError as exc:
+        # ENOENT(2): No such file or directory
+        if exc.errno != errno.ENOENT:
+            raise JobError("Unable to copy image: %s" % src)
+        # try creating parent directories
+        os.makedirs(os.path.dirname(dst), 0o755)
+        shutil.copy(src, dst)
+    return dst
+
+
+@replace_exception(RuntimeError, JobError)
 def copy_overlay_to_sparse_fs(image, overlay):
     """copy_overlay_to_sparse_fs
     """
@@ -343,7 +402,7 @@ def copy_directory_contents(root_dir, dst_dir):
     files_to_copy = glob.glob(os.path.join(root_dir, '*'))
     logger = logging.getLogger('dispatcher')
     for fname in files_to_copy:
-        logger.debug("copying %s to %s" % (fname, os.path.join(dst_dir, os.path.basename(fname))))
+        logger.debug("copying %s to %s", fname, os.path.join(dst_dir, os.path.basename(fname)))
         if os.path.isdir(fname):
             shutil.copytree(fname, os.path.join(dst_dir, os.path.basename(fname)))
         else:
@@ -357,7 +416,7 @@ def remove_directory_contents(root_dir):
     files_to_remove = glob.glob(os.path.join(root_dir, '*'))
     logger = logging.getLogger('dispatcher')
     for fname in files_to_remove:
-        logger.debug("removing %s" % fname)
+        logger.debug("removing %s", fname)
         if os.path.isdir(fname):
             shutil.rmtree(fname)
         else:

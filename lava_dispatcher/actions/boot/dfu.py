@@ -150,7 +150,7 @@ class FlashDFUAction(Action):
             dfu = ' '.join(dfu_command)
             output = self.run_command(dfu.split(' '))
             if output:
-                if not ("No error condition is present\nDone!\n" in output):
+                if "No error condition is present\nDone!\n" not in output:
                     raise InfrastructureError("command failed: %s" % dfu)
             else:
                 raise InfrastructureError("command failed: %s" % dfu)
