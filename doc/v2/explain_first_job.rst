@@ -53,6 +53,18 @@ Top level elements of a test job
   job. This includes whether the results are available to queries and to
   charts.
 
+  ``group`` visibility setting should list the groups users must be in to
+  be allowed to see the job. If more than one group is listed, users must
+  be in all the listed groups to be able to view the job or the results::
+
+    visibility:
+      group:
+        - developers
+        - project
+
+  In this example, users must be members of both ``developers`` group and
+  ``project`` group.
+
 * **context** - Not all testjobs will use a :term:`job context`, it is
   available to override some of the server-side device configuration templates.
   In this case, ``arch: amd64`` sets the template to use the

@@ -210,7 +210,7 @@ Pipeline construction and flow
 
 The pipeline is a FIFO_ and has branches which are handled as a `tree walk`_.
 The top level object is the job, based on the YAML definition supplied by the
-**dispatcher-master**. The definition is processed by the scheduler and the
+**lava-master**. The definition is processed by the scheduler and the
 submission interface with information specific to the actual device. The
 processed definition is parsed to generate the top level pipeline and
 :ref:`strategy classes <using_strategy_classes>`. Each strategy class adds a
@@ -773,7 +773,9 @@ a device type jinja template::
  {% extends 'panda.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 08' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
- {% set connection_command = 'telnet droopy 4001' %}
+ {% set connection_list = [‘uart0’] %}
+ {% set connection_commands = {‘uart0’: ‘telnet dispatcher01 7001’} %}
+ {% set connection_tags = {‘uart0’: [‘primary’, 'telnet']} %}
  {% set power_on_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 08' %}
 
 This dictionary declares that the device inherits the rest of the device

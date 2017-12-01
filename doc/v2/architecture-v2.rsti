@@ -20,8 +20,11 @@ Elements of the Master
   this will scan the database to check for queued test jobs and available test
   devices, starting jobs when the needed resources become available.
 
-* **Dispatcher-master daemon** - This communicates with the worker(s) using
+* **Lava-master daemon** - This communicates with the worker(s) using
   :abbr:`ZMQ (zero MQ)`.
+
+* **Lava-logs daemon** - This process aggregates the logs coming from the
+  dispatchers using :abbr:`ZMQ (zero MQ)`.
 
 Elements of the Worker
 ======================

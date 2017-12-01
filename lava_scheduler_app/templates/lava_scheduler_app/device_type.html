@@ -62,10 +62,8 @@
       <dd>{{ running_jobs_num }}</dd>
       <dt>Queued jobs</dt>
       <dd>{{ queued_jobs_num }}</dd>
-{% if device_type.name != 'dynamic-vm' %}
       <dt>Checks/failures</dt>
       <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Graphical reports</a></dd>
-{% endif %}
       <dt>Health Checks</dt>
      <dd>{{ health_freq }}</dd>
     </dl>
@@ -78,10 +76,8 @@
       <dd>{{ idle_num }}</dd>
       <dt>Offline</dt>
       <dd>{{ offline_num }}</dd>
-{% if device_type.name != 'dynamic-vm' %}
       <dt>Retired</dt>
       <dd>{{ retired_num }}</dd>
-{% endif %}
   </dl>
   </div>
 </div>
@@ -131,10 +127,8 @@
 <h4 class="modal-header">Devices list</h4>
 {% render_table devices_table_no_dt %}
 
-{% if device_type.name != 'dynamic-vm' %}
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
-{% endif %}
 
 <h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
 {% render_table device_type_jobs_table %}

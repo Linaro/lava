@@ -848,7 +848,7 @@ $(document).ready(function () {
 
                 // Support metadata content with image and tooltip text.
                 if (!$.isEmptyObject(row["metadata_content"])) {
-                    label = "/static/dashboard_app/images/metadata.png";
+                    label = "/static/lava_results_app/images/metadata.png";
                     for (key in row["metadata_content"]) {
                         tooltip += key + " changed to " +
                             row["metadata_content"][key][1] + "<br>";
@@ -859,7 +859,7 @@ $(document).ready(function () {
                 // priority over comments.
                 if (row["comments"]) {
                     if (label == "") {
-                        label = "/static/dashboard_app/images/icon-info.png";
+                        label = "/static/lava_results_app/images/icon-info.png";
                     }
                     if (this.chart_data.basic.chart_type == "pass/fail") {
                         tooltip += "Has comments<br>";
@@ -1331,7 +1331,7 @@ $(document).ready(function () {
     init_loading_dialog = function() {
     // Setup the loading image dialog.
         $("#main_container").append('<div id="loading_dialog"></div>');
-        $("#loading_dialog").append('<img src="/static/dashboard_app/images/ajax-progress.gif" alt="Loading..." />');
+        $("#loading_dialog").append('<img src="/static/lava_results_app/images/ajax-progress.gif" alt="Loading..." />');
 
         $('#loading_dialog').dialog({
             autoOpen: false,

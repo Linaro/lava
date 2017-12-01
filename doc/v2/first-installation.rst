@@ -30,8 +30,9 @@ Software Requirements
    detailed instructions.
 
 We currently recommend installing LAVA on `Debian`_ jessie, stretch or
-unstable. Installations using jessie (the current Debian stable release) should
-use updates available in ``jessie-backports``.
+unstable. Installations using stretch (the current Debian stable
+release) or jessie (the previous stable release) should use updates
+available in ``backports``.
 
 Contributions to support other distributions are welcome as long as there is a
 commitment to maintain LAVA on those distributions.

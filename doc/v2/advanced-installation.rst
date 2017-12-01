@@ -342,7 +342,7 @@ When changing the configuration, you should restart the corresponding services:
 
   $ sudo service lava-publisher restart
   $ sudo service lava-master restart
-  $ sudo service lava-server restart
+  $ sudo service lava-logs restart
   $ sudo service lava-server-gunicorn restart
 
 The default values for the event notification settings are:

@@ -17,6 +17,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.core.urlresolvers import reverse
+from django.db import connection, transaction
 from django.template.loader import render_to_string
 from django.http import (
     Http404,
@@ -24,6 +25,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
+from django.http.response import StreamingHttpResponse
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -65,7 +67,11 @@ from lava_scheduler_app.dbutils import (
 )
 
 from lava.utils.lavatable import LavaView
-from lava_results_app.utils import description_data, description_filename
+from lava_results_app.utils import (
+    check_request_auth,
+    description_data,
+    description_filename
+)
 from lava_results_app.models import (
     NamedTestAttribute,
     Query,
@@ -228,7 +234,7 @@ class FailureTableView(JobTableView):
 class WorkerView(JobTableView):
 
     def get_queryset(self):
-        return Worker.objects.filter(display=True).order_by('hostname')
+        return Worker.objects.exclude(health=Worker.HEALTH_RETIRED).order_by('hostname')
 
 
 def health_jobs_in_hr():
@@ -266,8 +272,7 @@ class DeviceTableView(JobTableView):
                                              "current_job__submitter",
                                              "user", "group") \
                              .prefetch_related("tags") \
-                             .filter(temporarydevice=None,
-                                     device_type__in=visible,
+                             .filter(device_type__in=visible,
                                      is_pipeline=True) \
                              .order_by("hostname")
 
@@ -303,26 +308,6 @@ def index(request):
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
-        })
-
-
-@BreadCrumb("Active jobs", parent=index)
-def active_jobs(request):
-    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    ptable = IndexJobTable(data.get_table_data())
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
-
-    return render(
-        request,
-        "lava_scheduler_app/active_jobs.html",
-        {
-            'active_jobs_table': ptable,
-            "sort": '-submit_time',
-            "terms_data": ptable.prepare_terms_data(data),
-            "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
-            "times_data": ptable.prepare_times_data(data),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
         })
 
 
@@ -443,7 +428,7 @@ def failure_report(request):
         })
 
 
-@BreadCrumb("All Devices", parent=index)
+@BreadCrumb("Devices", parent=index)
 def device_list(request):
 
     data = DeviceTableView(request, model=Device, table_class=DeviceTable)
@@ -462,7 +447,7 @@ def device_list(request):
         request=request))
 
 
-@BreadCrumb("Active Devices", parent=index)
+@BreadCrumb("Active", parent=device_list)
 def active_device_list(request):
 
     data = ActiveDeviceView(request, model=Device, table_class=DeviceTable)
@@ -583,16 +568,16 @@ def mydevices_health_history_log(request):
 
 def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
-    accessibility to the object.
+    accessibility to the object via the UI login AND via the REST API.
     """
     try:
         job = TestJob.get_by_job_number(pk)
     except TestJob.DoesNotExist:
         raise Http404("No TestJob matches the given query.")
-    if job.can_view(user):
-        return job
-    else:
-        raise PermissionDenied()
+    # handle REST API querystring as well as UI logins
+    if request:
+        check_request_auth(request, job)
+    return job
 
 
 def filter_device_types(user):
@@ -636,9 +621,7 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.filter(
-            Q(temporarydevice=None) and ~Q(status__in=[Device.RETIRED])
-        ).order_by('hostname')
+        return Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
@@ -805,7 +788,7 @@ def device_type_detail(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
+@BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     prefix = "dthealthhistory_"
@@ -829,7 +812,7 @@ def device_type_health_history_log(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device type report", parent=device_type_detail, needs=['pk'])
+@BreadCrumb("Report", parent=device_type_detail, needs=['pk'])
 def device_type_reports(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     health_day_report = []
@@ -974,7 +957,7 @@ class AllJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(is_pipeline=True)
 
 
-@BreadCrumb("All Jobs", parent=index)
+@BreadCrumb("Jobs", parent=index)
 def job_list(request):
 
     data = AllJobsView(request, model=TestJob, table_class=JobTable)
@@ -994,7 +977,27 @@ def job_list(request):
         request=request))
 
 
-@BreadCrumb("Submit Job", parent=index)
+@BreadCrumb("Active", parent=job_list)
+def active_jobs(request):
+    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
+    ptable = IndexJobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+
+    return render(
+        request,
+        "lava_scheduler_app/active_jobs.html",
+        {
+            'active_jobs_table': ptable,
+            "sort": '-submit_time',
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
+        })
+
+
+@BreadCrumb("Submit", parent=job_list)
 def job_submit(request):
 
     is_authorized = False
@@ -1066,7 +1069,7 @@ def remove_broken_string(line):
         line['msg'] = '<<lava: broken line>>'
 
 
-@BreadCrumb("Job {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
@@ -1199,7 +1202,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
     description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
@@ -1237,7 +1240,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
     template = loader.get_template("lava_scheduler_app/multinode_job_definition.html")
     return HttpResponse(template.render(
@@ -1252,7 +1255,7 @@ def multinode_job_definition(request, pk):
 
 
 def multinode_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
@@ -1326,7 +1329,7 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     # If this is a new log format, redirect to the job page
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
@@ -1361,7 +1364,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, pk, log_name):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = get_restricted_job(request.user, pk)
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
@@ -1423,7 +1426,7 @@ def job_status(request, pk):
 
 
 def job_pipeline_timing(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     try:
         logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")))
     except IOError:
@@ -1509,7 +1512,9 @@ def job_log_file_plain(request, pk):
     # Old style jobs
     log_file = job.output_file()
     if log_file:
-        response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+        response = StreamingHttpResponse(
+            log_file,
+            content_type='text/plain; charset=utf-8')
         response['Content-Transfer-Encoding'] = 'quoted-printable'
         response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
         return response
@@ -1517,7 +1522,8 @@ def job_log_file_plain(request, pk):
     # New pipeline jobs
     try:
         with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
-            response = HttpResponse(log_file, content_type='application/yaml')
+            response = StreamingHttpResponse(log_file.readlines(),
+                                             content_type="application/yaml")
             response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
             return response
     except IOError:
@@ -1868,7 +1874,7 @@ class MyDevicesHealthHistoryView(JobTableView):
         )
 
 
-@BreadCrumb("Device {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=device_list, needs=['pk'])
 def device_detail(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
@@ -1989,7 +1995,7 @@ def device_detail(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device dictionary", parent=device_detail, needs=['pk'])
+@BreadCrumb("dictionary", parent=device_detail, needs=['pk'])
 def device_dictionary(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
@@ -2017,18 +2023,23 @@ def device_dictionary(request, pk):
 
     dictionary = OrderedDict()
     vland = OrderedDict()
+    connections = OrderedDict()
     extra = {}
     sequence = utils.device_dictionary_sequence()
     for item in sequence:
         if item in device_dict.keys():
             dictionary[item] = device_dict[item]
+    connect_sequence = utils.device_dictionary_connections()
+    for item in connect_sequence:
+        if item in device_dict.keys():
+            connections[item] = yaml.dump(device_dict[item], default_flow_style=False)
     vlan_sequence = utils.device_dictionary_vlan()
     for item in vlan_sequence:
         if item in device_dict.keys():
             vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
-    for item in set(device_dict.keys()) - set(sequence) - set(vlan_sequence):
+    for item in set(device_dict.keys()) - set(sequence) - set(connect_sequence) - set(vlan_sequence):
         extra[item] = device_dict[item]
-    # Exclusive is already handled
+    # Exclusive is ignored
     if 'exclusive' in extra:
         del extra['exclusive']
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
@@ -2036,6 +2047,7 @@ def device_dictionary(request, pk):
         {
             'device': device,
             'dictionary': dictionary,
+            'connections': connections,
             'vland': vland,
             'extra': extra,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_dictionary, pk=pk),
@@ -2044,7 +2056,7 @@ def device_dictionary(request, pk):
         request=request))
 
 
-@BreadCrumb("{pk} device report", parent=device_detail, needs=['pk'])
+@BreadCrumb("Report", parent=device_detail, needs=['pk'])
 def device_reports(request, pk):
     device = get_object_or_404(Device, pk=pk)
     health_day_report = []
@@ -2189,7 +2201,7 @@ def device_health_history_log(request, pk):
         request=request))
 
 
-@BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])
+@BreadCrumb("{pk}", parent=workers, needs=['pk'])
 def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
     data = DeviceTableView(request)
@@ -2209,6 +2221,45 @@ def worker_detail(request, pk):
                                                             pk=pk),
         },
         request=request))
+
+
+def worker_active(request, pk):
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_active()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
+
+
+def worker_maintenance(request, pk):
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_maintenance()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
+
+
+def worker_retired(request, pk):
+    try:
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(pk=pk)
+            if not worker.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+            worker.go_health_retired()
+            worker.save()
+            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
+    except Worker.DoesNotExist:
+        raise Http404("Worker %s not found" % pk)
 
 
 @post_only
@@ -2245,7 +2296,7 @@ class HealthCheckJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(health_check=True)
 
 
-@BreadCrumb("Healthcheck", parent=index)
+@BreadCrumb("Healthcheck", parent=job_list)
 def healthcheck(request):
     health_check_data = HealthCheckJobsView(request, model=TestJob,
                                             table_class=JobTable)
@@ -2272,7 +2323,7 @@ class QueueJobsView(JobTableView):
         return all_jobs_with_custom_sort().filter(status=TestJob.SUBMITTED)
 
 
-@BreadCrumb("Queue", parent=index)
+@BreadCrumb("Queue", parent=job_list)
 def queue(request):
     queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
     queue_ptable = QueueJobsTable(

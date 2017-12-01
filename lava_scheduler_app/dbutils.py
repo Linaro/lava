@@ -37,7 +37,7 @@ def match_vlan_interface(device, job_def):
     if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols'] or not device:
         return False
     interfaces = []
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     device_dict = device.load_configuration()
     if not device_dict or device_dict.get('parameters', {}).get('interfaces', None) is None:
         return False
@@ -62,7 +62,7 @@ def match_vlan_interface(device, job_def):
 
 
 def initiate_health_check_job(device):
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     logger.info("Initiating health check")
     if not device:
         # logic error
@@ -96,7 +96,7 @@ def submit_health_check_jobs():
     Looping is only active once a device is offline.
     """
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     for device in Device.objects.filter(
             Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
         time_denominator = True
@@ -122,8 +122,6 @@ def submit_health_check_jobs():
             logger.debug("Last health report job [%d] has no end_time", device.last_health_report_job.id)
         else:
             if time_denominator:
-                if not run_health_check:
-                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
@@ -191,7 +189,7 @@ def check_device_and_job(job, device):
     :param device: the device about the be assigned to the job.
     :return: the device if OK or None on error.
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if not job.is_pipeline and device.is_exclusive:
         return None
     if device.current_job:
@@ -231,7 +229,7 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
         # secondary connection, the "host" has a real device
         return None
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     # health check support
     if job.health_check is True:
         if job.requested_device:
@@ -311,7 +309,7 @@ def get_job_queue():
     later into the queue.
 
     Pipeline jobs are allowed to be assigned but the actual running of
-    a job on a reserved pipeline device is down to the dispatcher-master.
+    a job on a reserved pipeline device is down to the lava-master.
 
     Operations on the returned QuerySet will need to lookup the related
     objects from these foreign keys in the TestJob object:
@@ -334,14 +332,14 @@ def get_job_queue():
     retrieved and with set ordering.
     """
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
     jobs = jobs.filter(actual_device=None)
     jobs = jobs.select_related(
         'requested_device', 'requested_device_type', 'actual_device')
     jobs = jobs.prefetch_related('tags')
     jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
-                         'vm_group', 'target_group', 'id')
+                         'target_group', 'id')
     # evaluate in database
     if len(jobs):
         logger.info("Job queue length: %d", len(jobs))
@@ -354,7 +352,7 @@ def _validate_queue():
     These jobs get ignored by the get_job_queue function and therfore by assign_jobs *unless*
     another job happens to reference that specific device.
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
     jobs = jobs.filter(~Q(actual_device=None)) \
                .select_related('actual_device', 'actual_device__current_job')
@@ -386,7 +384,7 @@ def _validate_idle_device(job, device):
     # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
     device.refresh_from_db()
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     # to be valid for reservation, no queued TestJob can reference this device
     jobs = TestJob.objects.filter(
         status__in=[TestJob.RUNNING, TestJob.SUBMITTED, TestJob.CANCELING],
@@ -428,7 +426,7 @@ def _validate_non_idle_devices(reserved_devices, idle_devices):
     and check that the changes are correct.
     """
     errors = []
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     for device_name in reserved_devices:
         device = Device.objects.get(hostname=device_name)  # force re-load
         if device.status not in [Device.RESERVED, Device.RUNNING]:
@@ -470,7 +468,7 @@ def assign_jobs():
     # FIXME: Make the forced health check constraint explicit
     # evaluate the testjob query set using list()
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     _validate_queue()
     jobs = list(get_job_queue())
     if not jobs:
@@ -533,7 +531,7 @@ def assign_jobs():
 
 def create_job(job, device):
     """
-    Only for use with the dispatcher-master
+    Only for use with the lava-master
     """
     # FIXME check the incoming device status
     job.actual_device = device
@@ -549,10 +547,12 @@ def create_job(job, device):
 
 def start_job(job):
     """
-    Only for use with the dispatcher-master
+    Only for use with the lava-master
     """
+    # leave early if job is already running
+    if job.status != TestJob.SUBMITTED:
+        return
     job.status = TestJob.RUNNING
-    # TODO: Only if that was not already the case !
     job.start_time = timezone.now()
     device = job.actual_device
     msg = "Job %d running" % job.id
@@ -679,7 +679,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
     device tags.
     """
     # FIXME: split out dynamic_connection, multinode and validation
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if not job.dynamic_connection:
         if not job.actual_device:
             return None
@@ -770,7 +770,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
 
 def parse_job_description(job):
     filename = os.path.join(job.output_dir, 'description.yaml')
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     try:
         with open(filename, 'r') as f_describe:
             description = f_describe.read()

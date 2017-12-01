@@ -53,7 +53,7 @@ class DeviceTest(TestCaseWithFactory):
 
     def setUp(self):
         super(DeviceTest, self).setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
 
     def test_put_into_looping_mode(self):
@@ -167,7 +167,7 @@ class TestLogEntry(TestCaseWithFactory):
 
     def setUp(self):
         super(TestLogEntry, self).setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
 
     def test_create_logentry(self):

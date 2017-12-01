@@ -171,6 +171,22 @@ can be easily converted or compared:
    e.g. http://localhost/results/12020/lava/validate and
    http://localhost/results/testcase/60534 will both work.
 
+.. _test_raise:
+
+Test Raise
+----------
+
+Some test definitions are designed to configure or initialise a service or
+operation or peripheral device. If this setup task fails, the later
+test definitions will fail but that will take time and the failure messages
+may not be obvious.
+
+A test shell definition can abort further test operations by calling
+``lava-test-raise MESSAGE`` which will raise an immediate TestError
+exception. The current test shell result will be marked as ``fail`` and
+the ``${MESSAGE}`` will be recorded. The test job itself will go ``Incomplete``
+and the ``${MESSAGE}`` will be recorded as the job failure comment.
+
 Accessing the test job logs from results
 ****************************************
 

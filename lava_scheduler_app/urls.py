@@ -19,7 +19,7 @@ from lava_scheduler_app.views import (
     mydevice_list, mydevices_health_history_log, myjobs, online_device_list,
     passing_health_checks, queue, reports,
     running, transition_detail, username_list_json,
-    worker_detail, workers,
+    worker_detail, worker_active, worker_maintenance, worker_retired, workers,
     download_device_type_template, similar_jobs,)
 
 
@@ -44,6 +44,12 @@ urlpatterns = [
     url(r'^allworkers$', workers, name='lava.scheduler.workers'),
     url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)$', worker_detail,
         name='lava.scheduler.worker.detail'),
+    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/active$', worker_active,
+        name='lava.scheduler.worker.active'),
+    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/maintenance$', worker_maintenance,
+        name='lava.scheduler.worker.maintenance'),
+    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/retired$', worker_retired,
+        name='lava.scheduler.worker.retired'),
     url(r'^edit-transition', edit_transition,
         name='lava.scheduler.edit_transition'),
     url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/maintenance$', device_maintenance_mode,

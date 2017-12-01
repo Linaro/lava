@@ -1,9 +1,14 @@
 [Unit]
-Description=LAVA event publisher
+Description=LAVA publisher
+After=network.target remote-fs.target
 
 [Service]
-ExecStart=/usr/bin/lava-server manage lava-publisher --level DEBUG
 Type=simple
+Environment=LOGLEVEL=DEBUG
+EnvironmentFile=-/etc/default/lava-publisher
+EnvironmentFile=-/etc/lava-server/lava-publisher
+ExecStart=/usr/bin/lava-server manage lava-publisher --level $LOGLEVEL
+Restart=always
 
 [Install]
-WantedBy=network.target
+WantedBy=multi-user.target

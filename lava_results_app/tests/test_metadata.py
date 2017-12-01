@@ -43,7 +43,7 @@ class TestMetaTypes(TestCaseWithFactory):
 
     def setUp(self):
         super(TestMetaTypes, self).setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
 
     def test_job(self):

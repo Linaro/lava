@@ -395,9 +395,9 @@ If you do use the same string for a namespace and a role, make sure that the
 namespace and the role apply to the same actions. All actions **must** have
 both a namespace and a role.
 
-`Download or view the complete example
+Download or view the complete example:
+`examples/test-jobs/bbb-lxc-ssh-guest.yaml
 <examples/test-jobs/bbb-lxc-ssh-guest.yaml>`_:
-examples/test-jobs/bbb-lxc-ssh-guest.yaml
 
 The ``protocols`` block needs to combine the MultiNode requirements and the LXC
 requirements. However, the MultiNode requirements take priority because the LXC

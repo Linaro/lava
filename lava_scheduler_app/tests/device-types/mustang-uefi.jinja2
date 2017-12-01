@@ -99,7 +99,7 @@ actions:
           boot_message: '{{ base_menu_boot_message }}'
         nfs:
 {% for test_dict in mustang_menu_list %}
-{% for select, action in test_dict.iteritems() %}
+{% for select, action in test_dict.items() %}
 {% if select == 'item' %}
         - select:
             items:

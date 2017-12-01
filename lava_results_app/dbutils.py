@@ -22,9 +22,7 @@ import os
 import yaml
 import urllib
 import logging
-import django
 import decimal
-from django.db import transaction
 from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
     TestSuite,
@@ -38,13 +36,6 @@ from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.action import Timeout
 
-if django.VERSION > (1, 10):
-    from django.urls.exceptions import NoReverseMatch
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
-    from django.core.urlresolvers import NoReverseMatch
-
 
 def _check_for_testset(result_dict, suite):
     """
@@ -54,7 +45,7 @@ def _check_for_testset(result_dict, suite):
     :param result_dict: lava-test-shell results
     :param suite: current test suite
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     testset = None
     if 'set' in result_dict:
         set_name = result_dict['set']
@@ -69,7 +60,7 @@ def _check_for_testset(result_dict, suite):
 
 
 def append_failure_comment(job, msg):
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if not job.failure_comment:
         job.failure_comment = ''
     job.failure_comment += msg[:256]
@@ -87,7 +78,7 @@ def create_metadata_store(results, job):
     if level is None:
         return None
 
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
     if not os.path.exists(os.path.dirname(meta_filename)):
@@ -117,7 +108,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     :param meta_filename: YAML store for results metadata
     :return: False on error, else True
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
 
     if not isinstance(results, dict):
         append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
@@ -258,7 +249,8 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
                     if definition['from'] == 'inline':
                         run = definition['repository'].get('run', None)
                         # an inline repo without test cases will not get reported.
-                        if run and 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
+                        steps = [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0] if run else None
+                        if steps is not None and 'lava-test-case' in steps:
                             prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
                         else:
                             # store the fact that an inline exists but would not generate any testcases
@@ -289,7 +281,7 @@ def _get_device_metadata(data):
 
 def build_action(action_data, testdata, submission):
     # test for a known section
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     if 'section' not in action_data:
         logger.warning("Invalid action data - missing section")
         return
@@ -349,7 +341,7 @@ def map_metadata(description, job):
     :param job: the TestJob to associate
     :return: True on success, False on error
     """
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     try:
         submission_data = yaml.load(job.definition)
         description_data = yaml.load(description)
@@ -417,7 +409,7 @@ def testcase_export_fields():
     ]
 
 
-def export_testcase(testcase):
+def export_testcase(testcase, with_buglinks=False):
     """
     Returns string versions of selected elements of a TestCase
     Unicode causes issues with CSV and can complicate YAML parsing
@@ -448,4 +440,21 @@ def export_testcase(testcase):
         'logged': str(testcase.logged),
         'metadata': metadata,
     }
+    if with_buglinks:
+        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
+
     return casedict
+
+
+def export_testsuite(testsuite):
+    """
+    Returns string versions of selected elements of a TestSuite
+    :param testsuite: TestSuite object
+    :return: Dictionary containing relevant information formatted for export
+    """
+    suitedict = {
+        'name': str(testsuite.name),
+        'job': str(testsuite.job_id),
+        'id': str(testsuite.id),
+    }
+    return suitedict

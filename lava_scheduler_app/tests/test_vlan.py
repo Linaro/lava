@@ -83,7 +83,7 @@ class TestVlandDevices(TestCaseWithFactory):
         super(TestVlandDevices, self).setUp()
         self.factory = VlandFactory()
         self.factory.setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
 
     def test_match_devices_without_map(self):

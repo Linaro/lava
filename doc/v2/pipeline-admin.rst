@@ -442,7 +442,9 @@ Now modify the dictionary (`Jinja2 child template`_ format) to set the values re
  {% extends 'beaglebone-black.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 04' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 04' %}
- {% set connection_command = 'telnet playgroundmaster 7018' %}
+ {% set connection_list = [‘uart0’] %}
+ {% set connection_commands = {‘uart0’: ‘telnet playgroundmaster 7018’} %}
+ {% set connection_tags = {‘uart0’: [‘primary’, 'telnet']} %}
  {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 04' %}
 
 .. warning:: LAVA does not preserve history of a device dictionary, it is

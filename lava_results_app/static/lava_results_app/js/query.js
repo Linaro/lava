@@ -177,7 +177,7 @@ $(document).ready(function () {
 
     init_loading_dialog = function() {
 	// Setup the loading image dialog.
-        $("#refresh_loading_dialog").append('<img src="/static/dashboard_app/images/ajax-progress.gif" alt="Loading..." />');
+        $("#refresh_loading_dialog").append('<img src="/static/lava_results_app/images/ajax-progress.gif" alt="Loading..." />');
 	if (is_updating == "False") {
             $('#refresh_loading_dialog').hide();
 	}

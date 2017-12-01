@@ -31,9 +31,11 @@ from lava_results_app.views import (
     suite_csv,
     suite_yaml,
     testcase,
+    testcase_yaml,
     testjob,
     testjob_csv,
     testjob_yaml,
+    testjob_yaml_summary,
     testset,
 )
 from lava_results_app.views.query.views import (
@@ -118,6 +120,7 @@ urlpatterns = [
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)$', testjob, name='lava.results.testjob'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/csv$', testjob_csv, name='lava.results.testjob_csv'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml$', testjob_yaml, name='lava.results.testjob_yaml'),
+    url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml_summary$', testjob_yaml_summary, name='lava.results.testjob_yaml_summary'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/metadata$',
         metadata_export, name='lava.results.job.metadata'),
     url(r'^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$', suite, name='lava.results.suite'),
@@ -164,6 +167,8 @@ urlpatterns = [
         testcase, name='lava.results.testcase'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case_id>[-_a-zA-Z0-9.\(\)+]+)$',
         testcase, name='lava.results.testcase'),
+    url(r'^testcase/(?P<pk>[0-9]+)/yaml$',
+        testcase_yaml, name='lava.results.testcase_yaml'),
     url(r'^get-bug-links-json$', get_bug_links_json,
         name='lava.results.get_bug_links_json'),
     url(r'^add-bug-link$', add_bug_link,

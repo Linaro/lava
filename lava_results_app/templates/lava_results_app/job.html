@@ -35,6 +35,9 @@
     <h4 class="modal-header">Exports
         </h4>
     <dl class="dl-horizontal">
+      <dt>Test results summary :</dt>
+      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml_summary' job.id %}"
+         title="Download test job summary as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
       <dt>Test results :</dt>
       <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
          title="Download results as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a

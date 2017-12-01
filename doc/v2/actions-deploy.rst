@@ -64,3 +64,29 @@ Parameter List
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti
 .. include:: actions-deploy-to-download.rsti
+
+.. index:: deploy os
+
+.. _deploy_os:
+
+os *
+****
+
+The operating system of the image **must** be specified so that the LAVA
+scripts can install packages and identify other defaults in the deployment
+data.
+
+* **Not all deployment methods support all types of operating system.**
+* **Not all devices can support all operating systems.**
+
+.. topic:: Allowed values
+
+ * ``android``
+ * ``ubuntu``
+ * ``debian``
+ * ``lede``
+ * ``fedora``
+ * ``centos``
+ * ``debian_installer``
+ * ``centos_installer``
+ * ``oe``

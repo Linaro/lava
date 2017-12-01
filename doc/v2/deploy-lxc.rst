@@ -60,6 +60,71 @@ Sample Job Definition
 .. include:: examples/test-jobs/lxc-fedora.yaml
    :code: yaml
 
+.. index:: Namespaces
+
+.. _namespaces_with_lxc:
+
+Namespaces
+**********
+
+Namespaces were introduced to handle use-cases specific to LXC, but the
+principle can be expanded to other use-cases as and when required. In a job
+definition where multiple deploy, boot and test actions are specified, there
+must be a mechanism to describe how the actions are connected. This is the
+primary purpose of a namespace; it is the way to tie related actions together.
+The namespace itself is simply a label, test writers are advised to make the
+label chosen for each namespace meaningful for the purposes of the test job.
+
+In the example below, there are two namespaces - one for the deploy, boot and
+test actions to perform inside the LXC and one for the deploy, boot and test
+actions to be performed on the :term:`DUT`. To support this particular device,
+the test job needs to:
+
+#. deploy the container, including:
+
+   * install software inside the container to control the device. In this
+     case ``android-tools-fastboot``.
+
+#. boot the container
+
+#. deploy files to the device
+
+   * In this case, this connects to and turns on power to the device then
+     uses software in the container to push files to the device using the
+     bootloader.
+
+#. boot the device
+
+#. run a test shell on the device
+
+#. run a test shell in the container.
+
+Note how the deploy, boot and test actions are interleaved. The use of
+namespaces is essential for the test shell in the container to be able to find
+and execute commands in the container. In this example, the software running in
+the container and the software running on the device need to be handled quite
+differently in each test shell. For example, when installing dependencies
+inside the container running Debian, the ``apt`` package manager is available.
+When installing dependencies in the test shell on the device, running
+OpenEmbedded, there might not be any package manager support. The namespace
+data is used to let each test shell identify the default shell and other data
+about the environment in each namespace.
+
+.. literalinclude:: examples/test-jobs/hikey-oe.yaml
+     :language: yaml
+     :linenos:
+     :lines: 26-108
+     :emphasize-lines: 3, 12, 24, 47, 66, 76
+
+.. note:: The two test shells are *almost* identical but remember that all the
+   results of this one test job will be reported together. The name of each
+   test shell definition needs to be different for each test action. So the
+   example uses ``name: smoke-tests-basic-oe`` for the ``hikey-oe`` namespace
+   and ``name: smoke-tests-basic-ubuntu`` for the ``tlxc`` namespace.
+
+.. seealso:: :term:`Namespace in the glossary <namespace>`,
+   :ref:`connections_and_namespaces`
+
 .. _lava_lxc_protocol_android:
 
 Using the LXC protocol to support Android
@@ -136,20 +201,6 @@ Requirements and Limitations
 #. :term:`namespaces <namespace>` to relate different job actions to run in the
    LXC and for the device.
 
-.. _namespaces_with_lxc:
-
-Namespaces
-==========
-
-Namespaces were introduced to handle use-cases specific to LXC, but it
-can be expanded to other use-cases as and when required. In a job
-definition where multiple deploy, boot and test actions are specified,
-there must be a mechanism to describe how the actions are
-connected. This is the primary purpose of a namespace; it is the way
-to tie related actions together. This is important - consider how an
-overlay created during a deploy action will be consumed by a test
-action somewhere down the job definition, for example.
-
 Protocol elements
 =================
 
@@ -161,8 +212,8 @@ Protocol elements
      template: debian
      distribution: debian
      release: sid
-     mirror: http://ftp.us.debian.org/debian/
-     security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+     mirror: http://deb.debian.org/debian/
+     security_mirror: http://deb.debian.org/debian-security/
 
   actions:
   - deploy:

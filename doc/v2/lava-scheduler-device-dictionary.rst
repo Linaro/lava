@@ -8,25 +8,26 @@ Detailed device dictionary information in LAVA Scheduler
 Each :term:`device type` in LAVA defines a template to describe the features of
 that device type, and how LAVA can use it. A :term:`device dictionary`
 customises that template to include the data for one specific instance of that
-device. This includes details like the specific serial port connection for this
-device, commands to operate remote power control, device serial numbers and
-elements of the network topology for :term:`vland` support.
+device. This includes details like the commands to connect specific serial
+ports for this device, commands to operate remote power control, device serial
+numbers and elements of the network topology for :term:`vland` support.
 
 Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
 device type template.
 
-Dictionary elements are shown in three blocks: commands, vland and others.
+Dictionary elements are shown in four blocks: commands, connections, vland and
+others.
 
 .. _device_dictionary_commands:
 
 Commands
 ********
 
-* **exclusive** - if set to ``'True'``, the device will not accept V1
-  submissions.
+* **connection_command** - **deprecated** command to access the serial port of
+  the device.
 
-* **connection_command** - command to access the serial port of the device.
+  .. seealso: :ref:`device_dictionary_connections`
 
 * **power_on_command** - command to supply power to the device remotely. (The
   device **must** start the boot sequence on application of power.)
@@ -56,6 +57,28 @@ Commands
 
 * **fastboot_options** - a list of strings, used for specifying additional
   options to the ``fastboot`` command.
+
+.. _device_dictionary_connections:
+
+Connections
+***********
+
+* **connection_list** - the list of hardware ports which are configured for
+  serial connections to the device.
+
+* **connection_commands** - a dictionary of the commands to start each
+  connection.
+
+* **connection_tags** -  Each connection can include ``tags`` - extra pieces of
+  metadata to describe the connection.
+
+  There must always be one (and only one) connection with the ``primary`` tag,
+  denoting the connection that will be used for firmware, bootloader and kernel
+  interaction.
+
+  Other tags may describe the *type* of connection, as extra information that
+  LAVA can use to determine how to close the connection cleanly when a job
+  finishes (e.g ``telnet`` and ``ssh``).
 
 VLANd support
 *************

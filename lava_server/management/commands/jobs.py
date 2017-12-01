@@ -64,7 +64,8 @@ class Command(BaseCommand):
                                        "browsing the bundle pages.")
         rm.add_argument("--older-than", default=None, type=str,
                         help="Remove jobs older than this. The time is of the "
-                             "form: 1h (one hour) or 2d (two days)")
+                             "form: 1h (one hour) or 2d (two days). "
+                             "By default, all jobs will be removed.")
         rm.add_argument("--status", default=None,
                         choices=["SUBMITTED", "RUNNING", "COMPLETE",
                                  "INCOMPLETE", "CANCELED", "CANCELING"],
@@ -73,15 +74,19 @@ class Command(BaseCommand):
                         help="Filter jobs by submitter")
         rm.add_argument("--dry-run", default=False, action="store_true",
                         help="Do not remove any data, simulate the output")
+        rm.add_argument("--v1", default=False, action="store_true",
+                        help="Remove only v1 jobs. "
+                             "If this is the only filtering option, all v1 jobs will be removed.")
 
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
             self.handle_rm(options["older_than"], options["submitter"],
-                           options["status"], options["dry_run"])
+                           options["status"], options["v1"],
+                           options["dry_run"])
 
-    def handle_rm(self, older_than, submitter, status, simulate):
-        if not older_than and not submitter and not status:
+    def handle_rm(self, older_than, submitter, status, v1_only, simulate):
+        if not older_than and not submitter and not status and not v1_only:
             raise CommandError("You should specify at least one filtering option")
 
         if simulate:
@@ -106,8 +111,12 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
+
         if status is not None:
             jobs = jobs.filter(status=self.job_status[status])
+
+        if v1_only:
+            jobs = jobs.filter(is_pipeline=False)
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
         for job in jobs:

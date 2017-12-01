@@ -1,0 +1,82 @@
+device_type: beaglebone-black
+
+job_name: beaglebone-black NFS test using second UART for isolation
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: connections
+  docs-filename: examples/test-jobs/bbb-2serial.yaml
+  source: https://git.linaro.org/lava-team/refactoring.git
+  build-readme: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/README.txt
+  build-script: https://git.linaro.org/lava-team/refactoring.git/tree/scripts/armmp.sh
+
+actions:
+- deploy:
+    namespace: bbb
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/vmlinuz-4.9.0-4-armmp
+    ramdisk:
+      url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/initrd.img-4.9.0-4-armmp
+      compression: gz
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+    modules:
+      url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/stretch-armhf-nfs-extra-getty.tar.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/dtbs/am335x-boneblack.dtb
+
+- boot:
+    namespace: bbb
+    method: u-boot
+    commands: nfs
+    type: bootz
+    prompts:
+    - 'login:'
+    timeout:
+      minutes: 2
+
+# startup the extra UART
+- boot:
+    # make the connection to the second uart for use in the test shell
+    # support auto-login
+    namespace: isolation
+    method: new_connection
+    connection: uart1
+    prompts:
+    - 'root@stretch:'
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    timeout:
+      # shorter timeout as the device should exist.
+      minutes: 2
+
+- test:
+    # Use the bbb namespace - we depend on that for the deployed data
+    namespace: bbb
+    # Run the test shell using the "isolation" connection
+    connection-namespace: isolation
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

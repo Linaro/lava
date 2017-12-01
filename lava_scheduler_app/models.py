@@ -305,11 +305,6 @@ class DeviceType(models.Model):
         default=None
     )
 
-    # FIXME: deprecated, should be removed in 2017.5
-    # Replaced by Device.get_health_check()
-    health_check_job = models.TextField(
-        null=True, blank=True, default=None, validators=[validate_job])
-
     health_frequency = models.IntegerField(
         verbose_name="How often to run health checks",
         default=24
@@ -425,29 +420,23 @@ class Worker(models.Model):
         editable=True
     )
 
-    rpc2_url = models.CharField(
-        verbose_name=_(u"Master RPC2 URL"),
-        max_length=200,
-        null=True,
-        blank=True,
-        editable=True,
-        default=None,
-        help_text=("Corresponds to the master node's RPC2 url. Does not have"
-                   " any impact when set on a worker node.")
+    STATE_ONLINE, STATE_OFFLINE = range(2)
+    STATE_CHOICES = (
+        (STATE_ONLINE, "Online"),
+        (STATE_OFFLINE, "Offline"),
     )
+    state = models.IntegerField(choices=STATE_CHOICES,
+                                default=STATE_OFFLINE,
+                                editable=False)
 
-    display = models.BooleanField(
-        default=True,
-        help_text=("Should this be displayed in the GUI or not. This will be"
-                   " useful when a worker needs to be removed but still"
-                   " linked device status transitions and devices should be"
-                   " intact."))
-
-    is_master = models.BooleanField(
-        verbose_name=_(u"Is Master?"),
-        default=False,
-        editable=True
+    HEALTH_ACTIVE, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(3)
+    HEALTH_CHOICES = (
+        (HEALTH_ACTIVE, "Active"),
+        (HEALTH_MAINTENANCE, "Maintenance"),
+        (HEALTH_RETIRED, "Retired"),
     )
+    health = models.IntegerField(choices=HEALTH_CHOICES,
+                                 default=HEALTH_ACTIVE)
 
     description = models.TextField(
         verbose_name=_(u"Worker Description"),
@@ -482,6 +471,29 @@ class Worker(models.Model):
     def update_description(self, description):
         self.description = description
         self.save()
+
+    def retired_devices_count(self):
+        return self.device_set.filter(status=Device.RETIRED).count()
+
+    def go_health_active(self):
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_ACTIVE
+
+    def go_health_maintenance(self):
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_MAINTENANCE
+
+    def go_health_retired(self):
+        # TODO: send the right signal to the attached devices
+        self.health = Worker.HEALTH_RETIRED
+
+    def go_state_offline(self):
+        # TODO: send the right signal to the attached devices
+        self.state = Worker.STATE_OFFLINE
+
+    def go_state_online(self):
+        # TODO: send the right signal to the attached devices
+        self.state = Worker.STATE_ONLINE
 
 
 class Device(RestrictedResource):
@@ -737,7 +749,7 @@ class Device(RestrictedResource):
 
     def state_transition_to(self, new_status, user=None, message=None,
                             job=None, master=False):
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         try:
             dst_obj = DeviceStateTransition.objects.create(
                 created_by=user, device=self, old_state=self.status,
@@ -763,7 +775,7 @@ class Device(RestrictedResource):
         the status will be OFFLINING.
         Returns False if the device status is unchanged (retired devices)
         """
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         if self.status == self.RETIRED:
             return False
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -786,7 +798,7 @@ class Device(RestrictedResource):
         return True
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         if self.status == self.RETIRED:
             return False
         if self.status == Device.OFFLINING and self.current_job is not None:
@@ -807,7 +819,7 @@ class Device(RestrictedResource):
     def put_into_looping_mode(self, user, reason):
         if self.status != Device.OFFLINE:
             return
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         self.health_status = Device.HEALTH_LOOPING
 
         self.state_transition_to(self.IDLE, user=user, message=reason)
@@ -819,7 +831,7 @@ class Device(RestrictedResource):
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
             return
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         self.state_transition_to(self.IDLE, user=user, message=reason)
         if user:
             self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
@@ -946,27 +958,6 @@ class Device(RestrictedResource):
                 return f_in.read()
         except IOError:
             return None
-
-
-class TemporaryDevice(Device):
-    """
-    A temporary device which inherits all properties of a normal Device.
-    Heavily used by vm-groups implementation.
-
-    This uses "Multi-table inheritance" of django models, since we need a
-    separate table to maintain the temporary devices.
-    See: https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance
-    """
-    vm_group = models.CharField(
-        verbose_name=_(u"VM Group"),
-        blank=True,
-        max_length=64,
-        null=True,
-        default=None
-    )
-
-    class Meta:
-        pass
 
 
 class JobFailureTag(models.Model):
@@ -1202,7 +1193,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
     and the checks are done again before the job starts.
 
     Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
-    this migrates into dispatcher-master.
+    this migrates into lava-master.
 
     params:
       job_data - dictionary of the submission YAML
@@ -1374,14 +1365,6 @@ class TestJob(RestrictedResource):
         default=None
     )
 
-    vm_group = models.CharField(
-        verbose_name=_(u"VM Group"),
-        blank=True,
-        max_length=64,
-        null=True,
-        default=None
-    )
-
     submitter = models.ForeignKey(
         User,
         verbose_name=_(u"Submitter"),
@@ -1505,11 +1488,6 @@ class TestJob(RestrictedResource):
     )
 
     multinode_definition = models.TextField(
-        editable=False,
-        blank=True
-    )
-
-    vmgroup_definition = models.TextField(
         editable=False,
         blank=True
     )
@@ -1993,7 +1971,7 @@ class TestJob(RestrictedResource):
             :param device: the actual device for this job, or None
             :return: True if there is a device and that device is status Reserved
             """
-            logger = logging.getLogger('dispatcher-master')
+            logger = logging.getLogger('lava-master')
             if not job.actual_device:
                 return False
             if job.actual_device.current_job and job.actual_device.current_job != job:

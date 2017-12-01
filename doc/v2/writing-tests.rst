@@ -248,7 +248,9 @@ Inline test definitions will be written out as **single files**, so if the test
 definition needs to call any scripts or programs, those need to be downloaded
 or installed before being called in the inline test definition.
 
-`Download or view inline example <examples/test-jobs/inline-test-definition-example.yaml>`_
+Download or view the comple example:
+`examples/test-jobs/inline-test-definition-example.yaml
+<examples/test-jobs/inline-test-definition-example.yaml>`_
 
 .. index:: terminology - test writer
 

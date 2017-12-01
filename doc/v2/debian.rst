@@ -9,20 +9,22 @@ LAVA no longer supports development on Ubuntu.
 
 Packages for LAVA are available for:
 
-* Debian Jessie (stable) - with backports
-* Debian Stretch (testing)
+* Debian Jessie (oldstable) - with backports
+* Debian Stretch (stable) - with backports
+* Debian Buster (testing)
 * Debian Sid (unstable)
 
 When using the packages to develop LAVA, there is a change to the workflow
 compared to the old lava-deployment-tool buildouts.
 
-.. note:: Changes to build dependencies between Debian unstable and Debian
-   stable can cause changes to the builds for each suite. Always ensure that
-   you build packages for unstable using unstable and build packages for stable
-   using a chroot or VM or other stable environment. If a package built on
-   unstable does not install on stable, rebuild the same changes in a stable
-   environment and re-install. Backports to stable in Debian are always built
-   in a stable chroot or VM for this reason.
+.. note:: Changes to build dependencies between Debian versions can
+   cause changes to the builds for each suite. Always ensure that you
+   build packages for unstable using unstable and build packages for
+   stable using a chroot or VM or other stable environment. If a
+   package built on unstable does not install on stable, rebuild the
+   same changes in a stable environment and re-install. Backports to
+   stable in Debian are always built in a stable chroot or VM for this
+   reason.
 
 .. index:: developer - preparation, lava-dev
 
@@ -171,8 +173,8 @@ unstable will fail to install on jessie.
 
 **Always** build packages on the suite you expect to use for installation.
 
-Packages available from the :ref:`lava_repositories` are built on Jessie (using
-sbuild) using the `lava-buildd scripts
+Packages available from the :ref:`lava_repositories` are built on
+the correct suite (using sbuild) using the `lava-buildd scripts
 <https://git.linaro.org/lava/lava-buildd.git>`_.
 
 .. _pep440: https://www.python.org/dev/peps/pep-0440/
@@ -251,7 +253,6 @@ templates/\*/\*.html     next browser refresh (F5/Ctrl-R)
 device-types/\*.jinja2   next testjob submission
 devices/\*.jinja2        next testjob submission
 \*_app/\*.py             ``$ sudo apache2ctl restart``
-\*_daemon/\*.py          ``$ sudo service lava-server restart``
 ====================== ==============================================
 
 .. index:: postgres migration, migrate postgres
@@ -539,7 +540,7 @@ in debug mode for the toolbar to be loaded at all.
 Restart the ``django`` related services to complete the installation of the
 toolbar::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart
 
 Installation can be checked using ``lava-server manage shell``::
@@ -576,7 +577,7 @@ previous versions of LAVA installer that is not needed anymore.
 Once the changes are complete, ensure the settings are loaded by restarting
 both apache2 and django::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart
 
 Performance overhead
@@ -592,5 +593,5 @@ value of ``USE_DEBUG_TOOLBAR`` in ``/etc/lava-server/settings.conf`` to
 
 Ensure the settings are reloaded by restarting both apache2 and django::
 
- sudo service lava-server restart
+ sudo service lava-server-gunicorn restart
  sudo apache2ctl restart

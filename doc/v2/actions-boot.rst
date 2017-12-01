@@ -367,7 +367,9 @@ most cases, starting Grub from UEFI requires using the
    :language: yaml
    :lines: 42, 47, 48
 
-`Download or view mustang-grub-efi.yaml <examples/test-jobs/mustang-grub-efi.yaml>`_
+Download or view the complete example:
+`examples/test-jobs/mustang-grub-efi.yaml
+<examples/test-jobs/mustang-grub-efi.yaml>`_
 
 .. note:: Admins can refer to the ``mustang-grub-efi.jinja2`` template for an
    example of how to make selections from a UEFI menu to load Grub. See

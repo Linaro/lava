@@ -1,0 +1,11 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttyAMA0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set device_type = "poplar" %}
+{% set bootloader_prompt = bootloader_prompt|default('poplar#') %}
+{% set booti_kernel_addr = '0x30000000' %}
+{% set booti_ramdisk_addr = '0x32400000' %}
+{% set booti_dtb_addr = '0x32200000' %}
+{% set boot_message = boot_message|default('Linux version') %}
+{% set uboot_mkimage_arch = 'arm64' %}

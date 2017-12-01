@@ -54,9 +54,10 @@ class SchedulerWorkersAPI(ExposedV2API):
         None
         """
         try:
+            health = Worker.HEALTH_RETIRED if disabled else Worker.HEALTH_ACTIVE
             Worker.objects.create(hostname=hostname,
                                   description=description,
-                                  display=not disabled)
+                                  health=health)
         except IntegrityError as exc:
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)
@@ -182,16 +183,16 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         return {"hostname": worker.hostname,
                 "description": worker.description,
-                "master": worker.is_master,
-                "hidden": not worker.display,
+                "state": worker.get_state_display(),
+                "health": worker.get_health_display(),
                 "devices": worker.device_set.count()}
 
     @check_superuser
-    def update(self, hostname, description=None, disabled=None):
+    def update(self, hostname, description=None, health=None):
         """
         Name
         ----
-        `scheduler.workers.update` (`hostname`, `description=None`, `disabled=False`)
+        `scheduler.workers.update` (`hostname`, `description=None`, `health=None`)
 
         Description
         -----------
@@ -204,8 +205,8 @@ class SchedulerWorkersAPI(ExposedV2API):
           Hostname of the worker
         `description`: string
           Description of the worker
-        `disabled`: bool
-          Is the worker disabled?
+        `health`: string
+          Set worker health ("ACTIVE", "MAINTENANCE" or "RETIRED")
 
         Return value
         ------------
@@ -220,7 +221,15 @@ class SchedulerWorkersAPI(ExposedV2API):
         if description is not None:
             worker.description = description
 
-        if disabled is not None:
-            worker.display = not disabled
+        if health is not None:
+            if health == "ACTIVE":
+                worker.go_health_active()
+            elif health == "MAINTENANCE":
+                worker.go_health_maintenance()
+            elif health == "RETIRED":
+                worker.go_health_retired()
+            else:
+                raise xmlrpclib.Fault(
+                    400, "Invalid health: %s" % health)
 
         worker.save()

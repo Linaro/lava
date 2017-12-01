@@ -41,7 +41,11 @@ from lava_server.bread_crumbs import (
 from django.shortcuts import get_object_or_404
 from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
 from lava_results_app.utils import StreamEcho
-from lava_results_app.dbutils import export_testcase, testcase_export_fields
+from lava_results_app.dbutils import (
+    export_testcase,
+    testcase_export_fields,
+    export_testsuite
+)
 from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
@@ -170,42 +174,62 @@ def testjob(request, job):
 def testjob_csv(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
-    response = HttpResponse(content_type='text/csv')
+
+    def testjob_stream(suites, pseudo_buffer):
+        writer = csv.DictWriter(pseudo_buffer,
+                                fieldnames=testcase_export_fields())
+        yield pseudo_buffer.write(testcase_export_fields())
+
+        for test_suite in suites:
+            for test_case in test_suite.testcase_set.all():
+                yield writer.writerow(export_testcase(test_case))
+
+    suites = job.testsuite_set.all().prefetch_related('test_sets__test_cases__actionlevels')
+    pseudo_buffer = StreamEcho()
+    response = StreamingHttpResponse(testjob_stream(suites, pseudo_buffer),
+                                     content_type="text/csv")
     filename = "lava_%s.csv" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
-    writer = csv.DictWriter(
-        response,
-        quoting=csv.QUOTE_ALL,
-        extrasaction='ignore',
-        fieldnames=testcase_export_fields())
-    writer.writeheader()
-    suites = job.testsuite_set.all().prefetch_related('test_sets__test_cases__actionlevels')
-    for test_suite in suites:
-        for test_case in test_suite.testcase_set.all():
-            writer.writerow(export_testcase(test_case))
     return response
 
 
 def testjob_yaml(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
-    response = HttpResponse(content_type='text/yaml')
-    filename = "lava_%s.yaml" % job.id
-    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
-    yaml_list = []
     suites = job.testsuite_set.all().prefetch_related(
         'test_sets__test_cases__actionlevels')
+
+    def test_case_stream():
+        for test_suite in suites:
+            for test_case in test_suite.testcase_set.all():
+                yield yaml.dump([export_testcase(test_case)],
+                                Dumper=yaml.CDumper)
+
+    response = StreamingHttpResponse(test_case_stream(),
+                                     content_type="text/yaml")
+    filename = "lava_%s.yaml" % job.id
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    return response
+
+
+def testjob_yaml_summary(request, job):
+
+    job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
+    suites = job.testsuite_set.all()
+    response = HttpResponse(content_type='text/yaml')
+    filename = "lava_%s_summary.yaml" % job.id
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    yaml_list = []
     for test_suite in suites:
-        for test_case in test_suite.testcase_set.all():
-            yaml_list.append(export_testcase(test_case))
+        yaml_list.append(export_testsuite(test_suite))
     yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
     return response
 
 
 @BreadCrumb("Suite {pk}", parent=testjob, needs=['job', 'pk'])
 def suite(request, job, pk):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
@@ -295,7 +319,9 @@ def metadata_export(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     # testdata from job & export
-    testdata = get_object_or_404(TestData, testjob=job)
+    testdata = TestData.objects.filter(testjob=job).first()
+    if not testdata:
+        raise Http404("No TestData matches the given query.")
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_metadata_%s.yaml" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -351,6 +377,8 @@ def testcase(request, case_id, job=None, pk=None):
                     "No TestCase/TestSet matches the given parameters.")
     if not job:
         job = case.suite.job
+        # Auth check purposes only.
+        job = get_restricted_job(request.user, pk=job.id, request=request)
     else:
         job = get_restricted_job(request.user, pk=job, request=request)
     if not pk:
@@ -364,7 +392,7 @@ def testcase(request, case_id, job=None, pk=None):
     else:
         test_cases = TestCase.objects.filter(name=case.name, suite=test_suite)
     extra_source = {}
-    logger = logging.getLogger('dispatcher-master')
+    logger = logging.getLogger('lava-master')
     for extra_case in test_cases:
         try:
             f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)
@@ -396,6 +424,17 @@ def testcase(request, case_id, job=None, pk=None):
                     TestCase).id,
             )
         }, request=request))
+
+
+def testcase_yaml(request, pk):
+    testcase = get_object_or_404(TestCase, pk=pk)
+    check_request_auth(request, testcase.suite.job)
+    response = HttpResponse(content_type='text/yaml')
+    filename = "lava_%s.yaml" % testcase.name
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    yaml.dump(export_testcase(testcase, with_buglinks=True), response,
+              Dumper=yaml.CDumper)
+    return response
 
 
 @login_required

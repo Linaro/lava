@@ -248,9 +248,14 @@ the use of the following terms:
   without the server or the scheduler and a machine configured in this way is
   also called a *dispatcher*.
 
-**dispatcher-master** or simply **master**
+**lava-master** or simply **master**
   A singleton process which starts and monitors test jobs running on one or
   more dispatchers by communicating with the slave using ZMQ.
+  This process is solely responsible for assigning a device to a test job. The
+  scheduler performs checks on submission restrictions, device availability,
+  device tags and schema compliance.
+
+  .. seealso:: :term:`device tag`
 
 **dynamic data** - the Action base class provides access to dynamic data stores
   which other actions can access. This provides the way for action classes to
@@ -280,14 +285,6 @@ the use of the following terms:
   Protocols need to be supported within the python codebase and currently
   include multinode, LXC and vland.
 
-**scheduler**
-  A singleton process which is solely responsible for assigning a device to a
-  test job. The scheduler is common to LAVA V1 and LAVA V2 and performs checks
-  on submission restrictions, device availability, device tags and schema
-  compliance.
-
-  .. seealso:: :term:`device tag`
-
 **server**
   The server software relates to the ``lava-server`` source package in git and
   in Debian. It includes components from LAVA V1 and LAVA V2 covering the UI
@@ -295,8 +292,8 @@ the use of the following terms:
 
 **slave**
   A daemon running on each dispatcher machine which communicates with the
-  dispatcher-master using ZMQ. The slave in LAVA V2 uses whatever device
-  configuration the dispatcher-master provides.
+  lava-master using ZMQ. The slave in LAVA V2 uses whatever device
+  configuration the lava-master provides.
 
 **test job**
   A database object which is created for each submission and retains the logs
@@ -374,10 +371,10 @@ Compatibility
 
 .. seealso:: :ref:`compatibility_failures`
 
-The compatibility mechanism allows the dispatcher-master daemon to prevent
-issues that would arise if the worker is running older software. A job with a
-lower compatibility may fail much, much later but this allows the job to fail
-early. In future, support is to be added for re-queuing such jobs.
+The compatibility mechanism allows the lava-master daemon to prevent issues
+that would arise if the worker is running older software. A job with a lower
+compatibility may fail much, much later but this allows the job to fail early.
+In future, support is to be added for re-queuing such jobs.
 
 Developers need to take note that in the code, compatibility should reflect the
 removal of support for particular elements, similar to handling a SONAME when
@@ -480,8 +477,7 @@ can exist within a single Story.
 This information is made available for interest and to make our development
 process open to the community. If you have comments or questions about anything
 visible within the LAVA project, please subscribe to one of the :ref:`mailing
-lists <mailing_lists>` and ask your questions there. For bugs in the current
-release, please continue to file bug reports using Bugzilla_.
+lists <mailing_lists>` and ask your questions there.
 
 Many stories contain comments linking directly to one or more gerrit reviews
 related to that story. When the review is merged, the story will be marked as
@@ -489,7 +485,40 @@ resolved with a *Fix Version* matching the git tag of the release containing
 the fix from the review.
 
 .. _Jira: http://www.atlassian.com/jira-software
-.. _Bugzilla: https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+
+.. index:: bug reporting
+
+.. _bug_reporting:
+
+Report a Bug
+============
+
+The LAVA software team use Jira_ to track bugs. Bugs / issues, feature
+requests, enhancements and problems can be either reported directly into JIRA
+using a CTT_ ticket or via the lava-users_ mailing list. Updates to each
+``JIRA`` ticket will be sent to the lava-users_ mailing list.
+
+If you do not already have a Linaro account, you can choose to :ref:`register`
+in order to file a new CTT_ ticket. It is often useful to discuss the full
+details of the problem on the lava-users_ mailing list before creating a
+ticket. One of the LAVA software team member can then create a ticket on your
+behalf and keep the list updated as the work progresses.
+
+
+.. note:: CTT_ tickets are only visible with a JIRA login. However, the LAVA
+          software team will create LAVA stories which are public.
+
+LAVA stories in JIRA can be tracked on the public LAVA Dashboard_ which
+includes a view of all the current stories generated from the lava-users_
+mailing list as well as views relating to internal stories and progress towards
+releases.
+
+.. note:: The old Bugzilla system is deprecated and reporting bugs in the old
+          Bugzilla system will not be tracked by the LAVA team.
+
+.. _lava-users: https://lists.linaro.org/mailman/listinfo/lava-users
+.. _CTT: https://projects.linaro.org/servicedesk/customer/portal/1/create/34
+.. _Dashboard: https://projects.linaro.org/secure/Dashboard.jspa?selectPageId=11603
 
 .. index:: community contributions
 
@@ -513,7 +542,7 @@ local git configuration. (This can take a little time.)::
  $ git review -s
 
 .. important:: **All** changes need to support both Debian unstable
-   **and** Debian stable - currently Jessie. This often includes multiple
+   **and** Debian stable - currently Stretch. This often includes multiple
    versions of django and other supporting packages. Automated unit tests are
    run on stable (with backports).
 

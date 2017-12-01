@@ -18,7 +18,6 @@ from lava_scheduler_app.models import (
     validate_yaml,
     Alias,
 )
-from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
 from lava_scheduler_app.dbutils import (
     testjob_submission, get_job_queue,
@@ -56,7 +55,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
 
     def setUp(self):
         super(TestSchedulerAPI, self).setUp()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
         logger = logging.getLogger('lava_scheduler_app')
         logger.disabled = True
@@ -184,54 +183,6 @@ class TransactionTestCaseWithFactory(TransactionTestCase):
     def setUp(self):
         TransactionTestCase.setUp(self)
         self.factory = ModelFactory()
-
-
-class NonthreadedDatabaseJobSource(DatabaseJobSource):
-    deferToThread = staticmethod(lambda f, *args, **kw: f(*args, **kw))
-
-
-class TestDBJobSource(TransactionTestCaseWithFactory):
-
-    def setUp(self):
-        super(TestDBJobSource, self).setUp()
-        self.source = NonthreadedDatabaseJobSource()
-        # The lava-health user is created by a migration in production
-        # databases, but removed from the test database by the django
-        # machinery.
-        User.objects.create_user(
-            username='lava-health', email='lava@lava.invalid')
-
-    @property
-    def health_job(self):
-        return self.factory.make_job_json(health_check=True)
-
-    @property
-    def ordinary_job(self):
-        return self.factory.make_job_json(health_check=False)
-
-    def assertHealthJobAssigned(self, device):
-        pass
-
-    def assertHealthJobNotAssigned(self, device):
-        pass
-
-    def _makeBoardWithTags(self, tags):
-        board = self.factory.make_device()
-        for tag_name in tags:
-            board.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
-        return board
-
-    def _makeJobWithTagsForBoard(self, tags, board):
-        job = self.factory.make_testjob(requested_device=board)
-        for tag_name in tags:
-            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
-        return job
-
-    def assertBoardWithTagsGetsJobWithTags(self, board_tags, job_tags):
-        pass
-
-    def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, job_tags):
-        pass
 
 
 class TestVoluptuous(unittest.TestCase):
