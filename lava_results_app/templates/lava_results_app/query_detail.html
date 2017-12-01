@@ -241,6 +241,7 @@
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';
   query_user = '{{ query.owner.username }}';
+  query_url = '{{ query.get_absolute_url }}';
   is_updating = '{{ query.is_updating }}';
   is_live = '{{ query.is_live }}';
   condition_choices = JSON.parse($("#id_condition_choices").val());
