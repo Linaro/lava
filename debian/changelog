@@ -1,3 +1,35 @@
+lava-dispatcher (2017.12-1) unstable; urgency=medium
+
+  * 2017.12 production release
+    1f13d442 Fix bug in calculating flash commands order in fastboot deploy.
+    0b1f8fae LAVA-1155 - Create overlay as part of download deploy action
+    c20269b9 Prevent crash if logfile is None in shell.
+    b5244836 ensure lava-test-raise is available for packaging
+    d3f70511 Fix function signature
+    0fbaa24f Drop misleading warning message
+    085a8d49 LAVA-1105 Disconnect from connections cleanly.
+    32c6f7f4 LAVA-1132 - add an API for abort a test
+    b5ebe130 LAVA-1127 - Extend bootloader reset messages.
+    4b140ed4 LAVA-1142 fix VLANd overlay support
+    bc7fdee8 ApplyOverlayImage init does not take any parameter
+    d0ff1380 Use lazy logging
+    334ccaab Never return/break/continue in finally block
+    9e61e84d LAVA-1130 - Drop unimplemented CustomisationAction
+    4772dd57 raise an infra error when dockerd is not running
+    74871923 Indicated when helpers come from the distro
+    ae5cdce3 slave: "lava-logs" is a reserved hostname
+    e5713118 Use systemd for slave startup
+    7ebeb578 slave: do not send status along END message
+    054fcf9b lava-slave: make ping time configurable
+    10ab9909 lava-slave: improving logging
+    6a7bf9d5 Fix wrong duration when timing out at action start
+    3013b1fa guestfs: change RuntimError into JobError
+    0fd8a0d0 deploy/fastboot.py: Add sparse parameter to apply-overlay
+  * Update build depends to use python3-sphinx
+  * Drop dependency on python-daemon with move to systemd-sysv.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 01 Dec 2017 19:07:13 +0000
+
 lava-dispatcher (2017.11-1) unstable; urgency=medium
 
   * New production release

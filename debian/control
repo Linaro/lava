@@ -6,8 +6,7 @@ Uploaders: Neil Williams <codehelp@debian.org>,
  Senthil Kumaran S (stylesen) <stylesen@gmail.com>
 Build-Depends: debhelper (>= 9.20160709), dh-python,
  python | python-all | python-dev | python-all-dev,
- python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
- python-setuptools (>= 3)
+ python3-sphinx, python-setuptools (>= 3)
 X-Python-Version: 2.7
 Standards-Version: 4.1.1
 Homepage: http://www.linaro.org/projects/test-validation/
@@ -17,7 +16,7 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 mipsel powerpc ppc64el s390x ppc64
 Depends: file, systemd-sysv, python-serial (>= 2.6), python-setuptools,
- python-daemon, python-guestfs, tar (>= 1.27),
+ python-guestfs, tar (>= 1.27),
  sudo, telnet, ${python:Depends}, ${misc:Depends}
 Conflicts: python-linaro-dashboard-bundle
 Provides: python-linaro-dashboard-bundle
