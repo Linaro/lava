@@ -298,11 +298,11 @@ by test writers from a hacking session.)
    support can potentially stop devices from working in subsequent
    tests, or maybe even damage them permanently - be careful!
 
-   If the commands are to be used regularly, `file a bug
-   <https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework>`_
-   requesting that a label is created in the templates for this set of
-   commands. Alternatively, the bug report can request a new override
-   to make the existing labels more flexible.
+   If the commands are to be used regularly, `ask on the lava-users mailing
+   list <https://lists.linaro.org/mailman/listinfo/lava-users>`_ requesting
+   that a label is created in the templates for this set of commands.
+   Alternatively, you can request a new override to make the existing labels
+   more flexible.
 
 .. index:: boot method
 

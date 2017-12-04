@@ -14,6 +14,8 @@ overview to help you know where to look for particular help.
 * :ref:`contents_first_steps_installing` - if you are starting with a
   fresh installation or running your own instance, start here.
 
+* :ref:`getting_support`
+
 ========================================================================
 
 * :ref:`contents_lava_ci` - this section explains the design goals

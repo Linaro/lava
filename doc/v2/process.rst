@@ -61,15 +61,18 @@ for each project:
 Reporting Bugs
 ^^^^^^^^^^^^^^
 
-New bugs should be reported in `Linaro Bugzilla
-<https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework>`_. If you need
-an account to log in, please register here: `Linaro Registration
-<https://register.linaro.org/>`_.
+New bugs should be reported via the `LAVA Users mailing list
+<https://lists.linaro.org/mailman/listinfo/lava-users>`_. You will need
+to subscribe to the list to be able to post.
 
-If you are not sure which component is affected by your bug, simply report it
-against any of the LAVA sub-projects and let us handle the rest. As with any
-bug report, please describe the problem clearly and give the version of LAVA
-software you are using.
+Please describe the problem clearly:
+
+* Give the version of LAVA software you are using, as reported by ``dpkg -l
+  lava-server lava-dispatcher``
+
+* Attach all relevant configuration and log portions. If you are using LAVA
+  with your own device, provide the full Jinja2 template, device dictionary
+  and test job submission as well as the complete test job output.
 
 If you were using our public LAVA instance, the one used by Linaro for daily
 activities (https://validation.linaro.org), try to include a link to a page

@@ -24,16 +24,14 @@ Guidelines
   problem.
 
 * Avoid putting LAVA job output directly into your email to a list or IRC
-  channel. Mailing list posts can include a few lines but not IRC.
-
-* If you are using LAVA V1, rather than LAVA V2, you should *always** re-run
-  your test with ``logging_level: DEBUG`` if you have not done so already.
+  channel. Mailing list posts can include a few lines but not IRC. Attach
+  full logs to your email instead of including content inline.
 
 * Always use a `pastebin`_ for log output, and include a link to the paste in
   your post.
 
-* Paste content from the complete log, not the summary, so that you get the
-  complete lines.
+* If you are integrating your own device into LAVA, always include the full
+  jinja2 device-type template and device dictionary.
 
 * Include the job definition you used, either in this paste or another paste.
 
@@ -64,6 +62,12 @@ A few guidelines apply to all such lists:
 
 * Always provide as much context as you can when phrasing your question to the
   list.
+
+* If you have a Linaro login, you can also use JIRA to create a CTT ticket.
+  https://projects.linaro.org/servicedesk/customer/portal/1
+
+.. seealso:: The LAVA team workflow announcement:
+   https://lists.linaro.org/pipermail/lava-announce/2017-December/000043.html
 
 .. index:: lava-users support
 
