@@ -46,6 +46,9 @@ class Command(BaseCommand):
                                 help="Hostname of the worker")
         add_parser.add_argument("--description", type=str, default="",
                                 help="Worker description")
+        add_parser.add_argument("--health", type=str, default="ACTIVE",
+                                choices=["ACTIVE", "MAINTENANCE", "RETIRED"],
+                                help="Worker health")
 
         details_parser = sub.add_parser("details", help="Details of a worker")
         details_parser.add_argument("hostname", type=str,
@@ -55,8 +58,8 @@ class Command(BaseCommand):
                                     help="Print the list of attached devices")
 
         list_parser = sub.add_parser("list", help="List the workers")
-        list_parser.add_argument("--all", default=False, action="store_true",
-                                 help="Show all workers (including hidden ones)")
+        list_parser.add_argument("-a", "--all", default=False, action="store_true",
+                                 help="Show all workers (including retired ones)")
         list_parser.add_argument("--csv", dest="csv", default=False,
                                  action="store_true", help="Print as csv")
 
@@ -74,7 +77,7 @@ class Command(BaseCommand):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
             self.handle_add(options["hostname"], options["description"],
-                            options["disabled"])
+                            options["health"])
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"], options["devices"])
         elif options["sub_command"] == "list":
@@ -83,15 +86,23 @@ class Command(BaseCommand):
             self.handle_update(options["hostname"], options["description"],
                                options["health"])
 
-    def handle_add(self, name, description):
+    def handle_add(self, hostname, description, health_str):
         """ Create a worker """
         try:
             Worker.objects.get(hostname=hostname)
             raise CommandError("Worker already exists with hostname %s" % hostname)
         except Worker.DoesNotExist:
             pass
+
+        if health_str == "ACTIVE":
+            health = Worker.HEALTH_ACTIVE
+        elif health_str == "MAINTENANCE":
+            health = Worker.HEALTH_MAINTENANCE
+        else:
+            health = Worker.HEALTH_RETIRED
         Worker.objects.create(hostname=hostname,
-                              description=description)
+                              description=description,
+                              health=health)
 
     def handle_details(self, hostname, print_devices):
         try:
@@ -118,7 +129,7 @@ class Command(BaseCommand):
             workers = workers.exclude(health=Worker.HEALTH_RETIRED)
 
         if format_as_csv:
-            fields = ["hostname", "description", "master", "hidden", "devices"]
+            fields = ["hostname", "description", "master", "state", "health", "devices"]
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for worker in workers:
