@@ -12,12 +12,11 @@ Files: lava_server/settings/secret_key.py
 Copyright: 2010-2016, Linaro Limited
 License: GPL-3.0+
 
-Files: dashboard_app/tests/import_prohibitor.py
- dashboard_app/tests/call_helper.py setup.py
+Files: setup.py
 Copyright: 2010-2013, Linaro Limited
 License: LGPL-3.0
 
-Files: dashboard_app/static/dashboard_app/js/* lava_server/lava-server/js/*
+Files: lava_server/lava-server/js/*
  lava_scheduler_app/static/lava_scheduler_app/js/*
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
  lava_server/lava-server/css/smoothness/jquery-ui-1.10.4.custom.min.css
@@ -38,12 +37,9 @@ Copyright: 2014 Jörn Zaefferer
 License: MIT
 
 Files:
- lava_server/lava-master
  share/javascript.py
- lava_server/daemonise.py
  share/render-template.py
  share/validate_devices.py
- lava_server/lava-daemon
 Copyright: 2013, 2016 Linaro Limited
            2015 Neil Williams <codehelp@debian.org>
 License: GPL-2.0+
@@ -52,14 +48,6 @@ Files: share/release-queue.py
  share/startup.py
 Copyright: 2016 Linaro Limited
 License: GPL-3.0+
-
-Files: dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js
-Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
-           2006 - 2008 Jörn Zaefferer
-           2004-2010 Alex Gorbatchev
-           2010 Klaus Hartl (stilbuero.de)
-           2007-2011 Jay Salvat
-License: GPL-3.0+ or MIT
 
 Files: doc/v2/_static/default.css
 Copyright: 2009, Stanislaus Madueke

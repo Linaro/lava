@@ -34,8 +34,8 @@ install_dir=$(call py_libdir, $(PYTHON2))
 override_dh_auto_build:
 	dh_auto_build
 	python setup.py build
-	make -C doc/v2/ html SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
-	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
+	make -C doc/v2/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C man/ man SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
 	dh_auto_install
@@ -58,6 +58,10 @@ override_dh_auto_install:
 	dh_systemd_start --name lava-server
 	dh_systemd_start --name lava-publisher
 	dh_systemd_start --name lava-master
+
+override_dh_installdocs:
+	dh_installdocs
+	find debian/lava-server-doc/usr/ -type d -empty -delete
 
 override_dh_installinit:
 	dh_installinit -Nlava-server

@@ -1,3 +1,96 @@
+lava-server (2017.12-1) unstable; urgency=medium
+
+  * 2017.12 production release
+    de84f115 Move away from bugs.linaro.org
+    1aeb97ee Default extra_cpu_reset_message cannot be empty.
+    bd529d6c LAVA-1127 - Extend bootloader reset messages
+    1c510f12 Fix a data race between lava-logs and lava-master
+    41c63693 fix pep8 error in pylint comment
+    aea79d3d Fix authorization for testsuite and testcase views.
+    3587c07e LAVA-1151 - REST API for individual test case results
+    23912624 LAVA-1127 - Extend bootloader reset messages
+    0f523875 Add docs on configuring the services.
+    971c6bd8 lava-logs: allow setting master_socket and socket
+    f59e1ab1 LAVA-1123 Add check on active daemons.
+    da2751b6 Make sure refreshing query works when a migration removes a field.
+    3fb3272c Handle MultiNode sub_id with the REST API support
+    06b8797e LAVA-1104 document namespaces
+    a8e20ece Update device dictionary handling
+    12597e12 Fixup documentation examples
+    3682a7f5 device-types: add dra7-evm
+    c83894fe Fix timeout in query refresh/create because of
+      'distinct all' issue.
+    2498634b fix logging when lava-logs is going offline
+    549bab84 Send a signal when the worker state/health change
+    21d68083 Worker: improve main page and make updates atomic
+    9b6c3365 Worker: make state read only in the admin
+    fe39f6c3 Fix breadcrumb for devices, jobs and workers
+    f6ca007d LAVA-1132 document lava-test-raise
+    d77fec2f Remove unused template tag "linenumbers"
+    c62734ac LAVA-1125 - Separate results download link for a summary
+      of the test job
+    eaeefc82 LAVA-1047 health check issues
+    c9105768 Fix a typo in code comment.
+    64bb15c3 Modify apply-overlay and sparse parameter doc in
+      fastboot deploy action.
+    b362332f Fix web link to sparse_format.h in doc.
+    52520b58 Remove unused imports
+    7c0c1c6c Add a section of required config for UBoot
+    481c15ec LAVA-986 Poplar support using U-Boot TFTP
+    731d0419 Add Worker state and health
+    169bcb0b Fix typo and update URLs in example artifact conversion job in doc.
+    4a341866 Update various Debian references
+    8990fd7b Port template to python3
+    983bc763 Fix Report a bug and Support links.
+    9b688776 Take CUSTOM_DOCS into account for Help link.
+    c0cdd0eb Try to create a generator for yaml dumping
+    974b3a16 Fix help link on index page.
+    8d344d65 Point to LAVA docs directly without a dropdown for Help.
+    c7333bf0 Tweak v1 removal page for latest changes
+    ad8f556d Remove unused functions and dependencies
+    d6ea4293 Re-organize deploy action doc.
+    ee2b4dce Remove unused js lib jquery.formset.js.
+    6e8c08e4 Purge .pyc files on each unit test run.
+    8c1cc57e LAVA-737 make lava-master the job scheduler
+    94c1df3d master and logs: always close zmq sockets
+    e6e5e9da Fix a crash when parsing job description
+    84172121 Fix a crash when parsing job description
+    f5b7f16f LAVA-1124 - Adopt StreamingHttpResponse for large downloads
+    15060b06 Add a YAML syntax checker for static device configs
+    c98655fd Prevent MultipleObjectsReturned for jobs with many related TestData
+    2748e682 LAVA-1122 - skip retired devices in deploy check
+    db2aed27 LAVA-1126 - RESTAPI support for scheduler downloads
+    f721b3f1 master: improve logging
+    94a4adf8 Add a simple example for multi-uart test using BBB
+    c014613c master: schedule jobs only if lava-logs is pinging
+    7c4570b5 Remove unused file
+    4aeb14bb Remove daemonise helper
+    09b1c82c Document the group visibility setting.
+    e3bbbc5e Remove init.d scripts and use systemd directly
+    e12b6722 Fix chart query remove link.
+    09bdae2a Remove obsolete doc regarding test case dependencies.
+    edddbf9e master: job_status is not sent anymore by slaves
+    252e2c7a Send the ping interval to the slave.
+    17ba6914 Rename dispatcher-master to lava-master
+    2a07e4ea Mark a job as RUNNING only when not already done
+    7b1cd8c3 lava-master: improve behavior with duplicated END
+    39e78200 Factorize lava daemon functions
+    1def9370 jobs: allow removal of only v1 jobs
+    debec5da Remove unused models and fields
+    0583c4e2 Add hip07-d05 device type based on d03
+    3019e41b Move log handling into a separate process
+    05dbbb7f LAVA-1063 and LAVA-1064 - Drop dashboard app.
+    42bfd0e5 dispatcher-master: prevent growing message queue
+    611aaa13 Document the process of V1 test data removal
+  * Depend on python3-sphinx in preparation for python3 and django2
+  * Drop dependency on lsb-base with the move to systemd-sysv
+  * Add back a debconf prompt for removal of V1 test data - one time
+    only. Ignored if no V1 test data exists.
+  * Update copyright for removed files
+  * Update dependencies on debootstrap and python-pexpect in metapackage
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 01 Dec 2017 19:07:47 +0000
+
 lava-server (2017.11-2) unstable; urgency=medium
 
   * Fix error in postrm script
