@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 9.20160709), dh-python,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev, po-debconf,
- python-sphinx (>= 1.4), python-sphinx-bootstrap-theme,
+ python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme,
  python-setuptools (>= 3), python-yaml
 X-Python-Version: 2.7
 Standards-Version: 4.1.1
@@ -24,13 +24,12 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Pre-Depends: debconf | debconf-2.0
-Depends: apache2, adduser, gunicorn, iproute2, lsb-base (>= 4),
- python-tz, python-daemon, python-dateutil,
+Depends: apache2, adduser, gunicorn, iproute2, python-tz, python-dateutil,
  python-django (>= 1.8), python-django-auth-ldap, python-setuptools,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
- postgresql, postgresql-client, postgresql-common,
- lava-dispatcher (>= 2017.11),
+ postgresql, postgresql-client, postgresql-common, systemd-sysv,
+ lava-dispatcher (>= 2017.12),
  ${python:Depends}, ${misc:Depends}
 Recommends: fuse, ntp, lava-coordinator, lava-server-doc,
 Suggests: python-django-hijack, python-django-debug-toolbar
@@ -77,13 +76,13 @@ Package: lava-dev
 Architecture: all
 Section: devel
 Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
- debhelper (>= 9.20160709), fakeroot, git, libdistro-info-perl,
- node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
- libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
- python | python-all | python-dev | python-all-dev, pep8 | python-pep8,
- python-guestfs, python-sphinx (>= 1.4) | python3-sphinx (>= 1.4),
- python-nose, python-netifaces, python-setuptools,
- python-sphinx-bootstrap-theme, python-zmq, python-yaml,
+ debootstrap (>= 1.0.86), debhelper (>= 9.20160709), fakeroot, git,
+ libdistro-info-perl, node-uglify, libjs-excanvas, libjs-jquery-cookie,
+ libjs-jquery, libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
+ libjs-jquery-ui, python | python-all | python-dev | python-all-dev,
+ pep8 | python-pep8, python-guestfs,  python-nose, python-netifaces,
+ python3-sphinx (>= 1.4), python-setuptools, python-pexpect (>= 4.2),
+ python3-sphinx-bootstrap-theme, python-zmq, python-yaml,
  python-voluptuous (>= 0.8.8), docbook-xsl, xsltproc, python-mock,
  ${python:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot,
