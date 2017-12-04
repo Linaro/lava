@@ -298,11 +298,11 @@ by test writers from a hacking session.)
    support can potentially stop devices from working in subsequent
    tests, or maybe even damage them permanently - be careful!
 
-   If the commands are to be used regularly, `file a bug
-   <https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework>`_
-   requesting that a label is created in the templates for this set of
-   commands. Alternatively, the bug report can request a new override
-   to make the existing labels more flexible.
+   If the commands are to be used regularly, `ask on the lava-users mailing
+   list <https://lists.linaro.org/mailman/listinfo/lava-users>`_ requesting
+   that a label is created in the templates for this set of commands.
+   Alternatively, you can request a new override to make the existing labels
+   more flexible.
 
 .. index:: boot method
 
@@ -367,7 +367,9 @@ most cases, starting Grub from UEFI requires using the
    :language: yaml
    :lines: 42, 47, 48
 
-`Download or view mustang-grub-efi.yaml <examples/test-jobs/mustang-grub-efi.yaml>`_
+Download or view the complete example:
+`examples/test-jobs/mustang-grub-efi.yaml
+<examples/test-jobs/mustang-grub-efi.yaml>`_
 
 .. note:: Admins can refer to the ``mustang-grub-efi.jinja2`` template for an
    example of how to make selections from a UEFI menu to load Grub. See

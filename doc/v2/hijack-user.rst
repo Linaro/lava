@@ -12,10 +12,9 @@ functionality is enabled by django-hijack module.
    effect until the superuser logs out of the hijacked user in LAVA and logs
    back in.
 
-django-hijack depends on django-compat and both these modules should be
-installed in order to enable this support. These packages are optional for lava
-and are not installed by default. They are available in Debian testing release
-as of now.
+django-hijack depends on django-compat and both these modules should
+be installed in order to enable this support. These packages are
+optional for LAVA and are not installed by default.
 
 Install `python-django-compat` and `python-django-hijack` packages directly
 using apt if either of production-repo or staging-repo are configured already

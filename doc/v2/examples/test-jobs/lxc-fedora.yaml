@@ -1,5 +1,5 @@
 device_type: lxc
-job_name: lxc-pipeline
+job_name: lxc-fedora
 timeouts:
   job:
     minutes: 15
@@ -37,7 +37,7 @@ actions:
     timeout:
       minutes: 5
     definitions:
-    - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
-      path: fedora/echo-pass-fail-error-test.yaml
-      name: echo-pass-fail-error-test
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

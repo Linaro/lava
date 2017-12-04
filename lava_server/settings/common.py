@@ -123,7 +123,6 @@ INSTALLED_APPS = [
     'lava_server',
     'dashboard_app',
     'lava_results_app',
-    'lava_scheduler_daemon',
     'lava_scheduler_app',
     # Needed applications
     'django_tables2',

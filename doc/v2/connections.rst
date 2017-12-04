@@ -136,9 +136,9 @@ blocks:
      :emphasize-lines: 3, 15, 36, 45, 57
 
 
-`Download or view the complete example
+Download or view the complete example:
+`examples/test-jobs/namespace-connections-example1.yaml
 <examples/test-jobs/namespace-connections-example1.yaml>`_:
-examples/test-jobs/namespace-connections-example1.yaml
 
 .. note:: It is not allowed to combine the ``common`` namespace with any others
    - it is special-cased. If you are defining more namespaces in your job, give
@@ -239,12 +239,17 @@ with kernel message output.
 LAVA supports using these multiple serial connections in a simple way,
 avoiding the need for MultiNode complexity.
 
-In common with the ``ssh`` method, the use of multiple serial connections
-involves some risks because the creation of the ``getty`` on the additional
-serial port(s) is managed by the kernel and rootfs of the **test image**. When
-using multiple serial connections, always test that the booted system raises
-the ``getty`` correctly and that the ``login`` process works before committing
-to using this method.
+.. _extra_serial_ports_modify_test_image:
+
+Changes needed in the test image
+================================
+
+In common with the ``ssh`` method, the use of multiple serial
+connections involves some risks because the creation of the ``getty``
+on the additional serial port(s) is managed by the kernel and rootfs
+of the **test image**. When using multiple serial connections, always
+test that the booted system raises the ``getty`` correctly and that
+the ``login`` process works before committing to using this method.
 
 .. index:: connections - adding extra serial ports
 
@@ -280,12 +285,14 @@ serial connections over one cable.
 Configuring serial ports
 ========================
 
-The traditional way for an admin to configure how to connect to a
-serial port in LAVA is using the ``connection_command`` variable in
-the :ref:`device dictionary <device_dictionary_commands>`. LAVA will
-use this command to open the connection early in test job startup (in
-the first ``boot`` action) , and will keep this connection open right
-until the end of the test job. A simple example:
+To configure LAVA to connect to one or more serial ports of a device, create a
+list of ``connection_commands`` in the :ref:`device dictionary
+<device_dictionary_connections>`. LAVA will use the command tagged with
+``primary`` to open the connection early in test job startup (in the first
+``boot`` action) , and will keep this connection open right until the end of
+the test job.
+
+In earler versions of LAVA, only a single connection command could be used:
 
 .. code-block:: jinja
 
@@ -295,9 +302,10 @@ until the end of the test job. A simple example:
  {% set connection_command = 'telnet dispatcher01 7001' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
 
-This works fine when just using a single serial connection but won't
-work with more than one. There is now a better way to configure serial
-ports more flexibly:
+This has worked fine when just using a single serial connection but is now
+deprecated to support working with more than one and other improvements in
+connection handling. The ``connection_list`` is a more flexible way to
+configure one or more serial ports:
 
 .. code-block:: jinja
 
@@ -305,9 +313,29 @@ ports more flexibly:
  {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
- {% set connection_list = [‘uart0’, ‘uart1’] %}
- {% set connection_commands = {‘uart0’: ‘telnet dispatcher01 7001’, ‘uart1’: ‘telnet dispatcher01 7002’} %}
- {% set connection_tags = {‘uart0’: [‘primary’]} %}
+ {% set connection_list = ['uart0'] %}
+ {% set connection_commands = {'uart0': 'telnet dispatcher01 7001'} %}
+ {% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+
+``primary`` denotes the serial connection which will be started automatically
+with each test job.
+
+Other tags describe how LAVA should close the connection at the end of the
+test job, possible values are ``telnet``, ``ssh``. If your connection command
+does not use ``telnet`` or ``ssh``, the connection will be forcibly closed
+using ``kill -9``.
+
+Or with two serial connections:
+
+.. code-block:: jinja
+
+ {% extends 'beaglebone-black.jinja2' %}
+ {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
+ {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
+ {% set connection_list = ['uart0', 'uart1'] %}
+ {% set connection_commands = {'uart0': 'telnet dispatcher01 7001', 'uart1': 'telnet dispatcher01 7002'} %}
+ {% set connection_tags = {'uart0': ['primary', 'telnet'], 'uart1': ['telnet']} %}
 
 This defines two serial ports (labelled ``uart0`` and ``uart``), then
 describes how to connect to each one. Finally, it sets a ``tag`` of
@@ -386,26 +414,128 @@ For a typical device with multiple serial ports, we can extend our
 	  when kernel messages are most likely to be intermingled with
 	  attempts to control a device on the primary console.
 
-.. _multiple_serial_ports_example:
+.. index:: connections - multiple serial ports example
 
-Example job
-===========
+.. _multiple_serial_ports_example1:
 
-An example test job will help to show how the test shell connection can be
-isolated. It's a complicated job, using an LXC as well as the device, so let's
-unpick it.
+Example job 1: Simple beaglebone-black job with a second serial port
+====================================================================
 
-#. :ref:`multiple_serial_ports_example_define_container`
+Here's a simple test job on a common board, a Beaglebone Black. The
+board only exposes one serial port for easy use, so we've added a USB
+serial adapter as a second port.
 
-#. :ref:`multiple_serial_ports_example_boot_container`
+Download or view the complete example:
+`examples/test-jobs/bbb-2serial.yaml
+<examples/test-jobs/bbb-2serial.yaml>`_:
 
-#. :ref:`multiple_serial_ports_example_boot_device`
+#. :ref:`multiple_serial_ports_example1_boot_device`
 
-#. :ref:`multiple_serial_ports_example_boot_connection`
+#. :ref:`multiple_serial_ports_example1_boot_connection`
 
-#. :ref:`multiple_serial_ports_example_test_connection`
+#. :ref:`multiple_serial_ports_example1_test_connection`
 
-.. _multiple_serial_ports_example_define_container:
+.. _multiple_serial_ports_example1_boot_device:
+
+Deploy and boot the device
+--------------------------
+
+This is using a simple Debian Stretch nfs rootfs and initramfs. The
+rootfs is easy to generate using standard tools; the only change in
+there is to define the second serial console on
+/dev/ttyUSB0. `Remember <extra_serial_ports_modify_test_image>`_ that
+a similar change will likely be needed in any test image you want to
+test this way. Note the explicit namespace ``bbb`` defined in the
+``deploy`` action, and created in the ``boot`` action:
+
+.. literalinclude:: examples/test-jobs/bbb-2serial.yaml
+     :language: yaml
+     :linenos:
+     :lines: 23-53
+     :emphasize-lines: 2,24,28-29
+
+A ``boot`` action would typically include an ``auto_login`` section,
+but in this test we're not going to be doing any testing using the
+primary serial connection. Hence, we just add a ``prompts`` secion
+looking for ``login:`` to check when this boot is complete.
+
+.. _multiple_serial_ports_example1_boot_connection:
+
+Create the connection to the second serial port
+-----------------------------------------------
+
+Next, we use a second ``boot`` action block to create a new connection
+**in a new namespace** called ``isolation``. We're using the
+``new_connection`` method, using the ``uart1`` connection defined in
+the device dictionary. As we're going to be using this new connection
+for testing, we now run ``auto_login`` here.
+
+.. literalinclude:: examples/test-jobs/bbb-2serial.yaml
+     :language: yaml
+     :linenos:
+     :lines: 55-69
+     :emphasize-lines: 5-7
+
+.. _multiple_serial_ports_example1_test_connection:
+
+Tell the test shell to use the new connection
+---------------------------------------------
+
+Finally, we start our tests.
+
+* The **namespace** of the ``test`` action **matches** the ``bbb``
+  namespace used in the ``deploy`` and ``boot`` actions of the
+  device. This ensures that the test shell has access to the dynamic
+  data created by the correct deployment action to be able to know
+  what rootfs is in use, and where to find the test shell files on
+  that rootfs.
+
+* The ``test`` action also has ``connection-namespace`` defined to
+  ``isolation`` - this tells it to use the connection tracked in the
+  ``isolation`` namespace, rather than the default connection in the
+  ``bbb`` namespace. **This is the key part of the isolation, running
+  tests on the second serial port.**
+
+.. literalinclude:: examples/test-jobs/bbb-2serial.yaml
+     :language: yaml
+     :linenos:
+     :lines: 71-82
+     :emphasize-lines: 3,5
+
+Download or view the complete example:
+`examples/test-jobs/bbb-2serial.yaml
+<examples/test-jobs/bbb-2serial.yaml>`_:
+
+.. index:: connections - multiple serial ports example
+
+.. _multiple_serial_ports_example2:
+
+Example job 2: A more complicated setup including LXC
+=====================================================
+
+Here's a more complicated example job, including the use of LXC for
+deployment. This was the first real-world use case for the multiple
+serial port support, running Linux kernel functional testing on a
+HiKey 6220. The HiKey 6220 hardware includes an extra serial port, but
+deploying to the board is more involved - we use fastboot in an LXC
+container, which means we have *another* namespace to track in the
+test job. Let's unpick the test job.
+
+#. :ref:`multiple_serial_ports_example2_define_container`
+
+#. :ref:`multiple_serial_ports_example2_boot_container`
+
+#. :ref:`multiple_serial_ports_example2_boot_device`
+
+#. :ref:`multiple_serial_ports_example2_boot_connection`
+
+#. :ref:`multiple_serial_ports_example2_test_connection`
+
+Download or view the complete example:
+`examples/test-jobs/multiple-serial-ports-lxc.yaml
+<examples/test-jobs/multiple-serial-ports-lxc.yaml>`_:
+
+.. _multiple_serial_ports_example2_define_container:
 
 Define the container
 --------------------
@@ -413,12 +543,12 @@ Define the container
 The distribution and suite of the container, as well as the name, are defined
 using the ``lava-lxc`` protocol block.
 
-.. literalinclude:: examples/test-jobs/multiple-serial-ports.yaml
+.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
      :lines: 20-25
 
-.. _multiple_serial_ports_example_boot_container:
+.. _multiple_serial_ports_example2_boot_container:
 
 Deploy and boot the container
 -----------------------------
@@ -431,7 +561,7 @@ connection is created in the ``boot`` action. In the case of LXC support, this
 is done by running ``lxc-attach`` on the dispatcher instead of a connection
 command from the device configuration.
 
-.. literalinclude:: examples/test-jobs/multiple-serial-ports.yaml
+.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
      :lines: 27-44
@@ -439,7 +569,7 @@ command from the device configuration.
 
 .. seealso:: :ref:`boot_connection_namespace` and :ref:`namespaces_with_lxc`
 
-.. _multiple_serial_ports_example_boot_device:
+.. _multiple_serial_ports_example2_boot_device:
 
 Use the container to deploy and boot the device
 -----------------------------------------------
@@ -452,13 +582,13 @@ take note of the ``namespace`` used to ``boot`` the device. The ``boot``
 operation is responsible for creating the connection (in this case by running
 a connection command specified in the device configuration).
 
-.. literalinclude:: examples/test-jobs/multiple-serial-ports.yaml
+.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
      :lines: 46-87
      :emphasize-lines: 2, 28
 
-.. _multiple_serial_ports_example_boot_connection:
+.. _multiple_serial_ports_example2_boot_connection:
 
 Create the connection to the second serial port
 -----------------------------------------------
@@ -472,16 +602,16 @@ a unique namespace for each connection.) This namespace will be used later to
 isolate a test shell from the primary connection used for the deployment and
 boot actions of the device.
 
-.. literalinclude:: examples/test-jobs/multiple-serial-ports.yaml
+.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
      :lines: 89-103
      :emphasize-lines: 5
 
-.. _multiple_serial_ports_example_test_connection:
+.. _multiple_serial_ports_example2_test_connection:
 
-Set the new connection for use by the test shell
-------------------------------------------------
+Tell the test shell to use the new connection
+---------------------------------------------
 
 This is where it all comes together.
 
@@ -493,7 +623,7 @@ This is where it all comes together.
 
   In this example, the test shell needs a **namespace** of ``hikey-oe``
 
-  .. seealso:: :ref:`multiple_serial_ports_example_boot_device`
+  .. seealso:: :ref:`multiple_serial_ports_example2_boot_device`
 
 * The **connection-namespace** of the same test shell **matches** the namespace
   of the **boot action of the second serial port**. This ensures that the test
@@ -503,13 +633,17 @@ This is where it all comes together.
   In this example, the test shell needs a **connection-namespace** of
   ``isolation``
 
-  .. seealso:: :ref:`multiple_serial_ports_example_boot_connection`
+  .. seealso:: :ref:`multiple_serial_ports_example2_boot_connection`
 
-.. literalinclude:: examples/test-jobs/multiple-serial-ports.yaml
+.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
      :lines: 105-115
      :emphasize-lines: 3-4
+
+Download or view the complete example:
+`examples/test-jobs/multiple-serial-ports-lxc.yaml
+<examples/test-jobs/multiple-serial-ports-lxc.yaml>`_:
 
 .. index:: connections - limitations with multiple serial ports
 

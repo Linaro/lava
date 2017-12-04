@@ -15,26 +15,62 @@
 {% endblock %}
 
 {% block content %}
-<h2>Worker: {{ worker }}
-</h2>
-
 <div class="row">
-  <div class="col-md-6">
-    <h4 class="modal-header">LAVA details</h4>
+  <div class="col-md-4">
     <dl class="dl-horizontal">
-      <dt>Is Master</dt>
-      <dd>{{ worker.is_master }}</dd>
+      <dt>Hostname</dt>
+      <dd>{{ worker.hostname }}</dd>
       <dt>Description</dt>
       {% if can_admin %}
       <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
         <dd>
           {% csrf_token %}
-          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"..." }}</div>
+          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"<i>...</i>" }}</div>
         </dd>
       </form>
       {% else %}
-      <dd>{{ worker.get_description|default:"<i>empty</i>" }}</dd>
+      <dd>{{ worker.get_description|default:"<i>...</i>" }}</dd>
       {% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <dl class="dl-horizontal">
+      <dt>State</dt>
+        {% if worker.state == worker.STATE_ONLINE %}
+      <dd><span class="label label-success">{{ worker.get_state_display }}</span></dd>
+        {% else %}
+      <dd><span class="label label-warning">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="glyphicon glyphicon-fire"></div>{% endif %}{{ worker.get_state_display }}</span></dd>
+        {% endif %}
+      <dt>Health</dt>
+        {% if worker.health == worker.HEALTH_ACTIVE %}
+      <dd class="text-success">
+        {% elif worker.health == worker.HEALTH_MAINTENANCE %}
+      <dd class="text-warning">
+        {% else %}
+      <dd class="text-danger">
+        {% endif %}
+        {% if can_admin %}
+        <div class="dropdown">
+        {{ worker.get_health_display }}
+          <span class="glyphicon glyphicon-pencil" id="worker_health_menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"></span>
+          <ul class="dropdown-menu" aria-labelledby="worker_health_menu">
+            {% if worker.health != worker.HEALTH_ACTIVE %}<li><a href="{% url "lava.scheduler.worker.active" worker.pk %}">Active</a></li>{% endif %}
+            {% if worker.health != worker.HEALTH_MAINTENANCE %}<li><a href="{% url "lava.scheduler.worker.maintenance" worker.pk %}">Maintenance</a></li>{% endif %}
+            {% if worker.health != worker.HEALTH_RETIRED %}<li><a href="{% url "lava.scheduler.worker.retired" worker.pk %}">Retired</a></li>{% endif %}
+          </ul>
+        </div>
+        {% else %}
+        {{ worker.get_health_display }}
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <dl class="dl-horizontal">
+      <dt>Devices</dt>
+      <dd>{{ worker.device_set.all.count }}</dd>
+      <dt>Retired devices</dt>
+      <dd>{{ worker.retired_devices_count }}</dd>
     </dl>
   </div>
 </div>

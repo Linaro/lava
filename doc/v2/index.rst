@@ -79,6 +79,8 @@ retired, in the following steps:
 * **2017.12** will **permanently delete all V1 test data** from the database
   upon installation.
 
+  .. seealso:: :ref:`v1_removal`
+
 .. _`announced`: https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html
 
 LAVA Overview

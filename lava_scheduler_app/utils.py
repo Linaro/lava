@@ -22,10 +22,7 @@ import errno
 import jinja2
 import ldap
 import logging
-import netifaces
 import os
-import re
-import socket
 import subprocess
 import yaml
 
@@ -37,7 +34,6 @@ from django.core.exceptions import ImproperlyConfigured
 from lava_server.settings.getsettings import Settings
 
 from lava_scheduler_app.schema import SubmissionException
-
 
 DEFAULT_IRC_SERVER = "irc.freenode.net"
 DEFAULT_IRC_PORT = 6667
@@ -58,19 +54,6 @@ class IRCHandleNotFoundError(IRCSendError):
     """Error raised when user handle is not found on specific server."""
 
 
-def get_fqdn():
-    """Returns the fully qualified domain name.
-    """
-    host = socket.getfqdn()
-    try:
-        if bool(re.match("[-_a-zA-Z0-9.]+$", host)):
-            return host
-        else:
-            raise ValueError("Your FQDN contains invalid characters")
-    except ValueError as exc:
-        raise exc
-
-
 def get_domain():
     domain = '???'
     try:
@@ -81,36 +64,6 @@ def get_domain():
         domain = site.domain
 
     return domain
-
-
-def is_master():
-    """Checks if the current machine is the master.
-    """
-    worker_config_path = '/etc/lava-server/worker.conf'
-    if "VIRTUAL_ENV" in os.environ:
-        worker_config_path = os.path.join(os.environ["VIRTUAL_ENV"],
-                                          worker_config_path[1:])
-
-    return not os.path.exists(worker_config_path)
-
-
-# pylint gets confused with netifaces
-def get_ip_address():  # pylint: disable=no-member
-    """Returns the IP address of the default interface, if found.
-    """
-    ip = '0.0.0.0'
-    gateways = netifaces.gateways()
-    if gateways:
-        default_gateway = gateways.get('default')
-        if default_gateway:
-            default_interface = default_gateway.get(netifaces.AF_INET)[1]
-            if default_interface:
-                default_interface_values = netifaces.ifaddresses(
-                    default_interface)
-                if default_interface_values:
-                    ip = default_interface_values.get(
-                        netifaces.AF_INET)[0].get('addr')
-    return ip
 
 
 def is_member(user, group):
@@ -387,7 +340,6 @@ def device_dictionary_to_dict(ast):
 
 def device_dictionary_sequence():
     return [
-        'connection_command',
         'power_on_command',
         'power_off_command',
         'soft_reset_command',
@@ -398,6 +350,15 @@ def device_dictionary_sequence():
         'fastboot_options',
         'fastboot_serial_number',
         'device_info',
+        'static_info',
+    ]
+
+
+def device_dictionary_connections():
+    return [
+        'connection_list',
+        'connection_commands',
+        'connection_tags'
     ]
 
 

@@ -1,0 +1,16 @@
+{% extends 'd03.jinja2' %}
+
+{% set device_type = "hip07-d05" %}
+
+{% block grub_ramdisk %}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/ram0 {{ base_ip_args }}'
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+{% endblock grub_ramdisk %}
+
+{% block grub_nfs %}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+          - boot
+{% endblock grub_nfs %}

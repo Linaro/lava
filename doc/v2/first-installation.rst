@@ -30,8 +30,9 @@ Software Requirements
    detailed instructions.
 
 We currently recommend installing LAVA on `Debian`_ jessie, stretch or
-unstable. Installations using jessie (the current Debian stable release) should
-use updates available in ``jessie-backports``.
+unstable. Installations using stretch (the current Debian stable
+release) or jessie (the previous stable release) should use updates
+available in ``backports``.
 
 Contributions to support other distributions are welcome as long as there is a
 commitment to maintain LAVA on those distributions.
@@ -303,11 +304,15 @@ addressed in the :ref:`ser2net` config file.
 Contact and bug reports
 ***********************
 
-Please report bugs using Linaro's Bugzilla:
-https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+Please report bugs using the LAVA Users mailing list:
+https://lists.linaro.org/mailman/listinfo/lava-users
 
 You can also report bugs using ``reportbug`` and the Debian Bug Tracking
 System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=lava-server
 
 Feel free to contact us at validation (at) linaro (dot) org and on
-the ``#linaro-lava`` channel on OFTC.
+the ``#linaro-lava`` channel on OFTC but note that IRC is not well suited to
+some discussions. Problems with device configuration or test job failures
+usually benefit from being able to attach the full configuration to an email
+to the lava-users mailing list.
+

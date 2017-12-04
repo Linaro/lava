@@ -20,7 +20,7 @@ metadata:
 actions:
 - deploy:
     timeout:
-      minutes: 3
+      minutes: 5
     to: tftp
     kernel:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
@@ -53,7 +53,7 @@ actions:
 
 - test:
     timeout:
-      minutes: 5
+      minutes: 10
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
@@ -67,4 +67,3 @@ actions:
       repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       path: lava-test-shell/single-node/singlenode02.yaml
       name: singlenode-intermediate
-

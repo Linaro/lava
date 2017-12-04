@@ -23,15 +23,10 @@ are installed.
 
    $ sudo apache2ctl restart
 
-* **scheduler daemon** - from V1 but still used in V2 for the assignment
-  of devices to testjobs. Restart when changing django files in
-  ``lava_scheduler_app``::
-
-   $ sudo service lava-server restart
-
-* **master** - the dispatcher master, controlling the slaves using ZMQ. The
-  master does the pipeline validation. Restart when changing the dispatcher
-  code (as the master runs the validation check using the dispatcher code)::
+* **master** - the dispatcher master, controlling the slaves using ZMQ and
+  scheduling jobs. The master does the pipeline validation. Restart when
+  changing the dispatcher code (as the master runs the validation check using
+  the dispatcher code)::
 
    $ sudo service lava-master restart
 
@@ -42,13 +37,9 @@ are installed.
 
    $ sudo service lava-slave restart
 
-The scheduler daemon, master and slave all have dedicated singleton processes
-which should be put into loglevel ``DEBUG`` when investigating problems.
+The master and slave have dedicated singleton processes which should be put
+into loglevel ``DEBUG`` when investigating problems.
 Restart the service after editing the service file.
-
-* **scheduler daemon** ``/etc/init.d/lava-server`` - enable debug::
-
-   LOGLEVEL="--loglevel=debug"
 
 * **master** ``/etc/init.d/lava-master`` currently defaults to DEBUG
   log level.
@@ -68,8 +59,6 @@ All log files use ``logrotate``, so the information you need may be in a
 
 * **django** - by default ``/var/log/lava-server/django.log`` contains
   errors and warnings from django.
-
-* **scheduler daemon** - ``/var/log/lava-server/lava-scheduler.log``
 
 * **master** - ``/var/log/lava-server/lava-master.log``
 

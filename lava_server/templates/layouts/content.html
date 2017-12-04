@@ -63,21 +63,23 @@
               <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
             </ul>
           </li>
-          <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                  <li><a href="{{ STATIC_URL }}docs/v2">Help</a></li>
-              {% assign_setting 'CUSTOM_DOCS' as userdocs %}
-                  {% if userdocs %}
-                      {% for label, url in userdocs.items %}
-                          {% if label and url %}
-                            <li role="separator" class="divider"></li>
-                            <li><a href="{{ url }}">{{ label }}</a></li>
-                          {% endif %}
-                      {% endfor %}
-                  {% endif %}
-              </ul>
-          </li>
+          {% assign_setting 'CUSTOM_DOCS' as userdocs %}
+              {% if userdocs %}
+                  <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                      <li><a href="{{ STATIC_URL }}docs/v2">Help</a></li>
+                  {% for label, url in userdocs.items %}
+                      {% if label and url %}
+                         <li role="separator" class="divider"></li>
+                         <li><a href="{{ url }}">{{ label }}</a></li>
+                      {% endif %}
+                  {% endfor %}
+                  </ul>
+                  </li>
+              {% else %}
+                  <li><a href="{{ STATIC_URL }}docs/v2"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+              {% endif %}
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if lava.instance_name %}
@@ -144,7 +146,7 @@
   <div class="container">
     <p class="text-center"><a
             href="{{ lava.branding_bug_url }}">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a
-            href="{{ STATIC_URL }}docs/index.html#getting-support">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a
+            href="{{ STATIC_URL }}docs/v2/support.html">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a
             href="{{ lava.branding_source_url }}">Source code</a></p>
     <p class="text-muted text-center">LAVA Server is free software developed by <a
             href="http://linaro.org">Linaro</a>. It is distributed under the terms of the <a

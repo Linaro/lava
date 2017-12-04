@@ -658,7 +658,9 @@ device-specific values.
 .. code-block:: jinja
 
  {% extends 'mustang.jinja2' %}
- {% set connection_command = "telnet serial4 7012" %}
+ {% set connection_list = [‘uart0’] %}
+ {% set connection_commands = {‘uart0’: ‘telnet serial4 7012’} %}
+ {% set connection_tags = {‘uart0’: [‘primary’, 'telnet']} %}
  {% set hard_reset_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command reboot --port 05" %}
  {% set power_off_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command off --port 05" %}
  {% set power_on_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command on --port 05" %}

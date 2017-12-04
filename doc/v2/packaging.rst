@@ -33,7 +33,7 @@ Instance name
 Further information
 ###################
 
-* http://wiki.debian.org/LAVA
+* https://wiki.debian.org/LAVA
 * https://github.com/Linaro
 
 .. _packaging_components:
@@ -67,11 +67,6 @@ advance.
 Daemon renaming
 ===============
 
-The main scheduler daemon is now explicitly named and only restarts the
-scheduler daemon::
-
- $ sudo service lava-server restart
-
 The web application itself is handled within apache, so to refresh the code
 running behind the front end, use::
 
@@ -81,4 +76,4 @@ The ``LAVA_SYS_USER`` has also been renamed from an instance-specific name to
 ``lavaserver``. ``lava-server manage`` can also be run as a normal user or by
 root. The system user is used just for the filesystem permissions.
 
-There are also daemons for the ``dispatcher-master`` and the ``lava-slave``.
+There are also daemons for the ``lava-master`` and the ``lava-slave``.

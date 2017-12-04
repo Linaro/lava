@@ -16,11 +16,17 @@
   </style>
 {% endblock %}
 {% block content %}
-<h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
+  <h1>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a> for job {{ job_link }}</h1>
+
 {% if not test_cases %}
 {%  for testset in sets %}
     <h2>Test Set: {{ testset.name }}</h2>
     {% for testcase in testset.test_cases.all %}
+        <dl class="dl-horizontal">
+          <dt>Test case export :  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button>
+          </dt>
+          <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+        </dl>
         <dl class="dl-horizontal">
         <dt>Test Case:</dt>
         <dd><a href="{{ testcase.get_absolute_url }}">{{ testcase.name }}</a></dd>
@@ -36,28 +42,28 @@
 {% endif %}
 {% for testcase in test_cases %}
   {% if testcase.test_set %}
-  <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
+     <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
   {% endif %}
   {% if testcase.result == 1%}
-  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-remove"></span>&nbsp;fail</h3>
+    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-remove"></span>&nbsp;fail</h3>
       <h4><a
       title="view test job output for this failed test"
       href="{{ job.get_absolute_url }}#results_{{ testcase.id }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% elif testcase.result == 2 %}
-  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;skipped</h3>
+    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;skipped</h3>
       <h4><a
       title="view test job output for this test which was skipped"
       href="{{ job.get_absolute_url }}#results_{{ testcase.id }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% elif testcase.result == 3 %}
-  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;unknown</h3>
+    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;unknown</h3>
       <h4><a
       title="view test job output for this test which gave an unknown result"
       href="{{ job.get_absolute_url }}#results_{{ testcase.id }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% else %}
-  <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
+    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
       <h4><a
       title="view test job output for this passed test"
       href="{{ job.get_absolute_url }}#results_{{ testcase.id }}">
@@ -70,37 +76,42 @@
   {% endif %}
   {% if testcase.action_metadata %}
   <ul class="list-unstyled">
-  {% for key, value in testcase.action_metadata.items|sort_items %}
-  {% get_extra_source testcase extra_source as testcase_extra %}
-  {% if key == 'extra' and extra_source %}
-      <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ testcase_extra }}</pre></li>
-  {% elif key == 'level' %}
-    <li><strong>Pipeline description</strong>: <a
-            href="{% url 'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
-  {% elif key == 'duration' %}
-    <li><strong>{{ key }}</strong>: {{ value|floatformat:2 }} secs</li>
-  {% elif key == 'case' or key == 'result' or key == 'definition' %}
-  {% elif value.items %}
-    <li><strong>{{ key }}</strong><ul>
-    {% for k, v in value.items %}
-      <li><strong>{{ k }}</strong>: {{ v }}</li>
+    {% for key, value in testcase.action_metadata.items|sort_items %}
+      {% get_extra_source testcase extra_source as testcase_extra %}
+      {% if key == 'extra' and extra_source %}
+        <li><strong>{{ key }}:</strong><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ testcase_extra }}</pre></li>
+      {% elif key == 'level' %}
+        <li><strong>Pipeline description</strong>: <a
+              href="{% url 'lava.scheduler.job.definition' job.pk %}#pipeline:{{ value }}">{{ value }}</a></li>
+      {% elif key == 'duration' %}
+        <li><strong>{{ key }}</strong>: {{ value|floatformat:2 }} secs</li>
+      {% elif key == 'case' or key == 'result' or key == 'definition' %}
+      {% elif value.items %}
+        <li><strong>{{ key }}</strong><ul>
+        {% for k, v in value.items %}
+          <li><strong>{{ k }}</strong>: {{ v }}</li>
+        {% endfor %}
+        </ul></li>
+      {% else %}
+        <li><strong>{{ key }}</strong>: {{ value }}</li>
+      {% endif %}
     {% endfor %}
-    </ul></li>
-  {% else %}
-    <li><strong>{{ key }}</strong>: {{ value }}</li>
-  {% endif %}
-  {% endfor %}
   </ul>
   {% else %}
-  <dl class='dl-horizontal'>
-  <dt>Result</dt>
-  <dd>{{ testcase.result_code }}</dd>
-  {% if testcase.measurement >= 0.0 %}
-  <dt>Measurement</dt>
-  <dd>{{ testcase.measurement|floatformat:2 }} {{ testcase.units }}</dd>
+    <dl class='dl-horizontal'>
+    <dt>Result</dt>
+    <dd>{{ testcase.result_code }}</dd>
+    {% if testcase.measurement >= 0.0 %}
+      <dt>Measurement</dt>
+      <dd>{{ testcase.measurement|floatformat:2 }} {{ testcase.units }}</dd>
+    {% endif %}
+    </dl>
   {% endif %}
-  </dl>
-  {% endif %}
+
+  <ul class="list-unstyled">
+    <li>Test case export <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button> :
+      <a class="btn btn-xs btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></li>
+  </ul>
 {% endfor %}
 
 <div class="panel-group" id="buglinks_accordion">

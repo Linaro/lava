@@ -284,6 +284,10 @@ is made, then these resets **must** completely reset the device so as to clear
 all buffers from previous test runs or deployments, **including** when such
 test runs or deployments failed in unexpected ways.
 
+.. note:: It is recommended for all devices that admins disable ability of the
+   device to automatically boot anything, but rather simply drop to the
+   bootloader prompt.
+
 .. index:: device integration - networking
 
 .. _integration_networking:
@@ -551,7 +555,7 @@ that check fails, the test job will not start and the failure will be logged:
 
 .. code-block:: none
 
- [WARNING] [dispatcher-master] [9] Refusing to reserve for broken V2 device intel-smecher
+ [WARNING] [lava-master] [9] Refusing to reserve for broken V2 device intel-smecher
 
 This message indicates that test job ID ``9`` will never start to run until the
 device dictionary and the device type template for the device ``intel-smecher``
@@ -568,7 +572,6 @@ the other unit tests in ``test_templates.py`` to see how this is done.
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}
- {% set exclusive = 'True' %}
  {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
  {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}

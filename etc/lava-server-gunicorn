@@ -1,0 +1,11 @@
+# Configuration for lava-gunicorn-daemon daemon
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# LOGLEVEL="DEBUG"
+# LOGFILE="/var/log/lava-server/gunicorn.log"
+
+# Number of workers
+# WORKERS=4
+
+# When working on the python files, gunicorn can reload on any change
+# RELOAD="--reload"

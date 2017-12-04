@@ -2,12 +2,10 @@
 
 # Socket addresses of the master and logger (IPv4 only)
 # MASTER_SOCKET="--master-socket tcp://*:5556"
-# LOGGER_SOCKET="--log-socket tcp://*:5555"
 
 # Socket addresses of the master and logger (IPv4 and IPv6)
 # IPV6="--ipv6"
 # MASTER_SOCKET="--master-socket tcp://[::]:5556"
-# LOGGER_SOCKET="--log-socket tcp://[::]:5555"
 
 # Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
 # LOGLEVEL="DEBUG"

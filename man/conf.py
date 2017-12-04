@@ -207,10 +207,6 @@ intersphinx_mapping = {'http://docs.python.org/': None}
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('lava-daemon', 'lava-daemon', u'run the LAVA scheduler as a daemon',
-     [u'Linaro Validation Team'], 1),
     ('lava-server', 'lava-server', u'lava-server command line support',
-     [u'Linaro Validation Team'], 1),
-    ('lava-master', 'lava-master', u'run the LAVA master dispatcher as a daemon',
      [u'Linaro Validation Team'], 1),
 ]

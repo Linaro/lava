@@ -20,9 +20,10 @@ import os
 import subprocess
 
 from django.core.checks import Debug, Error, register
-
+from django.db.models import Q
 from lava_scheduler_app.models import Device, validate_job
 from lava_scheduler_app.schema import SubmissionException
+# pylint: disable=unused-argument,missing-docstring,invalid-name
 
 
 @register(deploy=True)
@@ -62,7 +63,7 @@ def check_health_checks(app_configs, **kwargs):
 def check_device_configuration(app_configs, **kwargs):
     errors = []
 
-    for device in Device.objects.filter(is_pipeline=True):
+    for device in Device.objects.filter(Q(is_pipeline=True), ~Q(status=Device.RETIRED)):
         if not device.is_valid():
             errors.append(Error('Invalid configuration', obj=device.hostname))
 
@@ -95,8 +96,27 @@ def check_packaging(app_configs, **kwargs):
     _package_symlinks("lava_dispatcher", errors)
     _package_symlinks("lava_results_app", errors)
     _package_symlinks("lava_scheduler_app", errors)
-    _package_symlinks("lava_scheduler_daemon", errors)
     _package_symlinks("lava_server", errors)
     _package_symlinks("", errors)
 
+    return errors
+
+
+@register(deploy=True)
+def check_services(app_configs, **kwargs):
+
+    errors = []
+    services = [
+        'lava-server-gunicorn',
+        'lava-master',
+        'lava-slave',
+        'lava-publisher',
+        'lava-logs',
+    ]
+
+    for service in services:
+        try:
+            subprocess.check_call(['systemctl', '-q', 'is-active', service])
+        except subprocess.CalledProcessError:
+            errors.append(Error("%s service is not active." % service, obj="lava service"))
     return errors

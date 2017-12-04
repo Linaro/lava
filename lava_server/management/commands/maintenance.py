@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Disable the internal loggers
-        logging.getLogger('dispatcher-master').disabled = True
+        logging.getLogger('lava-master').disabled = True
         logging.getLogger('lava_scheduler_app').disabled = True
         # Find the user
         try:

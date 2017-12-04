@@ -2,6 +2,7 @@ import os
 import logging
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
@@ -13,7 +14,6 @@ from lava_scheduler_app.models import (
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
-from markupsafe import escape
 
 
 # The query_set is based in the view, so split that into a View class
@@ -441,11 +441,7 @@ class DeviceHealthTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
-    {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
-    {% endif %}
     ''')
     health_status = tables.Column()
     last_report_time = tables.DateColumn(
@@ -508,7 +504,7 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = DeviceType
         exclude = [
-            'display', 'disable_health_check', 'health_check_job', 'owners_only',
+            'display', 'disable_health_check', 'owners_only',
             'architecture', 'health_denominator', 'health_frequency',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
@@ -530,11 +526,7 @@ class DeviceTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
-    {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
-    {% endif %}
     ''')
     device_type = tables.Column()
     status = ExpandedStatusColumn("status")
@@ -592,22 +584,29 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
         self.show_help = True
 
     hostname = tables.TemplateColumn('''
-    {% if record.is_master %}
-    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
-    {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    {% endif %}
     ''')
 
-    is_master = tables.Column()
+    def render_state(self, record):
+        if record.state == Worker.STATE_ONLINE:
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_state_display())
+        elif record.health == Worker.HEALTH_ACTIVE:
+            return mark_safe('<span class="glyphicon glyphicon-fire text-danger"></span> %s' % record.get_state_display())
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_state_display())
+
+    def render_health(self, record):
+        if record.health == Worker.HEALTH_ACTIVE:
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_health_display())
+        elif record.health == Worker.HEALTH_MAINTENANCE:
+            return mark_safe('<span class="glyphicon glyphicon-wrench text-warning"></span> %s' % record.get_health_display())
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
-        exclude = [
-            'rpc2_url', 'display'
-        ]
         sequence = [
-            'hostname', 'description', 'is_master'
+            'hostname', 'state', 'health', 'description'
         ]
 
 
@@ -832,6 +831,6 @@ class RunningTable(LavaTable):
             'name', 'reserved', 'running', 'jobs'
         ]
         exclude = [
-            'display', 'disable_health_check', 'health_check_job', 'owners_only', 'architecture',
+            'display', 'disable_health_check', 'owners_only', 'architecture',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]

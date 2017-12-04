@@ -22,6 +22,7 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 from lava_scheduler_app.dbutils import (
     testjob_submission,
     find_device_for_job,
+    initiate_health_check_job,
     end_job,
 )
 from lava_scheduler_app.schema import (
@@ -757,6 +758,54 @@ class TestPipelineSubmit(TestCaseWithFactory):
         include_data = {'key': 'value'}
         job_data = include_yaml(job_data, include_data)
         self.assertEqual(job_data['key'], 'value')
+
+
+class TestExtendsSubmit(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestExtendsSubmit, self).setUp()
+        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
+        Device.HEALTH_CHECK_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'health-checks')
+        self.factory = YamlFactory()
+        self.device_type = self.factory.make_device_type(name='juno-r2')
+        self.factory.make_device(device_type=self.device_type, hostname="juno-r2-uboot-01")
+        self.factory.make_device(device_type=self.device_type, hostname="juno-r2-01")
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        logger = logging.getLogger('lava_scheduler_app')
+        logger.disabled = True
+        logger.propagate = False
+        logger = logging.getLogger('lava-master')
+        logging.disable(logging.DEBUG)
+        logger.disabled = True
+        logger.propagate = False
+
+    def test_health_checks_extends(self):
+        device1 = Device.objects.get(hostname='juno-r2-uboot-01')
+        self.assertIsNotNone(Device.CONFIG_PATH)
+        self.assertIsNotNone(device1.load_configuration(output_format='raw'))
+        self.assertEqual('juno-r2-uboot', device1.get_extends())
+        self.assertIsNotNone(device1.HEALTH_CHECK_PATH)
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    Device.HEALTH_CHECK_PATH, "%s.yaml" % device1.get_extends())))
+        self.assertIsNotNone(initiate_health_check_job(device1))
+
+    def test_health_checks_dbname(self):
+        device2 = Device.objects.get(hostname='juno-r2-01')
+        self.assertIsNotNone(device2.load_configuration(output_format='raw'))
+        self.assertEqual('juno', device2.get_extends())
+        self.assertIsNotNone(device2.HEALTH_CHECK_PATH)
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    Device.HEALTH_CHECK_PATH, "%s.yaml" % device2.get_extends())))
+        # device_type specified in the job does not exist in the database
+        self.assertIsNone(initiate_health_check_job(device2))
+
+        device_type = self.factory.make_device_type(name='juno')
+        self.factory.make_device(device_type=device_type, hostname="juno-01")
+        self.assertIsNotNone(initiate_health_check_job(device2))
 
 
 class TestYamlMultinode(TestCaseWithFactory):

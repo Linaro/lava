@@ -162,6 +162,37 @@ class QueryMaterializedView(MaterializedView):
         return QueryMaterializedView.objects.all()
 
 
+class BugLink(models.Model):
+
+    class Meta:
+        unique_together = (('object_id', 'url', 'content_type'))
+
+    url = models.URLField(
+        max_length=1024,
+        blank=False,
+        null=False,
+        verbose_name=_(u"Bug Link URL"),
+    )
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def log_admin_entry(self, user, reason):
+        buglink_ct = ContentType.objects.get_for_model(BugLink)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=buglink_ct.pk,
+            object_id=self.pk,
+            object_repr=unicode(self),
+            action_flag=ADDITION,
+            change_message=reason
+        )
+
+    def __unicode__(self):
+        return unicode(self.url)
+
+
 class TestSuite(models.Model, Queryable):
     """
     Result suite of a pipeline job.
@@ -378,6 +409,8 @@ class TestCase(models.Model, Queryable):
         auto_now=True
     )
 
+    buglinks = fields.GenericRelation(BugLink)
+
     @property
     def action_metadata(self):
         if not self.metadata:
@@ -559,7 +592,7 @@ class MetaType(models.Model):
         """
         Return the section_name to lookup metadata for the associated action.
         """
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         section = action_data['section']
         level = action_data['level'].split('.')[0]
         name = action_data['name']
@@ -946,7 +979,7 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct().order_by(*order_by).extra(select={
+            **filters).distinct('id').order_by(*order_by).extra(select={
                 '%s_ptr_id' % content_type.model:
                 '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
@@ -1718,34 +1751,3 @@ class ChartQueryUser(models.Model):
     is_delta = models.BooleanField(
         default=False,
         verbose_name='Delta reporting')
-
-
-class BugLink(models.Model):
-
-    class Meta:
-        unique_together = (('object_id', 'url', 'content_type'))
-
-    url = models.URLField(
-        max_length=1024,
-        blank=False,
-        null=False,
-        verbose_name=_(u"Bug Link URL"),
-    )
-
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = fields.GenericForeignKey('content_type', 'object_id')
-
-    def log_admin_entry(self, user, reason):
-        buglink_ct = ContentType.objects.get_for_model(BugLink)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=buglink_ct.pk,
-            object_id=self.pk,
-            object_repr=unicode(self),
-            action_flag=ADDITION,
-            change_message=reason
-        )
-
-    def __unicode__(self):
-        return unicode(self.url)

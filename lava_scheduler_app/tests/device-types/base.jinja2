@@ -71,9 +71,14 @@ constants:
      # BOOT_MESSAGE
      boot-message: '{{ boot_message | default("Booting Linux") }}'
 
-     # CPU reset message
-     # CPU_RESET_MESSAGE
-     cpu-reset-message: '{{ cpu_reset_message | default("Resetting CPU") }}'
+     # CPU reset messages
+     # CPU_RESET_MESSAGES
+     cpu-reset-messages:
+       - 'Resetting CPU'
+       - 'Must RESET board to recover'
+{% if extra_cpu_reset_message %}
+       - '{{ extra_cpu_reset_message }}'
+{% endif -%}
 
      # Default shell prompt for AutoLogin
      # DEFAULT_SHELL_PROMPT

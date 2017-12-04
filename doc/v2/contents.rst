@@ -14,6 +14,8 @@ overview to help you know where to look for particular help.
 * :ref:`contents_first_steps_installing` - if you are starting with a
   fresh installation or running your own instance, start here.
 
+* :ref:`getting_support`
+
 ========================================================================
 
 * :ref:`contents_lava_ci` - this section explains the design goals
@@ -58,6 +60,10 @@ overview to help you know where to look for particular help.
   LAVA.
 
 ========================================================================
+
+.. # FIXME: remove link in 2018.1
+
+.. seealso:: :ref:`v1_removal`
 
 .. toctree::
    :maxdepth: 1
@@ -179,6 +185,7 @@ LAVA administration guide
    vland-admin
    pipeline-debug
    lava-tool-issues
+   v1removal
 
 .. _contents_integration_guide:
 

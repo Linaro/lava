@@ -87,7 +87,7 @@ class TestCaseWithFactory(DjangoTestCase):
         self.device_type = self.factory.make_device_type()
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
         self.user = self.factory.make_user()
-        logger = logging.getLogger('dispatcher-master')
+        logger = logging.getLogger('lava-master')
         logger.disabled = True
 
 

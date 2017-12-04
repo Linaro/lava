@@ -23,11 +23,12 @@ These instructions cover installation on Debian. The supported versions are:
 | Debian        | Jessie (oldstable)     | 8.0    | Yes [#f3]_           |
 +---------------+------------------------+--------+----------------------+
 
-Debian uses codenames for releases (stretch, buster, jessie, wheezy, squeeze)
-and names for `suites`_ (unstable, testing, stable & oldstable). When a new
-Debian major release is made, the packages in "testing" are frozen and become
-the new "stable". A new codename is chosen for the new "testing" suite, and
-that will be the name for the next major release in the cycle.
+Debian uses codenames for releases (buster, stretch, jessie, wheezy,
+squeeze) and names for `suites`_ (unstable, testing, stable &
+oldstable). When a new Debian major release is made, the packages in
+"testing" are frozen and become the new "stable". A new codename is
+chosen for the new "testing" suite, and that will be the name for the
+next major release in the cycle.
 
 To allow the table to refer to the same package versions consistently over
 time, codenames are used here. When a Debian release is made, a new codename is
@@ -232,12 +233,34 @@ can be disabled using::
  $ sudo a2dismod proxy
  $ sudo a2dismod proxy_http
 
+.. _installation_configuration:
+
+Configuring the installation
+============================
+
+If the installation uses ``http://localhost``, the remaining configuration is to
+disable some of the Django security checks which expect ``https``.
+
+.. seealso:: :ref:`check_instance`
+
+If the installation uses a remote slave, then :ref:`zmq_curve` should be enabled.
+
+The configuration defaults of ``lava-master``, ``lava-logs`` and ``lava-slave``
+should also be checked. On the master, these files can often be the same content:
+
+* ``/etc/default/lava-master`` or ``/etc/lava-server/lava-master``
+* ``/etc/default/lava-logs`` or ``/etc/lava-server/lava-logs``
+
+Each master has a local ``lava-slave`` even if that slave has no devices configured.
+
+* ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
+
 .. index:: tftpd-hpa
 
 .. _tftp_support:
 
 TFTP support requirement
-------------------------
+========================
 
 LAVA uses :term:`tftp` to serve files to a variety of device types.
 
@@ -291,27 +314,28 @@ useful on some instances.
 Installing on Debian Stretch
 ============================
 
-Debian Stretch is due to be released on June 17th, 2017, containing a full set
-of packages to install LAVA at version 2016.12. Debian stable releases of LAVA
-do not receive updates to LAVA directly, so a simple install on Stretch will
-only get you ``2016.12``. All admins of LAVA instances are **strongly** advised
-to update all software on the instance on a regular basis to receive security
-updates to the base system.
+Debian Stretch was released on June 17th, 2017, containing a full set
+of packages to install LAVA at version 2016.12. Debian stable releases
+of LAVA do not receive updates to LAVA directly, so a simple install
+on Stretch will only get you ``2016.12``. All admins of LAVA instances
+are **strongly** advised to update all software on the instance on a
+regular basis to receive security updates to the base system.
 
-For packages which need larger changes, the official Debian method is to
-provide those updates using ``backports``. Backports **do not install
-automatically** even after the apt source is added - this is because backports
-are rebuilt from the current ``testing`` suite, so automatic upgrades would
-move the base system to testing as well. Instead, the admin selects which
-backported packages to add to the base stable system. Only those packages (and
-dependencies, if not available in stable already) will then be installed from
-backports.
+For packages which need larger changes, the official Debian method is
+to provide those updates using ``backports``. Backports **do not
+install automatically** even after the apt source is added - this is
+because backports are rebuilt from the current ``testing`` suite, so
+automatic upgrades would move the base system to testing as
+well. Instead, the admin selects which backported packages to add to
+the base stable system. Only those packages (and dependencies, if not
+available in stable already) will then be installed from backports.
 
-The ``lava-server`` backports and dependencies are **fully supported** by the
-LAVA software team and admins of **all** LAVA instances need to update the base
-``2016.12`` to the version available in current backports. Subscribe to the
-:ref:`lava_announce` mailing list for details of when new releases are made.
-Backports will be available about a week after the initial release.
+The ``lava-server`` backports and dependencies are **fully supported**
+by the LAVA software team and admins of **all** LAVA instances need to
+update the base ``2016.12`` to the version available in current
+backports. Subscribe to the :ref:`lava_announce` mailing list for
+details of when new releases are made. Backports will be available
+about a week after the initial release.
 
 Updates for LAVA on Debian Stretch will be uploaded to `stretch-backports
 <http://backports.debian.org/>`_ once this becomes available.
@@ -320,7 +344,7 @@ Create an apt source for backports, either by editing ``/etc/apt/sources.list``
 or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.
 Create a line like the one below (using your preferred Debian mirror)::
 
- deb http://http.debian.net/debian stretch-backports main
+ deb http://deb.debian.org/debian stretch-backports main
 
 Remember to update your apt cache whenever add a new apt source::
 
@@ -376,7 +400,7 @@ Create an apt source for backports, either by editing ``/etc/apt/sources.list``
 or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.
 Create a line like the one below (using your preferred Debian mirror)::
 
- deb http://http.debian.net/debian jessie-backports main
+ deb http://deb.debian.org/debian jessie-backports main
 
 Remember to update your apt cache whenever add a new apt source::
 

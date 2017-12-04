@@ -1,0 +1,108 @@
+device_type: hi6220-hikey
+job_name: HiKey OE
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+# run udhcpc in the test shell before accessing the internet
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: hikey-oe.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-hikey-oe
+    template: debian
+    distribution: debian
+    release: jessie
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 15
+    to: lxc
+    packages:
+    - android-tools-fastboot
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'hikey:/'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 30
+    to: fastboot
+    namespace: hikey-oe
+    connection: lxc
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/bootloader/ptable-linux-8g.img
+        reboot: hard-reset
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20170713193031-83.uefi.img
+        reboot: hard-reset
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/rpb-console-image-hikey-20170808001820-83.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+        # ensure that this job raises a network interface with DHCP before relying on internet access
+    os: oe
+    protocols:
+        lava-lxc:
+        - action: fastboot-deploy
+          request: pre-power-command
+          timeout:
+              minutes: 2
+
+- boot:
+    namespace: hikey-oe
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@hikey:~#'
+    timeout:
+      minutes: 5
+    method: uefi-menu
+    commands: fastboot
+    protocols:
+      lava-lxc:
+      # other action could be boot-fastboot
+      - action: uefi-commands
+        request: pre-os-command
+        timeout:
+          minutes: 2
+
+- test:
+    namespace: hikey-oe
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-oe
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-ubuntu

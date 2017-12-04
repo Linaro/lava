@@ -6,6 +6,10 @@ set -e
 echo "Checking pep8"
 pep8 --ignore E501,E722 .
 
+echo "Removing old .pyc files"
+echo
+find . -name '*.pyc' -delete
+
 if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
   echo "If it exists, a broken test database will be deleted without prompting."
   NOINPUT='--noinput -v2'
@@ -18,7 +22,6 @@ fi
 if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
   ./lava_server/manage.py test $NOINPUT $VERBOSE \
 	lava_scheduler_app \
-	lava_scheduler_daemon \
 	linaro_django_xmlrpc.tests \
 	lava_results_app
 else

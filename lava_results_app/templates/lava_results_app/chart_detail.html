@@ -107,8 +107,7 @@
   <div id="{{ chart_query.id }}" class="sortable-placeholder">
     <div class="chart-title">
       <a href="{{ chart_query.query.get_absolute_url }}">{{ chart_query.query.owner_name }}</a>
-      <a class="chart-title-link" href="{% url 'lava.results.chart_query_remove'
-      chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
+      <a class="chart-title-link" href="{% url 'lava.results.chart_query_remove' chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
         remove
       </a>
       <a class="chart-title-link" href="{{ chart_query.get_absolute_url }}">

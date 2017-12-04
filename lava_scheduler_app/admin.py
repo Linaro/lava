@@ -286,7 +286,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {
-            'fields': ('description', 'tags', 'sub_id', 'target_group', 'vm_group')}),
+            'fields': ('description', 'tags', 'sub_id', 'target_group')}),
         ('Current status', {
             'fields': ('actual_device', 'status')}),
         ('Results & Failures', {
@@ -371,28 +371,9 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
-# API defined by django admin
-def hide_worker_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for worker in queryset.filter(display=True):
-        worker.display = False
-        worker.save()
-
-
-hide_worker_action.short_description = "Hide selected worker(s)"
-
-
-def show_worker_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for worker in queryset.filter(display=False):
-        worker.display = True
-        worker.save()
-
-
-show_worker_action.short_description = "Show selected worker(s)"
-
-
 class WorkerAdmin(admin.ModelAdmin):
-    actions = [hide_worker_action, show_worker_action]
-    list_display = ('hostname', 'display', 'is_master')
+    list_display = ('hostname', 'state', 'health')
+    readonly_fields = ('state', )
     ordering = ['hostname']
 
 

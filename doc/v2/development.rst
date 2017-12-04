@@ -627,8 +627,8 @@ for different versions and separate with:
 Database migrations
 *******************
 
-LAVA recommends Debian Jessie but also supports testing and unstable which have
-a newer version of `python-django
+The LAVA team recommend using Debian stable but also support testing
+and unstable which have a newer version of `python-django
 <https://tracker.debian.org/pkg/python-django>`_.
 
 Database migrations on Debian Jessie and later are managed within django.

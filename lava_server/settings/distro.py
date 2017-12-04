@@ -162,7 +162,7 @@ BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images
 BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
-BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", "https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework")
+BRANDING_BUG_URL = distro_settings.get_setting("BRANDING_BUG_URL", STATIC_URL + "docs/v2/development-intro.html#report-a-bug")
 BRANDING_SOURCE_URL = distro_settings.get_setting("BRANDING_SOURCE_URL", "https://git.linaro.org/lava")
 BRANDING_MESSAGE = distro_settings.get_setting("BRANDING_MESSAGE", '')
 

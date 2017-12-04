@@ -48,7 +48,16 @@ the master in each LAVA instance.
      # MASTER_URL="tcp://<lava-master-dns>:5556"
      # LOGGER_URL="tcp://<lava-master-dns>:5555"
 
-     # Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+     # Enable IPv6 to connect to the master and logger
+     # IPV6="--ipv6"
+
+     # Slave hostname
+     # Should be set for host that have random hostname (containers, ...)
+     # The hostname can be any unique string, except "lava-logs" which is reserved
+     # for the lava-logs daemon.
+     # HOSTNAME="--hostname <hostname.fqdn>"
+
+     # Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)
      # LOGLEVEL="DEBUG"
 
      # Encryption
@@ -143,6 +152,9 @@ Workers are enabled or disabled in the Django admin interface by changing the
 fail, so it is also recommended that the devices would be made offline at the
 same time. (The django admin interface has support for selecting devices by
 worker and taking all selected devices offline in a single action.)
+
+.. note:: *lava-logs* is a reserved hostname. Any worker connecting with that
+          hostname will be rejected by lava-master.
 
 .. seealso:: :ref:`create_device_database`
 
@@ -296,12 +308,12 @@ message showing that encryption has been enabled on the master. e.g.
 .. code-block:: none
 
  2016-04-26 10:08:56,303 LAVA Daemon: lava-server manage --instance-template=/etc/lava-server/{{filename}}.conf
-  --instance=playground dispatcher-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
+  --instance=playground lava-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
   --slaves-certs /etc/lava-dispatcher/certificates.d pid: 17387
  2016-04-26 09:08:58,410 INFO Starting encryption
  2016-04-26 09:08:58,411 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key_secret
  2016-04-26 09:08:58,411 DEBUG Using slaves certificates from: /etc/lava-dispatcher/certificates.d
- 2016-04-26 09:08:58,411 INFO [INIT] LAVA dispatcher-master has started.
+ 2016-04-26 09:08:58,411 INFO [INIT] LAVA master has started.
 
 Now restart each slave in turn and watch for equivalent messages in the logs:
 

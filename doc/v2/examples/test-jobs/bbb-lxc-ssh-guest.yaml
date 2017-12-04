@@ -177,7 +177,6 @@ actions:
         run:
           steps:
           - ntpdate-debian
-          - lava-network broadcast eth0
           # messageID matches, message_key as the key.
           - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
           - lava-send lava_start
