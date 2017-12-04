@@ -7,7 +7,6 @@ import logging
 import os
 import simplejson
 import datetime
-import urllib2
 import re
 import sys
 
@@ -102,6 +101,13 @@ from lava_scheduler_app.tables import (
     PassingHealthTable,
     RunningTable,
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib2 import urlopen
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.request import urlopen
 
 # pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
@@ -1736,7 +1742,7 @@ def get_remote_definition(request):
     url = request.POST.get("url")
 
     try:
-        data = urllib2.urlopen(url).read()
+        data = urlopen(url).read()
         # Validate that the data at the location is really JSON or YAML.
         # This is security based check so noone can misuse this url.
         yaml.load(data)

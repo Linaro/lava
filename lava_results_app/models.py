@@ -29,7 +29,7 @@ TestCase is a single lava-test-case record or Action result.
 """
 
 import logging
-import urllib
+import sys
 import yaml
 
 from datetime import timedelta
@@ -62,6 +62,13 @@ from lava_scheduler_app.managers import (
 )
 
 from lava_results_app.utils import help_max_length
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib import quote
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.parse import quote
 
 
 class InvalidConditionsError(Exception):
@@ -309,7 +316,7 @@ class TestSet(models.Model):
     )
 
     def get_absolute_url(self):
-        return urllib.quote("/results/%s/%s/%s" % (
+        return quote("/results/%s/%s/%s" % (
             self.suite.job.id,
             self.suite.name,
             self.name

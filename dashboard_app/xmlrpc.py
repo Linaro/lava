@@ -23,7 +23,6 @@ XMP-RPC API
 import datetime
 import logging
 import re
-import urllib2
 import xmlrpclib
 import hashlib
 import json

@@ -7,8 +7,6 @@ import os
 import re
 import uuid
 import simplejson
-import urllib
-import urllib2
 import smtplib
 import socket
 import sys
@@ -54,6 +52,15 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.schema import validate_device
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib2 import urlopen, Request
+    from urllib import urlencode
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.request import urlopen, Request
+    from urllib.parse import urlencode
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
@@ -2641,14 +2648,14 @@ class Notification(models.Model):
                 callback_data = json.dumps(callback_data)
                 headers['Content-Type'] = 'application/json'
             else:
-                callback_data = urllib.urlencode(callback_data)
+                callback_data = urlencode(callback_data)
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         if self.callback_url:
             try:
                 logger.info("Sending request to callback_url %s" % self.callback_url)
-                request = urllib2.Request(self.callback_url, callback_data, headers)
-                urllib2.urlopen(request)
+                request = Request(self.callback_url, callback_data, headers)
+                urlopen(request)
 
             except Exception as ex:
                 logger.warning("Problem sending request to %s: %s" % (

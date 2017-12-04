@@ -20,9 +20,10 @@
 # pylint: disable=too-many-return-statements,ungrouped-imports
 import os
 import yaml
-import urllib
+import sys
 import logging
 import decimal
+
 from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
     TestSuite,
@@ -35,6 +36,13 @@ from lava_results_app.models import (
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.action import Timeout
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib import quote
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.parse import quote
 
 
 def _check_for_testset(result_dict, suite):
@@ -49,7 +57,7 @@ def _check_for_testset(result_dict, suite):
     testset = None
     if 'set' in result_dict:
         set_name = result_dict['set']
-        if set_name != urllib.quote(set_name):
+        if set_name != quote(set_name):
             msg = "Invalid testset name '%s', ignoring." % set_name
             suite.job.set_failure_comment(msg)
             logger.warning(msg)
