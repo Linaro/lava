@@ -13,8 +13,9 @@ https://staging.validation.linaro.org/static/docs/v2/support.html
 Reporting Bugs
 ==============
 
-All bugs should be reported to Linaro at - 
-https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+All bugs should be reported to Linaro by subscribing to the
+lava-users mailing list.
+https://lists.linaro.org/mailman/listinfo/lava-users
 
 LAVA features are planned using JIRA:
 https://projects.linaro.org/projects/LAVA
