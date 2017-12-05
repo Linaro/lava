@@ -18,6 +18,14 @@ def get_item(dictionary, key):
     return dictionary.get(key)
 
 
+@register.filter
+def udecode(obj):
+    try:
+        return obj.decode("utf-8", errors="replace")
+    except AttributeError:
+        return obj
+
+
 # Compile it only once
 action_id_regexp = re.compile(r'^start: ([\d.]+) [\w_-]+ ')
 

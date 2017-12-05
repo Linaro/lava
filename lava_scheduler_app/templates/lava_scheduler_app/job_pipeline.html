@@ -293,14 +293,14 @@
       <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
           {% else %}
             {% get_action_id line.msg as act_id %}
-      <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg }}</code>
+      <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg|udecode }}</code>
           {% endif %}
         {% elif line.lvl == "input" %}
-      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg }}</kbd></code>
+      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg|udecode }}</kbd></code>
         {% elif line.lvl == "target" %}
-      <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+      <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% elif line.lvl == "feedback" %}
-      <code class="feedback" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+      <code class="feedback" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% elif line.lvl == "results" %}
             {% if line.msg.set %}
               {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
@@ -324,10 +324,10 @@
         {% endfor %}
         </a></code>
         {% elif line.lvl == "error" or line.lvl == "exception" %}
-      <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg }}</code>
+      <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% else %}
           {% get_action_id line.msg as act_id %}
-      <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg }}</code>
+      <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% endif %}
       {% endfor %}
       {% if job.status <= job.RUNNING or job.status == job.CANCELING %}

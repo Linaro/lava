@@ -1064,17 +1064,6 @@ def job_submit(request):
         return HttpResponse(template.render(response_data, request=request))
 
 
-def remove_broken_string(line):
-    # Check that the string is valid unicode.
-    # This is not needed for python3.
-    try:
-        line['msg'].encode('utf-8')
-    except AttributeError:
-        pass
-    except UnicodeDecodeError:
-        line['msg'] = '<<lava: broken line>>'
-
-
 @BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
@@ -1175,10 +1164,6 @@ def job_detail(request, pk):
                             "id", flat=True)
                     if case_id:
                         line["msg"]["case_id"] = case_id[0]
-
-            if sys.version_info < (3, 0):
-                for line in log_data:
-                    remove_broken_string(line)
 
         except IOError:
             log_data = []
