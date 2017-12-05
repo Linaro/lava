@@ -83,7 +83,6 @@ class SecondaryConnections(TestCaseWithFactory):
                 )
                 self.assertIsNone(job.requested_device_type)
                 self.assertIsNone(job.actual_device)
-                self.assertIsNone(job.requested_device)
                 host_role.append(data['host_role'])
 
         self.assertFalse(any(role for role in host_role if role != 'host'))

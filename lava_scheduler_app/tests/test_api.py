@@ -4,7 +4,6 @@ import yaml
 import json
 import logging
 import unittest
-from django.test import TransactionTestCase
 from django.test.client import Client
 from django.contrib.auth.models import Permission, User
 from django.utils import timezone
@@ -17,11 +16,6 @@ from lava_scheduler_app.models import (
     Alias,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
-from lava_scheduler_app.dbutils import (
-    testjob_submission, get_job_queue,
-    find_device_for_job,
-    get_available_devices,
-)
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 # pylint: disable=invalid-name
 
@@ -101,16 +95,9 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         device.save()
         server = self.server_proxy('test', 'test')
         self.assertEqual(
-            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
+            {'status': 'Idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
                 'offline_by': None, 'is_pipeline': False},
             server.scheduler.get_device_status('black01'))
-        offline_device = self.factory.make_device(device_type=device_type, hostname="black02", status=Device.OFFLINE)
-        offline_device.save()
-        self.assertEqual(
-            {'status': 'offline', 'job': None, 'offline_since': '', 'hostname': 'black02',
-                'offline_by': '', 'is_pipeline': False},
-            server.scheduler.get_device_status('black02')
-        )
 
     def test_type_aliases(self):
         aliases = DeviceType.objects.filter(aliases__name__contains='black')
@@ -132,64 +119,6 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             'black': [dt.name for dt in aliases]
         }
         self.assertEqual(retval, {'black': []})
-
-    # comment out the decorator to run this queue timing test
-    @unittest.skip('Developer only - timing test')
-    def test_queueing(self):
-        """
-        uses stderr to avoid buffered prints
-        Expect the test itself to take <30s and
-        the gap between jobs submitted and end being ~500ms
-        Most of the time is spent setting up the database
-        and submitting all the test jobs.
-        """
-        sys.stderr.write(timezone.now(), "start")
-        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
-        user.user_permissions.add(
-            Permission.objects.get(codename='add_testjob'))
-        user.save()
-        device_type = self.factory.make_device_type('beaglebone-black')
-        device = self.factory.make_device(device_type=device_type, hostname="black01")
-        device.save()
-        device_type = self.factory.make_device_type('wandboard')
-        count = 1
-        while count < 100:
-            suffix = "{:02d}".format(count)
-            device = self.factory.make_device(device_type=device_type, hostname="imx6q-%s" % suffix)
-            device.save()
-            count += 1
-        sys.stderr.write(timezone.now(), "%d dummy devices created" % count)
-        device_list = list(get_available_devices())
-        sys.stderr.write(timezone.now(), "%d available devices" % len(device_list))
-        filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'master-check.json')
-        self.assertTrue(os.path.exists(filename))
-        with open(filename, 'r') as json_file:
-            definition = json_file.read()
-        count = 0
-        # each 1000 more can take ~15s in the test.
-        while count < 1000:
-            # simulate API submission
-            job = testjob_submission(definition, user)
-            self.assertFalse(job.health_check)
-            count += 1
-        sys.stderr.write(timezone.now(), "%d jobs submitted" % count)
-        jobs = list(get_job_queue())
-        self.assertIsNotNone(jobs)
-        sys.stderr.write(timezone.now(), "Finding devices for jobs.")
-        for job in jobs:
-            # this needs to stay as a tight loop to cope with load
-            device = find_device_for_job(job, device_list)
-            if device:
-                sys.stderr.write(timezone.now(), "[%d] allocated %s" % (job.id, device))
-                device_list.remove(device)
-        sys.stderr.write(timezone.now(), "end")
-
-
-class TransactionTestCaseWithFactory(TransactionTestCase):
-
-    def setUp(self):
-        TransactionTestCase.setUp(self)
-        self.factory = ModelFactory()
 
 
 class TestVoluptuous(unittest.TestCase):

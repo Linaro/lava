@@ -6,11 +6,11 @@ import sys
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.db import transaction
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    DeviceStateTransition,
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
@@ -54,6 +54,36 @@ def check_superuser(f):
             )
         return f(self, *args, **kwargs)
     return wrapper
+
+
+def build_job_status_display(state, health):
+    if state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
+        return "Submitted"
+    elif state == TestJob.STATE_RUNNING:
+        return "Running"
+    elif state == TestJob.STATE_CANCELING:
+        return "Canceling"
+    else:
+        if health == TestJob.HEALTH_COMPLETE:
+            return "Complete"
+        elif health in [TestJob.HEALTH_UNKNOWN, TestJob.HEALTH_INCOMPLETE]:
+            return "Incomplete"
+        else:
+            return "Canceled"
+
+
+def build_device_status_display(state, health):
+    if state == Device.STATE_IDLE:
+        if health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]:
+            return "Idle"
+        elif health == Device.HEALTH_RETIRED:
+            return "Retired"
+        else:
+            return "Offline"
+    elif state == Device.STATE_RESERVED:
+        return "Reserved"
+    else:
+        return "Running"
 
 
 class SchedulerAPI(ExposedAPI):
@@ -163,26 +193,31 @@ class SchedulerAPI(ExposedAPI):
         if not job_id:
             raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
                                   "specified.")
-        try:
-            job = get_restricted_job(self.user, job_id)
-        except PermissionDenied:
-            raise xmlrpclib.Fault(
-                401, "Permission denied for user to job %s" % job_id)
-        except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
 
-        if job.status > TestJob.RUNNING:
-            # Don't do anything for jobs that ended already
-            return True
-        if not job.can_cancel(self.user):
-            raise xmlrpclib.Fault(403, "Permission denied.")
-        if job.is_multinode:
-            multinode_jobs = TestJob.objects.filter(
-                target_group=job.target_group)
-            for multinode_job in multinode_jobs:
-                multinode_job.cancel(self.user)
-        else:
-            job.cancel(self.user)
+        with transaction.atomic():
+            try:
+                job = get_restricted_job(self.user, job_id, for_update=True)
+            except PermissionDenied:
+                raise xmlrpclib.Fault(
+                    401, "Permission denied for user to job %s" % job_id)
+            except TestJob.DoesNotExist:
+                raise xmlrpclib.Fault(404, "Specified job not found.")
+
+            if job.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
+                # Don't do anything for jobs that ended already
+                return True
+            if not job.can_cancel(self.user):
+                raise xmlrpclib.Fault(403, "Permission denied.")
+
+            if job.is_multinode:
+                multinode_jobs = TestJob.objects.select_for_update().filter(
+                    target_group=job.target_group)
+                for multinode_job in multinode_jobs:
+                    multinode_job.go_state_canceling()
+                    multinode_job.save()
+            else:
+                job.go_state_canceling()
+                job.save()
         return True
 
     def validate_yaml(self, yaml_string):
@@ -282,18 +317,16 @@ class SchedulerAPI(ExposedAPI):
         device hostname, device type, device state, current running job id and
         if device is pipeline. For example:
 
-        [['panda01', 'panda', 'running', 164, False], ['qemu01', 'qemu', 'idle', None, True]]
+        [['panda01', 'panda', 'running', 'good', 164, False], ['qemu01', 'qemu', 'idle', 'unknwon', None, True]]
         """
 
         devices_list = []
-        for dev in Device.objects.all():
+        for dev in Device.objects.exclude(health=Device.HEALTH_RETIRED):
             if not dev.is_visible_to(self.user):
-                continue
-            if dev.status == Device.RETIRED:
                 continue
             devices_list.append(dev)
 
-        return [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None, dev.is_pipeline))
+        return [[dev.hostname, dev.device_type.name, build_device_status_display(dev.state, dev.health), dev.current_job().pk if dev.current_job() else None, dev.is_pipeline]
                 for dev in devices_list]
 
     def all_device_types(self):
@@ -404,10 +437,9 @@ class SchedulerAPI(ExposedAPI):
                 403, "DeviceType '%s' not available to user '%s'." %
                 (device_type, self.user)
             )
-        job_qs = TestJob.objects.filter(
-            status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE),
-            requested_device_type=dt)\
-            .order_by('-id')
+        job_qs = TestJob.objects.filter(state=TestJob.STATE_FINISHED) \
+                                .filter(requested_device_type=dt) \
+                                .order_by('-id')
         if restrict_to_user:
             job_qs = job_qs.filter(submitter=self.user)
         job_list = []
@@ -415,7 +447,7 @@ class SchedulerAPI(ExposedAPI):
             job_dict = {
                 "id": job.id,
                 "description": job.description,
-                "status": job.get_status_display(),
+                "status": build_job_status_display(job.state, job.health),
                 "device": job.actual_device.hostname,
             }
             if not job.can_view(self.user):
@@ -485,10 +517,9 @@ class SchedulerAPI(ExposedAPI):
                 403, "Device '%s' not available to user '%s'." %
                 (device, self.user)
             )
-        job_qs = TestJob.objects.filter(
-            status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE),
-            actual_device=device_obj)\
-            .order_by('-id')
+        job_qs = TestJob.objects.filter(state=TestJob.STATE_FINISHED) \
+                                .filter(actual_device=device_obj) \
+                                .order_by('-id')
         if restrict_to_user:
             job_qs = job_qs.filter(submitter=self.user)
         job_list = []
@@ -496,7 +527,7 @@ class SchedulerAPI(ExposedAPI):
             job_dict = {
                 "id": job.id,
                 "description": job.description,
-                "status": job.get_status_display(),
+                "status": build_job_status_display(job.state, job.health),
             }
             if not job.can_view(self.user):
                 job_dict["id"] = None
@@ -586,26 +617,15 @@ class SchedulerAPI(ExposedAPI):
         device_dict = {}
         if device.is_visible_to(self.user):
             device_dict["hostname"] = device.hostname
-            device_dict["status"] = Device.STATUS_CHOICES[device.status][1].lower()
+            device_dict["status"] = build_device_status_display(device.state, device.health)
             device_dict["job"] = None
             device_dict["offline_since"] = None
             device_dict["offline_by"] = None
             device_dict["is_pipeline"] = device.is_pipeline
 
-            if device.current_job:
-                device_dict["job"] = device.current_job.pk
-
-            if device.status == Device.OFFLINE:
-                device_dict["offline_since"] = ""
-                device_dict["offline_by"] = ""
-                try:
-                    last_transition = device.transitions.latest('created_on')
-                    if last_transition.new_state == Device.OFFLINE:
-                        device_dict["offline_since"] = str(last_transition.created_on)
-                        if last_transition.created_by:
-                            device_dict["offline_by"] = last_transition.created_by.username
-                except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
-                    pass
+            current_job = device.current_job()
+            if current_job is not None:
+                device_dict["job"] = current_job.pk
         else:
             raise xmlrpclib.Fault(
                 403, "Permission denied for user to access %s information." % hostname
@@ -648,18 +668,20 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: Reason was not specified."
             )
-        try:
-            device = Device.objects.get(hostname=hostname)
-        except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
-                404, "Device '%s' was not found." % hostname
-            )
-        if device.can_admin(self.user):
-            device.put_into_maintenance_mode(self.user, reason, notify)
-        else:
-            raise xmlrpclib.Fault(
-                403, "Permission denied for user to put %s into maintenance mode." % hostname
-            )
+        with transaction.atomic():
+            try:
+                device = Device.objects.select_for_update().get(hostname=hostname)
+            except Device.DoesNotExist:
+                raise xmlrpclib.Fault(
+                    404, "Device '%s' was not found." % hostname
+                )
+            if device.can_admin(self.user):
+                device.health = Device.HEALTH_MAINTENANCE
+                device.save()
+            else:
+                raise xmlrpclib.Fault(
+                    403, "Permission denied for user to put %s into maintenance mode." % hostname
+                )
 
     def put_into_online_mode(self, hostname, reason, skip_health_check=False):
         """
@@ -697,18 +719,20 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Bad request: Reason was not specified."
             )
-        try:
-            device = Device.objects.get(hostname=hostname)
-        except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
-                404, "Device '%s' was not found." % hostname
-            )
-        if device.can_admin(self.user):
-            device.put_into_online_mode(self.user, reason, skip_health_check)
-        else:
-            raise xmlrpclib.Fault(
-                403, "Permission denied for user to put %s into online mode." % hostname
-            )
+        with transaction.atomic():
+            try:
+                device = Device.objects.select_for_update().get(hostname=hostname)
+            except Device.DoesNotExist:
+                raise xmlrpclib.Fault(
+                    404, "Device '%s' was not found." % hostname
+                )
+            if device.can_admin(self.user):
+                device.health = Device.HEALTH_UNKNOWN
+                device.save()
+            else:
+                raise xmlrpclib.Fault(
+                    403, "Permission denied for user to put %s into online mode." % hostname
+                )
 
     def pending_jobs_by_device_type(self):
         """
@@ -735,9 +759,9 @@ class SchedulerAPI(ExposedAPI):
 
         pending_jobs_by_device = {}
 
-        jobs_res = TestJob.objects.filter(status=TestJob.SUBMITTED)\
-            .values_list('requested_device_type_id')\
-            .annotate(pending_jobs=(Count('id')))
+        jobs_res = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED) \
+                                  .values_list('requested_device_type_id')\
+                                  .annotate(pending_jobs=(Count('id')))
         jobs = {}
         jobs_hash = dict(jobs_res)
         for job in jobs_hash:
@@ -774,14 +798,13 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
 
         The elements available in XML-RPC structure include:
-        _results_link, _state, submitter_id, submit_token_id, is_pipeline,
-        id, failure_comment, multinode_definition, user_id,
-        priority, _actual_device_cache, original_definition,
-        status, health_check, description, admin_notifications, start_time,
-        target_group, visibility, requested_device_id, pipeline_compatibility,
-        submit_time, is_public, _old_status, actual_device_id, definition,
-        sub_id, requested_device_type_id, end_time,
-        group_id, absolute_url, submitter_username
+        _results_link, _state, submitter_id, is_pipeline, id, failure_comment,
+        multinode_definition, user_id, priority, _actual_device_cache,
+        original_definition, status, health_check, description,
+        admin_notifications, start_time, target_group, visibility,
+        pipeline_compatibility, submit_time, is_public, _old_status,
+        actual_device_id, definition, sub_id, requested_device_type_id,
+        end_time, group_id, absolute_url, submitter_username
         """
         self._authenticate()
         if not job_id:
@@ -789,7 +812,7 @@ class SchedulerAPI(ExposedAPI):
                                   "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
-            job.status = job.get_status_display()
+            job.status = build_job_status_display(job.state, job.health)
             job.submitter_username = job.submitter.username
             job.absolute_url = job.get_absolute_url()
         except PermissionDenied:
@@ -849,7 +872,7 @@ class SchedulerAPI(ExposedAPI):
 
         if job.is_pipeline:
             job_status.update({
-                'job_status': job.get_status_display(),
+                'job_status': build_job_status_display(job.state, job.health),
                 'bundle_sha1': ""
             })
             return job_status
@@ -863,7 +886,7 @@ class SchedulerAPI(ExposedAPI):
                 pass
 
         job_status.update({
-            'job_status': job.get_status_display(),
+            'job_status': build_job_status_display(job.state, job.health),
             'bundle_sha1': bundle_sha1
         })
 
@@ -911,7 +934,7 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(400, "Bad request: needs to be a list of integers or floats")
         jobs = TestJob.objects.filter(
             Q(id__in=job_id_list) | Q(sub_id__in=job_id_list)).select_related(
-                'actual_device', 'requested_device', 'requested_device_type')
+                'actual_device', 'requested_device_type')
         for job in jobs:
             device_type = job.job_device_type()
             if not job.can_view(self.user) or not job.is_accessible_by(self.user) and not self.user.is_superuser:
@@ -920,41 +943,8 @@ class SchedulerAPI(ExposedAPI):
                 # do the more expensive check second and only for a hidden device type
                 if not device_type.some_devices_visible_to(self.user):
                     continue
-            job_status[str(job.display_id)] = job.get_status_display()
+            job_status[str(job.display_id)] = build_job_status_display(job.state, job.health)
         return job_status
-
-    def notify_incomplete_job(self, job_id):
-        """
-        Name
-        ----
-        `notify_incomplete_job` (`job_id`)
-
-        Description
-        -----------
-        Internal call to notify the master scheduler that a job on a remote worker
-        ended in the Incomplete state. This allows the master to send the
-        notification emails, if any. The status of the TestJob is not altered.
-
-        Arguments
-        ---------
-        The TestJob.id which ended in status Incomplete.
-
-        Return value
-        ------------
-        None. The user should be authenticated with a username and token.
-        """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
-        try:
-            job = get_restricted_job(self.user, job_id)
-        except PermissionDenied:
-            raise xmlrpclib.Fault(
-                401, "Permission denied for user to job %s" % job_id)
-        except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "TestJob with id '%s' was not found." % job_id)
-        job.send_summary_mails()
 
     def all_jobs(self):
         """
@@ -977,15 +967,14 @@ class SchedulerAPI(ExposedAPI):
         job sub_id for multinode jobs.
         For example:
 
-        [[73, 'multinode-job', 'submitted', None, None, 'kvm', '72.1'],
-        [72, 'multinode-job', 'submitted', None, None, 'kvm', '72.0'],
-        [71, 'test-job', 'running', 'kvm01', None, None, None]]
+        [[73, 'multinode-job', 'submitted', None, 'kvm', '72.1'],
+        [72, 'multinode-job', 'submitted', None, 'kvm', '72.0'],
+        [71, 'test-job', 'running', 'kvm01', None, None]]
         """
 
-        jobs = TestJob.objects.filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])\
-            .order_by('-id')
-        jobs_list = [list((job.id, job.description, TestJob.STATUS_CHOICES[job.status][1].lower(), job.actual_device, job.requested_device, job.requested_device_type, job.sub_id))
-                     for job in jobs]
+        jobs = TestJob.objects.exclude(state=TestJob.STATE_FINISHED).order_by('-id')
+        jobs_list = [[job.id, job.description, build_job_status_display(job.state, job.health),
+                      job.actual_device, job.requested_device_type, job.sub_id] for job in jobs]
 
         return jobs_list
 
@@ -1188,15 +1177,11 @@ class SchedulerAPI(ExposedAPI):
 
         """
         if not name:
-            devices = Device.objects.filter(
-                Q(is_pipeline=True) & ~Q(status=Device.RETIRED))
+            devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED)
         else:
-            devices = Device.objects.filter(
-                Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(
-                    device_type__name=name))
+            devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED).filter(device_type__name=name)
             if not devices:
-                devices = Device.objects.filter(
-                    Q(is_pipeline=True) & ~Q(status=Device.RETIRED) & Q(hostname=name))
+                devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED).filter(hostname=name)
         if not devices and name:
             raise xmlrpclib.Fault(
                 404,

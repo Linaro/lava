@@ -129,7 +129,7 @@ def testjob(request, job):
         # some duplicates can exist, so get would fail here and [0] is quicker than try except.
         testdata = TestData.objects.filter(
             testjob=job).prefetch_related('actionlevels__testcase', 'actionlevels__testcase__suite')[0]
-        if job.status in [TestJob.INCOMPLETE, TestJob.COMPLETE]:
+        if job.state == TestJob.STATE_FINISHED:
             # returns something like ['singlenode-advanced', 'smoke-tests-basic', 'smoke-tests-basic']
             executed = [
                 {

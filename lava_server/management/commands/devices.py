@@ -25,6 +25,7 @@ from django.core.management.base import (
     CommandError,
     CommandParser
 )
+from django.db import transaction
 
 from lava_scheduler_app.models import (
     Device,
@@ -36,6 +37,20 @@ from lava_scheduler_app.models import (
 
 class Command(BaseCommand):
     help = "Manage devices"
+
+    device_state = {
+        "IDLE": Device.STATE_IDLE,
+        "RESERVED": Device.STATE_RESERVED,
+        "RUNNING": Device.STATE_RUNNING
+    }
+    device_health = {
+        "GOOD": Device.HEALTH_GOOD,
+        "UNKNOWN": Device.HEALTH_UNKNOWN,
+        "LOOPING": Device.HEALTH_LOOPING,
+        "BAD": Device.HEALTH_BAD,
+        "MAINTENANCE": Device.HEALTH_MAINTENANCE,
+        "RETIRED": Device.HEALTH_RETIRED
+    }
 
     def add_arguments(self, parser):
         cmd = self
@@ -77,14 +92,16 @@ class Command(BaseCommand):
 
         # "list" sub-command
         list_parser = sub.add_parser("list", help="List the installed devices")
-        display = list_parser.add_mutually_exclusive_group()
-        display.add_argument("--all", "-a", dest="show_all",
-                             default=False, action="store_true",
-                             help="Show all devices, including retired ones")
-        display.add_argument("--status", default=None,
-                             choices=["OFFLINE", "IDLE", "RUNNING",
-                                      "OFFLINING", "RETIRED", "RESERVED"],
-                             help="Show only devices with this status")
+        list_parser.add_argument("--state", default=None,
+                                 choices=["IDLE", "RESERVED", "RUNNING"],
+                                 help="Show only devices with the given state")
+        health = list_parser.add_mutually_exclusive_group()
+        health.add_argument("--all", "-a", dest="show_all",
+                            default=None, action="store_true",
+                            help="Show all devices, including retired ones")
+        health.add_argument("--health", default=None,
+                            choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
+                            help="Show only devices with the given health")
         list_parser.add_argument("--csv", dest="csv", default=False,
                                  action="store_true", help="Print as csv")
 
@@ -99,15 +116,11 @@ class Command(BaseCommand):
                              help="make the device public")
         display.add_argument("--private", dest="public", action="store_false",
                              help="Make the device private")
-        set_parser.add_argument("--status", default=None,
-                                choices=["OFFLINE", "IDLE", "RUNNING",
-                                         "OFFLINING", "RETIRED", "RESERVED"],
-                                help="Set the device status")
-        set_parser.add_argument("--health", default=None,
-                                choices=["UNKNOWN", "PASS", "FAIL", "LOOPING"],
-                                help="Set the device health status")
-        set_parser.add_argument("--worker", default=None,
-                                help="Set the worker")
+        update_parser.add_argument("--health", default=None,
+                                   choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
+                                   help="Update the device health")
+        update_parser.add_argument("--worker", default=None,
+                                   help="Update the worker")
 
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
@@ -119,8 +132,8 @@ class Command(BaseCommand):
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
-            self.handle_list(options["status"], options["show_all"],
-                             options["csv"])
+            self.handle_list(options["state"], options["health"],
+                             options["show_all"], options["csv"])
         else:
             self.handle_set(options)
 
@@ -136,11 +149,12 @@ class Command(BaseCommand):
         except Worker.DoesNotExist:
             raise CommandError("Unable to find worker '%s'" % worker_name)
 
-        status = Device.IDLE if online else Device.OFFLINE
+        health = Device.HEALTH_GOOD if online else Device.HEALTH_MAINTENANCE
         device = Device.objects.create(hostname=hostname, device_type=dt,
                                        description=description,
                                        worker_host=worker, is_pipeline=True,
-                                       status=status, is_public=public)
+                                       state=Device.STATE_IDLE, health=health,
+                                       is_public=public)
 
         if tags is not None:
             for tag in tags:
@@ -154,9 +168,9 @@ class Command(BaseCommand):
             raise CommandError("Unable to find device '%s'" % hostname)
 
         self.stdout.write("hostname   : %s" % hostname)
-        self.stdout.write("device_type: %s" % device.device_type.name)
-        self.stdout.write("status     : %s" % device.get_status_display())
-        self.stdout.write("health     : %s" % device.get_health_status_display())
+        self.stdout.write("device-type: %s" % device.device_type.name)
+        self.stdout.write("state      : %s" % device.get_state_display())
+        self.stdout.write("health     : %s" % device.get_health_display())
         self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
         self.stdout.write("public     : %s" % device.is_public)
@@ -164,64 +178,66 @@ class Command(BaseCommand):
         config = device.load_configuration(output_format="raw")
         self.stdout.write("device-dict: %s" % bool(config))
         self.stdout.write("worker     : %s" % device.worker_host.hostname)
-        self.stdout.write("current_job: %s" % device.current_job)
+        self.stdout.write("current_job: %s" % device.current_job())
 
-    def handle_list(self, status, show_all, format_as_csv):
+    def handle_list(self, state, health, show_all, format_as_csv):
         """ Print devices list """
         devices = Device.objects.all().order_by("hostname")
-        if status is not None:
-            devices = devices.filter(status=Device.STATUS_REVERSE[status])
+        if state is not None:
+            devices = devices.filter(state=self.device_state[state])
+
+        if health is not None:
+            devices = devices.filter(health=self.device_health[health])
         elif not show_all:
-            devices = devices.exclude(status=Device.RETIRED)
+            devices = devices.exclude(health=Device.HEALTH_RETIRED)
 
         if format_as_csv:
-            fields = ["hostname", "device-type", "status"]
+            fields = ["hostname", "device-type", "state", "health"]
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for device in devices:
                 writer.writerow({
                     "hostname": device.hostname,
                     "device-type": device.device_type.name,
-                    "status": device.get_status_display()
+                    "state": device.get_state_display(),
+                    "health": device.get_health_display()
                 })
         else:
             self.stdout.write("Available devices:")
             for device in devices:
-                self.stdout.write("* %s (%s) %s" % (device.hostname,
-                                                    device.device_type.name,
-                                                    device.get_status_display()))
+                self.stdout.write("* %s (%s) %s, %s" % (device.hostname,
+                                                        device.device_type.name,
+                                                        device.get_state_display(),
+                                                        device.get_health_display()))
 
-    def handle_set(self, options):
-        """ Set device properties """
-        hostname = options["hostname"]
-        try:
-            device = Device.objects.get(hostname=hostname)
-        except Device.DoesNotExist:
-            raise CommandError("Unable to find device '%s'" % hostname)
-
-        status = options["status"]
-        if status is not None:
-            device.status = Device.STATUS_REVERSE[status]
-
-        health = options["health"]
-        if health is not None:
-            device.health_status = Device.HEALTH_REVERSE[health]
-
-        description = options["description"]
-        if description is not None:
-            device.description = description
-
-        worker_name = options["worker"]
-        if worker_name is not None:
+    def handle_update(self, options):
+        """ Update device properties """
+        with transaction.atomic():
+            hostname = options["hostname"]
             try:
-                worker = Worker.objects.get(hostname=worker_name)
-                device.worker_host = worker
-            except Worker.DoesNotExist:
-                raise CommandError("Unable to find worker '%s'" % worker_name)
+                device = Device.objects.select_for_update().get(hostname=hostname)
+            except Device.DoesNotExist:
+                raise CommandError("Unable to find device '%s'" % hostname)
 
-        public = options["public"]
-        if public is not None:
-            device.is_public = public
+            health = options["health"]
+            if health is not None:
+                device.health = self.device_health[health]
 
-        # Save the modifications
-        device.save()
+            description = options["description"]
+            if description is not None:
+                device.description = description
+
+            worker_name = options["worker"]
+            if worker_name is not None:
+                try:
+                    worker = Worker.objects.get(hostname=worker_name)
+                    device.worker_host = worker
+                except Worker.DoesNotExist:
+                    raise CommandError("Unable to find worker '%s'" % worker_name)
+
+            public = options["public"]
+            if public is not None:
+                device.is_public = public
+
+            # Save the modifications
+            device.save()

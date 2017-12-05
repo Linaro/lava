@@ -123,7 +123,8 @@ class SchedulerJobsAPI(ExposedV2API):
             ret.append({"id": job.display_id,
                         "description": job.description,
                         "device_type": device_type,
-                        "status": job.get_status_display(),
+                        "health": job.get_health_display(),
+                        "state": job.get_state_display(),
                         "submitter": job.submitter.username})
 
         return ret
@@ -161,7 +162,7 @@ class SchedulerJobsAPI(ExposedV2API):
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 
-        job_finished = job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]
+        job_finished = (job.state == TestJob.STATE_FINISHED)
 
         try:
             with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
@@ -217,7 +218,8 @@ class SchedulerJobsAPI(ExposedV2API):
                 "device_type": device_type,
                 "health_check": job.health_check,
                 "pipeline": job.is_pipeline,
-                "status": job.get_status_display(),
+                "health": job.get_health_display(),
+                "state": job.get_state_display(),
                 "submitter": job.submitter.username,
                 "submit_time": job.submit_time,
                 "start_time": job.start_time,

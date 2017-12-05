@@ -36,13 +36,13 @@ from lava_scheduler_app.models import (
 class Command(BaseCommand):
     help = "Manage jobs"
 
-    job_status = {
-        "SUBMITTED": TestJob.SUBMITTED,
-        "RUNNING": TestJob.RUNNING,
-        "COMPLETE": TestJob.COMPLETE,
-        "INCOMPLETE": TestJob.INCOMPLETE,
-        "CANCELED": TestJob.CANCELED,
-        "CANCELING": TestJob.CANCELING
+    job_state = {
+        "SUBMITTED": TestJob.STATE_SUBMITTED,
+        "SCHEDULING": TestJob.STATE_SCHEDULING,
+        "SCHEDULED": TestJob.STATE_SCHEDULED,
+        "RUNNING": TestJob.STATE_RUNNING,
+        "CANCELING": TestJob.STATE_CANCELING,
+        "FINISHED": TestJob.STATE_FINISHED
     }
 
     def add_arguments(self, parser):
@@ -68,10 +68,10 @@ class Command(BaseCommand):
                         help="Remove jobs older than this. The time is of the "
                              "form: 1h (one hour) or 2d (two days). "
                              "By default, all jobs will be removed.")
-        rm.add_argument("--status", default=None,
-                        choices=["SUBMITTED", "RUNNING", "COMPLETE",
-                                 "INCOMPLETE", "CANCELED", "CANCELING"],
-                        help="Filter by job status")
+        rm.add_argument("--state", default=None,
+                        choices=["SUBMITTED", "SCHEDULING", "SCHEDULED", "RUNNING", "CANCELING",
+                                 "FINISHED"],
+                        help="Filter by job state")
         rm.add_argument("--submitter", default=None, type=str,
                         help="Filter jobs by submitter")
         rm.add_argument("--dry-run", default=False, action="store_true",
@@ -86,11 +86,11 @@ class Command(BaseCommand):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
             self.handle_rm(options["older_than"], options["submitter"],
-                           options["status"], options["v1"],
+                           options["state"], options["v1"],
                            options["dry_run"], options["slow"])
 
-    def handle_rm(self, older_than, submitter, status, v1_only, simulate, slow):
-        if not older_than and not submitter and not status and not v1_only:
+    def handle_rm(self, older_than, submitter, state, v1_only, simulate, slow):
+        if not older_than and not submitter and not state and not v1_only:
             raise CommandError("You should specify at least one filtering option")
 
         if simulate:
@@ -116,8 +116,8 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
 
-        if status is not None:
-            jobs = jobs.filter(status=self.job_status[status])
+        if state is not None:
+            jobs = jobs.filter(state=self.job_state[state])
 
         if v1_only:
             jobs = jobs.filter(is_pipeline=False)

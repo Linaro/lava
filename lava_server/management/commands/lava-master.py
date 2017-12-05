@@ -32,19 +32,14 @@ import zmq.auth
 from zmq.auth.thread import ThreadAuthenticator
 
 from django.db import connection, transaction
-from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
 
 from lava_scheduler_app.dbutils import (
-    assign_jobs,
-    create_job, start_job,
-    fail_job, cancel_job,
     parse_job_description,
-    select_device,
-    submit_health_check_jobs,
 )
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.utils import mkdir
+from lava_scheduler_app.scheduler import schedule_health_checks, schedule_jobs
 from lava_server.cmdutils import LAVADaemonCommand
 
 
@@ -184,7 +179,7 @@ class Command(LAVADaemonCommand):
         """
         jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
                                       is_pipeline=True,
-                                      status=TestJob.RUNNING)
+                                      state=TestJob.STATE_RUNNING)
         for job in jobs:
             self.logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
                              job.actual_device.hostname)
@@ -224,126 +219,143 @@ class Command(LAVADaemonCommand):
 
         # Handle the actions
         if action == 'HELLO' or action == 'HELLO_RETRY':
-            self.logger.info("%s => %s", hostname, action)
-
-            # Check the protocol version
-            try:
-                slave_version = int(msg[2])
-            except (IndexError, ValueError):
-                self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return True
-            if slave_version != PROTOCOL_VERSION:
-                self.logger.error("<%s> using protocol v%d while master is using v%d",
-                                  hostname, slave_version, PROTOCOL_VERSION)
-                return True
-
-            self.controler.send_multipart([hostname, 'HELLO_OK'])
-            # If the dispatcher is known and sent an HELLO, means that
-            # the slave has restarted
-            if hostname in self.dispatchers:
-                if action == 'HELLO':
-                    self.logger.warning("Dispatcher <%s> has RESTARTED",
-                                        hostname)
-                else:
-                    # Assume the HELLO command was received, and the
-                    # action succeeded.
-                    self.logger.warning("Dispatcher <%s> was not confirmed",
-                                        hostname)
-            else:
-                # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
-                # message.
-                self.logger.warning("New dispatcher <%s>", hostname)
-                self.dispatchers[hostname] = SlaveDispatcher(hostname)
-
-            if action == 'HELLO':
-                # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
-                # as well as handling unexpected crashes.
-                self._cancel_slave_dispatcher_jobs(hostname)
-
-            # Mark the dispatcher as alive
-            self.dispatcher_alive(hostname)
-
+            return self._handle_hello(hostname, action, msg)
         elif action == 'PING':
-            self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
-            # Send back a signal
-            self.controler.send_multipart([hostname, 'PONG', str(PING_INTERVAL)])
-            self.dispatcher_alive(hostname)
-
+            return self._handle_ping(hostname, action, msg)
         elif action == 'END':
-            try:
-                job_id = int(msg[2])
-                error_msg = msg[3]
-                compressed_description = msg[4]
-            except (IndexError, ValueError):
-                self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return True
-
-            try:
-                job = TestJob.objects.get(id=job_id)
-            except TestJob.DoesNotExist:
-                self.logger.error("[%d] Unknown job", job_id)
-            else:
-                filename = os.path.join(job.output_dir, 'description.yaml')
-                # If description.yaml already exists: a END was already received
-                if os.path.exists(filename):
-                    self.logger.info("[%d] %s => END (duplicated), skipping", job_id, hostname)
-                else:
-                    if compressed_description:
-                        self.logger.info("[%d] %s => END", job_id, hostname)
-                    else:
-                        self.logger.info("[%d] %s => END (lava-run crashed, mark job as INCOMPLETE)",
-                                         job_id, hostname)
-                        if error_msg:
-                            self.logger.error("[%d] Error: %s", job_id, error_msg)
-
-                        with transaction.atomic():
-                            job = TestJob.objects.select_for_update().get(id=job_id)
-                            if job.status == TestJob.CANCELING:
-                                cancel_job(job)
-                            fail_job(job, fail_msg=error_msg,
-                                     job_status=TestJob.INCOMPLETE)
-
-                    # Create description.yaml even if it's empty
-                    # Allows to know when END messages are duplicated
-                    try:
-                        # Create the directory if it was not already created
-                        mkdir(os.path.dirname(filename))
-                        description = lzma.decompress(compressed_description)
-                        with open(filename, 'w') as f_description:
-                            f_description.write(description)
-                        if description:
-                            parse_job_description(job)
-                    except (IOError, lzma.error) as exc:
-                        self.logger.error("[%d] Unable to dump 'description.yaml'",
-                                          job_id)
-                        self.logger.exception("[%d] %s", job_id, exc)
-
-            # ACK even if the job is unknown to let the dispatcher
-            # forget about it
-            self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
-            self.dispatcher_alive(hostname)
-
+            return self._handle_end(hostname, action, msg)
         elif action == 'START_OK':
-            try:
-                job_id = int(msg[2])
-            except (IndexError, ValueError):
-                self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-                return True
-            self.logger.info("[%d] %s => START_OK", job_id, hostname)
-            try:
-                with transaction.atomic():
-                    job = TestJob.objects.select_for_update() \
-                                         .get(id=job_id)
-                    start_job(job)
-            except TestJob.DoesNotExist:
-                self.logger.error("[%d] Unknown job", job_id)
-
-            self.dispatcher_alive(hostname)
-
+            return self._handle_start_ok(hostname, action, msg)
         else:
             self.logger.error("<%s> sent unknown action=%s, args=(%s)",
                               hostname, action, msg[1:])
+            return True
+
+    def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
+        try:
+            job_id = int(msg[2])
+            error_msg = msg[3]
+            compressed_description = msg[4]
+        except (IndexError, ValueError):
+            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            return True
+
+        try:
+            job = TestJob.objects.get(id=job_id)
+        except TestJob.DoesNotExist:
+            self.logger.error("[%d] Unknown job", job_id)
+            # ACK even if the job is unknown to let the dispatcher
+            # forget about it
+            self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
+            return True
+
+        filename = os.path.join(job.output_dir, 'description.yaml')
+        # If description.yaml already exists: a END was already received
+        if os.path.exists(filename):
+            self.logger.info("[%d] %s => END (duplicated), skipping", job_id, hostname)
+        else:
+            if compressed_description:
+                self.logger.info("[%d] %s => END", job_id, hostname)
+            else:
+                self.logger.info("[%d] %s => END (lava-run crashed, mark job as INCOMPLETE)",
+                                 job_id, hostname)
+                if error_msg:
+                    self.logger.error("[%d] Error: %s", job_id, error_msg)
+
+                with transaction.atomic():
+                    # TODO: find a way to lock actual_device
+                    job = TestJob.objects.select_for_update() \
+                                         .get(id=job_id)
+                    # TODO: use the failure message
+                    job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                    job.save()
+
+            # Create description.yaml even if it's empty
+            # Allows to know when END messages are duplicated
+            try:
+                # Create the directory if it was not already created
+                mkdir(os.path.dirname(filename))
+                description = lzma.decompress(compressed_description)
+                with open(filename, 'w') as f_description:
+                    f_description.write(description)
+                if description:
+                    parse_job_description(job)
+            except (IOError, lzma.error) as exc:
+                self.logger.error("[%d] Unable to dump 'description.yaml'",
+                                  job_id)
+                self.logger.exception("[%d] %s", job_id, exc)
+
+        # ACK the job and mark the dispatcher as alive
+        self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
+        self.dispatcher_alive(hostname)
         return True
+
+    def _handle_hello(self, hostname, action, msg):
+        # Check the protocol version
+        try:
+            slave_version = int(msg[2])
+        except (IndexError, ValueError):
+            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            return True
+
+        self.logger.info("%s => %s", hostname, action)
+        if slave_version != PROTOCOL_VERSION:
+            self.logger.error("<%s> using protocol v%d while master is using v%d",
+                              hostname, slave_version, PROTOCOL_VERSION)
+            return True
+
+        self.controler.send_multipart([hostname, 'HELLO_OK'])
+        # If the dispatcher is known and sent an HELLO, means that
+        # the slave has restarted
+        if hostname in self.dispatchers:
+            if action == 'HELLO':
+                self.logger.warning("Dispatcher <%s> has RESTARTED",
+                                    hostname)
+                # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
+                # as well as handling unexpected crashes.
+                self._cancel_slave_dispatcher_jobs(hostname)
+            else:
+                # Assume the HELLO command was received, and the
+                # action succeeded.
+                self.logger.warning("Dispatcher <%s> was not confirmed",
+                                    hostname)
+        else:
+            # No dispatcher, treat HELLO and HELLO_RETRY as a normal HELLO
+            # message.
+            self.logger.warning("New dispatcher <%s>", hostname)
+            self.dispatchers[hostname] = SlaveDispatcher(hostname)
+            # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
+            # as well as handling unexpected crashes.
+            self._cancel_slave_dispatcher_jobs(hostname)
+
+        # Mark the dispatcher as alive
+        self.dispatcher_alive(hostname)
+
+    def _handle_ping(self, hostname, action, msg):  # pylint: disable=unused-argument
+        self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
+        # Send back a signal
+        self.controler.send_multipart([hostname, 'PONG', str(PING_INTERVAL)])
+        self.dispatcher_alive(hostname)
+        return True
+
+    def _handle_start_ok(self, hostname, action, msg):  # pylint: disable=unused-argument
+        try:
+            job_id = int(msg[2])
+        except (IndexError, ValueError):
+            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            return True
+        self.logger.info("[%d] %s => START_OK", job_id, hostname)
+        try:
+            with transaction.atomic():
+                # TODO: find a way to lock actual_device
+                job = TestJob.objects.select_for_update() \
+                                     .get(id=job_id)
+                job.go_state_running()
+                job.save()
+        except TestJob.DoesNotExist:
+            self.logger.error("[%d] Unknown job", job_id)
+        else:
+            self.dispatcher_alive(hostname)
 
     def _cancel_slave_dispatcher_jobs(self, hostname):
         """Get dispatcher jobs and cancel them.
@@ -359,14 +371,15 @@ class Command(LAVADaemonCommand):
         # The dispatcher had (re)started, so all jobs have to be
         # finished.
         with transaction.atomic():
-            jobs = TestJob.objects.filter(
-                actual_device__worker_host__hostname=hostname,
-                is_pipeline=True,
-                status=TestJob.RUNNING).select_for_update()
+            # TODO: find a way to lock actual_device
+            jobs = TestJob.objects.select_for_update() \
+                                  .filter(actual_device__worker_host__hostname=hostname,
+                                          state=TestJob.STATE_RUNNING)
 
             for job in jobs:
                 self.logger.info("[%d] Canceling", job.id)
-                cancel_job(job)
+                job.go_state_finished(TestJob.HEALTH_CANCELED)
+                job.save()
 
     def export_definition(self, job):  # pylint: disable=no-self-use
         job_def = yaml.load(job.definition)
@@ -375,94 +388,64 @@ class Command(LAVADaemonCommand):
         # no need for the dispatcher to retain comments
         return yaml.dump(job_def)
 
-    def process_jobs(self, options):
-        for job in TestJob.objects.filter(
-                Q(status=TestJob.SUBMITTED) & Q(is_pipeline=True) & ~Q(actual_device=None))\
-                .order_by('-health_check', '-priority', 'submit_time', 'target_group', 'id'):
-            device = None
-            worker_host = None
+    def start_jobs(self, options):
+        """
+        Loop on all scheduled jobs and send the START message to the slave.
+        """
+        # make the request atomic
+        query = TestJob.objects.select_for_update()
+        # Only select test job that are ready
+        query = query.filter(state=TestJob.STATE_SCHEDULED)
+        # exclude test job without a device: they are special test jobs like
+        # dynamic connection.
+        query = query.exclude(actual_device=None)
+        # TODO: find a way to lock actual_device
 
-            device = select_device(job, self.dispatchers)
-            if not device:
-                # e.g. one or more jobs in the MultiNode group do not yet have Reserved devices.
-                continue
-            # selecting device can change the job
-            job.refresh_from_db()
-
-            self.logger.info("[%d] Assigning %s device", job.id, device)
-            if job.actual_device is None:
-                # health checks
-                device = job.requested_device
-                if not device.worker_host:
-                    msg = "Infrastructure error: Invalid worker information"
-                    self.logger.error("[%d] %s", job.id, msg)
-                    fail_job(job, msg, TestJob.INCOMPLETE)
-                    continue
-            # Launch the job
-            create_job(job, device)
-            self.logger.info("[%d] START => %s (%s)", job.id,
-                             device.worker_host.hostname, device.hostname)
-            worker_host = device.worker_host
+        # Loop on all jobs
+        for job in query:
+            msg = None
             try:
                 # Load job definition to get the variables for template
                 # rendering
                 job_def = yaml.load(job.definition)
                 job_ctx = job_def.get('context', {})
 
-                # Load env.yaml, env-dut.yaml and dispatcher configuration
-                # All three are optional
+                device = job.actual_device
+                worker = device.worker_host
+
+                # Load configurations
                 env_str = load_optional_yaml_file(options['env'])
                 env_dut_str = load_optional_yaml_file(options['env_dut'])
+                device_cfg = device.load_configuration(job_ctx)
+                dispatcher_cfg_file = os.path.join(options['dispatchers_config'],
+                                                   "%s.yaml" % worker.hostname)
+                dispatcher_cfg = load_optional_yaml_file(dispatcher_cfg_file)
 
-                # Load device configuration
-                if device:
-                    device_configuration = device.load_configuration(job_ctx)
-                    dispatcher_config_file = os.path.join(options['dispatchers_config'],
-                                                          "%s.yaml" % worker_host.hostname)
-                    dispatcher_config = load_optional_yaml_file(dispatcher_config_file)
+                self.logger.info("[%d] START => %s (%s)", job.id,
+                                 worker.hostname, device.hostname)
+                self.controler.send_multipart([str(worker.hostname),
+                                               'START', str(job.id),
+                                               self.export_definition(job),
+                                               str(device_cfg), dispatcher_cfg,
+                                               env_str, env_dut_str])
 
-                    self.controler.send_multipart(
-                        [str(worker_host.hostname),
-                         'START', str(job.id),
-                         self.export_definition(job),
-                         str(device_configuration),
-                         dispatcher_config,
-                         env_str, env_dut_str])
+                # For multinode jobs, start the dynamic connections
+                parent = job
+                for sub_job in job.sub_jobs_list:
+                    if sub_job == parent or not sub_job.dynamic_connection:
+                        continue
 
-                if job.is_multinode:
-                    # All secondary connections must be made from a dispatcher local to the one host device
-                    # to allow for local firewalls etc. So the secondary connection is started on the
-                    # remote worker of the "nominated" host.
-                    # This job will not be a dynamic_connection, this is the parent.
-                    device = None
-                    device_configuration = None
-                    # to get this far, the rest of the multinode group must also be ready
-                    # so start the dynamic connections
-                    parent = job
+                    # inherit only enough configuration for dynamic_connection operation
+                    self.logger.info("[%d] Trimming dynamic connection device configuration.", sub_job.id)
+                    min_device_cfg = parent.actual_device.minimise_configuration(device_cfg)
 
-                    for group_job in job.sub_jobs_list:
-                        if group_job == parent or not group_job.dynamic_connection:
-                            continue
-
-                        worker_host = parent.actual_device.worker_host
-                        dispatcher_config_file = os.path.join(options['dispatchers_config'],
-                                                              "%s.yaml" % worker_host.hostname)
-                        dispatcher_config = load_optional_yaml_file(dispatcher_config_file)
-
-                        # inherit only enough configuration for dynamic_connection operation
-                        device_configuration = parent.actual_device.load_configuration(job_ctx)
-                        self.logger.info("[%d] Trimming dynamic connection device configuration.", group_job.id)
-                        device_configuration = parent.actual_device.minimise_configuration(device_configuration)
-
-                        self.logger.info("[%d] START => %s (connection)", group_job.id, worker_host.hostname)
-                        self.controler.send_multipart(
-                            [str(worker_host.hostname),
-                             'START', str(group_job.id),
-                             self.export_definition(group_job),
-                             str(device_configuration),
-                             dispatcher_config,
-                             env_str, env_dut_str])
-                continue
+                    self.logger.info("[%d] START => %s (connection)",
+                                     sub_job.id, worker.hostname)
+                    self.controler.send_multipart([str(worker.hostname),
+                                                   'START', str(sub_job.id),
+                                                   self.export_definition(sub_job),
+                                                   str(min_device_cfg), dispatcher_cfg,
+                                                   env_str, env_dut_str])
 
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
@@ -485,20 +468,17 @@ class Command(LAVADaemonCommand):
                 msg = "Infrastructure error: cannot parse job definition: %s" % \
                       exc
 
-            self.logger.error("[%d] INCOMPLETE job", job.id)
-            fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
+            if msg:
+                # TODO: do something with the error. Maybe setting lava.job result
+                job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                job.save()
 
-    def handle_canceling(self):
-        for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
-            worker_host = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
-            if not worker_host:
-                self.logger.warning("[%d] Invalid worker information", job.id)
-                # shouldn't happen
-                fail_job(job, 'invalid worker information', TestJob.CANCELED)
-                continue
+    def cancel_jobs(self):
+        for job in TestJob.objects.filter(state=TestJob.STATE_CANCELING):
+            worker = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
             self.logger.info("[%d] CANCEL => %s", job.id,
-                             worker_host.hostname)
-            self.controler.send_multipart([str(worker_host.hostname),
+                             worker.hostname)
+            self.controler.send_multipart([str(worker.hostname),
                                            'CANCEL', str(job.id)])
 
     def handle(self, *args, **options):
@@ -605,17 +585,17 @@ class Command(LAVADaemonCommand):
                 # Limit accesses to the database. This will also limit the rate of
                 # CANCEL and START messages
                 if time.time() - last_db_access > DB_LIMIT:
-                    # TODO: make this atomic
                     if self.dispatchers["lava-logs"].online:
-                        submit_health_check_jobs()
-                        assign_jobs()
-                        # Dispatch pipeline jobs with devices in Reserved state
-                        self.process_jobs(options)
+                        schedule(self.logger)
+
+                        # Dispatch scheduled jobs
+                        with transaction.atomic():
+                            self.start_jobs(options)
                     else:
                         self.logger.warning("lava-logs is offline: can't schedule jobs")
 
                     # Handle canceling jobs
-                    self.handle_canceling()
+                    self.cancel_jobs()
 
                     # Do not count the time taken to schedule jobs
                     last_db_access = time.time()

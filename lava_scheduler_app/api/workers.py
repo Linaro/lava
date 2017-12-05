@@ -19,7 +19,7 @@
 import os
 import sys
 
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
@@ -219,24 +219,25 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         None
         """
-        try:
-            worker = Worker.objects.get(hostname=hostname)
-        except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
-                404, "Worker '%s' was not found." % hostname)
-
-        if description is not None:
-            worker.description = description
-
-        if health is not None:
-            if health == "ACTIVE":
-                worker.go_health_active()
-            elif health == "MAINTENANCE":
-                worker.go_health_maintenance()
-            elif health == "RETIRED":
-                worker.go_health_retired()
-            else:
+        with transaction.atomic():
+            try:
+                worker = Worker.objects.select_for_update().get(hostname=hostname)
+            except Worker.DoesNotExist:
                 raise xmlrpclib.Fault(
-                    400, "Invalid health: %s" % health)
+                    404, "Worker '%s' was not found." % hostname)
 
-        worker.save()
+            if description is not None:
+                worker.description = description
+
+            if health is not None:
+                if health == "ACTIVE":
+                    worker.go_health_active(self.user)
+                elif health == "MAINTENANCE":
+                    worker.go_health_maintenance(self.user)
+                elif health == "RETIRED":
+                    worker.go_health_retired(self.user)
+                else:
+                    raise xmlrpclib.Fault(
+                        400, "Invalid health: %s" % health)
+
+            worker.save()

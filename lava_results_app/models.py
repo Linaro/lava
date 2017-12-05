@@ -1197,7 +1197,7 @@ class QueryCondition(models.Model):
     # Allowed fields for condition entities.
     FIELD_CHOICES = {
         TestJob: [
-            "submitter", "start_time", "end_time", "status", "actual_device",
+            "submitter", "start_time", "end_time", "state", "health", "actual_device",
             "requested_device_type", "health_check", "user", "group",
             "priority", "is_pipeline", "description"],
         TestSuite: ["name"],

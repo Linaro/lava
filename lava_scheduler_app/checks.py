@@ -36,7 +36,7 @@ def check_health_checks(app_configs, **kwargs):
 
         # All active devices should have a health check,
         # provided that health checks are not disabled for this device type.
-        if device.status == Device.RETIRED:
+        if device.health == Device.HEALTH_RETIRED:
             continue
         if ht is None and not ht_disabled:
             errors.append(Debug("No health check", obj=device.hostname))
@@ -63,7 +63,7 @@ def check_health_checks(app_configs, **kwargs):
 def check_device_configuration(app_configs, **kwargs):
     errors = []
 
-    for device in Device.objects.filter(Q(is_pipeline=True), ~Q(status=Device.RETIRED)):
+    for device in Device.objects.filter(Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED)):
         if not device.is_valid():
             errors.append(Error('Invalid configuration', obj=device.hostname))
 

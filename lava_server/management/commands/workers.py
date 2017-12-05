@@ -21,6 +21,7 @@
 import csv
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
 
 from lava_scheduler_app.models import Worker
 
@@ -147,18 +148,19 @@ class Command(BaseCommand):
 
     def handle_update(self, hostname, description, health):
         """ Update worker properties """
-        try:
-            worker = Worker.objects.get(hostname=hostname)
-        except Worker.DoesNotExist:
-            raise CommandError("No worker exists with hostname %s" % hostname)
+        with transaction.atomic():
+            try:
+                worker = Worker.objects.select_for_update().get(hostname=hostname)
+            except Worker.DoesNotExist:
+                raise CommandError("No worker exists with hostname %s" % hostname)
 
-        if description is not None:
-            worker.description = description
-        if health is not None:
-            if health == "ACTIVE":
-                worker.go_health_active()
-            elif health == "MAINTENANCE":
-                worker.go_health_maintenance()
-            else:
-                worker.go_health_retired()
-        worker.save()
+            if description is not None:
+                worker.description = description
+            if health is not None:
+                if health == "ACTIVE":
+                    worker.go_health_active()
+                elif health == "MAINTENANCE":
+                    worker.go_health_maintenance()
+                else:
+                    worker.go_health_retired()
+            worker.save()

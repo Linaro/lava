@@ -19,12 +19,6 @@ from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.dbutils import (
-    testjob_submission,
-    find_device_for_job,
-    initiate_health_check_job,
-    end_job,
-)
 from lava_scheduler_app.schema import (
     validate_submission,
     validate_device,
@@ -147,6 +141,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
+        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         Tag.objects.all().delete()
         tag_list = [
             self.factory.ensure_tag('usb'),
@@ -255,88 +250,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.factory.make_job_yaml(), user)
         self.assertEqual(user, job.submitter)
         self.assertFalse(job.health_check)
-
-    def test_pipeline_health_check(self):
-        user = self.factory.make_user()
-        device = Device.objects.get(hostname='fakeqemu1')
-        job = testjob_submission(self.factory.make_job_yaml(), user, check_device=None)
-        self.assertEqual(user, job.submitter)
-        self.assertFalse(job.health_check)
-        self.assertIsNone(job.requested_device)
-        job = testjob_submission(self.factory.make_job_yaml(), user, check_device=device)
-        self.assertEqual(user, job.submitter)
-        self.assertTrue(job.health_check)
-        self.assertEqual(job.requested_device, device)
-        self.assertIsNone(job.actual_device)
-
-    def test_pipeline_health_assignment(self):
-        user = self.factory.make_user()
-        device1 = Device.objects.get(hostname='fakeqemu1')
-        self.assertTrue(device1.is_pipeline)
-        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
-        self.assertTrue(device2.is_pipeline)
-        device3 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu3')
-        self.assertTrue(device3.is_pipeline)
-        job1 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device1)
-        job2 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device2)
-        self.assertEqual(user, job1.submitter)
-        self.assertTrue(job1.health_check)
-        self.assertEqual(job1.requested_device, device1)
-        self.assertEqual(job2.requested_device, device2)
-        self.assertIsNone(job1.actual_device)
-        self.assertIsNone(job2.actual_device)
-        device_list = Device.objects.filter(device_type=device1.device_type)
-        count = 0
-        while True:
-            device_list.reverse()
-            assigned = find_device_for_job(job2, device_list)
-            if assigned != device2:
-                self.fail("[%d] invalid device assigment in health check." % count)
-            count += 1
-            if count > 100:
-                break
-        self.assertGreater(count, 100)
-
-    def test_multinode_tags_assignment(self):
-        # kvm-multinode.yaml contains notification settings for admin
-        user = self.factory.ensure_user('admin', 'admin@test.com', 'admin')
-        device1 = Device.objects.get(hostname='fakeqemu1')
-        client_tag_list = [
-            self.factory.ensure_tag('usb-flash'),
-            self.factory.ensure_tag('usb-eth')
-        ]
-        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=client_tag_list)
-        self.assertTrue(device1.is_pipeline)
-        server_tag_list = [
-            self.factory.ensure_tag('testtag')
-        ]
-        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2', tags=server_tag_list)
-        self.assertTrue(device2.is_pipeline)
-        submission = yaml.load(open(
-            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
-        job_list = testjob_submission(yaml.dump(submission), user)
-        self.assertEqual(len(job_list), 2)
-        client_job = None
-        server_job = None
-        for job in job_list:
-            job_def = yaml.load(job.definition)
-            if job_def['protocols'][MultinodeProtocol.name]['role'] == 'client':
-                client_job = job
-            elif job_def['protocols'][MultinodeProtocol.name]['role'] == 'server':
-                server_job = job
-            else:
-                self.fail("Unrecognised role in job")
-        self.assertEqual(set(client_job.tags.all()), set(client_tag_list))
-        self.assertEqual(set(server_job.tags.all()), set(server_tag_list))
-        self.assertIsNone(client_job.actual_device)
-        self.assertIsNone(server_job.actual_device)
-        device_list = Device.objects.filter(device_type=device1.device_type)
-        assigned = find_device_for_job(client_job, device_list)
-        self.assertEqual(assigned, device1)
-        self.assertEqual(set(device1.tags.all()), set(client_job.tags.all()))
-        assigned = find_device_for_job(server_job, device_list)
-        self.assertEqual(assigned, device2)
-        self.assertEqual(set(device2.tags.all()), set(server_job.tags.all()))
 
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
@@ -597,129 +510,12 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIn('compatibility', description)
         self.assertGreaterEqual(description['compatibility'], BootQEMU.compatibility)
 
-    def test_device_maintenance_with_jobs(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
-        self.assertEqual(user, job.submitter)
-        self.assertFalse(job.health_check)
-        device1 = Device.objects.get(hostname='fakeqemu1')
-        device1.current_job = None
-        device1.status = Device.IDLE
-        device1.save()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.IDLE)
-        device1.put_into_maintenance_mode(user, 'unit test')
-        self.assertEqual(device1.status, Device.OFFLINE)
-        device1.put_into_online_mode(user, 'unit-test')
-        self.assertEqual(device1.status, Device.IDLE)
-        device1.current_job = job
-        device1.status = Device.RUNNING
-        device1.save()
-        device1.refresh_from_db()
-        device1.put_into_maintenance_mode(user, 'unit test')
-        self.assertIsNotNone(device1.current_job)
-        self.assertEqual(device1.status, Device.OFFLINING)
-        device1.put_into_online_mode(user, 'unit-test')
-        self.assertEqual(device1.status, Device.RUNNING)
-        device1.current_job = None
-        device1.status = Device.RETIRED
-        device1.save()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        device1.put_into_maintenance_mode(user, 'unit test')
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(device1.status, Device.RETIRED)
-        device1.put_into_online_mode(user, 'unit-test')
-        self.assertEqual(device1.status, Device.RETIRED)
-
-    def reset_job_device(self, job, device, job_status=TestJob.RUNNING, device_status=Device.RUNNING):
+    def reset_job_device(self, job, device, job_state=TestJob.STATE_RUNNING, device_state=Device.STATE_RUNNING):
         device.current_job = job
-        job.status = job_status
-        device.status = device_status
+        job.state = job_state
+        device.state = device_state
         job.save()
         device.save()
-
-    def test_job_ending(self):
-        user = self.factory.make_user()
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
-        self.assertEqual(user, job.submitter)
-        self.assertFalse(job.health_check)
-        device1 = Device.objects.get(hostname='fakeqemu1')
-        device1.current_job = None
-        device1.status = Device.IDLE
-        device1.save()
-        self.assertEqual(device1.status, Device.IDLE)
-        self.assertEqual(job.status, TestJob.SUBMITTED)
-        job.actual_device = device1
-
-        self.reset_job_device(job, device1)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.RUNNING)
-        self.assertEqual(job.status, TestJob.RUNNING)
-
-        # standard complete test job
-        end_job(job, 'unit test')
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(job.status, TestJob.COMPLETE)
-
-        self.reset_job_device(job, device1)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.RUNNING)
-        self.assertEqual(job.status, TestJob.RUNNING)
-
-        # standard failed test job
-        end_job(job, 'unit test', TestJob.INCOMPLETE)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(job.status, TestJob.INCOMPLETE)
-
-        self.reset_job_device(job, device1, job_status=TestJob.CANCELING)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.RUNNING)
-        self.assertEqual(job.status, TestJob.CANCELING)
-
-        # cancelled test job
-        end_job(job, 'unit test', TestJob.CANCELING)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(job.status, TestJob.CANCELED)
-
-        self.reset_job_device(job, device1, device_status=Device.OFFLINING)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.OFFLINING)
-        self.assertEqual(job.status, TestJob.RUNNING)
-
-        # job ends when device is offlining
-        end_job(job, 'unit test')
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(device1.status, Device.OFFLINE)
-        self.assertEqual(job.status, TestJob.COMPLETE)
-
-        self.reset_job_device(job, device1, job_status=TestJob.CANCELING, device_status=Device.OFFLINING)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertEqual(device1.status, Device.OFFLINING)
-        self.assertEqual(job.status, TestJob.CANCELING)
-
-        # job cancelled when device is offlining
-        end_job(job, 'unit test', job_status=TestJob.CANCELING)
-        job.refresh_from_db()
-        device1.refresh_from_db()
-        self.assertIsNone(device1.current_job)
-        self.assertEqual(device1.status, Device.OFFLINE)
-        self.assertEqual(job.status, TestJob.CANCELED)
 
     def test_include_yaml_non_dict(self):
         include_data = ['value1', 'value2']
@@ -786,23 +582,7 @@ class TestExtendsSubmit(TestCaseWithFactory):
             os.path.exists(
                 os.path.join(
                     Device.HEALTH_CHECK_PATH, "%s.yaml" % device1.get_extends())))
-        self.assertIsNotNone(initiate_health_check_job(device1))
-
-    def test_health_checks_dbname(self):
-        device2 = Device.objects.get(hostname='juno-r2-01')
-        self.assertIsNotNone(device2.load_configuration(output_format='raw'))
-        self.assertEqual('juno', device2.get_extends())
-        self.assertIsNotNone(device2.HEALTH_CHECK_PATH)
-        self.assertTrue(
-            os.path.exists(
-                os.path.join(
-                    Device.HEALTH_CHECK_PATH, "%s.yaml" % device2.get_extends())))
-        # device_type specified in the job does not exist in the database
-        self.assertIsNone(initiate_health_check_job(device2))
-
-        device_type = self.factory.make_device_type(name='juno')
-        self.factory.make_device(device_type=device_type, hostname="juno-01")
-        self.assertIsNotNone(initiate_health_check_job(device2))
+        self.assertIsNotNone(device1.get_health_check())
 
 
 class TestYamlMultinode(TestCaseWithFactory):
@@ -1239,8 +1019,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertNotIn(fakeqemu1, allowed_devices)
 
         # set one candidate device to RETIRED to force the bug
-        fakeqemu4.status = Device.RETIRED
-        fakeqemu4.save(update_fields=['status'])
+        fakeqemu4.health = Device.HEALTH_RETIRED
+        fakeqemu4.save(update_fields=['health'])
         # refresh the device_list
         device_list = Device.objects.filter(device_type=device_type, is_pipeline=True).order_by('hostname')
         allowed_devices = []
@@ -1254,7 +1034,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         except DevicesUnavailableException:
             self.assertEqual(len(allowed_devices), 2)
             self.assertIn(fakeqemu4, device_list)
-            self.assertIn(fakeqemu4.status, [Device.RETIRED])
+            self.assertEqual(fakeqemu4.health, Device.HEALTH_RETIRED)
         else:
             self.fail("Missed DevicesUnavailableException")
         allowed_devices = []
@@ -1268,7 +1048,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         # test improvement as there is no point wasting memory with a Query containing Retired.
         device_list = Device.objects.filter(
-            Q(device_type=device_type), Q(is_pipeline=True), ~Q(status=Device.RETIRED))
+            Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
         allowed_devices.extend(_check_submit_to_device(list(device_list), user))
         self.assertEqual(len(allowed_devices), 2)
         self.assertIn(fakeqemu3, allowed_devices)

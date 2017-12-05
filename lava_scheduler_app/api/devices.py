@@ -21,15 +21,13 @@ import sys
 
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
-from lava_scheduler_app.dbutils import initiate_health_check_job
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    DeviceStateTransition,
     Tag,
     Worker
 )
@@ -47,14 +45,14 @@ class SchedulerDevicesAPI(ExposedV2API):
     @check_superuser
     def add(self, hostname, type_name, worker_hostname,
             user_name=None, group_name=None, public=True,
-            status=None, health_status=None, description=None):
+            health=None, description=None):
         """
         Name
         ----
         `scheduler.devices.add` (`hostname`, `type_name`, `worker_hostname`,
                                  `user_name=None`, `group_name=None`,
-                                 `public=True`, `status=None`,
-                                 `health_status=None`, `description=None`)
+                                 `public=True`, `health=None`,
+                                 `description=None`)
 
         Description
         -----------
@@ -78,11 +76,8 @@ class SchedulerDevicesAPI(ExposedV2API):
           Device group owner, None by default
         `public`: boolean
           Is the device public?
-        `status`: string
-          Device status, among ["OFFLINE", "IDLE", "RUNNING", "OFFLINING",
-                                "RETIRED", "RESERVED"]
-        `health_status`: string
-          Device health, among ["UNKNOWN", "PASS", "FAIL", "LOOPING"]
+        `health`: string
+          Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
           Device description
 
@@ -111,22 +106,19 @@ class SchedulerDevicesAPI(ExposedV2API):
             raise xmlrpclib.Fault(
                 400, "Group '%s' was not found." % group_name)
 
-        status_val = Device.IDLE
-        health_status_val = Device.HEALTH_UNKNOWN
+        health_val = Device.HEALTH_UNKNOWN
         try:
-            if status is not None:
-                status_val = Device.STATUS_REVERSE[status]
-            if health_status is not None:
-                health_status_val = Device.HEALTH_REVERSE[health_status]
+            if health is not None:
+                health_val = Device.HEALTH_REVERSE[health]
         except KeyError:
             raise xmlrpclib.Fault(
-                400, "Invalid status or health_status")
+                400, "Invalid health")
 
         try:
             Device.objects.create(hostname=hostname, device_type=device_type,
                                   user=user, group=group, is_public=public,
                                   worker_host=worker, is_pipeline=True,
-                                  status=status_val, health_status=health_status_val,
+                                  state=Device.STATE_IDLE, health=health_val,
                                   description=description)
 
         except (IntegrityError, ValidationError) as exc:
@@ -218,44 +210,6 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         return device.save_configuration(dictionary)
 
-    def force_health_check(self, hostname):
-        """
-        Name
-        ----
-        `scheduler.devices.force_health_check` (`hostname`)
-
-        Description
-        -----------
-        [admin only]
-        Force health check on the specified device
-
-        Arguments
-        ---------
-        `hostname`: string
-          Hostname of the device
-
-        Return value
-        ------------
-        The id of the health check job.
-        """
-        try:
-            device = Device.objects.get(hostname=hostname)
-        except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
-                404, "Device '%s' was not found." % hostname)
-
-        if not device.can_admin(self.user):
-            raise xmlrpclib.Faul(
-                403, "Device '%s' is not available to user '%s'." %
-                (hostname, self.user))
-
-        job = initiate_health_check_job(device)
-        if not job:
-            raise xmlrpclib.Fault(
-                404, "Device '%s' does not have health checks" % hostname)
-
-        return job.id
-
     def list(self, show_all=False, offline_info=False):
         """
         Name
@@ -282,32 +236,19 @@ class SchedulerDevicesAPI(ExposedV2API):
         """
         devices = Device.objects.all()
         if not show_all:
-            devices = Device.objects.exclude(status=Device.RETIRED)
+            devices = Device.objects.exclude(health=Device.HEALTH_RETIRED)
         devices = devices.order_by("hostname")
 
         ret = []
         for device in devices:
             if device.is_visible_to(self.user):
+                current_job = device.current_job()
                 device_dict = {"hostname": device.hostname,
                                "type": device.device_type.name,
-                               "status": device.get_status_display(),
-                               "current_job": device.current_job.pk if device.current_job else None,
+                               "health": device.get_health_display(),
+                               "state": device.get_state_display(),
+                               "current_job": current_job.pk if current_job else None,
                                "pipeline": device.is_pipeline}
-
-                if device.status == Device.OFFLINE and offline_info:
-                    device_dict["offline_since"] = ""
-                    device_dict["offline_by"] = ""
-                    device_dict["message"] = ""
-                    try:
-                        last_transition = device.transitions.latest("created_on")
-                        if last_transition.new_state == Device.OFFLINE:
-                            device_dict["message"] = str(last_transition.message)
-                            device_dict["offline_since"] = str(last_transition.created_on)
-                            if last_transition.created_by:
-                                device_dict["offline_by"] = last_transition.created_by.username
-                    except (Device.DoesNotExist, DeviceStateTransition.DoesNotExist):
-                        pass
-
                 ret.append(device_dict)
 
         return ret
@@ -344,10 +285,11 @@ class SchedulerDevicesAPI(ExposedV2API):
                 (hostname, self.user)
             )
 
+        current_job = device.current_job()
         device_dict = {"hostname": device.hostname,
                        "device_type": device.device_type.name,
-                       "status": device.get_status_display(),
-                       "health": device.get_health_status_display(),
+                       "health": device.get_health_display(),
+                       "state": device.get_state_display(),
                        "health_job": bool(device.get_health_check()),
                        "description": device.description,
                        "public": device.is_public,
@@ -356,36 +298,23 @@ class SchedulerDevicesAPI(ExposedV2API):
                        "worker": None,
                        "user": device.user.username if device.user else None,
                        "group": device.group.name if device.group else None,
-                       "current_job": device.current_job.pk if device.current_job else None,
-                       "offline_since": None,
-                       "offline_by": None,
+                       "current_job": current_job.pk if current_job else None,
                        "tags": [t.name for t in device.tags.all().order_by("name")]}
         if device.worker_host is not None:
             device_dict["worker"] = device.worker_host.hostname
-
-        if device.status == Device.OFFLINE:
-            try:
-                last_transition = device.transitions.latest("created_on")
-                if last_transition.new_state == Device.OFFLINE:
-                    device_dict["offline_since"] = str(last_transition.created_on)
-                    if last_transition.created_by:
-                        device_dict["offline_by"] = last_transition.created_by.username
-            except DeviceStateTransition.DoesNotExist:
-                pass
 
         return device_dict
 
     @check_superuser
     def update(self, hostname, worker_hostname=None, user_name=None,
-               group_name=None, public=True, status=None, health_status=None,
-               description=None):
+               group_name=None, public=True, health=None, description=None):
         """
         Name
         ----
         `scheduler.devices.update` (`hostname`, `worker_hostname=None`,
                                     `user_name=None`, `group_name=None`,
-                                    `public=True`, `status=None`,
-                                    `health_status=None`, `description=None`)
+                                    `public=True`, `health=None`,
+                                    `description=None`)
 
         Description
         -----------
@@ -405,11 +334,8 @@ class SchedulerDevicesAPI(ExposedV2API):
           Device group owner
         `public`: boolean
           Is the device public?
-        `status`: string
-          Device status, among ["OFFLINE", "IDLE", "RUNNING", "OFFLINING",
-                                "RETIRED", "RESERVED"]
-        `health_status`: string
-          Device health, among ["UNKNOWN", "PASS", "FAIL", "LOOPING"]
+        `health`: string
+          Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
           Device description
 
@@ -418,59 +344,51 @@ class SchedulerDevicesAPI(ExposedV2API):
         None
         """
         try:
-            device = Device.objects.get(hostname=hostname)
+            with transaction.atomic():
+                device = Device.objects.get(hostname=hostname)
+
+                if worker_hostname is not None:
+                    try:
+                        device.worker_host = Worker.objects.get(hostname=worker_hostname)
+                    except Worker.DoesNotExist:
+                        raise xmlrpclib.Fault(
+                            400, "Unable to find worker '%s'" % worker_hostname)
+
+                user = group = None
+                try:
+                    if user_name is not None:
+                        user = User.objects.get(username=user_name)
+                    if group_name is not None:
+                        group = Group.objects.get(name=group_name)
+                except User.DoesNotExist:
+                    raise xmlrpclib.Fault(
+                        400, "User '%s' was not found." % user_name)
+                except Group.DoesNotExist:
+                    raise xmlrpclib.Fault(
+                        400, "Group '%s' was not found." % group_name)
+
+                if user is not None or group is not None:
+                    device.user = user
+                    device.group = group
+
+                if public is not None:
+                    device.is_public = public
+
+                try:
+                    if health is not None:
+                        device.health = Device.HEALTH_REVERSE[health]
+                except KeyError:
+                    raise xmlrpclib.Fault(
+                        400, "Health '%s' is invalid" % health)
+
+                if description is not None:
+                    device.description = description
+
+                device.save()
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(
                 404, "Device '%s' was not found." % hostname
             )
-
-        if worker_hostname is not None:
-            try:
-                device.worker_host = Worker.objects.get(hostname=worker_hostname)
-            except Worker.DoesNotExist:
-                raise xmlrpclib.Fault(
-                    400, "Unable to find worker '%s'" % worker_hostname)
-
-        user = group = None
-        try:
-            if user_name is not None:
-                user = User.objects.get(username=user_name)
-            if group_name is not None:
-                group = Group.objects.get(name=group_name)
-        except User.DoesNotExist:
-            raise xmlrpclib.Fault(
-                400, "User '%s' was not found." % user_name)
-        except Group.DoesNotExist:
-            raise xmlrpclib.Fault(
-                400, "Group '%s' was not found." % group_name)
-
-        if user is not None or group is not None:
-            device.user = user
-            device.group = group
-
-        if public is not None:
-            device.is_public = public
-
-        try:
-            if status is not None:
-                device.status = Device.STATUS_REVERSE[status]
-        except KeyError:
-            raise xmlrpclib.Fault(
-                400, "Status '%s' is invalid" % status)
-
-        try:
-            if health_status is not None:
-                device.health_status = Device.HEALTH_REVERSE[health_status]
-        except KeyError:
-            raise xmlrpclib.Fault(
-                400, "Health status '%s' is invalid" % health_status)
-
-        if description is not None:
-            device.description = description
-
-        # Save the modifications
-        try:
-            device.save()
         except (IntegrityError, ValidationError) as exc:
             raise xmlrpclib.Fault(
                 400, "Bad request: %s" % exc.message)

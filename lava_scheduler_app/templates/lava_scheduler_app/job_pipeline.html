@@ -145,12 +145,16 @@
   <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>#{{ job.sub_id|default:job.id }}</dt>
-      {% if job.status <= job.RUNNING %}
-      <dd><span id="jobstatus">{{ job.get_status_display }}</span>
-      {% elif job.status == job.COMPLETE %}
-      <dd><span class="label label-success">Complete</span>
+      {% if job.state != job.STATE_FINISHED %}
+      <dd><span id="jobstatus">{{ job.get_state_display }}</span>
+      {% elif job.health == job.HEALTH_UNKNOWN %}
+      <dd><span class="label label-default">{{ job.get_health_display }}</span>
+      {% elif job.health == job.HEALTH_COMPLETE %}
+      <dd><span class="label label-success">{{ job.get_health_display }}</span>
+      {% elif job.health == job.HEALTH_INCOMPLETE %}
+      <dd><span class="label label-danger">{{ job.get_health_display }}</span>
       {% else %}
-      <dd><span class="label label-danger">{{ job.get_status_display }}</span>
+      <dd><span class="label label-warning">{{ job.get_health_display }}</span>
       {% endif %}
       {% if job.is_multinode %}
         <div class="btn-group">
@@ -160,7 +164,7 @@
             {% if subjob.id == job.id %}
             <li class="disabled"><a href=".">#{{ subjob.sub_id }} ({{ subjob.device_role }})</a></li>
             {% else %}
-            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_status_display }}</span></a></li>
+            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_state_display }}</span></a></li>
             {% endif %}
             {% endfor %}
           </ul>
@@ -177,7 +181,7 @@
       <dt>Started</dt>
       <dd id="started" title="{{ job.start_time }}">{% if job.start_time %}{{ job.start_time|naturaltime }}{% else %}...{% endif %}</dd>
       <dt>Duration</dt>
-      {% if job.status <= job.RUNNING %}
+      {% if job.state != job.STATE_FINISHED %}
       <dd id="duration">...</dd>
       {% else %}
       <dd id="duration" title="{{ job.duration }}">{{ job.end_time|timeuntil:job.start_time }}</dd>
@@ -330,13 +334,13 @@
       <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% endif %}
       {% endfor %}
-      {% if job.status <= job.RUNNING or job.status == job.CANCELING %}
+      {% if job.state != job.STATE_FINISHED %}
       <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
       {% endif %}
     </div>
     {% if not size_warning %}
     <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
-    {% if job.status >= job.RUNNING %}
+    {% if job.state == job.STATE_FINISHED %}
     <p><a href="/static/docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
     {% endif %}
     {% endif %}
@@ -692,13 +696,13 @@
       })
     });
 
-    {% if job.status > job.RUNNING and job.status != job.CANCELING %}
+    {% if job.state == job.STATE_FINISHED %}
     // Add the links only for non-running jobs
     anchors.options.placement = 'left';
     anchors.add('code');
     {% endif %}
 
-{% if job.status <= job.RUNNING or job.status == job.CANCELING %}
+{% if job.state != job.STATE_FINISHED %}
   // Add a timer for the log updates
   pollTimer = setTimeout(poll, 5000);
 {% endif %}
@@ -716,13 +720,13 @@
         success: function(data, success, xhr) {
           $('#actual_device').html(data['actual_device']);
           $('#started').html(data['started']);
-          $('#jobstatus').html(data['job_status']);
+          $('#jobstatus').html(data['job_state']);
           $('#duration').html(data['duration']);
           for(var i = 0; i < data['subjobs'].length; i++) {
             var d = data['subjobs'][i];
             $('#subjob_' + d[0]).html(d[1]);
           }
-          if ('X-JobStatus' in data) {
+          if ('X-JobState' in data) {
             $('#cancel').css('display', 'none');
             poll_status = 0;
           }
