@@ -57,10 +57,7 @@ class ModelFactory(object):
         return yaml.safe_dump(self.make_job_data(**kw))
 
     def make_device_type(self, name='qemu'):
-        (device_type, created) = DeviceType.objects.get_or_create(name=name)
-        if created:
-            device_type.save()
-        return device_type
+        return DeviceType.objects.get_or_create(name=name)[0]
 
     def make_device(self, device_type=None, hostname=None, tags=None, is_public=True, **kw):
         if device_type is None:
