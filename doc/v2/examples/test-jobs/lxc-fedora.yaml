@@ -16,7 +16,7 @@ protocols:
   lava-lxc:
     name: pipeline-lxc-test
     distribution: fedora
-    release: '23'
+    release: '26'
     arch: amd64
 
 actions:
