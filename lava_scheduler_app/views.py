@@ -1071,7 +1071,7 @@ def remove_broken_string(line):
 
 @BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
 
     # Refuse non-pipeline jobs
     if not job.is_pipeline:
@@ -1202,7 +1202,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     description = description_data(job)
     template = loader.get_template("lava_scheduler_app/job_definition.html")
@@ -1240,7 +1240,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     template = loader.get_template("lava_scheduler_app/multinode_job_definition.html")
     return HttpResponse(template.render(
@@ -1329,7 +1329,7 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     # If this is a new log format, redirect to the job page
     if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
         return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
@@ -1364,7 +1364,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, pk, log_name):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
     if not os.path.exists(path):
         raise Http404
@@ -1531,7 +1531,7 @@ def job_log_file_plain(request, pk):
 
 
 def job_log_pipeline_incremental(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     # Start from this line
     try:
         first_line = int(request.GET.get("line", 0))
@@ -1580,7 +1580,7 @@ def job_log_pipeline_incremental(request, pk):
 
 
 def job_cancel(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if job.can_cancel(request.user):
         if job.is_multinode:
             multinode_jobs = TestJob.objects.filter(
@@ -1604,7 +1604,7 @@ def job_resubmit(request, pk):
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
     }
 
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if job.can_resubmit(request.user):
         response_data["is_authorized"] = True
 
@@ -1672,7 +1672,7 @@ class FailureForm(forms.ModelForm):
 
 @post_only
 def job_change_priority(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
         raise PermissionDenied()
     requested_priority = request.POST['priority']
@@ -1697,7 +1697,7 @@ def job_toggle_favorite(request, pk):
 
 
 def job_annotate_failure(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.can_annotate(request.user):
         raise PermissionDenied()
 
@@ -1718,7 +1718,7 @@ def job_annotate_failure(request, pk):
 
 
 def job_json(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     json_text = simplejson.dumps({
         'status': job.get_status_display(),
         'results_link': request.build_absolute_uri(job.results_link),
@@ -2392,7 +2392,7 @@ def similar_jobs(request, pk):
     from lava_results_app.models import TestData
 
     logger = logging.getLogger('lava_scheduler_app')
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
         raise PermissionDenied()
 
