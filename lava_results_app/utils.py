@@ -4,7 +4,7 @@ import logging
 import subprocess
 from django.utils.translation import ungettext_lazy
 from django.conf import settings
-from django.http import Http404
+from django.core.exceptions import PermissionDenied
 from linaro_django_xmlrpc.models import AuthToken
 
 
@@ -79,9 +79,9 @@ def anonymous_token(request, job):
     # safe to call with (None, None) - returns None
     auth_user = AuthToken.get_user_for_secret(username=user, secret=token)
     if not user and not job.is_public:
-        raise Http404("Job %d requires authentication to view." % job.id)
+        raise PermissionDenied()
     if not auth_user:
-        raise Http404("User '%s' is not able to view job %d" % (user, job.id))
+        raise PermissionDenied()
     return auth_user
 
 
@@ -92,9 +92,9 @@ def check_request_auth(request, job):
         # handle anonymous access
         auth_user = anonymous_token(request, job)
         if not auth_user or not job.can_view(auth_user):
-            raise Http404("User '%s' is not able to view job %d" % (request.user, job.id))
+            raise PermissionDenied()
     elif not job.can_view(request.user):
-        raise Http404("User '%s' is not able to view job %d" % (request.user.username, job.id))
+        raise PermissionDenied()
 
 
 def debian_package_version():
