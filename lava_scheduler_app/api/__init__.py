@@ -1,7 +1,7 @@
 from functools import wraps
 from simplejson import JSONDecodeError
-import xmlrpclib
 import yaml
+import sys
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -27,6 +27,13 @@ from lava_scheduler_app.schema import (
     validate_device,
     SubmissionException,
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 # functions need to be members to be exposed in the API
 # pylint: disable=no-self-use

@@ -21,7 +21,7 @@ Unit tests for Linaro Django XML-RPC Application
 """
 import re
 import logging
-import xmlrpclib
+import sys
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -37,6 +37,13 @@ from linaro_django_xmlrpc.models import (
     SystemAPI,
     xml_rpc_signature,
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class MockUser(object):

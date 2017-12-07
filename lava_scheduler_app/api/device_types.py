@@ -18,13 +18,20 @@
 
 import glob
 import os
-import xmlrpclib
+import sys
 
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Alias, DeviceType
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerDeviceTypesAPI(ExposedV2API):

@@ -4,7 +4,6 @@ import yaml
 import json
 import logging
 import cStringIO
-import xmlrpclib
 import unittest
 from django.test import TransactionTestCase
 from django.test.client import Client
@@ -26,6 +25,13 @@ from lava_scheduler_app.dbutils import (
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 # pylint: disable=invalid-name
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/

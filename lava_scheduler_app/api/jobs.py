@@ -17,11 +17,18 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import xmlrpclib
+import sys
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.models import TestJob
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerJobsAPI(ExposedV2API):

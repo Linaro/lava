@@ -19,8 +19,8 @@
 
 import os
 import subprocess
+import sys
 import yaml
-import xmlrpclib
 
 from django.http import Http404
 
@@ -28,6 +28,13 @@ from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class LavaSystemAPI(SystemAPI):

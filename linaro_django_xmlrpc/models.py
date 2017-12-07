@@ -24,11 +24,18 @@ import inspect
 import logging
 import pydoc
 import random
-import xmlrpclib
+import sys
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class errors:

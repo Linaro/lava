@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import xmlrpclib
 import yaml
+import sys
 
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
@@ -33,6 +33,13 @@ from lava_scheduler_app.models import (
     Tag,
     Worker
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerDevicesAPI(ExposedV2API):

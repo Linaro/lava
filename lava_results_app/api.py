@@ -18,8 +18,8 @@
 
 import csv
 import io
-import xmlrpclib
 import yaml
+import sys
 
 from linaro_django_xmlrpc.models import ExposedAPI
 
@@ -37,6 +37,13 @@ from lava_results_app.models import (
     InvalidContentTypeError,
 )
 from lava_scheduler_app.models import TestJob
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class ResultsAPI(ExposedAPI):
