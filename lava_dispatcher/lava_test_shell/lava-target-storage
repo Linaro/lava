@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+# This command will produce in its standard output a representation of the
+# available storage which is available to the test writer.
+#
+# Usage: ``lava-target-storage``
+#
+# The output format contains one line per device, and each line contains
+# the method and the ID for the storage using that method, separated
+# by a TAB character::
+#
+#	UMS /dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0xac2400d300000054-0:0
+#	SATA    /dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW
+#
+# Usage: ``lava-target-storage method``
+#
+# The output format contains one line per device assigned to the specified
+# ID, with no whitespace. The matched method is not output.::
+#
+#   /dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0xac2400d300000054-0:0
+#
+# If there is no matching method, exit non-zero and output nothing.
+#
+
+FILTER=$1
+if [ -z "$FILTER" ]; then
+  printf ${LAVA_STORAGE}
+  exit 0
+fi
+MATCH=$(printf ${LAVA_STORAGE} | awk "/^\t$FILTER\t/" | sed -e "s/^\t$FILTER\t//")
+if [ "$MATCH" = "${LAVA_STORAGE}" ] || [ -z "$MATCH" ]; then
+  # failed to find the filter in the group
+  exit 1
+fi
+printf "${MATCH}"
+exit 0

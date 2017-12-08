@@ -170,6 +170,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             'lava-os-build',
             'lava-target-ip',
             'lava-target-mac',
+            'lava-target-storage',
             'lava-test-case',
             'lava-test-case-attach',
             'lava-test-case-metadata',
