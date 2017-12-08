@@ -290,7 +290,9 @@ def lxc_udev_rule(data):
         rule += 'ATTR{{idProduct}}=="{product_id}", '
     rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
             '--lxc-name {lxc_name} --device-node $name ' \
-            '--logging-url {logging_url} --job-id {job_id}'
+            '--job-id {job_id}'
+    if data['logging_url']:
+        rule += ' --logging-url {logging_url}'
     rule = rule.format(**data)
 
     if data["master_cert"] is not None:
