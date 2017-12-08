@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='testjob',
             name='visibility',
-            field=models.IntegerField(default=0, help_text='Visibility affects the TestJob and all results arising from that job, including Queries and Reports.', verbose_name='Visibility type', choices=[(0, b'Publicly visible'), (1, b'Personal only'), (2, b'Group only')]),
+            field=models.IntegerField(default=0, help_text='Visibility affects the TestJob and all results arising from that job, including Queries and Reports.', verbose_name='Visibility type', choices=[(0, 'Publicly visible'), (1, 'Personal only'), (2, 'Group only')]),
             preserve_default=True,
         ),
     ]

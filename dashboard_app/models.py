@@ -20,6 +20,8 @@
 Database models of the Dashboard application
 """
 
+from __future__ import unicode_literals
+
 import gzip
 
 from django.core.files.storage import FileSystemStorage

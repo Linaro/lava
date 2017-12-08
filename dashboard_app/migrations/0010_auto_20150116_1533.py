@@ -14,13 +14,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='is_build_number',
-            field=models.BooleanField(default=False, verbose_name=b'Use build number'),
+            field=models.BooleanField(default=False, verbose_name='Use build number'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='imagereportchart',
             name='xaxis_attribute',
-            field=models.CharField(max_length=20, null=True, verbose_name=b'X-axis attribute', blank=True),
+            field=models.CharField(max_length=20, null=True, verbose_name='X-axis attribute', blank=True),
             preserve_default=True,
         ),
     ]

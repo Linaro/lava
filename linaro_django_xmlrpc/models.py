@@ -20,6 +20,8 @@
 Empty module for Django to pick up this package as Django application
 """
 
+from __future__ import unicode_literals
+
 import inspect
 import logging
 import pydoc

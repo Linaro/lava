@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereport',
             name='is_archived',
-            field=models.BooleanField(default=False, verbose_name=b'Archived'),
+            field=models.BooleanField(default=False, verbose_name='Archived'),
             preserve_default=True,
         ),
         migrations.AlterField(

@@ -15,19 +15,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='imagereportchart',
             name='chart_height',
-            field=models.PositiveIntegerField(default=300, verbose_name=b'Chart height', validators=[django.core.validators.MinValueValidator(200), django.core.validators.MaxValueValidator(400)]),
+            field=models.PositiveIntegerField(default=300, verbose_name='Chart height', validators=[django.core.validators.MinValueValidator(200), django.core.validators.MaxValueValidator(400)]),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='imagereportchart',
             name='is_aggregate_results',
-            field=models.BooleanField(default=True, verbose_name=b'Aggregate parametrized results'),
+            field=models.BooleanField(default=True, verbose_name='Aggregate parametrized results'),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='imagereportchart',
             name='is_build_number',
-            field=models.BooleanField(default=True, verbose_name=b'Use build number'),
+            field=models.BooleanField(default=True, verbose_name='Use build number'),
             preserve_default=True,
         ),
     ]

@@ -1,5 +1,7 @@
 # pylint: disable=too-many-lines
 
+from __future__ import unicode_literals
+
 import jinja2
 import json
 import logging

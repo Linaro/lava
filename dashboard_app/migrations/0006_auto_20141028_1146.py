@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='is_percentage',
-            field=models.BooleanField(default=False, verbose_name=b'Percentage'),
+            field=models.BooleanField(default=False, verbose_name='Percentage'),
             preserve_default=True,
         ),
     ]

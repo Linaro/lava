@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='querycondition',
             name='operator',
-            field=models.CharField(choices=[(b'exact', 'Exact match'), (b'iexact', 'Case-insensitive match'), (b'ne', 'Not equal to'), (b'icontains', 'Contains'), (b'gt', 'Greater than'), (b'lt', 'Less than')], default=b'exact', max_length=20, verbose_name='Operator'),
+            field=models.CharField(choices=[('exact', 'Exact match'), ('iexact', 'Case-insensitive match'), ('ne', 'Not equal to'), ('icontains', 'Contains'), ('gt', 'Greater than'), ('lt', 'Less than')], default='exact', max_length=20, verbose_name='Operator'),
         ),
         migrations.AlterUniqueTogether(
             name='queryomitresult',

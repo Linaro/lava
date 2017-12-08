@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='query',
             name='is_changed',
-            field=models.BooleanField(default=False, verbose_name=b'Conditions have changed'),
+            field=models.BooleanField(default=False, verbose_name='Conditions have changed'),
         ),
         migrations.AlterField(
             model_name='query',
             name='is_updating',
-            field=models.BooleanField(default=False, editable=False, verbose_name=b'Query is currently updating'),
+            field=models.BooleanField(default=False, editable=False, verbose_name='Query is currently updating'),
         ),
     ]
