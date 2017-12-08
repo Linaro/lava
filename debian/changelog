@@ -1,3 +1,12 @@
+lava-server (2017.12.post1-1) unstable; urgency=medium
+
+  * Hot fix release
+    2e00544f LAVA-1168 - LAVA job visibility bug
+    341f5dfa LAVA-1171 - Show 403 instead of 404
+    31b7b2a9 Fix "lava-server manage workers add"
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 08 Dec 2017 14:32:43 +0000
+
 lava-server (2017.12-1) unstable; urgency=medium
 
   * 2017.12 production release
@@ -884,7 +893,7 @@ lava-server (2016.12-1) unstable; urgency=medium
 
 lava-server (2016.11-1) unstable; urgency=medium
 
-  * New production release aimed at Stretch. 
+  * New production release aimed at Stretch.
     Release details available at:
     https://projects.linaro.org/browse/LAVA-789?filter=12078
   * Drop dependency on libapache2-mod-uwsgi and libapache2-mod-wsgi.
@@ -1021,7 +1030,7 @@ lava-server (2016.11-1) unstable; urgency=medium
     Add nbdroot as optional parameter to the schema
     Update qemu/kvm templates to allow overriding of guestfs interface
     LAVA-93 mark some roles as essential
-  
+
 
  -- Neil Williams <codehelp@debian.org>  Wed, 09 Nov 2016 11:49:24 +0000
 
@@ -1670,7 +1679,7 @@ lava-server (0.22.1-2) unstable; urgency=medium
 
 lava-server (0.22.1-1) unstable; urgency=medium
 
-  * Port to django1.6 
+  * Port to django1.6
 
  -- Neil Williams <codehelp@debian.org>  Thu, 20 Feb 2014 10:45:58 +0000
 
