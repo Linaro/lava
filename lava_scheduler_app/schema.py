@@ -377,6 +377,7 @@ def _device_schema():
         'fastboot_via_uboot': bool,
         'device_info': [dict],
         'static_info': [dict],
+        'storage_info': [dict],
         'flash_cmds_order': list,
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
