@@ -67,6 +67,12 @@ actions:
         sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
         compression: xz
     os: debian
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
 
 - boot:
     namespace: droid
@@ -93,7 +99,8 @@ actions:
           - /sbin/ifconfig
       name: lxc-dev-inline
       path: inline/lxc-dev.yaml
-    - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+    - repository: https://git.linaro.org/lava-team/refactoring.git/
       from: git
-      path: debian/get-adb-serial.yaml
-      name: get-adb-serial
+      path: android/lava-android-basic-lxc.yaml
+      name: v2-make-adb-connection
+
