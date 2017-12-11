@@ -64,6 +64,7 @@ from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     testjob_submission
 )
+from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
 from lava_results_app.utils import (
@@ -1547,8 +1548,7 @@ def job_log_pipeline_incremental(request, pk):
                 data = []
             else:
                 for line in data:
-                    if sys.version_info < (3, 0):
-                        remove_broken_string(line)
+                    line["msg"] = udecode(line["msg"])
                     if line["lvl"] == "results":
                         case_id = TestCase.objects.filter(
                             suite__job=job,
