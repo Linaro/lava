@@ -3,7 +3,6 @@ import sys
 import yaml
 import json
 import logging
-import cStringIO
 import unittest
 from django.test import TransactionTestCase
 from django.test.client import Client
@@ -28,9 +27,11 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 
 if sys.version_info[0] == 2:
     # Python 2.x
+    from cStringIO import StringIO
     import xmlrpclib
 elif sys.version_info[0] == 3:
     # For Python 3.0 and later
+    from io import StringIO
     import xmlrpc.client as xmlrpclib
 
 
@@ -52,7 +53,7 @@ class TestTransport(xmlrpclib.Transport, object):
         self.verbose = verbose
         response = self.client.post(
             handler, request_body, content_type="text/xml")
-        res = cStringIO.StringIO(response.content)
+        res = StringIO(response.content)
         res.seek(0)
         return self.parse_response(res)
 
