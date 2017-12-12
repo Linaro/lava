@@ -21,6 +21,7 @@
 import datetime
 import re
 from shutil import rmtree
+import time
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -77,15 +78,17 @@ class Command(BaseCommand):
         rm.add_argument("--v1", default=False, action="store_true",
                         help="Remove only v1 jobs. "
                              "If this is the only filtering option, all v1 jobs will be removed.")
+        rm.add_argument("--slow", default=False, action="store_true",
+                        help="Be nice with the system by sleeping regularly")
 
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
             self.handle_rm(options["older_than"], options["submitter"],
                            options["status"], options["v1"],
-                           options["dry_run"])
+                           options["dry_run"], options["slow"])
 
-    def handle_rm(self, older_than, submitter, status, v1_only, simulate):
+    def handle_rm(self, older_than, submitter, status, v1_only, simulate, slow):
         if not older_than and not submitter and not status and not v1_only:
             raise CommandError("You should specify at least one filtering option")
 
@@ -119,6 +122,7 @@ class Command(BaseCommand):
             jobs = jobs.filter(is_pipeline=False)
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
+        counter = 0
         for job in jobs:
             self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
             try:
@@ -127,6 +131,10 @@ class Command(BaseCommand):
             except OSError as exc:
                 self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
             job.delete()
+            counter += 1
+            if slow and not counter % 100:
+                self.stdout.write("sleeping 2s...")
+                time.sleep(2)
 
         if simulate:
             transaction.rollback()
