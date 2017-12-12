@@ -40,7 +40,7 @@ from lava_scheduler_app.dbutils import (
 )
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.utils import mkdir
-from lava_scheduler_app.scheduler import schedule, schedule_health_checks, schedule_jobs
+from lava_scheduler_app.scheduler import schedule
 from lava_server.cmdutils import LAVADaemonCommand
 
 
@@ -51,14 +51,11 @@ from lava_server.cmdutils import LAVADaemonCommand
 # messages. If both version are not identical, the connection is refused by the
 # master.
 PROTOCOL_VERSION = 2
-# TODO constants to move into external files
-FD_TIMEOUT = 60
-TIMEOUT = 10
-DB_LIMIT = 20
 
 # Slave ping interval and timeout
 PING_INTERVAL = 20
 DISPATCHER_TIMEOUT = 3 * PING_INTERVAL
+SCHEDULE_INTERVAL = 20
 
 # Log format
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
@@ -560,15 +557,19 @@ class Command(LAVADaemonCommand):
             context.term()
 
     def main_loop(self, options):
-        # Last access to the database for new jobs and cancelations
-        last_db_access = 0
+        last_schedule = last_dispatcher_check = time.time()
 
         while True:
             try:
                 try:
-                    # TODO: Fix the timeout computation
+                    # Compute the timeout
+                    now = time.time()
+                    timeout = min(SCHEDULE_INTERVAL - (now - last_schedule),
+                                  PING_INTERVAL - (now - last_dispatcher_check))
+                    timeout = max(timeout * 1000, 1)
+
                     # Wait for data or a timeout
-                    sockets = dict(self.poller.poll(TIMEOUT * 1000))
+                    sockets = dict(self.poller.poll(timeout))
                 except zmq.error.ZMQError:
                     continue
 
@@ -583,17 +584,19 @@ class Command(LAVADaemonCommand):
 
                 # Check dispatchers status
                 now = time.time()
-                for hostname, dispatcher in self.dispatchers.items():
-                    if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
-                        if hostname == "lava-logs":
-                            self.logger.error("[STATE] lava-logs goes OFFLINE")
-                        else:
-                            self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
-                        self.dispatchers[hostname].go_offline()
+                if now - last_dispatcher_check > PING_INTERVAL:
+                    for hostname, dispatcher in self.dispatchers.items():
+                        if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
+                            if hostname == "lava-logs":
+                                self.logger.error("[STATE] lava-logs goes OFFLINE")
+                            else:
+                                self.logger.error("[STATE] Dispatcher <%s> goes OFFLINE", hostname)
+                            self.dispatchers[hostname].go_offline()
+                    last_dispatcher_check = now
 
                 # Limit accesses to the database. This will also limit the rate of
                 # CANCEL and START messages
-                if time.time() - last_db_access > DB_LIMIT:
+                if time.time() - last_schedule > SCHEDULE_INTERVAL:
                     if self.dispatchers["lava-logs"].online:
                         schedule(self.logger)
 
@@ -607,7 +610,7 @@ class Command(LAVADaemonCommand):
                     self.cancel_jobs()
 
                     # Do not count the time taken to schedule jobs
-                    last_db_access = time.time()
+                    last_schedule = time.time()
 
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")
