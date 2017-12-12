@@ -23,24 +23,25 @@
 from contextlib import contextmanager
 import errno
 import jinja2
+import json
 import lzma
 import os
 import time
 import yaml
 import zmq
 import zmq.auth
+from zmq.utils.strtypes import b, u
 from zmq.auth.thread import ThreadAuthenticator
 
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 from django.utils import timezone
 
-from lava_scheduler_app.dbutils import (
-    parse_job_description,
-)
+from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
-from lava_scheduler_app.utils import mkdir
 from lava_scheduler_app.scheduler import schedule
+from lava_scheduler_app.utils import mkdir
 from lava_server.cmdutils import LAVADaemonCommand
 
 
@@ -142,10 +143,14 @@ class Command(LAVADaemonCommand):
     def __init__(self, *args, **options):
         super(Command, self).__init__(*args, **options)
         self.controler = None
+        self.event_socket = None
+        self.poller = None
+        self.pipe_r = None
         # List of logs
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         self.dispatchers = {"lava-logs": SlaveDispatcher("lava-logs", online=False)}
+        self.events = {"canceling": set()}
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -168,6 +173,8 @@ class Command(LAVADaemonCommand):
         net.add_argument('--master-socket',
                          default='tcp://*:5556',
                          help="Socket for master-slave communication. Default: tcp://*:5556")
+        net.add_argument('--event-url', default="tcp://localhost:5500",
+                         help="URL of the publisher")
         net.add_argument('--ipv6', default=False, action='store_true',
                          help="Enable IPv6 on the listening sockets")
         net.add_argument('--encrypt', default=False, action='store_true',
@@ -236,6 +243,26 @@ class Command(LAVADaemonCommand):
             self.logger.error("<%s> sent unknown action=%s, args=(%s)",
                               hostname, action, msg[1:])
             return True
+
+    def read_event_socket(self):
+        try:
+            msg = self.event_socket.recv_multipart(zmq.NOBLOCK)
+        except zmq.error.Again:
+            return False
+
+        try:
+            (topic, _, dt, username, data) = (u(m) for m in msg)
+        except ValueError:
+            self.logger.error("Invalid event: %s", msg)
+            return True
+
+        if topic.endswith(".testjob"):
+            try:
+                data = json.loads(data)
+                if data["state"] == "Canceling":
+                    self.events["canceling"].add(int(data["job"]))
+            except ValueError:
+                self.logger.error("Invalid event data: %s", msg)
 
     def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
         try:
@@ -479,13 +506,18 @@ class Command(LAVADaemonCommand):
                 job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
                 job.save()
 
-    def cancel_jobs(self):
-        for job in TestJob.objects.filter(state=TestJob.STATE_CANCELING):
+    def cancel_jobs(self, partial=False):
+        query = TestJob.objects.filter(state=TestJob.STATE_CANCELING)
+        if partial:
+            query = query.filter(id__in=list(self.events["canceling"]))
+
+        for job in query:
             worker = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
             self.logger.info("[%d] CANCEL => %s", job.id,
                              worker.hostname)
             self.controler.send_multipart([str(worker.hostname),
                                            'CANCEL', str(job.id)])
+
 
     def handle(self, *args, **options):
         # Initialize logging.
@@ -507,10 +539,12 @@ class Command(LAVADaemonCommand):
         # Create the sockets
         context = zmq.Context()
         self.controler = context.socket(zmq.ROUTER)
+        self.event_socket = context.socket(zmq.SUB)
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")
             self.controler.setsockopt(zmq.IPV6, 1)
+            self.event_socket.setsockopt(zmq.IPV6, 1)
 
         if options['encrypt']:
             self.logger.info("[INIT] Starting encryption")
@@ -531,10 +565,14 @@ class Command(LAVADaemonCommand):
 
         self.controler.bind(options['master_socket'])
 
+        self.event_socket.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
+        self.event_socket.connect(options['event_url'])
+
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         self.poller = zmq.Poller()
         self.poller.register(self.controler, zmq.POLLIN)
+        self.poller.register(self.event_socket, zmq.POLLIN)
 
         # Translate signals into zmq messages
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
@@ -552,6 +590,7 @@ class Command(LAVADaemonCommand):
             # Drop controler socket: the protocol does handle lost messages
             self.logger.info("[CLOSE] Closing the controler socket and dropping messages")
             self.controler.close(linger=0)
+            self.event_socket.close(linger=0)
             if options['encrypt']:
                 auth.stop()
             context.term()
@@ -566,6 +605,10 @@ class Command(LAVADaemonCommand):
                     now = time.time()
                     timeout = min(SCHEDULE_INTERVAL - (now - last_schedule),
                                   PING_INTERVAL - (now - last_dispatcher_check))
+                    # If some actions are remaining, decrease the timeout
+                    if self.events["canceling"]:
+                        timeout = min(timeout, 1)
+                    # Wait at least for 1ms
                     timeout = max(timeout * 1000, 1)
 
                     # Wait for data or a timeout
@@ -579,8 +622,20 @@ class Command(LAVADaemonCommand):
 
                 # Command socket
                 if sockets.get(self.controler) == zmq.POLLIN:
-                    while self.controler_socket():  # Unqueue all the pending messages
+                    while self.controler_socket():  # Unqueue all pending messages
                         pass
+
+                # Events socket
+                if sockets.get(self.event_socket) == zmq.POLLIN:
+                    while self.read_event_socket():  # Unqueue all pending messages
+                        pass
+                    # Wait for the next iteration to handle the event.
+                    # In fact, the code that generated the event (lava-logs or
+                    # lava-server-gunicorn) needs some time to commit the
+                    # database transaction.
+                    # If we are too fast, the database object won't be
+                    # available (or in the right state) yet.
+                    continue
 
                 # Check dispatchers status
                 now = time.time()
@@ -611,6 +666,11 @@ class Command(LAVADaemonCommand):
 
                     # Do not count the time taken to schedule jobs
                     last_schedule = time.time()
+                else:
+                    # Cancel the jobs and remove the jobs from the set
+                    if self.events["canceling"]:
+                        self.cancel_jobs(partial=True)
+                        self.events["canceling"] = set()
 
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")
