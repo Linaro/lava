@@ -20,6 +20,12 @@ def get_item(dictionary, key):
 
 @register.filter
 def udecode(obj):
+    # Sometime we do have unicode string: they have been already decoded, so we
+    # should not do anything.
+    # The only way to test for unicode string in both python2 and 3, is to test
+    # for the bytes type.
+    if not isinstance(obj, bytes):
+        return obj
     try:
         return obj.decode("utf-8", errors="replace")
     except AttributeError:
