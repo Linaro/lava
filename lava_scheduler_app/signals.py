@@ -93,7 +93,7 @@ def testjob_post_handler(sender, **kwargs):
     instance = kwargs["instance"]
 
     # Send a signal if the state or health changed
-    if (instance.health != instance._old_health) or (instance.state != instance._old_state):
+    if (instance.health != instance._old_health) or (instance.state != instance._old_state) or instance.state == TestJob.STATE_SUBMITTED:
         # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
         # the states change.
