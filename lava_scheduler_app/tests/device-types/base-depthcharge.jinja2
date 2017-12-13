@@ -1,0 +1,35 @@
+{% extends 'base.jinja2' %}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set kernel_args = extra_kernel_args | default(base_kernel_args) %}
+
+{% set base_depthcharge_commands = depthcharge_tftp_commands | default(
+"          - tftpboot {SERVER_IP} {KERNEL} {CMDLINE}
+") -%}
+
+{% block body %}
+device_type: {{ device_type | default('depthcharge') }}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      depthcharge:
+        parameters:
+          start_message: {{ start_message | default('Starting netboot') }}
+          bootloader_prompt: "{{ bootloader_prompt | default('dpch:') }}"
+          boot_message: {{ boot_message | default('Booting Linux') }}
+        nfs:
+          cmdline: {{ kernel_args }} console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}
+          commands:
+{{ base_depthcharge_commands }}
+        ramdisk:
+          cmdline: {{ kernel_args }} console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_ip_args }}
+          commands:
+{{ base_depthcharge_commands }}
+{% endblock body %}

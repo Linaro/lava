@@ -1263,3 +1263,21 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
                                                  'volumes': ["/home", "/tmp"]}}},
                          template_dict['actions']['boot']['methods'])
+
+    def test_depthcharge_template(self):
+        data = """\
+{% extends 'base-depthcharge.jinja2' %}
+{% set device_type = 'rk3288-veyron-jaq' %}
+{% set start_message = 'Starting netboot on veyron_jaq...' %}
+{% set console_device = console_device | default('ttyS2') %}
+{% set extra_kernel_args = 'earlyprintk=ttyS2,115200n8 console=tty1' %}"""
+        self.assertTrue(self.validate_data('jaq-01', data))
+        test_template = prepare_jinja_template('jaq-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('rk3288-veyron-jaq', template_dict['device_type'])
+        depthcharge = template_dict['actions']['boot']['methods']['depthcharge']
+        self.assertEqual('Starting netboot on veyron_jaq...',
+                         depthcharge['parameters']['start_message'])
+        self.assertEqual('earlyprintk=ttyS2,115200n8 console=tty1 console=ttyS2,115200n8 root=/dev/ram0 ip=dhcp',
+                         depthcharge['ramdisk']['cmdline'])
