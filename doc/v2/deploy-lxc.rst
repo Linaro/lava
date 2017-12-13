@@ -39,20 +39,10 @@ actions within the job.
 Protocol elements
 =================
 
-.. code-block:: yaml
-
- protocols:
-   lava-lxc:
-     name: lxc-device
-     distribution: fedora
-     release: '23'
-
-  actions:
-  - deploy:
-    timeout:
-      minutes: 5
-    to: lxc
-    os: fedora
+.. include:: examples/test-jobs/lxc-fedora.yaml
+   :code: yaml
+   :start-after: path: lxc-fedora.yaml
+   :end-before: - boot:
 
 Sample Job Definition
 =====================
@@ -204,29 +194,10 @@ Requirements and Limitations
 Protocol elements
 =================
 
-.. code-block:: yaml
-
- protocols:
-   lava-lxc:
-     name: pipeline-lxc-test
-     template: debian
-     distribution: debian
-     release: sid
-     mirror: http://deb.debian.org/debian/
-     security_mirror: http://deb.debian.org/debian-security/
-
-  actions:
-  - deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 5
-    to: lxc
-    packages:
-    - android-tools-adb
-    - android-tools-fastboot
-    - systemd
-    - systemd-sysv
-    os: debian
+.. include:: examples/test-jobs/hi6220-hikey.yaml
+   :code: yaml
+   :start-after: path: hi6220-hikey.yaml
+   :end-before: - boot:
 
 .. index:: LXC - feedback, feedback output
 
