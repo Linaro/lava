@@ -96,9 +96,6 @@ class YamlFactory(ModelFactory):
         data.update(kw)
         return data
 
-    def make_job_json(self, **kw):
-        return self.make_job_yaml(**kw)
-
     def make_job_yaml(self, **kw):
         return yaml.safe_dump(self.make_job_data(**kw))
 
@@ -139,13 +136,13 @@ class PipelineDeviceTags(TestCaseWithFactory):
     def test_no_tags(self):
         self.factory.make_device(self.device_type, 'fakeqemu3')
         TestJob.from_yaml_and_user(
-            self.factory.make_job_json(),
+            self.factory.make_job_yaml(),
             self.factory.make_user())
 
     def test_priority(self):
         self.factory.make_device(self.device_type, 'fakeqemu3')
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(),
+            self.factory.make_job_yaml(),
             self.factory.make_user())
         self.assertEqual(TestJob.LOW, job.priority)
 
@@ -173,7 +170,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertRaises(
             yaml.YAMLError,
             TestJob.from_yaml_and_user,
-            self.factory.make_job_json(tags=['tag1', 'tag2']),
+            self.factory.make_job_yaml(tags=['tag1', 'tag2']),
             self.factory.make_user())
 
     def test_from_yaml_unsupported_tags(self):
@@ -182,7 +179,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.factory.ensure_tag('sata')
         try:
             TestJob.from_yaml_and_user(
-                self.factory.make_job_json(tags=['usb', 'sata']),
+                self.factory.make_job_yaml(tags=['usb', 'sata']),
                 self.factory.make_user())
         except DevicesUnavailableException:
             pass
@@ -196,7 +193,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         ]
         self.factory.make_device(self.device_type, hostname='fakeqemu1', tags=tag_list)
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(tags=['tag1', 'tag2']),
+            self.factory.make_job_yaml(tags=['tag1', 'tag2']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), {'tag1', 'tag2'})
@@ -206,10 +203,10 @@ class PipelineDeviceTags(TestCaseWithFactory):
         tags = list(Tag.objects.filter(name='tag'))
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1", tags=tags)
         job1 = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(tags=['tag']),
+            self.factory.make_job_yaml(tags=['tag']),
             self.factory.make_user())
         job2 = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(tags=['tag']),
+            self.factory.make_job_yaml(tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
@@ -230,7 +227,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         tag_list.append(self.factory.ensure_tag('unique_tag'))
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu2", tags=tag_list)
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(tags=['common_tag1', 'common_tag2', 'unique_tag']),
+            self.factory.make_job_yaml(tags=['common_tag1', 'common_tag2', 'unique_tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag for tag in job.tags.all()),
@@ -248,14 +245,14 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu3")
 
     def test_from_yaml_and_user_sets_definition(self):
-        definition = self.factory.make_job_json()
+        definition = self.factory.make_job_yaml()
         job = TestJob.from_yaml_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
 
     def test_from_yaml_and_user_sets_submitter(self):
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
+            self.factory.make_job_yaml(), user)
         self.assertEqual(user, job.submitter)
         self.assertFalse(job.health_check)
 
@@ -360,7 +357,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = Device.objects.get(hostname="fakeqemu1")
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_json(), user)
+            self.factory.make_job_yaml(), user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
         device_config = device.load_configuration(job_ctx)  # raw dict
@@ -501,7 +498,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         user3 = self.factory.make_user()
 
         # public set in the YAML
-        yaml_str = self.factory.make_job_json()
+        yaml_str = self.factory.make_job_yaml()
         yaml_data = yaml.load(yaml_str)
         job = TestJob.from_yaml_and_user(
             yaml_str, user)
@@ -553,7 +550,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
     def test_compatibility(self):  # pylint: disable=too-many-locals
         user = self.factory.make_user()
         # public set in the YAML
-        yaml_str = self.factory.make_job_json()
+        yaml_str = self.factory.make_job_yaml()
         yaml_data = yaml.load(yaml_str)
         job = TestJob.from_yaml_and_user(
             yaml_str, user)

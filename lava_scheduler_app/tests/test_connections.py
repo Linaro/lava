@@ -42,7 +42,7 @@ class SecondaryConnections(TestCaseWithFactory):
         device = self.factory.make_device(self.device_type, hostname)
         try:
             jobs = TestJob.from_yaml_and_user(
-                self.factory.make_job_json(),
+                self.factory.make_job_yaml(),
                 self.factory.make_user())
         except DevicesUnavailableException as exc:
             self.fail(exc)
@@ -104,7 +104,7 @@ class SecondaryConnections(TestCaseWithFactory):
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = 'fakeqemu4'
         self.factory.make_device(self.device_type, hostname)
-        data = yaml.load(self.factory.make_job_json())
+        data = yaml.load(self.factory.make_job_yaml())
         data['protocols']['lava-multinode']['roles']['host']['count'] = 2
         self.assertRaises(
             SubmissionException, TestJob.from_yaml_and_user,
@@ -116,14 +116,14 @@ class SecondaryConnections(TestCaseWithFactory):
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = 'fakeqemu4'
         self.factory.make_device(self.device_type, hostname)
-        data = yaml.load(self.factory.make_job_json())
+        data = yaml.load(self.factory.make_job_yaml())
         deploy = [action['deploy'] for action in data['actions'] if 'deploy' in action]
         # replace working image with a broken URL
         for block in deploy:
             block['image'] = 'http://localhost/unknown/invalid.gz'
         try:
             jobs = TestJob.from_yaml_and_user(
-                self.factory.make_job_json(),
+                self.factory.make_job_yaml(),
                 self.factory.make_user())
         except DevicesUnavailableException as exc:
             self.fail(exc)

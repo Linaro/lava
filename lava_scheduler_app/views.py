@@ -1708,19 +1708,6 @@ def job_annotate_failure(request, pk):
         request=request))
 
 
-def job_json(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    json_text = simplejson.dumps({
-        'status': job.get_status_display(),
-        'results_link': request.build_absolute_uri(job.results_link),
-    })
-    content_type = 'application/json'
-    if 'callback' in request.GET:
-        json_text = '%s(%s)' % (request.GET['callback'], json_text)
-        content_type = 'text/javascript'
-    return HttpResponse(json_text, content_type=content_type)
-
-
 @post_only
 def get_remote_definition(request):
     """Fetches remote job definition file."""
