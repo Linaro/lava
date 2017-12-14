@@ -469,7 +469,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         boot_params = None
         for name, params in ((x, d[x])
-                             for x, d in ((d.keys()[0], d)
+                             for x, d in ((list(d.keys())[0], d)
                                           for d in data['actions'])):
             if name == 'boot':
                 boot_params = params
@@ -840,8 +840,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(jobs), 2)
         for role, job_list in jobs.items():
             for job in job_list:
+                del(job['protocols']['lava-multinode']['sub_id'])
                 yaml.dump(job)  # ensure the jobs can be serialised as YAML
-                role = job['protocols']['lava-multinode']['role']
                 if role == 'client':
                     self.assertEqual(job, yaml.load(open(client_check, 'r')))
                 if role == 'server':
@@ -944,7 +944,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 'security_mirror': 'http://mirror.csclub.uwaterloo.ca/debian-security/', 'release': 'sid',
                 'distribution': 'debian', 'mirror': 'http://ftp.us.debian.org/debian/'}
         }
-        for role, _ in jobs.iteritems():
+        for role, _ in jobs.items():
             if role == 'server':
                 self.assertNotIn('lava-lxc', jobs[role][0]['protocols'])
             elif role == 'client':
@@ -970,7 +970,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 'distribution': 'debian', 'mirror': 'http://mirror.bytemark.co.uk/debian',
                 'name': 'lxc-hikey-oe', 'release': 'jessie', 'template': 'debian'}
         }
-        for role, _ in jobs.iteritems():
+        for role, _ in jobs.items():
             if role == 'server':
                 self.assertIn('lava-lxc', jobs[role][0]['protocols'])
                 self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], server_protocol_data['lava-lxc'])
@@ -1432,11 +1432,11 @@ class VlanInterfaces(TestCaseWithFactory):
         submission = yaml.load(open(self.filename, 'r'))
         self.assertIn('protocols', submission)
         self.assertIn('lava-vland', submission['protocols'])
-        roles = [role for role, _ in submission['protocols']['lava-vland'].iteritems()]
+        roles = [role for role, _ in submission['protocols']['lava-vland'].items()]
         params = submission['protocols']['lava-vland']
         vlans = {}
         for role in roles:
-            for name, tags in params[role].iteritems():
+            for name, tags in params[role].items():
                 vlans[name] = tags
         self.assertIn('vlan_one', vlans)
         self.assertIn('vlan_two', vlans)

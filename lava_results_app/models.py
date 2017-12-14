@@ -193,13 +193,10 @@ class BugLink(models.Model):
             user_id=user.id,
             content_type_id=buglink_ct.pk,
             object_id=self.pk,
-            object_repr=unicode(self),
+            object_repr=str(self),
             action_flag=ADDITION,
             change_message=reason
         )
-
-    def __unicode__(self):
-        return unicode(self.url)
 
 
 class TestSuite(models.Model, Queryable):
@@ -290,7 +287,7 @@ class TestSuite(models.Model, Queryable):
         """
         return ("lava.results.suite", [self.job.id, self.name])
 
-    def __unicode__(self):
+    def __str__(self):
         """
         Human friendly name for the test suite
         """
@@ -324,7 +321,7 @@ class TestSet(models.Model):
             self.name
         ))
 
-    def __unicode__(self):
+    def __str__(self):
         return _(u"Test Set {0}/{1}/{2}").format(
             self.suite.job.id,
             self.suite.name,
@@ -496,7 +493,7 @@ class TestCase(models.Model, Queryable):
             value = self.RESULT_REVERSE[self.result]
         return value
 
-    def __unicode__(self):
+    def __str__(self):
         """
         results/<job-ID>/<lava-suite-name>/<lava-test-set>/<lava-test-case>
         results/<job-ID>/<lava-suite-name>/<lava-test-case>
@@ -570,7 +567,7 @@ class MetaType(models.Model):
             (UNKNOWN_TYPE, _(u"unknown type")))
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return _(u"Name: {0} Type: {1}").format(
             self.name,
             self.TYPE_CHOICES[self.metatype])
@@ -646,7 +643,7 @@ class NamedTestAttribute(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey('content_type', 'object_id')
 
-    def __unicode__(self):
+    def __str__(self):
         return _(u"{name}: {value}").format(
             name=self.name,
             value=self.value)
@@ -670,7 +667,7 @@ class TestData(models.Model):
 
     attributes = fields.GenericRelation(NamedTestAttribute)
 
-    def __unicode__(self):
+    def __str__(self):
         return _(u"TestJob {0}").format(self.testjob.id)
 
 
@@ -726,7 +723,7 @@ class ActionData(models.Model):
     count = models.PositiveIntegerField(blank=True, null=True)
     max_retries = models.PositiveIntegerField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return _(u"{0} {1} Level {2}, Meta {3}").format(
             self.testdata,
             self.action_name,
@@ -738,7 +735,7 @@ class QueryGroup(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -870,7 +867,7 @@ class Query(models.Model):
         default=False,
         verbose_name='Archived')
 
-    def __unicode__(self):
+    def __str__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
     def has_view(self):
@@ -1289,7 +1286,7 @@ class QueryCondition(models.Model):
                         field_object)
                     field['type'] = field_object.__class__.__name__
                     if field_object.choices:
-                        field['choices'] = [unicode(x) for x in dict(
+                        field['choices'] = [str(x) for x in dict(
                             field_object.choices).values()]
 
                     condition_choice['fields'][field_name] = field
@@ -1401,7 +1398,7 @@ class ChartGroup(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -1447,7 +1444,7 @@ class Chart(models.Model):
 
     queries = models.ManyToManyField(Query, through='ChartQuery', blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink
@@ -1724,7 +1721,7 @@ class ChartQuery(models.Model):
 
         return data
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink

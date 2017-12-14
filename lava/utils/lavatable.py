@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -23,13 +25,13 @@ class LavaView(tables.SingleTableView):
         time_queries = {}
         if hasattr(self.table_class.Meta, 'times'):
             # filter the possible list by the request
-            for key, value in self.table_class.Meta.times.iteritems():
+            for key, value in self.table_class.Meta.times.items():
                 # check if the request includes the current time filter & get the value
                 match = self.request.GET.get(key)
                 if match and match != "":
                     self.terms[key] = "%s within %s %s" % (key, match, value)  # the label for this query in the search list
                     time_queries[key] = value
-            for key, value in time_queries.iteritems():
+            for key, value in time_queries.items():
                 match = escape(self.request.GET.get(key))
                 # escape converts None into u'None'
                 if not match or match == "" or match == "None":
@@ -65,14 +67,14 @@ class LavaView(tables.SingleTableView):
             self.search.extend(self.table_class.Meta.queries.values())
             self.search.sort()
         if hasattr(self.table_class.Meta, 'times'):
-            for key, value in self.table_class.Meta.times.iteritems():
+            for key, value in self.table_class.Meta.times.items():
                 field = [f for f in self.model._meta.get_fields()
                          if f.name == key][0]
                 column = self.table_class.base_columns.get(key)
                 if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
-                    self.times.append("%s (%s)" % (unicode(column.verbose_name), value))
+                    self.times.append("%s (%s)" % (str(column.verbose_name), value))
                 elif field and hasattr(field, 'verbose_name') and field.verbose_name is not None:
-                    self.times.append("%s (%s)" % (unicode(field.verbose_name), value))
+                    self.times.append("%s (%s)" % (str(field.verbose_name), value))
                 else:
                     self.times.append("%s (%s)" % (key, value))
             self.times.sort()
@@ -93,7 +95,7 @@ class LavaView(tables.SingleTableView):
                     distinct[discrete_key] = escape(self.request.GET.get(discrete_key))
             self.search = sorted(self.search, key=lambda s: s.lower())
         if hasattr(self.table_class.Meta, 'queries'):
-            for func, argument in self.table_class.Meta.queries.iteritems():
+            for func, argument in self.table_class.Meta.queries.items():
                 request_argument = "%s%s" % (prefix, argument) if prefix else argument
                 self.discrete.append(request_argument)  # for __and__ queries
                 if self.request and self.request.GET.get(request_argument):
@@ -104,7 +106,7 @@ class LavaView(tables.SingleTableView):
         q = Q()
         self.terms = {}
         # discrete searches
-        for key, val in distinct.iteritems():
+        for key, val in distinct.items():
             if key in self.table_class.Meta.searches:
                 args = 'q = q.__and__(Q({0}__contains="{1}"))'.format(key, val)
                 try:
@@ -124,7 +126,7 @@ class LavaView(tables.SingleTableView):
         if self.request.GET.get(table_search):
             self.terms["search"] = escape(self.request.GET.get(table_search))
         if hasattr(self.table_class.Meta, 'searches') and 'search' in self.terms:
-            for key, val in self.table_class.Meta.searches.iteritems():
+            for key, val in self.table_class.Meta.searches.items():
                 # this is a little bit of magic - creates an OR clause in the query based
                 # on the iterable search hash passed in via the table_class
                 # e.g. self.searches = {'id', 'contains'}

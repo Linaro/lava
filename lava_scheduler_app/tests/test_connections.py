@@ -57,7 +57,7 @@ class SecondaryConnections(TestCaseWithFactory):
             params['target_group'] = 'replaced'
             if not group_size:
                 group_size = params['group_size']
-            if job.sub_id.endswith('.0'):
+            if job.device_role == 'host':
                 self.assertFalse(job.dynamic_connection)
                 self.assertEqual(job.requested_device_type.name, device.device_type.name)
                 self.assertEqual(params['sub_id'], 0)
@@ -76,18 +76,11 @@ class SecondaryConnections(TestCaseWithFactory):
                 deploy = [action for action in data['actions'] if 'deploy' in action][0]
                 self.assertEqual(deploy['deploy']['connection'], 'ssh')
                 # validate each job
-                if params['sub_id'] == 1:
-                    self.assertEqual(
-                        data,
-                        yaml.load(open(os.path.join(path, 'qemu-ssh-guest-1.yaml'), 'r').read())
-                    )
-                elif params['sub_id'] == 2:
-                    self.assertEqual(
-                        data,
-                        yaml.load(open(os.path.join(path, 'qemu-ssh-guest-2.yaml'), 'r').read())
-                    )
-                else:
-                    self.fail("Unexpected sub_id parameter")
+                del(data['protocols']['lava-multinode']['sub_id'])
+                self.assertEqual(
+                    data,
+                    yaml.load(open(os.path.join(path, 'qemu-ssh-guest-1.yaml'), 'r').read())
+                )
                 self.assertIsNone(job.requested_device_type)
                 self.assertIsNone(job.actual_device)
                 self.assertIsNone(job.requested_device)
@@ -95,7 +88,7 @@ class SecondaryConnections(TestCaseWithFactory):
 
         self.assertFalse(any(role for role in host_role if role != 'host'))
         self.assertEqual(len(sub_id), group_size)
-        self.assertEqual(sub_id, range(0, group_size))
+        self.assertEqual(sub_id, list(range(group_size)))
 
     def test_host_role(self):
         # need a full job to properly test the multinode YAML split

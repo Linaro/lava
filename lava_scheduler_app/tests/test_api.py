@@ -31,7 +31,7 @@ if sys.version_info[0] == 2:
     import xmlrpclib
 elif sys.version_info[0] == 3:
     # For Python 3.0 and later
-    from io import StringIO
+    from io import BytesIO as StringIO
     import xmlrpc.client as xmlrpclib
 
 

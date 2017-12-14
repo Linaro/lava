@@ -108,7 +108,7 @@ class Tag(models.Model):
 
     description = models.TextField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name.lower()
 
 
@@ -189,7 +189,7 @@ class Architecture(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -202,7 +202,7 @@ class ProcessorFamily(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -215,7 +215,7 @@ class Alias(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -227,7 +227,7 @@ class BitWidth(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return "%d" % self.pk
 
 
@@ -240,7 +240,7 @@ class Core(models.Model):
         max_length=100,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -303,7 +303,7 @@ class DeviceType(models.Model):
         null=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     description = models.TextField(
@@ -409,7 +409,7 @@ class DefaultDeviceOwner(models.Model):
         default=False
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.user:
             return self.user.username
         return ''
@@ -456,7 +456,7 @@ class Worker(models.Model):
         editable=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.hostname
 
     def can_admin(self, user):
@@ -668,7 +668,7 @@ class Device(RestrictedResource):
             raise ValidationError(
                 'Cannot be owned by a user and a group at the same time')
 
-    def __unicode__(self):
+    def __str__(self):
         r = self.hostname
         r += " (%s, health %s)" % (self.get_status_display(),
                                    self.get_health_status_display())
@@ -751,7 +751,7 @@ class Device(RestrictedResource):
             user_id=user.id,
             content_type_id=device_ct.pk,
             object_id=self.pk,
-            object_repr=unicode(self),
+            object_repr=str(self),
             action_flag=CHANGE,
             change_message=reason
         )
@@ -978,7 +978,7 @@ class JobFailureTag(models.Model):
 
     description = models.TextField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -1609,12 +1609,12 @@ class TestJob(RestrictedResource):
             user_id=user.id,
             content_type_id=testjob_ct.pk,
             object_id=self.pk,
-            object_repr=unicode(self),
+            object_repr=str(self),
             action_flag=CHANGE,
             change_message=reason
         )
 
-    def __unicode__(self):
+    def __str__(self):
         job_type = self.health_check and 'health check' or 'test'
         r = "%s %s job" % (self.get_status_display(), job_type)
         if self.actual_device:
@@ -2864,7 +2864,7 @@ class TestJobUser(models.Model):
         default=False,
         verbose_name='Favorite job')
 
-    def __unicode__(self):
+    def __str__(self):
         if self.user:
             return self.user.username
         return ''
@@ -2884,7 +2884,7 @@ class DeviceStateTransition(models.Model):
             raise ValidationError(
                 _("New state must be different then the old state."))
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s: %s -> %s (%s)" % (self.device.hostname,
                                        self.get_old_state_display(),
                                        self.get_new_state_display(),

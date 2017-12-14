@@ -436,7 +436,7 @@ class LavaSystemAPI(SystemAPI):
             if 'interfaces' not in params:
                 continue
             for interface in params['interfaces']:
-                for map_switch, port in params['map'][interface].iteritems():
+                for map_switch, port in params['map'][interface].items():
                     port_list = []
                     device = {
                         'interface': interface,

@@ -180,7 +180,7 @@ class MapperTests(TestCase):
         context = CallContext(None, self.mapper, None)
         retval = self.mapper.lookup('API.foo', context)
         # bound method seems to have im_self attribute pointing back to self
-        self.assertIs(retval.im_self._context, context)
+        self.assertIs(retval.__self__._context, context)
 
     def test_list_methods_without_methods(self):
         class TestAPI(ExposedAPI):

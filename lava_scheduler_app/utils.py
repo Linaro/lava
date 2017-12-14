@@ -120,7 +120,7 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
 
 def _split_multinode_vland(submission, jobs):
 
-    for role, _ in jobs.iteritems():
+    for role, _ in jobs.items():
         # populate the lava-vland protocol metadata
         if len(jobs[role]) != 1:
             raise SubmissionException("vland protocol only supports one device per role.")
@@ -171,7 +171,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     )
 
     # populate the lava-multinode protocol metadata
-    for role, value in submission['protocols']['lava-multinode']['roles'].iteritems():
+    for role, value in submission['protocols']['lava-multinode']['roles'].items():
         roles[role] = {}
         for item in copies:
             if item in submission:
@@ -209,7 +209,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                     actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
 
     # add other parameters from the lava-multinode protocol
-    for key, value in submission['protocols']['lava-multinode'].iteritems():
+    for key, value in submission['protocols']['lava-multinode'].items():
         if key in skip:
             continue
         for role in roles:
@@ -256,7 +256,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
     # populate the lava-lxc protocol data
     if 'lava-lxc' in submission['protocols']:
-        for role, _ in jobs.iteritems():
+        for role, _ in jobs.items():
             if role not in submission['protocols']['lava-lxc']:
                 continue
             # populate the lava-lxc protocol metadata

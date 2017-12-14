@@ -1058,7 +1058,7 @@ class TestTemplates(unittest.TestCase):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         fdesc, device_yaml = tempfile.mkstemp()
-        os.write(fdesc, yaml.dump(template_dict))
+        os.write(fdesc, yaml.dump(template_dict).encode())
         panda = NewDevice(device_yaml)
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'devices', 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:

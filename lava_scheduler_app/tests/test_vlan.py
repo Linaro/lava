@@ -71,8 +71,9 @@ class TestVlandSplit(TestCaseWithFactory):
         server_vlan = server_job['protocols']['lava-vland']
         self.assertIn('vlan_one', client_vlan)
         self.assertIn('vlan_two', server_vlan)
-        self.assertEqual(['RJ45', '10M'], client_vlan.values()[0]['tags'])
-        self.assertEqual(['RJ45', '100M'], server_vlan.values()[0]['tags'])
+        self.assertEqual(['RJ45', '10M'], list(client_vlan.values())[0]['tags'])
+        self.assertEqual(['RJ45', '100M'],
+                         list(server_vlan.values())[0]['tags'])
 
 
 class TestVlandDevices(TestCaseWithFactory):
@@ -149,9 +150,9 @@ class TestVlandDevices(TestCaseWithFactory):
 
         for interface in device_dict['parameters']['interfaces']:
             tags = device_dict['parameters']['interfaces'][interface]['tags']
-            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                interfaces.append(interface)
-                break
+            if tags and set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
+                        interfaces.append(interface)
+                        break
         self.assertEqual(['eth1'], interfaces)
         self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
 
@@ -162,9 +163,9 @@ class TestVlandDevices(TestCaseWithFactory):
         tag_list = server_job['protocols']['lava-vland']['vlan_two']['tags']
         for interface in device_dict['parameters']['interfaces']:
             tags = device_dict['parameters']['interfaces'][interface]['tags']
-            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                interfaces.append(interface)
-                break
+            if tags and set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
+                    interfaces.append(interface)
+                    break
         self.assertEqual(['eth1'], interfaces)
         self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
 
