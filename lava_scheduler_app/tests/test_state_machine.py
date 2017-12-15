@@ -636,16 +636,6 @@ class TestWorkerStateMachine(TestCase):
             self.worker.go_health_active(self.user)
             self.check_device(Device.STATE_IDLE, health)
 
-        # 2/ Errors
-        # 2.1/ from ACTIVE
-        for (health, _) in Device.HEALTH_CHOICES:
-            self.worker.health = Worker.HEALTH_ACTIVE
-            self.worker.save()
-            self.device.health = health
-            self.device.save()
-            self.worker.go_health_active(self.user)
-            self.check_device(Device.STATE_IDLE, health)
-
     def test_worker_go_health_maintenance(self):
         # 1/ Normal transitions
         # 1.1/ from ACTIVE
@@ -676,16 +666,6 @@ class TestWorkerStateMachine(TestCase):
             else:
                 self.check_device(Device.STATE_IDLE, Device.HEALTH_MAINTENANCE)
 
-        # 2/ Errors
-        # 2.1/ from MAINTENANCE
-        for (health, _) in Device.HEALTH_CHOICES:
-            self.worker.health = Worker.HEALTH_MAINTENANCE
-            self.worker.save()
-            self.device.health = health
-            self.device.save()
-            self.worker.go_health_maintenance(self.user)
-            self.check_device(Device.STATE_IDLE, health)
-
     def test_worker_go_health_retired(self):
         # 1/ Normal transitions
         # 1.1/ from ACTIVE
@@ -711,13 +691,3 @@ class TestWorkerStateMachine(TestCase):
                 self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
             else:
                 self.check_device(Device.STATE_IDLE, Device.HEALTH_RETIRED)
-
-        # 2/ Errors
-        # 2.1/ from MAINTENANCE
-        for (health, _) in Device.HEALTH_CHOICES:
-            self.worker.health = Worker.HEALTH_RETIRED
-            self.worker.save()
-            self.device.health = health
-            self.device.save()
-            self.worker.go_health_retired(self.user)
-            self.check_device(Device.STATE_IDLE, health)
