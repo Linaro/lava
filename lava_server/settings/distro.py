@@ -228,9 +228,6 @@ LOGGING = {
     }
 }
 
-# Scheduler options
-SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
-
 # Override ZMQ events defined in lava_scheduler_app.settings
 EVENT_NOTIFICATION = distro_settings.get_setting("EVENT_NOTIFICATION", EVENT_NOTIFICATION)
 INTERNAL_EVENT_SOCKET = distro_settings.get_setting("INTERNAL_EVENT_SOCKET", INTERNAL_EVENT_SOCKET)
