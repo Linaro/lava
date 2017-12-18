@@ -5,8 +5,13 @@ device_type: rk3288-veyron-jaq
 commands:
   connect: telnet localhost 6002
 
+parameters:
+  load_address: 0
+
 actions:
   deploy:
+    parameters:
+      mkimage_arch: arm
     methods:
       tftp:
 

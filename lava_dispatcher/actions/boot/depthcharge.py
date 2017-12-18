@@ -95,7 +95,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         connection = super(DepthchargeCommandOverlay, self).run(
             connection, max_end_time, args)
 
-        # Create the cmdline file, this is not set by any bootloader commands
+        # Create the cmdline file, this is not set by any bootloader command
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         kernel_path = self.get_namespace_data(
             action='download-action', label='kernel', key='file')
@@ -129,8 +129,11 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         kernel_tftp = self.get_namespace_data(
             action='download-action', label='file', key='kernel')
         cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), 'cmdline')
+        fit_tftp = self.get_namespace_data(
+            action='prepare-fit', label='file', key='fit')
         substitutions = {
             '{CMDLINE}': cmdline_tftp,
+            '{FIT}': fit_tftp,
         }
         commands = self.get_namespace_data(
             action='bootloader-overlay', label=self.method, key='commands')

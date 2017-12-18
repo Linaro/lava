@@ -174,6 +174,8 @@ class PrepareOverlayTftp(Action):
             self.internal_pipeline.add_action(PrepareKernelAction())
         self.internal_pipeline.add_action(ConfigurePreseedFile())  # idempotent, checks for a preseed parameter
         self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
+        if 'depthcharge' in self.job.device['actions']['boot']['methods']:
+            self.internal_pipeline.add_action(PrepareKernelAction())
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PrepareOverlayTftp, self).run(connection, max_end_time, args)
@@ -562,9 +564,12 @@ class CompressRamdisk(Action):
                 raise InfrastructureError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
-        shutil.move(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
-        self.logger.debug("rename %s to %s",
-                          final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
+        full_path = os.path.join(tftp_dir, os.path.basename(final_file))
+        shutil.move(final_file, full_path)
+        self.logger.debug("rename {} to {}".format(final_file, full_path))
+        self.set_namespace_data(
+            action=self.name, label='file', key='full-path', value=full_path)
+
         if self.parameters['to'] == 'tftp':
             suffix = self.get_namespace_data(action='tftp-deploy', label='tftp', key='suffix')
             if not suffix:
