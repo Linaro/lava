@@ -25,6 +25,18 @@ test kernel functionality rather than the operating system itself.
 iso
 ---
 
+.. _deploy_to_iso_installer_images_iso_archive:
+
+archive
+^^^^^^^
+
+Some images are compressed as a tarball (``.tar.*``), these images
+need the ``archive`` option specified to unpack the image correctly.
+
+::
+
+   archive: tar
+
 .. _deploy_to_iso_installer_images_iso_compression:
 
 compression
