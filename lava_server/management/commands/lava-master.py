@@ -617,3 +617,4 @@ class Command(LAVADaemonCommand):
                 # Closing the database connection will force Django to reopen
                 # the connection
                 connection.close()
+                time.sleep(2)
