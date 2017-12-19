@@ -26,6 +26,7 @@ import time
 import yaml
 import zmq
 import zmq.auth
+from zmq.utils.strtypes import u
 from zmq.auth.thread import ThreadAuthenticator
 
 from django.db import connection, transaction
@@ -251,7 +252,7 @@ class Command(LAVADaemonCommand):
     def logging_socket(self):
         msg = self.log_socket.recv_multipart()
         try:
-            (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = (u(m) for m in msg)  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("[POLL] failed to parse log message, skipping: %s", msg)
