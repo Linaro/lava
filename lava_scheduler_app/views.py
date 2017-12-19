@@ -1468,8 +1468,7 @@ def job_pipeline_timing(request, pk):
                 total_duration += duration
                 summary.append([d["action"], duration, 0])
 
-    levels = timings.keys()
-    levels.sort()
+    levels = sorted(timings.keys())
 
     # Construct the report
     pipeline = []
