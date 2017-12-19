@@ -5,14 +5,21 @@
 {% set kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {% set base_depthcharge_commands = depthcharge_tftp_commands | default(
-"          - tftpboot {SERVER_IP} {KERNEL} {CMDLINE}
+"          - tftpboot {SERVER_IP} {FIT} {CMDLINE}
 ") -%}
+
+{% block vland %}
+{{ super() }}
+  load_address: '{{ fit_kernel_load_address | default('0') }}'
+{% endblock vland %}
 
 {% block body %}
 device_type: {{ device_type | default('depthcharge') }}
 
 actions:
   deploy:
+    parameters:
+      mkimage_arch: {{ mkimage_fit_arch }}
     methods:
       tftp:
   boot:
