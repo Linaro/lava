@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import datetime
 from django.conf import settings
 from django.db.models.signals import post_init, post_save
@@ -29,10 +31,10 @@ def send_event(topic, user, data):
         # The format is [topic, uuid, datetime, username, data as json]
         msg = [
             b(settings.EVENT_TOPIC + topic),
-            str(uuid.uuid1()),
-            datetime.datetime.utcnow().isoformat(),
-            user,
-            json.dumps(data)
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b(user),
+            b(json.dumps(data))
         ]
         # Send the message in the non-blockng mode.
         # If the consumer (lava-publisher) is not active, the message will be lost.

@@ -1,5 +1,5 @@
-import os
 import logging
+import random
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -279,7 +279,7 @@ class IndexJobTable(JobTable):
 class TagsColumn(tables.Column):
 
     def render(self, value):
-        tag_id = 'tag-%s' % os.urandom(4).encode('hex')
+        tag_id = 'tag-%s' % "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(8))
         tags = ''
         values = list(value.all())
         if len(values) > 0:

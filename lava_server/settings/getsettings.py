@@ -39,6 +39,8 @@ Simple integration for Django settings.py
  exists at /etc/lava-server/settings.conf
 """
 
+from __future__ import unicode_literals
+
 import django
 from lava_server.settings.secret_key import get_secret_key
 from lava_server.settings.config_file import ConfigFile
@@ -89,8 +91,7 @@ class Settings(object):
         self._appname = appname
         self._settings = self._load_settings()
         self._mount_point = self._settings.get(
-            "MOUNT_POINT", mount_point
-        ).encode("UTF-8")  # ensure we're still in binary string mode
+            "MOUNT_POINT", mount_point)
         # NOTE: both lines in this order mean that empty mount point stays
         # empty and root mount point gets sanitized to empty as well.
         # Ensure trailing slash is there

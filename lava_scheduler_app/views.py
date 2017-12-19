@@ -1538,7 +1538,7 @@ def job_log_pipeline_incremental(request, pk):
             # 2/ each item in this list is represented as one line in output.yaml
             count = 0
             for _ in range(first_line):
-                count += len(f_in.next())
+                count += len(next(f_in))
             # Seeking is needed to switch from reading lines to reading bytes.
             f_in.seek(count)
             # Load the remaining as yaml
