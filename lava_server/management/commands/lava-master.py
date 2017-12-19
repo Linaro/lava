@@ -20,12 +20,15 @@
 
 # pylint: disable=wrong-import-order
 
+from __future__ import unicode_literals
+
 from contextlib import contextmanager
 import errno
 import jinja2
 import json
 import lzma
 import os
+import sys
 import time
 import yaml
 import zmq
@@ -43,6 +46,11 @@ from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.scheduler import schedule
 from lava_scheduler_app.utils import mkdir
 from lava_server.cmdutils import LAVADaemonCommand
+
+if sys.version_info[0] == 2:
+    from lzma import error as LZMAError
+else:
+    from lzma import LZMAError
 
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
@@ -69,6 +77,15 @@ def suppress(kls):
         yield
     except kls:
         pass
+
+
+def send_multipart_u(sock, data):
+    """ Wrapper around send_multipart that encode data as bytes.
+
+    :param sock: The socket to use
+    :param data: Data to convert to byte strings
+    """
+    return sock.send_multipart([b(d) for d in data])
 
 
 class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
@@ -196,7 +213,7 @@ class Command(LAVADaemonCommand):
         for job in jobs:
             self.logger.info("[%d] STATUS => %s (%s)", job.id, hostname,
                              job.actual_device.hostname)
-            self.controler.send_multipart([hostname, 'STATUS', str(job.id)])
+            send_multipart_u(self.controler, [hostname, 'STATUS', str(job.id)])
 
     def dispatcher_alive(self, hostname):
         if hostname not in self.dispatchers:
@@ -220,9 +237,9 @@ class Command(LAVADaemonCommand):
         # self.logger.debug("[CC] Receiving: %s", msg)
 
         # 1: the hostname (see ZMQ documentation)
-        hostname = msg[0]
+        hostname = u(msg[0])
         # 2: the action
-        action = msg[1]
+        action = u(msg[1])
 
         # Check that lava-logs only send PINGs
         if hostname == "lava-logs" and action != "PING":
@@ -279,7 +296,7 @@ class Command(LAVADaemonCommand):
             self.logger.error("[%d] Unknown job", job_id)
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
-            self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
+            send_multipart_u(self.controler, [hostname, 'END_OK', str(job_id)])
             return True
 
         filename = os.path.join(job.output_dir, 'description.yaml')
@@ -308,18 +325,19 @@ class Command(LAVADaemonCommand):
             try:
                 # Create the directory if it was not already created
                 mkdir(os.path.dirname(filename))
+                # TODO: check that compressed_description is not ""
                 description = lzma.decompress(compressed_description)
                 with open(filename, 'w') as f_description:
-                    f_description.write(description)
+                    f_description.write(description.decode("utf-8"))
                 if description:
                     parse_job_description(job)
-            except (IOError, lzma.error) as exc:
+            except (IOError, LZMAError) as exc:
                 self.logger.error("[%d] Unable to dump 'description.yaml'",
                                   job_id)
                 self.logger.exception("[%d] %s", job_id, exc)
 
         # ACK the job and mark the dispatcher as alive
-        self.controler.send_multipart([hostname, 'END_OK', str(job_id)])
+        send_multipart_u(self.controler, [hostname, 'END_OK', str(job_id)])
         self.dispatcher_alive(hostname)
         return True
 
@@ -337,7 +355,7 @@ class Command(LAVADaemonCommand):
                               hostname, slave_version, PROTOCOL_VERSION)
             return True
 
-        self.controler.send_multipart([hostname, 'HELLO_OK'])
+        send_multipart_u(self.controler, [hostname, 'HELLO_OK'])
         # If the dispatcher is known and sent an HELLO, means that
         # the slave has restarted
         if hostname in self.dispatchers:
@@ -367,7 +385,7 @@ class Command(LAVADaemonCommand):
     def _handle_ping(self, hostname, action, msg):  # pylint: disable=unused-argument
         self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
         # Send back a signal
-        self.controler.send_multipart([hostname, 'PONG', str(PING_INTERVAL)])
+        send_multipart_u(self.controler, [hostname, 'PONG', str(PING_INTERVAL)])
         self.dispatcher_alive(hostname)
         return True
 
@@ -456,11 +474,10 @@ class Command(LAVADaemonCommand):
 
                 self.logger.info("[%d] START => %s (%s)", job.id,
                                  worker.hostname, device.hostname)
-                self.controler.send_multipart([str(worker.hostname),
-                                               'START', str(job.id),
-                                               self.export_definition(job),
-                                               str(device_cfg), dispatcher_cfg,
-                                               env_str, env_dut_str])
+                send_multipart_u(self.controler,
+                                 [str(worker.hostname), 'START', str(job.id),
+                                  self.export_definition(job), str(device_cfg),
+                                  dispatcher_cfg, env_str, env_dut_str])
 
                 # For multinode jobs, start the dynamic connections
                 parent = job
@@ -474,11 +491,12 @@ class Command(LAVADaemonCommand):
 
                     self.logger.info("[%d] START => %s (connection)",
                                      sub_job.id, worker.hostname)
-                    self.controler.send_multipart([str(worker.hostname),
-                                                   'START', str(sub_job.id),
-                                                   self.export_definition(sub_job),
-                                                   yaml.dump(min_device_cfg), dispatcher_cfg,
-                                                   env_str, env_dut_str])
+                    send_multipart_u(self.controler,
+                                     [str(worker.hostname), 'START',
+                                      str(sub_job.id),
+                                      self.export_definition(sub_job),
+                                      yaml.dump(min_device_cfg), dispatcher_cfg,
+                                      env_str, env_dut_str])
 
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
@@ -515,9 +533,8 @@ class Command(LAVADaemonCommand):
             worker = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
             self.logger.info("[%d] CANCEL => %s", job.id,
                              worker.hostname)
-            self.controler.send_multipart([str(worker.hostname),
-                                           'CANCEL', str(job.id)])
-
+            send_multipart_u(self.controler,
+                             [str(worker.hostname), 'CANCEL', str(job.id)])
 
     def handle(self, *args, **options):
         # Initialize logging.
