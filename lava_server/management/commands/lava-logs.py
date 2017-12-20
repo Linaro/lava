@@ -172,7 +172,7 @@ class Command(LAVADaemonCommand):
 
         # Carefully close the logging socket as we don't want to lose messages
         self.logger.info("[EXIT] Disconnect logging socket and process messages")
-        endpoint = self.log_socket.getsockopt(zmq.LAST_ENDPOINT)
+        endpoint = u(self.log_socket.getsockopt(zmq.LAST_ENDPOINT))
         self.logger.debug("[EXIT] unbinding from '%s'", endpoint)
         self.log_socket.unbind(endpoint)
 
