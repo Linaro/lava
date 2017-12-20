@@ -123,17 +123,22 @@ class Command(BaseCommand):
             jobs = jobs.filter(is_pipeline=False)
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
-        counter = 0
-        for job in jobs:
-            self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
-            try:
-                if not simulate:
-                    rmtree(job.output_dir)
-            except OSError as exc:
-                self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
-            job.delete()
-            counter += 1
-            if slow and not counter % 100:
+
+        while True:
+            count = 0
+            for job in jobs[0:100]:
+                count += 1
+                self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+                try:
+                    if not simulate:
+                        rmtree(job.output_dir)
+                except OSError as exc:
+                    self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
+                job.delete()
+
+            if count == 0:
+                break
+            if slow:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
 
