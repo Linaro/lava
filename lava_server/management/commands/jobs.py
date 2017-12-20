@@ -58,6 +58,7 @@ class Command(BaseCommand):
 
         sub = parser.add_subparsers(dest="sub_command", help="Sub commands",
                                     parser_class=SubParser)
+        sub.required = True
 
         rm = sub.add_parser("rm", help="Remove selected jobs. Keep in mind "
                                        "that v1 bundles won't be removed, "

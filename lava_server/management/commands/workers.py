@@ -40,6 +40,7 @@ class Command(BaseCommand):
                 super(SubParser, self).__init__(cmd, **kwargs)
 
         sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
+        sub.required = True
 
         add_parser = sub.add_parser("add", help="Create a worker")
         add_parser.add_argument("hostname", type=str,
