@@ -33,6 +33,7 @@ from zmq.auth.thread import ThreadAuthenticator
 
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
+from django.utils import timezone
 
 from lava_scheduler_app.dbutils import (
     parse_job_description,
@@ -87,16 +88,24 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
 
     def alive(self):
         self.last_msg = time.time()
-        if not self.online:
-            self.online = True
-            with suppress(Worker.DoesNotExist), transaction.atomic():
+        self.online = True
+        with transaction.atomic():
+            try:
                 worker = Worker.objects.select_for_update().get(hostname=self.hostname)
+            except Worker.DoesNotExist:
+                Worker.objects.create(hostname=self.hostname, description="Created by lava-master (%s)" % timezone.now())
+                worker = Worker.objects.select_for_update().get(hostname=self.hostname)
+                worker.log_admin_entry(None, "Created by lava-master", addition=True)
+
+            if worker.state == Worker.STATE_OFFLINE:
                 worker.go_state_online()
-                worker.save()
+            worker.last_ping = timezone.now()
+            worker.save()
 
     def go_offline(self):
         if self.online:
             self.online = False
+            # If the worker does not exist, just skip the update
             with suppress(Worker.DoesNotExist), transaction.atomic():
                 worker = Worker.objects.select_for_update().get(hostname=self.hostname)
                 worker.go_state_offline()

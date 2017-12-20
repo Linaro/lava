@@ -6,8 +6,9 @@ from django.contrib.admin.models import (
     LogEntry,
 )
 from django.template import defaultfilters as filters
-from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
+from django.utils.timesince import timesince
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
@@ -598,6 +599,9 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
             return mark_safe('<span class="glyphicon glyphicon-wrench text-warning"></span> %s' % record.get_health_display())
         else:
             return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())
+
+    def render_last_ping(self, record):
+        return timesince(record.last_ping)
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker

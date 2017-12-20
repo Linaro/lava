@@ -19,7 +19,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry, CHANGE
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.cache import cache
@@ -457,6 +457,9 @@ class Worker(models.Model):
         editable=True
     )
 
+    last_ping = models.DateTimeField(verbose_name=_(u"Last ping"),
+                                     default=timezone.now)
+
     def __str__(self):
         return self.hostname
 
@@ -518,14 +521,16 @@ class Worker(models.Model):
     def go_state_online(self):
         self.state = Worker.STATE_ONLINE
 
-    def log_admin_entry(self, user, reason):
+    def log_admin_entry(self, user, reason, addition=False):
+        if user is None:
+            user = User.objects.get(username="lava-health")
         worker_ct = ContentType.objects.get_for_model(Worker)
         LogEntry.objects.log_action(
             user_id=user.id,
             content_type_id=worker_ct.pk,
             object_id=self.pk,
             object_repr=self.hostname,
-            action_flag=CHANGE,
+            action_flag=ADDITION if addition else CHANGE,
             change_message=reason
         )
 

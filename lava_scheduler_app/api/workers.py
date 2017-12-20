@@ -192,7 +192,8 @@ class SchedulerWorkersAPI(ExposedV2API):
                 "description": worker.description,
                 "state": worker.get_state_display(),
                 "health": worker.get_health_display(),
-                "devices": [d.hostname for d in worker.device_set.all().order_by("hostname")]}
+                "devices": [d.hostname for d in worker.device_set.all().order_by("hostname")],
+                "last_ping": worker.last_ping}
 
     @check_superuser
     def update(self, hostname, description=None, health=None):
