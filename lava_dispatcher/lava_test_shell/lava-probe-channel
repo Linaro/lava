@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+#Prints the channel of the attached energy probe device.
+#
+#Usage: ``lava-probe-channel``
+
+echo ${PROBE_DEVICE_CHANNEL}

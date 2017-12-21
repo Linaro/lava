@@ -42,6 +42,8 @@ setup(
             'lava_test_shell/lava-lxc-device-add',
             'lava_test_shell/lava-lxc-device-wait-add',
             'lava_test_shell/lava-os-build',
+            'lava_test_shell/lava-probe-channel',
+            'lava_test_shell/lava-probe-ip',
             'lava_test_shell/lava-target-ip',
             'lava_test_shell/lava-target-mac',
             'lava_test_shell/lava-target-storage',
