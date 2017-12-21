@@ -168,6 +168,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             'lava-install-packages',
             'lava-installed-packages',
             'lava-os-build',
+            'lava-probe-channel',
+            'lava-probe-ip',
             'lava-target-ip',
             'lava-target-mac',
             'lava-target-storage',

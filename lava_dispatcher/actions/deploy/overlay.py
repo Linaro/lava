@@ -76,6 +76,8 @@ class OverlayAction(DeployAction):
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
         self.target_mac = ''
         self.target_ip = ''
+        self.probe_ip = ''
+        self.probe_channel = ''
 
     def validate(self):
         super(OverlayAction, self).validate()
@@ -106,6 +108,11 @@ class OverlayAction(DeployAction):
                 if 'target' in self.job.device['parameters']['interfaces']:
                     self.target_mac = self.job.device['parameters']['interfaces']['target'].get('mac', '')
                     self.target_ip = self.job.device['parameters']['interfaces']['target'].get('ip', '')
+        for device in self.job.device.get('static_info', []):
+            if 'probe_channel' in device and 'probe_ip' in device:
+                self.probe_channel = device['probe_channel']
+                self.probe_ip = device['probe_ip']
+                break
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -157,6 +164,10 @@ class OverlayAction(DeployAction):
                         fout.write("TARGET_DEVICE_MAC='%s'\n" % self.target_mac)
                     if foutname == 'lava-target-ip':
                         fout.write("TARGET_DEVICE_IP='%s'\n" % self.target_ip)
+                    if foutname == 'lava-probe-ip':
+                        fout.write("PROBE_DEVICE_IP='%s'\n" % self.probe_ip)
+                    if foutname == 'lava-probe-channel':
+                        fout.write("PROBE_DEVICE_CHANNEL='%s'\n" % self.probe_channel)
                     if foutname == 'lava-target-storage':
                         fout.write('LAVA_STORAGE="\n')
                         for method in self.job.device.get('storage_info', [{}]):
