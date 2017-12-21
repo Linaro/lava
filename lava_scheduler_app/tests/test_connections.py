@@ -60,11 +60,17 @@ class SecondaryConnections(TestCaseWithFactory):
             if job.device_role == 'host':
                 self.assertFalse(job.dynamic_connection)
                 self.assertEqual(job.requested_device_type.name, device.device_type.name)
-                self.assertEqual(params['sub_id'], 0)
+                self.assertIn(params['sub_id'], [0,1,2])
                 sub_id.append(params['sub_id'])
+                comparison = yaml.load(open(os.path.join(path, 'qemu-ssh-parent.yaml'), 'r').read())
+                self.assertIn('protocols', data)
+                self.assertIn('lava-multinode', data['protocols'])
+                self.assertIn('sub_id', data['protocols']['lava-multinode'])
+                del(comparison['protocols']['lava-multinode']['sub_id'])
+                del(data['protocols']['lava-multinode']['sub_id'])
                 self.assertEqual(
                     data,
-                    yaml.load(open(os.path.join(path, 'qemu-ssh-parent.yaml'), 'r').read())
+                    comparison
                 )
                 self.assertEqual(job.device_role, 'host')
                 host_role.append(job.device_role)
