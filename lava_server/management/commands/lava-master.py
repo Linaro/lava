@@ -444,7 +444,7 @@ class Command(LAVADaemonCommand):
                     self.controler.send_multipart([str(worker.hostname),
                                                    'START', str(sub_job.id),
                                                    self.export_definition(sub_job),
-                                                   str(min_device_cfg), dispatcher_cfg,
+                                                   yaml.dump(min_device_cfg), dispatcher_cfg,
                                                    env_str, env_dut_str])
 
             except jinja2.TemplateNotFound as exc:
