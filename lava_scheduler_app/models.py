@@ -1473,6 +1473,11 @@ class TestJob(RestrictedResource):
         """
         if self.state >= TestJob.STATE_CANCELING:
             return
+        # If the job was not scheduled, go directly to STATE_FINISHED
+        if self.state == TestJob.STATE_SUBMITTED:
+            self.go_state_finished(TestJob.HEALTH_CANCELED)
+            return
+
         self.state = TestJob.STATE_CANCELING
         # TODO: check that self.actual_device is locked by the
         # select_for_update on the TestJob
@@ -1507,7 +1512,8 @@ class TestJob(RestrictedResource):
         self.end_time = timezone.now()
         # TODO: check that self.actual_device is locked by the
         # select_for_update on the TestJob
-        if not self.dynamic_connection:
+        # Skip non-scheduled jobs and dynamic_connections
+        if self.actual_device is not None:
             self.actual_device.testjob_signal("go_state_finished", self)
             self.actual_device.save()
 
