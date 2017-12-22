@@ -39,7 +39,7 @@ from lava_scheduler_app.dbutils import (
 )
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.utils import mkdir
-from lava_scheduler_app.scheduler import schedule_health_checks, schedule_jobs
+from lava_scheduler_app.scheduler import schedule, schedule_health_checks, schedule_jobs
 from lava_server.cmdutils import LAVADaemonCommand
 
 
