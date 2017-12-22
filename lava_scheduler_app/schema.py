@@ -237,6 +237,28 @@ def vlan_name(value):
         raise Invalid(value)
 
 
+def _validate_multinode(data_object):
+    if data_object.get('protocols', {}).get('lava-multinode') is None:
+        return
+    multi = data_object['protocols']['lava-multinode']
+
+    # List the roles
+    roles = list(multi['roles'].keys())
+    # Check that "host_role" and "expect_role" does exist
+    for role in roles:
+        host_role = multi['roles'][role].get('host_role')
+        expect_role = multi['roles'][role].get('expect_role')
+        if host_role is not None:
+            if host_role not in roles:
+                raise SubmissionException("'host_role' '%s' does not exist" % host_role)
+            if expect_role is None:
+                raise SubmissionException("'expect_role' is required when 'host_role' is used")
+            if expect_role not in roles:
+                raise SubmissionException("'expect_role' '%s' does not exist" % host_role)
+        elif expect_role is not None:
+            raise SubmissionException("'expect_role' without 'host_role'")
+
+
 def _job_protocols_schema():
     return Schema({
         'lava-multinode': {
@@ -461,6 +483,7 @@ def validate_submission(data_object):
 
     _validate_secrets(data_object)
     _validate_vcs_parameters(data_object)
+    _validate_multinode(data_object)
     return True
 
 

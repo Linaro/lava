@@ -369,3 +369,143 @@ secrets:
   username: secret
 """
         self.assertRaises(SubmissionException, validate_submission, yaml.load(secrets))
+
+    def test_multinode(self):
+        # Without protocols
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+"""
+        self.assertTrue(validate_submission(yaml.load(data)))
+
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols: {}
+"""
+        self.assertTrue(validate_submission(yaml.load(data)))
+
+        # With a valid multinode protocol
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest: {}
+      host: {}
+"""
+        self.assertTrue(validate_submission(yaml.load(data)))
+
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        host_role: host
+        expect_role: host
+      host: {}
+"""
+        self.assertTrue(validate_submission(yaml.load(data)))
+
+        # invalid host_role or expect_role
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        host_role: server
+      host: {}
+"""
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        host_role: host
+        expect_role: server
+      host: {}
+"""
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+
+        # host_role without expect_role
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        host_role: host
+      host: {}
+"""
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+
+        # expect_role without host_role
+        data = """
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols:
+  lava-multinode:
+    roles:
+      guest:
+        expect_role: host
+      host: {}
+"""
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
