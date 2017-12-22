@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 9.20160709), dh-python,
  python3-sphinx, python-setuptools (>= 3)
 X-Python-Version: 2.7
 Standards-Version: 4.1.1
-Homepage: http://www.linaro.org/projects/test-validation/
+Homepage: https://www.linaro.org/initiatives/lava/
 Vcs-Git: https://github.com/Linaro/pkg-lava-dispatcher.git
 Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 
