@@ -459,7 +459,7 @@ class ExtractRamdisk(Action):
                 ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)).split(' ')
             try:
                 self.run_command(cmd)
-            except:
+            except Exception:
                 raise LAVABug('Unable to remove uboot header: %s' % ramdisk)
         else:
             # give the file a predictable name
