@@ -475,8 +475,9 @@ class Command(LAVADaemonCommand):
                 self.logger.info("[%d] START => %s (%s)", job.id,
                                  worker.hostname, device.hostname)
                 send_multipart_u(self.controler,
-                                 [str(worker.hostname), 'START', str(job.id),
-                                  self.export_definition(job), str(device_cfg),
+                                 [worker.hostname, 'START', str(job.id),
+                                  self.export_definition(job),
+                                  yaml.dump(device_cfg),
                                   dispatcher_cfg, env_str, env_dut_str])
 
                 # For multinode jobs, start the dynamic connections
@@ -492,7 +493,7 @@ class Command(LAVADaemonCommand):
                     self.logger.info("[%d] START => %s (connection)",
                                      sub_job.id, worker.hostname)
                     send_multipart_u(self.controler,
-                                     [str(worker.hostname), 'START',
+                                     [worker.hostname, 'START',
                                       str(sub_job.id),
                                       self.export_definition(sub_job),
                                       yaml.dump(min_device_cfg), dispatcher_cfg,
@@ -534,7 +535,7 @@ class Command(LAVADaemonCommand):
             self.logger.info("[%d] CANCEL => %s", job.id,
                              worker.hostname)
             send_multipart_u(self.controler,
-                             [str(worker.hostname), 'CANCEL', str(job.id)])
+                             [worker.hostname, 'CANCEL', str(job.id)])
 
     def handle(self, *args, **options):
         # Initialize logging.
