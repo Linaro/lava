@@ -565,6 +565,8 @@ to set the cookie domain and path correctly.
 Superuser
 =========
 
+.. seealso:: :ref:`admin_adding_users`
+
 LDAP
 ----
 
@@ -582,6 +584,8 @@ LDAP and also grant superuser privilege as follows::
   $ sudo lava-server manage addldapuser --username {username} --superuser
 
 .. note:: `{username}` is the username of LDAP user.
+
+.. seealso:: :ref:`admin_adding_users`
 
 Local Django Accounts
 ---------------------

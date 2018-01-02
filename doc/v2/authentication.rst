@@ -14,13 +14,14 @@ tested and supported authentication methods for LAVA.
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
-.. note:: LAVA used to include support for OpenID authentication
-	  (prior to version 2016.8), but this support had to be
-	  **removed** when incompatible changes in Django (version
-	  1.8) caused it to break.
+.. note:: LAVA used to include support for OpenID authentication (prior to
+   version 2016.8), but this support had to be **removed** when incompatible
+   changes in Django (version 1.8) caused it to break.
 
 Local Django user accounts are supported. When using local Django user
 accounts, new user accounts need to be created by Django admin prior to use.
+
+.. seealso:: :ref:`admin_adding_users`
 
 .. _ldap_authentication:
 
