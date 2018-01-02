@@ -26,7 +26,7 @@ from django.core.management.base import (
     CommandParser
 )
 from django.db import transaction
-
+from django.contrib.auth.models import User, Group
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -84,6 +84,16 @@ class Command(BaseCommand):
                                 help="The name of the worker")
         add_parser.add_argument("--tags", nargs="*", required=False,
                                 help="List of tags to add to the device")
+        physical = add_parser.add_mutually_exclusive_group()
+        physical.add_argument("--physical-user",
+                                help="Username of the user with physical access to the device")
+        physical.add_argument("--physical-group",
+                                help="Name of the group with physical access to the device")
+        owner = add_parser.add_mutually_exclusive_group()
+        owner.add_argument("--owner",
+                                help="Username of the user with ownership of the device")
+        owner.add_argument("--group",
+                                help="Name of the group with ownership of the device")
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device")
@@ -105,42 +115,87 @@ class Command(BaseCommand):
         list_parser.add_argument("--csv", dest="csv", default=False,
                                  action="store_true", help="Print as csv")
 
-        # "set" sub-command
-        set_parser = sub.add_parser("set", help="Set properties of the given device")
-        set_parser.add_argument("hostname",
-                                help="Hostname of the device")
-        set_parser.add_argument("--description", default=None,
-                                help="Set the description")
-        display = set_parser.add_mutually_exclusive_group()
-        display.add_argument("--public", default=None, action="store_true",
-                             help="make the device public")
-        display.add_argument("--private", dest="public", action="store_false",
-                             help="Make the device private")
         # "update" sub-command
         update_parser = sub.add_parser("update", help="Update properties of the given device")
+        update_parser.add_argument("hostname",
+                                help="Hostname of the device")
+        update_parser.add_argument("--description", default=None,
+                                help="Set the description")
         update_parser.add_argument("--health", default=None,
                                    choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
                                    help="Update the device health")
         update_parser.add_argument("--worker", default=None,
                                    help="Update the worker")
+        display = update_parser.add_mutually_exclusive_group()
+        display.add_argument("--public", default=None, action="store_true",
+                             help="make the device public")
+        display.add_argument("--private", dest="public", action="store_false",
+                             help="Make the device private")
+        physical = update_parser.add_mutually_exclusive_group()
+        physical.add_argument("--physical-user",
+                                help="Username of the user with physical access to the device")
+        physical.add_argument("--physical-group",
+                                help="Name of the group with physical access to the device")
+        owner = update_parser.add_mutually_exclusive_group()
+        owner.add_argument("--owner",
+                                help="Username of the user with ownership of the device")
+        owner.add_argument("--group", dest='group',
+                                help="Name of the group with ownership of the device")
 
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["hostname"], options["device_type"],
-                            options["worker"], options["description"],
-                            options["public"], options["online"],
-                            options["tags"])
+            self.handle_add(options)
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
             self.handle_list(options["state"], options["health"],
                              options["show_all"], options["csv"])
         else:
-            self.handle_set(options)
+            self.handle_update(options)
 
-    def handle_add(self, hostname, device_type, worker_name,
-                   description, public, online, tags):
+    def _assign(self, name, device, physical=False, owner=False, user=False, group=False):
+        if user:
+            try:
+                user = User.objects.get(username=name)
+            except User.DoesNotExist:
+                raise CommandError("Unable to find user '%s'" % name)
+            if physical:
+                if device.physical_group:
+                    device.physical_group = None
+                device.physical_owner = user
+            elif owner:
+                if device.group:
+                    device.group = None
+                device.user = user
+            else:
+                raise CommandError("Invalid combination of options.")
+        elif group:
+            try:
+                group = Group.objects.get(name=name)
+            except Group.DoesNotExist:
+                raise CommandError("Unable to find group '%s'" % name)
+            if physical:
+                if device.physical_owner:
+                    device.physical_owner = None
+                device.physical_group = group
+            elif owner:
+                if device.user:
+                    device.user = None
+                device.group = group
+            else:
+                raise CommandError("Invalid combination of options.")
+        else:
+            raise CommandError("Invalid combination of options.")
+
+    def handle_add(self, options):
+        hostname = options['hostname']
+        device_type = options['device_type']
+        worker_name = options['worker']
+        description = options['description']
+        public = options['public']
+        online = options['online']
+        tags = options['tags']
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
@@ -162,6 +217,17 @@ class Command(BaseCommand):
             for tag in tags:
                 device.tags.add(Tag.objects.get_or_create(name=tag)[0])
 
+        if options['physical_user']:
+            self._assign(options['physical_user'], device, user=True, physical=True)
+        elif options['physical_group']:
+            self._assign(options['physical_group'], device, group=True, physical=True)
+
+        if options['owner']:
+            self._assign(options['owner'], device, user=True, owner=True)
+        elif options['group']:
+            self._assign(options['group'], device, group=True, owner=True)
+        device.save()
+
     def handle_details(self, hostname):
         """ Print device details """
         try:
@@ -176,6 +242,21 @@ class Command(BaseCommand):
         self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
         self.stdout.write("public     : %s" % device.is_public)
+        if device.user:
+            owner = device.user.username
+        elif device.group:
+            owner = device.group.name
+        else:
+            owner = ''
+        self.stdout.write("owner      : %s" % owner)
+
+        if device.physical_owner:
+            physical = device.physical_owner.username
+        elif device.physical_group:
+            physical = device.physical_group.name
+        else:
+            physical = ''
+        self.stdout.write("physical   : %s" % physical)
 
         config = device.load_configuration(output_format="raw")
         self.stdout.write("device-dict: %s" % bool(config))
@@ -240,6 +321,16 @@ class Command(BaseCommand):
             public = options["public"]
             if public is not None:
                 device.is_public = public
+
+            if options['physical_user']:
+                self._assign(options['physical_user'], device, user=True, physical=True)
+            elif options['physical_group']:
+                self._assign(options['physical_group'], device, group=True, physical=True)
+
+            if options['owner']:
+                self._assign(options['owner'], device, user=True, owner=True)
+            elif options['group']:
+                self._assign(options['group'], device, group=True, owner=True)
 
             # Save the modifications
             device.save()
