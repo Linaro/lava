@@ -116,6 +116,8 @@ class Command(BaseCommand):
                              help="make the device public")
         display.add_argument("--private", dest="public", action="store_false",
                              help="Make the device private")
+        # "update" sub-command
+        update_parser = sub.add_parser("update", help="Update properties of the given device")
         update_parser.add_argument("--health", default=None,
                                    choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
                                    help="Update the device health")
