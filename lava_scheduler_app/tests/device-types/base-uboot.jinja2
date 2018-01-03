@@ -12,25 +12,22 @@
     {% set load_fdt = "" %}
 {% else %}
     {% set run_load_fdt = "run loadfdt; " %}
-    {% set load_fdt = "          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'" %}
+    {% set load_fdt = "          - tftp {DTB_ADDR} {DTB}" %}
 {% endif %}
 
+{% set base_uboot_dhcp_command = (
+"          - " + uboot_ipaddr_cmd|default('dhcp') + "
+          - setenv serverip {SERVER_IP}" ) -%}
+
 {% set base_uboot_tftp_commands = uboot_tftp_commands|default(
-"          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+"          - tftp {KERNEL_ADDR} {KERNEL}
+          - tftp {RAMDISK_ADDR} {RAMDISK}
+          - setenv initrd_size ${filesize}
 " + load_fdt) -%}
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default(
-"          - setenv bootcmd 'run loadkernel; run loadinitrd; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - run bootcmd") -%}
+"          - '" + uboot_bootx_cmd|default('{BOOTX}')) + "'" -%}
 
-{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - run bootcmd") -%}
-
-{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
-"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; " + run_load_fdt + uboot_bootx_cmd|default('{BOOTX}') + "'
-          - run bootcmd") -%}
 {% set base_uboot_nbd_bootcmd = (
 "          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
           - setenv verify no
@@ -92,9 +89,12 @@
 
 {% block body %}
 device_type: {{ device_type|default('uboot') }}
-
-{% set console_device = console_device | default('ttyS0') %}
-{% set baud_rate = baud_rate | default(115200) %}
+{% if console_device %}
+{% set console_device = "console=" + console_device + "," %}
+{% set parity = console_parity|default('n') %}
+{% set databits = console_databits|default('8') %}
+{% set baud_rate = baud_rate | default(115200)|string + parity + databits %}
+{% endif %}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
 {% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
@@ -152,7 +152,6 @@ actions:
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: "{{ interrupt_char|default('') }}"
-          boot_message: {{ boot_message|default('Booting Linux') }}
 {% if fastboot_boot_uboot %}
 {{- fastboot_boot_uboot }}
 {{- fastboot_boot_grub }}
@@ -170,24 +169,25 @@ actions:
 {% if uboot_set_mac %}
 {{ base_uboot_set_mac }}
 {% endif -%}
+{{ base_uboot_dhcp_command }}
 {{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
-            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
-{{ base_uboot_nfs_bootcmd }}
+          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
         nbd:
           commands:
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
 {{ base_uboot_commands }}
 {% if base_high_limits %}
 {{ base_uboot_high_limits }}
 {% endif %}
-{{ base_uboot_addr_commands }}
+{{ base_uboot_dhcp_command }}
 {{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
-          - setenv nbdkbootargs '{{ base_nbdroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'
-          - setenv bootargs verbose console={{ console_device }},{{ baud_rate }}n8 rw ${nbdbasekargs} ${nbdkbootargs}
-{{ base_uboot_nbd_bootcmd }}
+          - "setenv bootargs '{{ console_device }}{{ baud_rate }} rw {{ base_nbdroot_args }} {{ base_kernel_args }} {{ base_ip_args }} verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+{{ base_uboot_bootcmd }}
         ramdisk:
           commands:
 {% if uboot_needs_usb %}
@@ -200,26 +200,27 @@ actions:
 {% if uboot_set_mac %}
 {{ base_uboot_set_mac }}
 {% endif -%}
+{{ base_uboot_dhcp_command }}
 {{ base_uboot_tftp_commands }}
-          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
-{{ base_uboot_tftp_bootcmd }}
+          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
+{{ base_uboot_bootcmd }}
         usb:
           commands:
 {{ base_uboot_usb_commands }}
 {{ base_uboot_commands }}
-{{ base_uboot_addr_commands }}
-          - "setenv loadkernel 'load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}'"
-          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}"
+          - "setenv initrd_size ${filesize}"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}"
+          - "{{ console_device }}{{ baud_rate }} root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}"
 {{ base_uboot_bootcmd }}
         sata:
           commands:
           - scsi scan
 {{ base_uboot_commands }}
-          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
-          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}"
+          - "load scsi {ROOT_PART} {DTB_ADDR} {DTB}"
+          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
 {{ base_uboot_bootcmd }}
 {% endblock body %}

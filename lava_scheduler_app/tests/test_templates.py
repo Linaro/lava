@@ -159,6 +159,34 @@ class TestTemplates(unittest.TestCase):
             template_dict['actions']['boot']['methods']['fastboot']
         )
 
+    def test_console_baud(self):
+        data = """{% extends 'beaglebone-black.jinja2' %}"""
+        test_template = prepare_jinja_template('bbb-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
+        for command in commands:
+            if not command.startswith('setenv nfsargs'):
+                continue
+            self.assertIn('console=ttyO0,115200n8', command)
+        data = """{% extends 'base-uboot.jinja2' %}"""
+        test_template = prepare_jinja_template('base-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
+        for command in commands:
+            if not command.startswith('setenv nfsargs'):
+                continue
+            self.assertNotIn('console=ttyO0,115200n8', command)
+            self.assertNotIn('console=', command)
+            self.assertNotIn('console=ttyO0', command)
+            self.assertNotIn('115200n8', command)
+            self.assertNotIn('n8', command)
+
     def test_primary_connection_power_commands_fail(self):
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
@@ -1223,7 +1251,7 @@ class TestTemplates(unittest.TestCase):
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
-        self.assertIn('cpu-reset-messages', template_dict['constants'])
+        self.assertIn('error-messages', template_dict['constants']['u-boot'])
 
     def test_db820c_template(self):
         data = """{% extends 'dragonboard-820c.jinja2' %}
