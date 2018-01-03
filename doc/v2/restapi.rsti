@@ -35,3 +35,29 @@ differ from the username you use if logging in via LDAP.
    public git repositories. Wherever supported, use ``https://`` when
    using a token to avoid it being sent in plain-text.
 
+.. index:: results pagination
+
+.. _test_suite_result_pagination:
+
+Chunking test suite results
+===========================
+
+When jobs have a large number of test results in a particular test suite,
+it is advisable to use test case **chunking**, to provide pagination for
+downloading test cases via the REST API.
+
+Two special query string arguments are supported for allowing users to
+**chunk** the test cases when downloading test suite results.
+
+* **Limit** - determines how many results to read in this chunk
+
+* **offset** - the number of results already received
+
+Limit and offset are supported only for test suite exports (both csv
+and yaml). Example:
+
+.. code-block:: shell
+
+    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?limit=100&offset=200'
+
+    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline&limit=100&offset=200'
