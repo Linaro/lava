@@ -10,7 +10,9 @@
 
 {% block vland %}
 {{ super() }}
+{% if fit_kernel_load_address %}
   load_address: '{{ fit_kernel_load_address | default('0') }}'
+{% endif %}
 {% endblock vland %}
 
 {% block body %}
@@ -18,8 +20,10 @@ device_type: {{ device_type | default('depthcharge') }}
 
 actions:
   deploy:
+{% if mkimage_fit_arch %}
     parameters:
       mkimage_arch: {{ mkimage_fit_arch }}
+{% endif %}
     methods:
       tftp:
   boot:
