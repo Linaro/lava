@@ -108,7 +108,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIn('ipxe', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['ipxe']['parameters']
         boot_message = params.get('boot_message',
-                                  job.device.get_constant('boot-message'))
+                                  job.device.get_constant('kernel-start-message'))
         self.assertIsNotNone(boot_message)
         bootloader_action = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         bootloader_retry = [action for action in bootloader_action.internal_pipeline.actions if action.name == 'bootloader-retry'][0]

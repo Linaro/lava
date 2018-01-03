@@ -9,36 +9,19 @@ commands:
     power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
 device_type: x15
 constants:
-     # OS shutdown message
-     # Override: set as the shutdown-message parameter of an Action.
-     # SHUTDOWN_MESSAGE
-     shutdown-message: 'The system is going down for reboot NOW'
-
-     # Kernel starting message
-     # BOOT_MESSAGE
-     boot-message: 'Booting Linux'
-
-     # CPU reset message
-     # CPU_RESET_MESSAGE
-     cpu-reset-messages:
-       - "Resetting CPU"
-       - "Must RESET board to recover"
-
-     # Default shell prompt for AutoLogin
-     # DEFAULT_SHELL_PROMPT
-     default-shell-prompt: 'lava-test: # '
-
-     # u-boot auto boot prompt
-     # UBOOT_AUTOBOOT_PROMPT
-     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
-
-     # u-boot interrupt character
-     # UBOOT_INTERRUPT_CHARACTER = ' '
-     uboot-interrupt-character: ' '
-
-     # GRUB_BOOT_PROMPT
-     grub-autoboot-prompt: 'Press enter to boot the selected OS'
-     grub-interrupt-character: 'c'
+  shutdown-message: "The system is going down for reboot NOW"
+  kernel-start-message: 'Linux version [0-9]'
+  default-shell-prompt: "lava-test: # "
+  u-boot:
+    interrupt-prompt: "Hit any key to stop autoboot"
+    interrupt-character: " "
+    final-message: '{{ uboot_final_message | default("Starting kernel") }}'
+    error-messages:
+      - 'Resetting CPU'
+      - 'Must RESET board to recover'
+      - 'TIMEOUT'
+      - 'Retry count exceeded'
+      - 'ERROR: The remote end did not respond in time.'
 
 device_info: [{'board_id': 'R32D300FRYP'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor', 'system', 'cache', 'userdata']

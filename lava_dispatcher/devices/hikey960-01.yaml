@@ -2,36 +2,29 @@
 character_delays:
       boot: 10
 constants:
-     # OS shutdown message
-     # Override: set as the shutdown-message parameter of an Action.
-     # SHUTDOWN_MESSAGE
-     shutdown-message: 'The system is going down for reboot NOW'
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
 
-     # Kernel starting message
-     # BOOT_MESSAGE
-     boot-message: 'Booting Linux'
+  # Kernel starting message
+  # BOOT_MESSAGE
+  boot-message: 'Booting Linux'
 
-     # CPU reset message
-     # CPU_RESET_MESSAGE
-     cpu-reset-messages:
-       - 'Resetting CPU'
-       - 'Must RESET board to recover'
+  # CPU reset message
+  # CPU_RESET_MESSAGE
+  cpu-reset-messages:
+   - 'Resetting CPU'
+   - 'Must RESET board to recover'
 
-     # Default shell prompt for AutoLogin
-     # DEFAULT_SHELL_PROMPT
-     default-shell-prompt: 'lava-test: # '
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
 
-     # u-boot auto boot prompt
-     # UBOOT_AUTOBOOT_PROMPT
-     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
-
-     # u-boot interrupt character
-     # UBOOT_INTERRUPT_CHARACTER = ' '
-     uboot-interrupt-character: ' '
-
-     # GRUB_BOOT_PROMPT
-     grub-autoboot-prompt: 'Press enter to boot the selected OS'
-     grub-interrupt-character: 'c'
+  # GRUB_BOOT_PROMPT
+  grub:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
 
 commands:
     connections:

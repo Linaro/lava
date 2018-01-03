@@ -63,7 +63,7 @@
       name: reset-device
       pipeline:
       - {class: power.SendRebootCommands, name: send-reboot-commands}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
@@ -97,7 +97,7 @@
       name: reset-device
       pipeline:
       - {class: power.SendRebootCommands, name: send-reboot-commands}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: power.FinalizeAction

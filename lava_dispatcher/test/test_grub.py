@@ -140,7 +140,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('grub', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['grub']['parameters']
         boot_message = params.get('boot_message',
-                                  job.device.get_constant('boot-message'))
+                                  job.device.get_constant('kernel-start-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()

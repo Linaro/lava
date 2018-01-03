@@ -129,7 +129,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         params = job.device['actions']['deploy']['parameters']
         self.assertIn('mkimage_arch', params)
         boot_message = params.get('boot_message',
-                                  job.device.get_constant('boot-message'))
+                                  job.device.get_constant('kernel-start-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
@@ -344,7 +344,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 uboot_retry = action
         names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
         self.assertIn('reset-device', names)
-        self.assertIn('u-boot-interrupt', names)
+        self.assertIn('bootloader-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
         for action in uboot_retry.internal_pipeline.actions:

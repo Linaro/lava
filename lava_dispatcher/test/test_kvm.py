@@ -429,6 +429,7 @@ class TestAutoLogin(StdoutTestCase):
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': []})
+        autologinaction.parameters.update({'method': 'qemu'})
 
         with self.assertRaises((JobError, InfrastructureError)) as check:
             self.job.validate()
@@ -465,6 +466,8 @@ class TestAutoLogin(StdoutTestCase):
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
+        autologinaction.parameters.update({'method': 'qemu'})
+        autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
@@ -494,6 +497,8 @@ class TestAutoLogin(StdoutTestCase):
         autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
 
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
+        autologinaction.parameters.update({'method': 'qemu'})
+        autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
@@ -515,6 +520,8 @@ class TestAutoLogin(StdoutTestCase):
             'login_prompt': 'debian login:',
             'username': 'root'
         }})
+        autologinaction.parameters.update({'method': 'qemu'})
+        autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()

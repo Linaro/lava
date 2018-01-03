@@ -35,6 +35,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandsAction,
     BootloaderSecondaryMedia,
     OverlayUnpack,
+    BootloaderInterruptAction
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
@@ -113,7 +114,7 @@ class UBootRetry(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(UBootInterrupt())
+        self.internal_pipeline.add_action(BootloaderInterruptAction())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
@@ -135,46 +136,6 @@ class UBootRetry(BootAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(UBootRetry, self).run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        return connection
-
-
-class UBootInterrupt(Action):
-    """
-    Support for interrupting the bootloader.
-    """
-    def __init__(self):
-        super(UBootInterrupt, self).__init__()
-        self.name = "u-boot-interrupt"
-        self.description = "interrupt u-boot"
-        self.summary = "interrupt u-boot to get a prompt"
-
-    def validate(self):
-        super(UBootInterrupt, self).validate()
-        if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s"
-        device_methods = self.job.device['actions']['boot']['methods']
-        if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
-            self.errors = "Missing bootloader prompt for device"
-
-    def run(self, connection, max_end_time, args=None):
-        if not connection:
-            raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super(UBootInterrupt, self).run(connection, max_end_time, args)
-        device_methods = self.job.device['actions']['boot']['methods']
-        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        interrupt_prompt = device_methods['u-boot']['parameters'].get('interrupt_prompt', self.job.device.get_constant('uboot-autoboot-prompt'))
-        # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
-        interrupt_char = device_methods['u-boot']['parameters'].get('interrupt_char', self.job.device.get_constant('uboot-interrupt-character'))
-        # vendor u-boot builds may require one or more control characters
-        interrupt_control_chars = device_methods['u-boot']['parameters'].get('interrupt_ctrl_list', [])
-        self.logger.debug("Changing prompt to '%s'", interrupt_prompt)
-        connection.prompt_str = interrupt_prompt
-        self.wait(connection)
-        if interrupt_control_chars:
-            for char in interrupt_control_chars:
-                connection.sendcontrol(char)
-        else:
-            connection.sendline(interrupt_char)
         return connection
 
 
@@ -241,7 +202,7 @@ class UBootEnterFastbootAction(BootAction):
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(UBootInterrupt())
+        self.internal_pipeline.add_action(BootloaderInterruptAction())
         self.internal_pipeline.add_action(ConnectLxc())
 
     def validate(self):

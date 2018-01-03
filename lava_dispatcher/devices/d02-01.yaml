@@ -15,13 +15,14 @@ character_delays:
 
 constants:
   shutdown-message: "The system is going down for reboot NOW"
-  boot-message: "Booting Linux"
-  cpu-reset-messages:
-    - "Resetting CPU"
-    - "Must RESET board to recover"
+  kernel-start-message: "Linux version [0-9]"
   default-shell-prompt: "lava-test: # "
-  uboot-autoboot-prompt: "Hit any key to stop autoboot"
-  uboot-interrupt-character: " "
+  grub:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
+  grub-efi:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
 
 actions:
   deploy:

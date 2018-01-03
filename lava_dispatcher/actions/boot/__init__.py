@@ -156,6 +156,7 @@ class AutoLoginAction(Action):
     def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
         # Skip auto login if the configuration is not found
+        self.method = self.parameters['method']
         params = self.parameters.get('auto_login', None)
         if params:
             if not isinstance(params, dict):
@@ -224,6 +225,20 @@ class AutoLoginAction(Action):
     def run(self, connection, max_end_time, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
+        self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
+        self.kernel_start_message = self.job.device.get_constant('kernel-start-message')
+        connection.prompt_str = [self.kernel_start_message]
+        if self.params.get('boot_message', None):
+            self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
+            connection.prompt_str = [self.params.get('boot_message')]
+
+        error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
+        if error_messages:
+            connection.prompt_str = connection.prompt_str + error_messages
+        res = self.wait(connection)
+        if res != 0:
+            raise InfrastructureError('matched a bootloader error message')
+
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
@@ -562,6 +577,58 @@ class OverlayUnpack(Action):
         return connection
 
 
+class BootloaderInterruptAction(Action):
+    """
+    Support for interrupting the bootloader.
+    """
+    def __init__(self):
+        super(BootloaderInterruptAction, self).__init__()
+        self.name = "bootloader-interrupt"
+        self.description = "interrupt bootloader"
+        self.summary = "interrupt bootloader to get an interactive shell"
+
+    def validate(self):
+        super(BootloaderInterruptAction, self).validate()
+        uboot_fastboot = True if self.parameters.get('to', "") == 'fastboot' and self.job.device.get('fastboot_via_uboot', False) else False
+        if uboot_fastboot:
+            self.method = 'u-boot'
+        else:
+            self.method = self.parameters['method']
+        self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s"
+        device_methods = self.job.device['actions']['boot']['methods']
+        if self.parameters.get('method', '') == 'grub-efi' and 'grub-efi' in device_methods:
+            self.method = 'grub-efi'
+        if 'bootloader_prompt' not in self.params:
+            self.errors = "Missing bootloader prompt for device"
+        self.bootloader_prompt = self.params['bootloader_prompt']
+        self.interrupt_prompt = self.params.get('interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix=self.method))
+        # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
+        self.interrupt_char = None
+        if self.method != 'ipxe':
+            # ipxe only need interrupt_ctrl_list, not a single char.
+            self.interrupt_char = self.params.get('interrupt_char', self.job.device.get_constant('interrupt-character', prefix=self.method))
+        # vendor u-boot builds may require one or more control characters
+        self.interrupt_control_chars = self.params.get('interrupt_ctrl_list', self.job.device.get_constant('interrupt_ctrl_list', prefix=self.method, missing_ok=True))
+
+    def run(self, connection, max_end_time, args=None):
+        if not connection:
+            raise LAVABug("%s started without a connection already in use" % self.name)
+        connection = super(BootloaderInterruptAction, self).run(connection, max_end_time, args)
+        connection.prompt_str = [self.interrupt_prompt, self.bootloader_prompt]
+        res = self.wait(connection)
+        if res == 0:
+            if self.interrupt_control_chars:
+                for char in self.interrupt_control_chars:
+                    connection.sendcontrol(char)
+            else:
+                connection.sendline(self.interrupt_char)
+        else:
+            self.set_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt', value=True)
+        return connection
+
+
 class BootloaderCommandsAction(Action):
     """
     Send the boot commands to the bootloader
@@ -588,34 +655,28 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
         connection.raw_connection.linesep = self.line_separator()
-        connection.prompt_str = self.params['bootloader_prompt']
-        self.logger.debug("Changing prompt to start interaction: %s", connection.prompt_str)
-        self.wait(connection)
+        connection.prompt_str = [self.params['bootloader_prompt']]
+        at_bootloader_prompt = self.get_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt')
+        if not at_bootloader_prompt:
+            self.wait(connection, max_end_time)
         i = 1
         commands = self.get_namespace_data(action='bootloader-overlay', label=self.method, key='commands')
+        error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
+        final_message = self.job.device.get_constant('final-message', prefix=self.method, missing_ok=True)
+        if error_messages:
+            connection.prompt_str = connection.prompt_str + error_messages
 
         for line in commands:
             connection.sendline(line, delay=self.character_delay)
             if i != (len(commands)):
-                self.wait(connection)
+                res = self.wait(connection, max_end_time)
+                if res != 0:
+                    raise InfrastructureError('matched a bootloader error message')
                 i += 1
 
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        # allow for auto_login
-        if self.parameters.get('prompts', None):
-            connection.prompt_str = [
-                self.params.get('boot_message',
-                                self.job.device.get_constant('boot-message'))]
-            connection.prompt_str.extend(
-                self.job.device.get_constant('cpu-reset-messages'))
+        if final_message:
+            connection.prompt_str = final_message
+            self.wait(connection, max_end_time)
 
-            self.logger.debug("Changing prompt to boot_message %s",
-                              connection.prompt_str)
-            index = self.wait(connection)
-            if connection.prompt_str[index] in self.job.device.get_constant('cpu-reset-messages'):
-                self.logger.error("Bootloader reset detected: Bootloader "
-                                  "failed to load the required file into "
-                                  "memory correctly so the bootloader reset "
-                                  "the CPU.")
-                raise InfrastructureError("Bootloader reset detected")
+        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
