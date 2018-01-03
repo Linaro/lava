@@ -615,31 +615,35 @@ class LogEntryTable(tables.Table):
         super(LogEntryTable, self).__init__(*args, **kwargs)
         self.length = 10
 
+    action_time = tables.DateColumn(format=u"Nd, g:ia")
     object_id = tables.Column(verbose_name="Name")
-    action_flag = tables.Column(verbose_name="Action")
-    action_flag.orderable = False
-    change_message = tables.Column(verbose_name="Reason")
+    change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
 
     def render_change_message(self, record):
-        return record.get_change_message()
-
-    def render_action_flag(self, record):
-        if record.action_flag == ADDITION:
-            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span>')
-        elif record.action_flag == CHANGE:
-            return mark_safe('<span class="glyphicon glyphicon-pencil"></span>')
+        if record.is_change():
+            return record.get_change_message()
+        elif record.is_addition():
+            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % record.get_change_message())
         else:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_change_message())
 
     class Meta(LavaTable.Meta):
         model = LogEntry
         fields = (
-            'action_time', 'object_id', 'user', 'change_message', 'action_flag'
+            'action_time', 'object_id', 'user', 'change_message'
         )
         sequence = (
-            'action_time', 'object_id', 'user', 'change_message', 'action_flag'
+            'action_time', 'object_id', 'user', 'change_message'
         )
+
+
+class DeviceLogEntryTable(LogEntryTable):
+
+    class Meta(LogEntryTable.Meta):
+        exclude = [
+            'object_id'
+        ]
 
 
 class NoWorkerDeviceTable(DeviceTable):

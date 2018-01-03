@@ -85,6 +85,7 @@ from lava_scheduler_app.tables import (
     all_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
+    DeviceLogEntryTable,
     LogEntryTable,
     LongestJobTable,
     DeviceTable,
@@ -587,9 +588,9 @@ def mydevice_list(request):
 @BreadCrumb("My Devices Health History", parent=index)
 def mydevices_health_history_log(request):
     devices = Device.objects.owned_by_principal(request.user)
-    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=LogEntryTable)
-    devices_log_ptable = LogEntryTable(devices_log_data.get_table_data(),
-                                       prefix="devices_log_")
+    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    devices_log_ptable = DeviceLogEntryTable(devices_log_data.get_table_data(),
+                                             prefix="devices_log_")
     RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(devices_log_ptable)
     return render(request,
                   "lava_scheduler_app/mydevices_health_history_log.html",
@@ -821,9 +822,9 @@ def device_type_detail(request, pk):
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     devices = device_type.device_set.all()
-    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=LogEntryTable)
-    devices_log_ptable = LogEntryTable(devices_log_data.get_table_data(),
-                                       prefix="devices_log_")
+    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    devices_log_ptable = DeviceLogEntryTable(devices_log_data.get_table_data(),
+                                             prefix="devices_log_")
     RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(devices_log_ptable)
 
     return render(request,
@@ -1764,9 +1765,9 @@ def device_detail(request, pk):
     terms_data = recent_ptable.prepare_terms_data(recent_data)
     times_data = recent_ptable.prepare_times_data(recent_data)
 
-    device_log_data = DeviceLogView(device, request, model=LogEntry, table_class=LogEntryTable)
-    device_log_ptable = LogEntryTable(device_log_data.get_table_data(),
-                                      prefix="device_log_")
+    device_log_data = DeviceLogView(device, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    device_log_ptable = DeviceLogEntryTable(device_log_data.get_table_data(),
+                                            prefix="device_log_")
     RequestConfig(request, paginate={"per_page": device_log_ptable.length}).configure(device_log_ptable)
 
     mismatch = False
