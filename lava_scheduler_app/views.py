@@ -248,7 +248,7 @@ class WorkersLogView(LavaView):
 
     def get_queryset(self):
         worker_ct = ContentType.objects.get_for_model(Worker)
-        return LogEntry.objects.filter(content_type=worker_ct).order_by("-action_time")
+        return LogEntry.objects.filter(content_type=worker_ct).order_by("-action_time").select_related("user")
 
 
 class WorkerLogView(LavaView):
@@ -261,7 +261,8 @@ class WorkerLogView(LavaView):
         worker_ct = ContentType.objects.get_for_model(Worker)
         device_ct = ContentType.objects.get_for_model(Device)
         return LogEntry.objects.filter((Q(content_type=worker_ct) & Q(object_id=self.worker.hostname)) |
-                                       (Q(content_type=device_ct) & Q(object_id__in=self.worker.device_set.all()))).order_by("-action_time")
+                                       (Q(content_type=device_ct) & Q(object_id__in=self.worker.device_set.all()))) \
+                               .order_by("-action_time").select_related("user")
 
 
 class DevicesLogView(LavaView):
@@ -279,7 +280,7 @@ class DeviceLogView(LavaView):
         self.device = device
 
     def get_queryset(self):
-        return LogEntry.objects.filter(object_id=self.device.hostname).order_by("-action_time")
+        return LogEntry.objects.filter(object_id=self.device.hostname).order_by("-action_time").select_related("user")
 
 
 def health_jobs_in_hr():
