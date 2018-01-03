@@ -683,6 +683,12 @@ class Device(RestrictedResource):
     def get_absolute_url(self):
         return ("lava.scheduler.device.detail", [self.pk])
 
+    def get_simple_state_display(self):
+        if self.state == Device.STATE_IDLE:
+            if self.health in [Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+                return self.get_health_display()
+        return self.get_state_display()
+
     def get_description(self):
         return mark_safe(self.description) if self.description else None
 

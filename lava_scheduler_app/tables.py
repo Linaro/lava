@@ -90,7 +90,7 @@ class ExpandedStatusColumn(tables.Column):
                 current_job.description,
                 current_job.submitter))
         else:
-            return record.get_state_display()
+            return record.get_simple_state_display()
 
 
 class RestrictedDeviceColumn(tables.Column):
@@ -160,13 +160,9 @@ class JobTable(LavaTable):
     end_time = tables.DateColumn(format=u"Nd, g:ia")
 
     def render_state(self, record):
-        # TODO: find two icons for scheduling and scheduled
-        if record.state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
-            return mark_safe('<span class="glyphicon glyphicon-option-horizontal" title="%s"></span>' % record.get_state_display())
-        elif record.state == TestJob.STATE_RUNNING:
-            return mark_safe('<span class="glyphicon glyphicon-play" title="%s"></span>' % record.get_state_display())
-        elif record.state == TestJob.STATE_CANCELING:
-            return mark_safe('<span class="glyphicon glyphicon-pause" title="%s"></span>' % record.get_state_display())
+        if record.state == TestJob.STATE_RUNNING:
+            return mark_safe('<span class="text-info"><strong>%s</strong></span>' %
+                             record.get_state_display())
         elif record.state == TestJob.STATE_FINISHED:
             if record.health == TestJob.HEALTH_UNKNOWN:
                 text = 'text-default'
@@ -178,6 +174,9 @@ class JobTable(LavaTable):
                 text = 'text-warning'
             return mark_safe('<span class="%s"><strong>%s</strong></span>' %
                              (text, record.get_health_display()))
+        else:
+            return mark_safe('<span class="text-muted"><strong>%s</strong></span>' %
+                             record.get_state_display())
 
     def render_device(self, record):
         if record.actual_device:
