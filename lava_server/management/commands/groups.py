@@ -121,7 +121,6 @@ class Command(BaseCommand):
                 print("Adding permission %s to group %s" % (perm, group.name))
                 group.permissions.add(perm)
 
-
     def handle_list(self, verbose=False):
         """ List groups with permissions """
         groups = Group.objects.all().order_by('name')
