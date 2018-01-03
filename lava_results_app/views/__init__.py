@@ -58,7 +58,7 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
-from lava_results_app.utils import check_request_auth
+from lava_results_app.utils import check_request_auth, get_testcases_with_limit
 from lava_results_app.models import (
     BugLink,
     QueryCondition,
@@ -274,7 +274,8 @@ def suite_csv(request, job, pk):
         extrasaction='ignore',
         fieldnames=testcase_export_fields())
     writer.writeheader()
-    for row in test_suite.testcase_set.all():
+    testcases = get_testcases_with_limit(request, test_suite)
+    for row in testcases:
         writer.writerow(export_testcase(row))
     return response
 
@@ -295,8 +296,9 @@ def suite_csv_stream(request, job, pk):
 
     pseudo_buffer = StreamEcho()
     writer = csv.writer(pseudo_buffer)
+    testcases = get_testcases_with_limit(request, test_suite)
     response = StreamingHttpResponse(
-        (writer.writerow(export_testcase(row)) for row in test_suite.test_cases.all()),
+        (writer.writerow(export_testcase(row)) for row in testcases),
         content_type="text/csv")
     filename = "lava_stream_%s.csv" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -311,7 +313,8 @@ def suite_yaml(request, job, pk):
     filename = "lava_%s.yaml" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
-    for test_case in test_suite.testcase_set.all():
+    testcases = get_testcases_with_limit(request, test_suite)
+    for test_case in testcases:
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
     return response

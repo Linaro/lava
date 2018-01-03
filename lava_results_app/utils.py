@@ -2,6 +2,7 @@ import os
 import yaml
 import logging
 import subprocess
+from django.db import DataError
 from django.utils.translation import ungettext_lazy
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -109,3 +110,28 @@ def debian_package_version():
             'dpkg-query', '-W', "-f=${Version}\n", 'lava-server')).strip().decode('utf-8')
         # example version returned would be '2016.11-1'
         return deb_version
+
+
+def get_testcases_with_limit(request, testsuite):
+    logger = logging.getLogger('lava_results_app')
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
+    if limit:
+        try:
+            if not offset:
+                testcases = list(testsuite.testcase_set.all()[:limit])
+            else:
+                testcases = list(testsuite.testcase_set.all()[offset:][:limit])
+        except ValueError as e:
+            logger.warning(
+                "Offset and limit must be integers: %s" % str(e))
+            return []
+        except DataError as e:
+            logger.warning(
+                "Offset must be positive integer: %s" % str(e))
+            return []
+    else:
+        testcases = list(testsuite.testcase_set.all())
+
+    return testcases
