@@ -265,6 +265,9 @@ def suite_csv(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
     response = HttpResponse(content_type='text/csv')
     filename = "lava_%s.csv" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -274,7 +277,7 @@ def suite_csv(request, job, pk):
         extrasaction='ignore',
         fieldnames=testcase_export_fields())
     writer.writeheader()
-    testcases = get_testcases_with_limit(request, test_suite)
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
     for row in testcases:
         writer.writerow(export_testcase(row))
     return response
@@ -293,10 +296,13 @@ def suite_csv_stream(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     check_request_auth(request, job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
 
     pseudo_buffer = StreamEcho()
     writer = csv.writer(pseudo_buffer)
-    testcases = get_testcases_with_limit(request, test_suite)
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
     response = StreamingHttpResponse(
         (writer.writerow(export_testcase(row)) for row in testcases),
         content_type="text/csv")
@@ -309,11 +315,14 @@ def suite_yaml(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_%s.yaml" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
-    testcases = get_testcases_with_limit(request, test_suite)
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
     for test_case in testcases:
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response, Dumper=yaml.CDumper)

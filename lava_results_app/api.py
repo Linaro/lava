@@ -36,6 +36,7 @@ from lava_results_app.models import (
     TestData,
     InvalidContentTypeError,
 )
+from lava_results_app.utils import get_testcases_with_limit
 from lava_scheduler_app.models import TestJob
 
 if sys.version_info[0] == 2:
@@ -390,11 +391,12 @@ class ResultsAPI(ExposedAPI):
 
         return output.getvalue()
 
-    def get_testsuite_results_yaml(self, job_id, suite_name):
+    def get_testsuite_results_yaml(self, job_id, suite_name, limit=None,
+                                   offset=None):
         """
         Name
         ----
-        `get_testsuite_results_yaml` (`job_id`, `suite_name`)
+        `get_testsuite_results_yaml` (`job_id`, `suite_name`, `limit=None`, `offset=None`)
 
         Description
         -----------
@@ -406,6 +408,10 @@ class ResultsAPI(ExposedAPI):
             Job id for which the results are required.
         `suite_name`: string
             Name of the suite for which the results are required.
+        `limit`: int
+            Limit the number of test cases fetched.
+        `offset`: int
+            Start fetching test cases from a specific point.
 
         Return value
         ------------
@@ -424,7 +430,8 @@ class ResultsAPI(ExposedAPI):
                     401, "Permission denied for user to job %s" % job_id)
             yaml_list = []
             test_suite = job.testsuite_set.get(name=suite_name)
-            for test_case in test_suite.testcase_set.all():
+            for test_case in get_testcases_with_limit(test_suite,
+                                                      limit, offset):
                 yaml_list.append(export_testcase(test_case))
 
         except TestJob.DoesNotExist:
@@ -434,11 +441,12 @@ class ResultsAPI(ExposedAPI):
 
         return yaml.dump(yaml_list)
 
-    def get_testsuite_results_csv(self, job_id, suite_name):
+    def get_testsuite_results_csv(self, job_id, suite_name, limit=None,
+                                  offset=None):
         """
         Name
         ----
-        `get_testsuite_results_csv` (`job_id`, `suite_name`)
+        `get_testsuite_results_csv` (`job_id`, `suite_name`, `limit=None`, `offset=None`)
 
         Description
         -----------
@@ -450,6 +458,10 @@ class ResultsAPI(ExposedAPI):
             Job id for which the results are required.
         `suite_name`: string
             Name of the suite for which the results are required.
+        `limit`: int
+            Limit the number of test cases fetched.
+        `offset`: int
+            Start fetching test cases from a specific point.
 
         Return value
         ------------
@@ -474,7 +486,7 @@ class ResultsAPI(ExposedAPI):
                 fieldnames=testcase_export_fields())
             writer.writeheader()
             test_suite = job.testsuite_set.get(name=suite_name)
-            for row in test_suite.testcase_set.all():
+            for row in get_testcases_with_limit(test_suite, limit, offset):
                 writer.writerow(export_testcase(row))
 
         except TestJob.DoesNotExist:

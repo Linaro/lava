@@ -112,11 +112,8 @@ def debian_package_version():
         return deb_version
 
 
-def get_testcases_with_limit(request, testsuite):
+def get_testcases_with_limit(testsuite, limit=None, offset=None):
     logger = logging.getLogger('lava_results_app')
-    querydict = request.GET
-    offset = querydict.get('offset', default=None)
-    limit = querydict.get('limit', default=None)
     if limit:
         try:
             if not offset:
