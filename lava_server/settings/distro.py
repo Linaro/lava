@@ -89,8 +89,7 @@ if AUTH_LDAP_SERVER_URI:
         return types
 
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
-                               'django.contrib.auth.backends.ModelBackend'] + \
-        AUTHENTICATION_BACKENDS
+                               'django.contrib.auth.backends.ModelBackend']
 
     # Load credentials
     AUTH_LDAP_BIND_DN = distro_settings.get_setting("AUTH_LDAP_BIND_DN")
