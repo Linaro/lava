@@ -43,3 +43,7 @@ actions:
     - 'root@beaglebone:'
     timeout:
       minutes: 4
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port

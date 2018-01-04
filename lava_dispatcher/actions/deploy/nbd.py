@@ -30,8 +30,6 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
-from lava_dispatcher.utils.network import get_free_port
-from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 
@@ -132,13 +130,6 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         # and store in namespace for boot action
         # ip
         parameters['lava-xnbd'] = {}
-        self.nbd_ip = dispatcher_ip(self.job.parameters['dispatcher'])
-        parameters['lava-xnbd']['ip'] = self.nbd_ip
-        self.set_namespace_data(action=self.name, label='nbd', key='nbd_server_ip', value=self.nbd_ip, parameters=parameters)
-        # port
-        self.nbd_port = get_free_port(self.job.parameters['dispatcher'])
-        parameters['lava-xnbd']['port'] = self.nbd_port
-        self.set_namespace_data(action=self.name, label='nbd', key='nbd_server_port', value=self.nbd_port, parameters=parameters)
         # handle XnbdAction next - bring-up xnbd-server
         self.internal_pipeline.add_action(XnbdAction())
 
@@ -159,9 +150,12 @@ class XnbdAction(DeployAction):
         connection = super(XnbdAction, self).run(connection, max_end_time, args)
         self.logger.debug("%s: starting xnbd-server", self.name)
         # pull from parameters - as previously set
-        self.nbd_server_port = self.parameters['lava-xnbd']['port']
-        self.nbd_server_ip = self.parameters['lava-xnbd']['ip']
         self.nbd_root = self.parameters['lava-xnbd']['nbdroot']
+        self.nbd_server_port = self.get_namespace_data(action='nbd-deploy', label='nbd', key='nbd_server_port')
+        self.nbd_server_ip = self.get_namespace_data(action='nbd-deploy', label='nbd', key='nbd_server_ip')
+        if self.nbd_server_port is None:
+            self.errors = "NBD server port is unset"
+            return connection
         self.logger.debug("NBD-IP: %s, NBD-PORT: %s, NBD-ROOT: %s",
                           self.nbd_server_ip, self.nbd_server_port, self.nbd_root)
         nbd_cmd = ['xnbd-server', '--logpath', '/tmp/xnbd.log.%s' % self.nbd_server_port,
