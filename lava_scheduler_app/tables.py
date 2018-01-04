@@ -641,6 +641,9 @@ class LogEntryTable(tables.Table):
 class DeviceLogEntryTable(LogEntryTable):
 
     class Meta(LogEntryTable.Meta):
+        sequence = (
+            'action_time', 'user', 'change_message'
+        )
         exclude = [
             'object_id'
         ]
