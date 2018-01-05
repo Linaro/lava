@@ -17,7 +17,6 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import json
 import os
 import shutil
 import simplejson
@@ -650,7 +649,7 @@ def get_query_names(request):
                        "id": query.id,
                        "content_type": query.content_type.model_class().__name__})
     return HttpResponse(
-        json.dumps(list(result)),
+        simplejson.dumps(list(result)),
         content_type='application/json')
 
 

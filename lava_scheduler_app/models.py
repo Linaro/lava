@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 
 import jinja2
-import json
 import logging
 import os
 import re
@@ -2610,7 +2609,7 @@ class Notification(models.Model):
         if callback_data:
             headers['Authorization'] = callback_data['token']
             if self.callback_content_type == Notification.JSON:
-                callback_data = json.dumps(callback_data)
+                callback_data = simplejson.dumps(callback_data)
                 headers['Content-Type'] = 'application/json'
             else:
                 callback_data = urlencode(callback_data)

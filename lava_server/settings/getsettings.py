@@ -44,7 +44,7 @@ from __future__ import unicode_literals
 import django
 from lava_server.settings.secret_key import get_secret_key
 from lava_server.settings.config_file import ConfigFile
-import json
+import simplejson
 import os
 
 
@@ -118,7 +118,7 @@ class Settings(object):
         pathname = self._get_pathname("settings")
         if os.path.exists(pathname):
             with open(pathname, "r") as stream:
-                return json.load(stream)
+                return simplejson.load(stream)
         else:
             return {}
 

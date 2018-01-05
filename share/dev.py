@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import json
+import simplejson
 import os
 import subprocess
 import sys
@@ -124,7 +124,7 @@ def main():
     # with lava running in DEBUG
     try:
         with open("/etc/lava-server/settings.conf") as f_conf:
-            conf = json.loads(f_conf.read())
+            conf = simplejson.loads(f_conf.read())
             if not conf.get("DEBUG"):
                 print("lava-server should be running in 'DEBUG' mode")
                 sys.exit(1)

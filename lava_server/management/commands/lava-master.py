@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import errno
 import jinja2
-import json
+import simplejson
 import lzma
 import os
 import sys
@@ -275,7 +275,7 @@ class Command(LAVADaemonCommand):
 
         if topic.endswith(".testjob"):
             try:
-                data = json.loads(data)
+                data = simplejson.loads(data)
                 if data["state"] == "Canceling":
                     self.events["canceling"].add(int(data["job"]))
             except ValueError:

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import datetime
 from django.conf import settings
 from django.db.models.signals import post_init, post_save
-import json
+import simplejson
 import threading
 import uuid
 import zmq
@@ -34,7 +34,7 @@ def send_event(topic, user, data):
             b(str(uuid.uuid1())),
             b(datetime.datetime.utcnow().isoformat()),
             b(user),
-            b(json.dumps(data))
+            b(simplejson.dumps(data))
         ]
         # Send the message in the non-blockng mode.
         # If the consumer (lava-publisher) is not active, the message will be lost.

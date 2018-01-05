@@ -24,7 +24,6 @@ import datetime
 import logging
 import re
 import hashlib
-import json
 import os
 import subprocess
 import sys

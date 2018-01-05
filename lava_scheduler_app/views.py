@@ -3,7 +3,6 @@
 from collections import OrderedDict
 import yaml
 import jinja2
-import json
 import logging
 import os
 import simplejson
@@ -1399,7 +1398,8 @@ def job_status(request, pk):
     if job.state == TestJob.STATE_FINISHED:
         response_dict['X-JobState'] = '1'
 
-    response = HttpResponse(json.dumps(response_dict), content_type='text/json')
+    response = HttpResponse(simplejson.dumps(response_dict),
+                            content_type='text/json')
     return response
 
 
@@ -1481,7 +1481,8 @@ def job_pipeline_timing(request, pk):
         response_dict = {'timing': timing,
                          'graph': pipeline}
 
-    return HttpResponse(json.dumps(response_dict), content_type='text/json')
+    return HttpResponse(simplejson.dumps(response_dict),
+                        content_type='text/json')
 
 
 def job_log_file_plain(request, pk):

@@ -1,7 +1,6 @@
 import os
 import sys
 import yaml
-import json
 import logging
 import unittest
 from django.test.client import Client
