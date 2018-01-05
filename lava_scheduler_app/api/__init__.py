@@ -813,6 +813,8 @@ class SchedulerAPI(ExposedAPI):
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = build_job_status_display(job.state, job.health)
+            job.state = job.get_state_display()
+            job.health = job.get_health_display()
             job.submitter_username = job.submitter.username
             job.absolute_url = job.get_absolute_url()
         except PermissionDenied:
