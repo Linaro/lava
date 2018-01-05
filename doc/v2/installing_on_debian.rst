@@ -20,7 +20,7 @@ These instructions cover installation on Debian. The supported versions are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Stretch (stable)       | 9.0    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Jessie (oldstable)     | 8.0    | Yes [#f3]_           |
+| Debian        | Jessie (oldstable)     | 8.0    | Deprecated [#f3]_    |
 +---------------+------------------------+--------+----------------------+
 
 Debian uses codenames for releases (buster, stretch, jessie, wheezy,
@@ -56,17 +56,14 @@ that codename in the table.
          the relevant production release available from the
          :ref:`lava_repositories`.
 
-.. [#f3] Jessie was released on April 25th, 2015. All updates to LAVA packages
-         for Jessie will be made using `jessie-backports`_. Systems using
-         Debian Jessie are recommended to enable jessie-backports. LAVA
-         packages and dependencies which are installed using jessie-backports
-         are **fully supported** by upstream and are the same codebase as the
-         relevant production release available from the
-         :ref:`lava_repositories`.
+.. [#f3] Jessie was released on April 25th, 2015 and security support for
+         Jessie is expected to terminate in June 2018. All instances using
+         Jessie are recommended to upgrade to Debian Stretch as soon as
+         possible. Remaining updates to LAVA packages for Jessie will be made
+         using `jessie-backports`_.
 
 .. [#f4] `buster` is the name of the next Debian release after Stretch, which
          is supported automatically via uploads to Sid (unstable).
-
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -98,12 +95,27 @@ In times when the current production release has not made it into either
 or a pre-release package freeze in Debian), this repository can be used
 instead.
 
+The :file:`services-trace.txt` file in the repository shows the latest update
+timestamp and is accompanied by a GnuPG signature of the trace file, signed
+using the :ref:`lava_archive_signing_key`.
+
+Interim builds (including release candidates) are available in the staging
+repository, using the same suites::
+
+ deb https://images.validation.linaro.org/staging-repo stretch-backports main
+
+ deb https://images.validation.linaro.org/staging-repo jessie-backports main
+
+This repository uses the same key as the production repository.
+
 There are differences in how the packages are built between
 ``jessie-backports`` and ``stretch-backports`` but the contents are otherwise
 the same for the same upstream version.
 
 Stretch users
 -------------
+
+.. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
 
 ::
 
@@ -112,28 +124,14 @@ Stretch users
 Jessie users
 -------------
 
+.. caution:: Deprecated - please upgrade Jessie systems to Stretch.
+
 ::
 
  deb https://images.validation.linaro.org/production-repo jessie-backports main
 
 .. note:: The packages formerly in the ``sid`` suite in the repository are
    not being updated after 2017.6.
-
-The :file:`services-trace.txt` file in the repository shows the latest update
-timestamp and is accompanied by a GnuPG signature of the trace file, signed
-using the :ref:`lava_archive_signing_key`.
-
-Interim builds (including release candidates) are available in the staging
-repository, using the same suites::
-
- deb https://images.validation.linaro.org/staging-repo sid main
-
- deb https://images.validation.linaro.org/staging-repo stretch-backports main
-
- deb https://images.validation.linaro.org/staging-repo jessie-backports main
-
-This repository uses the same key as the production repository and uses ``sid``
-in the same way.
 
 .. _archive_repository:
 
@@ -371,6 +369,9 @@ require updates from backports.
 Installing on Debian Jessie
 ===========================
 
+.. caution:: Deprecated - new LAVA instances should no longer use Debian
+   Jessie.
+
 Debian Jessie was released on April 25th, 2015, containing a full set of
 packages to install LAVA at version 2014.9. Debian stable releases of LAVA do
 not receive updates to LAVA directly, so a simple install on Jessie will only
@@ -488,7 +489,7 @@ All of these packages can be installed separately alongside the main
 set. ::
 
  $ sudo apt install postgresql
- $ sudo apt -t jessie-backports install lava
+ $ sudo apt -t stretch-backports install lava
  $ sudo a2dissite 000-default
  $ sudo a2enmod proxy
  $ sudo a2enmod proxy_http
@@ -498,6 +499,31 @@ set. ::
 .. seealso:: :ref:`Creating a superuser <create_superuser>`, :ref:`logging_in`,
    :ref:`authentication_tokens` and the :ref:`first job definition
    <first_job_definition>`.
+
+.. index:: python3
+
+.. _lava_python3:
+
+LAVA and Python3
+================
+
+Python2 has been `marked as end of life
+<http://legacy.python.org/dev/peps/pep-0373/>`_ and distributions are in the
+process of removing packages which depend on Python2. Django has had Python3
+support for some time and will be dropping Python2 support in the next LTS.
+(The current non-LTS release of django, version 2.0, has already dropped
+support for Python2.)
+
+LAVA has been moving towards Python3 support as an integral part of the
+migration to V2 and with the completion of the migration and the removal of the
+V1 codebase, `the announcement has been made
+<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_ that
+all LAVA packages will move exclusively to Python3 support.
+
+Supporting LAVA with Python3 on Debian Jessie is awkward and as Jessie is now
+deprecated and will have security support dropped in 2018, the decision has
+been taken to **not** support Python3 in Jessie for LAVA packages. The move to
+Python3 will therefore happen with the move to Stretch.
 
 Setting up a reverse proxy
 ==========================
