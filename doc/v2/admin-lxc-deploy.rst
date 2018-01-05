@@ -1,9 +1,9 @@
-.. index:: admin deploy lxc, device_info - lxc
+.. index:: admin deploy lxc, device_info - lxc, lxc - admin
 
 .. _lxc_deploy:
 
 Deploying LXC devices
-=====================
+#####################
 
 LXC is a userspace interface for the Linux kernel containment features. Through
 a powerful API and simple tools, it lets Linux users easily create and manage
@@ -14,7 +14,7 @@ environment with support for different OS types, enabling testing in different
 platforms.
 
 Prerequisite
-------------
+************
 
 Ensure that LXC is installed in your LAVA dispatcher host, if not use the
 following command to install LXC in Debian::
@@ -32,7 +32,7 @@ Refer the following links in order to setup networking for LXC in Debian:
 .. _add_android_devices_lxc:
 
 Android testing with LXC support
---------------------------------
+********************************
 
 :ref:`LXC protocol <lxc_protocol_reference>` is used for Android testing
 use-cases which removes the need for writing complex job definitions using
@@ -64,30 +64,51 @@ Example 3 - Single device with `board_id`, `usb_vendor_id` and `usb_product_id` 
 .. include:: examples/device-configurations/hi6220-hikey.yaml
    :code: yaml
 
+.. index:: static_info devices
+
 .. _add_usb_devices_lxc:
 
-Arbitrary USB devices with LXC support
---------------------------------------
+Arbitrary external devices needing LXC support
+**********************************************
 
-Some workers have other USB devices attached, for example an energy probe,
-which also need to be added to the LXC for access by the test shell. These can
-be added as supplementary ``device_info`` dictionaries. In the case of an
-energy probe, the probe may be measuring a single DUT whilst being connected to
-the worker as a USB device. The ``id`` of that USB device needs to be in the
-``device_info`` of the DUT so that the test shell running in the LXC can
+Some test devices have attached hardware which needs to be visible from the LXC
+during the time that the test job is running.
+
+* If the attached device re-enumerates on the worker each time that the
+  :term:`DUT` is rebooted then ``device_info`` can be used.
+
+* More commonly, the attached device is independent of the :term:`DUT` and
+  is accessible to the worker even when the DUT is powered off. These attached
+  devices need to use ``static_info``.
+
+  * Static USB devices (using ``board_id``, ``usb_vendor_id`` or
+    ``usb_product_id``) will be added to the LXC at the start of the test job,
+    including associated ``/dev/`` nodes like ``/dev/tty*`` or
+    ``/dev/serial/by-id/`` etc. Test writers will need to locate the correct
+    device by inspecting paths like ``/dev/serial/by-id/``.
+
+  * Other static devices which are accessible over the network can be made
+    available to a test shell in the LXC through lava test shell helpers.
+
+.. seealso:: :ref:`device_dictionary_commands`
+
+One example is an energy probe, which may be measuring a single DUT whilst
+being connected to the worker as a USB or network device.
+
+For a USB probe, the ``id`` of that USB device needs to be in the
+``static_info`` of the DUT so that the test shell running in the LXC can
 control the probe.
 
-The keys given in the dictionary are **not** arbitrary and follow the same
-rules as for :ref:`Android devices <add_android_devices_lxc>`::
+For a network attached probe, the IP address of the probe and the channel which
+the probe uses for this specific DUT need to be in the ``static_info``.
 
- [{'board_id': '0123456789ABCDEF'}, {'board_id': 'S/NO44440001'}]
+USB attached devices
+====================
 
-.. caution:: Ensure that the ``device_info`` relates to a USB device which is
-   attached to the same worker as the DUT but is **not** a DUT itself.
-
-The value to specify is what shows up in ``pyudev`` bindings as the
-``ID_SERIAL_SHORT``. This is typically the ``SerialNumber`` reported by
-``dmesg`` but it is worth checking:
+The value for ``board_id`` in the ``static_info`` is what shows up in
+``pyudev`` bindings as the ``ID_SERIAL_SHORT``. This is typically the
+``SerialNumber`` reported by ``dmesg`` but it is worth checking as the precise
+syntax does matter and can differ between ``pyudev`` and ``dmesg``:
 
 .. code-block:: python
 
@@ -95,27 +116,65 @@ The value to specify is what shows up in ``pyudev`` bindings as the
   >>> context = pyudev.Context()
   >>> [ device.get('ID_SERIAL_SHORT') for device in context.list_devices(subsystem='usb')]
   [u'0000:00:1a.0', None, None, None, None, u'889FFAE94013', None, None, None, None,
-  None, u'FTGNRL22', None, None, None, None, None, None, None, None, None, None, None,
+  None, u'FTGNRL22', None, None, None, u'S_NO62200001', None, None, None, None,
   None, None, None, None, None, u'0000:00:1d.0', None, None, None]
   >>>
 
 For ``usb_vendor_id``, the corresponding pyudev key is ``ID_VENDOR_ID``.
 For ``usb_product_id``, the corresponding pyudev key is ``ID_MODEL_ID``.
 
+The keys given in the dictionary are **not** arbitrary and follow the same
+rules as for :ref:`Android devices <add_android_devices_lxc>`::
+
+ [{'board_id': 'S_NO62200001'}]
+
+.. caution:: Ensure that the ``static_info`` relates to a USB device which is
+   attached to the same worker as the DUT but is **not** a DUT itself.
+
 If using multiple keys for the same ``device_info``, ensure that the key value
 pairs are in a single dictionary within the list of dictionaries::
 
- {% set device_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
+ {% set static_info = [{'board_id': '0123456789'}, {'board_id': 'adsd0978775', 'usb_vendor_id': 'ACME54321'}] %}
 
 .. note:: Devices which include a forward slash ``/`` in the serial number will have
    that replaced by an underscore when processed through ``pyudev``. e.g.::
 
     udev: ATTRS{serial}=="S/NO44440001"
     pydev: S_NO44440001
-    device_info: {% set device_info = [{'board_id': 'S_NO44440001'}] %}
+    static_info: {% set static_info = [{'board_id': 'S_NO44440001'}] %}
 
-Configuration: Persistent Containers
-------------------------------------
+Other related devices
+=====================
+
+Devices which are not directly attached to the worker can also be supported,
+for example energy probes which communicate over the network::
+
+ {% set static_info = [{'probe_ip': '192.168.0.23', 'probe_channel': '4'}] %}
+
+* **probe_ip** - The IP address at which the energy probe is accessible from
+  the LXC.
+
+* **probe_channel**  - Energy probes can often measure multiple devices at once,
+  so the device dictionary needs to specify the channel so that the test job
+  can know what channel refers to this LAVA device.
+
+These values can be retrieved by test writers inside a LAVA test shell in the
+LXC by using the associated test shell helpers.
+
+* **lava-probe-ip** - echoes the ``probe_ip`` specified in the device
+  dictioanry.
+
+* **lava-probe-channel** - echoes the ``probe_channel`` specified in the device
+  dictionary.
+
+  .. seealso:: https://github.com/ARM-software/lisa/wiki/Energy-Meters-Requirements#iiocapture---baylibre-acme-cape
+
+Configuration
+*************
+
+Persistent Containers
+=====================
+
 A test job can request a persistent container which will not get destroyed after
 the test job is complete. This allows the container to be reused for subsequent test
 jobs. This is useful when users want to setup some software on a container and
@@ -138,8 +197,8 @@ non-persistent containers will get created in this path.
           persistent containers and free space whenever required or destroy
           unused persistent containers.
 
-Configuration: Unprivileged containers as root
-----------------------------------------------
+Unprivileged containers as root
+===============================
 
 This is the recommended configuration for running your LXC devices within a
 LAVA dispatcher, provided your container does not access any devices attached
@@ -166,7 +225,7 @@ container.
   the dispatcher use ``/etc/lxc/default.conf`` file.
 
 Other resources
----------------
+***************
 
 For advanced LXC configurations and usage refer the following links:
 
