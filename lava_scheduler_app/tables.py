@@ -1,3 +1,4 @@
+import django
 import logging
 import random
 from django.contrib.admin.models import (
@@ -621,12 +622,16 @@ class LogEntryTable(tables.Table):
     change_message.orderable = False
 
     def render_change_message(self, record):
-        if record.is_change():
-            return record.get_change_message()
-        elif record.is_addition():
-            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % record.get_change_message())
+        if django.VERSION > (1, 10):
+            message = record.get_change_message()
         else:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_change_message())
+            message = record.change_message
+        if record.is_change():
+            return message
+        elif record.is_addition():
+            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % message)
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % message)
 
     class Meta(LavaTable.Meta):
         model = LogEntry
