@@ -10,10 +10,15 @@ same results for job number 123 are available in YAML format using:
 
 If you know the test definition name, you can also download the
 results for that specific test definition only in a similar way:
-``https://validation.linaro.org/results/123/singlenode-advanced/csv``
+``https://validation.linaro.org/results/123/0_singlenode-advanced/csv``
 for the data in CSV format and
-``https://validation.linaro.org/results/123/singlenode-advanced/yaml``
+``https://validation.linaro.org/results/123/0_singlenode-advanced/yaml``
 for the YAML format.
+
+Test definition names use a prefix to show the sequence within the
+test job, for each namespace. The list of test definitions within a
+test job can be retrieved using the Summary:
+ `https://validation.linaro.org/results/123/yaml_summary`
 
 Some test jobs can be restricted to particular users or groups of
 users. The results of these test jobs will be restricted in the same
@@ -25,7 +30,7 @@ example:
 
 .. code-block:: shell
 
-    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
+    $ curl 'https://validation.linaro.org/results/123/0_singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
 
 Use the **Username** as specified in `your Profile </me>`_ - this may
 differ from the username you use if logging in via LDAP.
@@ -58,6 +63,17 @@ and yaml). Example:
 
 .. code-block:: shell
 
-    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?limit=100&offset=200'
+    $ curl 'https://validation.linaro.org/results/123/0_singlenode-advanced/yaml?limit=100&offset=200'
 
-    $ curl 'https://validation.linaro.org/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline&limit=100&offset=200'
+    $ curl 'https://validation.linaro.org/results/123/0_singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline&limit=100&offset=200'
+
+To retrieve the full count of testcases in a single test suite (useful for
+pagination), you can use the testcase-count REST API method, like so:
+
+.. code-block:: shell
+
+    $ curl 'https://validation.linaro.org/results/123/0_singlenode-advanced/+testcase-count?user=user.name&token=yourtokentextgoeshereononeverylongline'
+
+.. note:: Test cases will be ordered by ID regardless of whether pagination is
+   used or not. This applies to downloading test cases for a particular test
+   suite only.

@@ -117,9 +117,9 @@ def get_testcases_with_limit(testsuite, limit=None, offset=None):
     if limit:
         try:
             if not offset:
-                testcases = list(testsuite.testcase_set.all()[:limit])
+                testcases = list(testsuite.testcase_set.all().order_by('id')[:limit])
             else:
-                testcases = list(testsuite.testcase_set.all()[offset:][:limit])
+                testcases = list(testsuite.testcase_set.all().order_by('id')[offset:][:limit])
         except ValueError as e:
             logger.warning(
                 "Offset and limit must be integers: %s" % str(e))
@@ -129,6 +129,6 @@ def get_testcases_with_limit(testsuite, limit=None, offset=None):
                 "Offset must be positive integer: %s" % str(e))
             return []
     else:
-        testcases = list(testsuite.testcase_set.all())
+        testcases = list(testsuite.testcase_set.all().order_by('id'))
 
     return testcases

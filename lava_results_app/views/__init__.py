@@ -329,6 +329,14 @@ def suite_yaml(request, job, pk):
     return response
 
 
+def suite_testcase_count(request, job, pk):
+    job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
+    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_case_count = test_suite.testcase_set.all().count()
+    return HttpResponse(test_case_count, content_type='text/plain')
+
+
 def metadata_export(request, job):
     """
     Dispatcher adds some metadata,
