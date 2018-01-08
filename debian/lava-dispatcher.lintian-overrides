@@ -38,4 +38,5 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-tags
 lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata
 lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-target-storage
 

@@ -1,3 +1,23 @@
+lava-dispatcher (2018.1-1) unstable; urgency=medium
+
+  * New production release
+    b0de4b84 Enabling energy probe data to be passed to LAVA test shell
+    dd349a77 Use BaseException only when needed
+    c1a0cd99 lava-slave: when canceling, wait for the job
+    f00a7315 Port multinode to python3
+    f937a861 docker deploy: fix python3 port
+    11e3571d Generate the FIT image for Depthcharge
+    d46f10c4 Update unit test sample file for images.v.l.o mirror.
+    b4536e09 Include child devices of matched pyudev devices
+    eb04f6fd Remove V1-only test shell helper scripts
+    9f96a0c5 utils/udev.py: lxc_udev_rule only use logging-url arg
+      when is not None
+    781312b5 devices/db410c-01.yaml: Add cdt after aboot in flash order
+    9e809927 LAVA-1172 add support for lava-target-storage
+    53cfc7db Add support for the depthcharge boot method
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Jan 2018 11:42:07 +0000
+
 lava-dispatcher (2017.12-1) unstable; urgency=medium
 
   * 2017.12 production release
