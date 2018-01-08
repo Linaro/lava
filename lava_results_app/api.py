@@ -442,7 +442,6 @@ class ResultsAPI(ExposedAPI):
 
         return output.getvalue()
 
-
     def get_testjob_suites_list_yaml(self, job_id):
         """
         Name
@@ -482,7 +481,6 @@ class ResultsAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
         return yaml.dump(yaml_list)
-
 
     def get_testsuite_results_yaml(self, job_id, suite_name, limit=None,
                                    offset=None):
