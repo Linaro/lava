@@ -97,30 +97,41 @@ class LxcAddStaticDevices(Action):
         self.description = 'Add devices which are permanently powered by the worker to the LXC'
         self.summary = 'Add static devices to the LXC'
 
+    def get_usb_devices(self):
+        """
+        Takes static_info from the device, and identifies which
+        devices are USB devices. Only passes the USB devices back.
+        """
+        usb_devices = []
+        for device in self.job.device.get('static_info', []):
+            if 'board_id' in device:
+                # This is a USB device
+                usb_devices.append(device)
+        return usb_devices
+
     def validate(self):
         super(LxcAddStaticDevices, self).validate()
-        # If there is no static_info then this action should be idempotent.
+        # If there are no USB devices under static_info then this action should be idempotent.
         try:
-            if 'static_info' in self.job.device:
-                for usb_device in self.job.device['static_info']:
-                    if usb_device.get('board_id', '') in ['', '0000000000']:
-                        self.errors = "board_id unset"
-                    if usb_device.get('usb_vendor_id', '') == '0000':
-                        self.errors = 'usb_vendor_id unset'
-                    if usb_device.get('usb_product_id', '') == '0000':
-                        self.errors = 'usb_product_id unset'
+            for usb_device in self.get_usb_devices():
+                if usb_device.get('board_id', '') in ['', '0000000000']:
+                    self.errors = "board_id unset"
+                if usb_device.get('usb_vendor_id', '') == '0000':
+                    self.errors = 'usb_vendor_id unset'
+                if usb_device.get('usb_product_id', '') == '0000':
+                    self.errors = 'usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcAddStaticDevices, self).run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
-        # If there is no static_info then this action should be idempotent.
-        if 'static_info' not in self.job.device:
+        # If there are no USB devices under static_info then this action should be idempotent.
+        if not self.get_usb_devices():
             return connection
         device_list = get_udev_devices(
             job=self.job, logger=self.logger,
-            device_info=self.job.device.get('static_info'))
+            device_info=self.get_usb_devices())
         for link in device_list:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', link]
             cmd_out = self.run_command(lxc_cmd, allow_silent=True)

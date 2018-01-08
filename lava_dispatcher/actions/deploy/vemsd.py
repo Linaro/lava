@@ -321,13 +321,13 @@ class DeployVExpressRecoveryImage(Action):
         self.logger.debug("Removing existing recovery image from Versatile Express mass storage device..")
         try:
             remove_directory_contents(mount_point)
-        except:
+        except Exception:
             raise JobError("Failed to erase old recovery image")
 
         self.logger.debug("Transferring new recovery image to Versatile Express mass storage device..")
         try:
             copy_directory_contents(src_dir, mount_point)
-        except:
+        except Exception:
             raise JobError("Failed to deploy recovery image to %s" % mount_point)
         return connection
 

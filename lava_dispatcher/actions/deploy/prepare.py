@@ -25,6 +25,7 @@ from lava_dispatcher.action import (
     Pipeline,
     InfrastructureError,
 )
+from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.strings import map_kernel_uboot
 
 
@@ -41,8 +42,11 @@ class PrepareKernelAction(Action):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # the logic here can be upgraded in future if needed with more parameters to the deploy.
-        if 'u-boot' in self.job.device['actions']['boot']['methods']:
+        methods = self.job.device['actions']['boot']['methods']
+        if 'u-boot' in methods:
             self.internal_pipeline.add_action(UBootPrepareKernelAction())
+        elif 'depthcharge' in methods:
+            self.internal_pipeline.add_action(PrepareFITAction())
 
 
 class UBootPrepareKernelAction(Action):
@@ -108,6 +112,7 @@ class UBootPrepareKernelAction(Action):
                 self.errors = "Requested kernel boot type '%s' is not supported by this device." % self.bootcommand
             if self.kernel_type == "bootm" or self.kernel_type == "bootz" or self.kernel_type == "booti":
                 self.errors = "booti, bootm and bootz are deprecated, please use 'image', 'uimage' or 'zimage'"
+            self.errors = infrastructure_error('mkimage')
             if 'mkimage_arch' not in self.params:
                 self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
             if self.bootcommand == 'bootm' and self.kernel_type != 'uimage':
@@ -153,4 +158,90 @@ class UBootPrepareKernelAction(Action):
             self.set_namespace_data(
                 action='prepare-kernel',
                 label='file', key='kernel', value=new_kernel)
+        return connection
+
+
+class PrepareFITAction(Action):
+    """
+    Package kernel, dtb and ramdisk into an FIT image
+    """
+    def __init__(self):
+        super(PrepareFITAction, self).__init__()
+        self.name = "prepare-fit"
+        self.description = "package kernel, dtb and ramdisk into an FIT image"
+        self.summary = "generate depthcharge FIT image"
+        self.deploy_params = None
+        self.device_params = None
+
+    def validate(self):
+        super(PrepareFITAction, self).validate()
+
+        self.errors = infrastructure_error('mkimage')
+
+        deploy_params = self.job.device['actions']['deploy'].get('parameters')
+        if deploy_params is None:
+            self.errors = "Missing parameters in deploy action"
+        elif 'mkimage_arch' not in deploy_params:
+            self.errors = "Missing mkimage_arch parameter for FIT support"
+        else:
+            self.deploy_params = deploy_params
+
+        device_params = self.job.device.get('parameters')
+        if device_params is None:
+            self.errors = "Missing device parameters"
+        elif 'load_address' not in device_params:
+            self.errors = "Missing load_address from device parameters"
+        else:
+            self.device_params = device_params
+
+    def _make_mkimage_command(self, params):
+        cmd = [
+            'mkimage',
+            '-D', '"-I dts -O dtb -p 2048"',
+            '-f', 'auto',
+            '-A', params['arch'],
+            '-O', 'linux',
+            '-T', 'kernel',
+            '-C', 'None',
+            '-d', params['kernel'],
+            '-a', params['load_addr'],
+        ]
+        dtb = params.get('dtb')
+        if dtb:
+            cmd += ['-b', dtb]
+        ramdisk = params.get('ramdisk')
+        if ramdisk:
+            cmd += ['-i', ramdisk]
+        cmd.append(params['fit_path'])
+        return cmd
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(PrepareFITAction, self).run(
+            connection, max_end_time, args)
+        params = {
+            label: self.get_namespace_data(
+                action='download-action', label=label, key='file')
+            for label in ['kernel', 'dtb', 'ramdisk']
+        }
+        fit_path = os.path.join(os.path.dirname(params['kernel']), 'image.itb')
+        params.update({
+            'arch': self.deploy_params['mkimage_arch'],
+            'load_addr': self.device_params['load_address'],
+            'fit_path': fit_path,
+        })
+        ramdisk_with_overlay = self.get_namespace_data(
+            action='compress-ramdisk', label='file', key='full-path')
+        if ramdisk_with_overlay:
+            params['ramdisk'] = ramdisk_with_overlay
+
+        cmd = self._make_mkimage_command(params)
+        if not self.run_command(cmd):
+            raise InfrastructureError("FIT image creation failed")
+
+        kernel_tftp = self.get_namespace_data(
+            action='download-action', label='file', key='kernel')
+        fit_tftp = os.path.join(os.path.dirname(kernel_tftp), 'image.itb')
+        self.set_namespace_data(
+            action=self.name, label='file', key='fit', value=fit_tftp)
+
         return connection

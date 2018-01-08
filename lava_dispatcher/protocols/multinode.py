@@ -131,11 +131,11 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         msg_len = len(message)
         try:
             # send the length as 32bit hexadecimal
-            ret_bytes = self.sock.send("%08X" % msg_len)
+            ret_bytes = self.sock.send(("%08X" % msg_len).encode("utf-8"))
             if ret_bytes == 0:
                 self.logger.debug("zero bytes sent for length - connection closed?")
                 return False
-            ret_bytes = self.sock.send(message)
+            ret_bytes = self.sock.send(message.encode("utf-8"))
             if ret_bytes == 0:
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
@@ -147,7 +147,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
 
     def _recv_message(self):
         try:
-            header = self.sock.recv(8)  # 32bit limit as a hexadecimal
+            header = self.sock.recv(8).decode("utf-8")  # 32bit limit as a hexadecimal
             if not header or header == '':
                 self.logger.debug("empty header received?")
                 return json.dumps({"response": "wait"})
@@ -155,7 +155,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
             recv_count = 0
             response = ''
             while recv_count < msg_count:
-                response += self.sock.recv(self.blocks)
+                response += self.sock.recv(self.blocks).decode("utf-8")
                 recv_count += self.blocks
         except socket.error as exc:
             self.logger.exception("socket error '%d' on response", exc.errno)

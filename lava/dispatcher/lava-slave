@@ -453,8 +453,8 @@ def handle_cancel(msg, jobs, sock, master):
 
     if job_id in jobs:
         if jobs[job_id].status == Job.RUNNING:
-            # TODO: do not send the END message now. We don't know if the
-            # process will leave right now.
+            # Do not send the END message now. We don't know if the process
+            # will leave right now.
             LOG.debug("[%d] canceling", job_id)
             jobs[job_id].cancel()
         else:
@@ -463,8 +463,8 @@ def handle_cancel(msg, jobs, sock, master):
         LOG.debug("[%d] Unknown job, sending END", job_id)
         jobs[job_id] = Job(job_id, "", "", None, "", None, None)
         jobs[job_id].status = Job.ENDING
-    # Send the END message anyway
-    send_end(sock, job_id, jobs[job_id])
+        # Send the END message anyway
+        send_end(sock, job_id, jobs[job_id])
 
     # Mark the master as alive
     master.received_msg()
@@ -686,9 +686,16 @@ def check_job_status(jobs, sock, last_jobs_check):
                 send_end(sock, job_id, jobs[job_id])
 
         elif status == Job.FINISHING:
+            ret = jobs[job_id].proc.poll()
+            # Job has finished
+            if ret is not None:
+                LOG.info("[%d] Job END", job_id)
+                jobs[job_id].status = Job.ENDING
+                send_end(sock, job_id, jobs[job_id])
+
             # Terminate processes that where not collected last time and that are
             # too long to end.
-            if now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
+            elif now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
                 LOG.info("[%d] Job not finishing => terminating", job_id)
                 # Just terminate the proc and let the next iteration will send the
                 # signal for us.
