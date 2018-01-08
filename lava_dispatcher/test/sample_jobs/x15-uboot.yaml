@@ -48,7 +48,7 @@ actions:
     namespace: droid
     images:
       userdata:
-        url: http://snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/262/rpb-console-image-am57xx-evm-20170913032216-262.rootfs.img.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/279/rpb-console-image-am57xx-evm-20170918074710-279.rootfs.img.gz
         compression: gz
     os: debian
 

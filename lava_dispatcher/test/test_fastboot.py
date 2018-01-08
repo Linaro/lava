@@ -277,7 +277,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         #    dictionary, but ensure that it gets added in the final flash
         #    commands list.
         expected_flash_cmds = ['partition', 'hyp', 'rpm', 'sbl1', 'tz',
-                               'aboot', 'boot', 'rootfs', 'cdt']
+                               'aboot', 'cdt', 'boot', 'rootfs']
         flash_order = None
         for action in job.pipeline.actions:
             self.assertIsNotNone(action.name)

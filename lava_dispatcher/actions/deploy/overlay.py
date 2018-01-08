@@ -157,6 +157,15 @@ class OverlayAction(DeployAction):
                         fout.write("TARGET_DEVICE_MAC='%s'\n" % self.target_mac)
                     if foutname == 'lava-target-ip':
                         fout.write("TARGET_DEVICE_IP='%s'\n" % self.target_ip)
+                    if foutname == 'lava-target-storage':
+                        fout.write('LAVA_STORAGE="\n')
+                        for method in self.job.device.get('storage_info', [{}]):
+                            for key, value in method.items():
+                                if key == 'yaml_line':
+                                    continue
+                                self.logger.debug("storage methods:\t%s\t%s", key, value)
+                                fout.write(r"\t%s\t%s\n" % (key, value))
+                        fout.write('"\n')
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
 

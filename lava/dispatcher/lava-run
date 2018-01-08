@@ -204,7 +204,7 @@ def main():
         error_help = exc.error_help
         error_msg = str(exc)
         error_type = exc.error_type
-    except Exception as exc:  # pylint: disable=broad-except
+    except BaseException as exc:  # pylint: disable=broad-except
         logger.exception(traceback.format_exc())
         error_help = LAVABug.error_help
         error_msg = str(exc)
