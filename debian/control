@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 9.20160709), dh-python,
  python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme,
  python-setuptools (>= 3), python-yaml
 X-Python-Version: 2.7
-Standards-Version: 4.1.1
+Standards-Version: 4.1.3
 Homepage: https://www.linaro.org/initiatives/lava/
 Vcs-Git: https://github.com/Linaro/pkg-lava-server.git
 Vcs-Browser: https://github.com/Linaro/pkg-lava-server
@@ -29,7 +29,7 @@ Depends: apache2, adduser, gunicorn, iproute2, python-tz, python-dateutil,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
- lava-dispatcher (>= 2017.12),
+ lava-dispatcher (>= 2018.1),
  ${python:Depends}, ${misc:Depends}
 Recommends: fuse, ntp, lava-coordinator, lava-server-doc,
 Suggests: python-django-hijack, python-django-debug-toolbar
@@ -79,12 +79,11 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  debootstrap (>= 1.0.86), debhelper (>= 9.20160709), fakeroot, git,
  libdistro-info-perl, node-uglify, libjs-excanvas, libjs-jquery-cookie,
  libjs-jquery, libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
- libjs-jquery-ui, python | python-all | python-dev | python-all-dev,
- pep8 | python-pep8, python-guestfs,  python-nose, python-netifaces,
+ libjs-jquery-ui, pep8 | python-pep8, python-guestfs, python-nose, python-netifaces,
  python3-sphinx (>= 1.4), python-setuptools, python-pexpect (>= 4.2),
  python3-sphinx-bootstrap-theme, python-requests, python-zmq, python-yaml,
  python-voluptuous (>= 0.8.8), docbook-xsl, xsltproc, python-mock,
- ${python:Depends}, ${misc:Depends}
+ ${python:Depends}, ${python3:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot,
  django-testscenarios
 Description: Linaro Automated Validation Architecture developer support
