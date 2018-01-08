@@ -496,6 +496,49 @@ class ResultsAPI(ExposedAPI):
 
         return output.getvalue()
 
+    def get_testsuite_results_count(self, job_id, suite_name):
+        """
+        Name
+        ----
+        `get_testsuite_results_count` (`job_id`, `suite_name`)
+
+        Description
+        -----------
+        Get the count of test cases in test suite.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the results are required.
+        `suite_name`: string
+            Name of the suite for which the test case count is required.
+
+        Return value
+        ------------
+        This function returns a count of test cases in particular test suite,
+        provided the user is authenticated with an username and token.
+        """
+
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
+        try:
+            job = TestJob.get_by_job_number(job_id)
+            if not job.can_view(self.user):
+                raise xmlrpclib.Fault(
+                    401, "Permission denied for user to job %s" % job_id)
+
+            test_suite = job.testsuite_set.get(name=suite_name)
+            test_case_count = test_suite.testcase_set.all().count()
+
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+        except TestSuite.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified test suite not found.")
+
+        return test_case_count
+
     def get_testcase_results_yaml(self, job_id, suite_name, case_name):
         """
         Name
