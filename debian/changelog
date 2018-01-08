@@ -1,3 +1,101 @@
+lava-server (2018.1-1) unstable; urgency=medium
+
+  * New production release
+    d87ccc73 Restore Health and TestJob Reports calculations
+    6aa325e0 Add a reason when updating device and worker health
+    aaa1a959 Notifications: use email signature conventions
+    3f6770f4 Fix notifications and log the exception
+    fbe57d5f Only use get_change_message on Django > 1.10
+    832edcf8 fix pep8 error
+    ff1ef1c4 Disable high limits on ODROID-XU3
+    7ae61e90 Remove old sample job
+    4be662da LAVA-1206 - Improve docs for API chunking
+    6c717e49 LAVA-1207 - Add xmlrpc API call for test suite list.
+    d8d7ffdd Fix pep8 - E127 continuation line over-indented for visual indent.
+    81a2a6d1 Return state and health information as strings not numbers.
+    d2451a1d LAVA-1163 - Unify json library across lava-server.
+    d9ea9343 LAVA-1192 document use of static_info
+    824d9580 Deprecate Jessie in favour of Stretch
+    0791d8be LAVA-1198 - Make sure API covers retrieving the set of test suites
+    489b83da Add optional support for python3 unit tests
+    91782fac A sequence is required before excluding a field in table.
+    6be77f09 AUTHENTICATION_BACKENDS list is available in distro settings only.
+    938352ff Add documentation for the depthcharge boot method
+    f6172120 Ensure added blocks are wrapped in conditionals
+    7ca1a522 LogEntry: improve SQL queries
+    38c8c8e3 Improve LogEntry tables
+    e6bb9cf3 LAVA-1199 - Implement incremental result exports in XMLRPC
+    2945e5f7 Simplify TestJob and Device state display
+    2e6460bd LAVA-1197 - Document REST API chunking on test suite level.
+    2f7bc9ab Fix pep8 error
+    4f896471 LAVA-1197 - Implement incremental result exports in REST API
+    7a0854ac LAVA-1103 document user and group creation
+    4b7b353a lava-master: fix string serialization
+    1e9c1aa4 LAVA-1119 - users and groups for devices
+    4963ffa9 LAVA-1102 - add group support to manage commands
+    bf9dd4ec Add missing sub-command parser for device update
+    9a480bc0 Fix missing import for lava-master
+    39faeb5f fix crash when canceling a non-scheduled job
+    4f201dd6 master: use yaml.dump to dump a dictionary
+    045ed9ec schema: validate multinode
+    2d2963d9 Allow browsing LogEntry in the admin interface
+    ba37046c fix pep8 error
+    8c6b3c35 LAVA-1186 - Fix python3 unit test support
+    be8b1e5d Worker: record the last ping received
+    1f4157c1 lava-logs: fix issue when unbinding under python3
+    d64514fb Port linaro_django_xmlrpc to python3
+    4b04cc30 lava-server manage: make the sub command required
+    f49a1bd7 Port scheduler.jobs api to python3
+    320cb918 jobs: split the database requests in small chunks
+    babab5ce Prevent noise from apache2 for DocumentRoot
+    79cfc375 Add FIT parameters to base-depthcharge and rk3288-veyron-jaq
+    62dd2464 python3: port timing page
+    b52c84c6 Port BreadCrumb to python3
+    c4432f55 lava-master: sleep a bit when db connection drop
+    6b71a7e0 Port lava-master to python3
+    7f0a2ae5 Improve support for python3
+    e2182b3c Port lava-logs to python3
+    cc05ce30 All images that accepts compression will also accept archive.
+    2bb99530 Port lava daemons common functions to python3
+    1e84fdc9 Remove deprecated settings
+    c530a82e remove restrictions on worker health transitions
+    f66b7f6b workers.show now returns the list of devices
+    36239079 Print LogEntry messages on the admin main page
+    02f83e49 Test the Device and TestJob state machine
+    2d427a84 Remove unused job json functions.
+    70cb792c LAVA-963 - Support python3 -Wall unit tests
+    34d52727 Add base-depthcharge and rk3288-veyron-jaq device types
+    60f85e3e Derive protocol elements from sample jobs.
+    012034ef Update app_index.html from last django version
+    849aaa6c manage jobs rm: try to be nice by sleeping a bit
+    57a2356d Allow for instant canceling
+    bc754b3f Fix udecode crash when receiving unicode strings
+    6aad013a Generate an event when a job is submitted
+    ed9546fc master: improve scheduling regularity
+    698817ae Fix fastboot boot sequence for hi960-hikey device type.
+    107cea4b Fix 500: remove_broken_string has been removed
+    7c95d706 Extend base-fastboot template for fastboot device types.
+    d779a194 Python 3 support for cStringIO.
+    65e769d7 Update example test job with pre command
+    2467411b LAVA-1170 - Unicode literals port
+    3bf73425 Provide and Document the storage_info support.
+    270c90a4 Document the state machine and scheduler
+    87af6a56 LAVA-1169 - Support xmlrpc.client imports in python3
+    e24865f3 Update lxc fedora example
+    14792136 No need to save the object returned by get_or_create
+    6114d0f9 Rewrite from scratch the job scheduler
+    9da8d83f Fix broken line detection
+    af632f12 Add a test character delay to rpi3
+    a5163e61 LAVA-962 - Port lava-server to python3 exclusively - urllib
+    b7e7ec2a LAVA-1085 - First time 'run query' click does not
+      enable 'Results' button
+    a47c170e LAVA-1084 - Clicking on 'live query' tooltip will submit request
+    e50c2d03 LAVA-1082 - Results action link points to the same page
+    6705ec87 Refresh the setting files
+    e4b39c38 Store the lava_server static file in the right dir
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Jan 2018 11:38:31 +0000
+
 lava-server (2017.12.post1-1) unstable; urgency=medium
 
   * Hot fix release
