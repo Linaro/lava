@@ -86,14 +86,14 @@ class Command(BaseCommand):
                                 help="List of tags to add to the device")
         physical = add_parser.add_mutually_exclusive_group()
         physical.add_argument("--physical-user",
-                                help="Username of the user with physical access to the device")
+                              help="Username of the user with physical access to the device")
         physical.add_argument("--physical-group",
-                                help="Name of the group with physical access to the device")
+                              help="Name of the group with physical access to the device")
         owner = add_parser.add_mutually_exclusive_group()
         owner.add_argument("--owner",
-                                help="Username of the user with ownership of the device")
+                           help="Username of the user with ownership of the device")
         owner.add_argument("--group",
-                                help="Name of the group with ownership of the device")
+                           help="Name of the group with ownership of the device")
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device")
@@ -118,9 +118,9 @@ class Command(BaseCommand):
         # "update" sub-command
         update_parser = sub.add_parser("update", help="Update properties of the given device")
         update_parser.add_argument("hostname",
-                                help="Hostname of the device")
+                                   help="Hostname of the device")
         update_parser.add_argument("--description", default=None,
-                                help="Set the description")
+                                   help="Set the description")
         update_parser.add_argument("--health", default=None,
                                    choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
                                    help="Update the device health")
@@ -133,14 +133,14 @@ class Command(BaseCommand):
                              help="Make the device private")
         physical = update_parser.add_mutually_exclusive_group()
         physical.add_argument("--physical-user",
-                                help="Username of the user with physical access to the device")
+                              help="Username of the user with physical access to the device")
         physical.add_argument("--physical-group",
-                                help="Name of the group with physical access to the device")
+                              help="Name of the group with physical access to the device")
         owner = update_parser.add_mutually_exclusive_group()
         owner.add_argument("--owner",
-                                help="Username of the user with ownership of the device")
+                           help="Username of the user with ownership of the device")
         owner.add_argument("--group", dest='group',
-                                help="Name of the group with ownership of the device")
+                           help="Name of the group with ownership of the device")
 
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
