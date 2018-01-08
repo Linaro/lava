@@ -25,7 +25,12 @@ from linaro_django_xmlrpc.models import ExposedAPI
 
 from django.db.models.fields import FieldDoesNotExist
 
-from lava_results_app.dbutils import export_testcase, testcase_export_fields
+from lava_results_app.dbutils import (
+    export_testcase,
+    testcase_export_fields,
+    export_testsuite,
+    testsuite_export_fields
+)
 from lava_results_app.models import (
     Query,
     QueryCondition,
@@ -390,6 +395,94 @@ class ResultsAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
         return output.getvalue()
+
+    def get_testjob_suites_list_csv(self, job_id):
+        """
+        Name
+        ----
+        `get_testjob_suites_list_csv` (`job_id`)
+
+        Description
+        -----------
+        Get the test suites list from job results of given job id in CSV format.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the test suites are required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of test suites list from
+        job results in CSV format, provided the user is authenticated with an
+        username and token.
+        """
+
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
+        try:
+            job = TestJob.get_by_job_number(job_id)
+            if not job.can_view(self.user):
+                raise xmlrpclib.Fault(
+                    401, "Permission denied for user to job %s" % job_id)
+            output = io.BytesIO()
+            writer = csv.DictWriter(
+                output,
+                quoting=csv.QUOTE_ALL,
+                extrasaction='ignore',
+                fieldnames=testsuite_export_fields())
+            writer.writeheader()
+            for test_suite in job.testsuite_set.all():
+                writer.writerow(export_testsuite(test_suite))
+
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        return output.getvalue()
+
+
+    def get_testjob_suites_list_yaml(self, job_id):
+        """
+        Name
+        ----
+        `get_testjob_suites_list_yaml` (`job_id`)
+
+        Description
+        -----------
+        Get the test suites list from job results of given job id in YAML format.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the test suites are required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of test suites list from
+        job results in YAML format, provided the user is authenticated with an
+        username and token.
+        """
+
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
+        try:
+            job = TestJob.get_by_job_number(job_id)
+            if not job.can_view(self.user):
+                raise xmlrpclib.Fault(
+                    401, "Permission denied for user to job %s" % job_id)
+            yaml_list = []
+            for test_suite in job.testsuite_set.all():
+                yaml_list.append(export_testsuite(test_suite))
+
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        return yaml.dump(yaml_list)
+
 
     def get_testsuite_results_yaml(self, job_id, suite_name, limit=None,
                                    offset=None):

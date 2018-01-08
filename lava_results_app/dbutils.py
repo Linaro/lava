@@ -457,6 +457,16 @@ def export_testcase(testcase, with_buglinks=False):
     return casedict
 
 
+def testsuite_export_fields():
+    """
+    Keep this list in sync with the keys in export_testsuite
+    :return: list of fields used in export_testsuite
+    """
+    return [
+        'name', 'job', 'id'
+    ]
+
+
 def export_testsuite(testsuite):
     """
     Returns string versions of selected elements of a TestSuite
