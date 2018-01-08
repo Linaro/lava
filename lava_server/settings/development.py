@@ -20,12 +20,15 @@ import os
 from lava_server.settings.config_file import ConfigFile
 from lava_server.settings.common import *
 
+# Activate debugging
+DEBUG = True
+TEMPLATES[0]["OPTIONS"]["debug"] = True
+
+# Disable TZ for the test as dashboard_app does not pass the tests.
+# FIXME: should be removed when v1 is removed
+USE_TZ = False
+
 # Top-level directory of the project.
-#
-# This directory MUST contain two sub-directories:
-#  * templates/ - project-wide template files
-#  * htdocs/    - project-wide static files
-#                 (_not_ the root of the static file cache)
 PROJECT_SRC_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(
@@ -34,10 +37,6 @@ PROJECT_SRC_DIR = os.path.normpath(
 
 # Top-level directory for nonvolatile files
 PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
-
-# Create precious directory if needed
-if not os.path.exists(PRECIOUS_DIR):
-    os.makedirs(PRECIOUS_DIR)
 
 # Top-level directory of the precious project state.
 #
@@ -50,33 +49,21 @@ PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
 if not os.path.exists(PROJECT_STATE_DIR):
     os.makedirs(PROJECT_STATE_DIR)
 
-DEBUG = True
-DEBUG_PROPAGATE_EXCEPTIONS = True
-TEMPLATE_DEBUG = DEBUG
-
-# It would be good to have rails-like configuration file in the future
-devel_db = os.getenv("DEVEL_DB", "pgsql")
-if devel_db == "pgsql":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'devel',
-            'USER': 'devel',
-            'PASSWORD': 'devel',
-            'HOST': 'localhost',
-            'PORT': ''}}
-elif devel_db == "nosql":
-    raise ValueError("not yet ;-)")
-else:
-    raise ValueError("Invalid value of DEVEL_DB environment variable")
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'devel',
+        'USER': 'devel',
+        'PASSWORD': 'devel',
+        'HOST': 'localhost',
+        'PORT': ''}}
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media", devel_db)
+MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media")
 
 # Absolute filesystem path to the directory that will hold archived files.
-ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive", devel_db)
+ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive")
 
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
@@ -86,42 +73,6 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '00000000000000000000000000000000000000000000000000'
-
-# Use templates from the checkout directory
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(PROJECT_SRC_DIR, '..', 'lava_server', 'templates'),
-            os.path.join(PROJECT_SRC_DIR, '..', 'lava_scheduler_app', 'templates', 'lava_scheduler_app'),
-            os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
-            os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
-        ],
-        'OPTIONS': {
-            'context_processors': [
-                # Insert your TEMPLATE_CONTEXT_PROCESSORS here
-                "django.contrib.auth.context_processors.auth",
-                "django.template.context_processors.debug",
-                "django.template.context_processors.i18n",
-                "django.template.context_processors.media",
-                "django.template.context_processors.request",
-                "django.template.context_processors.static",
-                "lava_server.context_processors.lava",
-                "lava_server.context_processors.ldap_available",
-            ],
-            'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
-            ]
-        },
-    },
-]
-
-
-# Serve static files used by lava-server from the checkout directory
-STATICFILES_DIRS = [
-    ('lava-server', os.path.join(PROJECT_SRC_DIR, 'lava-server'))]
-
 
 # Try using devserver if available, devserver is a very useful extension that
 # makes debugging applications easier. It shows a lot of interesting output,
@@ -142,7 +93,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # default branding details
 BRANDING_ALT = "Linaro logo"
-BRANDING_ICON = 'lava-server/images/logo.png'
+BRANDING_ICON = 'lava_server/images/logo.png'
 BRANDING_URL = 'http://www.linaro.org'
 BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22

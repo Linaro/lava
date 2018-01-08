@@ -1,5 +1,5 @@
 import re
-import urllib2
+import sys
 import yaml
 from voluptuous import (
     All,
@@ -13,6 +13,16 @@ from voluptuous import (
     Required,
     Schema
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib2 import urlopen
+    from urllib2 import URLError
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.request import urlopen
+    from urllib.error import URLError
+
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 INCLUDE_URL_TIMEOUT = 10
@@ -227,6 +237,28 @@ def vlan_name(value):
         raise Invalid(value)
 
 
+def _validate_multinode(data_object):
+    if data_object.get('protocols', {}).get('lava-multinode') is None:
+        return
+    multi = data_object['protocols']['lava-multinode']
+
+    # List the roles
+    roles = list(multi['roles'].keys())
+    # Check that "host_role" and "expect_role" does exist
+    for role in roles:
+        host_role = multi['roles'][role].get('host_role')
+        expect_role = multi['roles'][role].get('expect_role')
+        if host_role is not None:
+            if host_role not in roles:
+                raise SubmissionException("'host_role' '%s' does not exist" % host_role)
+            if expect_role is None:
+                raise SubmissionException("'expect_role' is required when 'host_role' is used")
+            if expect_role not in roles:
+                raise SubmissionException("'expect_role' '%s' does not exist" % host_role)
+        elif expect_role is not None:
+            raise SubmissionException("'expect_role' without 'host_role'")
+
+
 def _job_protocols_schema():
     return Schema({
         'lava-multinode': {
@@ -367,6 +399,7 @@ def _device_schema():
         'fastboot_via_uboot': bool,
         'device_info': [dict],
         'static_info': [dict],
+        'storage_info': [dict],
         'flash_cmds_order': list,
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
@@ -399,9 +432,9 @@ def _validate_vcs_parameters(data_objects):
 def _download_raw_yaml(url):
     try:
         data = yaml.load(
-            urllib2.urlopen(url, timeout=INCLUDE_URL_TIMEOUT).read())
+            urlopen(url, timeout=INCLUDE_URL_TIMEOUT).read())
         return data
-    except urllib2.URLError as e:
+    except URLError as e:
         raise SubmissionException(
             "Section 'include' must contain valid URL: %s" % e)
     except yaml.YAMLError as e:
@@ -450,6 +483,7 @@ def validate_submission(data_object):
 
     _validate_secrets(data_object)
     _validate_vcs_parameters(data_object)
+    _validate_multinode(data_object)
     return True
 
 

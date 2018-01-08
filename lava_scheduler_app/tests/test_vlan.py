@@ -11,7 +11,7 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.dbutils import find_device_for_job, assign_jobs
+from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.vland import VlandProtocol
@@ -71,8 +71,9 @@ class TestVlandSplit(TestCaseWithFactory):
         server_vlan = server_job['protocols']['lava-vland']
         self.assertIn('vlan_one', client_vlan)
         self.assertIn('vlan_two', server_vlan)
-        self.assertEqual(['RJ45', '10M'], client_vlan.values()[0]['tags'])
-        self.assertEqual(['RJ45', '100M'], server_vlan.values()[0]['tags'])
+        self.assertEqual(['RJ45', '10M'], list(client_vlan.values())[0]['tags'])
+        self.assertEqual(['RJ45', '100M'],
+                         list(server_vlan.values())[0]['tags'])
 
 
 class TestVlandDevices(TestCaseWithFactory):
@@ -108,13 +109,8 @@ class TestVlandDevices(TestCaseWithFactory):
         vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
         assignments = {}
         for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertIsNone(device)
-            # no map defined
-            self.assertFalse(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-        self.assertIsNone(assignments['client'])
-        self.assertIsNone(assignments['server'])
+            self.assertFalse(match_vlan_interface(self.bbb3, yaml.load(job.definition)))
+            self.assertFalse(match_vlan_interface(self.cubie2, yaml.load(job.definition)))
 
     def test_jinja_template(self):
         yaml_data = self.factory.bbb1.load_configuration()
@@ -130,183 +126,6 @@ class TestVlandDevices(TestCaseWithFactory):
             '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
             yaml_data['parameters']['interfaces']['eth1']['sysfs']
         )
-
-    def test_match_devices_with_map(self):
-        devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
-        user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
-        with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
-        del(data['protocols']['lava-multinode']['roles']['client']['tags'])
-        del(data['protocols']['lava-multinode']['roles']['server']['tags'])
-
-        interfaces = []
-        job_dict = split_multinode_yaml(data, 'abcdefg123456789')
-        client_job = job_dict['client'][0]
-        device_dict = self.factory.bbb1.load_configuration()
-        self.assertIsNotNone(device_dict)
-        tag_list = client_job['protocols']['lava-vland']['vlan_one']['tags']
-
-        for interface in device_dict['parameters']['interfaces']:
-            tags = device_dict['parameters']['interfaces'][interface]['tags']
-            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                interfaces.append(interface)
-                break
-        self.assertEqual(['eth1'], interfaces)
-        self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
-
-        interfaces = []
-        server_job = job_dict['server'][0]
-        device_dict = self.factory.cubie1.load_configuration()
-        self.assertIsNotNone(device_dict)
-        tag_list = server_job['protocols']['lava-vland']['vlan_two']['tags']
-        for interface in device_dict['parameters']['interfaces']:
-            tags = device_dict['parameters']['interfaces'][interface]['tags']
-            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                interfaces.append(interface)
-                break
-        self.assertEqual(['eth1'], interfaces)
-        self.assertEqual(len(interfaces), len(client_job['protocols']['lava-vland'].keys()))
-
-        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
-
-        # vlan_one: client role. RJ45 10M. bbb device type
-        # vlan_two: server role. RJ45 100M. cubie device type.
-
-        assignments = {}
-        for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertEqual(device.device_type, job.requested_device_type)
-            # map has been defined
-            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-        self.assertEqual(assignments['client'].hostname, self.factory.bbb1.hostname)
-        self.assertEqual(assignments['server'].hostname, self.factory.cubie1.hostname)
-
-    def test_same_type_devices_with_map(self):
-        bbb2 = self.factory.make_device(self.factory.bbb_type, hostname='bbb-02')
-        devices = list(Device.objects.filter(status=Device.IDLE).order_by('is_public'))
-        user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-bbb-vland-group.yaml')
-        with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
-        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
-        assignments = {}
-        for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertIsNotNone(device)
-            self.assertEqual(device.device_type, job.requested_device_type)
-            # map has been defined
-            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-            if device in devices:
-                devices.remove(device)
-        assign_jobs()
-        self.factory.bbb1.refresh_from_db()
-        bbb2.refresh_from_db()
-        self.assertIsNotNone(self.factory.bbb1.current_job)
-        self.assertIsNotNone(bbb2.current_job)
-        self.assertIsNotNone(self.factory.bbb1.current_job.actual_device)
-        self.assertIsNotNone(bbb2.current_job.actual_device)  # pylint: disable=no-member
-        self.assertNotEqual(self.factory.bbb1.current_job, bbb2.current_job)
-        self.assertNotEqual(
-            self.factory.bbb1.current_job.actual_device, bbb2.current_job.actual_device)  # pylint: disable=no-member
-
-    def test_differing_vlan_tags(self):
-        """
-        More devices of the requested type than needed by the test
-        with some devices having unsuitable vland interface tags.
-        """
-        x86 = self.factory.make_device_type('x86')
-        x86_1 = self.factory.make_device(device_type=x86, hostname='x86-01')
-        x86_2 = self.factory.make_device(device_type=x86, hostname='x86-02')
-        x86_3 = self.factory.make_device(device_type=x86, hostname='x86-03')
-        x86_4 = self.factory.make_device(device_type=x86, hostname='x86-04')
-
-        devices = list(Device.objects.filter(status=Device.IDLE).order_by('is_public'))
-        user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'x86-vlan.yaml')
-        with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
-        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
-        assignments = {}
-        for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertIsNotNone(device)
-            self.assertEqual(device.device_type, job.requested_device_type)
-            # map has been defined
-            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-            if device in devices:
-                devices.remove(device)
-        assign_jobs()
-
-        # reset state, pretend the assigned jobs have completed.
-        for job in TestJob.objects.all():
-            job.status = TestJob.COMPLETE
-            job.actual_device.status = Device.IDLE
-            job.actual_device.current_job = None
-            job.actual_device.save(update_fields=['status', 'current_job'])
-            job.save(update_fields=['status'])
-
-        # take x86_1 offline, forcing the idle list to include x86_3 for evaluation
-
-        x86_1.status = Device.OFFLINE
-        x86_1.save(update_fields=['status'])
-        x86_1.refresh_from_db()
-
-        devices = list(Device.objects.filter(status=Device.IDLE).order_by('is_public'))
-        self.assertNotIn(x86_1, devices)
-        self.assertIn(x86_2, devices)
-        self.assertIn(x86_3, devices)
-        self.assertIn(x86_4, devices)
-        user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'x86-vlan.yaml')
-        with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
-        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
-        assignments = {}
-        for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertIsNotNone(device)
-            self.assertEqual(device.device_type, job.requested_device_type)
-            # map has been defined
-            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-            if device in devices:
-                devices.remove(device)
-        assign_jobs()
-        x86_1.refresh_from_db()
-        x86_2.refresh_from_db()
-        x86_3.refresh_from_db()
-        x86_4.refresh_from_db()
-        self.assertEqual(Device.STATUS_CHOICES[Device.OFFLINE], Device.STATUS_CHOICES[x86_1.status])
-        self.assertEqual(Device.STATUS_CHOICES[Device.RESERVED], Device.STATUS_CHOICES[x86_2.status])
-        self.assertEqual(Device.STATUS_CHOICES[Device.IDLE], Device.STATUS_CHOICES[x86_3.status])
-        self.assertEqual(Device.STATUS_CHOICES[Device.RESERVED], Device.STATUS_CHOICES[x86_4.status])
-
-    def test_match_devices_with_map_and_tags(self):  # pylint: disable=invalid-name
-        devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
-        self.factory.ensure_tag('usb-eth')
-        self.factory.ensure_tag('sata')
-        self.factory.bbb1.tags = Tag.objects.filter(name='usb-eth')
-        self.factory.bbb1.save()
-        self.factory.cubie1.tags = Tag.objects.filter(name='sata')
-        self.factory.cubie1.save()
-        user = self.factory.make_user()
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
-        with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
-        vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
-        assignments = {}
-        for job in vlan_job:
-            device = find_device_for_job(job, devices)
-            self.assertEqual(device.device_type, job.requested_device_type)
-            # map has been defined
-            self.assertTrue(match_vlan_interface(device, yaml.load(job.definition)))
-            assignments[job.device_role] = device
-        self.assertEqual(assignments['client'].hostname, self.factory.bbb1.hostname)
-        self.assertEqual(assignments['server'].hostname, self.factory.cubie1.hostname)
 
 
 class TestVlandProtocolSplit(TestCaseWithFactory):

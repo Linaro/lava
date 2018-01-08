@@ -77,14 +77,6 @@ class ResultsTable(LavaTable):
         user = table.context.get('request').user
         return bool(record.job.can_view(user))
 
-    def render_name(self, record, table=None):
-        if not self._check_job(record, table):
-            return 'Unavailable'
-        return mark_safe(
-            '<a href="%s">%s</a>' % (
-                record.get_absolute_url(),
-                record.name))
-
     def render_submitter(self, record, table=None):
         if not self._check_job(record, table):
             return 'Unavailable'
@@ -157,7 +149,7 @@ class ResultsTable(LavaTable):
 
     job_id = tables.Column(verbose_name='Job ID')
     actions = tables.TemplateColumn(
-        template_name="lava_results_app/suite_actions_field.html")
+        template_name="lava_results_app/results_actions_field.html")
     actions.orderable = False
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
@@ -180,6 +172,25 @@ class ResultsTable(LavaTable):
 class ResultsIndexTable(ResultsTable):
 
     job_id = tables.Column(verbose_name='Job ID')
+    submitter = tables.Column(accessor='job.submitter')
+    name = tables.Column(verbose_name='Test Suite')
+    passes = tables.Column(accessor='job', verbose_name='Passes')
+    fails = tables.Column(accessor='job', verbose_name='Fails')
+    total = tables.Column(accessor='job', verbose_name='Totals')
+    logged = tables.Column(accessor='job', verbose_name='Logged')
+
+    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+        searches = {
+            'name': 'contains'
+        }
+
+
+class TestJobResultsTable(ResultsTable):
+
+    job_id = tables.Column(verbose_name='Job ID')
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/suite_actions_field.html")
+    actions.orderable = False
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')

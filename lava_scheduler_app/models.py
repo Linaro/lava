@@ -1,14 +1,14 @@
+# -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
 
+from __future__ import unicode_literals
+
 import jinja2
-import json
 import logging
 import os
 import re
 import uuid
 import simplejson
-import urllib
-import urllib2
 import smtplib
 import socket
 import sys
@@ -18,7 +18,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry, CHANGE
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.cache import cache
@@ -36,6 +36,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
@@ -54,6 +55,15 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.schema import validate_device
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib2 import urlopen, Request
+    from urllib import urlencode
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.request import urlopen, Request
+    from urllib.parse import urlencode
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
@@ -99,7 +109,7 @@ class Tag(models.Model):
 
     description = models.TextField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name.lower()
 
 
@@ -180,7 +190,7 @@ class Architecture(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -193,7 +203,7 @@ class ProcessorFamily(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -206,7 +216,7 @@ class Alias(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -218,7 +228,7 @@ class BitWidth(models.Model):
         editable=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return "%d" % self.pk
 
 
@@ -231,7 +241,7 @@ class Core(models.Model):
         max_length=100,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.pk
 
 
@@ -294,7 +304,7 @@ class DeviceType(models.Model):
         null=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     description = models.TextField(
@@ -372,7 +382,7 @@ class DeviceType(models.Model):
             return cached_value
 
         devices = Device.objects.filter(device_type=self) \
-                                .only('user', 'group') \
+                                .only('state', 'health', 'user', 'group') \
                                 .select_related('user', 'group')
 
         if self.owners_only:
@@ -400,7 +410,7 @@ class DefaultDeviceOwner(models.Model):
         default=False
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.user:
             return self.user.username
         return ''
@@ -409,7 +419,6 @@ class DefaultDeviceOwner(models.Model):
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
-    Only the hostname, description and online status will be used in pipeline.
     """
 
     hostname = models.CharField(
@@ -447,7 +456,10 @@ class Worker(models.Model):
         editable=True
     )
 
-    def __unicode__(self):
+    last_ping = models.DateTimeField(verbose_name=_(u"Last ping"),
+                                     default=timezone.now)
+
+    def __str__(self):
         return self.hostname
 
     def can_admin(self, user):
@@ -473,74 +485,53 @@ class Worker(models.Model):
         self.save()
 
     def retired_devices_count(self):
-        return self.device_set.filter(status=Device.RETIRED).count()
+        return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
-    def go_health_active(self):
-        # TODO: send the right signal to the attached devices
+    def go_health_active(self, user):
+        self.log_admin_entry(user, "%s → Active" % self.get_health_display())
+        for device in self.device_set.all().select_for_update():
+            device.worker_signal("go_health_active", user, self.state, self.health)
+            device.save()
         self.health = Worker.HEALTH_ACTIVE
 
-    def go_health_maintenance(self):
-        # TODO: send the right signal to the attached devices
+    def go_health_maintenance(self, user):
+        self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
+        for device in self.device_set.all().select_for_update():
+            device.worker_signal("go_health_maintenance", user, self.state, self.health)
+            device.save()
         self.health = Worker.HEALTH_MAINTENANCE
 
-    def go_health_retired(self):
-        # TODO: send the right signal to the attached devices
+    def go_health_retired(self, user):
+        self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
+        for device in self.device_set.all().select_for_update():
+            device.worker_signal("go_health_retired", user, self.state, self.health)
+            device.save()
         self.health = Worker.HEALTH_RETIRED
 
     def go_state_offline(self):
-        # TODO: send the right signal to the attached devices
         self.state = Worker.STATE_OFFLINE
 
     def go_state_online(self):
-        # TODO: send the right signal to the attached devices
         self.state = Worker.STATE_ONLINE
+
+    def log_admin_entry(self, user, reason, addition=False):
+        if user is None:
+            user = User.objects.get(username="lava-health")
+        worker_ct = ContentType.objects.get_for_model(Worker)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=worker_ct.pk,
+            object_id=self.pk,
+            object_repr=self.hostname,
+            action_flag=ADDITION if addition else CHANGE,
+            change_message=reason
+        )
 
 
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
     """
-
-    OFFLINE = 0
-    IDLE = 1
-    RUNNING = 2
-    OFFLINING = 3
-    RETIRED = 4
-    RESERVED = 5
-
-    STATUS_CHOICES = (
-        (OFFLINE, 'Offline'),
-        (IDLE, 'Idle'),
-        (RUNNING, 'Running'),
-        (OFFLINING, 'Going offline'),
-        (RETIRED, 'Retired'),
-        (RESERVED, 'Reserved')
-    )
-
-    STATUS_REVERSE = {
-        "OFFLINE": OFFLINE,
-        "IDLE": IDLE,
-        "RUNNING": RUNNING,
-        "OFFLINING": OFFLINING,
-        "RETIRED": RETIRED,
-        "RESERVED": RESERVED
-    }
-
-    # A device health shows a device is ready to test or not
-    HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL, HEALTH_LOOPING = range(4)
-    HEALTH_CHOICES = (
-        (HEALTH_UNKNOWN, 'Unknown'),
-        (HEALTH_PASS, 'Pass'),
-        (HEALTH_FAIL, 'Fail'),
-        (HEALTH_LOOPING, 'Looping'),
-    )
-
-    HEALTH_REVERSE = {
-        "UNKNOWN": HEALTH_UNKNOWN,
-        "PASS": HEALTH_PASS,
-        "FAIL": HEALTH_FAIL,
-        "LOOPING": HEALTH_LOOPING
-    }
 
     CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
     HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
@@ -587,28 +578,44 @@ class Device(RestrictedResource):
         default=None
     )
 
-    current_job = models.OneToOneField(
-        "TestJob", blank=True, unique=True, null=True, related_name='+',
-        on_delete=models.SET_NULL)
-
     tags = models.ManyToManyField(Tag, blank=True)
 
-    status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=IDLE,
-        verbose_name=_(u"Device status"),
+    # This state is a cache computed from the device health and jobs. So keep
+    # it read only to the admins
+    STATE_IDLE, STATE_RESERVED, STATE_RUNNING = range(3)
+    STATE_CHOICES = (
+        (STATE_IDLE, 'Idle'),
+        (STATE_RESERVED, 'Reserved'),
+        (STATE_RUNNING, 'Running'),
     )
+    state = models.IntegerField(choices=STATE_CHOICES, default=STATE_IDLE,
+                                editable=False)
 
-    health_status = models.IntegerField(
-        choices=HEALTH_CHOICES,
-        default=HEALTH_UNKNOWN,
-        verbose_name=_(u"Device Health"),
+    # The device health helps to decide what to do next with the device
+    HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(6)
+    HEALTH_CHOICES = (
+        (HEALTH_GOOD, 'Good'),
+        (HEALTH_UNKNOWN, 'Unknown'),
+        (HEALTH_LOOPING, 'Looping'),
+        (HEALTH_BAD, 'Bad'),
+        (HEALTH_MAINTENANCE, 'Maintenance'),
+        (HEALTH_RETIRED, 'Retired')
     )
+    HEALTH_REVERSE = {
+        "GOOD": HEALTH_GOOD,
+        "UNKNOWN": HEALTH_UNKNOWN,
+        "LOOPING": HEALTH_LOOPING,
+        "BAD": HEALTH_BAD,
+        "MAINTENANCE": HEALTH_MAINTENANCE,
+        "RETIRED": HEALTH_RETIRED,
+    }
+    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_UNKNOWN)
 
     last_health_report_job = models.OneToOneField(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
 
+    # TODO: make this mandatory
     worker_host = models.ForeignKey(
         Worker,
         verbose_name=_(u"Worker Host"),
@@ -659,36 +666,30 @@ class Device(RestrictedResource):
             raise ValidationError(
                 'Cannot be owned by a user and a group at the same time')
 
-    def __unicode__(self):
+    def __str__(self):
         r = self.hostname
-        r += " (%s, health %s)" % (self.get_status_display(),
-                                   self.get_health_status_display())
+        r += " (%s, health %s)" % (self.get_state_display(),
+                                   self.get_health_display())
         return r
+
+    def current_job(self):
+        try:
+            return self.testjobs.get(~Q(state=TestJob.STATE_FINISHED))
+        except TestJob.DoesNotExist:
+            return None
 
     @models.permalink
     def get_absolute_url(self):
         return ("lava.scheduler.device.detail", [self.pk])
 
-    @models.permalink
-    def get_device_health_url(self):
-        return ("lava.scheduler.labhealth.detail", [self.pk])
+    def get_simple_state_display(self):
+        if self.state == Device.STATE_IDLE:
+            if self.health in [Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+                return self.get_health_display()
+        return self.get_state_display()
 
     def get_description(self):
         return mark_safe(self.description) if self.description else None
-
-    def recent_jobs(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "requested_device",
-            "requested_device_type",
-            "submitter",
-            "user",
-            "group",
-        ).filter(
-            actual_device=self
-        ).order_by(
-            '-submit_time'
-        )
 
     def is_visible_to(self, user):
         """
@@ -718,7 +719,7 @@ class Device(RestrictedResource):
         return False
 
     def can_submit(self, user):
-        if self.status == Device.RETIRED:
+        if self.health == Device.HEALTH_RETIRED:
             return False
         if self.is_public:
             return True
@@ -737,106 +738,77 @@ class Device(RestrictedResource):
         return True
 
     def log_admin_entry(self, user, reason):
+        if user is None:
+            user = User.objects.get(username="lava-health")
         device_ct = ContentType.objects.get_for_model(Device)
         LogEntry.objects.log_action(
             user_id=user.id,
             content_type_id=device_ct.pk,
             object_id=self.pk,
-            object_repr=unicode(self),
+            object_repr=self.hostname,
             action_flag=CHANGE,
             change_message=reason
         )
 
-    def state_transition_to(self, new_status, user=None, message=None,
-                            job=None, master=False):
-        logger = logging.getLogger('lava-master')
-        try:
-            dst_obj = DeviceStateTransition.objects.create(
-                created_by=user, device=self, old_state=self.status,
-                new_state=new_status, message=message, job=job)
-        except ValidationError as e:
-            logger.error(
-                "Cannot create DeviceStateTransition object. "
-                "old-state=%s new-state=%s %s", self.status, new_status, str(e))
-            return False
-        self.status = new_status
-        self.save()
-        if user:
-            self.log_admin_entry(user, "DeviceStateTransition [%d] %s" % (dst_obj.id, message))
-        elif master:
-            logger.info("Master transitioning with message %s" % message)
-        else:
-            logger.warning("Empty user passed to state_transition_to() with message %s" % message)
-        return True
+    def testjob_signal(self, signal, job):
+        if signal == "go_state_scheduling":
+            self.state = Device.STATE_RESERVED
 
-    def put_into_maintenance_mode(self, user, reason, notify=None):
-        """
-        Put a device OFFLINE whenever possible. If the device is running a job,
-        the status will be OFFLINING.
-        Returns False if the device status is unchanged (retired devices)
-        """
-        logger = logging.getLogger('lava-master')
-        if self.status == self.RETIRED:
-            return False
-        if self.status in [self.RESERVED, self.OFFLINING]:
-            new_status = self.OFFLINING
-        elif self.status == self.RUNNING:
-            if notify:
-                # only one admin will be emailed when admin_notification is set.
-                self.current_job.admin_notifications = notify
-                self.current_job.save()
-            new_status = self.OFFLINING
-        else:
-            new_status = self.OFFLINE
-        if self.health_status == Device.HEALTH_LOOPING:
-            self.health_status = Device.HEALTH_UNKNOWN
-        self.state_transition_to(new_status, user=user, message=reason)
-        if user:
-            self.log_admin_entry(user, "put into maintenance mode: OFFLINE: %s" % reason)
-        else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
-        return True
+        elif signal == "go_state_scheduled":
+            self.state = Device.STATE_RESERVED
 
-    def put_into_online_mode(self, user, reason, skiphealthcheck=False):
-        logger = logging.getLogger('lava-master')
-        if self.status == self.RETIRED:
-            return False
-        if self.status == Device.OFFLINING and self.current_job is not None:
-            new_status = self.RUNNING
+        elif signal == "go_state_running":
+            self.state = Device.STATE_RUNNING
+
+        elif signal == "go_state_canceling":
+            pass
+
+        elif signal == "go_state_finished":
+            self.state = Device.STATE_IDLE
+
+            if job.health_check and self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+                self.last_health_report_job = job
+                prev_health_display = self.get_health_display()
+                if job.health == TestJob.HEALTH_COMPLETE:
+                    self.health = Device.HEALTH_GOOD
+                elif job.health == TestJob.HEALTH_INCOMPLETE:
+                    self.health = Device.HEALTH_BAD
+                elif job.health == TestJob.HEALTH_CANCELED:
+                    self.health = Device.HEALTH_UNKNOWN
+                else:
+                    raise NotImplementedError("Unexpected TestJob health")
+                self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+
         else:
-            new_status = self.IDLE
+            raise NotImplementedError("Unknown signal %s" % signal)
 
-        if not skiphealthcheck:
-            self.health_status = Device.HEALTH_UNKNOWN
+    def worker_signal(self, signal, user, prev_state, prev_health):
+        # HEALTH_BAD and HEALTH_RETIRED are permanent states that are not
+        # changed by worker signals
+        if signal == "go_health_active":
+            # When leaving retirement, don't cascade the change
+            if prev_health == Worker.HEALTH_RETIRED:
+                return
+            # Only update health of devices in maintenance
+            if self.health != Device.HEALTH_MAINTENANCE:
+                return
+            self.log_admin_entry(user, "%s → Unknown" % self.get_health_display())
+            self.health = Device.HEALTH_UNKNOWN
 
-        self.state_transition_to(new_status, user=user, message=reason)
-        if user:
-            self.log_admin_entry(user, "put into online mode: %s: %s" % (self.STATUS_CHOICES[new_status][1], reason))
+        elif signal == "go_health_maintenance":
+            if self.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+                return
+            self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
+            self.health = Device.HEALTH_MAINTENANCE
+
+        elif signal == "go_health_retired":
+            if self.health in [Device.HEALTH_BAD, Device.HEALTH_RETIRED]:
+                return
+            self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
+            self.health = Device.HEALTH_RETIRED
+
         else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
-        return True
-
-    def put_into_looping_mode(self, user, reason):
-        if self.status != Device.OFFLINE:
-            return
-        logger = logging.getLogger('lava-master')
-        self.health_status = Device.HEALTH_LOOPING
-
-        self.state_transition_to(self.IDLE, user=user, message=reason)
-        if user:
-            self.log_admin_entry(user, "put into looping mode: %s: %s" % (self.HEALTH_CHOICES[self.health_status][1], reason))
-        else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
-
-    def cancel_reserved_status(self, user, reason):
-        if self.status != Device.RESERVED:
-            return
-        logger = logging.getLogger('lava-master')
-        self.state_transition_to(self.IDLE, user=user, message=reason)
-        if user:
-            self.log_admin_entry(user, "cancelled reserved status: %s: %s" % (Device.STATUS_CHOICES[Device.IDLE][1], reason))
-        else:
-            logger.warning("Empty user passed to put_into_maintenance_mode() with message %s", reason)
+            raise NotImplementedError("Unknown signal %s" % signal)
 
     def load_configuration(self, job_ctx=None, output_format="dict"):
         """
@@ -969,7 +941,7 @@ class JobFailureTag(models.Model):
 
     description = models.TextField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -1018,7 +990,7 @@ def _check_tags(taglist, device_type=None, hostname=None):
         q = q.__and__(models.Q(device_type=device_type))
     if hostname:
         q = q.__and__(models.Q(hostname=hostname))
-    q = q.__and__(~models.Q(status=Device.RETIRED))
+    q = q.__and__(~models.Q(health=Device.HEALTH_RETIRED))
     tag_devices = set(Device.objects.filter(q))
     matched_devices = []
     for device in tag_devices:
@@ -1054,7 +1026,7 @@ def _check_submit_to_device(device_list, user):
     device_type = None
     for device in device_list:
         device_type = device.device_type
-        if device.status != Device.RETIRED and device.can_submit(user):
+        if device.health != Device.HEALTH_RETIRED and device.can_submit(user):
             allow.append(device)
     if len(allow) == 0:
         raise DevicesUnavailableException(
@@ -1152,7 +1124,6 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
         orig = yaml.dump(job_data)
     job = TestJob(definition=yaml.dump(job_data), original_definition=orig,
                   submitter=user,
-                  requested_device=device,
                   requested_device_type=device_type,
                   target_group=target_group,
                   description=job_data['job_name'],
@@ -1239,7 +1210,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
 
                 allowed_devices = []
                 device_list = Device.objects.filter(
-                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(status=Device.RETIRED))
+                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
                 allowed_devices.extend(_check_submit_to_device(list(device_list), user))
 
                 if len(allowed_devices) < params['count']:
@@ -1296,44 +1267,10 @@ class TestJob(RestrictedResource):
     A test job is a test process that will be run on a Device.
     """
     class Meta:
-        index_together = ["status", "requested_device_type", "requested_device"]
+        index_together = ["health", "state", "requested_device_type"]
 
     objects = RestrictedResourceManager.from_queryset(
         RestrictedTestJobQuerySet)()
-
-    SUBMITTED = 0
-    RUNNING = 1
-    COMPLETE = 2
-    INCOMPLETE = 3
-    CANCELED = 4
-    CANCELING = 5
-
-    STATUS_CHOICES = (
-        (SUBMITTED, 'Submitted'),
-        (RUNNING, 'Running'),
-        (COMPLETE, 'Complete'),
-        (INCOMPLETE, 'Incomplete'),
-        (CANCELED, 'Canceled'),
-        (CANCELING, 'Canceling'),
-    )
-    STATUS_MAP = {
-        "Submitted": SUBMITTED,
-        "Running": RUNNING,
-        "Complete": COMPLETE,
-        "Incomplete": INCOMPLETE,
-        "Canceled": CANCELED,
-        "Canceling": CANCELING,
-    }
-
-    LOW = 0
-    MEDIUM = 50
-    HIGH = 100
-
-    PRIORITY_CHOICES = (
-        (LOW, 'Low'),
-        (MEDIUM, 'Medium'),
-        (HIGH, 'High'),
-    )
 
     # VISIBILITY levels are subject to any device restrictions and hidden device type rules
     VISIBLE_PUBLIC = 0  # anyone can view, submit or resubmit
@@ -1393,9 +1330,6 @@ class TestJob(RestrictedResource):
         editable=True
     )
 
-    submit_token = models.ForeignKey(
-        AuthToken, null=True, blank=True, on_delete=models.SET_NULL)
-
     description = models.CharField(
         verbose_name=_(u"Description"),
         max_length=200,
@@ -1406,11 +1340,8 @@ class TestJob(RestrictedResource):
 
     health_check = models.BooleanField(default=False)
 
-    # Only one of requested_device, requested_device_type or dynamic_connection
-    # should be non-null. requested_device is not supported for pipeline jobs,
-    # except health checks. Dynamic connections have no device.
-    requested_device = models.ForeignKey(
-        Device, null=True, default=None, related_name='+', blank=True)
+    # Only one of requested_device_type or dynamic_connection should be
+    # non-null. Dynamic connections have no device.
     requested_device_type = models.ForeignKey(
         DeviceType, null=True, default=None, related_name='+', blank=True)
 
@@ -1430,12 +1361,7 @@ class TestJob(RestrictedResource):
 
     # This is set once the job starts or is reserved.
     actual_device = models.ForeignKey(
-        Device, null=True, default=None, related_name='+', blank=True)
-
-    # compare with:
-    # current_job = models.OneToOneField(
-    #     "TestJob", blank=True, unique=True, null=True, related_name='+',
-    #     on_delete=models.SET_NULL)
+        Device, null=True, default=None, related_name='testjobs', blank=True)
 
     submit_time = models.DateTimeField(
         verbose_name=_(u"Submit time"),
@@ -1466,12 +1392,149 @@ class TestJob(RestrictedResource):
             return None
         return self.end_time - self.start_time
 
-    status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=SUBMITTED,
-        verbose_name=_(u"Status"),
+    STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(6)
+    STATE_CHOICES = (
+        (STATE_SUBMITTED, "Submitted"),
+        (STATE_SCHEDULING, "Scheduling"),
+        (STATE_SCHEDULED, "Scheduled"),
+        (STATE_RUNNING, "Running"),
+        (STATE_CANCELING, "Canceling"),
+        (STATE_FINISHED, "Finished"),
     )
+    state = models.IntegerField(choices=STATE_CHOICES,
+                                default=STATE_SUBMITTED,
+                                editable=False)
 
+    HEALTH_UNKNOWN, HEALTH_COMPLETE, HEALTH_INCOMPLETE, HEALTH_CANCELED = range(4)
+    HEALTH_CHOICES = (
+        (HEALTH_UNKNOWN, "Unknown"),
+        (HEALTH_COMPLETE, "Complete"),
+        (HEALTH_INCOMPLETE, "Incomplete"),
+        (HEALTH_CANCELED, "Canceled"),
+    )
+    health = models.IntegerField(choices=HEALTH_CHOICES,
+                                 default=HEALTH_UNKNOWN)
+
+    def go_state_scheduling(self, device):
+        """
+        Used for multinode jobs when all jobs are not scheduled yet.
+        When each sub jobs are scheduled, the state is change to
+        STATE_SCHEDULED
+        Jobs that are not multinode will directly use STATE_SCHEDULED
+        """
+        if device.state != Device.STATE_IDLE:
+            raise Exception("device is not IDLE")
+        if self.state >= TestJob.STATE_SCHEDULING:
+            return
+        self.state = TestJob.STATE_SCHEDULING
+        # TODO: check that device is locked
+        self.actual_device = device
+        self.actual_device.testjob_signal("go_state_scheduling", self)
+        self.actual_device.save()
+
+    def go_state_scheduled(self, device=None):
+        """
+        The jobs has been scheduled or the given device.
+        lava-master will send a START to the right lava-slave.
+        """
+        dynamic_connection = self.dynamic_connection
+        if device is None:
+            # dynamic connection does not have any device
+            if not dynamic_connection:
+                if self.actual_device is None:
+                    raise Exception("actual_device is not set")
+                device = self.actual_device
+        else:
+            if device.state != Device.STATE_IDLE:
+                raise Exception("device is not IDLE")
+        if self.state >= TestJob.STATE_SCHEDULED:
+            return
+        self.state = TestJob.STATE_SCHEDULED
+        # dynamic connection does not have any device
+        if not dynamic_connection:
+            # TODO: check that device is locked
+            self.actual_device = device
+            self.actual_device.testjob_signal("go_state_scheduled", self)
+            self.actual_device.save()
+
+    def go_state_running(self):
+        """
+        lava-master received a START_OK for this job which is now running.
+        """
+        if self.state >= TestJob.STATE_RUNNING:
+            return
+        self.state = TestJob.STATE_RUNNING
+        self.start_time = timezone.now()
+        # TODO: check that self.actual_device is locked by the
+        # select_for_update on the TestJob
+        if not self.dynamic_connection:
+            self.actual_device.testjob_signal("go_state_running", self)
+            self.actual_device.save()
+
+    def go_state_canceling(self, sub_cancel=False):
+        """
+        The job was canceled by a user. lava-master will send a CANCEL to the right lava-slave.
+        """
+        if self.state >= TestJob.STATE_CANCELING:
+            return
+        # If the job was not scheduled, go directly to STATE_FINISHED
+        if self.state == TestJob.STATE_SUBMITTED:
+            self.go_state_finished(TestJob.HEALTH_CANCELED)
+            return
+
+        self.state = TestJob.STATE_CANCELING
+        # TODO: check that self.actual_device is locked by the
+        # select_for_update on the TestJob
+        if not self.dynamic_connection:
+            self.actual_device.testjob_signal("go_state_canceling", self)
+            self.actual_device.save()
+
+        # For multinode, cancel all sub jobs if the current job is essential
+        if not sub_cancel and self.essential_role:
+            for sub_job in self.sub_jobs_list:
+                if sub_job != self:
+                    sub_job.go_state_canceling(sub_cancel=True)
+                    sub_job.save()
+
+    def go_state_finished(self, health):
+        """
+        The job has been terminated by either lava-master or lava-logs. The
+        job health can be set.
+        """
+        if self.state == TestJob.STATE_FINISHED:
+            return
+
+        if health == TestJob.HEALTH_UNKNOWN:
+            raise Exception("Cannot give HEALTH_UNKNOWN")
+
+        # If the job was in STATE_CANCELING, then override health
+        self.health = health
+        if self.state == TestJob.STATE_CANCELING:
+            self.health = TestJob.HEALTH_CANCELED
+        self.state = TestJob.STATE_FINISHED
+
+        self.end_time = timezone.now()
+        # TODO: check that self.actual_device is locked by the
+        # select_for_update on the TestJob
+        # Skip non-scheduled jobs and dynamic_connections
+        if self.actual_device is not None:
+            self.actual_device.testjob_signal("go_state_finished", self)
+            self.actual_device.save()
+
+        # For multinode, cancel all sub jobs if the current job is essential
+        # and it was a failure.
+        if health == TestJob.HEALTH_INCOMPLETE and self.essential_role:
+            for sub_job in self.sub_jobs_list:
+                if sub_job != self:
+                    sub_job.go_state_canceling(sub_cancel=True)
+                    sub_job.save()
+
+    LOW, MEDIUM, HIGH = (0, 50, 100)
+    PRIORITY_CHOICES = (
+        (LOW, 'Low'),
+        (MEDIUM, 'Medium'),
+        (HIGH, 'High'),
+    )
     priority = models.IntegerField(
         choices=PRIORITY_CHOICES,
         default=MEDIUM,
@@ -1594,25 +1657,12 @@ class TestJob(RestrictedResource):
             return 'Error'
         return data['protocols']['lava-multinode']['role']
 
-    def log_admin_entry(self, user, reason):
-        testjob_ct = ContentType.objects.get_for_model(TestJob)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=testjob_ct.pk,
-            object_id=self.pk,
-            object_repr=unicode(self),
-            action_flag=CHANGE,
-            change_message=reason
-        )
-
-    def __unicode__(self):
-        job_type = self.health_check and 'health check' or 'test'
-        r = "%s %s job" % (self.get_status_display(), job_type)
+    def __str__(self):
+        job_type = 'health_check' if self.health_check else 'test'
+        r = "%s (%s) %s job" % (self.get_state_display(), self.get_health_display(), job_type)
         if self.actual_device:
             r += " on %s" % (self.actual_device.hostname)
         else:
-            if self.requested_device:
-                r += " for %s" % (self.requested_device.hostname)
             if self.requested_device_type:
                 r += " for %s" % (self.requested_device_type.name)
         r += " (%d)" % (self.id)
@@ -1629,7 +1679,6 @@ class TestJob(RestrictedResource):
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
         creates a TestJob object for the submission and saves that testjob into the database.
         This function must *never* be involved in setting the state of this job or the state of any associated device.
-        'target' is not supported, so requested_device is always None at submission time.
         Retains yaml_data as the original definition to retain comments.
 
         :return: a single TestJob object or a list
@@ -1757,11 +1806,11 @@ class TestJob(RestrictedResource):
         """
         Permission required for user to add failure information to a job
         """
-        states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
-        return self._can_admin(user) and self.status in states
+        return self._can_admin(user) and self.state == TestJob.STATE_FINISHED
 
     def can_cancel(self, user):
-        return self._can_admin(user) and self.status <= TestJob.RUNNING
+        states = [TestJob.STATE_SUBMITTED, TestJob.STATE_RUNNING]
+        return self._can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
         return self.is_pipeline and \
@@ -1772,44 +1821,9 @@ class TestJob(RestrictedResource):
         device_type = None
         if self.actual_device:
             device_type = self.actual_device.device_type
-        elif self.requested_device:
-            device_type = self.requested_device.device_type
         elif self.requested_device_type:
             device_type = self.requested_device_type
         return device_type
-
-    def cancel(self, user=None):
-        """
-        Sets the Canceling status and clears reserved status, if any.
-        Actual job cancellation (ending the lava-dispatch process)
-        is done by the scheduler daemon (or lava-slave).
-        :param user: user requesting the cancellation, or None.
-        """
-        logger = logging.getLogger('lava_scheduler_app')
-        if not user:
-            logger.error("Unidentified user requested cancellation of job submitted by %s", self.submitter)
-            user = self.submitter
-        # if SUBMITTED with actual_device - clear the actual_device back to idle.
-        if self.status == TestJob.SUBMITTED and self.actual_device is not None:
-            logger.info("Cancel %s - clearing reserved status for device %s",
-                        self, self.actual_device.hostname)
-            self.actual_device.cancel_reserved_status(user, "job-cancel")
-            self.status = TestJob.CANCELING
-            self._send_cancellation_mail(user)
-        elif self.status == TestJob.SUBMITTED:
-            logger.info("Cancel %s", self)
-            self.status = TestJob.CANCELED
-            self._send_cancellation_mail(user)
-        elif self.status == TestJob.RUNNING:
-            logger.info("Cancel %s", self)
-            self.status = TestJob.CANCELING
-            self._send_cancellation_mail(user)
-        elif self.status == TestJob.CANCELING:
-            logger.info("Completing cancel of %s", self)
-            self.status = TestJob.CANCELED
-        if user:
-            self.set_failure_comment("Canceled by %s" % user.username)
-        self.save()
 
     def _generate_summary_mail(self):
         domain = '???'
@@ -1861,7 +1875,7 @@ class TestJob(RestrictedResource):
         recipients = job_data.get('notify', [])
         recipients.extend([self.admin_notifications])  # Bug 170
         recipients = filter(None, recipients)
-        if self.status != self.COMPLETE:
+        if self.health != self.HEALTH_COMPLETE:
             recipients.extend(job_data.get('notify_on_incomplete', []))
         return recipients
 
@@ -1898,7 +1912,7 @@ class TestJob(RestrictedResource):
                 target_group=self.target_group).order_by('id')
             return jobs
         else:
-            return None
+            return []
 
     @property
     def is_multinode(self):
@@ -1932,17 +1946,20 @@ class TestJob(RestrictedResource):
             return self.id
 
     @classmethod
-    def get_by_job_number(cls, job_id):
+    def get_by_job_number(cls, job_id, for_update=False):
         """If JOB_ID is of the form x.y ie., a multinode job notation, then
         query the database with sub_id and get the JOB object else use the
         given id as the primary key value.
 
         Returns JOB object.
         """
+        query = TestJob.objects
+        if for_update:
+            query = query.select_for_update()
         if '.' in str(job_id):
-            job = TestJob.objects.get(sub_id=job_id)
+            job = query.get(sub_id=job_id)
         else:
-            job = TestJob.objects.get(pk=job_id)
+            job = query.get(pk=job_id)
         return job
 
     @property
@@ -1955,46 +1972,6 @@ class TestJob(RestrictedResource):
             return self.original_definition
         else:
             return self.definition
-
-    @property
-    def is_ready_to_start(self):  # FIXME for secondary connections
-        def device_ready(job):
-            """
-            job.actual_device is not None is insufficient.
-            The device also needs to be reserved and not have
-            a different job set in device.current_job.
-            The device and the job update in different transactions, so, the following
-            *must* be allowed:
-              job.status in [SUBMITTED, RUNNING] and job.actual_device.status in [RESERVED, RUNNING]
-              *only as long as* if job.actual_device.current_job:
-                job == job.actual_device.current_job
-            :param device: the actual device for this job, or None
-            :return: True if there is a device and that device is status Reserved
-            """
-            logger = logging.getLogger('lava-master')
-            if not job.actual_device:
-                return False
-            if job.actual_device.current_job and job.actual_device.current_job != job:
-                logger.debug(
-                    "%s current_job %s differs from job being checked: %s",
-                    job.actual_device, job.actual_device.current_job, job)
-                return False
-            if job.actual_device.status not in [Device.RESERVED, Device.RUNNING]:
-                logger.debug("%s is not ready to start a job", job.actual_device)
-                return False
-            return True
-
-        def ready(job):
-            return job.status == TestJob.SUBMITTED and device_ready(job)
-
-        def ready_or_running(job):
-            return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
-
-        if self.is_multinode:
-            # FIXME: bad use of map - use list comprehension
-            return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
-        else:
-            return ready(self)
 
     def get_passfail_results(self):
         # Get pass fail results per lava_results_app.testsuite.
@@ -2041,7 +2018,7 @@ class TestJob(RestrictedResource):
             for attr in testdata.attributes.all():
                 if attr.name in attributes:
                     results[attr.name] = {}
-                    results[attr.name]['fail'] = self.status != self.COMPLETE
+                    results[attr.name]['fail'] = self.health != self.HEALTH_COMPLETE
                     try:
                         results[attr.name]['value'] = float(attr.value)
                     except ValueError:
@@ -2236,11 +2213,11 @@ class TestJob(RestrictedResource):
         if self.notification.query_name or self.notification.entity:
             kwargs["query"]["results"] = self.notification.get_query_results()
             kwargs["query"]["link"] = self.notification.get_query_link()
-            # Find the first job which has status COMPLETE and is not the
+            # Find the first job which has health HEALTH_COMPLETE and is not the
             # current job (this can happen with custom queries) for comparison.
             compare_index = None
             for index, result in enumerate(kwargs["query"]["results"]):
-                if result.status == TestJob.COMPLETE and \
+                if result.health == TestJob.HEALTH_COMPLETE and \
                    self != result:
                     compare_index = index
                     break
@@ -2359,33 +2336,34 @@ class TestJob(RestrictedResource):
 
     def notification_criteria(self, criteria, old_job):
         # support special status of finished, otherwise skip to normal
-        if criteria["status"] == 'finished':
-            finished_statuses = [TestJob.STATUS_MAP["Complete"],
-                                 TestJob.STATUS_MAP["Incomplete"],
-                                 TestJob.STATUS_MAP["Canceled"]]
-            if self.status in finished_statuses:
-                return True
-            return False
+        if criteria["status"] == "finished":
+            return self.state == TestJob.STATE_FINISHED
+
+        if criteria["status"] == "running":
+            return self.state == TestJob.STATE_RUNNING
+
+        if criteria["status"] == "complete":
+            const = TestJob.HEALTH_COMPLETE
+        elif criteria["status"] == "incomplete":
+            const = TestJob.HEALTH_INCOMPLETE
+        else:
+            const = TestJob.HEALTH_CANCELED
 
         # use normal notification support
-        if self.status == TestJob.STATUS_MAP[criteria["status"].title()]:
+        if self.health == const:
             if "type" in criteria:
                 if criteria["type"] == "regression":
-                    if old_job.status == TestJob.COMPLETE and \
-                       self.status == TestJob.INCOMPLETE:
+                    if old_job.health == TestJob.HEALTH_COMPLETE and \
+                       self.health == TestJob.HEALTH_INCOMPLETE:
                         return True
                 if criteria["type"] == "progression":
-                    if old_job.status == TestJob.INCOMPLETE and \
-                       self.status == TestJob.COMPLETE:
+                    if old_job.health == TestJob.HEALTH_INCOMPLETE and \
+                       self.health == TestJob.HEALTH_COMPLETE:
                         return True
             else:
                 return True
 
         return False
-
-    @property
-    def status_string(self):
-        return TestJob.STATUS_CHOICES[self.status][1].lower()
 
     def substitute_callback_url_variables(self, callback_url):
         # Substitute variables in callback_url with field values from self.
@@ -2446,13 +2424,6 @@ class Notification(models.Model):
         null=True,
         blank=True,
         verbose_name=_(u"Type"),
-    )
-
-    job_status_trigger = models.CharField(
-        choices=TestJob.STATUS_CHOICES,
-        max_length=30,
-        default=TestJob.COMPLETE,
-        verbose_name=_(u"Job status trigger"),
     )
 
     VERBOSE = 0
@@ -2638,17 +2609,17 @@ class Notification(models.Model):
         if callback_data:
             headers['Authorization'] = callback_data['token']
             if self.callback_content_type == Notification.JSON:
-                callback_data = json.dumps(callback_data)
+                callback_data = simplejson.dumps(callback_data)
                 headers['Content-Type'] = 'application/json'
             else:
-                callback_data = urllib.urlencode(callback_data)
+                callback_data = urlencode(callback_data)
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         if self.callback_url:
             try:
                 logger.info("Sending request to callback_url %s" % self.callback_url)
-                request = urllib2.Request(self.callback_url, callback_data, headers)
-                urllib2.urlopen(request)
+                request = Request(self.callback_url, callback_data, headers)
+                urlopen(request)
 
             except Exception as ex:
                 logger.warning("Problem sending request to %s: %s" % (
@@ -2664,8 +2635,10 @@ class Notification(models.Model):
 
             data = {
                 "id": self.test_job.pk,
-                "status": self.test_job.status,
-                "status_string": self.test_job.status_string,
+                "state": self.test_job.state,
+                "state_string": self.test_job.get_state_display(),
+                "health": self.test_job.health,
+                "health_string": self.test_job.get_health_display(),
                 "submit_time": str(self.test_job.submit_time),
                 "start_time": str(self.test_job.start_time),
                 "end_time": str(self.test_job.end_time),
@@ -2813,14 +2786,13 @@ class NotificationRecipient(models.Model):
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
 def process_notifications(sender, **kwargs):
     new_job = kwargs["instance"]
-    notification_status = [TestJob.RUNNING, TestJob.COMPLETE,
-                           TestJob.INCOMPLETE, TestJob.CANCELED]
+    notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
     # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
     if new_job.is_pipeline and new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)
-        if new_job.status in notification_status and \
-           old_job.status != new_job.status:
+        if new_job.state in notification_state and \
+           old_job.state != new_job.state:
             job_def = yaml.load(new_job.definition)
             if "notify" in job_def:
                 if new_job.notification_criteria(job_def["notify"]["criteria"],
@@ -2855,39 +2827,7 @@ class TestJobUser(models.Model):
         default=False,
         verbose_name='Favorite job')
 
-    def __unicode__(self):
+    def __str__(self):
         if self.user:
             return self.user.username
         return ''
-
-
-class DeviceStateTransition(models.Model):
-    created_on = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    device = models.ForeignKey(Device, related_name='transitions')
-    job = models.ForeignKey(TestJob, null=True, blank=True, on_delete=models.SET_NULL)
-    old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
-    new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
-    message = models.TextField(null=True, blank=True)
-
-    def clean(self):
-        if self.old_state == self.new_state:
-            raise ValidationError(
-                _("New state must be different then the old state."))
-
-    def __unicode__(self):
-        return u"%s: %s -> %s (%s)" % (self.device.hostname,
-                                       self.get_old_state_display(),
-                                       self.get_new_state_display(),
-                                       self.message)
-
-    def update_message(self, message):
-        self.message = message
-        self.save()
-
-
-@receiver(pre_save, sender=DeviceStateTransition,
-          dispatch_uid="clean_device_state_transition")
-def clean_device_state_transition(sender, **kwargs):
-    instance = kwargs["instance"]
-    instance.full_clean()

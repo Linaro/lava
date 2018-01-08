@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
             name='ExtendedUser',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('irc_handle', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name=b'IRC handle')),
-                ('irc_server', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name=b'IRC server')),
+                ('irc_handle', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name='IRC handle')),
+                ('irc_server', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name='IRC server')),
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),

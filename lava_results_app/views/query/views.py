@@ -17,7 +17,6 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import json
 import os
 import shutil
 import simplejson
@@ -650,7 +649,7 @@ def get_query_names(request):
                        "id": query.id,
                        "content_type": query.content_type.model_class().__name__})
     return HttpResponse(
-        json.dumps(list(result)),
+        simplejson.dumps(list(result)),
         content_type='application/json')
 
 
@@ -730,9 +729,8 @@ def _export_query(query_results, content_type, filename):
     removed_fields = [
         # TestJob fields:
         "_results_link", "user_id", "actual_device_id", "definition",
-        "group_id", "id", "original_definition", "requested_device_id",
-        "sub_id", "submit_token", "submit_token_id", "submitter_id",
-        "testdata", "testsuite",
+        "group_id", "id", "original_definition",
+        "sub_id", "submitter_id", "testdata", "testsuite",
         # TestSuite fields:
         "job_id",
         # TestCase fields:

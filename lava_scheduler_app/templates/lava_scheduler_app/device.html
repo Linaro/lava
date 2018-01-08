@@ -27,7 +27,9 @@
 {% block content_columns %}
 <hr/>
 <h3>Recent jobs on {{ device.hostname }}</h3>
-<div id="recent_job">
   {% render_table recent_job_table %}
-</div>
+
+<h3>Transitions</h3>
+  {% render_table device_log_table %}
+
 {% endblock %}

@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='chartquery',
             name='xaxis_attribute',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name=b'X-axis attribute'),
+            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='X-axis attribute'),
         ),
     ]

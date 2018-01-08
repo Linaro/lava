@@ -876,3 +876,82 @@ Early admin stuff:
 * where to find logs and debug information
 * device configuration and templates
 * getting a number of cheap ARMv7 development boards
+
+.. index:: add users admin
+
+.. _admin_adding_users:
+
+Adding users and groups
+***********************
+
+.. seealso:: :ref:`user_authentication` and :ref:`create_superuser`
+
+Users and groups can be added and modified in the :ref:`django_admin_interface`
+or from the command line.
+
+Newly created users will need permission to submit test jobs. This can be done
+by adding the user to a group which already has the ``Can cancel or resubmit
+test jobs`` permission or by adding this permission for each individual user.
+
+Local Users
+===========
+
+Local django user accounts can be created with the ``manage users`` command::
+
+  $ sudo lava-server manage users add <username>  --password <password>
+
+If ``--password`` is omitted, a random password is generated and output by
+the script.
+
+See ``$ sudo lava-server manage users add --help`` for more information
+and available options.
+
+LDAP Users
+==========
+
+If :ref:`user_authentication` is configured, users can be added directly from
+LDAP, retaining the configured LDAP password and email address::
+
+  $ sudo lava-server manage addldapuser --username {username}
+
+Local Groups
+============
+
+Local Django groups can be created with the ``manage groups`` command::
+
+  $ sudo lava-server manage groups add <name>
+
+See ``$ sudo lava-server manage groups add --help`` or ``$ sudo lava-server
+manage groups update --help`` for more information and available options.
+
+.. seealso:: :ref:`create_superuser`
+
+Owners and physical access
+==========================
+
+A device can be linked to two kinds of users or groups:
+
+* **Owners** will be able to submit jobs to a restricted device.
+
+* **Physical Access** is a way of providing information to test writers on who
+  to contact for problems with the physical hardware or questions about what
+  peripherals may be available.
+
+Only one user or one group can be set for the owner or for physical access at
+any one time.
+
+Setting owners and physical access
+----------------------------------
+
+Devices can be modified in the :ref:`django_admin_interface` or from the
+command line. An existing user can be listed as the owner or
+the user with physical access to a specified device which must already exist::
+
+  $ sudo lava-server manage devices update {hostname} --owner {username}
+  $ sudo lava-server manage devices update {hostname} --physical-user {username}
+
+Once at least one group has been created, the owner and physical access details
+can also be set as groups::
+
+  $ sudo lava-server manage devices update {hostname} --group {group_name}
+  $ sudo lava-server manage devices update {hostname} --physical-group {group_name}

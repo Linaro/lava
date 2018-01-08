@@ -281,8 +281,6 @@ The arguments are:
 #. (optional) An indication that you want to attach file(s) to the
    test run with specified mime type. See :ref:`test_attach`.
 
-.. _test_attach:
-
 Handling test attachments
 =========================
 

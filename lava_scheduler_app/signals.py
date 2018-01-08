@@ -1,7 +1,9 @@
+from __future__ import unicode_literals
+
 import datetime
 from django.conf import settings
 from django.db.models.signals import post_init, post_save
-import json
+import simplejson
 import threading
 import uuid
 import zmq
@@ -29,10 +31,10 @@ def send_event(topic, user, data):
         # The format is [topic, uuid, datetime, username, data as json]
         msg = [
             b(settings.EVENT_TOPIC + topic),
-            str(uuid.uuid1()),
-            datetime.datetime.utcnow().isoformat(),
-            user,
-            json.dumps(data)
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b(user),
+            b(simplejson.dumps(data))
         ]
         # Send the message in the non-blockng mode.
         # If the consumer (lava-publisher) is not active, the message will be lost.
@@ -44,32 +46,35 @@ def send_event(topic, user, data):
 
 def device_init_handler(sender, **kwargs):
     # This function is called for every Device object created
-    # Save the old status
+    # Save the old states
     instance = kwargs["instance"]
-    instance._old_status = instance.status
+    instance._old_health = instance.health
+    instance._old_state = instance.state
 
 
 def device_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
 
-    # Send a signal if the status changed
-    if instance.status != instance._old_status:
-        # Update the status as some objects are save many times.
+    # Send a signal if the state or health changed
+    if (instance.health != instance._old_health) or (instance.state != instance._old_state):
+        # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
-        # the status change.
-        instance._old_status = instance.status
+        # the state change.
+        instance._old_health = instance.health
+        instance._old_state = instance.state
 
         # Create the message
         data = {
-            "status": instance.STATUS_CHOICES[instance.status][1],
-            "health_status": instance.HEALTH_CHOICES[instance.health_status][1],
+            "health": instance.get_health_display(),
+            "state": instance.get_state_display(),
             "device": instance.hostname,
             "device_type": instance.device_type.name,
             "pipeline": instance.is_pipeline,
         }
-        if instance.current_job:
-            data["job"] = instance.current_job.display_id
+        current_job = instance.current_job()
+        if current_job is not None:
+            data["job"] = current_job.display_id
 
         # Send the event
         send_event(".device", "lavaserver", data)
@@ -77,47 +82,48 @@ def device_post_handler(sender, **kwargs):
 
 def testjob_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
-    # Save the old status
+    # Save the old states
     instance = kwargs["instance"]
-    instance._old_status = instance.status
+    instance._old_health = instance.health
+    instance._old_state = instance.state
 
 
 def testjob_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
 
-    # Send a signal if the status changed or this is a new TestJob
-    if instance.status != instance._old_status or kwargs["created"]:
-        # Update the status as some objects are save many times.
+    # Send a signal if the state or health changed
+    if (instance.health != instance._old_health) or (instance.state != instance._old_state) or instance.state == TestJob.STATE_SUBMITTED:
+        # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
-        # the status change.
-        instance._old_status = instance.status
+        # the states change.
+        instance._old_health = instance.health
+        instance._old_state = instance.state
 
         # Create the message
         data = {
-            "status": instance.STATUS_CHOICES[instance.status][1],
+            "health": instance.get_health_display(),
+            "state": instance.get_state_display(),
             "job": instance.id,
             "description": instance.description,
             "priority": instance.priority,
             "submit_time": instance.submit_time.isoformat(),
             "submitter": str(instance.submitter),
-            "visibility": instance.VISIBLE_CHOICES[instance.visibility][1],
+            "visibility": instance.get_visibility_display(),
             "pipeline": instance.is_pipeline,
         }
         if instance.is_multinode:
             data['sub_id'] = instance.sub_id
         if instance.health_check:
             data['health_check'] = True
-        if instance.requested_device:
-            data['device'] = instance.requested_device.hostname
-        elif instance.requested_device_type:
+        if instance.actual_device:
+            data["device"] = instance.actual_device.hostname
+        if instance.requested_device_type:
             data['device_type'] = instance.requested_device_type.name
         if instance.start_time:
             data["start_time"] = instance.start_time.isoformat()
         if instance.end_time:
             data["end_time"] = instance.end_time.isoformat()
-        if instance.actual_device:
-            data["device"] = instance.actual_device.hostname
 
         # Send the event
         send_event(".testjob", str(instance.submitter), data)
@@ -125,7 +131,7 @@ def testjob_post_handler(sender, **kwargs):
 
 def worker_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
-    # Save the old status
+    # Save the old states
     instance = kwargs["instance"]
     instance._old_health = instance.health
     instance._old_state = instance.state

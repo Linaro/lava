@@ -48,7 +48,15 @@ Commands
 
 * **device_info** - a list of dictionaries, where each dictionary value can
   contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which can
-  be added to the LXC for device specific tasks.
+  be added to the LXC for device specific tasks dynamically, whenever the
+  device is reset, using a ``udev`` rule.
+
+* **static_info** - a list of dictionaries, where each dictionary value can
+  contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which
+  will be added to the LXC for device specific tasks when the LXC is started.
+  Used for static devices which are always visible to the dispatcher, for
+  example the ARM Energy Probe which has a USB connection to the dispatcher
+  and probe connections to the device.
 
 * **adb_serial_number** - value to pass to ADB to connect to this device.
 
@@ -106,6 +114,40 @@ download a YAML file of the :term:`device dictionary`, which is the equivalent
 of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
+
+.. _device_dictionary_exported_parameters:
+
+Exported parameters
+*******************
+
+Some elements of the device configuration can be exposed to the test shell,
+where it is safe to do so. Each parameter must be explicitly set in each device
+dictionary. The information will then be populated into the
+:ref:`lava_test_helpers`.
+
+.. seealso:: :ref:`test_device_info` and :ref:`extra_device_configuration`.
+
+* **device_ip** - A single fixed IPv4 address of this device. The value will be
+  exported into the test shell using ``lava-target-ip``.
+
+  .. code-block:: jinja
+
+   {% set device_ip = "10.66.16.24" %}
+
+* **device_mac** - similar to ``device_ip`` but for a single MAC address.
+
+  .. code-block:: jinja
+
+   {% set device_mac = '00:02:F7:00:58:53' %}
+
+* **storage_info** - a list of dictionaries, where each dictionary value can
+  contain keys describing the storage method (e.g. USB or SATA) and a value
+  stating the device node of the top level block device which is available to
+  the test writer.
+
+  .. code-block:: jinja
+
+   {% set storage_info = [{'SATA: '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
 
 .. _device_dictionary_other_parameters:
 

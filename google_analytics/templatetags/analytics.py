@@ -19,7 +19,7 @@ def do_get_analytics(parser, token):
         current_site = Site.objects.get_current()
     else:
         if not (code[0] == code[-1] and code[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % tag_name
+            raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
         code = code[1:-1]
         current_site = None
     return AnalyticsNode(current_site, code)

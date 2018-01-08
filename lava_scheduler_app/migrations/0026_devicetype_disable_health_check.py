@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='devicetype',
             name='disable_health_check',
-            field=models.BooleanField(default=False, verbose_name=b'Disable health check for devices of this type'),
+            field=models.BooleanField(default=False, verbose_name='Disable health check for devices of this type'),
         ),
     ]

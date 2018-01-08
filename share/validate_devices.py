@@ -37,6 +37,7 @@ import sys
 if sys.version > '3':
     import xmlrpc.client as xmlrpclib
 else:
+    # Python 2.x
     import xmlrpclib
 
 

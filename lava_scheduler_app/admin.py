@@ -2,8 +2,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import Q
+
 from lava_scheduler_app.models import (
-    Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
+    Device, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
     Architecture, ProcessorFamily, Alias, BitWidth, Core
 )
@@ -51,48 +53,6 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 
-def offline_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for device in queryset.filter(status__in=[Device.IDLE, Device.RUNNING, Device.RESERVED]):
-        if device.can_admin(request.user):
-            device.put_into_maintenance_mode(request.user, "admin action")
-
-
-offline_action.short_description = "take offline"
-
-
-def online_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
-        if device.can_admin(request.user):
-            device.put_into_online_mode(request.user, "admin action")
-
-
-online_action.short_description = "take online"
-
-
-def online_action_without_health_check(modeladmin, request, queryset):  # pylint: disable=unused-argument,invalid-name
-    for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
-        if device.can_admin(request.user):
-            device.put_into_online_mode(request.user, "admin action", True)
-
-
-online_action_without_health_check.short_description = \
-    "take online without manual health check"
-
-
-def retire_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for device in queryset:
-        if device.can_admin(request.user):
-            new_status = device.RETIRED
-            DeviceStateTransition.objects.create(
-                created_by=request.user, device=device, old_state=device.status,
-                new_state=new_status, message="retiring", job=None).save()
-            device.status = new_status
-            device.save()
-
-
-retire_action.short_description = "retire"
-
-
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     for testjob in queryset:
         if testjob.can_cancel(request.user):
@@ -102,18 +62,9 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
 cancel_action.short_description = 'cancel selected jobs'
 
 
-def health_unknown(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for device in queryset.filter(health_status=Device.HEALTH_PASS):
-        device.health_status = Device.HEALTH_UNKNOWN
-        device.save()
-
-
-health_unknown.short_description = "set health_status to unknown"
-
-
 class ActiveDevicesFilter(admin.SimpleListFilter):
     title = 'Active devices'
-    parameter_name = 'status'
+    parameter_name = 'state'
 
     def lookups(self, request, model_admin):
         return (
@@ -123,28 +74,9 @@ class ActiveDevicesFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'NoRetired':
-            return queryset.exclude(status=Device.RETIRED).order_by('hostname')
+            return queryset.exclude(health=Device.HEALTH_RETIRED).order_by('hostname')
         if self.value() == 'CurrentJob':
-            return queryset.filter(current_job__isnull=False).order_by('hostname')
-
-
-class RequestedDeviceFilter(admin.SimpleListFilter):
-    title = 'Requested Device (except retired)'
-    parameter_name = 'requested_device'
-
-    def lookups(self, request, model_admin):
-        list_of_types = []
-        queryset = Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
-        for dev_type in queryset:
-            list_of_types.append(
-                (str(dev_type.hostname), dev_type.hostname)
-            )
-        return sorted(list_of_types, key=lambda tp: tp[1])
-
-    def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(requested_device__hostname=self.value())
-        return queryset.order_by('requested_device__hostname')
+            return queryset.filter(state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING]).order_by('hostname')
 
 
 class ActualDeviceFilter(admin.SimpleListFilter):
@@ -153,7 +85,7 @@ class ActualDeviceFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         list_of_types = []
-        queryset = Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
+        queryset = Device.objects.exclude(health=Device.HEALTH_RETIRED).order_by('hostname')
         for dev_type in queryset:
             list_of_types.append(
                 (str(dev_type.hostname), dev_type.hostname)
@@ -205,11 +137,9 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    actions = [online_action, online_action_without_health_check,
-               offline_action, health_unknown, retire_action]
-    list_filter = (DeviceTypeFilter, 'status', ActiveDevicesFilter,
-                   'health_status', 'worker_host')
-    raw_id_fields = ['current_job', 'last_health_report_job']
+    list_filter = (DeviceTypeFilter, 'state', ActiveDevicesFilter,
+                   'health', 'worker_host')
+    raw_id_fields = ['last_health_report_job']
 
     def has_health_check(self, obj):
         return bool(obj.get_health_check())
@@ -240,15 +170,15 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Device owner', {
             'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public', 'is_pipeline')}),
         ('Status', {
-            'fields': (('status', 'health_status'), ('last_health_report_job', 'current_job'))}),
+            'fields': (('state', 'health'), ('last_health_report_job', 'current_job'))}),
         ('Advanced properties', {
             'fields': ('description', 'tags', ('device_dictionary_jinja')),
             'classes': ('collapse', )
         }),
     )
-    readonly_fields = ('device_dictionary_jinja', )
+    readonly_fields = ('device_dictionary_jinja', 'state', 'current_job')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
-                    'status', 'health_status', 'has_health_check',
+                    'state', 'health', 'has_health_check',
                     'health_check_enabled', 'is_public', 'is_pipeline',
                     'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
@@ -270,46 +200,28 @@ class VisibilityForm(forms.ModelForm):
 
 
 class TestJobAdmin(admin.ModelAdmin):
-    def requested_device_hostname(self, obj):
-        return '' if obj.requested_device is None else obj.requested_device.hostname
-    requested_device_hostname.short_description = 'Requested device'
-
     def requested_device_type_name(self, obj):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
     form = VisibilityForm
     actions = [cancel_action]
-    list_filter = ('status', RequestedDeviceTypeFilter, RequestedDeviceFilter, ActualDeviceFilter)
+    list_filter = ('state', RequestedDeviceTypeFilter, ActualDeviceFilter)
     fieldsets = (
         ('Owner', {
-            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'visibility', 'viewing_groups')}),
+            'fields': ('user', 'group', 'submitter', 'is_public', 'visibility', 'viewing_groups')}),
         ('Request', {
-            'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
+            'fields': ('requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {
             'fields': ('description', 'tags', 'sub_id', 'target_group')}),
         ('Current status', {
-            'fields': ('actual_device', 'status')}),
+            'fields': ('actual_device', 'state', 'health')}),
         ('Results & Failures', {
             'fields': ('failure_tags', 'failure_comment', '_results_link')}),
     )
-    list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname',
+    readonly_fields = ('state', )
+    list_display = ('id', 'state', 'health', 'submitter', 'requested_device_type_name',
                     'actual_device', 'health_check', 'submit_time', 'start_time', 'end_time')
     ordering = ['-submit_time']
-
-
-class DeviceStateTransitionAdmin(admin.ModelAdmin):
-    def device_hostname(self, obj):
-        return obj.device.hostname
-
-    raw_id_fields = ['job']
-    list_filter = ('device__hostname', )
-    list_display = ('device_hostname', 'old_state', 'new_state', 'created_on')
-    fieldsets = (
-        ('State', {
-            'fields': ('device', 'old_state', 'new_state')}),
-        ('Metadata', {
-            'fields': ('created_by', 'job', 'message')})
-    )
 
 
 def disable_health_check_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
@@ -393,7 +305,6 @@ class TagAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Device, DeviceAdmin)
-admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag, TagAdmin)

@@ -18,11 +18,15 @@
 
 # pylint: disable=no-member,too-many-locals,too-many-nested-blocks,
 # pylint: disable=too-many-return-statements,ungrouped-imports
+
+from __future__ import unicode_literals
+
 import os
 import yaml
-import urllib
+import sys
 import logging
 import decimal
+
 from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
     TestSuite,
@@ -35,6 +39,13 @@ from lava_results_app.models import (
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_dispatcher.action import Timeout
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib import quote
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.parse import quote
 
 
 def _check_for_testset(result_dict, suite):
@@ -49,7 +60,7 @@ def _check_for_testset(result_dict, suite):
     testset = None
     if 'set' in result_dict:
         set_name = result_dict['set']
-        if set_name != urllib.quote(set_name):
+        if set_name != quote(set_name):
             msg = "Invalid testset name '%s', ignoring." % set_name
             suite.job.set_failure_comment(msg)
             logger.warning(msg)
@@ -201,7 +212,7 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
             'lava-server-version': packaged
         })
     for action in data:
-        deploy = [reduce(dict.get, ['deploy'], action)]
+        deploy = [dict.get(action, 'deploy')]
         count = 0
         for block in deploy:
             if not block:
@@ -212,7 +223,7 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
             if value:
                 retval['%s.method' % prefix] = value
                 count += 1
-        boot = [reduce(dict.get, ['boot'], action)]
+        boot = [dict.get(action, 'boot')]
         count = 0
         for block in boot:
             if not block:
@@ -229,15 +240,15 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
             if value:
                 retval['%s.type' % prefix] = value
             count += 1
-        test = [reduce(dict.get, ['test'], action)]
+        test = [dict.get(action, 'test')]
         count = 0
         for block in test:
             if not block:
                 continue
             namespace = block.get('namespace', None)
-            definitions = [reduce(dict.get, ['definitions'], block)][0]
+            definitions = [dict.get(block, 'definitions')][0]
             if not definitions:
-                monitors = [reduce(dict.get, ['monitors'], block)][0]
+                monitors = [dict.get(block, 'monitors')][0]
                 if monitors:
                     if isinstance(monitors, list):
                         for monitor in monitors:
@@ -249,7 +260,7 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-neste
                     if definition['from'] == 'inline':
                         run = definition['repository'].get('run', None)
                         # an inline repo without test cases will not get reported.
-                        steps = [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0] if run else None
+                        steps = [dict.get(run, 'steps')][0] if run else None
                         if steps is not None and 'lava-test-case' in steps:
                             prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
                         else:
@@ -420,7 +431,7 @@ def export_testcase(testcase, with_buglinks=False):
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get('extra', None)
-    if extra_data and isinstance(extra_data, unicode) and os.path.exists(extra_data):
+    if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
         with open(metadata['extra'], 'r') as extra_file:
             items = yaml.load(extra_file, Loader=yaml.CLoader)
         # hide the !!python OrderedDict prefix from the output.

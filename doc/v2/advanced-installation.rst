@@ -234,7 +234,7 @@ overlap.
 
 The ``favicon`` is configurable via the Apache configuration::
 
- Alias /favicon.ico /usr/share/lava-server/static/lava-server/images/logo.png
+ Alias /favicon.ico /usr/share/lava-server/static/lava_server/images/logo.png
 
 .. index:: security upgrades, unattended upgrades
 

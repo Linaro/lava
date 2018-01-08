@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagechartuser',
             name='is_delta',
-            field=models.BooleanField(default=False, verbose_name=b'Delta reporting'),
+            field=models.BooleanField(default=False, verbose_name='Delta reporting'),
             preserve_default=True,
         ),
     ]

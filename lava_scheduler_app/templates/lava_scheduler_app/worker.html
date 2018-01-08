@@ -75,11 +75,12 @@
   </div>
 </div>
 
-<h3 class="modal-header">Devices Attached</h3>
-{% block content_columns %}
+<hr/>
+<h3>Devices Attached</h3>
 {% render_table worker_device_table %}
 
-{% endblock %}
+<h3>Transitions</h3>
+{% render_table worker_log_table %}
 
 {% endblock %}
 

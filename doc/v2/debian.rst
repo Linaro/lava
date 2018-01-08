@@ -9,10 +9,13 @@ LAVA no longer supports development on Ubuntu.
 
 Packages for LAVA are available for:
 
-* Debian Jessie (oldstable) - with backports
 * Debian Stretch (stable) - with backports
 * Debian Buster (testing)
 * Debian Sid (unstable)
+
+Packages will remain available for Debian Jessie (oldstable) with backports
+until June 2018 as security support for Jessie will end. Developers are
+recommended to use Debian Stretch or Buster for development.
 
 When using the packages to develop LAVA, there is a change to the workflow
 compared to the old lava-deployment-tool buildouts.
@@ -26,7 +29,7 @@ compared to the old lava-deployment-tool buildouts.
    stable in Debian are always built in a stable chroot or VM for this
    reason.
 
-.. index:: developer - preparation, lava-dev
+.. index:: developer: preparation, lava-dev
 
 .. _developer_preparations:
 
@@ -39,13 +42,6 @@ intended primarily for developers working on laptops and other systems where
 a full desktop environment is already installed::
 
   $ sudo apt install lava-dev
-
-.. note:: There are problems with the version of ``python-sphinx`` in jessie
-   for building the documentation. Newer versions of ``lava-dev`` depend on
-   the version of ``python-sphinx`` from ``jessie-backports``::
-
-    $ sudo apt -t jessie-backports install python-sphinx
-    $ sudo apt install lava-dev
 
 If you want to build local packages on a headless box or a system with limited
 space, you can trim the set of dependencies by pre-installing
@@ -223,6 +219,60 @@ From August 2015, LAVA uses git tags without a leading zero on the month
 number, in accordance with PEP440, so the git tag will be ``2015.8`` instead of
 ``2015.07`` used for the previous release tag.
 
+.. index:: developer: python3
+
+.. _developer_python3:
+
+Development using Python3
+*************************
+
+LAVA has been moving towards Python3 support as an integral part of the
+migration to V2 and with the completion of the migration and the removal of the
+V1 codebase, `the announcement has been made
+<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_ that
+all LAVA packages will move exclusively to Python3 support.
+
+Both lava-server and lava-dispatcher optionally support running the unit tests
+with Python3 using the ``-a`` option to ``./ci-run``.
+
+In due course, the internal CI within LAVA (called ``lavabot``) will support
+running the Python3 unit tests for lava-server as well as lava-dispatcher. At
+this point, **all** reviews **must** pass the unit tests when run with Python3.
+
+Once builds for Debian Jessie cease, support for Python2 will be dropped and
+**only** Python3 will be supported.
+
+The 2018.2 release of LAVA will enable both Python2 and Python3, so that
+installations will bring in both sets of dependencies to allow both sets of
+unit tests to be run. At runtime, LAVA will still use Python2 for the 2018.1
+release but will switch over when support for Jessie ceases.
+
+In the meantime, the :ref:`dev_builds` can support Python3 by using the ``-b``
+option to specify the ``python3`` branch::
+
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b python3
+
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -b python3
+
+.. note:: The first time you install a package built using the ``python3``
+   branch, you are likely to see dependency failures which block the install.
+   Check the information about the newly built packages and ensure that the
+   relevant dependencies are installed. In particular,
+   ``python3-django-auth-ldap`` will need to be installed from
+   ``stretch-backports``.
+
+Python3 dependencies include:
+
+ python3-django (>= 1.8), python3-django-auth-ldap (>= 1.1.8),
+ python3-django-restricted-resource (>= 2015.09),
+ python3-django-tables2 (>=1.2), python3-docutils, python3-jinja2,
+ python3-markdown, python3-psycopg2, python3-simplejson,
+ python3-voluptuous (>= 0.8.8), python3:any (>= 3.3.2-2~),
+ python3-configobj, python3-magic, python3-netifaces (>=0.10.0),
+ python3-nose, python3-pexpect (>= 4.2), python3-pyudev (>= 0.21),
+ python3-requests, python3-serial, python3-setproctitle (>= 1.1.8),
+ python3-tz, python3-yaml, python3-zmq, python3-guestfs (>= 1.32.7)
+
 .. _quick_fixes:
 
 Quick fixes and testing
@@ -237,10 +287,8 @@ packages use python2.7, so the path is beneath
 
  $ sudo cp <git-path> /usr/lib/python2.7/dist-packages/<git-path>
 
-.. tip:: This path has recently changed - there are no files in
-         ``/usr/share/pyshared/`` after change in python2.7.
-         However, this does simplify changes which involve new
-         files.
+.. warning:: To fix failures in the Python3 unit tests, the **same** change
+   will also need to be copied to ``/usr/lib/python3/dist-packages/``.
 
 Viewing changes
 ***************

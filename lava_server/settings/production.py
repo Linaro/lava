@@ -20,7 +20,6 @@
 from lava_server.settings.common import *
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 # Add a memory based cache
 CACHES = {

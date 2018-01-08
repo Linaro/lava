@@ -94,7 +94,8 @@ add_refresh_click_event = function() {
 		if (data[0] == true) {
 		    $('#last_updated').html(data[1]);
                     $("#query_results").removeClass('disabled');
-                    $("#query_results").attr('title', '');
+                    $("#query_results").attr('title', 'View query results');
+                    $("#query_results").attr('href', query_url);
 		} else {
 		    bootbox.alert("Update failed: " + data[2]);
 		}

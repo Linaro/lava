@@ -14,13 +14,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='querycondition',
             name='operator',
-            field=models.CharField(default=b'exact', max_length=20, verbose_name='Operator', choices=[(b'exact', 'Exact match'), (b'iexact', 'Case-insensitive match'), (b'icontains', 'Contains'), (b'gt', 'Greater than'), (b'lt', 'Less than')]),
+            field=models.CharField(default='exact', max_length=20, verbose_name='Operator', choices=[('exact', 'Exact match'), ('iexact', 'Case-insensitive match'), ('icontains', 'Contains'), ('gt', 'Greater than'), ('lt', 'Less than')]),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='querycondition',
             name='value',
-            field=models.CharField(max_length=40, verbose_name=b'Field value'),
+            field=models.CharField(max_length=40, verbose_name='Field value'),
             preserve_default=True,
         ),
         migrations.AlterField(

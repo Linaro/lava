@@ -14,19 +14,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='query',
             name='is_changed',
-            field=models.BooleanField(default=False, verbose_name=b'Live query'),
+            field=models.BooleanField(default=False, verbose_name='Live query'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='query',
             name='is_live',
-            field=models.BooleanField(default=False, verbose_name=b'Live query'),
+            field=models.BooleanField(default=False, verbose_name='Live query'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='query',
             name='is_updating',
-            field=models.BooleanField(default=False, verbose_name=b'Live query'),
+            field=models.BooleanField(default=False, verbose_name='Live query'),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='querycondition',
             name='value',
-            field=models.CharField(max_length=20, verbose_name=b'Field value'),
+            field=models.CharField(max_length=20, verbose_name='Field value'),
             preserve_default=True,
         ),
     ]

@@ -140,6 +140,18 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``https://``
  * ``file://``
 
+.. _deploy_to_nbd_nfsroot_archive:
+
+archive
+-------
+
+Some nbdroot are compressed as a tarball (``.tar.*``), these nbdroot need the
+``archive`` option specified to unpack the nbdroot correctly.
+
+::
+
+   archive: tar
+
 .. _deploy_to_nbd_nfsroot_compression:
 
 compression

@@ -7,8 +7,8 @@
     <h2>LAVA Results for {{ job_link }}
     {% if not failed_definitions %}
       <span
-          class="label {% if job.status == job.COMPLETE %}label-success{% else %}label-warning{% endif %}"
-          {% if job.status == job.COMPLETE %}title="All submitted definitions have started execution."{% endif %}>{{ job.get_status_display }}
+          class="label {% if job.health == job.HEALTH_COMPLETE %}label-success{% else %}label-warning{% endif %}"
+          {% if job.health == job.HEALTH_COMPLETE %}title="All submitted definitions have started execution."{% endif %}>{{ job.get_state_display }}
       </span>
     {% endif %}
     </h2>

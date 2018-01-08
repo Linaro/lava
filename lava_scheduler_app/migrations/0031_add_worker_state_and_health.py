@@ -35,12 +35,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='worker',
             name='health',
-            field=models.IntegerField(choices=[(0, b'Active'), (1, b'Maintenance'), (2, b'Retired')], default=0),
+            field=models.IntegerField(choices=[(0, 'Active'), (1, 'Maintenance'), (2, 'Retired')], default=0),
         ),
         migrations.AddField(
             model_name='worker',
             name='state',
-            field=models.IntegerField(choices=[(0, b'Online'), (1, b'Offline')], default=1, editable=False),
+            field=models.IntegerField(choices=[(0, 'Online'), (1, 'Offline')], default=1, editable=False),
         ),
         migrations.RunPython(
             forwards_func,

@@ -314,6 +314,27 @@ method
 The boot ``method`` determines how the device is booted and which commands and
 prompts are used to determine a successful boot.
 
+.. index:: boot method depthcharge
+
+.. _boot_method_depthcharge:
+
+depthcharge
+===========
+
+The ``depthcharge`` boot method takes no arguments or parameters.  It is used
+to boot the downloaded kernel image, and optionally a device tree and a
+ramdisk.  The files are converted into an FIT (U-Boot Flattened Image Tree
+format) image suitable to be booted by Coreboot using the Depthcharge payload,
+typically used by Chrome OS devices.  It also creates a separate text file with
+the kernel command line which is made available to the :term:`DUT` over TFTP
+alongside the FIT image.
+
+.. code-block:: yaml
+
+  - boot:
+      method: depthcharge
+      commands: nfs
+
 .. index:: boot method fastboot
 
 .. _boot_method_fastboot:

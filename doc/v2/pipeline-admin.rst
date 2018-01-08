@@ -177,6 +177,50 @@ device types.
 
 https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
 
+.. _extra_device_configuration:
+
+Extra device configuration
+**************************
+
+There are a variety of optional elements of device configuration which need to
+be considered at an administrator level.
+
+.. seealso:: :ref:`device_dictionary_exported_parameters` and
+   :ref:`test_device_info`
+
+Providing permanent IPv4 addresses
+==================================
+
+Not all devices of one device-type will necessarily need fixed IPv4 addresses
+to be configured in the device dictionary. Admins should consider the use of
+:term`device tags`.
+
+Providing temporary filesystem storage
+======================================
+
+``lava-target-storage`` - Where devices have alternative storage media
+fitted, the id of the block device can be exported. For example, this can help
+provide temporary storage on the device when the test shell is running a
+ramdisk or NFS. Some devices may provide a USB mass storage device which could
+also be exported in this way.
+
+Test writers need to be able to rely on getting a known block device, without
+complications from enumeration at boot. If a second block device is desired,
+the ``method`` label could simply append a unique ID, ``SATA-1``, ``SATA-2``
+etc.
+
+Only a **single** block device is supported per method. The ``method`` itself
+is simply a label specified by the admin. Often it will relate to the interface
+used by the block device, e.g. ``SATA`` or ``USB`` but it could be any string.
+In the example below, ``UMS`` is the label used by the device (as an
+abbreviation for USB Mass Storage).
+
+.. caution:: Do **not** specify the ID for a partition as this **will change**
+   if a test changes the partition table. There must be **no** files on the
+   exported block device which are necessary for the device to reboot and
+   execute another test job successfully. Not all devices can support such
+   temporary storage.
+
 .. _dispatcher_configuration:
 
 Extra dispatcher configuration

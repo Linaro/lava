@@ -56,19 +56,9 @@ class DeviceTest(TestCaseWithFactory):
         logger = logging.getLogger('lava-master')
         logger.disabled = True
 
-    def test_put_into_looping_mode(self):
-        foo = DeviceType(name='foo')
-        device = Device(device_type=foo, hostname='foo01', status=Device.OFFLINE)
-        device.save()
-
-        device.put_into_looping_mode(None, None)
-
-        self.assertEqual(device.status, Device.IDLE, "should be IDLE")
-        self.assertEqual(device.health_status, Device.HEALTH_LOOPING, "should be LOOPING")
-
-    def test_access_while_hidden(self):
+    def test_access_while_private(self):
         hidden = DeviceType(name="hidden", owners_only=True)
-        device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
+        device = Device(device_type=hidden, hostname='hidden1', is_public=False)
         user = self.factory.make_user()
         device.user = user
         device.save()
@@ -80,7 +70,7 @@ class DeviceTest(TestCaseWithFactory):
 
     def test_access_retired_hidden(self):
         hidden = DeviceType(name="hidden", owners_only=True)
-        device = Device(device_type=hidden, hostname='hidden2', status=Device.RETIRED)
+        device = Device(device_type=hidden, hostname='hidden2', health=Device.HEALTH_RETIRED)
         user = self.factory.make_user()
         device.user = user
         device.save()
@@ -90,40 +80,6 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.can_submit(user2), False)
         # user cannot submit as the device is retired
         self.assertEqual(device.can_submit(user), False)
-
-    def test_maintenance_mode(self):
-        foo = DeviceType(name='foo')
-        device = Device(device_type=foo, hostname='foo01', status=Device.IDLE)
-        device.save()
-
-        device.put_into_maintenance_mode(None, None)
-
-        self.assertEqual(device.status, Device.OFFLINE, "should be offline")
-
-        device.status = Device.RUNNING
-        device.put_into_maintenance_mode(None, None)
-
-        self.assertEqual(device.status, Device.OFFLINING, "should be offlining")
-
-        device.status = Device.RETIRED
-        device.put_into_maintenance_mode(None, None)
-        self.assertEqual(device.status, Device.RETIRED, "should be retired")
-
-    def test_online_mode(self):
-        foo = DeviceType(name='foo')
-        device = Device(device_type=foo, hostname='foo02', status=Device.OFFLINE)
-        device.save()
-        device.put_into_online_mode(None, None)
-        self.assertEqual(device.status, Device.IDLE, "should be idle")
-
-        device.status = Device.OFFLINING
-        device.put_into_online_mode(None, None)
-        self.assertIsNone(device.current_job)
-        self.assertEqual(device.status, Device.IDLE, "should be idle")
-
-        device.status = Device.RETIRED
-        device.put_into_online_mode(None, None)
-        self.assertEqual(device.status, Device.RETIRED, "should be retired")
 
 
 class DeviceTypeTest(TestCaseWithFactory):
@@ -161,31 +117,3 @@ class DeviceTypeTest(TestCaseWithFactory):
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
-
-
-class TestLogEntry(TestCaseWithFactory):
-
-    def setUp(self):
-        super(TestLogEntry, self).setUp()
-        logger = logging.getLogger('lava-master')
-        logger.disabled = True
-
-    def test_create_logentry(self):
-        foo = DeviceType(name='foo')
-        device = Device(device_type=foo, hostname='foo01', status=Device.OFFLINE)
-        device.save()
-
-        # only unit tests should call these functions with None, None
-        # if that is made a requirement of the device status functions, fix this test.
-        device.put_into_looping_mode(None, None)
-        self.assertEqual(device.status, Device.IDLE, "should be IDLE")
-        self.assertEqual(device.health_status, Device.HEALTH_LOOPING, "should be LOOPING")
-        device_ct = ContentType.objects.get_for_model(Device)
-        self.assertEqual(0, len(LogEntry.objects.filter(content_type=device_ct, action_flag=2).order_by('-action_time')))
-
-        user = self.factory.make_user()
-        device.put_into_maintenance_mode(user, 'test_create_logentry')
-        self.assertEqual(device.status, Device.OFFLINE, "should be OFFLINE")
-        self.assertEqual(device.health_status, Device.HEALTH_UNKNOWN, "should be UNKNOWN")
-        # the device state transition also creates a log entry
-        self.assertEqual(2, len(LogEntry.objects.filter(content_type=device_ct, action_flag=2).order_by('-action_time')))

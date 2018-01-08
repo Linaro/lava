@@ -21,6 +21,8 @@ Views for the Results application
 Keep to just the response rendering functions
 """
 
+from __future__ import unicode_literals
+
 import os
 import csv
 import logging
@@ -39,7 +41,12 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
+from lava_results_app.tables import (
+    ResultsTable,
+    SuiteTable,
+    ResultsIndexTable,
+    TestJobResultsTable
+)
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import (
     export_testcase,
@@ -51,7 +58,7 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
-from lava_results_app.utils import check_request_auth
+from lava_results_app.utils import check_request_auth, get_testcases_with_limit
 from lava_results_app.models import (
     BugLink,
     QueryCondition,
@@ -111,8 +118,9 @@ def query(request):
 @BreadCrumb("Test job {job}", parent=index, needs=['job'])
 def testjob(request, job):
     job = get_restricted_job(request.user, pk=job, request=request)
-    data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    suite_table = ResultsTable(
+    data = ResultsView(request, model=TestSuite,
+                       table_class=TestJobResultsTable)
+    suite_table = TestJobResultsTable(
         data.get_table_data().filter(job=job)
     )
     failed_definitions = []
@@ -121,7 +129,7 @@ def testjob(request, job):
         # some duplicates can exist, so get would fail here and [0] is quicker than try except.
         testdata = TestData.objects.filter(
             testjob=job).prefetch_related('actionlevels__testcase', 'actionlevels__testcase__suite')[0]
-        if job.status in [TestJob.INCOMPLETE, TestJob.COMPLETE]:
+        if job.state == TestJob.STATE_FINISHED:
             # returns something like ['singlenode-advanced', 'smoke-tests-basic', 'smoke-tests-basic']
             executed = [
                 {
@@ -257,6 +265,9 @@ def suite_csv(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
     response = HttpResponse(content_type='text/csv')
     filename = "lava_%s.csv" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -266,7 +277,8 @@ def suite_csv(request, job, pk):
         extrasaction='ignore',
         fieldnames=testcase_export_fields())
     writer.writeheader()
-    for row in test_suite.testcase_set.all():
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
+    for row in testcases:
         writer.writerow(export_testcase(row))
     return response
 
@@ -284,11 +296,15 @@ def suite_csv_stream(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     check_request_auth(request, job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
 
     pseudo_buffer = StreamEcho()
     writer = csv.writer(pseudo_buffer)
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
     response = StreamingHttpResponse(
-        (writer.writerow(export_testcase(row)) for row in test_suite.test_cases.all()),
+        (writer.writerow(export_testcase(row)) for row in testcases),
         content_type="text/csv")
     filename = "lava_stream_%s.csv" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -299,11 +315,15 @@ def suite_yaml(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    querydict = request.GET
+    offset = querydict.get('offset', default=None)
+    limit = querydict.get('limit', default=None)
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_%s.yaml" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
-    for test_case in test_suite.testcase_set.all():
+    testcases = get_testcases_with_limit(test_suite, limit, offset)
+    for test_case in testcases:
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
     return response
@@ -400,7 +420,7 @@ def testcase(request, case_id, job=None, pk=None):
             logger.info("Unable to load extra case metadata for %s", extra_case)
             f_metadata = {}
         extra_data = f_metadata.get('extra', None)
-        if extra_data and isinstance(extra_data, unicode) and os.path.exists(extra_data):
+        if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
             with open(f_metadata['extra'], 'r') as extra_file:
                 items = yaml.load(extra_file, Loader=yaml.CLoader)
             # hide the !!python OrderedDict prefix from the output.

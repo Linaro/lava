@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='relative_index',
-            field=models.PositiveIntegerField(default=0, verbose_name=b'Order in the report'),
+            field=models.PositiveIntegerField(default=0, verbose_name='Order in the report'),
             preserve_default=True,
         ),
     ]

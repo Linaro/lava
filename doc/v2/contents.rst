@@ -221,6 +221,7 @@ LAVA developer guide
    debian
    packaging
    developer-example
+   scheduler
 
 .. _contents_migration:
 
