@@ -92,18 +92,17 @@ def schedule_health_checks_for_device_type(logger, dt):
         elif device.last_health_report_job is None:
             scheduling = True
         else:
+            submit_time = device.last_health_report_job.submit_time
             if dt.health_denominator == DeviceType.HEALTH_PER_JOB:
-                start_time = device.last_health_report_job.start_time
                 count = device.testjobs.filter(health_check=False,
-                                               start_time__gte=start_time).count()
+                                               start_time__gte=submit_time).count()
 
-                scheduling = count > dt.health_frequency
+                scheduling = count >= dt.health_frequency
             else:
-                last_hc = device.last_health_report_job.end_time
                 frequency = datetime.timedelta(hours=dt.health_frequency)
                 now = timezone.now()
 
-                scheduling = last_hc + frequency < now
+                scheduling = submit_time + frequency < now
 
         if not scheduling:
             available_devices.append(device.hostname)
