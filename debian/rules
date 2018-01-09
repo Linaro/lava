@@ -34,8 +34,8 @@ install_dir=$(call py_libdir, $(PYTHON2))
 override_dh_auto_build:
 	dh_auto_build
 	python setup.py build
-	make -C doc/v2/ html SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
-	make -C man/ man SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
 	dh_auto_install
