@@ -2,7 +2,7 @@ Hi,
 
 The job with id {{ job.id }} has finished.  It took {{ job.start_time|timesince:job.end_time }}.
 
-The final status was {{ job.get_status_display }}.
+The final status was {{ job.get_health_display }}.
 
 You can see more details at:
 

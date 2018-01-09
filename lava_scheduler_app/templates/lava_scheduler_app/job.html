@@ -46,8 +46,10 @@
     <dl class="dl-horizontal">
       <dt>Description</dt>
       <dd>{{job.description|default:"<i>not set</i>" }}</dd>
-      <dt>Status<dt>
-      <dd id="jobstatusdef">{{ job.get_status_display }}</dd>
+      <dt>State<dt>
+      <dd id="jobstatusdef">{{ job.get_state_display }}</dd>
+      <dt>Health<dt>
+      <dd>{{ job.get_health_display }}</dd>
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
       <dt>Submitter</dt>
