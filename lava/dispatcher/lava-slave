@@ -35,6 +35,7 @@ import atexit
 import errno
 import fcntl
 import logging
+import logging.handlers
 import lzma
 import os
 import re
@@ -377,7 +378,7 @@ def configure_logger(log_file, level):
     if log_file == "-":
         handler = logging.StreamHandler(sys.stdout)
     else:
-        handler = logging.FileHandler(log_file, "a")
+        handler = logging.handlers.WatchedFileHandler(log_file)
     handler.setFormatter(logging.Formatter(FORMAT))
     LOG.addHandler(handler)
 
@@ -619,16 +620,7 @@ def listen_to_master(master, jobs, poller, pipe_r, zmq_config, sock, timeout):
     if sockets.get(pipe_r) == zmq.POLLIN:
         signum = ord(os.read(pipe_r, 1))
         if signum == signal.SIGHUP:
-            LOG.info("SIGHUP received, restarting loggers")
-            handler = LOG.handlers[0]
-            if isinstance(handler, logging.FileHandler):
-                # Keep the filename and remove the handler
-                log_file = handler.baseFilename
-                LOG.removeHandler(handler)
-                # Re-create the handler
-                handler = logging.FileHandler(log_file, "a")
-                handler.setFormatter(logging.Formatter(FORMAT))
-                LOG.addHandler(handler)
+            LOG.info("SIGHUP received, ignoring")
         else:
             LOG.info("Received a signal, leaving")
             sys.exit(0)
