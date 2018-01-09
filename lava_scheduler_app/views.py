@@ -22,6 +22,7 @@ from django.template.loader import render_to_string
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
@@ -1941,39 +1942,29 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
-def _device_update_health(request, pk, health):
+@post_only
+def device_health(request, pk):
     try:
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
             if not device.can_admin(request.user):
                 return HttpResponseForbidden("Permission denied")
+
+            health = request.POST.get("health").upper()
+            reason = request.POST.get("reason")
+            if health not in Device.HEALTH_REVERSE:
+                return HttpResponseBadRequest("Wrong device health %s" % health)
+
             old_health_display = device.get_health_display()
-            device.health = health
+            device.health = Device.HEALTH_REVERSE[health]
             device.save()
-            device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+            if reason:
+                device.log_admin_entry(request.user, u"%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
+            else:
+                device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
         return HttpResponseRedirect(reverse("lava.scheduler.device.detail", args=[pk]))
     except Device.DoesNotExist:
         raise Http404("Device %s not found" % pk)
-
-
-def device_good(request, pk):
-    return _device_update_health(request, pk, Device.HEALTH_GOOD)
-
-
-def device_unknown(request, pk):
-    return _device_update_health(request, pk, Device.HEALTH_UNKNOWN)
-
-
-def device_looping(request, pk):
-    return _device_update_health(request, pk, Device.HEALTH_LOOPING)
-
-
-def device_maintenance(request, pk):
-    return _device_update_health(request, pk, Device.HEALTH_MAINTENANCE)
-
-
-def device_retired(request, pk):
-    return _device_update_health(request, pk, Device.HEALTH_RETIRED)
 
 
 @BreadCrumb("{pk}", parent=workers, needs=['pk'])
@@ -2005,39 +1996,25 @@ def worker_detail(request, pk):
         request=request))
 
 
-def worker_active(request, pk):
+@post_only
+def worker_health(request, pk):
     try:
         with transaction.atomic():
             worker = Worker.objects.select_for_update().get(pk=pk)
             if not worker.can_admin(request.user):
                 return HttpResponseForbidden("Permission denied")
-            worker.go_health_active(request.user)
-            worker.save()
-            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
-    except Worker.DoesNotExist:
-        raise Http404("Worker %s not found" % pk)
 
+            health = request.POST.get("health")
+            reason = request.POST.get("reason")
+            if health == "Active":
+                worker.go_health_active(request.user, reason)
+            elif health == "Maintenance":
+                worker.go_health_maintenance(request.user, reason)
+            elif health == "Retired":
+                worker.go_health_retired(request.user, reason)
+            else:
+                return HttpResponseBadRequest("Wrong worker health %s" % health)
 
-def worker_maintenance(request, pk):
-    try:
-        with transaction.atomic():
-            worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_admin(request.user):
-                return HttpResponseForbidden("Permission denied")
-            worker.go_health_maintenance(request.user)
-            worker.save()
-            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
-    except Worker.DoesNotExist:
-        raise Http404("Worker %s not found" % pk)
-
-
-def worker_retired(request, pk):
-    try:
-        with transaction.atomic():
-            worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_admin(request.user):
-                return HttpResponseForbidden("Permission denied")
-            worker.go_health_retired(request.user)
             worker.save()
             return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
     except Worker.DoesNotExist:
