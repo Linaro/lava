@@ -7,5 +7,7 @@ The final status was {{ job.get_health_display }}.
 You can see more details at:
 
   {{ url_prefix }}{{ job.get_absolute_url }}
+
+-- 
 LAVA
 Linaro Automated Validation
