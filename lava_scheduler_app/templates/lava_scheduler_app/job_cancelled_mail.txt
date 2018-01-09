@@ -7,5 +7,6 @@ You can see more details at:
 
   {{ url_prefix }}{{ job.get_absolute_url }}
 
+-- 
 LAVA
 Linaro Automated Validation

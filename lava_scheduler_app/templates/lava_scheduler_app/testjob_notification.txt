@@ -124,5 +124,6 @@ No query is set for results comparing.
 {%- endif %}{# verbosity #}
 {%- endif %}{# job state finished #}
 
+-- 
 LAVA
 Linaro Automated Validation Architecture
