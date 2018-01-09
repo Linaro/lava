@@ -2171,7 +2171,8 @@ class TestJob(RestrictedResource):
                             recipient.status = NotificationRecipient.SENT
                             recipient.save()
                     except (smtplib.SMTPRecipientsRefused, jinja2.exceptions.TemplateError,
-                            smtplib.SMTPSenderRefused, socket.error):
+                            smtplib.SMTPSenderRefused, socket.error) as exc:
+                        logger.exception(exc)
                         logger.warning("[%d] failed to send email notification to %s",
                                        self.id, recipient.email_address)
             else:  # IRC method
