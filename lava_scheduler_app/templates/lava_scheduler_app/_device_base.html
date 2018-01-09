@@ -65,9 +65,6 @@
       <dd>{{ device.get_simple_state_display }}</dd>
       <dt>Health</dt>
       <dd>
-        {% if can_admin %}
-        <div class="dropdown">
-        {% endif %}
         {% if device.health == device.HEALTH_GOOD %}
         <span class="label label-success">
         {% elif device.health == device.HEALTH_UNKNOWN or device.health == device.HEALTH_LOOPING %}
@@ -78,15 +75,37 @@
           {{ device.get_health_display }}
         </span>
         {% if can_admin %}
-          &nbsp;<span class="glyphicon glyphicon-pencil" id="device_health_menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"></span>
-          <ul class="dropdown-menu" aria-labelledby="device_health_menu">
-            {% if device.health != device.HEALTH_GOOD %}<li><a href="{% url 'lava.scheduler.device.good' device.pk %}">Good</a></li>{% endif %}
-            {% if device.health != device.HEALTH_UNKNOWN %}<li><a href="{% url 'lava.scheduler.device.unknown' device.pk %}">Unknown</a></li>{% endif %}
-            {% if device.health != device.HEALTH_LOOPING %}<li><a href="{% url 'lava.scheduler.device.looping' device.pk %}">Looping</a></li>{% endif %}
-            <li role="separator" class="divider"></li>
-            {% if device.health != device.HEALTH_MAINTENANCE %}<li><a href="{% url 'lava.scheduler.device.maintenance' device.pk %}">Maintenance</a></li>{% endif %}
-            {% if device.health != device.HEALTH_RETIRED %}<li><a href="{% url 'lava.scheduler.device.retired' device.pk %}">Retired</a></li>{% endif %}
-          </ul>
+        &nbsp;<span class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#healthModal"></span>
+        <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="healthModalLabel">Device health</h4>
+              </div>
+              <div class="modal-body">
+                <form method="post" action="{% url 'lava.scheduler.device.health' device.pk %}">
+                  {% csrf_token %}
+                  <div class="form-group">
+                    <label for="health" class="control-label">Health:</label>
+                    <select name="health" class="form-control" id="health">
+                      {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
+                      {% if device.health != device.HEALTH_UNKNOWN %}<option>Unknown</option>{% endif %}
+                      {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
+                      {% if device.health != device.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
+                      {% if device.health != device.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="reason" class="control-label">Reason:</label>
+                    <textarea name="reason" class="form-control" id="reason"></textarea>
+                  </div>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button class="btn btn-primary" type="submit">Set health</button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
         {% endif %}
       </dd>

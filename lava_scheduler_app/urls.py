@@ -1,9 +1,7 @@
 from django.conf.urls import url
 from lava_scheduler_app.views import (
     active_device_list, active_jobs, device_derestrict_device, device_detail,
-    device_good, device_unknown, device_looping,
-    device_maintenance, device_retired,
-    device_edit_description,
+    device_edit_description, device_health,
     device_type_health_history_log,
     mydevices_health_history_log, device_list, device_reports,
     device_restrict_device, device_type_detail, device_dictionary,
@@ -21,7 +19,7 @@ from lava_scheduler_app.views import (
     mydevice_list, myjobs, online_device_list,
     passing_health_checks, queue, reports,
     running, username_list_json,
-    worker_detail, worker_active, worker_maintenance, worker_retired, workers,
+    worker_detail, worker_health, workers,
     download_device_type_template, similar_jobs,)
 
 
@@ -46,12 +44,8 @@ urlpatterns = [
     url(r'^allworkers$', workers, name='lava.scheduler.workers'),
     url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)$', worker_detail,
         name='lava.scheduler.worker.detail'),
-    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/active$', worker_active,
-        name='lava.scheduler.worker.active'),
-    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/maintenance$', worker_maintenance,
-        name='lava.scheduler.worker.maintenance'),
-    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/retired$', worker_retired,
-        name='lava.scheduler.worker.retired'),
+    url(r'^worker/(?P<pk>[-_a-zA-Z0-9.]+)/health$', worker_health,
+        name='lava.scheduler.worker.health'),
     url(r'^labhealth/$', lab_health, name='lava.scheduler.labhealth'),
     url(r'^labhealth/device/(?P<pk>[-_a-zA-Z0-9.]+)$', health_job_list,
         name='lava.scheduler.labhealth.detail'),
@@ -111,16 +105,8 @@ urlpatterns = [
         device_edit_description,
         name='lava.scheduler.device.edit_description'),
 
-    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/good$', device_good,
-        name='lava.scheduler.device.good'),
-    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/unknown$', device_unknown,
-        name='lava.scheduler.device.unknown'),
-    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/looping$', device_looping,
-        name='lava.scheduler.device.looping'),
-    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/maintenance$', device_maintenance,
-        name='lava.scheduler.device.maintenance'),
-    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/retired$', device_retired,
-        name='lava.scheduler.device.retired'),
+    url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/health$', device_health,
+        name='lava.scheduler.device.health'),
 
     url(r'^alldevices/active$', active_device_list,
         name='lava.scheduler.active_devices'),

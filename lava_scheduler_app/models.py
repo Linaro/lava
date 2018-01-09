@@ -487,22 +487,31 @@ class Worker(models.Model):
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
-    def go_health_active(self, user):
-        self.log_admin_entry(user, "%s → Active" % self.get_health_display())
+    def go_health_active(self, user, reason=None):
+        if reason:
+            self.log_admin_entry(user, "%s → Active (%s)" % (self.get_health_display(), reason))
+        else:
+            self.log_admin_entry(user, "%s → Active" % self.get_health_display())
         for device in self.device_set.all().select_for_update():
             device.worker_signal("go_health_active", user, self.state, self.health)
             device.save()
         self.health = Worker.HEALTH_ACTIVE
 
-    def go_health_maintenance(self, user):
-        self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
+    def go_health_maintenance(self, user, reason=None):
+        if reason:
+            self.log_admin_entry(user, "%s → Maintenance (%s)" % (self.get_health_display(), reason))
+        else:
+            self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
         for device in self.device_set.all().select_for_update():
             device.worker_signal("go_health_maintenance", user, self.state, self.health)
             device.save()
         self.health = Worker.HEALTH_MAINTENANCE
 
-    def go_health_retired(self, user):
-        self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
+    def go_health_retired(self, user, reason=None):
+        if reason:
+            self.log_admin_entry(user, "%s → Retired (%s)" % (self.get_health_display(), reason))
+        else:
+            self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
         for device in self.device_set.all().select_for_update():
             device.worker_signal("go_health_retired", user, self.state, self.health)
             device.save()
@@ -792,19 +801,19 @@ class Device(RestrictedResource):
             # Only update health of devices in maintenance
             if self.health != Device.HEALTH_MAINTENANCE:
                 return
-            self.log_admin_entry(user, "%s → Unknown" % self.get_health_display())
+            self.log_admin_entry(user, "%s → Unknown (worker going active)" % self.get_health_display())
             self.health = Device.HEALTH_UNKNOWN
 
         elif signal == "go_health_maintenance":
             if self.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
                 return
-            self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
+            self.log_admin_entry(user, "%s → Maintenance (worker going maintenance)" % self.get_health_display())
             self.health = Device.HEALTH_MAINTENANCE
 
         elif signal == "go_health_retired":
             if self.health in [Device.HEALTH_BAD, Device.HEALTH_RETIRED]:
                 return
-            self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
+            self.log_admin_entry(user, "%s → Retired (worker going retired)" % self.get_health_display())
             self.health = Device.HEALTH_RETIRED
 
         else:

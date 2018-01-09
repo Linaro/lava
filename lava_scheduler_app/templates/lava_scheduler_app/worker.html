@@ -37,30 +37,52 @@
     <dl class="dl-horizontal">
       <dt>State</dt>
         {% if worker.state == worker.STATE_ONLINE %}
-      <dd><span class="label label-success">{{ worker.get_state_display }}</span></dd>
+      <dd class="text-success">{{ worker.get_state_display }}</dd>
         {% else %}
-      <dd><span class="label label-warning">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="glyphicon glyphicon-fire"></div>{% endif %}{{ worker.get_state_display }}</span></dd>
+      <dd class="text-danger">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="glyphicon glyphicon-fire"></div>&nbsp;{% endif %}{{ worker.get_state_display }}</dd>
         {% endif %}
       <dt>Health</dt>
+      <dd>
         {% if worker.health == worker.HEALTH_ACTIVE %}
-      <dd class="text-success">
+      <span class="label label-success">
         {% elif worker.health == worker.HEALTH_MAINTENANCE %}
-      <dd class="text-warning">
+      <span class="label label-warning">
         {% else %}
-      <dd class="text-danger">
+      <span class="label label-danger">
         {% endif %}
+        {{ worker.get_health_display }}
+      </span>
         {% if can_admin %}
-        <div class="dropdown">
-        {{ worker.get_health_display }}
-          <span class="glyphicon glyphicon-pencil" id="worker_health_menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"></span>
-          <ul class="dropdown-menu" aria-labelledby="worker_health_menu">
-            {% if worker.health != worker.HEALTH_ACTIVE %}<li><a href="{% url "lava.scheduler.worker.active" worker.pk %}">Active</a></li>{% endif %}
-            {% if worker.health != worker.HEALTH_MAINTENANCE %}<li><a href="{% url "lava.scheduler.worker.maintenance" worker.pk %}">Maintenance</a></li>{% endif %}
-            {% if worker.health != worker.HEALTH_RETIRED %}<li><a href="{% url "lava.scheduler.worker.retired" worker.pk %}">Retired</a></li>{% endif %}
-          </ul>
+        &nbsp;<span class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#healthModal"></span>
+        <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="healthModalLabel">Worker health</h4>
+              </div>
+              <div class="modal-body">
+                <form method="post" action="{% url 'lava.scheduler.worker.health' worker.pk %}">
+                  {% csrf_token %}
+                  <div class="form-group">
+                    <label for="health" class="control-label">Health:</label>
+                    <select name="health" class="form-control" id="health">
+                      {% if worker.health != worker.HEALTH_ACTIVE %}<option>Active</option>{% endif %}
+                      {% if worker.health != worker.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
+                      {% if worker.health != worker.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="reason" class="control-label">Reason:</label>
+                    <textarea name="reason" class="form-control" id="reason"></textarea>
+                  </div>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button class="btn btn-primary" type="submit">Set health</button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
-        {% else %}
-        {{ worker.get_health_display }}
         {% endif %}
       </dd>
     </dl>
