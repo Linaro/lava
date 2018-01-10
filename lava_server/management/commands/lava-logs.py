@@ -113,9 +113,15 @@ class Command(LAVADaemonCommand):
         # Create the sockets
         context = zmq.Context()
         self.log_socket = context.socket(zmq.PULL)
-        # TODO: use a ROUTER socket
-        self.controler = context.socket(zmq.DEALER)
+        self.controler = context.socket(zmq.ROUTER)
         self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
+        # Limit the number of messages in the queue
+        self.controler.setsockopt(zmq.SNDHWM, 2)
+        # TODO: remove when Jessie is not supported
+        if hasattr(zmq, "CONNECT_RID"):
+            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
+            # "Immediately readies that connection for data transfer with the master"
+            self.controler.setsockopt(zmq.CONNECT_RID, b"master")
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")
@@ -158,7 +164,7 @@ class Command(LAVADaemonCommand):
         self.logger.info("[INIT] listening for logs")
         # PING right now: the master is waiting for this message to start
         # scheduling.
-        self.controler.send_multipart([b"PING"])
+        self.controler.send_multipart([b"master", b"PING"])
 
         try:
             self.main_loop()
@@ -207,7 +213,7 @@ class Command(LAVADaemonCommand):
             if now - self.last_ping > self.ping_interval:
                 self.logger.debug("PING => master")
                 self.last_ping = now
-                self.controler.send_multipart([b"PING"])
+                self.controler.send_multipart([b"master", b"PING"])
 
     def wait_for_messages(self, leaving):
         try:
@@ -338,7 +344,18 @@ class Command(LAVADaemonCommand):
     def controler_socket(self):
         msg = self.controler.recv_multipart()
         try:
-            ping_interval = int(msg[1])
+            master_id = u(msg[0])
+            action = u(msg[1])
+            ping_interval = int(msg[2])
+
+            if master_id != "master":
+                self.logger.error("Invalid master id '%s'. Should be 'master'",
+                                  master_id)
+                return
+            if action != "PONG":
+                self.logger.error("Invalid answer '%s'. Should be 'PONG'",
+                                  action)
+                return
         except (IndexError, ValueError):
             self.logger.error("Invalid message '%s'", msg)
             return

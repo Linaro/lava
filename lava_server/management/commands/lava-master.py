@@ -59,7 +59,7 @@ else:
 # The slave does send the protocol version along with the HELLO and HELLO_RETRY
 # messages. If both version are not identical, the connection is refused by the
 # master.
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 3
 
 # Slave ping interval and timeout
 PING_INTERVAL = 20
@@ -583,6 +583,14 @@ class Command(LAVADaemonCommand):
             self.controler.curve_secretkey = master_secret
             self.controler.curve_server = True
 
+        self.controler.setsockopt(zmq.IDENTITY, b"master")
+        # TODO: remove when Jessie is not supported
+        if hasattr(zmq, "ROUTER_HANDOVER"):
+            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc42
+            # "If two clients use the same identity when connecting to a ROUTER
+            # [...] the ROUTER socket shall hand-over the connection to the new
+            # client and disconnect the existing one."
+            self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
         self.controler.bind(options['master_socket'])
 
         self.event_socket.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
