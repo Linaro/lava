@@ -168,7 +168,7 @@ class SchedulerJobsAPI(ExposedV2API):
             with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
                 count = 0
                 for _ in range(line):
-                    count += next(len(f_in))
+                    count += len(next(f_in))
                 f_in.seek(count)
                 return (job_finished, xmlrpclib.Binary(f_in.read().encode("utf-8")))
         except (IOError, StopIteration):
