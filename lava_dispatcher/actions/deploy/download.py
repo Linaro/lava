@@ -244,6 +244,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                                     key='file', value=image_name)
             self.set_namespace_data(action='download-action', label=self.key,
                                     key='image_arg', value=image_arg)
+            self.set_namespace_data(action='download-action', label=self.key,
+                                    key='compression', value=compression)
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
             compression = self.parameters[self.key].get('compression', None)
@@ -251,6 +253,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
+            self.set_namespace_data(action='download-action', label=self.key, key='compression', value=compression)
 
         if overlay:
             self.set_namespace_data(action='download-action', label=self.key, key='overlay', value=overlay)

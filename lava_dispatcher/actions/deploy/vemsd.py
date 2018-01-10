@@ -138,13 +138,12 @@ class ExtractVExpressRecoveryImage(Action):
         if not self.get_namespace_data(
                 action='download-action', label=self.param_key, key='file'):
             self.errors = "no file specified extract as %s" % self.param_key
-        self.compression = self.parameters[self.file_key].get('compression', None)
+        self.compression = self.get_namespace_data(
+            action='download-action', label=self.param_key, key='compression')
         if not self.compression:
             self.errors = "no compression set for recovery image"
 
     def run(self, connection, max_end_time, args=None):
-        if not self.parameters.get(self.param_key, None):  # idempotency
-            return connection
         connection = super(ExtractVExpressRecoveryImage, self).run(connection, max_end_time, args)
 
         # copy recovery image to a temporary directory and unpack
