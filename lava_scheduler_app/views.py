@@ -685,7 +685,7 @@ def device_type_detail(request, pk):
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
         submit_time__lt=now,
-        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
+        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count()
     weekly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
@@ -697,7 +697,7 @@ def device_type_detail(request, pk):
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
         submit_time__lt=now,
-        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
+        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count()
     monthly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
@@ -709,7 +709,7 @@ def device_type_detail(request, pk):
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
         submit_time__lt=now,
-        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
+        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count()
     health_summary_data = [{
         "Duration": "24hours",
         "Complete": daily_complete,
