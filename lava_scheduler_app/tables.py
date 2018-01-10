@@ -727,10 +727,10 @@ class OnlineDeviceTable(DeviceTable):
         exclude = [
             'worker_host', 'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description', 'current_job',
-            'last_health_report_job', 'health'
+            'last_health_report_job'
         ]
         sequence = [
-            'hostname', 'device_type', 'state', 'owner'
+            'hostname', 'device_type', 'state', 'health', 'owner'
         ]
         searches = {
             'hostname': 'contains',
