@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='query',
             name='limit',
-            field=models.PositiveIntegerField(default=200, validators=[django.core.validators.MinValueValidator(20)], verbose_name=b'Results limit'),
+            field=models.PositiveIntegerField(default=200, validators=[django.core.validators.MinValueValidator(20)], verbose_name='Results limit'),
         ),
     ]

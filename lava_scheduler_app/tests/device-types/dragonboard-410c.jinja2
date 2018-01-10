@@ -1,33 +1,7 @@
-{% extends 'base.jinja2' %}
+{% extends 'base-fastboot.jinja2' %}
 
-{% block vland %}
-{#  #}
-{% endblock vland %}
-
-{% block body %}
-device_type: dragonboard-410c
-adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
-fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
-fastboot_options: {{ fastboot_options|default([]) }}
-
-actions:
-  deploy:
-    methods:
-      lxc:
-      fastboot:
-    connections:
-      lxc:
-      serial:
-  boot:
-    connections:
-      lxc:
-      serial:
-    methods:
-      lxc:
-      fastboot:
-        - no-flash-boot
-        - auto-login
-        - shell-session
-        - export-env
-
-{% endblock body %}
+{% set device_type = 'dragonboard-410c' %}
+{% set fastboot_sequence = ['no-flash-boot', 'auto-login', 'shell-session', 'export-env'] %}
+{% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
+'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'cdt', 'boot', 'rootfs', 'vendor',
+'system', 'cache', 'userdata'] %}

@@ -22,7 +22,6 @@ protocols:
 #      kvm01: client
 #      kvm02: server
     group_size: 2
-    sub_id: 0
     timeout:
       seconds: 60
 

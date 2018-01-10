@@ -4,12 +4,12 @@ Dear {{ user.first_name }} {{ user.last_name }},
 Hello,
 {%- endif %}
 
-The job with ID # {{ job.id }} is now in status {{ job.get_status_display() }}. Job was submitted by {{ job.submitter.username }}.
+The job with ID # {{ job.id }} is now in state {{ job.get_state_display() }} and health {{ job.get_health_display() }}. Job was submitted by {{ job.submitter.username }}.
 
 Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 
 {# Send verbose emails only if the job is finished as complete or incomplete. #}
-{%- if job.status == 2 or job.status == 3 %}
+{%- if job.state == job.STATE_FINISHED %}
 {%- if job.notification.verbosity < 2 %}
 
 {% if job.actual_device %}
@@ -64,7 +64,8 @@ Query used: {{ url_prefix }}{{ query.link }}
 Last {{ job.notification.QUERY_LIMIT }} jobs:
 {%- for result in query.results %}
 Test job: {{ url_prefix }}{{ result.get_absolute_url() }}
-Status: {{ result.get_status_display() }}
+State: {{ result.get_state_display() }}
+Health: {{ result.get_health_display() }}
 {%- endfor %}
 
 {%- if query.compare_index is defined %}
@@ -121,7 +122,8 @@ No jobs with COMPLETE status to compare results with.
 No query is set for results comparing.
 {%- endif %}{# query #}
 {%- endif %}{# verbosity #}
-{%- endif %}{# job status #}
+{%- endif %}{# job state finished #}
 
+-- 
 LAVA
 Linaro Automated Validation Architecture

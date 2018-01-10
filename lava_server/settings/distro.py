@@ -10,9 +10,6 @@ from lava_server.settings.config_file import ConfigFile
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
 
-# Use timezone
-USE_TZ = True
-
 # Load the mount point from settings file
 MOUNT_POINT = distro_settings.mount_point
 
@@ -40,11 +37,11 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
 STATIC_URL = distro_settings.STATIC_URL
 
+# Allow only the connection through the reverse proxy
+ALLOWED_HOSTS = ['[::1]', '127.0.0.1', 'localhost']
+
 # List of absolute pathnames used to resolve templates.
 TEMPLATES = distro_settings.TEMPLATES
-
-# Like TEMPLATE_DIRS but for static files
-STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
 
 # A tuple that lists people who get code error notifications. When DEBUG=False
 # and a view raises an exception, Django will e-mail these people with the
@@ -92,8 +89,7 @@ if AUTH_LDAP_SERVER_URI:
         return types
 
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
-                               'django.contrib.auth.backends.ModelBackend'] + \
-        AUTHENTICATION_BACKENDS
+                               'django.contrib.auth.backends.ModelBackend']
 
     # Load credentials
     AUTH_LDAP_BIND_DN = distro_settings.get_setting("AUTH_LDAP_BIND_DN")
@@ -158,7 +154,7 @@ for regex in regexes:
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
-BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/logo.png')
+BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava_server/images/logo.png')
 BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
@@ -231,9 +227,6 @@ LOGGING = {
     }
 }
 
-# Scheduler options
-SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
-
 # Override ZMQ events defined in lava_scheduler_app.settings
 EVENT_NOTIFICATION = distro_settings.get_setting("EVENT_NOTIFICATION", EVENT_NOTIFICATION)
 INTERNAL_EVENT_SOCKET = distro_settings.get_setting("INTERNAL_EVENT_SOCKET", INTERNAL_EVENT_SOCKET)
@@ -256,10 +249,10 @@ connection_created.connect(set_timeout)
 # Allow Django System check framework settings override
 SILENCED_SYSTEM_CHECKS = distro_settings.get_setting("SILENCED_SYSTEM_CHECKS",
                                                      SILENCED_SYSTEM_CHECKS)
-SECURE_CONTENT_TYPE_NOSNIFF = distro_settings.get_setting(
-    "SECURE_CONTENT_TYPE_NOSNIFF", SECURE_CONTENT_TYPE_NOSNIFF)
-SECURE_BROWSER_XSS_FILTER = distro_settings.get_setting(
-    "SECURE_BROWSER_XSS_FILTER", SECURE_BROWSER_XSS_FILTER)
+SECURE_CONTENT_TYPE_NOSNIFF = distro_settings.get_setting("SECURE_CONTENT_TYPE_NOSNIFF",
+                                                          SECURE_CONTENT_TYPE_NOSNIFF)
+SECURE_BROWSER_XSS_FILTER = distro_settings.get_setting("SECURE_BROWSER_XSS_FILTER",
+                                                        SECURE_BROWSER_XSS_FILTER)
 SESSION_COOKIE_SECURE = distro_settings.get_setting("SESSION_COOKIE_SECURE",
                                                     SESSION_COOKIE_SECURE)
 CSRF_COOKIE_SECURE = distro_settings.get_setting("CSRF_COOKIE_SECURE",

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='is_aggregate_results',
-            field=models.BooleanField(default=False, verbose_name=b'Aggregate parametrized results'),
+            field=models.BooleanField(default=False, verbose_name='Aggregate parametrized results'),
             preserve_default=True,
         ),
     ]

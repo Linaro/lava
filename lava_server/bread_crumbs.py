@@ -47,10 +47,14 @@ will result in logged warnings (either a name of the URL being not
 constructible). To fix that simply add the missing keyword argument and reload.
 """
 
+from __future__ import unicode_literals
+
 from django.core.urlresolvers import reverse
+from django.utils.encoding import python_2_unicode_compatible
 import logging
 
 
+@python_2_unicode_compatible
 class BreadCrumb(object):
     """
     A crumb of bread left in the forest of pages to let you go back to (no, not
@@ -74,7 +78,7 @@ class BreadCrumb(object):
         self.parent = parent
         self.needs = needs or []
 
-    def __repr__(self):
+    def __str__(self):
         return "<BreadCrumb name=%r view=%r parent=%r>" % (
             self.name, self.view, self.parent)
 
@@ -122,6 +126,7 @@ class BreadCrumb(object):
             raise
 
 
+@python_2_unicode_compatible
 class LiveBreadCrumb(object):
     """
     Bread crumb instance as observed by a particular request.
@@ -138,7 +143,7 @@ class LiveBreadCrumb(object):
         self.bread_crumb = bread_crumb
         self.kwargs = kwargs
 
-    def __unicode__(self):
+    def __str__(self):
         return self.get_name()
 
     def get_name(self):

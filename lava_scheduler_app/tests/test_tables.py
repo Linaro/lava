@@ -105,7 +105,7 @@ class TestTestJobTable(TestCase):
                 for item in value:
                     proxied[key].append(str(item))
         self.assertEqual(proxied,
-                         {'search': ['Description', 'device', 'ID', 'status', 'Sub ID', 'submitter']})
+                         {'search': ['Description', 'device', 'ID', 'state', 'Sub ID', 'submitter']})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
         self.assertEqual(table.prepare_times_data(view), {'times': ['End time (hours)', 'Submit time (hours)']})
 
@@ -133,7 +133,7 @@ class TestPrefixJobTable(TestCase):
                     proxied[key].append(str(item))
 
         self.assertEqual(proxied,
-                         {self.prefix: ['Description', 'device', 'ID', 'status', 'Sub ID', 'submitter']})
+                         {self.prefix: ['Description', 'device', 'ID', 'state', 'Sub ID', 'submitter']})
         self.assertEqual(table.prepare_terms_data(view), {self.prefix: {}})
         self.assertEqual(table.prepare_times_data(view), {self.prefix: ['End time (hours)', 'Submit time (hours)']})
 
@@ -157,10 +157,10 @@ class TestForDeviceTable(TestCase):
         table = DeviceTable(view.get_table_data())
         self.assertEqual(table.prepare_search_data(view),
                          {'search': ['device_type',
-                                     'health_status',
+                                     'health',
                                      u'Hostname',
                                      'restrictions',
-                                     'status',
+                                     'state',
                                      'tags'
                                      ]})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
@@ -179,10 +179,10 @@ class TestForDeviceTable(TestCase):
         table = TestDeviceTable(view.get_table_data())
         self.assertEqual(table.prepare_search_data(view),
                          {'search': ['device_type',
-                                     'health_status',
+                                     'health',
                                      u'Hostname',
                                      'restrictions',
-                                     'status',
+                                     'state',
                                      'tags',
                                      ]})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
@@ -207,7 +207,7 @@ class TestHiddenDevicesInDeviceTable(TestCase):
     def test_device_table_view(self):
         device_type = DeviceType(name="generic", owners_only=False)
         device_type.save()  # pylint: disable=no-member
-        device = Device(device_type=device_type, hostname='generic1', status=Device.OFFLINE)
+        device = Device(device_type=device_type, hostname='generic1')
         user = self.make_user()
         device.user = user
         device.save()  # pylint: disable=no-member
@@ -217,7 +217,7 @@ class TestHiddenDevicesInDeviceTable(TestCase):
     def test_device_table_hidden(self):
         hidden = DeviceType(name="hidden", owners_only=True)
         hidden.save()  # pylint: disable=no-member
-        device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
+        device = Device(device_type=hidden, hostname='hidden1')
         device.save()  # pylint: disable=no-member
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 0)

@@ -259,6 +259,8 @@ Download or view the comple example:
 Terminology reference
 *********************
 
+.. _lava_test_job:
+
 LAVA Test Job
 =============
 
@@ -276,6 +278,8 @@ between the other LAVA Test Shell Definitions which do the bulk of the work.
 
 The test job definition is what is submitted to LAVA to generate a test job.
 
+.. _lava_test_shell_definition:
+
 LAVA Test Shell Definition
 ==========================
 
@@ -289,6 +293,8 @@ scripts to use for a particular deployment as it runs.
 Each line in the definition must be a single line of shell, with no redirects,
 functions or pipes. Ideally, the Test Shell Definition will consist of a
 single ``run`` step which simply calls the appropriate test writer script.
+
+.. _lava_test_helpers:
 
 LAVA Test Helpers
 =================
@@ -638,6 +644,79 @@ parameters are **not** exported. The test shell definition needs to support
 using the parameter and can then use that information to change how external
 programs behave. This may include using ``export``, it may include changing the
 command line options.
+
+.. index:: lava-target-ip, lava-target-mac, lava-target-storage
+
+.. _test_device_info:
+
+Obtaining information about the device
+**************************************
+
+.. seealso:: :ref:`device_dictionary_exported_parameters` for details of how
+   this support is described in the device dictionary.
+
+Some elements of the static device configuration are exposed to the test shell,
+where it is safe to do so and where the admin has explicitly configured the
+information. The information is exposed using test shell helpers which
+currently include:
+
+* ``lava-target-ip`` - Devices with a fixed IPv4 address will populate this
+  field. Test writers are able to use this in an LXC to connect to the device,
+  providing that the test shell has correctly raised a network connection and
+  suitable services are configured and running on the device::
+
+   ping -c4 $(lava-target-ip)
+
+* ``lava-target-mac`` - An alternative to ``lava-target-ip``, declaring the
+  MAC address of the device. Depending on the use case, this may be useful to
+  lookup the IP address of the device::
+
+   echo `lava-target-mac`
+
+* ``lava-target-storage`` - Where devices have alternative storage media
+  fitted, the id of the block device can be exported. For example, this can
+  help provide temporary storage on the device when the test shell is running
+  a ramdisk or NFS. Some devices may provide a USB mass storage device which
+  could also be exported in this way.
+
+  .. note:: This provision is designed to support temporary storage on devices
+     which typically boot over NFS or ramdisk etc. It is intended to allow test
+     writers to run operations which would typically fail without a local
+     filesystem or would block network traffic such that NFS would time out.
+
+  Only a **single** block device is supported per method. The ``method`` itself
+  is simply a label specified by the admin. Often it will relate to the interface
+  used by the block device, e.g. ``SATA`` or ``USB`` but it could be any string.
+  In the example below, ``UMS`` is the label used by the device (as an
+  abbreviation for USB Mass Storage).
+
+  .. seealso:: :ref:`extra_device_configuration` and :ref:`persistence` -
+     test writers are responsible for handling persistence issues. The
+     recommendation is that a new filesystem is created on the block device
+     each time it is to be used.
+
+  The output format contains one line per device, and each line contains
+  the method and the ID for the storage using that method, separated
+  by a TAB character::
+
+    $ lava-target-storage
+    UMS     /dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0xac2400d300000054-0:0
+    SATA    /dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW
+
+  Usage: ``lava-target-storage method``
+
+  The output format contains one line per device assigned to the specified
+  ID, with no whitespace. The matched method is not output.::
+
+    $ lava-target-storage UMS
+    /dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0xac2400d300000054-0:0
+
+  If there is no matching method, exit non-zero and output nothing.
+
+.. seealso:: :ref:`Exporting information into the test shell from the device
+   dictionary <device_dictionary_exported_parameters>`
+
+.. _test_attach:
 
 .. _recording_test_result_data:
 

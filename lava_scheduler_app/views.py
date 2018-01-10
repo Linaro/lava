@@ -1,27 +1,28 @@
-# pylint: disable=too-many-lines,invalid-name
+# -*- coding: utf-8 -*-
+# pylint: disable=too-many-lines,invalid-namlog_e
 from collections import OrderedDict
 import yaml
 import jinja2
-import json
 import logging
 import os
 import simplejson
 import datetime
-import urllib2
 import re
 import sys
 
 from django import forms
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
+from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.core.urlresolvers import reverse
-from django.db import connection, transaction
+from django.db import transaction
 from django.template.loader import render_to_string
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
 )
@@ -32,7 +33,7 @@ from django.shortcuts import (
     render,
 )
 from django.template import loader
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django_tables2 import (
@@ -49,7 +50,6 @@ from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    DeviceStateTransition,
     Tag,
     TestJob,
     TestJobUser,
@@ -61,10 +61,10 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     device_type_summary,
-    initiate_health_check_job,
     load_devicetype_template,
     testjob_submission
 )
+from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
 from lava_results_app.utils import (
@@ -85,6 +85,8 @@ from lava_scheduler_app.tables import (
     all_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
+    DeviceLogEntryTable,
+    LogEntryTable,
     LongestJobTable,
     DeviceTable,
     NoDTDeviceTable,
@@ -93,15 +95,20 @@ from lava_scheduler_app.tables import (
     DeviceTypeTable,
     WorkerTable,
     HealthJobSummaryTable,
-    DeviceTransitionTable,
     OverviewJobsTable,
     NoWorkerDeviceTable,
     QueueJobsTable,
-    DeviceTypeTransitionTable,
     OnlineDeviceTable,
     PassingHealthTable,
     RunningTable,
 )
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    from urllib2 import urlopen
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    from urllib.request import urlopen
 
 # pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
@@ -138,20 +145,20 @@ class JobTableView(LavaView):
         dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
         return Q(device_type__in=dt)
 
-    def job_status_query(self, term):
+    def job_state_query(self, term):
         # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in TestJob.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
+        matches = [p[0] for p in TestJob.STATE_CHOICES if term in p[1]]
+        return Q(state__in=matches)
 
-    def device_status_query(self, term):
+    def device_state_query(self, term):
         # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in Device.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
+        matches = [p[0] for p in Device.STATE_CHOICES if term in p[1]]
+        return Q(state__in=matches)
 
-    def health_status_query(self, term):
+    def device_health_query(self, term):
         # could use .lower() but that prevents matching Complete discrete from Incomplete
         matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
-        return Q(health_status__in=matches)
+        return Q(health__in=matches)
 
     def restriction_query(self, term):
         """
@@ -204,8 +211,8 @@ class JobTableView(LavaView):
 class FailureTableView(JobTableView):
 
     def get_queryset(self):
-        failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
-        jobs = all_jobs_with_custom_sort().filter(status__in=failures)
+        failures = [TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED]
+        jobs = all_jobs_with_custom_sort().filter(health__in=failures)
 
         health = self.request.GET.get('health_check', None)
         if health:
@@ -237,31 +244,65 @@ class WorkerView(JobTableView):
         return Worker.objects.exclude(health=Worker.HEALTH_RETIRED).order_by('hostname')
 
 
+class WorkersLogView(LavaView):
+
+    def get_queryset(self):
+        worker_ct = ContentType.objects.get_for_model(Worker)
+        return LogEntry.objects.filter(content_type=worker_ct).order_by("-action_time").select_related("user")
+
+
+class WorkerLogView(LavaView):
+
+    def __init__(self, worker, *args, **kwargs):
+        super(WorkerLogView, self).__init__(*args, **kwargs)
+        self.worker = worker
+
+    def get_queryset(self):
+        worker_ct = ContentType.objects.get_for_model(Worker)
+        device_ct = ContentType.objects.get_for_model(Device)
+        return LogEntry.objects.filter((Q(content_type=worker_ct) & Q(object_id=self.worker.hostname)) |
+                                       (Q(content_type=device_ct) & Q(object_id__in=self.worker.device_set.all()))) \
+                               .order_by("-action_time").select_related("user")
+
+
+class DevicesLogView(LavaView):
+    def __init__(self, devices, *args, **kwargs):
+        super(DevicesLogView, self).__init__(*args, **kwargs)
+        self.devices = devices
+
+    def get_queryset(self):
+        return LogEntry.objects.filter(object_id__in=[d.hostname for d in self.devices]).order_by("-action_time")
+
+
+class DeviceLogView(LavaView):
+    def __init__(self, device, *args, **kwargs):
+        super(DeviceLogView, self).__init__(*args, **kwargs)
+        self.device = device
+
+    def get_queryset(self):
+        return LogEntry.objects.filter(object_id=self.device.hostname).order_by("-action_time").select_related("user")
+
+
 def health_jobs_in_hr():
-    return TestJob.objects.values('actual_device').filter(
-        Q(health_check=True) & ~Q(actual_device=None)).exclude(
-            actual_device__status__in=[Device.RETIRED]).exclude(
-                status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
+    return TestJob.objects.values('actual_device') \
+                  .filter(Q(health_check=True) & ~Q(actual_device=None)) \
+                  .exclude(actual_device__health=Device.HEALTH_RETIRED) \
+                  .filter(state=TestJob.STATE_FINISHED).distinct()
 
 
 def _online_total():
     """ returns a tuple of (num_online, num_not_retired) """
-    r = Device.objects.all().values('status').annotate(count=Count('status'))
-    offline = total = 0
-    for res in r:
-        if res['status'] in [Device.OFFLINE, Device.OFFLINING]:
-            offline += res['count']
-        if res['status'] != Device.RETIRED:
-            total += res['count']
-
-    return total - offline, total
+    total = Device.objects.exclude(health=Device.HEALTH_RETIRED).count()
+    online = Device.objects.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
+                                   worker_host__state=Worker.STATE_ONLINE).count()
+    return (online, total)
 
 
 class IndexTableView(JobTableView):
 
     def get_queryset(self):
         return all_jobs_with_custom_sort()\
-            .filter(status__in=[TestJob.CANCELING, TestJob.RUNNING])
+            .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
 
 
 class DeviceTableView(JobTableView):
@@ -269,7 +310,6 @@ class DeviceTableView(JobTableView):
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
         return Device.objects.select_related("device_type", "worker_host",
-                                             "current_job__submitter",
                                              "user", "group") \
                              .prefetch_related("tags") \
                              .filter(device_type__in=visible,
@@ -285,12 +325,12 @@ def index(request):
 
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(
-        status=TestJob.COMPLETE).count()
+        health=TestJob.HEALTH_COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
     running_jobs_count = TestJob.objects.filter(
-        status=TestJob.RUNNING, actual_device__isnull=False).count()
+        state=TestJob.STATE_RUNNING, actual_device__isnull=False).count()
     active_devices_count = Device.objects.filter(
-        status__in=[Device.RESERVED, Device.RUNNING]).count()
+        state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING]).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -313,14 +353,20 @@ def index(request):
 
 @BreadCrumb("Workers", parent=index)
 def workers(request):
-    data = WorkerView(request, model=None, table_class=WorkerTable)
-    ptable = WorkerTable(data.get_table_data())
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    worker_data = WorkerView(request, model=Worker, table_class=WorkerTable)
+    worker_ptable = WorkerTable(worker_data.get_table_data(), prefix="worker_")
+    RequestConfig(request, paginate={"per_page": worker_ptable.length}).configure(worker_ptable)
+
+    worker_log_data = WorkersLogView(request, model=LogEntry, table_class=LogEntryTable)
+    worker_log_ptable = LogEntryTable(worker_log_data.get_table_data(), prefix="worker_log_")
+    RequestConfig(request, paginate={"per_page": worker_log_ptable.length}).configure(worker_log_ptable)
+
     return render(
         request,
         "lava_scheduler_app/allworkers.html",
         {
-            'worker_table': ptable,
+            'worker_table': worker_ptable,
+            'worker_log_table': worker_log_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(workers),
         })
 
@@ -332,14 +378,12 @@ def type_report_data(start_day, end_day, dt, health_check):
 
     res = TestJob.objects.filter(actual_device__in=Device.objects.filter(device_type=dt),
                                  health_check=health_check,
-                                 start_time__range=(start_date, end_date),
-                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
-                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+                                 start_time__range=(start_date, end_date))
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&device_type=%s&health_check=%d' % (start_day, end_day, dt, health_check)
     return {
-        'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'pass': res.filter(health=TestJob.HEALTH_COMPLETE).count(),
+        'fail': res.filter(health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
@@ -351,14 +395,12 @@ def device_report_data(start_day, end_day, device, health_check):
     end_date = now + datetime.timedelta(end_day)
 
     res = TestJob.objects.filter(actual_device=device, health_check=health_check,
-                                 start_time__range=(start_date, end_date),
-                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
-                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+                                 start_time__range=(start_date, end_date))
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&device=%s&health_check=%d' % (start_day, end_day, device.pk, health_check)
     return {
-        'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'pass': res.filter(health=TestJob.HEALTH_COMPLETE).count(),
+        'fail': res.filter(health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
@@ -370,13 +412,13 @@ def job_report(start_day, end_day, health_check):
     end_date = now + datetime.timedelta(end_day)
 
     res = TestJob.objects.filter(health_check=health_check,
-                                 start_time__range=(start_date, end_date)).values('status')
+                                 start_time__range=(start_date, end_date)) \
+                         .filter(state=TestJob.STATE_FINISHED).values('health')
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
-        'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.filter(status__in=(TestJob.INCOMPLETE, TestJob.CANCELED,
-                                       TestJob.CANCELING)).count(),
+        'pass': res.filter(health=TestJob.HEALTH_COMPLETE).count(),
+        'fail': res.filter(health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
@@ -470,7 +512,7 @@ class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
         q = super(OnlineDeviceView, self).get_queryset()
-        return q.exclude(status=Device.RETIRED)
+        return q.exclude(health__in=[Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED])
 
 
 @BreadCrumb("Online Devices", parent=index)
@@ -495,9 +537,9 @@ class PassingHealthTableView(DeviceTableView):
 
     def get_queryset(self):
         q = super(PassingHealthTableView, self).get_queryset()
-        q = q.exclude(status=Device.RETIRED)
+        q = q.exclude(health=Device.HEALTH_RETIRED)
         q = q.select_related("last_health_report_job", "last_health_report_job__actual_device")
-        return q.order_by("-health_status", "device_type", "hostname")
+        return q.order_by("-health", "device_type", "hostname")
 
 
 @BreadCrumb("Passing Health Checks", parent=index)
@@ -546,32 +588,23 @@ def mydevice_list(request):
 
 @BreadCrumb("My Devices Health History", parent=index)
 def mydevices_health_history_log(request):
-    prefix = "mydeviceshealthhistory_"
-    mydeviceshhistory_data = MyDevicesHealthHistoryView(request,
-                                                        model=DeviceStateTransition,
-                                                        table_class=DeviceTypeTransitionTable)
-    mydeviceshhistory_table = DeviceTypeTransitionTable(
-        mydeviceshhistory_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request,
-                           paginate={"per_page": mydeviceshhistory_table.length})
-    config.configure(mydeviceshhistory_table)
-    template = loader.get_template("lava_scheduler_app/mydevices_health_history_log.html")
-    return HttpResponse(template.render(
-        {
-            'mydeviceshealthhistory_table': mydeviceshhistory_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevices_health_history_log),
-        },
-        request=request))
+    devices = Device.objects.owned_by_principal(request.user)
+    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    devices_log_ptable = DeviceLogEntryTable(devices_log_data.get_table_data(),
+                                             prefix="devices_log_")
+    RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(devices_log_ptable)
+    return render(request,
+                  "lava_scheduler_app/mydevices_health_history_log.html",
+                  {'mydeviceshealthhistory_table': devices_log_ptable,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevices_health_history_log)})
 
 
-def get_restricted_job(user, pk, request=None):
+def get_restricted_job(user, pk, request=None, for_update=False):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object via the UI login AND via the REST API.
     """
     try:
-        job = TestJob.get_by_job_number(pk)
+        job = TestJob.get_by_job_number(pk, for_update)
     except TestJob.DoesNotExist:
         raise Http404("No TestJob matches the given query.")
     # handle REST API querystring as well as UI logins
@@ -600,14 +633,14 @@ class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
         q = super(ActiveDeviceView, self).get_queryset()
-        return q.exclude(status=Device.RETIRED)
+        return q.exclude(health=Device.HEALTH_RETIRED)
 
 
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
         q = super(DeviceHealthView, self).get_queryset()
-        q = q.exclude(status=Device.RETIRED)
+        q = q.exclude(health=Device.HEALTH_RETIRED)
         return q.select_related("last_health_report_job")
 
 
@@ -621,7 +654,7 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
+        return Device.objects.exclude(health=Device.HEALTH_RETIRED).order_by('hostname')
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
@@ -646,37 +679,37 @@ def device_type_detail(request, pk):
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
         submit_time__lt=now,
-        status=TestJob.COMPLETE).count()
+        health=TestJob.HEALTH_COMPLETE).count()
     daily_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
         submit_time__lt=now,
-        status=TestJob.INCOMPLETE).count()
+        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
     weekly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
         submit_time__lt=now,
-        status=TestJob.COMPLETE).count()
+        health=TestJob.HEALTH_COMPLETE).count()
     weekly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
         submit_time__lt=now,
-        status=TestJob.INCOMPLETE).count()
+        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
     monthly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
         submit_time__lt=now,
-        status=TestJob.COMPLETE).count()
+        health=TestJob.HEALTH_COMPLETE).count()
     monthly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
         submit_time__lt=now,
-        status=TestJob.INCOMPLETE).count()
+        health__in=[TestJob.HEALTH_CANCELED, testJob.HEALTH_INCOMPLETE]).count()
     health_summary_data = [{
         "Duration": "24hours",
         "Complete": daily_complete,
@@ -766,18 +799,16 @@ def device_type_detail(request, pk):
             'times_data': times_data,
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
-                status=TestJob.RUNNING).count(),
+                state=TestJob.STATE_RUNNING).count(),
             # going offline are still active - number for comparison with running jobs.
             'active_num': Device.objects.filter(
                 device_type=dt,
-                status__in=[Device.RUNNING, Device.RESERVED, Device.OFFLINING]).count(),
-            'queued_jobs_num': TestJob.objects.filter(
-                Q(status=TestJob.SUBMITTED),
-                Q(requested_device_type=dt) |
-                Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
-            'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
-            'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
+                state__in=[Device.STATE_RUNNING, Device.STATE_RESERVED]).count(),
+            'queued_jobs_num': TestJob.objects.filter(state=TestJob.STATE_SUBMITTED,
+                                                      requested_device_type=dt).count(),
+            'idle_num': Device.objects.filter(device_type=dt, state=Device.STATE_IDLE, health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]).count(),
+            'offline_num': Device.objects.filter(device_type=dt).exclude(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]).count(),
+            'retired_num': Device.objects.filter(device_type=dt, health=Device.HEALTH_RETIRED).count(),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
@@ -791,25 +822,17 @@ def device_type_detail(request, pk):
 @BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
-    prefix = "dthealthhistory_"
-    dthhistory_data = DTHealthHistoryView(request, device_type,
-                                          model=DeviceStateTransition,
-                                          table_class=DeviceTypeTransitionTable)
-    dthhistory_table = DeviceTypeTransitionTable(
-        dthhistory_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request,
-                           paginate={"per_page": dthhistory_table.length})
-    config.configure(dthhistory_table)
-    template = loader.get_template("lava_scheduler_app/device_type_health_history_log.html")
-    return HttpResponse(template.render(
-        {
-            'device_type': device_type,
-            'dthealthhistory_table': dthhistory_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk),
-        },
-        request=request))
+    devices = device_type.device_set.all()
+    devices_log_data = DevicesLogView(devices, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    devices_log_ptable = DeviceLogEntryTable(devices_log_data.get_table_data(),
+                                             prefix="devices_log_")
+    RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(devices_log_ptable)
+
+    return render(request,
+                  "lava_scheduler_app/device_type_health_history_log.html",
+                  {'device_type': device_type,
+                   'dthealthhistory_table': devices_log_ptable,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk)})
 
 
 @BreadCrumb("Report", parent=device_type_detail, needs=['pk'])
@@ -828,8 +851,8 @@ def device_type_reports(request, pk):
 
     long_running = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=device_type),
-        status__in=[TestJob.RUNNING,
-                    TestJob.CANCELING]).order_by('start_time')[:5]
+        state__in=[TestJob.STATE_RUNNING,
+                   TestJob.STATE_CANCELING]).order_by('start_time')[:5]
     template = loader.get_template("lava_scheduler_app/devicetype_reports.html")
     return HttpResponse(template.render(
         {
@@ -873,51 +896,21 @@ def lab_health(request):
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    trans_data = TransitionView(request, device)
-    trans_table = DeviceTransitionTable(trans_data.get_table_data())
-    config = RequestConfig(request, paginate={"per_page": trans_table.length})
-    config.configure(trans_table)
 
     health_data = AllJobsView(request)
     health_table = JobTable(health_data.get_table_data().filter(
         actual_device=device, health_check=True))
+    config = RequestConfig(request, paginate={"per_page": health_table.length})
     config.configure(health_table)
 
-    terms_data = trans_table.prepare_terms_data(trans_data)
-    terms_data.update(health_table.prepare_terms_data(health_data))
-
-    search_data = trans_table.prepare_search_data(trans_data)
-    search_data.update(health_table.prepare_search_data(health_data))
-
-    times_data = trans_table.prepare_times_data(trans_data)
-    times_data.update(health_table.prepare_times_data(health_data))
-
-    discrete_data = trans_table.prepare_discrete_data(trans_data)
-    discrete_data.update(health_table.prepare_discrete_data(health_data))
     template = loader.get_template("lava_scheduler_app/health_jobs.html")
     device_can_admin = device.can_admin(request.user)
     return HttpResponse(template.render(
         {
             'device': device,
-            "terms_data": terms_data,
-            "search_data": search_data,
-            "discrete_data": discrete_data,
-            "times_data": times_data,
-            'transition_table': trans_table,
             'health_job_table': health_table,
-            'show_forcehealthcheck':
-                device_can_admin and
-                device.status not in [Device.RETIRED] and
-                not device.device_type.disable_health_check and
-                device.get_health_check(),
             'can_admin': device_can_admin,
-            'show_maintenance':
-                device_can_admin and
-                device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'edit_description': device_can_admin,
-            'show_online':
-                device_can_admin and
-                device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
         request=request))
@@ -933,12 +926,12 @@ class MyJobsView(JobTableView):
 class LongestJobsView(JobTableView):
 
     def get_queryset(self):
-        jobs = TestJob.objects.select_related("actual_device", "requested_device",
+        jobs = TestJob.objects.select_related("actual_device",
                                               "requested_device_type", "group")\
             .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                          'requested_device_id, requested_device_type_id)',
+                                          'requested_device_type_id)',
                            'duration_sort': 'end_time - start_time'}).all()\
-            .filter(status__in=[TestJob.RUNNING, TestJob.CANCELING])
+            .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
         return jobs.order_by('start_time')
 
 
@@ -1011,7 +1004,6 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
-
         if request.is_ajax():
             try:
                 validate_job(request.POST.get("definition-input"))
@@ -1058,17 +1050,6 @@ def job_submit(request):
         return HttpResponse(template.render(response_data, request=request))
 
 
-def remove_broken_string(line):
-    # Check that the string is valid unicode.
-    # This is not needed for python3.
-    try:
-        line['msg'].encode('utf-8')
-    except AttributeError:
-        pass
-    except UnicodeDecodeError:
-        line['msg'] = '<<lava: broken line>>'
-
-
 @BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
@@ -1107,7 +1088,6 @@ def job_detail(request, pk):
         'show_failure': job.can_annotate(request.user),
         'show_resubmit': job.can_resubmit(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
-        'show_reload_page': job.status <= TestJob.RUNNING,
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         'is_favorite': is_favorite,
@@ -1169,10 +1149,6 @@ def job_detail(request, pk):
                             "id", flat=True)
                     if case_id:
                         line["msg"]["case_id"] = case_id[0]
-
-            if sys.version_info < (3, 0):
-                for line in log_data:
-                    remove_broken_string(line)
 
         except IOError:
             log_data = []
@@ -1391,7 +1367,7 @@ def job_status(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     response_dict = {'actual_device': "<i>...</i>",
                      'duration': "<i>...</i>",
-                     'job_status': job.get_status_display(),
+                     'job_state': job.get_state_display(),
                      'failure_comment': job.failure_comment,
                      'started': "<i>...</i>",
                      'subjobs': []}
@@ -1407,21 +1383,24 @@ def job_status(request, pk):
         response_dict['started'] = naturaltime(job.start_time)
         response_dict['duration'] = timeuntil(timezone.now(), job.start_time)
 
-    if job.status <= job.RUNNING:
-        response_dict['job_status'] = job.get_status_display()
-    elif job.status == job.COMPLETE:
-        response_dict['job_status'] = '<span class="label label-success">Complete</span>'
+    if job.state != job.STATE_FINISHED:
+        response_dict['job_state'] = job.get_state_display()
+    elif job.health == job.HEALTH_COMPLETE:
+        response_dict['job_state'] = '<span class="label label-success">Complete</span>'
+    elif job.health == job.HEALTH_INCOMPLETE:
+        response_dict['job_state'] = "<span class=\"label label-danger\">%s</span>" % job.get_health_display()
     else:
-        response_dict['job_status'] = "<span class=\"label label-danger\">%s</span>" % job.get_status_display()
+        response_dict['job_state'] = "<span class=\"label label-warning\">%s</span>" % job.get_health_display()
 
     if job.is_multinode:
         for subjob in job.sub_jobs_list:
-            response_dict['subjobs'].append((subjob.id, subjob.get_status_display()))
+            response_dict['subjobs'].append((subjob.id, subjob.get_state_display()))
 
-    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
-        response_dict['X-JobStatus'] = '1'
+    if job.state == TestJob.STATE_FINISHED:
+        response_dict['X-JobState'] = '1'
 
-    response = HttpResponse(json.dumps(response_dict), content_type='text/json')
+    response = HttpResponse(simplejson.dumps(response_dict),
+                            content_type='text/json')
     return response
 
 
@@ -1476,8 +1455,7 @@ def job_pipeline_timing(request, pk):
                 total_duration += duration
                 summary.append([d["action"], duration, 0])
 
-    levels = timings.keys()
-    levels.sort()
+    levels = sorted(timings.keys())
 
     # Construct the report
     pipeline = []
@@ -1504,7 +1482,8 @@ def job_pipeline_timing(request, pk):
         response_dict = {'timing': timing,
                          'graph': pipeline}
 
-    return HttpResponse(json.dumps(response_dict), content_type='text/json')
+    return HttpResponse(simplejson.dumps(response_dict),
+                        content_type='text/json')
 
 
 def job_log_file_plain(request, pk):
@@ -1546,7 +1525,7 @@ def job_log_pipeline_incremental(request, pk):
             # 2/ each item in this list is represented as one line in output.yaml
             count = 0
             for _ in range(first_line):
-                count += len(f_in.next())
+                count += len(next(f_in))
             # Seeking is needed to switch from reading lines to reading bytes.
             f_in.seek(count)
             # Load the remaining as yaml
@@ -1556,8 +1535,7 @@ def job_log_pipeline_incremental(request, pk):
                 data = []
             else:
                 for line in data:
-                    if sys.version_info < (3, 0):
-                        remove_broken_string(line)
+                    line["msg"] = udecode(line["msg"])
                     if line["lvl"] == "results":
                         case_id = TestCase.objects.filter(
                             suite__job=job,
@@ -1573,26 +1551,29 @@ def job_log_pipeline_incremental(request, pk):
     response = HttpResponse(
         simplejson.dumps(data), content_type='application/json')
 
-    if job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]:
+    if job.state == TestJob.STATE_FINISHED:
         response['X-Is-Finished'] = '1'
 
     return response
 
 
 def job_cancel(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    if job.can_cancel(request.user):
-        if job.is_multinode:
-            multinode_jobs = TestJob.objects.filter(
-                target_group=job.target_group)
-            for multinode_job in multinode_jobs:
-                multinode_job.cancel(request.user)
+    with transaction.atomic():
+        job = get_restricted_job(request.user, pk, request=request, for_update=True)
+        if job.can_cancel(request.user):
+            if job.is_multinode:
+                multinode_jobs = TestJob.objects.select_for_update().filter(
+                    target_group=job.target_group)
+                for multinode_job in multinode_jobs:
+                    multinode_job.go_state_canceling()
+                    multinode_job.save()
+            else:
+                job.go_state_canceling()
+                job.save()
+            return redirect(job)
         else:
-            job.cancel(request.user)
-        return redirect(job)
-    else:
-        return HttpResponseForbidden(
-            "you cannot cancel this job", content_type="text/plain")
+            return HttpResponseForbidden(
+                "you cannot cancel this job", content_type="text/plain")
 
 
 def job_resubmit(request, pk):
@@ -1610,9 +1591,9 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             original = job
+            job = testjob_submission(request.POST.get("definition-input"),
+                                     request.user, original_job=original)
             try:
-                job = testjob_submission(request.POST.get("definition-input"),
-                                         request.user, original_job=original)
 
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
@@ -1717,26 +1698,13 @@ def job_annotate_failure(request, pk):
         request=request))
 
 
-def job_json(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    json_text = simplejson.dumps({
-        'status': job.get_status_display(),
-        'results_link': request.build_absolute_uri(job.results_link),
-    })
-    content_type = 'application/json'
-    if 'callback' in request.GET:
-        json_text = '%s(%s)' % (request.GET['callback'], json_text)
-        content_type = 'text/javascript'
-    return HttpResponse(json_text, content_type=content_type)
-
-
 @post_only
 def get_remote_definition(request):
     """Fetches remote job definition file."""
     url = request.POST.get("url")
 
     try:
-        data = urllib2.urlopen(url).read()
+        data = urlopen(url).read()
         # Validate that the data at the location is really JSON or YAML.
         # This is security based check so noone can misuse this url.
         yaml.load(data)
@@ -1747,48 +1715,6 @@ def get_remote_definition(request):
     return HttpResponse(data)
 
 
-@post_only
-def edit_transition(request):
-    """Edit device state transition, based on user permission."""
-    trans_id = request.POST.get("id")
-    value = request.POST.get("value")
-
-    transition_obj = get_object_or_404(DeviceStateTransition, pk=trans_id)
-    if transition_obj.device.can_admin(request.user):
-        transition_obj.update_message(value)
-        return HttpResponse(transition_obj.message)
-    else:
-        return HttpResponseForbidden("Permission denied.",
-                                     content_type="text/plain")
-
-
-@BreadCrumb("Transition {pk}", parent=index, needs=['pk'])
-def transition_detail(request, pk):
-    transition = get_object_or_404(DeviceStateTransition, id=pk)
-    device_type = transition.device.device_type
-    if not device_type.some_devices_visible_to(request.user):
-        raise Http404('No device type matches the given query.')
-    trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
-    trans_table = DeviceTransitionTable(trans_data.get_table_data())
-    config = RequestConfig(request, paginate={"per_page": trans_table.length})
-    config.configure(trans_table)
-    template = loader.get_template("lava_scheduler_app/transition.html")
-    return HttpResponse(template.render(
-        {
-            'device': transition.device,
-            'transition': transition,
-            "length": trans_table.length,
-            "terms_data": trans_table.prepare_terms_data(trans_data),
-            "search_data": trans_table.prepare_search_data(trans_data),
-            "discrete_data": trans_table.prepare_discrete_data(trans_data),
-            'transition_table': trans_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(transition_detail, pk=pk),
-            'old_state': transition.get_old_state_display(),
-            'new_state': transition.get_new_state_display(),
-        },
-        request=request))
-
-
 class RecentJobsView(JobTableView):
 
     def __init__(self, request, device, **kwargs):
@@ -1797,81 +1723,6 @@ class RecentJobsView(JobTableView):
 
     def get_queryset(self):
         return all_jobs_with_custom_sort().filter(actual_device=self.device)
-
-
-class TransitionView(JobTableView):
-
-    def __init__(self, request, device, **kwargs):
-        super(TransitionView, self).__init__(request, **kwargs)
-        self.device = device
-
-    def get_queryset(self):
-        return DeviceStateTransition.objects.select_related(
-            'created_by'
-        ).filter(
-            device=self.device,
-        ).order_by(
-            '-id'
-        )
-
-
-class DeviceHealthHistoryView(JobTableView):
-
-    def __init__(self, request, device, **kwargs):
-        super(DeviceHealthHistoryView, self).__init__(request, **kwargs)
-        self.device = device
-
-    def get_queryset(self):
-        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
-
-        return DeviceStateTransition.objects.select_related(
-            'created_by'
-        ).filter(
-            (Q(old_state__in=states) | Q(new_state__in=states)),
-            device=self.device
-        ).order_by(
-            '-created_on'
-        )
-
-
-class DTHealthHistoryView(JobTableView):
-
-    def __init__(self, request, device_type, **kwargs):
-        super(DTHealthHistoryView, self).__init__(request, **kwargs)
-        self.device_type = device_type
-
-    def get_queryset(self):
-        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
-
-        return DeviceStateTransition.objects.select_related(
-            'device', 'created_by'
-        ).filter(
-            (Q(old_state__in=states) | Q(new_state__in=states)),
-            device__device_type=self.device_type
-        ).order_by(
-            'device',
-            '-created_on'
-        )
-
-
-class MyDevicesHealthHistoryView(JobTableView):
-
-    def __init__(self, request, **kwargs):
-        super(MyDevicesHealthHistoryView, self).__init__(request, **kwargs)
-
-    def get_queryset(self):
-        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
-
-        return DeviceStateTransition.objects.select_related(
-            'device', 'created_by'
-        ).filter(
-            (Q(old_state__in=states) | Q(new_state__in=states)),
-            created_by=self.request.user
-        ).order_by(
-            'device__device_type',
-            'device__hostname',
-            '-created_on'
-        )
 
 
 @BreadCrumb("{pk}", parent=device_list, needs=['pk'])
@@ -1891,7 +1742,7 @@ def device_detail(request, pk):
     # Find previous and next device
     devices = Device.objects \
         .filter(device_type_id=device.device_type_id) \
-        .only('hostname').order_by('hostname')
+        .only('hostname', 'state', 'health').order_by('hostname')
     previous_device = None
     next_device = None
     devices_iter = iter(devices)
@@ -1904,43 +1755,23 @@ def device_detail(request, pk):
             break
         previous_device = d.hostname
 
-    if device.status in [Device.OFFLINE, Device.OFFLINING]:
-        try:
-            transition = device.transitions.filter(message__isnull=False).latest('created_on').message
-        except DeviceStateTransition.DoesNotExist:
-            transition = None
-    else:
-        transition = None
-    recent_data = RecentJobsView(request, device, model=TestJob, table_class=RecentJobsTable)
     prefix = "recent_"
+    recent_data = RecentJobsView(request, device, model=TestJob, table_class=RecentJobsTable)
     recent_ptable = RecentJobsTable(
         recent_data.get_table_data(prefix),
         prefix=prefix,
     )
-
-    config = RequestConfig(request, paginate={"per_page": recent_ptable.length})
-    config.configure(recent_ptable)
-
-    prefix = "transition_"
-    trans_data = TransitionView(request, device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
-    trans_table = DeviceTransitionTable(
-        trans_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": trans_table.length})
-    config.configure(trans_table)
+    RequestConfig(request, paginate={"per_page": recent_ptable.length}).configure(recent_ptable)
 
     search_data = recent_ptable.prepare_search_data(recent_data)
-    search_data.update(trans_table.prepare_search_data(trans_data))
-
     discrete_data = recent_ptable.prepare_discrete_data(recent_data)
-    discrete_data.update(trans_table.prepare_discrete_data(trans_data))
-
     terms_data = recent_ptable.prepare_terms_data(recent_data)
-    terms_data.update(trans_table.prepare_terms_data(trans_data))
-
     times_data = recent_ptable.prepare_times_data(recent_data)
-    times_data.update(trans_table.prepare_times_data(trans_data))
+
+    device_log_data = DeviceLogView(device, request, model=LogEntry, table_class=DeviceLogEntryTable)
+    device_log_ptable = DeviceLogEntryTable(device_log_data.get_table_data(),
+                                            prefix="device_log_")
+    RequestConfig(request, paginate={"per_page": device_log_ptable.length}).configure(device_log_ptable)
 
     mismatch = False
 
@@ -1962,29 +1793,12 @@ def device_detail(request, pk):
             "terms_data": terms_data,
             "search_data": search_data,
             "discrete_data": discrete_data,
-            'transition': transition,
-            'transition_table': trans_table,
             'recent_job_table': recent_ptable,
-            'show_forcehealthcheck':
-                device_can_admin and
-                device.status not in [Device.RETIRED] and
-                not device.device_type.disable_health_check and
-                device.get_health_check(),
+            "device_log_table": device_log_ptable,
             'can_admin': device_can_admin,
             'exclusive': device.is_exclusive,
             'pipeline': device.is_pipeline,
-            'show_maintenance':
-                device_can_admin and
-                device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'edit_description': device_can_admin,
-            'show_online': (device_can_admin and
-                            device.status in [Device.OFFLINE, Device.OFFLINING]),
-            'show_restrict': (device.is_public and device_can_admin and
-                              device.status not in [Device.RETIRED]),
-            'show_pool': (not device.is_public and device_can_admin and
-                          device.status not in [Device.RETIRED] and not
-                          device.device_type.owners_only),
-            'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,
@@ -2072,8 +1886,8 @@ def device_reports(request, pk):
 
     long_running = TestJob.objects.filter(
         actual_device=device,
-        status__in=[TestJob.RUNNING,
-                    TestJob.CANCELING]).order_by('start_time')[:5]
+        state__in=[TestJob.STATE_RUNNING,
+                   TestJob.STATE_CANCELING]).order_by('start_time')[:5]
     template = loader.get_template("lava_scheduler_app/device_reports.html")
     return HttpResponse(template.render(
         {
@@ -2086,55 +1900,6 @@ def device_reports(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_reports, pk=pk),
         },
         request=request))
-
-
-@post_only
-def device_maintenance_mode(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        device.put_into_maintenance_mode(request.user, request.POST.get('reason'),
-                                         request.POST.get('notify'))
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot administer this device", content_type="text/plain")
-
-
-@post_only
-def device_online(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        device.put_into_online_mode(request.user, request.POST.get('reason'),
-                                    request.POST.get('skiphealthcheck'))
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot administer this device", content_type="text/plain")
-
-
-@post_only
-def device_looping_mode(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        device.put_into_looping_mode(request.user, request.POST.get('reason'))
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot administer this device", content_type="text/plain")
-
-
-@post_only
-def device_force_health_check(request, pk):
-    device = get_object_or_404(Device, pk=pk)
-    if device.can_admin(request.user):
-        job = initiate_health_check_job(device)
-        if not job:
-            raise Http404
-        device.log_admin_entry(request.user, "forced a health check")
-        return redirect(job)
-    else:
-        return HttpResponseForbidden(
-            "you cannot administer this device", content_type="text/plain")
 
 
 def device_edit_description(request, pk):
@@ -2177,28 +1942,29 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
-@BreadCrumb("{pk} device health history", parent=device_detail, needs=['pk'])
-def device_health_history_log(request, pk):
-    device = get_object_or_404(Device, pk=pk)
-    prefix = "healthhistory_"
-    hhistory_data = DeviceHealthHistoryView(request, device,
-                                            model=DeviceStateTransition,
-                                            table_class=DeviceTransitionTable)
-    hhistory_table = DeviceTransitionTable(
-        hhistory_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request,
-                           paginate={"per_page": hhistory_table.length})
-    config.configure(hhistory_table)
-    template = loader.get_template("lava_scheduler_app/device_health_history_log.html")
-    return HttpResponse(template.render(
-        {
-            'device': device,
-            'healthhistory_table': hhistory_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_health_history_log, pk=pk),
-        },
-        request=request))
+@post_only
+def device_health(request, pk):
+    try:
+        with transaction.atomic():
+            device = Device.objects.select_for_update().get(pk=pk)
+            if not device.can_admin(request.user):
+                return HttpResponseForbidden("Permission denied")
+
+            health = request.POST.get("health").upper()
+            reason = request.POST.get("reason")
+            if health not in Device.HEALTH_REVERSE:
+                return HttpResponseBadRequest("Wrong device health %s" % health)
+
+            old_health_display = device.get_health_display()
+            device.health = Device.HEALTH_REVERSE[health]
+            device.save()
+            if reason:
+                device.log_admin_entry(request.user, u"%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
+            else:
+                device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+        return HttpResponseRedirect(reverse("lava.scheduler.device.detail", args=[pk]))
+    except Device.DoesNotExist:
+        raise Http404("Device %s not found" % pk)
 
 
 @BreadCrumb("{pk}", parent=workers, needs=['pk'])
@@ -2207,11 +1973,18 @@ def worker_detail(request, pk):
     data = DeviceTableView(request)
     ptable = NoWorkerDeviceTable(data.get_table_data().filter(worker_host=worker).order_by('hostname'))
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+
+    worker_log_data = WorkerLogView(worker, request, model=LogEntry, table_class=LogEntryTable)
+    worker_log_ptable = LogEntryTable(worker_log_data.get_table_data(),
+                                      prefix="worker_log_")
+    RequestConfig(request, paginate={"per_page": worker_log_ptable.length}).configure(worker_log_ptable)
+
     template = loader.get_template("lava_scheduler_app/worker.html")
     return HttpResponse(template.render(
         {
-            'worker': worker,
-            'worker_device_table': ptable,
+            "worker": worker,
+            "worker_device_table": ptable,
+            "worker_log_table": worker_log_ptable,
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
@@ -2223,39 +1996,25 @@ def worker_detail(request, pk):
         request=request))
 
 
-def worker_active(request, pk):
+@post_only
+def worker_health(request, pk):
     try:
         with transaction.atomic():
             worker = Worker.objects.select_for_update().get(pk=pk)
             if not worker.can_admin(request.user):
                 return HttpResponseForbidden("Permission denied")
-            worker.go_health_active()
-            worker.save()
-            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
-    except Worker.DoesNotExist:
-        raise Http404("Worker %s not found" % pk)
 
+            health = request.POST.get("health")
+            reason = request.POST.get("reason")
+            if health == "Active":
+                worker.go_health_active(request.user, reason)
+            elif health == "Maintenance":
+                worker.go_health_maintenance(request.user, reason)
+            elif health == "Retired":
+                worker.go_health_retired(request.user, reason)
+            else:
+                return HttpResponseBadRequest("Wrong worker health %s" % health)
 
-def worker_maintenance(request, pk):
-    try:
-        with transaction.atomic():
-            worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_admin(request.user):
-                return HttpResponseForbidden("Permission denied")
-            worker.go_health_maintenance()
-            worker.save()
-            return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
-    except Worker.DoesNotExist:
-        raise Http404("Worker %s not found" % pk)
-
-
-def worker_retired(request, pk):
-    try:
-        with transaction.atomic():
-            worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_admin(request.user):
-                return HttpResponseForbidden("Permission denied")
-            worker.go_health_retired()
             worker.save()
             return HttpResponseRedirect(reverse("lava.scheduler.worker.detail", args=[pk]))
     except Worker.DoesNotExist:
@@ -2320,7 +2079,7 @@ def healthcheck(request):
 class QueueJobsView(JobTableView):
 
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(status=TestJob.SUBMITTED)
+        return all_jobs_with_custom_sort().filter(state=TestJob.STATE_SUBMITTED)
 
 
 @BreadCrumb("Queue", parent=job_list)
@@ -2359,7 +2118,7 @@ def running(request):
 
     retirements = []
     for dt in running_data.get_queryset():
-        if not Device.objects.filter(~Q(status=Device.RETIRED) & Q(device_type=dt)):
+        if not Device.objects.filter(~Q(health=Device.HEALTH_RETIRED) & Q(device_type=dt)):
             retirements.append(dt.name)
 
     template = loader.get_template("lava_scheduler_app/running.html")

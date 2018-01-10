@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagechartfilter',
             name='is_all_tests_included',
-            field=models.BooleanField(default=False, verbose_name=b'Include all tests from this filter'),
+            field=models.BooleanField(default=False, verbose_name='Include all tests from this filter'),
             preserve_default=True,
         ),
     ]

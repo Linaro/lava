@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='notification',
             name='job_status_trigger',
-            field=models.CharField(choices=[(0, b'Submitted'), (1, b'Running'), (2, b'Complete'), (3, b'Incomplete'), (4, b'Canceled'), (5, b'Canceling')], default=2, max_length=30, verbose_name='Job status trigger'),
+            field=models.CharField(choices=[(0, 'Submitted'), (1, 'Running'), (2, 'Complete'), (3, 'Incomplete'), (4, 'Canceled'), (5, 'Canceling')], default=2, max_length=30, verbose_name='Job status trigger'),
         ),
     ]

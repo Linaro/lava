@@ -1,15 +1,21 @@
-import os
+import django
 import logging
+import random
+from django.contrib.admin.models import (
+    ADDITION,
+    CHANGE,
+    LogEntry,
+)
 from django.template import defaultfilters as filters
-from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
+from django.utils.timesince import timesince
 import django_tables2 as tables
 from lava_scheduler_app.models import (
     TestJob,
     Device,
     DeviceType,
     Worker,
-    DeviceStateTransition,
 )
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
@@ -71,25 +77,21 @@ class ExpandedStatusColumn(tables.Column):
         with no current job.
         """
         logger = logging.getLogger('lava_scheduler_app')
-        if record.status == Device.RUNNING and record.current_job:
+        if record.state == Device.STATE_RUNNING:
+            current_job = record.current_job()
             return mark_safe("Running job #%s - %s submitted by %s" % (
-                pklink(record.current_job),
-                record.current_job.description,
-                record.current_job.submitter))
-        elif record.status == Device.RESERVED and record.current_job:
-            return mark_safe("Reserved for job #%s %s - %s submitted by %s" % (
-                pklink(record.current_job),
-                record.current_job.status,
-                record.current_job.description,
-                record.current_job.submitter))
-        elif record.status == Device.RESERVED and not record.current_job:
-            logger.error("%s is reserved with no current job.", record)
-            return mark_safe("Reserved with <b>no current job</b>.")
-        elif record.status == Device.RUNNING and not record.current_job:
-            logger.error("%s is running with no current job.", record)
-            return mark_safe("Running with <b>no current job</b>.")
+                pklink(current_job),
+                current_job.description,
+                current_job.submitter))
+        elif record.state == Device.STATE_RESERVED:
+            current_job = record.current_job()
+            return mark_safe("Reserved for job #%s (%s) \"%s\" submitted by %s" % (
+                pklink(current_job),
+                current_job.get_state_display(),
+                current_job.description,
+                current_job.submitter))
         else:
-            return Device.STATUS_CHOICES[record.status][1]
+            return record.get_simple_state_display()
 
 
 class RestrictedDeviceColumn(tables.Column):
@@ -106,7 +108,7 @@ class RestrictedDeviceColumn(tables.Column):
         :return: a text string describing the restrictions on this device.
         """
         label = None
-        if record.status == Device.RETIRED:
+        if record.health == Device.HEALTH_RETIRED:
             return "Retired, no submissions possible."
         if record.is_public:
             return ""
@@ -123,13 +125,12 @@ def all_jobs_with_custom_sort():
         "actual_device__user",
         "actual_device__group",
         "actual_device__device_type",
-        "requested_device",
         "requested_device_type",
         "submitter",
         "user",
         "group").extra(select={'device_sort': 'coalesce('
                                               'actual_device_id, '
-                                              'requested_device_id, requested_device_type_id)',
+                                              'requested_device_type_id)',
                                'duration_sort': "date_trunc('second', end_time - start_time)"}).all()
     return jobs.order_by('-submit_time')
 
@@ -159,28 +160,29 @@ class JobTable(LavaTable):
     submit_time = tables.DateColumn(format=u"Nd, g:ia")
     end_time = tables.DateColumn(format=u"Nd, g:ia")
 
-    def render_status(self, record):
-        text = 'text-default'
-        if record.status == TestJob.COMPLETE:
-            text = 'text-success'
-        elif record.status == TestJob.RUNNING:
-            text = 'text-info'
-        elif record.status == TestJob.INCOMPLETE:
-            text = 'text-danger'
-        elif record.status in [TestJob.CANCELING, TestJob.CANCELED]:
-            text = 'text-warning'
-        elif record.status == TestJob.SUBMITTED:
-            text = 'text-muted'
-        return mark_safe('<span class="%s"><strong>%s</strong></span>' %
-                         (text, TestJob.STATUS_CHOICES[record.status][1]))
+    def render_state(self, record):
+        if record.state == TestJob.STATE_RUNNING:
+            return mark_safe('<span class="text-info"><strong>%s</strong></span>' %
+                             record.get_state_display())
+        elif record.state == TestJob.STATE_FINISHED:
+            if record.health == TestJob.HEALTH_UNKNOWN:
+                text = 'text-default'
+            elif record.health == TestJob.HEALTH_COMPLETE:
+                text = 'text-success'
+            elif record.health == TestJob.HEALTH_INCOMPLETE:
+                text = 'text-danger'
+            elif record.health == TestJob.HEALTH_CANCELED:
+                text = 'text-warning'
+            return mark_safe('<span class="%s"><strong>%s</strong></span>' %
+                             (text, record.get_health_display()))
+        else:
+            return mark_safe('<span class="text-muted"><strong>%s</strong></span>' %
+                             record.get_state_display())
 
     def render_device(self, record):
         if record.actual_device:
             device_type = record.actual_device.device_type
             retval = pklink(record.actual_device)
-        elif record.requested_device:
-            device_type = record.requested_device.device_type
-            retval = pklink(record.requested_device)
         elif record.requested_device_type:
             device_type = record.requested_device_type
             retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
@@ -207,7 +209,6 @@ class JobTable(LavaTable):
             'group',
             'sub_id',
             'target_group',
-            'submit_token',
             'health_check',
             'definition',
             'original_definition',
@@ -216,17 +217,17 @@ class JobTable(LavaTable):
             '_results_link',
             'requested_device_type',
             'start_time',
-            'requested_device',
             'log_file',
             'actual_device',
+            'health'
         ]
         fields = (
-            'id', 'actions', 'status', 'priority', 'device',
+            'id', 'actions', 'state', 'health', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
         sequence = (
-            'id', 'actions', 'status', 'priority', 'device',
+            'id', 'actions', 'state', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
@@ -234,7 +235,7 @@ class JobTable(LavaTable):
         queries = {
             'device_query': "device",  # active_device
             'owner_query': "submitter",  # submitter
-            'job_status_query': 'status',
+            'job_state_query': 'state',
         }
         # fields which can be searched with default __contains queries
         # note the enums cannot be searched this way.
@@ -266,11 +267,11 @@ class IndexJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'actions', 'status', 'priority', 'device',
+            'id', 'actions', 'state', 'health', 'priority', 'device',
             'description', 'submitter', 'submit_time'
         )
         sequence = (
-            'id', 'actions', 'status', 'priority', 'device',
+            'id', 'actions', 'state', 'priority', 'device',
             'description', 'submitter', 'submit_time'
         )
         exclude = ('end_time', 'duration', )
@@ -279,7 +280,7 @@ class IndexJobTable(JobTable):
 class TagsColumn(tables.Column):
 
     def render(self, value):
-        tag_id = 'tag-%s' % os.urandom(4).encode('hex')
+        tag_id = 'tag-%s' % "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(8))
         tags = ''
         values = list(value.all())
         if len(values) > 0:
@@ -309,10 +310,10 @@ class FailedJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'actions', 'status', 'device', 'submit_time'
+            'id', 'actions', 'state', 'device', 'submit_time'
         )
         sequence = (
-            'id', 'actions', 'status', 'device', 'submit_time'
+            'id', 'actions', 'state', 'device', 'submit_time'
         )
         exclude = ('submitter', 'end_time', 'priority', 'description')
 
@@ -324,8 +325,6 @@ class LongestJobTable(JobTable):
     actions = tables.TemplateColumn(
         template_name="lava_scheduler_app/job_actions_field.html")
     actions.orderable = False
-    status = tables.Column()
-    status.orderable = False
     device = tables.Column(accessor='actual_device')
     device.orderable = False
     priority = tables.Column()
@@ -357,10 +356,10 @@ class LongestJobTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'actions', 'status', 'device'
+            'id', 'actions', 'state', 'device'
         )
         sequence = (
-            'id', 'actions', 'status', 'device'
+            'id', 'actions', 'state', 'device'
         )
         exclude = ('duration', 'end_time')
 
@@ -384,7 +383,7 @@ class OverviewJobsTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'actions', 'status', 'priority', 'device',
+            'id', 'actions', 'device',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
@@ -412,12 +411,12 @@ class RecentJobsTable(JobTable):
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
-            'id', 'actions', 'status', 'priority',
+            'id', 'actions',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
         sequence = (
-            'id', 'actions', 'status', 'priority',
+            'id', 'actions', 'state',
             'description', 'submitter', 'submit_time', 'end_time',
             'duration'
         )
@@ -443,7 +442,7 @@ class DeviceHealthTable(LavaTable):
     worker_host = tables.TemplateColumn('''
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
     ''')
-    health_status = tables.Column()
+    health = tables.Column()
     last_report_time = tables.DateColumn(
         verbose_name="last report time",
         accessor="last_health_report_job.end_time")
@@ -451,14 +450,14 @@ class DeviceHealthTable(LavaTable):
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         sequence = [
-            'hostname', 'worker_host', 'health_status', 'last_report_time',
+            'hostname', 'worker_host', 'health', 'last_report_time',
             'last_health_report_job'
         ]
         searches = {
             'hostname': 'contains',
         }
         queries = {
-            'health_status_query': 'health_status',
+            'device_health_query': 'health',
         }
 
 
@@ -485,10 +484,8 @@ class DeviceTypeTable(LavaTable):
 
     def render_queue(self, record):  # pylint: disable=no-self-use
         count = TestJob.objects.filter(
-            Q(status=TestJob.SUBMITTED),
-            Q(requested_device_type=record['device_type']) |
-            Q(requested_device__in=Device.objects.filter(device_type=record['device_type'])))\
-            .only('status', 'requested_device_type', 'requested_device').count()
+            Q(state=TestJob.STATE_SUBMITTED),
+            Q(requested_device_type=record['device_type'])).count()
         return count if count > 0 else ""
 
     name = tables.Column(accessor='idle', verbose_name='Name')
@@ -529,10 +526,10 @@ class DeviceTable(LavaTable):
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
     ''')
     device_type = tables.Column()
-    status = ExpandedStatusColumn("status")
+    state = ExpandedStatusColumn("state")
     owner = RestrictedDeviceColumn()
     owner.orderable = False
-    health_status = tables.Column(verbose_name='Health')
+    health = tables.Column(verbose_name='Health')
     tags = TagsColumn()
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -543,16 +540,16 @@ class DeviceTable(LavaTable):
             'current_job', 'last_health_report_job', 'is_pipeline'
         ]
         sequence = [
-            'hostname', 'worker_host', 'device_type', 'status',
-            'owner', 'health_status'
+            'hostname', 'worker_host', 'device_type', 'state',
+            'health', 'owner'
         ]
         searches = {
             'hostname': 'contains',
         }
         queries = {
             'device_type_query': 'device_type',
-            'device_status_query': 'status',
-            'health_status_query': 'health_status',
+            'device_state_query': 'state',
+            'device_health_query': 'health',
             'restriction_query': 'restrictions',
             'tags_query': 'tags'
         }
@@ -571,8 +568,8 @@ class NoDTDeviceTable(DeviceTable):
             'hostname': 'contains',
         }
         queries = {
-            'device_status_query': 'status',
-            'health_status_query': 'health_status',
+            'device_state_query': 'state',
+            'device_health_query': 'health',
         }
 
 
@@ -603,10 +600,57 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
         else:
             return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())
 
+    def render_last_ping(self, record):
+        return timesince(record.last_ping)
+
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
         sequence = [
             'hostname', 'state', 'health', 'description'
+        ]
+
+
+class LogEntryTable(tables.Table):
+
+    def __init__(self, *args, **kwargs):
+        super(LogEntryTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    action_time = tables.DateColumn(format=u"Nd, g:ia")
+    object_id = tables.Column(verbose_name="Name")
+    change_message = tables.Column(verbose_name="Reason", empty_values=[None])
+    change_message.orderable = False
+
+    def render_change_message(self, record):
+        if django.VERSION > (1, 10):
+            message = record.get_change_message()
+        else:
+            message = record.change_message
+        if record.is_change():
+            return message
+        elif record.is_addition():
+            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % message)
+        else:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % message)
+
+    class Meta(LavaTable.Meta):
+        model = LogEntry
+        fields = (
+            'action_time', 'object_id', 'user', 'change_message'
+        )
+        sequence = (
+            'action_time', 'object_id', 'user', 'change_message'
+        )
+
+
+class DeviceLogEntryTable(LogEntryTable):
+
+    class Meta(LogEntryTable.Meta):
+        sequence = (
+            'action_time', 'user', 'change_message'
+        )
+        exclude = [
+            'object_id'
         ]
 
 
@@ -617,14 +661,14 @@ class NoWorkerDeviceTable(DeviceTable):
             'worker_host',
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job'
+            'last_health_report_job'
         ]
         searches = {
             'hostname': 'contains',
         }
         queries = {
-            'device_status_query': 'status',
-            'health_status_query': 'health_status',
+            'device_state_query': 'state',
+            'device_health_query': 'health',
         }
 
 
@@ -637,39 +681,6 @@ class HealthJobSummaryTable(tables.Table):  # pylint: disable=too-few-public-met
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = None
-
-
-class DeviceTransitionTable(LavaTable):
-
-    def render_created_on(self, record):  # pylint: disable=no-self-use
-        t = record
-        base = "<a href='/scheduler/transition/%s'>%s</a>" \
-               % (record.id, filters.date(t.created_on, "Y-m-d H:i"))
-        return mark_safe(base)
-
-    def render_transition(self, record):  # pylint: disable=no-self-use
-        t = record
-        return mark_safe(
-            '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
-
-    created_on = tables.Column('when')
-    transition = tables.Column('transition', orderable=False, accessor='old_state')
-    created_by = tables.Column('by', accessor='created_by')
-    message = tables.TemplateColumn('''
-    <div class="edit_transition" id="{{ record.id }}" style="width: 100%">{{ record.message }}</div>
-        ''')
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        model = DeviceStateTransition
-        exclude = [
-            'device', 'job', 'old_state', 'new_state'
-        ]
-        sequence = [
-            'id', 'created_on', 'transition', 'created_by', 'message'
-        ]
-        searches = {}
-        queries = {}
-        times = {}
 
 
 class QueueJobsTable(JobTable):
@@ -700,26 +711,7 @@ class QueueJobsTable(JobTable):
             'id', 'actions', 'device', 'description', 'submitter',
             'submit_time', 'in_queue'
         )
-        exclude = ('status', 'priority', 'end_time', 'duration')
-
-
-class DeviceTypeTransitionTable(DeviceTransitionTable):
-
-    device = tables.TemplateColumn('''
-    <a href='/scheduler/device/{{ record.device.hostname }}'>{{ record.device.hostname}}</a>
-        ''')
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        model = DeviceStateTransition
-        exclude = [
-            'id', 'job', 'old_state', 'new_state'
-        ]
-        sequence = [
-            'device', 'created_on', 'transition', 'created_by', 'message'
-        ]
-        searches = {}
-        queries = {}
-        times = {}
+        exclude = ('state', 'health', 'priority', 'end_time', 'duration')
 
 
 class OnlineDeviceTable(DeviceTable):
@@ -728,30 +720,24 @@ class OnlineDeviceTable(DeviceTable):
         super(OnlineDeviceTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    def render_status(self, record):  # pylint: disable=no-self-use
-        status = Device.STATUS_CHOICES[record.status][1]
-        try:
-            t = DeviceStateTransition.objects.filter(device=record).order_by('-id')[0]
-        except IndexError:
-            return status
-        else:
-            return "%s (reason: %s)" % (status, t.message)
+    def render_state(self, record):  # pylint: disable=no-self-use
+        return record.get_state_display()
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         exclude = [
             'worker_host', 'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description', 'current_job',
-            'last_health_report_job', 'health_status'
+            'last_health_report_job'
         ]
         sequence = [
-            'hostname', 'device_type', 'status', 'owner'
+            'hostname', 'device_type', 'state', 'health', 'owner'
         ]
         searches = {
             'hostname': 'contains',
         }
         queries = {
             'device_type_query': 'device_type',
-            'device_status_query': 'status',
+            'device_state_query': 'state',
             'restriction_query': 'restrictions',
         }
 
@@ -777,14 +763,14 @@ class PassingHealthTable(DeviceHealthTable):
             'worker_host', 'last_report_time'
         ]
         sequence = [
-            'hostname', 'device_type', 'health_status',
+            'hostname', 'device_type', 'health',
             'last_health_report_job'
         ]
         searches = {
             'hostname': 'contains',
         }
         queries = {
-            'health_status_query': 'health_status',
+            'device_health_query': 'health',
         }
 
 
@@ -804,19 +790,18 @@ class RunningTable(LavaTable):
 
     def render_jobs(self, record):  # pylint: disable=no-self-use
         count = TestJob.objects.filter(
-            Q(status=TestJob.RUNNING),
+            Q(state=TestJob.STATE_RUNNING),
             Q(requested_device_type=record.name) |
-            Q(requested_device__in=Device.objects.filter(device_type=record.name)) |
             Q(actual_device__in=Device.objects.filter(device_type=record.name))
         ).count()
         return count if count > 0 else ""
 
     def render_reserved(self, record):  # pylint: disable=no-self-use
-        count = Device.objects.filter(device_type=record.name, status=Device.RESERVED).count()
+        count = Device.objects.filter(device_type=record.name, state=Device.STATE_RESERVED).count()
         return count if count > 0 else ""
 
     def render_running(self, record):  # pylint: disable=no-self-use
-        count = Device.objects.filter(device_type=record.name, status=Device.RUNNING).count()
+        count = Device.objects.filter(device_type=record.name, state=Device.STATE_RUNNING).count()
         return count if count > 0 else ""
 
     name = IDLinkColumn(accessor='name')

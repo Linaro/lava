@@ -16,12 +16,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='devicetype',
             name='health_denominator',
-            field=models.IntegerField(choices=[(0, b'hours'), (1, b'jobs')], default=0, help_text=b'Choose to submit a health check every N hours or every N jobs. Balance against the duration ofa health check job and the average job duration.', verbose_name=b'Initiate health checks by hours or by jobs.'),
+            field=models.IntegerField(choices=[(0, 'hours'), (1, 'jobs')], default=0, help_text='Choose to submit a health check every N hours or every N jobs. Balance against the duration ofa health check job and the average job duration.', verbose_name='Initiate health checks by hours or by jobs.'),
         ),
         migrations.AddField(
             model_name='devicetype',
             name='health_frequency',
-            field=models.IntegerField(default=24, verbose_name=b'How often to run health checks'),
+            field=models.IntegerField(default=24, verbose_name='How often to run health checks'),
         ),
         migrations.AlterField(
             model_name='devicetype',

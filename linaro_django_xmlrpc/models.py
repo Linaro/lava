@@ -20,15 +20,26 @@
 Empty module for Django to pick up this package as Django application
 """
 
+from __future__ import unicode_literals
+
 import inspect
 import logging
 import pydoc
 import random
-import xmlrpclib
+import sys
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
+
+from six import string_types
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class errors:
@@ -58,7 +69,7 @@ def _make_secret():
     # Set of valid characters for secret
     _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
     return ''.join((random.choice(_SECRET_CHARS)
-                    for i in xrange(128)))
+                    for i in range(128)))
 
 
 class AuthToken(models.Model):
@@ -326,7 +337,7 @@ class Mapper(object):
         methods = []
         for register_path in self.registered:
             cls = self.registered[register_path]
-            for method_name, impl in inspect.getmembers(cls, inspect.ismethod):
+            for method_name, impl in inspect.getmembers(cls, inspect.isroutine):
                 if method_name.startswith("_"):
                     continue
                 if register_path:
@@ -557,7 +568,7 @@ class SystemAPI(ExposedAPI):
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName not specified")
         methodName = subcall.pop('methodName')
-        if not isinstance(methodName, basestring):
+        if not isinstance(methodName, string_types):
             return xmlrpclib.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName must be a string")

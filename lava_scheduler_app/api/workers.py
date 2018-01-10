@@ -17,13 +17,20 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import xmlrpclib
+import sys
 
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Worker
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerWorkersAPI(ExposedV2API):
@@ -185,7 +192,8 @@ class SchedulerWorkersAPI(ExposedV2API):
                 "description": worker.description,
                 "state": worker.get_state_display(),
                 "health": worker.get_health_display(),
-                "devices": worker.device_set.count()}
+                "devices": [d.hostname for d in worker.device_set.all().order_by("hostname")],
+                "last_ping": worker.last_ping}
 
     @check_superuser
     def update(self, hostname, description=None, health=None):
@@ -212,24 +220,25 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         None
         """
-        try:
-            worker = Worker.objects.get(hostname=hostname)
-        except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
-                404, "Worker '%s' was not found." % hostname)
-
-        if description is not None:
-            worker.description = description
-
-        if health is not None:
-            if health == "ACTIVE":
-                worker.go_health_active()
-            elif health == "MAINTENANCE":
-                worker.go_health_maintenance()
-            elif health == "RETIRED":
-                worker.go_health_retired()
-            else:
+        with transaction.atomic():
+            try:
+                worker = Worker.objects.select_for_update().get(hostname=hostname)
+            except Worker.DoesNotExist:
                 raise xmlrpclib.Fault(
-                    400, "Invalid health: %s" % health)
+                    404, "Worker '%s' was not found." % hostname)
 
-        worker.save()
+            if description is not None:
+                worker.description = description
+
+            if health is not None:
+                if health == "ACTIVE":
+                    worker.go_health_active(self.user)
+                elif health == "MAINTENANCE":
+                    worker.go_health_maintenance(self.user)
+                elif health == "RETIRED":
+                    worker.go_health_retired(self.user)
+                else:
+                    raise xmlrpclib.Fault(
+                        400, "Invalid health: %s" % health)
+
+            worker.save()

@@ -3,12 +3,44 @@
 set -x
 set -e
 
+PEP8=1
+ALL=0
+
+while getopts ":pa" opt; do
+  case $opt in
+    p)
+      # pep8 only
+      PEP8=2
+      ;;
+    a)
+      # python3 and python2
+      ALL=1
+      ;;
+    \?)
+      echo "Usage:"
+      echo "-p - pep8 only"
+      echo "-a - run all tests: pep8, python2 and python3"
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND -1))
+
 echo "Checking pep8"
 pep8 --ignore E501,E722 .
+if [ ${PEP8} = 2 ]; then
+    exit 0
+fi
 
 echo "Removing old .pyc files"
 echo
 find . -name '*.pyc' -delete
+rm -rf ./.cache/
+
+echo "Starting unit tests"
+echo
 
 if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
   echo "If it exists, a broken test database will be deleted without prompting."
@@ -26,4 +58,15 @@ if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
 	lava_results_app
 else
   ./lava_server/manage.py test "$@"
+fi
+
+if [ ${ALL} = 1 ]; then
+    if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
+        python3 ./lava_server/manage.py test $NOINPUT $VERBOSE \
+        lava_scheduler_app \
+        linaro_django_xmlrpc.tests \
+        lava_results_app
+    else
+        python3 ./lava_server/manage.py test "$@"
+    fi
 fi

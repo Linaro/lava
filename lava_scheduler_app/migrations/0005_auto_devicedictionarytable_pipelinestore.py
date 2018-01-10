@@ -36,13 +36,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='device',
             name='is_pipeline',
-            field=models.BooleanField(default=False, verbose_name=b'Pipeline device?'),
+            field=models.BooleanField(default=False, verbose_name='Pipeline device?'),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='testjob',
             name='is_pipeline',
-            field=models.BooleanField(default=False, verbose_name=b'Pipeline job?', editable=False),
+            field=models.BooleanField(default=False, verbose_name='Pipeline job?', editable=False),
             preserve_default=True,
         ),
     ]

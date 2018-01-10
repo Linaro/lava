@@ -166,6 +166,14 @@ device_info: {{ device_info }}
 static_info: {{ static_info }}
 {% endif -%}
 
+{% if storage_info %}
+{# Test shell support for exposing temporary storage. #}
+{# admins need to ensure that the device dictionary sets this as a list of dictionaries,
+where each dictionary value can contain method names such as 'SATA' with the corresponding
+value of the block device ID such as '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW' #}
+storage_info: {{ storage_info }}
+{% endif -%}
+
 {% block fastboot %}
 {% if fastboot_serial_number %}
 flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',

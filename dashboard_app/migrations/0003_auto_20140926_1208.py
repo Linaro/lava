@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='ImageChartTestAttributeUser',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('is_visible', models.BooleanField(default=True, verbose_name=b'Visible')),
+                ('is_visible', models.BooleanField(default=True, verbose_name='Visible')),
                 ('image_chart_test_attribute', models.ForeignKey(to='dashboard_app.ImageChartTestAttribute')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
@@ -32,6 +32,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='imagereportchart',
             name='chart_type',
-            field=models.CharField(default=b'pass/fail', max_length=20, verbose_name=b'Chart type', choices=[(b'pass/fail', b'Pass/Fail'), (b'measurement', b'Measurement'), (b'attributes', b'Attributes')]),
+            field=models.CharField(default='pass/fail', max_length=20, verbose_name='Chart type', choices=[('pass/fail', 'Pass/Fail'), ('measurement', 'Measurement'), ('attributes', 'Attributes')]),
         ),
     ]

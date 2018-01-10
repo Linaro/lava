@@ -39,10 +39,12 @@ Simple integration for Django settings.py
  exists at /etc/lava-server/settings.conf
 """
 
+from __future__ import unicode_literals
+
 import django
 from lava_server.settings.secret_key import get_secret_key
 from lava_server.settings.config_file import ConfigFile
-import json
+import simplejson
 import os
 
 
@@ -89,8 +91,7 @@ class Settings(object):
         self._appname = appname
         self._settings = self._load_settings()
         self._mount_point = self._settings.get(
-            "MOUNT_POINT", mount_point
-        ).encode("UTF-8")  # ensure we're still in binary string mode
+            "MOUNT_POINT", mount_point)
         # NOTE: both lines in this order mean that empty mount point stays
         # empty and root mount point gets sanitized to empty as well.
         # Ensure trailing slash is there
@@ -117,7 +118,7 @@ class Settings(object):
         pathname = self._get_pathname("settings")
         if os.path.exists(pathname):
             with open(pathname, "r") as stream:
-                return json.load(stream)
+                return simplejson.load(stream)
         else:
             return {}
 
@@ -261,23 +262,6 @@ class Settings(object):
         from django.conf import settings
         default = settings.TEMPLATES
         return self._settings.get('TEMPLATES', default)
-
-    @property
-    def STATICFILES_DIRS(self):
-        """
-        Similar to TEMPLATE_DIRS but only for static files shipped with each application.
-
-        Bridge for the settings file STATICFILES_DIRS property.
-
-        By default it produces one tuple:
-
-            * (appname, ``"/usr/share/{appname}/htdocs/"``)
-
-        """
-        default = (
-            (self._appname, "/usr/share/{appname}/htdocs/".format(appname=self._appname)),
-        )
-        return self._settings.get("STATICFILES_DIRS", default)
 
     @property
     def ADMINS(self):

@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             name='Attachment',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('content', models.FileField(help_text='Attachment content', upload_to=b'attachments', null=True, verbose_name='Content')),
+                ('content', models.FileField(help_text='Attachment content', upload_to='attachments', null=True, verbose_name='Content')),
                 ('content_filename', models.CharField(help_text='Name of the original attachment', max_length=256, verbose_name='Content file name')),
                 ('mime_type', models.CharField(max_length=64, verbose_name='MIME type')),
                 ('public_url', models.URLField(max_length=512, verbose_name='Public URL', blank=True)),
@@ -48,8 +48,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('uploaded_on', models.DateTimeField(default=datetime.datetime.utcnow, verbose_name='Uploaded on', editable=False)),
                 ('is_deserialized', models.BooleanField(help_text='Set when document has been analyzed and loaded into the database', verbose_name='Is deserialized', editable=False)),
-                ('_raw_content', models.FileField(help_text='Document in Dashboard Bundle Format 1.0', upload_to=b'bundles', null=True, verbose_name='Content', db_column=b'content')),
-                ('_gz_content', models.FileField(db_column=b'gz_content', storage=dashboard_app.models.GzipFileSystemStorage(), upload_to=b'compressed-bundles', help_text='Compressed document in Dashboard Bundle Format 1.0', null=True, verbose_name='Compressed content')),
+                ('_raw_content', models.FileField(help_text='Document in Dashboard Bundle Format 1.0', upload_to='bundles', null=True, verbose_name='Content', db_column='content')),
+                ('_gz_content', models.FileField(db_column='gz_content', storage=dashboard_app.models.GzipFileSystemStorage(), upload_to='compressed-bundles', help_text='Compressed document in Dashboard Bundle Format 1.0', null=True, verbose_name='Compressed content')),
                 ('content_sha1', models.CharField(max_length=40, unique=True, null=True, editable=False)),
                 ('content_filename', models.CharField(help_text='Name of the originally uploaded bundle', max_length=256, verbose_name='Content file name')),
             ],
@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BundleDeserializationError',
             fields=[
-                ('bundle', models.OneToOneField(related_name=b'deserialization_error', primary_key=True, serialize=False, to='dashboard_app.Bundle')),
+                ('bundle', models.OneToOneField(related_name='deserialization_error', primary_key=True, serialize=False, to='dashboard_app.Bundle')),
                 ('error_message', models.CharField(max_length=1024)),
                 ('traceback', models.TextField(max_length=32768)),
             ],
@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
             name='ImageChartFilter',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('representation', models.CharField(default=b'lines', max_length=20, verbose_name=b'Representation', choices=[(b'lines', b'Lines'), (b'bars', b'Bars')])),
+                ('representation', models.CharField(default='lines', max_length=20, verbose_name='Representation', choices=[(b'lines', 'Lines'), (b'bars', 'Bars')])),
             ],
             options={
             },
@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
             name='ImageChartTestCaseUser',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('is_visible', models.BooleanField(default=True, verbose_name=b'Visible')),
+                ('is_visible', models.BooleanField(default=True, verbose_name='Visible')),
                 ('image_chart_test_case', models.ForeignKey(to='dashboard_app.ImageChartTestCase')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
@@ -177,7 +177,7 @@ class Migration(migrations.Migration):
             name='ImageChartTestUser',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('is_visible', models.BooleanField(default=True, verbose_name=b'Visible')),
+                ('is_visible', models.BooleanField(default=True, verbose_name='Visible')),
                 ('image_chart_test', models.ForeignKey(to='dashboard_app.ImageChartTest')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
@@ -190,9 +190,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('start_date', models.CharField(max_length=20)),
-                ('is_legend_visible', models.BooleanField(default=True, verbose_name=b'Toggle legend')),
-                ('has_subscription', models.BooleanField(default=False, verbose_name=b'Subscribed to target goal')),
-                ('toggle_percentage', models.BooleanField(default=False, verbose_name=b'Toggle percentage')),
+                ('is_legend_visible', models.BooleanField(default=True, verbose_name='Toggle legend')),
+                ('has_subscription', models.BooleanField(default=False, verbose_name='Subscribed to target goal')),
+                ('toggle_percentage', models.BooleanField(default=False, verbose_name='Toggle percentage')),
             ],
             options={
             },
@@ -204,7 +204,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.SlugField(unique=True, max_length=1024)),
                 ('description', models.TextField(null=True, blank=True)),
-                ('is_published', models.BooleanField(default=False, verbose_name=b'Published')),
+                ('is_published', models.BooleanField(default=False, verbose_name='Published')),
             ],
             options={
             },
@@ -216,10 +216,10 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField(null=True, blank=True)),
-                ('chart_type', models.CharField(default=b'pass/fail', max_length=20, verbose_name=b'Chart type', choices=[(b'pass/fail', b'Pass/Fail'), (b'measurement', b'Measurement')])),
-                ('target_goal', models.DecimalField(null=True, verbose_name=b'Target goal', max_digits=10, decimal_places=5, blank=True)),
-                ('is_interactive', models.BooleanField(default=False, verbose_name=b'Interactive')),
-                ('is_data_table_visible', models.BooleanField(default=False, verbose_name=b'Data table visible')),
+                ('chart_type', models.CharField(default='pass/fail', max_length=20, verbose_name='Chart type', choices=[(b'pass/fail', 'Pass/Fail'), (b'measurement', 'Measurement')])),
+                ('target_goal', models.DecimalField(null=True, verbose_name='Target goal', max_digits=10, decimal_places=5, blank=True)),
+                ('is_interactive', models.BooleanField(default=False, verbose_name='Interactive')),
+                ('is_data_table_visible', models.BooleanField(default=False, verbose_name='Data table visible')),
                 ('image_report', models.ForeignKey(default=None, to='dashboard_app.ImageReport')),
             ],
             options={
@@ -264,7 +264,7 @@ class Migration(migrations.Migration):
             name='PMQABundleStream',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('bundle_stream', models.ForeignKey(related_name=b'+', to='dashboard_app.BundleStream')),
+                ('bundle_stream', models.ForeignKey(related_name='+', to='dashboard_app.BundleStream')),
             ],
             options={
             },
@@ -301,8 +301,8 @@ class Migration(migrations.Migration):
                 ('branch_vcs', models.CharField(help_text='Maximum length: 10 characters', max_length=10, verbose_name='Branch VCS')),
                 ('branch_revision', models.CharField(help_text='Maximum length: 128 characters', max_length=128, verbose_name='Branch Revision')),
                 ('commit_timestamp', models.DateTimeField(help_text='Date and time of the commit (optional)', null=True, verbose_name='Commit Timestamp', blank=True)),
-                ('default_params', models.CharField(help_text=b'Default parameters for lava-test-shell.', max_length=1024, null=True, verbose_name='Default parameters', blank=True)),
-                ('test_params', models.CharField(help_text=b'Runtime test parameters for lava-test-shell.', max_length=1024, null=True, verbose_name='Test parameters', blank=True)),
+                ('default_params', models.CharField(help_text='Default parameters for lava-test-shell.', max_length=1024, null=True, verbose_name='Default parameters', blank=True)),
+                ('test_params', models.CharField(help_text='Runtime test parameters for lava-test-shell.', max_length=1024, null=True, verbose_name='Test parameters', blank=True)),
             ],
             options={
             },
@@ -336,7 +336,7 @@ class Migration(migrations.Migration):
                 ('test_case_id', models.TextField(verbose_name='Test case ID')),
                 ('name', models.TextField(help_text='Maximum length: 100 characters', verbose_name='Name', blank=True)),
                 ('units', models.TextField(help_text='Units in which measurement value should be\n                     interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.\n                     There is no semantical meaning inferred from the value of\n                     this field, free form text is allowed. <br/>Maximum length: 100 characters', verbose_name='Units', blank=True)),
-                ('test', models.ForeignKey(related_name=b'test_cases', to='dashboard_app.Test')),
+                ('test', models.ForeignKey(related_name='test_cases', to='dashboard_app.Test')),
             ],
             options={
             },
@@ -350,13 +350,13 @@ class Migration(migrations.Migration):
                 ('version', models.CharField(help_text='Maximum length: 256 characters', max_length=256, verbose_name='Version')),
                 ('description', models.TextField(verbose_name='Description')),
                 ('format', models.CharField(help_text='Maximum length: 128 characters', max_length=128, verbose_name='Format')),
-                ('location', models.CharField(default=b'LOCAL', max_length=64, verbose_name='Location', choices=[(b'LOCAL', b'Local'), (b'URL', b'URL'), (b'GIT', b'GIT Repo'), (b'BZR', b'BZR Repo')])),
+                ('location', models.CharField(default='LOCAL', max_length=64, verbose_name='Location', choices=[(b'LOCAL', 'Local'), (b'URL', 'URL'), (b'GIT', 'GIT Repo'), (b'BZR', 'BZR Repo')])),
                 ('url', models.CharField(help_text='Maximum length: 1024 characters', max_length=1024, verbose_name='URL')),
                 ('environment', models.CharField(help_text='Maximum length: 256 characters', max_length=256, verbose_name='Environment')),
                 ('target_os', models.CharField(help_text='Maximum length: 512 characters', max_length=512, verbose_name='Operating Systems')),
                 ('target_dev_types', models.CharField(help_text='Maximum length: 512 characters', max_length=512, verbose_name='Device types')),
-                ('content', models.FileField(help_text='Test definition file', upload_to=b'testdef', null=True, verbose_name='Upload Test Definition', blank=True)),
-                ('mime_type', models.CharField(default=b'text/plain', help_text='Maximum length: 64 characters', max_length=64, verbose_name='MIME type')),
+                ('content', models.FileField(help_text='Test definition file', upload_to='testdef', null=True, verbose_name='Upload Test Definition', blank=True)),
+                ('mime_type', models.CharField(default='text/plain', help_text='Maximum length: 64 characters', max_length=64, verbose_name='MIME type')),
             ],
             options={
             },
@@ -375,7 +375,7 @@ class Migration(migrations.Migration):
                 ('timestamp', models.DateTimeField(null=True, blank=True)),
                 ('relative_index', models.PositiveIntegerField(help_text='The relative order of test results in one test run')),
                 ('comments', models.TextField(null=True, blank=True)),
-                ('test_case', models.ForeignKey(related_name=b'test_results', blank=True, to='dashboard_app.TestCase', null=True)),
+                ('test_case', models.ForeignKey(related_name='test_results', blank=True, to='dashboard_app.TestCase', null=True)),
             ],
             options={
                 'ordering': ['relative_index'],
@@ -401,7 +401,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TestRunDenormalization',
             fields=[
-                ('test_run', models.OneToOneField(related_name=b'denormalization', primary_key=True, serialize=False, to='dashboard_app.TestRun')),
+                ('test_run', models.OneToOneField(related_name='denormalization', primary_key=True, serialize=False, to='dashboard_app.TestRun')),
                 ('count_pass', models.PositiveIntegerField()),
                 ('count_fail', models.PositiveIntegerField()),
                 ('count_skip', models.PositiveIntegerField()),
@@ -415,12 +415,12 @@ class Migration(migrations.Migration):
             name='TestRunFilter',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.SlugField(help_text=b'The <b>name</b> of a filter is used to refer to it in the web UI and in email notifications triggered by this filter.', max_length=1024)),
-                ('public', models.BooleanField(default=False, help_text=b'Whether other users can see this filter.')),
-                ('build_number_attribute', models.CharField(help_text=b'For some filters, there is a natural <b>build number</b>.  If you specify the name of the attribute that contains the build number here, the results of the filter will be grouped and ordered by this build number.', max_length=1024, null=True, blank=True)),
-                ('bundle_streams', models.ManyToManyField(help_text=b'A filter only matches tests within the given <b>bundle streams</b>.', to='dashboard_app.BundleStream')),
+                ('name', models.SlugField(help_text='The <b>name</b> of a filter is used to refer to it in the web UI and in email notifications triggered by this filter.', max_length=1024)),
+                ('public', models.BooleanField(default=False, help_text='Whether other users can see this filter.')),
+                ('build_number_attribute', models.CharField(help_text='For some filters, there is a natural <b>build number</b>.  If you specify the name of the attribute that contains the build number here, the results of the filter will be grouped and ordered by this build number.', max_length=1024, null=True, blank=True)),
+                ('bundle_streams', models.ManyToManyField(help_text='A filter only matches tests within the given <b>bundle streams</b>.', to='dashboard_app.BundleStream')),
                 ('owner', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('uploaded_by', models.ForeignKey(related_name=b'+', blank=True, to=settings.AUTH_USER_MODEL, help_text=b'Only consider bundles uploaded by this user', null=True)),
+                ('uploaded_by', models.ForeignKey(related_name='+', blank=True, to=settings.AUTH_USER_MODEL, help_text='Only consider bundles uploaded by this user', null=True)),
             ],
             options={
             },
@@ -432,7 +432,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=1024)),
                 ('value', models.CharField(max_length=1024)),
-                ('filter', models.ForeignKey(related_name=b'attributes', to='dashboard_app.TestRunFilter')),
+                ('filter', models.ForeignKey(related_name='attributes', to='dashboard_app.TestRunFilter')),
             ],
             options={
             },
@@ -442,7 +442,7 @@ class Migration(migrations.Migration):
             name='TestRunFilterSubscription',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('level', models.IntegerField(default=0, help_text=b'You can choose to be <b>notified by email</b>:<ul><li>whenever a test that matches the criteria of this filter is executed</li><li>only when a test that matches the criteria of this filter fails</ul>', choices=[(0, b'Only when failed'), (1, b'Always')])),
+                ('level', models.IntegerField(default=0, help_text='You can choose to be <b>notified by email</b>:<ul><li>whenever a test that matches the criteria of this filter is executed</li><li>only when a test that matches the criteria of this filter fails</ul>', choices=[(0, 'Only when failed'), (1, 'Always')])),
                 ('filter', models.ForeignKey(to='dashboard_app.TestRunFilter')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
@@ -455,8 +455,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('index', models.PositiveIntegerField(help_text='The index of this test in the filter')),
-                ('filter', models.ForeignKey(related_name=b'tests', to='dashboard_app.TestRunFilter')),
-                ('test', models.ForeignKey(related_name=b'+', to='dashboard_app.Test')),
+                ('filter', models.ForeignKey(related_name='tests', to='dashboard_app.TestRunFilter')),
+                ('test', models.ForeignKey(related_name='+', to='dashboard_app.Test')),
             ],
             options={
             },
@@ -467,8 +467,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('index', models.PositiveIntegerField(help_text='The index of this case in the test')),
-                ('test', models.ForeignKey(related_name=b'cases', to='dashboard_app.TestRunFilterTest')),
-                ('test_case', models.ForeignKey(related_name=b'+', to='dashboard_app.TestCase')),
+                ('test', models.ForeignKey(related_name='cases', to='dashboard_app.TestRunFilterTest')),
+                ('test_case', models.ForeignKey(related_name='+', to='dashboard_app.TestCase')),
             ],
             options={
             },
@@ -485,43 +485,43 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='testrun',
             name='bundle',
-            field=models.ForeignKey(related_name=b'test_runs', to='dashboard_app.Bundle'),
+            field=models.ForeignKey(related_name='test_runs', to='dashboard_app.Bundle'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testrun',
             name='devices',
-            field=models.ManyToManyField(related_name=b'test_runs', verbose_name='Hardware devices', to='dashboard_app.HardwareDevice', blank=True),
+            field=models.ManyToManyField(related_name='test_runs', verbose_name='Hardware devices', to='dashboard_app.HardwareDevice', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testrun',
             name='packages',
-            field=models.ManyToManyField(related_name=b'test_runs', verbose_name='Software packages', to='dashboard_app.SoftwarePackage', blank=True),
+            field=models.ManyToManyField(related_name='test_runs', verbose_name='Software packages', to='dashboard_app.SoftwarePackage', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testrun',
             name='sources',
-            field=models.ManyToManyField(related_name=b'test_runs', verbose_name='Software sources', to='dashboard_app.SoftwareSource', blank=True),
+            field=models.ManyToManyField(related_name='test_runs', verbose_name='Software sources', to='dashboard_app.SoftwareSource', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testrun',
             name='tags',
-            field=models.ManyToManyField(related_name=b'test_runs', verbose_name='Tags', to='dashboard_app.Tag', blank=True),
+            field=models.ManyToManyField(related_name='test_runs', verbose_name='Tags', to='dashboard_app.Tag', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testrun',
             name='test',
-            field=models.ForeignKey(related_name=b'test_runs', to='dashboard_app.Test'),
+            field=models.ForeignKey(related_name='test_runs', to='dashboard_app.Test'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='testresult',
             name='test_run',
-            field=models.ForeignKey(related_name=b'test_results', to='dashboard_app.TestRun'),
+            field=models.ForeignKey(related_name='test_results', to='dashboard_app.TestRun'),
             preserve_default=True,
         ),
         migrations.AlterOrderWithRespectTo(
@@ -615,31 +615,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='image',
             name='filter',
-            field=models.ForeignKey(related_name=b'+', to='dashboard_app.TestRunFilter', null=True),
+            field=models.ForeignKey(related_name='+', to='dashboard_app.TestRunFilter', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='bundle',
             name='bundle_stream',
-            field=models.ForeignKey(related_name=b'bundles', verbose_name='Stream', to='dashboard_app.BundleStream'),
+            field=models.ForeignKey(related_name='bundles', verbose_name='Stream', to='dashboard_app.BundleStream'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='bundle',
             name='uploaded_by',
-            field=models.ForeignKey(related_name=b'uploaded_bundles', blank=True, to=settings.AUTH_USER_MODEL, help_text='The user who submitted this bundle', null=True, verbose_name='Uploaded by'),
+            field=models.ForeignKey(related_name='uploaded_bundles', blank=True, to=settings.AUTH_USER_MODEL, help_text='The user who submitted this bundle', null=True, verbose_name='Uploaded by'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='buglink',
             name='test_result',
-            field=models.ManyToManyField(related_name=b'bug_links', to='dashboard_app.TestResult', blank=True),
+            field=models.ManyToManyField(related_name='bug_links', to='dashboard_app.TestResult', blank=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='buglink',
             name='test_runs',
-            field=models.ManyToManyField(related_name=b'bug_links', to='dashboard_app.TestRun', blank=True),
+            field=models.ManyToManyField(related_name='bug_links', to='dashboard_app.TestRun', blank=True),
             preserve_default=True,
         ),
     ]

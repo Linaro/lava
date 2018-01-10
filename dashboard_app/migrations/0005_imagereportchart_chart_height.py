@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='chart_height',
-            field=models.PositiveIntegerField(default=200, verbose_name=b'Chart height', validators=[django.core.validators.MinValueValidator(200), django.core.validators.MaxValueValidator(400)]),
+            field=models.PositiveIntegerField(default=200, verbose_name='Chart height', validators=[django.core.validators.MinValueValidator(200), django.core.validators.MaxValueValidator(400)]),
             preserve_default=True,
         ),
     ]

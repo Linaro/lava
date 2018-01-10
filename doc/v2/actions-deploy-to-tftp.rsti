@@ -137,6 +137,18 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``https://``
  * ``file://``
 
+.. _deploy_to_tftp_modules_archive:
+
+archive
+-------
+
+Some modules are compressed as a tarball (``.tar.*``), these modules
+need the ``archive`` option specified to unpack the module correctly.
+
+::
+
+   archive: tar
+
 .. _deploy_to_tftp_modules_compression:
 
 compression
@@ -189,6 +201,18 @@ url *
      :code: yaml
      :start-after: add-header: u-boot
      :end-before: # despite this being
+
+.. _deploy_to_tftp_ramdisk_archive:
+
+archive
+-------
+
+Some ramdisks are compressed as a tarball (``.tar.*``), these ramdisks
+need the ``archive`` option specified to unpack the ramdisk correctly.
+
+::
+
+   archive: tar
 
 .. _deploy_to_tftp_ramdisk_compression:
 
@@ -254,6 +278,18 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+
+.. _deploy_to_tftp_nfsrootfs_archive:
+
+archive
+-------
+
+Some nfsrootfs are compressed as a tarball (``.tar.*``), these nfsrootfs
+need the ``archive`` option specified to unpack the nfsrootfs correctly.
+
+::
+
+   archive: tar
 
 .. _deploy_to_tftp_nfsrootfs_compression:
 
@@ -390,6 +426,18 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
+
+.. _deploy_to_tmpfs_archive:
+
+archive
+^^^^^^^
+
+Some tmpfs are compressed as a tarball (``.tar.*``), these tmpfs need the
+``archive`` option specified to unpack the tmpfs correctly.
+
+::
+
+   archive: tar
 
 .. _deploy_to_tmpfs_images_compression:
 

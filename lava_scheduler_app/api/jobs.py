@@ -17,11 +17,18 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import xmlrpclib
+import sys
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.models import TestJob
+
+if sys.version_info[0] == 2:
+    # Python 2.x
+    import xmlrpclib
+elif sys.version_info[0] == 3:
+    # For Python 3.0 and later
+    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerJobsAPI(ExposedV2API):
@@ -116,7 +123,8 @@ class SchedulerJobsAPI(ExposedV2API):
             ret.append({"id": job.display_id,
                         "description": job.description,
                         "device_type": device_type,
-                        "status": job.get_status_display(),
+                        "health": job.get_health_display(),
+                        "state": job.get_state_display(),
                         "submitter": job.submitter.username})
 
         return ret
@@ -154,13 +162,13 @@ class SchedulerJobsAPI(ExposedV2API):
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 
-        job_finished = job.status not in [TestJob.SUBMITTED, TestJob.RUNNING, TestJob.CANCELING]
+        job_finished = (job.state == TestJob.STATE_FINISHED)
 
         try:
             with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
                 count = 0
                 for _ in range(line):
-                    count += len(f_in.next())
+                    count += next(len(f_in))
                 f_in.seek(count)
                 return (job_finished, xmlrpclib.Binary(f_in.read().encode("utf-8")))
         except (IOError, StopIteration):
@@ -210,7 +218,8 @@ class SchedulerJobsAPI(ExposedV2API):
                 "device_type": device_type,
                 "health_check": job.health_check,
                 "pipeline": job.is_pipeline,
-                "status": job.get_status_display(),
+                "health": job.get_health_display(),
+                "state": job.get_state_display(),
                 "submitter": job.submitter.username,
                 "submit_time": job.submit_time,
                 "start_time": job.start_time,

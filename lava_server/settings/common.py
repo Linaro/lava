@@ -1,6 +1,8 @@
-# Copyright (C) 2010-2013 Linaro Limited
+#!/usr/bin/env python
 #
-# Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+# Copyright (C) 2017 Linaro Limited
+#
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Server.
 #
@@ -16,32 +18,78 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+# Created with Django 1.8.18
 
-# WARNING:
-# Never edit this file on a production system!
-# Any changes can be overwritten at any time by upgrade or any
-# system management operation. All production config changes
-# should happen strictly to etc/settings.conf, etc. files.
-# All comments below are strictly for development usage and
-# reference.
+import imp
 
 # Import application settings
 from lava_scheduler_app.settings import *
 
-import os
-import imp
 
-# Check for available modules
-available_modules = list()
-for module_name in ["devserver", "django_extensions", "hijack"]:
-    try:
-        imp.find_module(module_name)
-        available_modules.append(module_name)
-    except ImportError:
-        pass
+# Allow only the connection through the reverse proxy
+ALLOWED_HOSTS = ['[::1]', '127.0.0.1', 'localhost']
+
+# Application definition
+INSTALLED_APPS = [
+    # Add LAVA applications
+    'lava_server',
+    'dashboard_app',
+    'lava_results_app',
+    'lava_scheduler_app',
+    # Add LAVA dependencies
+    'django_tables2',
+    'linaro_django_xmlrpc',
+    'google_analytics',
+    # Add contrib
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'django.contrib.sites',  # FIXME: should not be needed anymore
+]
+
+MIDDLEWARE_CLASSES = [
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+]
+
+ROOT_URLCONF = 'lava_server.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.static',
+                # LAVA context processors
+                'lava_server.context_processors.lava',
+                'lava_server.context_processors.ldap_available',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'lava_server.wsgi.application'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -50,100 +98,35 @@ USE_I18N = True
 
 USE_L10N = True
 
-SITE_ID = 1
-
-DISALLOWED_USER_AGENTS = []
-
-PROJECT_DIR = os.path.dirname(os.path.join(os.path.dirname(__file__), '..', '..'))
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(PROJECT_DIR, 'templates'),
-        ],
-        'OPTIONS': {
-            'context_processors': [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-                "django.template.context_processors.i18n",
-                "django.template.context_processors.static",
-                # LAVA context processors
-                "lava_server.context_processors.lava",
-                "lava_server.context_processors.ldap_available",
-            ],
-            'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
-            ]
-        },
-    },
-]
-
-MIDDLEWARE_CLASSES = [
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-ROOT_URLCONF = 'lava_server.urls'
+USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.9/howto/static-files/
-STATIC_URL = "/static/"
+# https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-# General URL prefix
-MOUNT_POINT = ""
+STATIC_URL = '/static/'
 
-# The true outer url is /lava-server/
-LOGIN_REDIRECT_URL = MOUNT_POINT + "/"
 
-# URL of the login screen, has to be hard-coded like that for Django.
-# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
-# but it seems better than hard-coding 'lava-server' yet again.
-LOGIN_URL = MOUNT_POINT + "/accounts/login/"
-
-INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.humanize',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
-    # Add LAVA applications
-    'lava_server',
-    'dashboard_app',
-    'lava_results_app',
-    'lava_scheduler_app',
-    # Needed applications
-    'django_tables2',
-    'linaro_django_xmlrpc',
-    'google_analytics',
-]
-
-for module_name in available_modules:
-    INSTALLED_APPS.append(module_name)
-
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
+# Automatically install some applications
+available_modules = list()
+for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
+    try:
+        imp.find_module(module_name)
+        INSTALLED_APPS.append(module_name)
+    except ImportError:
+        pass
 
 # Add google analytics model.
 GOOGLE_ANALYTICS_MODEL = True
 
-ALLOWED_HOSTS = ['*']
+# General URL prefix
+MOUNT_POINT = ""
 
-# this is a tad ugly but the upstream package still needs something here.
-KEY_VALUE_STORE_BACKEND = 'db://lava_scheduler_app_devicedictionarytable'
+# Do not disallow any user-agent yet
+DISALLOWED_USER_AGENTS = []
+
+# Set a site ID
+# FIXME: should not be needed
+SITE_ID = 1
 
 # Django System check framework settings for security.* checks.
 # Silence some checks that should be explicitly configured by administrators

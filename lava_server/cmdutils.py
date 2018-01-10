@@ -108,7 +108,7 @@ class LAVADaemonCommand(BaseCommand):
 
         def signal_to_pipe(signumber, _):
             # Send the signal number on the pipe
-            os.write(pipe_w, chr(signumber))
+            os.write(pipe_w, chr(signumber).encode("utf-8"))
 
         signal.signal(signal.SIGINT, signal_to_pipe)
         signal.signal(signal.SIGTERM, signal_to_pipe)

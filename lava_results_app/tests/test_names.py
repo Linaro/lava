@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 import yaml
 import logging
@@ -12,6 +14,8 @@ from lava_scheduler_app.models import (
     DeviceType
 )
 from django_testscenarios.ubertest import TestCase as DjangoTestCase
+
+from six import string_types
 
 # note: when creating extensions, ensure a urls.py and views.py exist
 
@@ -57,10 +61,7 @@ class ModelFactory(object):
         return yaml.safe_dump(self.make_job_data(**kw))
 
     def make_device_type(self, name='qemu'):
-        (device_type, created) = DeviceType.objects.get_or_create(name=name)
-        if created:
-            device_type.save()
-        return device_type
+        return DeviceType.objects.get_or_create(name=name)[0]
 
     def make_device(self, device_type=None, hostname=None, tags=None, is_public=True, **kw):
         if device_type is None:
@@ -110,7 +111,7 @@ class TestTestSuite(TestCaseWithFactory):
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
         # the duplicate smoke-tests-basic is allowed here as the lava test suite supports multiples
-        self.assertEqual(5, TestCase.objects.count())
+        self.assertEqual(5, TestCase.objects.filter(suite__job=job).count())
         val = URLValidator()
         for testcase in TestCase.objects.all():
             self.assertIsNotNone(testcase.name)
@@ -134,7 +135,7 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertTrue(ret)
         self.assertEqual(1, TestCase.objects.filter(suite=suite).count())
         testcase = TestCase.objects.get(suite=suite)
-        self.assertTrue(type(testcase.metadata) in [str, unicode])
+        self.assertTrue(isinstance(testcase.metadata, string_types))
         self.assertEqual(testcase.result, TestCase.RESULT_PASS)
         self.factory.cleanup()
 
@@ -166,12 +167,11 @@ class TestTestSuite(TestCaseWithFactory):
         )
         suite.save()
         self.assertEqual('/results/%s/test-suite' % job.id, suite.get_absolute_url())
-
         for sample in result_samples:
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
 
-        self.assertEqual(2, TestCase.objects.count())
+        self.assertEqual(2, TestCase.objects.filter(suite__job=job).count())
         val = URLValidator()
         for testcase in TestCase.objects.filter(suite=suite):
             self.assertEqual(testcase.suite, suite)

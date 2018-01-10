@@ -15,26 +15,26 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='notification',
             name='callback_content_type',
-            field=models.IntegerField(blank=True, choices=[(0, b'urlencoded'), (1, b'json')], default=None, null=True, verbose_name='Callback content-type'),
+            field=models.IntegerField(blank=True, choices=[(0, 'urlencoded'), (1, 'json')], default=None, null=True, verbose_name='Callback content-type'),
         ),
         migrations.AddField(
             model_name='notification',
             name='callback_dataset',
-            field=models.IntegerField(blank=True, choices=[(0, b'minimal'), (1, b'logs'), (2, b'results'), (3, b'all')], default=None, null=True, verbose_name='Callback dataset'),
+            field=models.IntegerField(blank=True, choices=[(0, 'minimal'), (1, 'logs'), (2, 'results'), (3, 'all')], default=None, null=True, verbose_name='Callback dataset'),
         ),
         migrations.AddField(
             model_name='notification',
             name='callback_method',
-            field=models.IntegerField(blank=True, choices=[(0, b'GET'), (1, b'POST')], default=None, null=True, verbose_name='Callback method'),
+            field=models.IntegerField(blank=True, choices=[(0, 'GET'), (1, 'POST')], default=None, null=True, verbose_name='Callback method'),
         ),
         migrations.AddField(
             model_name='notification',
             name='callback_token',
-            field=models.CharField(blank=True, default=None, max_length=200, null=True, verbose_name=b'Callback token'),
+            field=models.CharField(blank=True, default=None, max_length=200, null=True, verbose_name='Callback token'),
         ),
         migrations.AddField(
             model_name='notification',
             name='callback_url',
-            field=models.CharField(blank=True, default=None, max_length=200, null=True, verbose_name=b'Callback URL'),
+            field=models.CharField(blank=True, default=None, max_length=200, null=True, verbose_name='Callback URL'),
         ),
     ]

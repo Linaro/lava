@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='imagereportchart',
             name='chart_visibility',
-            field=models.CharField(default=b'chart', max_length=20, verbose_name=b'Chart visibility', choices=[(b'chart', b'Chart only'), (b'table', b'Result table only'), (b'both', b'Both')]),
+            field=models.CharField(default='chart', max_length=20, verbose_name='Chart visibility', choices=[('chart', 'Chart only'), ('table', 'Result table only'), ('both', 'Both')]),
             preserve_default=True,
         ),
     ]

@@ -26,6 +26,7 @@ import time
 import yaml
 import zmq
 import zmq.auth
+from zmq.utils.strtypes import u
 from zmq.auth.thread import ThreadAuthenticator
 
 from django.db import connection, transaction
@@ -34,7 +35,6 @@ from django.db.utils import OperationalError, InterfaceError
 from lava_server.cmdutils import LAVADaemonCommand
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
-from lava_scheduler_app.dbutils import fail_job, cancel_job
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
@@ -172,7 +172,7 @@ class Command(LAVADaemonCommand):
 
         # Carefully close the logging socket as we don't want to lose messages
         self.logger.info("[EXIT] Disconnect logging socket and process messages")
-        endpoint = self.log_socket.getsockopt(zmq.LAST_ENDPOINT)
+        endpoint = u(self.log_socket.getsockopt(zmq.LAST_ENDPOINT))
         self.logger.debug("[EXIT] unbinding from '%s'", endpoint)
         self.log_socket.unbind(endpoint)
 
@@ -251,7 +251,7 @@ class Command(LAVADaemonCommand):
     def logging_socket(self):
         msg = self.log_socket.recv_multipart()
         try:
-            (job_id, message) = msg  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = (u(m) for m in msg)  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("[POLL] failed to parse log message, skipping: %s", msg)
@@ -306,19 +306,20 @@ class Command(LAVADaemonCommand):
                 # Look for lava.job result
                 if message_msg["definition"] == "lava" and message_msg["case"] == "job":
                     if message_msg["result"] == "pass":
-                        status = TestJob.COMPLETE
-                        status_msg = "Complete"
+                        health = TestJob.HEALTH_COMPLETE
+                        health_msg = "Complete"
                     else:
-                        status = TestJob.INCOMPLETE
-                        status_msg = "Incomplete"
+                        health = TestJob.HEALTH_INCOMPLETE
+                        health_msg = "Incomplete"
 
-                    self.logger.info("[%s] job status: %s", job_id, status_msg)
+                    self.logger.info("[%s] job status: %s", job_id, health_msg)
                     # Update status.
                     with transaction.atomic():
-                        job = TestJob.objects.select_for_update().get(id=job_id)
-                        if job.status == TestJob.CANCELING:
-                            cancel_job(job)
-                        fail_job(job, fail_msg="", job_status=status)
+                        # TODO: find a way to lock actual_device
+                        job = TestJob.objects.select_for_update() \
+                                             .get(id=job_id)
+                        job.go_state_finished(health)
+                        job.save()
 
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
