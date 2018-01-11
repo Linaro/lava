@@ -269,16 +269,7 @@ class TestSuite(models.Model, Queryable):
         return self.job.end_time
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
-
-        attribute = None
-        if xaxis_attribute:
-            try:
-                attribute = self.testcase_set.first().action_metadata[
-                    xaxis_attribute]
-            except:  # There's no attribute, use date.
-                pass
-
-        return attribute
+        return self.job.get_xaxis_attribute(xaxis_attribute)
 
     @models.permalink
     def get_absolute_url(self):
@@ -468,15 +459,7 @@ class TestCase(models.Model, Queryable):
         return self.logged
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
-
-        attribute = None
-        if xaxis_attribute:
-            try:
-                attribute = self.action_metadata[xaxis_attribute]
-            except:  # There's no attribute, use date.
-                pass
-
-        return attribute
+        return self.suite.job.get_xaxis_attribute(xaxis_attribute)
 
     @models.permalink
     def get_absolute_url(self):
