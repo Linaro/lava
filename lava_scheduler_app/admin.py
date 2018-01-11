@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import Q
+from django.db import transaction
 
 from lava_scheduler_app.models import (
     Device, DeviceType, TestJob, Tag, JobFailureTag,
@@ -136,6 +138,37 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
         return queryset.order_by('requested_device_type__name')
 
 
+def _update_devices_health(request, queryset, health):
+    with transaction.atomic():
+        for device in queryset.select_for_update():
+            old_health_display = device.get_health_display()
+            device.health = health
+            device.save()
+            device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+
+
+def device_health_good(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_GOOD)
+
+
+def device_health_unknown(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_UNKNOWN)
+
+
+def device_health_maintenance(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_MAINTENANCE)
+
+
+def device_health_retired(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_RETIRED)
+
+
+device_health_good.short_description = "Update health of selected devices to Good"
+device_health_unknown.short_description = "Update health of selected devices to Unknown"
+device_health_maintenance.short_description = "Update health of selected devices to Maintenance"
+device_health_retired.short_description = "Update health of selected devices to Retired"
+
+
 class DeviceAdmin(admin.ModelAdmin):
     list_filter = (DeviceTypeFilter, 'state', ActiveDevicesFilter,
                    'health', 'worker_host')
@@ -183,6 +216,8 @@ class DeviceAdmin(admin.ModelAdmin):
                     'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
+    actions = [device_health_good, device_health_unknown,
+               device_health_maintenance, device_health_retired]
 
 
 class VisibilityForm(forms.ModelForm):
