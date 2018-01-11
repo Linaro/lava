@@ -311,14 +311,18 @@ class Command(LAVADaemonCommand):
                     else:
                         health = TestJob.HEALTH_INCOMPLETE
                         health_msg = "Incomplete"
-
                     self.logger.info("[%s] job status: %s", job_id, health_msg)
+
+                    infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
+                    if infrastructure_error:
+                        self.logger.info("[%s] Infrastructure error", job_id)
+
                     # Update status.
                     with transaction.atomic():
                         # TODO: find a way to lock actual_device
                         job = TestJob.objects.select_for_update() \
                                              .get(id=job_id)
-                        job.go_state_finished(health)
+                        job.go_state_finished(health, infrastructure_error)
                         job.save()
 
         # Mark the file handler as used

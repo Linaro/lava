@@ -759,7 +759,7 @@ class Device(RestrictedResource):
             change_message=reason
         )
 
-    def testjob_signal(self, signal, job):
+    def testjob_signal(self, signal, job, infrastructure_error=False):
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
 
@@ -775,18 +775,22 @@ class Device(RestrictedResource):
         elif signal == "go_state_finished":
             self.state = Device.STATE_IDLE
 
-            if job.health_check and self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+            prev_health_display = self.get_health_display()
+            if job.health_check:
                 self.last_health_report_job = job
-                prev_health_display = self.get_health_display()
-                if job.health == TestJob.HEALTH_COMPLETE:
-                    self.health = Device.HEALTH_GOOD
-                elif job.health == TestJob.HEALTH_INCOMPLETE:
-                    self.health = Device.HEALTH_BAD
-                elif job.health == TestJob.HEALTH_CANCELED:
-                    self.health = Device.HEALTH_UNKNOWN
-                else:
-                    raise NotImplementedError("Unexpected TestJob health")
-                self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+                if self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+                    if job.health == TestJob.HEALTH_COMPLETE:
+                        self.health = Device.HEALTH_GOOD
+                    elif job.health == TestJob.HEALTH_INCOMPLETE:
+                        self.health = Device.HEALTH_BAD
+                    elif job.health == TestJob.HEALTH_CANCELED:
+                        self.health = Device.HEALTH_UNKNOWN
+                    else:
+                        raise NotImplementedError("Unexpected TestJob health")
+                    self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+            elif infrastructure_error:
+                self.health = Device.HEALTH_UNKNOWN
+                self.log_admin_entry(None, "%s → %s (Infrastructure error)" % (prev_health_display, self.get_health_display()))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -1505,7 +1509,7 @@ class TestJob(RestrictedResource):
                     sub_job.go_state_canceling(sub_cancel=True)
                     sub_job.save()
 
-    def go_state_finished(self, health):
+    def go_state_finished(self, health, infrastructure_error=False):
         """
         The job has been terminated by either lava-master or lava-logs. The
         job health can be set.
@@ -1527,7 +1531,7 @@ class TestJob(RestrictedResource):
         # select_for_update on the TestJob
         # Skip non-scheduled jobs and dynamic_connections
         if self.actual_device is not None:
-            self.actual_device.testjob_signal("go_state_finished", self)
+            self.actual_device.testjob_signal("go_state_finished", self, infrastructure_error)
             self.actual_device.save()
 
         # For multinode, cancel all sub jobs if the current job is essential
