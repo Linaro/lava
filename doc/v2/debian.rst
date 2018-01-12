@@ -65,6 +65,15 @@ Developer package build
 .. seealso:: :ref:`developer_preparations` and
    :ref:`development_pre_requisites`
 
+.. note:: The recommended suite for LAVA development is now Stretch. The
+   developer package build now defaults to expecting Stretch and therefore
+   enables Python2 and Python3 support. If you are building on Jessie, use the
+   ``-b backports`` branch option to only build for Python2. When support for
+   Python2 is removed, the ``master`` branch will change to only building
+   Python3 and building on Jessie will be disabled. To install lava-server,
+   lava-dispatcher must also be built and installed with Python3 support. See
+   https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
+
 The ``lava-dev`` package includes a helper script which is also present in the
 source code in ``lava-server/share/``. The script requires a normal Debian
 package build environment (i.e. ``dpkg-dev``) as well as the build-dependencies
