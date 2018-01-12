@@ -22,14 +22,14 @@ export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-# only python2.7 supported currently
 PYTHONDIR=/usr/lib/python2.7/dist-packages/
+PYTHON3DIR=/usr/lib/python3/dist-packages/
 
 PYTHON2:=$(shell pyversions -r)
 install_dir=$(call py_libdir, $(PYTHON2))
 
 %:
-	dh $@ --with sphinxdoc,systemd,python2
+	dh $@ --with sphinxdoc,systemd,python2,python3
 
 override_dh_auto_build:
 	dh_auto_build
@@ -40,10 +40,14 @@ override_dh_auto_build:
 override_dh_auto_install:
 	dh_auto_install
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
-	dh_installman -plava-server man/_build/man/lava-server.1
 	[ -f debian/lava-server/usr/bin/lava-server ] || cp debian/lava-server/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
+	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
+	find . -path '*/__pycache__/*' -delete
+	find . -type d -name '__pycache__' -empty -delete
+	dh_installman -plava-server man/_build/man/lava-server.1
 	# skip unwanted licence file specified in copyright
 	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
+	$(RM) debian/lava-server/$(PYTHON3DIR)/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
 	# handle systemd services
@@ -67,8 +71,10 @@ override_dh_compress:
 
 override_dh_auto_clean:
 	dh_auto_clean
+	find . -path '*/__pycache__/*' -delete
+	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
-	$(RM) -r versiontools-*.egg/
+	$(RM) -r versiontools-*.egg/ build/
 	$(RM) debian/*.service
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
