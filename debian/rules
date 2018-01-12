@@ -22,12 +22,17 @@ export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+export PYBUILD_DISABLE_python3.3=test
+export PYBUILD_DISABLE_python3.5=test
+export PYBUILD_DISABLE_python3.6=test
+
 %:
-	dh $@ --with systemd,python2
+	dh $@ --with systemd,python2,python3
 
 override_dh_auto_build:
 	dh_auto_build
 	python setup.py build
+	python3 setup.py build
 	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
@@ -39,17 +44,21 @@ override_dh_auto_install:
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable --name lava-slave
 	dh_systemd_start --name lava-slave
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 
 override_dh_fixperms:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
+	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	# ssh connections use a shared private key - use the same location for debian & ubuntu
 	chmod 0600 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	chmod 0644 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
+	chmod 0600 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
+	chmod 0644 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
 
 override_dh_auto_clean:
 	dh_auto_clean
-	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/
-	$(RM) -r versiontools-*.egg/ doc/build/ doc/html/
+	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/ build/
+	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
 	$(RM) debian/lava-slave.service
 	[ ! -f man/Makefile ] || make -C man/ clean
 
