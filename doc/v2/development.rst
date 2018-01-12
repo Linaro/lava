@@ -5,7 +5,8 @@
 LAVA development
 ################
 
-Before you start, ensure you've read the :ref:`development_pre_requisites`.
+Before you start, ensure you've read the :ref:`development_pre_requisites` and
+:ref:`criteria`.
 
 .. seealso:: :ref:`contribute_upstream`
 
@@ -144,8 +145,35 @@ Make your changes
 
 .. _`5 useful tips for a better commit message`: https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
+.. index:: developer: adding unit tests
+
+.. _developer_adding_unit_tests:
+
 Add some unit tests
 ===================
+
+Some changes will **always** need additional unit tests and reviews will not be
+merged without this support. The purpose is to ensure that future changes in
+the codebase have some assurance that existing support has not been affected.
+The intent is that as much as possible of the test job and device configuration
+is covered by at least one unit test. Some examples include:
+
+# Changes to an existing jinja2 device-type template which change the output
+  YAML of the device configuration need a unit test to show that the change
+  is being included.
+
+# Adding a new deployment or boot method needs unit tests (including sample
+  test jobs) which check that all ``validate()`` functions work correctly and
+  particular tests checking for the specific details of the new method.
+
+# Adding a change to an existing deployment or boot method which changes the
+  construction of the pipeline based on test job or device configuration. Unit
+  tests will be required to show that the change is being made.
+
+Reviewers may ask for unit test support for any change, so :ref:`talk to us
+<getting_support>` during development. You can also use an ``RFC`` prefix in
+your git commit to indicate that the change is not ready for merging but is
+ready for comments.
 
 lava-dispatcher
 ---------------
@@ -263,6 +291,9 @@ the packaged locations. e.g.::
  PYTHONDIR=/usr/lib/python2.7/dist-packages/
  sudo cp <path_to_file> $PYTHONDIR/<path_to_file>
 
+.. note:: The path used for ``PYTHONDIR`` will change when the LAVA runtime
+   support moves to Python3: PYTHONDIR=/usr/lib/python3/dist-packages/
+
 There is no need to copy files used solely by the unit tests.
 
 Changes to files in ``./etc/`` will require restarting the relevant service.
@@ -331,6 +362,9 @@ into the packaged path, e.g. html files in
 ``lava_scheduler_app/templates/lava_scheduler_app/`` can be copied or symlinked
 to
 ``/usr/lib/python2.7/dist-packages/lava_scheduler_app/templates/lava_scheduler_app/``
+
+.. note:: The path will change when the LAVA runtime support moves to Python3:
+   /usr/lib/python3/dist-packages/
 
 Changes to python code generally require copying the files and restarting the
 ``lava-server-gunicorn`` service before the changes will be applied::
@@ -666,46 +700,35 @@ Python3 support in LAVA is related to a number of factors:
 
 * Forthcoming LTS releases of django which will remove support for python2.7
 
-* Completion of the migration to V2 and the removal of the V1 codebase.
+* Deprecating Debian Jessie and moving development support to Stretch.
 
 * Transition within Debian to full python3 support.
 
 https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
 
-LAVA dispatcher now supports python3 testing but **only** for the pipeline unit
-tests. Code changes to the V2 dispatcher code (i.e. in the
-``lava_dispatcher`` tree) **must** be sufficiently aware of Python3 to
-not break the unit tests when run using python3.
+https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
 
-LAVA is not yet ready to use python 3.x support at runtime, particularly in
-lava-server, due to the lack of python 3.x support in the V1 code. However
-it is good to take python 3.x support into account in ``lava-server``, when
-writing new code for LAVA v2, so that it makes it easy during the move anytime
-in the future.
+lava-dispatcher and lava-server now support python3 testing. Code changes to
+either codebase **must** be Python3 compatible to not break the unit tests when
+run using python3.
 
-All reviews run the ``lava-dispatcher.pipelnie`` V2 unit tests against python
-3.x and changes must pass without breaking compatibility with python 2.x
+LAVA is not yet ready to use python 3.x support at runtime.
 
-The ``./ci-run`` script for ``lava-dispatcher`` shows how to run the python3
-unit tests::
+All reviews run the ``lava-dispatcher`` and ``lava-server`` unit tests against
+python 3.x and changes must pass without breaking compatibility with python 2.x
 
- # to run python3 unit tests, you can use
- # python3 -m unittest discover -v lava_dispatcher
- # but the python3 dependencies are not automatically installed.
+The ``./ci-run`` script for ``lava-dispatcher`` and ``lava-server`` can run
+the unit tests using Python3::
 
-The list of python3 dependencies needed for the pipeline unit tests is
-maintained as part of the functional tests:
+ ./ci-run -a
 
-https://git.linaro.org/lava-team/refactoring.git/tree/functional/dispatcher-pipeline-python3.yaml
+Some additional Python3 dependencies will be required. In particular,
+``python3-django-auth-ldap`` will need to be installed from
+``stretch-backports``.
 
-From time to time, reviews may add more python dependencies - check on the
-:ref:`mailing_lists` if your tests start to fail after rebasing on current
-master or if you want to help with more python3 support in LAVA V2.
-
-.. warning:: Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
-   going to support python3. Also note that as django wil be dropping python2.7
-   support with the 2.2LTS release, *frozen* instances of LAVA will not be able
-   to use django updates after that point.
+.. warning:: Django wil be dropping python2.7 support with the 2.2LTS release,
+   *frozen* instances of LAVA will not be able to use django updates after that
+   point.
 
 XML-RPC changes
 ***************
