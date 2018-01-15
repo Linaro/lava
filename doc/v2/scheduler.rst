@@ -15,25 +15,25 @@ For each worker, two variables describe the current status:
 
 * ``state``:
 
-  * STATE_ONLINE
-  * STATE_OFFLINE
+  * *Online*
+  * *Offline*
 
 * ``health``:
 
-  * HEALTH_ACTIVE
-  * HEALTH_MAINTENANCE
-  * HEALTH_RETIRED
+  * *Active*
+  * *Maintenance*
+  * *Retired*
 
 ``state`` is an internal variable, set by ``lava-master`` when receiving (or
 not) pings from each worker.
 
-.. caution:: When a worker is in STATE_OFFLINE, none of the attached devices
+.. caution:: When a worker is in *Offline*, none of the attached devices
    will be used to schedule new jobs.
 
 ``health`` can be used by admins to control the ``health`` of all attached
-devices. For instance, when set to *HEALTH_MAINTENANCE*, all attached devices
-will be automatically put into maintenance mode so that no jobs will be
-scheduled on those devices.
+devices. For instance, when set to *Maintenance*, all attached devices will be
+automatically put into maintenance mode so that no jobs will be scheduled on
+those devices.
 
 Devices
 *******
@@ -42,21 +42,21 @@ For each device, two variables describe the current status:
 
 * ``state``:
 
-  * STATE_IDLE: not in use by any test job
+  * *Idle*: not in use by any test job
 
-  * STATE_RESERVED: has been reserved for a test job but the test job is not
+  * *Reserved*: has been reserved for a test job but the test job is not
     running yet
 
-  * STATE_RUNNING: currently running a test job
+  * *Running*: currently running a test job
 
 * ``health``:
 
-  * HEALTH_GOOD
-  * HEALTH_UNKNOWN
-  * HEALTH_LOOPING: should run health-checks in a loop
-  * HEALTH_BAD
-  * HEALTH_MAINTENANCE
-  * HEALTH_RETIRED
+  * *Good*
+  * *Unknown*
+  * *Looping*: should run health-checks in a loop
+  * *Bad*
+  * *Maintenance*
+  * *Retired*
 
 ``state`` is an internal variable, set by ``lava-master`` and ``lava-logs``
 when scheduling, starting, canceling and ending test jobs.
@@ -72,33 +72,33 @@ For each test job, two variables are describing the current status:
 
 * ``state``:
 
-  * STATE_SUBMITTED: waiting in the queue
+  * *Submitted*: waiting in the queue
 
-  * STATE_SCHEDULING: part of a multinode test job where some sub-jobs are
-    still in STATE_SUBMITTED
+  * *Scheduling: part of a multinode test job where some sub-jobs are
+    still in *Submitted*
 
-  * STATE_SCHEDULED: has been scheduled. For multinode, it means that all
+  * *Scheduled*: has been scheduled. For multinode, it means that all
     sub-jobs are also scheduled
 
-  * STATE_RUNNING: currently running on a device
+  * *Running*: currently running on a device
 
-  * STATE_CANCELING: has been canceled but not ended yet
+  * *Canceling*: has been canceled but not ended yet
 
-  * STATE_FINISHED
+  * *Finished*
 
-.. note:: Only multinode test jobs use STATE_SCHEDULING. When all
-   sub-jobs are in STATE_SCHEDULING, ``lava-master`` will transition all test
-   jobs to SCHEDULED.
+.. note:: Only multinode test jobs use *Scheduling*. When all
+   sub-jobs are in *Scheduling*, ``lava-master`` will transition all test
+   jobs to *Scheduled*.
 
 * ``health``:
 
-  * HEALTH_UNKNOWN: default value that will be overriden when the job is finished.
+  * *Unknown*: default value that will be overriden when the job is finished.
 
-  * HEALTH_COMPLETE
+  * *Complete*
 
-  * HEALTH_INCOMPLETE
+  * *Incomplete*
 
-  * HEALTH_CANCELED: the test job was canceled.
+  * *Canceled*: the test job was canceled.
 
 .. _scheduler:
 
@@ -117,19 +117,19 @@ considered first by the scheduler before regular test jobs.
 
 The scheduler will only consider devices where:
 
-* `state` is *STATE_IDLE*
-* `health` is *HEALTH_GOOD*, *HEALTH_UNKNOWN* or *HEALTH_LOOPING*
-* worker's `state` is *STATE_ONLINE*
+* `state` is *Idle*
+* `health` is *Good*, *Unknown* or *Looping*
+* worker's `state` is *Online*
 
-.. note:: A device whose ``health`` is *HEALTH_BAD*, *HEALTH_MAINTENANCE* or
-   *HEALTH_RETIRED* is never considered by the scheduler when it is looking for
-   devices to run test jobs
+.. note:: A device whose ``health`` is *Bad*, *Maintenance* or *Retired* is
+   never considered by the scheduler when it is looking for devices to run test
+   jobs
 
 Test jobs
 *********
 
 The scheduler will only consider devices where:
 
-* ``state`` is *STATE_IDLE*
-* ``health`` is *HEALTH_GOOD* or *HEALTH_UNKNOWN*
-* worker's ``state`` is *STATE_ONLINE*
+* ``state`` is *Idle*
+* ``health`` is *Good* or *Unknown*
+* worker's ``state`` is *Online*
