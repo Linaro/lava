@@ -428,7 +428,7 @@ def testcase(request, case_id, job=None, pk=None):
             logger.info("Unable to load extra case metadata for %s", extra_case)
             f_metadata = {}
         extra_data = f_metadata.get('extra', None)
-        if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
+        if extra_data and os.path.exists(extra_data):
             with open(f_metadata['extra'], 'r') as extra_file:
                 items = yaml.load(extra_file, Loader=yaml.CLoader)
             # hide the !!python OrderedDict prefix from the output.
