@@ -555,24 +555,6 @@ class DeviceTable(LavaTable):
         }
 
 
-class NoDTDeviceTable(DeviceTable):
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        exclude = [
-            'device_type',
-            'user', 'group', 'is_public', 'device_version',
-            'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job'
-        ]
-        searches = {
-            'hostname': 'contains',
-        }
-        queries = {
-            'device_state_query': 'state',
-            'device_health_query': 'health',
-        }
-
-
 class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-init
 
     def __init__(self, *args, **kwargs):
@@ -712,34 +694,6 @@ class QueueJobsTable(JobTable):
             'submit_time', 'in_queue'
         )
         exclude = ('state', 'health', 'priority', 'end_time', 'duration')
-
-
-class OnlineDeviceTable(DeviceTable):
-
-    def __init__(self, *args, **kwargs):
-        super(OnlineDeviceTable, self).__init__(*args, **kwargs)
-        self.length = 25
-
-    def render_state(self, record):  # pylint: disable=no-self-use
-        return record.get_state_display()
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        exclude = [
-            'worker_host', 'user', 'group', 'is_public', 'device_version',
-            'physical_owner', 'physical_group', 'description', 'current_job',
-            'last_health_report_job'
-        ]
-        sequence = [
-            'hostname', 'device_type', 'state', 'health', 'owner'
-        ]
-        searches = {
-            'hostname': 'contains',
-        }
-        queries = {
-            'device_type_query': 'device_type',
-            'device_state_query': 'state',
-            'restriction_query': 'restrictions',
-        }
 
 
 class PassingHealthTable(DeviceHealthTable):
