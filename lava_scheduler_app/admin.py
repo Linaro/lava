@@ -9,7 +9,8 @@ from django.db import transaction
 from lava_scheduler_app.models import (
     Device, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
-    Architecture, ProcessorFamily, Alias, BitWidth, Core
+    Architecture, ProcessorFamily, Alias, BitWidth, Core,
+    NotificationRecipient
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -339,6 +340,16 @@ class TagAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
+class NotificationRecipientAdmin(admin.ModelAdmin):
+    def handle(self, obj):
+        if obj.method == NotificationRecipient.EMAIL:
+            return obj.email_address
+        else:
+            return "%s@%s" % (obj.irc_handle, obj.irc_server_name)
+    list_display = ('method', 'handle', 'status')
+    list_filter = ('method', 'status')
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
@@ -350,3 +361,4 @@ admin.site.register(BitWidth)
 admin.site.register(Core)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
+admin.site.register(NotificationRecipient, NotificationRecipientAdmin)
