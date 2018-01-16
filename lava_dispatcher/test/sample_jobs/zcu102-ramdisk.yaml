@@ -1,0 +1,56 @@
+device_type: xilinx-zcu102
+
+job_name: U-Boot ramdisk snapshots
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  original.build: http://snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/Image--4.9-xilinx-v2017.3+git0+f1b1e077d6-r0-zcu102-zynqmp-20180118171031.bin
+      type: image
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/modules--4.9-xilinx-v2017.3+git0+f1b1e077d6-r0-zcu102-zynqmp-20180118171031.tgz
+      compression: gz
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/core-image-minimal-zcu102-zynqmp-20180118171031.rootfs.cpio.gz.u-boot
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+      header: u-boot
+      compression: gz
+    os: oe
+    dtb:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/Image--4.9-xilinx-v2017.3+git0+f1b1e077d6-r0-zynqmp-zcu102-rev1.0-20180118171031.dtb
+
+- boot:
+    method: u-boot
+    commands: ramdisk
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@zcu102-zynqmp:'
+    timeout:
+      minutes: 2
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

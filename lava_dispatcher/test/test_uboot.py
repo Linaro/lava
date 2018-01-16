@@ -69,6 +69,16 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
             job.logger = DummyLogger()
         return job
 
+    def create_zcu102_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/xilinx-zcu102.yaml'))
+        zcu_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(zcu_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+            job.logger = DummyLogger()
+        return job
+
 
 class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -409,6 +419,13 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn('prefix', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['prefix'], 'jessie/')
         self.assertEqual(nfs.param_key, 'nfsrootfs')
+
+    def test_zcu102(self):
+        job = self.factory.create_zcu102_job('sample_jobs/zcu102-ramdisk.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('zcu102-ramdisk.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
 
 
 class TestKernelConversion(StdoutTestCase):
