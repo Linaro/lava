@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 self.stdout.write("* %d {%s => %s}" % (job.id,
                                                        old_path[len_base_dir:],
                                                        date_path[len_base_dir:]))
-                if options["dry_run"]:
+                if not options["dry_run"]:
                     mkdir(os.path.dirname(date_path))
                     if not os.path.exists(old_path):
                         self.stdout.write("  -> no output directory")
