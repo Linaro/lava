@@ -1313,3 +1313,28 @@ class TestTemplates(unittest.TestCase):
                          depthcharge['parameters']['start_message'])
         self.assertEqual('earlyprintk=ttyS2,115200n8 console=tty1 console=ttyS2,115200n8 root=/dev/ram0 ip=dhcp',
                          depthcharge['ramdisk']['cmdline'])
+
+    def test_xilinx_zcu102(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'zcu102.jinja2')) as zcu:
+            data = zcu.read()
+        self.assertTrue(self.validate_data('zcu-01', data))
+        test_template = prepare_jinja_template('zcu-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        for command in commands:
+            if not command.startswith('setenv loadkernel'):
+                continue
+            self.assertNotIn('tftp ', command)
+            self.assertIn('tftpb', command)
+
+        for command in commands:
+            if not command.startswith('setenv bootargs'):
+                continue
+            self.assertNotIn('console=ttyS0,115200n8', command)
+            self.assertNotIn('console=', command)
+            self.assertNotIn('console=ttyO0', command)
+            self.assertNotIn('115200n8', command)
+            self.assertNotIn('n8', command)

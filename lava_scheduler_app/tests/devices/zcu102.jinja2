@@ -1,0 +1,4 @@
+{% extends 'xilinx-zcu102.jinja2' %}
+{% set connection_list = ['uart0', 'uart1', 'uart2', 'uart3'] %}
+{% set connection_commands = {'uart0': 'telnet localhost 7030'} %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
