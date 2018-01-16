@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines,invalid-namlog_e
+
+from __future__ import unicode_literals
+
 from collections import OrderedDict
 import yaml
 import jinja2
@@ -1958,9 +1961,9 @@ def device_health(request, pk):
             device.health = Device.HEALTH_REVERSE[health]
             device.save()
             if reason:
-                device.log_admin_entry(request.user, u"%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
+                device.log_admin_entry(request.user, "%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
             else:
-                device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+                device.log_admin_entry(request.user, "%s → %s" % (old_health_display, device.get_health_display()))
         return HttpResponseRedirect(reverse("lava.scheduler.device.detail", args=[pk]))
     except Device.DoesNotExist:
         raise Http404("Device %s not found" % pk)

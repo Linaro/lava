@@ -21,11 +21,11 @@ def devicedictionary_to_jinja2(data_dict, extends):
     if not isinstance(data_dict, dict):
         return None
     pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
-    data = u'{%% extends \'%s\' %%}\n' % extends
+    data = '{%% extends \'%s\' %%}\n' % extends
     for key, value in data_dict.items():
         if key == 'extends':
             continue
-        data += u'{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
+        data += '{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
     return data
 
 

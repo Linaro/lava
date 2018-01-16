@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
@@ -145,7 +147,7 @@ def _update_devices_health(request, queryset, health):
             old_health_display = device.get_health_display()
             device.health = health
             device.save()
-            device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+            device.log_admin_entry(request.user, "%s → %s" % (old_health_display, device.get_health_display()))
 
 
 def device_health_good(modeladmin, request, queryset):

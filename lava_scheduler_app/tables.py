@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import django
 import logging
 import random
@@ -157,8 +159,8 @@ class JobTable(LavaTable):
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = tables.DateColumn(format=u"Nd, g:ia")
-    end_time = tables.DateColumn(format=u"Nd, g:ia")
+    submit_time = tables.DateColumn(format="Nd, g:ia")
+    end_time = tables.DateColumn(format="Nd, g:ia")
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
@@ -598,7 +600,7 @@ class LogEntryTable(tables.Table):
         super(LogEntryTable, self).__init__(*args, **kwargs)
         self.length = 10
 
-    action_time = tables.DateColumn(format=u"Nd, g:ia")
+    action_time = tables.DateColumn(format="Nd, g:ia")
     object_id = tables.Column(verbose_name="Name")
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
