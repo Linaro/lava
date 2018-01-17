@@ -2418,8 +2418,10 @@ class TestJob(RestrictedResource):
 
             attribute_name = sub.replace('{', '').replace('}', '').strip().lower()
             # FIXME: Keep legacy behavior. Should be removed.
-            if attribute_name == "state":
+            if attribute_name == "status":
                 attr = self.get_legacy_status()
+            elif attribute_name == "status_string":
+                attr = self.get_legacy_status_display().lower()
             else:
                 try:
                     attr = getattr(self, attribute_name)
