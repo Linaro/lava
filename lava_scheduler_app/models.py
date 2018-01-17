@@ -1538,6 +1538,34 @@ class TestJob(RestrictedResource):
                     sub_job.go_state_canceling(sub_cancel=True)
                     sub_job.save()
 
+    def get_legacy_status(self):
+        if self.state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
+            return 0
+        elif self.state == TestJob.STATE_RUNNING:
+            return 1
+        elif self.state == TestJob.STATE_CANCELING:
+            return 5
+        elif self.health == TestJob.HEALTH_COMPLETE:
+            return 2
+        elif self.health in [TestJob.HEALTH_UNKNOWN, TestJob.HEALTH_INCOMPLETE]:
+            return 3
+        else:
+            return 4
+
+    def get_legacy_status_display(self):
+        if self.state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
+            return "Submitted"
+        elif self.state == TestJob.STATE_RUNNING:
+            return "Running"
+        elif self.state == TestJob.STATE_CANCELING:
+            return "Canceling"
+        elif self.health == TestJob.HEALTH_COMPLETE:
+            return "Complete"
+        elif self.health in [TestJob.HEALTH_UNKNOWN, TestJob.HEALTH_INCOMPLETE]:
+            return "Incomplete"
+        else:
+            return "Canceled"
+
     LOW, MEDIUM, HIGH = (0, 50, 100)
     PRIORITY_CHOICES = (
         (LOW, 'Low'),
@@ -2645,6 +2673,8 @@ class Notification(models.Model):
 
             data = {
                 "id": self.test_job.pk,
+                "status": self.test_job.get_legacy_status(),
+                "status_string": self.test_job.get_legacy_status_display().lower(),
                 "state": self.test_job.state,
                 "state_string": self.test_job.get_state_display(),
                 "health": self.test_job.health,
