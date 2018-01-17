@@ -2,7 +2,7 @@
 
 set -e
 
-BRANCH=python3
+BRANCH=master
 ARCH=''
 
 while getopts ":p:a:b:" opt; do
