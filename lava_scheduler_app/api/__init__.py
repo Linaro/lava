@@ -59,15 +59,15 @@ def check_superuser(f):
 def build_device_status_display(state, health):
     if state == Device.STATE_IDLE:
         if health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]:
-            return "Idle"
+            return "idle"
         elif health == Device.HEALTH_RETIRED:
-            return "Retired"
+            return "retired"
         else:
-            return "Offline"
+            return "offline"
     elif state == Device.STATE_RESERVED:
-        return "Reserved"
+        return "reserved"
     else:
-        return "Running"
+        return "running"
 
 
 class SchedulerAPI(ExposedAPI):
