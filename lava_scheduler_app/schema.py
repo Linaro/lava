@@ -306,6 +306,10 @@ def visibility_schema():
 
 
 def _job_schema():
+    if sys.version_info[0] == 2:
+        metadata_types = Any(str, int, unicode)
+    else:
+        metadata_types = Any(str, int)
     return Schema(
         {
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
@@ -314,7 +318,7 @@ def _job_schema():
             Optional('priority'): Any('high', 'medium', 'low'),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
-            Optional('metadata'): All({Any(str, int): Any(str, int)}),
+            Optional('metadata'): All({metadata_types: metadata_types}),
             Optional('secrets'): dict,
             Optional('tags'): [str],
             Required('visibility'): visibility_schema(),
