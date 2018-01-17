@@ -211,6 +211,10 @@ class AutoLoginAction(Action):
         parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
         if len(parsed) and 'success' in parsed[0]:
             self.results = {'success': parsed[0]['success']}
+            if len(parsed) > 1:
+                # errors detected.
+                self.logger.warning("Kernel warnings or errors detected.")
+                self.results = {'extra': parsed}
         elif not parsed:
             self.results = {'success': "No kernel warnings or errors detected."}
         else:
