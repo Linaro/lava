@@ -88,6 +88,7 @@ from lava_results_app.models import (
 
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.tables import (
+    JobErrorsTable,
     JobTable,
     all_jobs_with_custom_sort,
     IndexJobTable,
@@ -321,10 +322,19 @@ class DeviceTableView(JobTableView):
                              .order_by("hostname")
 
 
+class JobErrorsView(LavaView):
+
+    def get_queryset(self):
+        q = TestCase.objects.filter(suite__name="lava", result=TestCase.RESULT_FAIL)
+        q = q.filter(metadata__regex="error_type: (Configuration|Infrastructure|Bug)")
+        q = q.select_related("suite", "suite__job__actual_device")
+        return q.order_by('-suite__job__id')
+
+
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
-    ptable = DeviceTypeTable(data.get_table_data())
+    ptable = DeviceTypeTable(data.get_table_data(), prefix="device_type_")
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     (num_online, num_not_retired) = _online_total()
@@ -335,6 +345,7 @@ def index(request):
         state=TestJob.STATE_RUNNING, actual_device__isnull=False).count()
     active_devices_count = Device.objects.filter(
         state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING]).count()
+
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -641,6 +652,12 @@ class ActiveDeviceView(DeviceTableView):
         return q.exclude(health=Device.HEALTH_RETIRED)
 
 
+class MaintenanceDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        return super(MaintenanceDeviceView, self).get_queryset().filter(health=Device.HEALTH_MAINTENANCE)
+
+
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
@@ -660,6 +677,24 @@ class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
         return Device.objects.exclude(health=Device.HEALTH_RETIRED).order_by('hostname')
+
+
+@BreadCrumb("Maintenance", parent=device_list)
+def maintenance_devices(request):
+    data = MaintenanceDeviceView(request, model=Device, table_class=DeviceTable)
+    ptable = DeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    template = loader.get_template("lava_scheduler_app/maintenance_devices.html")
+    return HttpResponse(template.render(
+        {
+            'maintenance_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
+        },
+        request=request))
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
@@ -972,6 +1007,25 @@ def job_list(request):
             "times_data": ptable.prepare_times_data(data),
         },
         request=request))
+
+
+@BreadCrumb("Errors", parent=job_list)
+def job_errors(request):
+    data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
+    ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/job_errors.html",
+        {
+            'job_errors_table': ptable,
+            "sort": '-submit_time',
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_errors),
+        })
 
 
 @BreadCrumb("Active", parent=job_list)

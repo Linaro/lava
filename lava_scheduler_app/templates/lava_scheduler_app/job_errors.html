@@ -1,14 +1,13 @@
 {% extends "layouts/content.html" %}
-
 {% load django_tables2 %}
 
 {% block content %}
-<h2>All Jobs</h2>
 
+<h2>Recent job errors</h2>
 <ul class="pager">
-    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-asterisk">
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-asterisk">
         <a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-play">
+    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-play">
         <a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></span></li>
     <li class="btn btn-sm"><span class="glyphicon glyphicon-pause">
         <a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></span></li>
@@ -18,10 +17,8 @@
         <a href="{% url 'lava.scheduler.job.errors' %}">Job Errors</a></span></li>
 </ul>
 
-{% render_table alljobs_table %}
-
+{% render_table job_errors_table %}
 {% endblock %}
-
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
 {% endblock %}

@@ -3,7 +3,7 @@
 
 {% block content %}
 
-<h2>Active Devices - <small>excluding retired</small></h2>
+<h2>Maintenance Devices</small></h2>
 
 <ul class="pager">
     <li class="btn btn-sm"><span class="glyphicon glyphicon-move">
@@ -16,7 +16,7 @@
         <a href="{% url 'lava.scheduler.maintenance_devices' %}">Maintenance Devices</a></span></li>
 </ul>
 
-{% render_table active_devices_table %}
+{% render_table maintenance_devices_table %}
 
 {% endblock %}
 

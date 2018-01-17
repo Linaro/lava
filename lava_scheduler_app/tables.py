@@ -14,6 +14,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 import django_tables2 as tables
+from lava_results_app.models import TestCase
 from lava_scheduler_app.models import (
     TestJob,
     Device,
@@ -139,6 +140,49 @@ def all_jobs_with_custom_sort():
                                               'requested_device_type_id)',
                                'duration_sort': "date_trunc('second', end_time - start_time)"}).all()
     return jobs.order_by('-submit_time')
+
+
+class JobErrorsTable(LavaTable):
+
+    def __init__(self, *args, **kwargs):
+        super(LavaTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    job = tables.Column(verbose_name="Job", empty_values=[""])
+    job.orderable = False
+    device = tables.Column(empty_values=[""])
+    device.orderable = False
+    error_type = tables.Column(empty_values=[""])
+    error_type.orderable = False
+    error_msg = tables.Column(empty_values=[""])
+    error_msg.orderable = False
+
+    def render_device(self, record):
+        if record.suite.job.actual_device is None:
+            return ""
+        else:
+            return mark_safe(
+                '<a href="%s" title="device details">%s</a>' % (
+                    record.suite.job.actual_device.get_absolute_url(),
+                    escape(record.suite.job.actual_device.hostname)))
+
+    def render_error_type(self, record):
+        return record.action_metadata["error_type"]
+
+    def render_error_msg(self, record):
+        return record.action_metadata["error_msg"]
+
+    def render_job(self, record):
+        return mark_safe('<a href="%s">%s</a>' % (record.suite.job.get_absolute_url(), record.suite.job.pk))
+
+    class Meta(LavaTable.Meta):
+        model = TestCase
+        fields = (
+            'job', 'device', 'error_type', 'error_msg',
+        )
+        sequence = (
+            'job', 'device', 'error_type', 'error_msg',
+        )
 
 
 class JobTable(LavaTable):

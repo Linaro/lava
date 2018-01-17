@@ -370,7 +370,8 @@ class TestCase(models.Model, Queryable):
     result = models.PositiveSmallIntegerField(
         verbose_name=_(u"Result"),
         help_text=_(u"Result classification to pass/fail group"),
-        choices=RESULT_CHOICES
+        choices=RESULT_CHOICES,
+        db_index=True
     )
 
     measurement = models.DecimalField(
