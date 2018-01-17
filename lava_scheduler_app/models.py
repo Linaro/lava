@@ -2417,11 +2417,15 @@ class TestJob(RestrictedResource):
         for sub in substitutes:
 
             attribute_name = sub.replace('{', '').replace('}', '').strip().lower()
-            try:
-                attr = getattr(self, attribute_name)
-            except AttributeError:
-                logger.error("Attribute '%s' does not exist in TestJob." % attribute_name)
-                continue
+            # FIXME: Keep legacy behavior. Should be removed.
+            if attribute_name == "state":
+                attr = self.get_legacy_status()
+            else:
+                try:
+                    attr = getattr(self, attribute_name)
+                except AttributeError:
+                    logger.error("Attribute '%s' does not exist in TestJob." % attribute_name)
+                    continue
 
             callback_url = callback_url.replace(str(sub), str(attr))
 
