@@ -92,6 +92,8 @@ class ExpandedStatusColumn(tables.Column):
                 current_job.get_state_display(),
                 current_job.description,
                 current_job.submitter))
+        elif record.state == Device.STATE_IDLE and record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+            return ""
         else:
             return record.get_simple_state_display()
 
