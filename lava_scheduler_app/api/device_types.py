@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import glob
 import os
 import sys
@@ -97,6 +98,53 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpclib.Fault(
                 400, "Bad request: device-type name is already used.")
 
+    def get_health_check(self, name):
+        """
+        Name
+        ----
+        `scheduler.device_types.get_health_check` (`name`)
+
+        Description
+        -----------
+        Return the health-check definition for the requested device-type or
+        filename.
+
+        Note: not all device-types have a health check filename that matches
+        the device-type name in the database.
+
+        Arguments
+        ---------
+        `name`: string
+          Filename
+
+        The .yaml suffix will be added if not specified.
+
+        Return value
+        ------------
+        The health-check
+        """
+        try:
+            dt = DeviceType.objects.get(name=name)
+            if dt.owners_only and not dt.some_devices_visible_to(self.user):
+                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+        except DeviceType.DoesNotExist:
+            pass
+
+        # Filename should not be a path or starting with a dot
+        if os.path.basename(name) != name or name[0] == ".":
+            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+
+        try:
+            filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks", name)
+            filename += ".yaml" if not filename.endswith('.yaml') else ''
+            with open(filename, "r") as f_in:
+                return xmlrpclib.Binary(f_in.read().encode("utf-8"))
+        except IOError as exc:
+            if exc.errno == errno.ENOENT:
+                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+            else:
+                raise xmlrpclib.Fault(400, "Unable to read health-check: %s" % exc.strerror)
+
     def get_template(self, name):
         """
         Name
@@ -105,41 +153,102 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
 
         Description
         -----------
-        Return the device-type configuration
+        Return the device-type configuration for the requested device-type or
+        filename.
+
+        Note: not all device-types have a health check filename that matches
+        the device-type name in the database.
 
         Arguments
         ---------
         `name`: string
           Name of the device-type
 
+        The .jinja2 suffix will be added if not specified.
+
         Return value
         ------------
         The device-type configuration
         """
-        if name not in self._available_device_types():
-            raise xmlrpclib.Fault(
-                404, "Device-type '%s' was not found." % name)
+        try:
+            dt = DeviceType.objects.get(name=name)
+            if dt.owners_only and not dt.some_devices_visible_to(self.user):
+                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+        except DeviceType.DoesNotExist:
+            pass
+
+        # Filename should not be a path or starting with a dot
+        if os.path.basename(name) != name or name[0] == ".":
+            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/device-types", name)
-            filename += ".jinja2"
+            filename += ".jinja2" if not filename.endswith('.jinja2') else ''
             with open(filename, "r") as f_in:
                 return xmlrpclib.Binary(f_in.read().encode("utf-8"))
         except IOError as exc:
+            if exc.errno == errno.ENOENT:
+                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+            else:
+                raise xmlrpclib.Fault(400, "Unable to read device-type configuration: %s" % exc.strerror)
+
+    @check_superuser
+    def set_health_check(self, name, config):
+        """
+        Name
+        ----
+        `scheduler.device_types.set_health_check` (`name`, `config`)
+
+        Description
+        -----------
+        [superuser only]
+        Set the health-check definition for the requested device-type or
+        filename.
+
+        Note: not all device-types have a health check filename that matches
+        the device-type name in the database.
+
+        Arguments
+        ---------
+        `name`: string
+          name of the device-type
+        `config`: string
+          The health-check as a yaml file
+
+        The .yaml suffix will be added if not specified.
+
+        Return value
+        ------------
+        None
+        """
+        # Filename should not be a path or starting with a dot
+        if os.path.basename(name) != name or name[0] == ".":
+            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+
+        try:
+            filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks", name)
+            filename += ".yaml" if not filename.endswith('.yaml') else ''
+            with open(filename, "w") as f_out:
+                f_out.write(config)
+        except IOError as exc:
             raise xmlrpclib.Fault(
-                400, "Unable to read device-type configuration: %s" % exc.strerror)
+                400, "Unable to write health-check: %s" % exc.strerror)
 
     @check_superuser
     def set_template(self, name, config):
         """
         Name
         ----
-        `scheduler.device_types.set_config` (`name`, `config`)
+        `scheduler.device_types.set_template` (`name`, `config`)
 
         Description
         -----------
         [superuser only]
-        Set the device-type configuration
+        Set the device-type configuration for the requested device-type or
+        filename.
+
+        Note: not all device-types have a health check filename that matches
+        the device-type name in the database.
 
         Arguments
         ---------
@@ -148,18 +257,19 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         `config`: string
           The device-type configuration as a jinja2 template
 
+        The .jinja2 suffix will be added if not specified.
+
         Return value
         ------------
         None
         """
-        # Validate the name (should not be a path)
-        if name != os.path.basename(name):
-            raise xmlrpclib.Fault(
-                404, "Device-type '%s' is invalid" % name)
+        # Filename should not be a path or starting with a dot
+        if os.path.basename(name) != name or name[0] == ".":
+            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/device-types", name)
-            filename += ".jinja2"
+            filename += ".jinja2" if not filename.endswith('.jinja2') else ''
             with open(filename, "w") as f_out:
                 f_out.write(config)
         except IOError as exc:
