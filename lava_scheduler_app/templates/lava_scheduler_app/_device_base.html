@@ -68,6 +68,8 @@
         {% if device.health == device.HEALTH_GOOD %}
         <span class="label label-success">
         {% elif device.health == device.HEALTH_UNKNOWN or device.health == device.HEALTH_LOOPING %}
+        <span class="label label-info">
+        {% elif device.health == device.HEALTH_MAINTENANCE %}
         <span class="label label-warning">
         {% else %}
         <span class="label label-danger">

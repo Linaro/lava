@@ -112,8 +112,8 @@ class RestrictedDeviceColumn(tables.Column):
         :return: a text string describing the restrictions on this device.
         """
         label = None
-        if record.health == Device.HEALTH_RETIRED:
-            return "Retired, no submissions possible."
+        if record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+            return "no submissions possible."
         if record.is_public:
             return ""
         if record.user:
@@ -522,6 +522,18 @@ class DeviceTable(LavaTable):
 
     def render_device_type(self, record):  # pylint: disable=no-self-use
         return pklink(record.device_type)
+
+    def render_health(self, record):
+        if record.health == Device.HEALTH_GOOD:
+            return mark_safe('<strong class="text-success">Good</strong>')
+        elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
+            return mark_safe('<span class="text-info">%s</span>' % record.get_health_display())
+        elif record.health == Device.HEALTH_BAD:
+            return mark_safe('<span class="text-danger">Bad</span>')
+        elif record.health == Device.HEALTH_MAINTENANCE:
+            return mark_safe('<span class="text-warning">Maintenance</span>')
+        else:
+            return mark_safe('<span class="text-muted">Retired</span>')
 
     hostname = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
