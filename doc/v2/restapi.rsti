@@ -18,7 +18,7 @@ for the YAML format.
 Test definition names use a prefix to show the sequence within the
 test job, for each namespace. The list of test definitions within a
 test job can be retrieved using the Summary:
- `https://validation.linaro.org/results/123/yaml_summary`
+``https://validation.linaro.org/results/123/yaml_summary``
 
 Some test jobs can be restricted to particular users or groups of
 users. The results of these test jobs will be restricted in the same
