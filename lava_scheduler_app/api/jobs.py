@@ -90,19 +90,25 @@ class SchedulerJobsAPI(ExposedV2API):
         else:
             return xmlrpclib.Binary(job.original_definition)
 
-    def list(self, start=0, limit=25):
+    def list(self, state=None, health=None, start=0, limit=25):
         """
         Name
         ----
-        `scheduler.jobs.list` (`start=0`, `limit=25`)
+        `scheduler.jobs.list` (`state=None`, `health=None`, `start=0`, `limit=25`)
 
         Description
         -----------
-        List the last jobs, within the specified range,
-        in descending order of job ID.
+        List the last jobs, within the specified range, in descending order of
+        job ID. Jobs can be filtered by `state` and `health` (if provided).
 
         Arguments
         ---------
+        `state`: str
+          Filter by state, None by default (no filtering).
+          Values: [SUBMITTED, SCHEDULING, SCHEDULED, RUNNING, CANCELING, FINISHED]
+        `health`: str
+          Filter by health, None by default (no filtering).
+          Values: [UNKNOWN, COMPLETE, INCOMPLETE, CANCELED]
         `start`: int
           Skip the first job in the list
         `limit`: int
@@ -116,7 +122,19 @@ class SchedulerJobsAPI(ExposedV2API):
         ret = []
         start = max(0, start)
         limit = min(limit, 100)
-        for job in TestJob.objects.all().order_by('-id')[start:start + limit]:
+        jobs = TestJob.objects.all()
+        if state is not None:
+            try:
+                jobs = jobs.filter(state=TestJob.STATE_REVERSE[state.capitalize()])
+            except KeyError:
+                raise xmlrpclib.Fault(400, "Invalid state '%s'" % state)
+        if health is not None:
+            try:
+                jobs = jobs.filter(health=TestJob.HEALTH_REVERSE[health.capitalize()])
+            except KeyError:
+                raise xmlrpclib.Fault(400, "Invalid health '%s'" % health)
+
+        for job in jobs.order_by('-id')[start:start + limit]:
             device_type = None
             if job.requested_device_type is not None:
                 device_type = job.requested_device_type.name

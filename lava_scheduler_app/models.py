@@ -1430,6 +1430,14 @@ class TestJob(RestrictedResource):
         (STATE_CANCELING, "Canceling"),
         (STATE_FINISHED, "Finished"),
     )
+    STATE_REVERSE = {
+        "Submitted": STATE_SUBMITTED,
+        "Scheduling": STATE_SCHEDULING,
+        "Scheduled": STATE_SCHEDULED,
+        "Running": STATE_RUNNING,
+        "Canceling": STATE_CANCELING,
+        "Finished": STATE_FINISHED
+    }
     state = models.IntegerField(choices=STATE_CHOICES,
                                 default=STATE_SUBMITTED,
                                 editable=False)
@@ -1441,6 +1449,12 @@ class TestJob(RestrictedResource):
         (HEALTH_INCOMPLETE, "Incomplete"),
         (HEALTH_CANCELED, "Canceled"),
     )
+    HEALTH_REVERSE = {
+        "Unknown": HEALTH_UNKNOWN,
+        "Complete": HEALTH_COMPLETE,
+        "Incomplete": HEALTH_INCOMPLETE,
+        "Canceled": HEALTH_CANCELED
+    }
     health = models.IntegerField(choices=HEALTH_CHOICES,
                                  default=HEALTH_UNKNOWN)
 
