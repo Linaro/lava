@@ -88,7 +88,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python3-sphinx (>= 1.4), python-setuptools, python-pexpect (>= 4.2),
  python3-sphinx-bootstrap-theme, python-requests, python-zmq, python-yaml,
  python-voluptuous (>= 0.8.8), docbook-xsl, xsltproc, python-mock,
- ${python:Depends}, ${misc:Depends}
+ ${python:Depends}, ${python3:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot,
  django-testscenarios
 Description: Linaro Automated Validation Architecture developer support
