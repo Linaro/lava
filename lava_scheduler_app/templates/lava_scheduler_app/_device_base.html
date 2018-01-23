@@ -89,10 +89,10 @@
                   <div class="form-group">
                     <label for="health" class="control-label">Health:</label>
                     <select name="health" class="form-control" id="health">
-                      {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
                       {% if device.health != device.HEALTH_UNKNOWN %}<option>Unknown</option>{% endif %}
-                      {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
                       {% if device.health != device.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
+                      {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
+                      {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
                       {% if device.health != device.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
                     </select>
                   </div>
