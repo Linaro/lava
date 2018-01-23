@@ -86,6 +86,30 @@ class BzrHelper(VCSHelper):
 
         return commit_id
 
+    def get_commit_id(self, dest_path):
+        cwd = os.getcwd()
+        logger = logging.getLogger('dispatcher')
+        env = dict(os.environ)
+        env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+
+        try:
+            os.chdir(dest_path)
+            commit_id = subprocess.check_output(['bzr', 'revno'],
+                                                env=env).strip().decode('utf-8')
+
+        except subprocess.CalledProcessError as exc:
+            if sys.version > '3':
+                logger.error(str(exc))
+            else:
+                logger.error(exc.output)
+            raise InfrastructureError(
+                "Unable to get commit-id for the repository '%s'" % (
+                    dest_path))
+        finally:
+            os.chdir(cwd)
+
+        return commit_id.decode('utf-8')
+
 
 class GitHelper(VCSHelper):
     """
@@ -135,6 +159,27 @@ class GitHelper(VCSHelper):
                 logger.error(exc.output)
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
+
+        return commit_id.decode('utf-8')
+
+    def get_commit_id(self, dest_path):
+        logger = logging.getLogger('dispatcher')
+        try:
+            cmd_args = [self.binary, '--git-dir',
+                        os.path.join(dest_path, '.git'), 'rev-parse', 'HEAD']
+
+            logger.debug("Running '%s'", " ".join(cmd_args))
+            commit_id = subprocess.check_output(
+                cmd_args, stderr=subprocess.STDOUT)
+
+        except subprocess.CalledProcessError as exc:
+            if sys.version > '3':
+                logger.error(str(exc))
+            else:
+                logger.error(exc.output)
+            raise InfrastructureError(
+                "Unable to get commit-id for the repository '%s'" % (
+                    dest_path))
 
         return commit_id.decode('utf-8')
 
