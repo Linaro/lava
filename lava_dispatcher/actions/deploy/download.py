@@ -455,7 +455,7 @@ class HttpDownloadAction(DownloadHandler):
                 res = requests.get(
                     self.url.geturl(), allow_redirects=True, stream=True)
                 if res.status_code != requests.codes.OK:  # pylint: disable=no-member
-                    self.errors = "Resources not available at '%s'" % (self.url.geturl())
+                    self.errors = "Resource unavailable at '%s' (%d)" % (self.url.geturl(), res.status_code)
 
             self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
