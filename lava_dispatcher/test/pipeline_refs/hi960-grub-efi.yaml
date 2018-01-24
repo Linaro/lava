@@ -43,7 +43,7 @@
     - {class: power.PDUReboot, name: pdu-reboot}
     - {class: power.ReadFeedback, name: read-feedback}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
-    - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.deploy.fastboot.FastbootReboot, name: fastboot-reboot}
     - {class: power.ReadFeedback, name: read-feedback}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.grub.GrubSequenceAction

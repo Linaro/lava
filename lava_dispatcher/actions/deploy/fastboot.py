@@ -256,9 +256,10 @@ class FastbootFlashAction(Action):
         return connection
 
 
-class FastbootReboot(FastbootFlashAction):
+class FastbootReboot(Action):
 
     def __init__(self):
+        super(FastbootReboot, self).__init__()
         self.name = 'fastboot-reboot'
         self.summary = 'execute a reboot using fastboot'
         self.description = 'Reset a device between flash operations using fastboot reboot.'
@@ -285,11 +286,13 @@ class FastbootReboot(FastbootFlashAction):
         if command_output and 'error' in command_output:
             raise InfrastructureError("Unable to reboot: %s"
                                       % (command_output))
+        return connection
 
 
-class FastbootRebootBootloader(FastbootFlashAction):
+class FastbootRebootBootloader(Action):
 
     def __init__(self):
+        super(FastbootRebootBootloader, self).__init__()
         self.name = 'fastboot-reboot-bootloader'
         self.summary = 'execute a reboot to bootloader using fastboot'
         self.description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
@@ -317,3 +320,4 @@ class FastbootRebootBootloader(FastbootFlashAction):
             raise InfrastructureError(
                 "Unable to reboot to bootloader: %s"
                 % (command_output))
+        return connection
