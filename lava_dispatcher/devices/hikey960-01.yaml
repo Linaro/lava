@@ -69,7 +69,7 @@ actions:
       lxc:
     methods:
       lxc:
-      fastboot: ['boot', 'wait-usb-add', 'lxc-add-device']
+      fastboot: ['boot']
       grub:
         sequence:
         - wait-fastboot-interrupt

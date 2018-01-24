@@ -119,7 +119,7 @@ actions:
     methods:
       minimal:
       ssh:
-      fastboot: ['reboot', 'auto-login', 'shell-session', 'export-env']
+      fastboot: ['reboot']
       u-boot:
         parameters:
           mkimage_arch: arm

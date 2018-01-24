@@ -44,9 +44,6 @@ actions:
         - no-flash-boot
         - wait-usb-remove
         - lxc-add-device
-        - auto-login
-        - shell-session
-        - export-env
 
 timeouts:
   actions:

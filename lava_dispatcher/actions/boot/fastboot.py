@@ -121,6 +121,13 @@ class BootFastbootAction(BootAction):
                     mapped[0](device_actions=mapped[1]))
             elif mapped[0]:
                 self.internal_pipeline.add_action(mapped[0]())
+        if self.has_prompts(parameters):
+            self.internal_pipeline.add_action(AutoLoginAction())
+            if self.test_has_shell(parameters):
+                self.internal_pipeline.add_action(ExpectShellSession())
+                if 'transfer_overlay' in parameters:
+                    self.internal_pipeline.add_action(OverlayUnpack())
+                self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class WaitFastBootInterrupt(Action):
