@@ -42,8 +42,6 @@ actions:
       lxc:
       fastboot:
         - no-flash-boot
-        - wait-usb-remove
-        - lxc-add-device
 
 timeouts:
   actions:
