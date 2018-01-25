@@ -228,8 +228,11 @@ class AutoLoginAction(Action):
         # use lazy logging or the string will not be quoted correctly.
         if 'parameters' in self.job.device['actions']['boot']['methods'][self.method]:
             self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
-        self.kernel_start_message = self.job.device.get_constant('kernel-start-message')
-        connection.prompt_str = [self.kernel_start_message]
+        kernel_start_message = self.parameters.get(
+            'parameters', {}).get(
+                'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
+        if kernel_start_message:
+            connection.prompt_str = [kernel_start_message]
         if self.params and self.params.get('boot_message', None):
             self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
             connection.prompt_str = [self.params.get('boot_message')]
