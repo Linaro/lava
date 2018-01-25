@@ -152,6 +152,7 @@ class AutoLoginAction(Action):
             " actual prompt string more closely."
         )
         self.force_prompt = False
+        self.params = None
 
     def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
@@ -225,10 +226,11 @@ class AutoLoginAction(Action):
     def run(self, connection, max_end_time, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
-        self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
+        if 'parameters' in self.job.device['actions']['boot']['methods'][self.method]:
+            self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
         self.kernel_start_message = self.job.device.get_constant('kernel-start-message')
         connection.prompt_str = [self.kernel_start_message]
-        if self.params.get('boot_message', None):
+        if self.params and self.params.get('boot_message', None):
             self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
             connection.prompt_str = [self.params.get('boot_message')]
 
