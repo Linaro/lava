@@ -226,8 +226,9 @@ class AutoLoginAction(Action):
     def run(self, connection, max_end_time, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
-        if 'parameters' in self.job.device['actions']['boot']['methods'][self.method]:
-            self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
+        if self.job.device['actions']['boot']['methods'][self.method]:
+            if 'parameters' in self.job.device['actions']['boot']['methods'][self.method]:
+                self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
         kernel_start_message = self.parameters.get(
             'parameters', {}).get(
                 'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
