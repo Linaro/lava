@@ -880,6 +880,7 @@ class Device(RestrictedResource):
         Principally drop top level parameters and commands
         like power.
         """
+        data['constants']['kernel-start-message'] = ''
         device_configuration = {
             'hostname': self.hostname,
             'constants': data['constants'],
