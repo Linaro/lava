@@ -604,6 +604,7 @@ class BootloaderInterruptAction(Action):
             self.errors = "Missing bootloader prompt for device"
         self.bootloader_prompt = self.params['bootloader_prompt']
         self.interrupt_prompt = self.params.get('interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix=self.method))
+        self.needs_interrupt = self.params.get('needs_interrupt', True)
         # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
         self.interrupt_char = None
         if self.method != 'ipxe':
@@ -616,15 +617,18 @@ class BootloaderInterruptAction(Action):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super(BootloaderInterruptAction, self).run(connection, max_end_time, args)
-        connection.prompt_str = [self.interrupt_prompt, self.bootloader_prompt]
-        res = self.wait(connection)
-        if res == 0:
+        if self.needs_interrupt:
+            connection.prompt_str = self.interrupt_prompt
+            self.wait(connection)
             if self.interrupt_control_chars:
                 for char in self.interrupt_control_chars:
                     connection.sendcontrol(char)
             else:
                 connection.sendline(self.interrupt_char)
         else:
+            self.logger.info("Not interrupting bootloader, waiting for bootloader prompt")
+            connection.prompt_str = self.bootloader_prompt
+            self.wait(connection)
             self.set_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt', value=True)
         return connection
 
