@@ -153,6 +153,7 @@ class AutoLoginAction(Action):
         )
         self.force_prompt = False
         self.params = None
+        self.booting = True  # if a boot is expected, False for second UART or ssh.
 
     def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
@@ -197,6 +198,17 @@ class AutoLoginAction(Action):
             for prompt in prompts:
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
+        if self.job:  # unit test protection
+            methods = self.job.device['actions']['boot']['methods']
+            if self.method not in methods:
+                # second uart
+                self.booting = False
+            elif not methods[self.method]:
+                # secondary connections
+                self.booting = False
+            elif 'parameters' in methods[self.method]:
+                # fastboot devices usually lack method parameters
+                self.params = methods[self.method]['parameters']
 
     def check_kernel_messages(self, connection, max_end_time):
         """
@@ -226,24 +238,22 @@ class AutoLoginAction(Action):
     def run(self, connection, max_end_time, args=None):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
-        if self.job.device['actions']['boot']['methods'][self.method]:
-            if 'parameters' in self.job.device['actions']['boot']['methods'][self.method]:
-                self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
-        kernel_start_message = self.parameters.get(
-            'parameters', {}).get(
-                'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
-        if kernel_start_message:
-            connection.prompt_str = [kernel_start_message]
-        if self.params and self.params.get('boot_message', None):
-            self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
-            connection.prompt_str = [self.params.get('boot_message')]
+        if self.booting:
+            kernel_start_message = self.parameters.get(
+                'parameters', {}).get(
+                    'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
+            if kernel_start_message:
+                connection.prompt_str = [kernel_start_message]
+            if self.params and self.params.get('boot_message', None):
+                self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
+                connection.prompt_str = [self.params.get('boot_message')]
 
-        error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
-        if error_messages:
-            connection.prompt_str = connection.prompt_str + error_messages
-        res = self.wait(connection)
-        if res != 0:
-            raise InfrastructureError('matched a bootloader error message')
+            error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
+            if error_messages:
+                connection.prompt_str = connection.prompt_str + error_messages
+            res = self.wait(connection)
+            if res != 0:
+                raise InfrastructureError('matched a bootloader error message')
 
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):

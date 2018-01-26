@@ -233,6 +233,8 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertFalse(ssh.primary)
         self.assertIsNotNone(scp.scp)
         self.assertFalse(scp.primary)
+        autologin = [action for action in login.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertIsNone(autologin.params)
         self.assertIn('host_key', login.parameters['parameters'])
         self.assertIn('hostID', login.parameters['parameters'])
         self.assertIn(  # ipv4
