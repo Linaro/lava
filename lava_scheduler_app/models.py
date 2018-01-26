@@ -1866,7 +1866,9 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.state == TestJob.STATE_FINISHED
 
     def can_cancel(self, user):
-        states = [TestJob.STATE_SUBMITTED, TestJob.STATE_RUNNING]
+        states = [
+            TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING,
+            TestJob.STATE_SCHEDULED, TestJob.STATE_RUNNING]
         return self._can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
