@@ -1,36 +1,45 @@
+
 constants:
-     # OS shutdown message
-     # Override: set as the shutdown-message parameter of an Action.
-     # SHUTDOWN_MESSAGE
-     shutdown-message: 'The system is going down for reboot NOW'
+  # bootloader specific
+  u-boot:
+    interrupt-prompt: 'Hit any key to stop autoboot'
+    interrupt-character: ' '
+    final-message: 'Starting kernel'
+    error-messages:
+      - 'Resetting CPU'
+      - 'Must RESET board to recover'
+      - 'TIMEOUT'
+      - 'Retry count exceeded'
+      - 'ERROR: The remote end did not respond in time.'
+  grub:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+  grub-efi:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+    error-messages:
+      - 'Undefined OpCode Exception PC at'
+      - 'Synchronous Exception at'
+  ipxe:
+    interrupt-prompt: 'Press Ctrl-B for the iPXE command line'
+    interrupt_ctrl_list: ['b']
+    error-messages:
+      - 'No configuration methods succeeded'
+      - 'Connection timed out'
 
-     # Kernel starting message
-     # BOOT_MESSAGE
-     boot-message: 'Booting Linux'
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
 
-     # CPU reset messages
-     # CPU_RESET_MESSAGES
-     cpu-reset-messages:
-       - 'Resetting CPU'
-       - 'Must RESET board to recover'
-# Default shell prompt for AutoLogin
-     # DEFAULT_SHELL_PROMPT
-     default-shell-prompt: 'lava-test: # '
+  # Kernel starting message
+  kernel-start-message: 'Linux version [0-9]'
 
-     # u-boot auto boot prompt
-     # UBOOT_AUTOBOOT_PROMPT
-     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
-
-     # u-boot interrupt character
-     # UBOOT_INTERRUPT_CHARACTER = ' '
-     uboot-interrupt-character: ' '
-
-     # GRUB_BOOT_PROMPT
-     grub-autoboot-prompt: 'Press enter to boot the selected OS'
-     grub-interrupt-character: 'c'
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
 
 commands:
-    hard_reset: 'sleep 5'
     connections:
         uart0:
             connect: telnet localhost 7030
@@ -43,6 +52,7 @@ commands:
             connect: None
         uart3:
             connect: None
+
 parameters:
   # interfaces or device_ip or device_mac
 
@@ -63,7 +73,7 @@ actions:
   deploy:
     parameters:
       add_header: u-boot
-      mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
+      mkimage_arch: arm64 # string to pass to mkimage -A when adding UBoot headers
       append_dtb: False
       use_xip: False
     connections:
@@ -96,76 +106,70 @@ actions:
       ssh:
       u-boot:
         parameters:
-          mkimage_arch: arm
+          mkimage_arch: arm64
           bootloader_prompt: ZynqMP>
           interrupt_prompt: Hit any key to stop autoboot
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: ""
-          boot_message: Booting Linux
+          needs_interrupt: True
           # method specific stanza
         nfs:
           commands:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
+          - dhcp
+          - setenv serverip {SERVER_IP}
           - setenv loadkernel 'tftpb {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftpb {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftpb {DTB_ADDR} {DTB}'
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs  root=/dev/nfs rw
-            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; run loadfdt; booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
-          - run bootcmd
+          - "setenv bootargs ' root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp'"
+          - 'booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
         nbd:
           commands:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
-
+          - dhcp
+          - setenv serverip {SERVER_IP}
           - setenv loadkernel 'tftpb {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftpb {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftpb {DTB_ADDR} {DTB}'
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
-          - setenv nbdkbootargs ' ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp'
-          - setenv bootargs verbose  rw ${nbdbasekargs} ${nbdkbootargs}
-          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
-          - setenv verify no
-          - setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'
-          - run bootcmd
-
+          - "setenv bootargs ' rw nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - 'booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
         ramdisk:
           commands:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
+          - dhcp
+          - setenv serverip {SERVER_IP}
           - setenv loadkernel 'tftpb {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftpb {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'tftpb {DTB_ADDR} {DTB}'
           - "setenv bootargs ' root=/dev/ram0  ip=dhcp'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
-          - run bootcmd
+          - 'booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
         usb:
           commands:
           - usb start
           - setenv autoload no
-
-          - "setenv loadkernel 'load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}'"
-          - "setenv bootargs ' root={ROOT}  ip=dhcp'"
-          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
-          - run bootcmd
+          - "load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}"
+          - "setenv initrd_size ${filesize}"
+          - "load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}"
+          - " root={ROOT}  ip=dhcp"
+          - 'booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
         sata:
           commands:
           - scsi scan
           - setenv autoload no
-          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}"
+          - "load scsi {ROOT_PART} {DTB_ADDR} {DTB}"
           - "setenv bootargs ' root={ROOT}  ip=dhcp'"
-          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
-          - run bootcmd
+          - 'booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}'
 timeouts:
   actions:
     apply-overlay-image:
@@ -219,4 +223,3 @@ timeouts:
       seconds: 30
     lava-test-shell:
       seconds: 10
-
