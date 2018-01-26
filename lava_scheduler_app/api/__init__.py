@@ -813,6 +813,8 @@ class SchedulerAPI(ExposedAPI):
         """
         Name
         ----
+        DEPRECATED - use `job_health` or `job_state` instead.
+
         `job_status` (`job_id`)
 
         Description
@@ -882,6 +884,8 @@ class SchedulerAPI(ExposedAPI):
         """
         Name
         ----
+        DEPRECATED - use `job_health` or `job_state` instead.
+
         job_list_status ([job_id, job_id, job_id])
 
         Description
@@ -931,6 +935,102 @@ class SchedulerAPI(ExposedAPI):
                     continue
             job_status[str(job.display_id)] = job.get_legacy_status_display()
         return job_status
+
+    def job_health(self, job_id):
+        """
+        Name
+        ----
+        `job_health` (`job_id`)
+
+        Description
+        -----------
+        Get the health of given job id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the output is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of job health with the
+        following fields.
+        The user is authenticated with an username and token.
+
+        `job_health`: string
+        ['Unknown'|'Complete'|'Incomplete'|'Canceled']
+        """
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
+        try:
+            job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Permission denied for user to job %s" % job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        job_health = {
+            'job_id': job.id,
+            'job_health': job.get_health_display()
+        }
+
+        if job.is_multinode:
+            job_health.update({
+                'sub_id': job.sub_id
+            })
+
+        return job_health
+
+    def job_state(self, job_id):
+        """
+        Name
+        ----
+        `job_state` (`job_id`)
+
+        Description
+        -----------
+        Get the state of given job id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the output is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of job state with the
+        following fields.
+        The user is authenticated with an username and token.
+
+        `job_state`: string
+        ['Submitted'|'Scheduling'|'Scheduled'|'Running'|'Canceling'|'Finished']
+        """
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
+        try:
+            job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Permission denied for user to job %s" % job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        job_state = {
+            'job_id': job.id,
+            'job_state': job.get_state_display()
+        }
+
+        if job.is_multinode:
+            job_state.update({
+                'sub_id': job.sub_id
+            })
+
+        return job_state
 
     def all_jobs(self):
         """
