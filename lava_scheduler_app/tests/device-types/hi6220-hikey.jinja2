@@ -63,7 +63,6 @@ actions:
           item_class: '0-9'
           separator: ' '
           bootloader_prompt: "{{ bootloader_prompt|default('Start:') }}"
-          boot_message: {{ boot_message|default("Booting Linux Kernel...") }}
         fastboot:
         - select:
             items:
