@@ -447,6 +447,8 @@ class Command(LAVADaemonCommand):
         query = TestJob.objects.select_for_update()
         # Only select test job that are ready
         query = query.filter(state=TestJob.STATE_SCHEDULED)
+        # Only start jobs on online workers
+        query = query.filter(actual_device__worker_host__state=Worker.STATE_ONLINE)
         # exclude test job without a device: they are special test jobs like
         # dynamic connection.
         query = query.exclude(actual_device=None)
