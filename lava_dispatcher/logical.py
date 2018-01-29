@@ -54,6 +54,7 @@ class RetryAction(Action):
     def run(self, connection, max_end_time, args=None):
         retries = 0
         has_failed = False
+        self.call_protocols()
         while retries < self.max_retries:
             try:
                 connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
