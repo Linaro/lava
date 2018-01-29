@@ -59,9 +59,11 @@ admin.site.register(User, UserAdmin)
 
 
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for testjob in queryset:
-        if testjob.can_cancel(request.user):
-            testjob.cancel(request.user)
+    with transaction.atomic():
+        for testjob in queryset.select_for_update():
+            if testjob.can_cancel(request.user):
+                testjob.go_state_canceling()
+                testjob.save()
 
 
 cancel_action.short_description = 'cancel selected jobs'
