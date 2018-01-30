@@ -168,6 +168,10 @@ class Connection(object):
                 logger.info("Disconnecting from ssh: %s", reason)
                 self.sendline('', disconnecting=True)
                 self.sendline('~.', disconnecting=True)
+            elif self.name == "LxcSession":
+                logger.info("Disconnecting from lxc: %s", reason)
+                self.sendline('', disconnecting=True)
+                self.sendline('exit', disconnecting=True)
             else:
                 raise LAVABug("'disconnect' not supported for %s" % self.tags)
         except ValueError:  # protection against file descriptor == -1
@@ -179,7 +183,7 @@ class Connection(object):
     def finalise(self):
         logger = logging.getLogger('dispatcher')
         if self.raw_connection:
-            if self.tags:
+            if self.tags or self.name == "LxcSession":
                 self.disconnect(reason='Finalise')
         if self.raw_connection:
             try:
@@ -188,7 +192,10 @@ class Connection(object):
             except OSError:
                 self.raw_connection.kill(9)
                 # self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
-            self.raw_connection.close()
+            else:
+                self.connected = False
+                self.raw_connection.close(force=True)
+                self.raw_connection = None
 
 
 class Protocol(object):
