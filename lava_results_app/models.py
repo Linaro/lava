@@ -968,7 +968,7 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct('id').order_by(*order_by).extra(select={
+            **filters).distinct().order_by(*order_by).extra(select={
                 '%s_ptr_id' % content_type.model:
                 '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
@@ -1553,8 +1553,7 @@ class ChartQuery(models.Model):
         else:
             results = Query.get_queryset(
                 content_type,
-                conditions).visible_by_user(user).order_by(
-                    self.ORDER_BY_MAP[content_type.model_class()])
+                conditions, order_by=[self.ORDER_BY_MAP[content_type.model_class()]]).visible_by_user(user)
 
         if self.chart_type == "pass/fail":
             chart_data["data"] = self.get_chart_passfail_data(user, results)
