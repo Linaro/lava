@@ -30,6 +30,7 @@ import os
 import re
 import shutil
 import signal
+import sqlite3
 import socket
 import subprocess
 import sys
@@ -61,7 +62,8 @@ JOBS_CHECK_INTERVAL = 5
 PROTOCOL_VERSION = 3
 SEND_QUEUE = 10  # zmq high water mark
 TIMEOUT = 5  # zmq timeout
-TMP_DIR = "/var/lib/lava/dispatcher/slave/tmp"
+SLAVE_DIR = "/var/lib/lava/dispatcher/slave"
+TMP_DIR = os.path.join(SLAVE_DIR, "tmp")
 
 # Create the logger that will be configured later
 logging.Formatter.convert = time.gmtime
@@ -125,14 +127,73 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b"master"] + [b(d) for d in data])
 
 
-def send_end(sock, job_id, job):
-    err = job.errors()
-    description = job.description()
-    if description is None:
-        LOG.error("[%d] lava-run crashed", job_id)
-        description = ""
+def start_job(job_id, definition, device_definition, zmq_config,
+              dispatcher_config, env_str, env_dut_str):
+    """
+    Start the lava-run process and return the pid
+    """
+    # Create the base directory
+    base_dir = os.path.join(TMP_DIR, "%s/" % job_id)
+    mkdir(base_dir)
 
-    send_multipart_u(sock, ["END", str(job_id), err, description])
+    # Write back the job, device and dispatcher configuration
+    with open(os.path.join(base_dir, "job.yaml"), "w") as f_job:
+        f_job.write(definition)
+    with open(os.path.join(base_dir, "device.yaml"), "w") as f_device:
+        f_device.write(device_definition)
+    with open(os.path.join(base_dir, "dispatcher.yaml"), "w") as f_job:
+        f_job.write(dispatcher_config)
+
+    # Dump the environment variables in the tmp file.
+    if env_dut_str:
+        with open(os.path.join(base_dir, "env.dut.yaml", 'w')) as f_env:
+            f_env.write(env_dut_str)
+
+    try:
+        out_file = os.path.join(base_dir, "stdout")
+        err_file = os.path.join(base_dir, "stderr")
+        env = create_environ(env_str)
+        args = [
+            "lava-run",
+            "--device=%s" % os.path.join(base_dir, "device.yaml"),
+            "--dispatcher=%s" % os.path.join(base_dir, "dispatcher.yaml"),
+            "--output-dir=%s" % base_dir,
+            "--job-id=%s" % job_id,
+            "--logging-url=%s" % zmq_config.logging_url,
+            os.path.join(base_dir, "job.yaml"),
+        ]
+
+        if zmq_config.ipv6:
+            args.append("--ipv6")
+
+        # Use certificates if defined
+        if zmq_config.master_cert is not None and \
+           zmq_config.slave_cert is not None:
+            args.extend(["--master-cert", zmq_config.master_cert,
+                         "--slave-cert", zmq_config.slave_cert])
+        if env_dut_str:
+            args.append("--env-dut=%s" % os.path.join(base_dir, "env.dut.yaml"))
+
+        proc = subprocess.Popen(
+            args,
+            stdout=open(out_file, "w"),
+            stderr=open(err_file, "w"),
+            env=env,
+            preexec_fn=os.setpgrp)
+        return proc.pid
+    except Exception as exc:  # pylint: disable=broad-except
+        LOG.error("[%d] Unable to start: %s", job_id, args)
+        # daemon must always continue running even if the job crashes
+        if hasattr(exc, "child_traceback"):
+            LOG.exception("[%d] %s", job_id, exc.child_traceback)
+        else:
+            LOG.exception("[%d] %s", job_id, exc)
+        with open(err_file, "a") as errlog:
+            errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
+        # The process has not started
+        # The END message will be sent the next time
+        # check_job_status is run
+        return None
 
 
 #########
@@ -142,21 +203,20 @@ def send_end(sock, job_id, job):
 class Job(object):
     """Wrapper around a job process."""
 
-    RUNNING = 1
-    FINISHING = 2
-    ENDING = 3
+    RUNNING, CANCELING, FINISHED = range(3)
 
-    def __init__(self, job_id):
-        self.job_id = job_id
-        self.proc = None
-        self.status = Job.RUNNING
-        self.finish_time = 0
+    def __init__(self, row):
+        self.job_id = row["id"]
+        self.pid = row["pid"]
+        self.status = row["status"]
+        self.last_update = row["last_update"]
+        # Create the base directory
         self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
         mkdir(self.base_dir)
 
     def errors(self):
         try:
-            return open(os.path.join(self.base_dir, "err"), 'r').read()
+            return open(os.path.join(self.base_dir, "stderr"), 'r').read()
         except IOError:
             return ''
 
@@ -170,77 +230,96 @@ class Job(object):
             LOG.exception(exc)
             return None
 
-    def start(self, definition, device_definition, zmq_config,
-              dispatcher_config, env_str, env_dut_str):
-        """Start the process."""
-        out_file = os.path.join(self.base_dir, "out")
-        err_file = os.path.join(self.base_dir, "err")
-        env_dut_filename = os.path.join(self.base_dir, "env.dut.yaml")
+    def kill(self):
+        # If the pid is 0, just skip because lava-run was not started
+        if self.pid == 0:
+            return
+        os.kill(self.pid, signal.SIGKILL)
 
-        # Write back the job and device configuration
-        with open(os.path.join(self.base_dir, "job.yaml"), "w") as f_job:
-            f_job.write(definition)
-        with open(os.path.join(self.base_dir, "device.yaml"), "w") as f_device:
-            f_device.write(device_definition)
-        with open(os.path.join(self.base_dir, "dispatcher.yaml"), "w") as f_job:
-            f_job.write(dispatcher_config)
+    def terminate(self):
+        # If the pid is 0, just skip because lava-run was not started
+        if self.pid == 0:
+            return
+        os.kill(self.pid, signal.SIGTERM)
 
-        # Dump the environment variables in the tmp file.
-        if env_dut_str:
-            with open(env_dut_filename, 'w') as f_env:
-                f_env.write(env_dut_str)
-
+    def is_running(self):
         try:
-            env = create_environ(env_str)
-            args = [
-                "lava-run",
-                "--device=%s" % os.path.join(self.base_dir, "device.yaml"),
-                "--dispatcher=%s" % os.path.join(self.base_dir, "dispatcher.yaml"),
-                "--output-dir=%s" % self.base_dir,
-                "--job-id=%s" % self.job_id,
-                "--logging-url=%s" % zmq_config.logging_url,
-                os.path.join(self.base_dir, "job.yaml"),
-            ]
+            with open("/proc/%d/cmdline" % self.pid, "r") as fd:
+                return "lava-run" in fd.read()
+        except IOError:
+            return False
 
-            if zmq_config.ipv6:
-                args.append("--ipv6")
+    def send_end(self, sock):
+        errors = self.errors()
+        description = self.description()
+        if description is None:
+            LOG.error("[%d] lava-run crashed", self.job_id)
+            if errors:
+                LOG.error(errors)
+            description = ""
+        LOG.debug("END(%d) => master", self.job_id)
+        send_multipart_u(sock, ["END", str(self.job_id), errors, description])
 
-            # Use certificates if defined
-            if zmq_config.master_cert is not None and \
-               zmq_config.slave_cert is not None:
-                args.extend(["--master-cert", zmq_config.master_cert,
-                             "--slave-cert", zmq_config.slave_cert])
-            if env_dut_str:
-                args.append("--env-dut=%s" % env_dut_filename)
+    def send_start_ok(self, sock):
+        LOG.debug("START_OK(%d) => master", self.job_id)
+        send_multipart_u(sock, ["START_OK", str(self.job_id)])
 
-            self.proc = subprocess.Popen(
-                args,
-                stdout=open(out_file, "w"),
-                stderr=open(err_file, "w"), env=env)
-        except Exception as exc:  # pylint: disable=broad-except
-            LOG.error("[%d] Unable to start: %s", self.job_id, args)
-            # daemon must always continue running even if the job crashes
-            if hasattr(exc, "child_traceback"):
-                LOG.exception("[%d] %s", self.job_id, exc.child_traceback)
-            else:
-                LOG.exception("[%d] %s", self.job_id, exc)
-            with open(err_file, "a") as errlog:
-                errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
-            # The process has not started
-            # The END message will be sent the next time
-            # check_job_status is run
-            self.status = Job.ENDING
 
-    def cancel(self):
-        """Cancel the job and kill the process."""
-        # self.proc can be None as cancel() is also called when the process
-        # fails to start.
-        if self.proc is not None:
-            self.proc.send_signal(signal.SIGINT)
-        # Set the status and store the time
-        if self.status != Job.FINISHING:
-            self.finish_time = time.time()
-            self.status = Job.FINISHING
+class JobsDB(object):
+
+    def __init__(self, dbname):
+        self.conn = sqlite3.connect(dbname)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTERGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
+        self.conn.commit()
+
+    def create(self, job_id, pid, status):
+        """
+        When pid is 0, the pid is unknown
+        """
+        try:
+            self.conn.execute("INSERT INTO jobs VALUES(?, ?, ?, ?)",
+                              (str(job_id), str(pid), str(status), str(int(time.time()))))
+            self.conn.commit()
+            return self.get(job_id)
+        except sqlite3.Error:
+            return None
+
+    def get(self, job_id):
+        row = self.conn.execute("SELECT * FROM jobs WHERE id=?", (str(job_id), )).fetchone()
+        return None if row is None else Job(row)
+
+
+    def update(self, job_id, status):
+        try:
+            self.conn.execute("UPDATE jobs SET status=?, last_update=? WHERE id=?",
+                              (str(status), str(int(time.time())), str(job_id)))
+            self.conn.commit()
+            return self.get(job_id)
+        except sqlite3.Error:
+            return None
+
+    def delete(self, job_id):
+        try:
+            self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id), ))
+            self.conn.commit()
+        except sqlite3.Error:
+            pass
+
+    def running(self):
+        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.RUNNING), ))
+        for job in jobs:
+            yield Job(job)
+
+    def canceling(self):
+        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.CANCELING), ))
+        for job in jobs:
+            yield Job(job)
+
+    def finished(self):
+        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.FINISHED), ))
+        for job in jobs:
+            yield Job(job)
 
 
 class Master(object):
@@ -254,6 +333,27 @@ class Master(object):
         # Start with TIMEOUT. Master will send the right value to use
         # afterward.
         self.ping_interval = TIMEOUT
+
+    def ping(self, sock):
+        """
+        PING the master whenever needed
+        Send a PING only if we haven't received a message from the master nor sent
+        a PING for a long time.
+
+        :param sock: the zmq socket
+        """
+        now = time.time()
+        if now - max(self.last_msg, self.last_ping) > self.ping_interval:
+            # Is the master offline ?
+            if self.online and now - self.last_msg > 4 * self.ping_interval:
+                LOG.warning("Master goes OFFLINE")
+                self.online = False
+
+            LOG.debug("PING => master (last message %ss ago)",
+                      int(now - self.last_msg))
+
+            send_multipart_u(sock, ["PING"])
+            self.last_ping = now
 
     def received_msg(self):
         """
@@ -378,43 +478,40 @@ def check_job_status(jobs, sock, last_jobs_check):
     if now - last_jobs_check < JOBS_CHECK_INTERVAL:
         return last_jobs_check
 
-    # Loop on all running jobs
-    for job_id in jobs.keys():
-        status = jobs[job_id].status
-        if status == Job.RUNNING:
-            ret = jobs[job_id].proc.poll()
-            # Job has finished
-            if ret is not None:
-                LOG.info("[%d] Job END", job_id)
-                jobs[job_id].status = Job.ENDING
-                send_end(sock, job_id, jobs[job_id])
-
-        elif status == Job.FINISHING:
-            ret = jobs[job_id].proc.poll()
-            # Job has finished
-            if ret is not None:
-                LOG.info("[%d] Job END", job_id)
-                jobs[job_id].status = Job.ENDING
-                send_end(sock, job_id, jobs[job_id])
-
-            # Terminate processes that where not collected last time and that are
-            # too long to end.
-            elif now - jobs[job_id].finish_time > FINISH_MAX_DURATION:
-                LOG.info("[%d] Job not finishing => terminating", job_id)
-                # Just terminate the proc and let the next iteration will send the
-                # signal for us.
-                jobs[job_id].proc.terminate()
-                jobs[job_id].proc.wait()
-                LOG.info("[%d] Job END", job_id)
-                jobs[job_id].status = Job.ENDING
-                send_end(sock, job_id, jobs[job_id])
-
-        else:
+    # Re-send the END message (if needed)
+    for job in jobs.finished():
+        if now - job.last_update > JOBS_CHECK_INTERVAL:
             # Re-send the END message (the server hasn't answered yet)
-            LOG.info("[%d] Job END (resend)", job_id)
-            send_end(sock, job_id, jobs[job_id])
+            LOG.info("[%d] Job END (resend)", job.job_id)
+            job.send_end(sock)
 
-    return now
+    # Check all running jobs
+    for job in jobs.running():
+        if not job.is_running():
+            # wait for the job
+            try:
+                os.waitpid(job.pid, 0)
+            except OSError as exc:
+                LOG.debug("[%d] unable to wait for the process: %s", job.job_id, str(exc))
+            LOG.info("[%d] Job END", job.job_id)
+            job.send_end(sock)
+            jobs.update(job.job_id, Job.FINISHED)
+
+    # Check canceling jobs
+    for job in jobs.canceling():
+        if not job.is_running():
+            # wait for the job
+            try:
+                os.waitpid(job.pid, 0)
+            except OSError as exc:
+                LOG.debug("[%d] unable to wait for the process: %s", job.job_id, str(exc))
+            LOG.info("[%d] Job END", job.job_id)
+            job.send_end(sock)
+        elif time.time() - job.last_update > FINISH_MAX_DURATION:
+            LOG.info("[%d] Job not finishing => killing", job.job_id)
+            job.kill()
+
+    return time.time()
 
 
 def connect_to_master(poller, pipe_r, sock):
@@ -438,6 +535,8 @@ def connect_to_master(poller, pipe_r, sock):
         LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
         send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
         (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
+
+    return False
 
 
 def destroy_context(context, sock, read_pipe, write_pipe):
@@ -500,7 +599,6 @@ def handle_cancel(msg, jobs, sock, master):
     Check if the job is known and started and cancel the process. In any cases,
     notify the master that the job is ending.
     """
-
     try:
         job_id = int(msg[1])
     except (IndexError, ValueError):
@@ -508,20 +606,22 @@ def handle_cancel(msg, jobs, sock, master):
         return
     LOG.info("master => CANCEL(%d)", job_id)
 
-    if job_id in jobs:
-        if jobs[job_id].status == Job.RUNNING:
-            # Do not send the END message now. We don't know if the process
-            # will leave right now.
-            LOG.debug("[%d] canceling", job_id)
-            jobs[job_id].cancel()
-        else:
-            LOG.debug("[%d] Job already canceled", job_id)
+    job = jobs.get(job_id)
+    if job is not None:
+        if job.status == Job.RUNNING:
+            if job.is_running():
+                # Do not send the END message now. We don't know if the process
+                # will leave right now.
+                LOG.debug("[%d] Canceling", job_id)
+                job.terminate()
+                jobs.update(job_id, Job.CANCELING)
+            else:
+                LOG.info("[%d] Job already finished", job.job_id)
+                job.send_end(sock)
     else:
-        LOG.debug("[%d] Unknown job, sending END", job_id)
-        jobs[job_id] = Job(job_id)
-        jobs[job_id].status = Job.ENDING
-        # Send the END message anyway
-        send_end(sock, job_id, jobs[job_id])
+        LOG.debug("[%d] Unknown job", job_id)
+        job = jobs.create(job_id, 0, Job.FINISHED)
+        job.send_end(sock)
 
     # Mark the master as alive
     master.received_msg()
@@ -536,16 +636,17 @@ def handle_end_ok(msg, jobs):
         return
     LOG.info("master => END_OK(%d)", job_id)
 
-    if job_id in jobs:
-        LOG.debug("[%d] Job END acked", job_id)
-        del jobs[job_id]
-    else:
+    job = jobs.get(job_id)
+    if job is None:
         LOG.debug("[%d] Unknown job", job_id)
 
     # Remove the tmp directory without checking for errors
     job_dir = os.path.join(TMP_DIR, str(job_id))
     LOG.debug("[%d] Removing %s", job_id, job_dir)
     shutil.rmtree(job_dir, ignore_errors=True)
+
+    # Remove from the jobs
+    jobs.delete(job_id)
 
     # Do not mark the master as alive. In fact we are not sending
     # back any data so the master will not be able to mark the
@@ -554,7 +655,7 @@ def handle_end_ok(msg, jobs):
 
 def handle_hello_ok():
     """ Handle HELLO_OK messages (nothing to do) """
-    LOG.debug("Received HELLO_OK from master - nothing do to")
+    LOG.debug("master => HELLO_OK")
 
 
 def handle_pong(msg, master):
@@ -588,26 +689,25 @@ def handle_start(msg, jobs, sock, master, zmq_config):
     except (IndexError, ValueError) as exc:
         LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
         return
-
     LOG.info("master => START(%d)", job_id)
-
-    # Pretty print configuration
-    dispatcher_str = str(yaml.load(dispatcher_config)) if dispatcher_config else ""
-    env_str = str(yaml.load(env)) if env else ""
-    env_dut_str = str(yaml.load(env_dut)) if env_dut else ""
 
     # Check if the job is known and started. In this case, send
     # back the right signal (ignoring the duplication or signaling
     # the end of the job).
     job = jobs.get(job_id)
     if job is not None:
-        if job.status == Job.ENDING:
-            LOG.warning("[%d] Job has already ended", job_id)
-            send_end(sock, job_id, jobs[job_id])
+        if job.status == Job.FINISHED:
+            LOG.warning("[%d] Job already finished", job_id)
+            job.send_end(sock)
         else:
-            LOG.debug("[%d] Job has already been started", job_id)
-            send_multipart_u(sock, ["START_OK", str(job_id)])
+            LOG.debug("[%d] Job already running", job_id)
+            job.send_start_ok(sock)
     else:
+        # Pretty print configuration
+        dispatcher_str = str(yaml.load(dispatcher_config)) if dispatcher_config else ""
+        env_str = str(yaml.load(env)) if env else ""
+        env_dut_str = str(yaml.load(env_dut)) if env_dut else ""
+
         LOG.info("[%d] Starting job", job_id)
         LOG.debug("[%d]         : %s", job_id, yaml.load(job_definition))
         LOG.debug("[%d] device  : %s", job_id, device_definition)
@@ -615,10 +715,12 @@ def handle_start(msg, jobs, sock, master, zmq_config):
         LOG.debug("[%d] env     : %s", job_id, env_str)
         LOG.debug("[%d] env-dut : %s", job_id, env_dut_str)
 
-        jobs[job_id] = Job(job_id)
-        jobs[job_id].start(job_definition, device_definition, zmq_config,
-                           dispatcher_config, env, env_dut)
-        send_multipart_u(sock, ["START_OK", str(job_id)])
+        # Start the job, grab the pid and create it in the dabatase
+        pid = start_job(job_id, job_definition, device_definition, zmq_config,
+                        dispatcher_config, env, env_dut)
+        job = jobs.create(job_id, 0 if pid is None else pid,
+                          Job.FINISHED if pid is None else Job.RUNNING)
+        job.send_start_ok(sock)
 
     # Mark the master as alive
     master.received_msg()
@@ -637,50 +739,24 @@ def handle_status(msg, jobs, sock, master):
         return
     LOG.info("master => STATUS(%d)", job_id)
 
-    if job_id in jobs:
-        if jobs[job_id].status == Job.ENDING:
+    job = jobs.get(job_id)
+    if job is not None:
+        if job.status == Job.FINISHED:
             # The job has already ended
-            LOG.debug("[%d] job has ended", job_id)
-            send_end(sock, job_id, jobs[job_id])
+            LOG.debug("[%d] job already finished", job_id)
+            job.send_end(sock)
         else:
             # The job is still running
             LOG.debug("[%d] job is running", job_id)
-            send_multipart_u(sock, ["START_OK", str(job_id)])
+            job.send_start_ok(sock)
     else:
         # Unknown job: return END anyway
         LOG.debug("[%d] Unknown job, sending END after STATUS", job_id)
-        jobs[job_id] = Job(job_id)
-        jobs[job_id].status = Job.ENDING
-        send_end(sock, job_id, jobs[job_id])
+        job = jobs.create(job_id, 0, Job.FINISHED)
+        job.send_end(sock)
 
     # Mark the master as alive
     master.received_msg()
-
-
-
-
-def ping_master(master, sock):
-    """
-    PING the master whenever needed
-    Send a PING only if we haven't received a message from the master nor sent
-    a PING for a long time.
-
-    :param master: the master structure
-    :param sock: the zmq socket
-    :param timeout: the time to wait to flag the master as offline
-    """
-    now = time.time()
-    if now - max(master.last_msg, master.last_ping) > master.ping_interval:
-        # Is the master offline ?
-        if master.online and now - master.last_msg > 4 * master.ping_interval:
-            LOG.warning("Master goes OFFLINE")
-            master.online = False
-
-        LOG.debug("PING => master (last message %ss ago)",
-                  int(now - master.last_msg))
-
-        send_multipart_u(sock, ["PING"])
-        master.last_ping = now
 
 
 def setup_parser():
@@ -768,7 +844,8 @@ def main():
 
     # slave states
     master = Master()
-    jobs = {}
+    mkdir(SLAVE_DIR)
+    jobs = JobsDB(os.path.join(SLAVE_DIR, "db.sqlite3"))
     last_jobs_check = time.time()
     if options.encrypt:
         zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
@@ -785,9 +862,12 @@ def main():
 
         (leaving, msg) = recv_from_master("", poller, pipe_r, sock)
         while not leaving:
+            # If the message is not empty, handle it
             if msg is not None:
                 handle(msg, master, jobs, zmq_config, sock)
-            ping_master(master, sock)
+            # Ping the master if needed
+            master.ping(sock)
+            # Check for jobs status
             last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
             (leaving, msg) = recv_from_master("", poller, pipe_r, sock)
 
