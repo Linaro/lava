@@ -364,9 +364,6 @@ class Command(LAVADaemonCommand):
             if action == 'HELLO':
                 self.logger.warning("Dispatcher <%s> has RESTARTED",
                                     hostname)
-                # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
-                # as well as handling unexpected crashes.
-                self._cancel_slave_dispatcher_jobs(hostname)
             else:
                 # Assume the HELLO command was received, and the
                 # action succeeded.
@@ -377,9 +374,6 @@ class Command(LAVADaemonCommand):
             # message.
             self.logger.warning("New dispatcher <%s>", hostname)
             self.dispatchers[hostname] = SlaveDispatcher(hostname)
-            # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
-            # as well as handling unexpected crashes.
-            self._cancel_slave_dispatcher_jobs(hostname)
 
         # Mark the dispatcher as alive
         self.dispatcher_alive(hostname)
@@ -408,30 +402,6 @@ class Command(LAVADaemonCommand):
             self.logger.error("[%d] Unknown job", job_id)
         else:
             self.dispatcher_alive(hostname)
-
-    def _cancel_slave_dispatcher_jobs(self, hostname):
-        """Get dispatcher jobs and cancel them.
-
-        :param hostname: The name of the dispatcher host.
-        :type hostname: string
-        """
-        # TODO: DB: mark the dispatcher as online in the database.
-        # For the moment this should not be done by this process as
-        # some dispatchers are using old and new dispatcher.
-
-        # Mark all jobs on this dispatcher as canceled.
-        # The dispatcher had (re)started, so all jobs have to be
-        # finished.
-        with transaction.atomic():
-            # TODO: find a way to lock actual_device
-            jobs = TestJob.objects.select_for_update() \
-                                  .filter(actual_device__worker_host__hostname=hostname,
-                                          state=TestJob.STATE_RUNNING)
-
-            for job in jobs:
-                self.logger.info("[%d] Canceling", job.id)
-                job.go_state_finished(TestJob.HEALTH_CANCELED)
-                job.save()
 
     def export_definition(self, job):  # pylint: disable=no-self-use
         job_def = yaml.load(job.definition)
