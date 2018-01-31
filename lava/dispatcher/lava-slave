@@ -23,6 +23,7 @@
 import argparse
 import errno
 import fcntl
+import glob
 import logging
 import logging.handlers
 import lzma
@@ -69,6 +70,13 @@ TMP_DIR = os.path.join(SLAVE_DIR, "tmp")
 logging.Formatter.convert = time.gmtime
 LOG = logging.getLogger("lava-slave")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
+
+# Check for stale resources every STALE_CHECK_INTERVAL seconds (default to 1 hour)
+STALE_CHECK_INTERVAL = 3600
+STALE_CONFIG = {
+    "/var/lib/lava/dispatcher/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
+    "/var/lib/lava/dispatcher/slave/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
+}
 
 
 #########
@@ -306,6 +314,10 @@ class JobsDB(object):
         except sqlite3.Error:
             pass
 
+    def all_ids(self):
+        jobs = self.conn.execute("SELECT * FROM jobs")
+        return [job["id"] for job in jobs]
+
     def running(self):
         jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.RUNNING), ))
         for job in jobs:
@@ -510,6 +522,35 @@ def check_job_status(jobs, sock, last_jobs_check):
         elif time.time() - job.last_update > FINISH_MAX_DURATION:
             LOG.info("[%d] Job not finishing => killing", job.job_id)
             job.kill()
+
+    return time.time()
+
+
+def remove_stale_resources(jobs, last_stale_check):
+    now = time.time()
+    if now - last_stale_check < STALE_CHECK_INTERVAL:
+        return last_stale_check
+
+    # Grab the known jobs
+    job_ids = jobs.all_ids()
+
+    LOG.info("Removing stale resources:")
+    for directory in STALE_CONFIG:
+        LOG.debug("-> %s", directory)
+        pattern = re.compile(STALE_CONFIG[directory]["pattern"])
+
+        for path in glob.iglob("%s/*" % directory):
+            match = pattern.match(os.path.basename(path))
+            if match is None:
+                continue
+            try:
+                job_id = int(match.groupdict()["job_id"])
+            except ValueError:
+                LOG.error("Invalid job_id: %s", job_id)
+                continue
+            if job_id not in job_ids:
+                LOG.debug("--> removing %s", path)
+                shutil.rmtree(path, ignore_errors=True)
 
     return time.time()
 
@@ -846,7 +887,7 @@ def main():
     master = Master()
     mkdir(SLAVE_DIR)
     jobs = JobsDB(os.path.join(SLAVE_DIR, "db.sqlite3"))
-    last_jobs_check = time.time()
+    last_jobs_check = last_stale_check = time.time()
     if options.encrypt:
         zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
                                options.slave_cert, options.ipv6)
@@ -867,8 +908,10 @@ def main():
                 handle(msg, master, jobs, zmq_config, sock)
             # Ping the master if needed
             master.ping(sock)
-            # Check for jobs status
+            # Regular checks
             last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
+            last_stale_check = remove_stale_resources(jobs, last_stale_check)
+            # Listen to the master
             (leaving, msg) = recv_from_master("", poller, pipe_r, sock)
 
     except Exception as exc:
