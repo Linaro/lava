@@ -39,7 +39,7 @@ from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
 # Constants
-FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
+FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 TIMEOUT = 10
 FD_TIMEOUT = 60
 
