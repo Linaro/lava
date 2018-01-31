@@ -168,7 +168,6 @@ def testjob(request, job):
             'job_link': pklink(job),
             'suite_table': suite_table,
             'metadata': yaml_dict,
-            'content_type_id': ContentType.objects.get_for_model(TestSuite).id,
             'failed_definitions': failed_definitions,
             'condition_choices': simplejson.dumps(
                 QueryCondition.get_condition_choices(job)
@@ -250,8 +249,10 @@ def suite(request, job, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(suite, pk=pk, job=job.id),
             'job': job,
             'job_link': pklink(job),
-            'content_type_id': ContentType.objects.get_for_model(TestCase).id,
+            'testsuite_content_type_id': ContentType.objects.get_for_model(
+                TestSuite).id,
             'suite_name': pk,
+            'suite_id': test_suite.id,
             'suite_table': suite_table,
             'bug_links': BugLink.objects.filter(
                 object_id=test_suite.id,
