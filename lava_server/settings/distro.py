@@ -4,7 +4,6 @@ import os
 import re
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.production import *
-from django.db.backends.signals import connection_created
 from lava_server.settings.config_file import ConfigFile
 
 # Load application settings from lava_server.settings integration package
@@ -239,12 +238,6 @@ if distro_settings.get_setting("USE_TEMPLATE_CACHE", False):
     TEMPLATES[0]['OPTIONS']['loaders'] = [('django.template.loaders.cached.Loader',
                                            TEMPLATES[0]['OPTIONS']['loaders'])]
 
-
-def set_timeout(connection, **kw):
-    connection.cursor().execute("SET statement_timeout to 30000")
-
-
-connection_created.connect(set_timeout)
 
 # Allow Django System check framework settings override
 SILENCED_SYSTEM_CHECKS = distro_settings.get_setting("SILENCED_SYSTEM_CHECKS",
