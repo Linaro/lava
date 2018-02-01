@@ -15,7 +15,7 @@
 {% set baud_rate = baud_rate|default(115200) %}
 
 {% set fastboot_sequence = [
-    'reboot', 'auto-login', 'shell-session', 'export-env'] %}
+    'reboot'] %}
 {% set fastboot_deploy_uboot = "
       u-boot:
         parameters:
