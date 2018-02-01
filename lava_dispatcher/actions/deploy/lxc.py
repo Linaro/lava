@@ -376,8 +376,8 @@ class LxcAptInstallAction(DeployAction):
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']
-        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y',
-               'install'] + packages
+        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n', lxc_name,
+               '--', 'apt-get', '-y', 'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
         return connection
