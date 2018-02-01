@@ -12,7 +12,7 @@
     {% set load_fdt = "" %}
 {% else %}
     {% set run_load_fdt = "run loadfdt; " %}
-    {% set load_fdt = uboot_load_ftd|default("          - loadfdt 'tftp {DTB_ADDR} {DTB}'") %}
+    {% set load_fdt = uboot_load_ftd|default("          - tftp {DTB_ADDR} {DTB}") %}
 {% endif %}
 
 {% set base_uboot_dhcp_command = (
