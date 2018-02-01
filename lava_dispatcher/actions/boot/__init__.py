@@ -583,7 +583,7 @@ class OverlayUnpack(Action):
             raise JobError("No overlay file identified for the transfer.")
         overlay = os.path.basename(overlay_file).strip()
         self.url = os.path.join(DISPATCHER_DOWNLOAD_DIR, overlay)
-        shutil.move(overlay_file, self.url)
+        shutil.copy(overlay_file, self.url)
         self.logger.debug("Moved %s to %s", overlay_file, self.url)
         dwnld = self.parameters['transfer_overlay']['download_command']
         dwnld += " http://%s/tmp/%s" % (ip_addr, overlay)
