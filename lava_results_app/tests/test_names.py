@@ -110,6 +110,7 @@ class TestTestSuite(TestCaseWithFactory):
         for sample in result_samples:
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
+            ret.save()
         # the duplicate smoke-tests-basic is allowed here as the lava test suite supports multiples
         self.assertEqual(5, TestCase.objects.filter(suite__job=job).count())
         val = URLValidator()
@@ -133,6 +134,7 @@ class TestTestSuite(TestCaseWithFactory):
                      "duration": 0.01159811019897461, "level": "1.3.3.2",
                      "result": "pass"}, job=job, meta_filename=None)
         self.assertTrue(ret)
+        ret.save()
         self.assertEqual(1, TestCase.objects.filter(suite=suite).count())
         testcase = TestCase.objects.get(suite=suite)
         self.assertTrue(isinstance(testcase.metadata, string_types))
@@ -170,6 +172,7 @@ class TestTestSuite(TestCaseWithFactory):
         for sample in result_samples:
             ret = map_scanned_results(results=sample, job=job, meta_filename=None)
             self.assertTrue(ret)
+            ret.save()
 
         self.assertEqual(2, TestCase.objects.filter(suite__job=job).count())
         val = URLValidator()

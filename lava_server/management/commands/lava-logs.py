@@ -32,6 +32,7 @@ from zmq.auth.thread import ThreadAuthenticator
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 
+from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
@@ -41,6 +42,7 @@ from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 # Constants
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 TIMEOUT = 10
+BULK_CREATE_TIMEOUT = 10
 FD_TIMEOUT = 60
 
 
@@ -76,6 +78,8 @@ class Command(LAVADaemonCommand):
         self.cert_dir_path = None
         # List of logs
         self.jobs = {}
+        # Keep test cases in memory
+        self.test_cases = []
         # Master status
         self.last_ping = 0
         self.ping_interval = TIMEOUT
@@ -194,22 +198,42 @@ class Command(LAVADaemonCommand):
         # Empty the queue
         try:
             while self.wait_for_messages(True):
-                pass
+                # Flush test cases cache for every iteration because we might
+                # get killed soon.
+                self.flush_test_cases()
         except BaseException as exc:
             self.logger.error("[EXIT] Unknown exception raised, leaving!")
             self.logger.exception(exc)
         finally:
+            # Last flush
+            self.flush_test_cases()
             self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
             self.log_socket.close()
             if options['encrypt']:
                 self.auth.stop()
             context.term()
 
+    def flush_test_cases(self):
+        if self.test_cases:
+            self.logger.info("Saving %d test cases", len(self.test_cases))
+            TestCase.objects.bulk_create(self.test_cases)
+            self.test_cases = []
+
     def main_loop(self):
-        # Wait for messages
         last_gc = time.time()
+        last_bulk_create = time.time()
+
+        # Wait for messages
+        # TODO: fix timeout computation
         while self.wait_for_messages(False):
             now = time.time()
+
+            # Dump TestCase into the database
+            if now - last_bulk_create > BULK_CREATE_TIMEOUT:
+                last_bulk_create = now
+                self.flush_test_cases()
+
+            # Close old file handlers
             if now - last_gc > FD_TIMEOUT:
                 last_gc = now
                 # Iterate while removing keys is not compatible with iterator
@@ -219,6 +243,7 @@ class Command(LAVADaemonCommand):
                         self.jobs[job_id].close()
                         del self.jobs[job_id]
 
+            # Ping the master
             if now - self.last_ping > self.ping_interval:
                 self.logger.debug("PING => master")
                 self.last_ping = now
@@ -320,13 +345,20 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[%s] unknown job id", job_id)
                 return
             meta_filename = create_metadata_store(message_msg, job)
-            ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
-            if not ret:
-                self.logger.warning("[%s] unable to map scanned results: %s",
-                                    job_id, message)
+            new_test_case = map_scanned_results(results=message_msg, job=job,
+                                                meta_filename=meta_filename)
+            if new_test_case is None:
+                self.logger.warning(
+                    "[%s] unable to map scanned results: %s",
+                    job_id, message)
+            else:
+                self.test_cases.append(new_test_case)
 
             # Look for lava.job result
             if message_msg.get("definition") == "lava" and message_msg.get("case") == "job":
+                # Flush cached test cases
+                self.flush_test_cases()
+
                 if message_msg.get("result") == "pass":
                     health = TestJob.HEALTH_COMPLETE
                     health_msg = "Complete"

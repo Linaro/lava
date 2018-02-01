@@ -116,17 +116,18 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     :param results: results logged via the slave
     :param job: the current test job
     :param meta_filename: YAML store for results metadata
-    :return: False on error, else True
+    :return: the TestCase object that should be saved to the database.
+             None on error.
     """
     logger = logging.getLogger('lava-master')
 
     if not isinstance(results, dict):
         append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
-        return False
+        return None
 
     if not {"definition", "case", "result"}.issubset(set(results.keys())):
         append_failure_comment(job, "Missing some keys (\"definition\", \"case\" or \"result\") in %s" % results)
-        return False
+        return None
 
     if 'extra' in results:
         results['extra'] = meta_filename
@@ -143,25 +144,26 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
 
     name = results["case"].strip()
 
+    test_case = None
     if suite.name == "lava":
         try:
             result_val = TestCase.RESULT_MAP[results['result']]
         except KeyError:
             logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
-            return False
+            return None
 
         measurement = None
         units = ''
         if 'duration' in results:
             measurement = results['duration']
             units = 'seconds'
-        TestCase.objects.create(name=name,
-                                suite=suite,
-                                test_set=testset,
-                                metadata=metadata,
-                                measurement=measurement,
-                                units=units,
-                                result=result_val)
+        test_case = TestCase(name=name,
+                             suite=suite,
+                             test_set=testset,
+                             metadata=metadata,
+                             measurement=measurement,
+                             units=units,
+                             result=result_val)
 
     else:
         result = results["result"]
@@ -180,17 +182,16 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
             return False
         try:
-            TestCase.objects.create(
-                name=name,
-                suite=suite,
-                test_set=testset,
-                result=TestCase.RESULT_MAP[result],
-                metadata=metadata,
-                measurement=measurement,
-                units=units)
+            test_case = TestCase(name=name,
+                                 suite=suite,
+                                 test_set=testset,
+                                 result=TestCase.RESULT_MAP[result],
+                                 metadata=metadata,
+                                 measurement=measurement,
+                                 units=units)
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
-    return True
+    return test_case
 
 
 def _add_parameter_metadata(prefix, definition, dictionary, label):
