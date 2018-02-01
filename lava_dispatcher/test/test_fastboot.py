@@ -61,6 +61,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
     def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -70,6 +71,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
     def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -260,8 +262,29 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_x15_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
+        job.validate()
         description_ref = self.pipeline_reference('x15.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        enter = [action for action in deploy.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertTrue(interrupt.needs_interrupt)
+        self.assertIsInstance(interrupt.params, dict)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertIn('mkimage_arch', interrupt.params)
+        self.assertIn('interrupt_prompt', interrupt.params)
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]
+        enter = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertIsInstance(interrupt.params, dict)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertIn('mkimage_arch', interrupt.params)
+        self.assertIn('interrupt_prompt', interrupt.params)
+        self.assertTrue(interrupt.needs_interrupt)
+        autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        print(autologin.booting)
+        print(autologin.parameters.get('prompts', None))
+        self.assertIsNone(autologin.parameters.get('boot_message', None))
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()

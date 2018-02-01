@@ -244,6 +244,8 @@ class AutoLoginAction(Action):
                     'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
             if kernel_start_message:
                 connection.prompt_str = [kernel_start_message]
+            else:
+                connection.prompt_str = self.parameters.get('prompts', [])
             if self.params and self.params.get('boot_message', None):
                 self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
                 connection.prompt_str = [self.params.get('boot_message')]
@@ -253,7 +255,7 @@ class AutoLoginAction(Action):
                 connection.prompt_str = connection.prompt_str + error_messages
             res = self.wait(connection)
             if res != 0:
-                raise InfrastructureError('matched a bootloader error message')
+                raise InfrastructureError('matched a bootloader error message: %s', connection.prompt_str[res])
 
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
@@ -602,12 +604,16 @@ class BootloaderInterruptAction(Action):
         self.name = "bootloader-interrupt"
         self.description = "interrupt bootloader"
         self.summary = "interrupt bootloader to get an interactive shell"
+        self.params = {}
+        self.method = None
+        self.needs_interrupt = False
 
     def validate(self):
         super(BootloaderInterruptAction, self).validate()
-        uboot_fastboot = True if self.parameters.get('to', "") == 'fastboot' and self.job.device.get('fastboot_via_uboot', False) else False
-        if uboot_fastboot:
-            self.method = 'u-boot'
+        # 'to' only exists in deploy, this action can be used in boot too.
+        if self.parameters.get('to', "") == 'fastboot' or self.parameters.get('method', "") == 'fastboot':
+            if self.job.device.get('fastboot_via_uboot', False):
+                self.method = 'u-boot'
         else:
             self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']

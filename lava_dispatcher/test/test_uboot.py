@@ -164,6 +164,12 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job.validate()
         description_ref = self.pipeline_reference('x15-uboot.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        enter = [action for action in deploy.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertIsNotNone(interrupt.params)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertEqual('u-boot', interrupt.method)
 
     def test_x15_uboot_nfs(self):  # pylint: disable=too-many-locals
         job = self.factory.create_x15_job('sample_jobs/x15-nfs.yaml')
