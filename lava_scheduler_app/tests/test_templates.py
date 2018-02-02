@@ -794,7 +794,23 @@ class TestTemplates(unittest.TestCase):
                 self.assertIn("earlycon=", line)
                 self.assertIn("extra_arg=extra_val", line)
                 checked = True
+        self.assertTrue(checked)
 
+        # test overwriting kernel args
+        checked = False
+        context = {'custom_kernel_args': 'custom_arg=custom_val'}
+        test_template = prepare_jinja_template('staging-rpi3-01', data)
+        rendered = test_template.render(**context)
+        template_dict = yaml.load(rendered)
+        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertNotIn("earlycon=", line)
+                self.assertIn("custom_arg=custom_val", line)
+                checked = True
         self.assertTrue(checked)
 
     def test_panda_template(self):

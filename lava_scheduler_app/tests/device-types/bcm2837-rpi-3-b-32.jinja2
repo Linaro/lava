@@ -21,4 +21,8 @@
 {% set extra_kernel_args = "earlycon=uart8250,mmio32,0x3f215040" %}
 {% endif %}
 
+{% if custom_kernel_args %}
+{% set extra_kernel_args = custom_kernel_args %}
+{% endif %}
+
 {% set boot_character_delay = 10 %}
