@@ -727,8 +727,7 @@ def device_type_detail(request, pk):
     prefix = 'no_dt_'
     no_dt_data = NoDTDeviceView(request, model=Device, table_class=DeviceTable)
     no_dt_ptable = DeviceTable(
-        no_dt_data.get_table_data(prefix).
-        filter(device_type=dt),
+        no_dt_data.get_table_data(prefix).filter(device_type=dt),
         prefix=prefix,
     )
     config = RequestConfig(request, paginate={"per_page": no_dt_ptable.length})
@@ -771,12 +770,24 @@ def device_type_detail(request, pk):
     else:
         core_string = ''
 
-    processor_name = dt.processor if dt.processor else ''
-    architecture_name = dt.architecture if dt.architecture else ''
     bits_width = dt.bits.width if dt.bits else ''
-    cpu_name = dt.cpu_model if dt.cpu_model else ''
-    desc = dt.description if dt.description else ''
     aliases = ', '.join([alias.name for alias in dt.aliases.all()])
+
+    all_devices = dt.device_set.count()
+    available_devices = dt.device_set.filter(state=Device.STATE_IDLE,
+                                             health__in=[Device.HEALTH_UNKNOWN, Device.HEALTH_GOOD],
+                                             worker_host__state=Worker.STATE_ONLINE).count()
+    running_devices = dt.device_set.filter(state__in=[Device.STATE_RUNNING, Device.STATE_RESERVED]).count()
+    if available_devices:
+        if available_devices == all_devices:
+            available_devices_label = "success"
+        else:
+            available_devices_label = "warning"
+    else:
+        if running_devices:
+            available_devices_label = "warning"
+        else:
+            available_devices_label = "danger"
 
     if dt.disable_health_check:
         health_freq_str = "Disabled"
@@ -784,41 +795,27 @@ def device_type_detail(request, pk):
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
-    template = loader.get_template("lava_scheduler_app/device_type.html")
-    return HttpResponse(template.render(
-        {
-            'device_type': dt,
-            'arch_version': architecture_name,
-            'processor': processor_name,
-            'arch_bits': bits_width,
-            'cores': core_string,
-            'cpu_model': cpu_name,
-            'aliases': aliases,
-            'description': desc,
-            'search_data': search_data,
-            "discrete_data": discrete_data,
-            'terms_data': terms_data,
-            'times_data': times_data,
-            'running_jobs_num': TestJob.objects.filter(
-                actual_device__in=Device.objects.filter(device_type=dt),
-                state=TestJob.STATE_RUNNING).count(),
-            # going offline are still active - number for comparison with running jobs.
-            'active_num': Device.objects.filter(
-                device_type=dt,
-                state__in=[Device.STATE_RUNNING, Device.STATE_RESERVED]).count(),
-            'queued_jobs_num': TestJob.objects.filter(state=TestJob.STATE_SUBMITTED,
-                                                      requested_device_type=dt).count(),
-            'idle_num': Device.objects.filter(device_type=dt, state=Device.STATE_IDLE, health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]).count(),
-            'offline_num': Device.objects.filter(device_type=dt).exclude(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]).count(),
-            'retired_num': Device.objects.filter(device_type=dt, health=Device.HEALTH_RETIRED).count(),
-            'health_job_summary_table': health_table,
-            'device_type_jobs_table': dt_jobs_ptable,
-            'devices_table_no_dt': no_dt_ptable,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
-            'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
-            'health_freq': health_freq_str,
-        },
-        request=request))
+    return render(request, "lava_scheduler_app/device_type.html",
+                  {'dt': dt,
+                   'cores': core_string,
+                   'aliases': aliases,
+                   'all_devices_count': all_devices,
+                   'retired_devices_count': dt.device_set.filter(health=Device.HEALTH_RETIRED).count(),
+                   'available_devices_count': available_devices,
+                   'available_devices_label': available_devices_label,
+                   'running_devices_count': running_devices,
+                   'queued_jobs_count': TestJob.objects.filter(state=TestJob.STATE_SUBMITTED,
+                                                               requested_device_type=dt).count(),
+                   'search_data': search_data,
+                   "discrete_data": discrete_data,
+                   'terms_data': terms_data,
+                   'times_data': times_data,
+                   'health_job_summary_table': health_table,
+                   'device_type_jobs_table': dt_jobs_ptable,
+                   'devices_table_no_dt': no_dt_ptable,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
+                   'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
+                   'health_freq': health_freq_str})
 
 
 @BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
