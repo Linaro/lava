@@ -1,0 +1,33 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2018 Linaro Limited
+#
+# Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#
+# This file is part of LAVA LXC mocker.
+#
+# Released under the MIT License:
+# http://www.opensource.org/licenses/mit-license.php
+#
+# Mocks lxc-attach command which is used by LAVA.
+
+CMD=$(awk -F'-- ' '{print $2}' <<< "$@")
+
+while getopts "n:" opt; do
+    case $opt in
+        n)
+            LXC_NAME="$OPTARG"
+            ;;
+        *)
+            ;;
+    esac
+done
+
+if [ "$CMD" ]; then
+    # execute the given command
+    $CMD
+else
+    # when no commands are requested, open up a shell
+    exec /bin/bash
+fi
