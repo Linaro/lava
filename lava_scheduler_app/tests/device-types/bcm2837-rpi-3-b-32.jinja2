@@ -15,6 +15,10 @@
 {% set uboot_needs_usb = true %}
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
 
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio32,0x3f215040 " +  extra_kernel_args %}
+{% else %}
 {% set extra_kernel_args = "earlycon=uart8250,mmio32,0x3f215040" %}
+{% endif %}
 
 {% set boot_character_delay = 10 %}

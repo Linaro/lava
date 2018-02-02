@@ -775,6 +775,28 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual('00:E0:4C:53:44:58', template_dict['parameters']['interfaces']['target']['mac'])
         self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
 
+    def test_rpi3_32_template(self):
+        checked = False
+        data = """{% extends 'bcm2837-rpi-3-b-32.jinja2' %}"""
+        self.assertTrue(self.validate_data('staging-rpi3-01', data))
+
+        # test appending to kernel args
+        context = {'extra_kernel_args': 'extra_arg=extra_val'}
+        test_template = prepare_jinja_template('staging-rpi3-01', data)
+        rendered = test_template.render(**context)
+        template_dict = yaml.load(rendered)
+        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertIn("earlycon=", line)
+                self.assertIn("extra_arg=extra_val", line)
+                checked = True
+
+        self.assertTrue(checked)
+
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
