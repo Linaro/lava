@@ -56,34 +56,18 @@ def check_superuser(f):
     return wrapper
 
 
-def build_job_status_display(state, health):
-    if state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
-        return "Submitted"
-    elif state == TestJob.STATE_RUNNING:
-        return "Running"
-    elif state == TestJob.STATE_CANCELING:
-        return "Canceling"
-    else:
-        if health == TestJob.HEALTH_COMPLETE:
-            return "Complete"
-        elif health in [TestJob.HEALTH_UNKNOWN, TestJob.HEALTH_INCOMPLETE]:
-            return "Incomplete"
-        else:
-            return "Canceled"
-
-
 def build_device_status_display(state, health):
     if state == Device.STATE_IDLE:
         if health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]:
-            return "Idle"
+            return "idle"
         elif health == Device.HEALTH_RETIRED:
-            return "Retired"
+            return "retired"
         else:
-            return "Offline"
+            return "offline"
     elif state == Device.STATE_RESERVED:
-        return "Reserved"
+        return "reserved"
     else:
-        return "Running"
+        return "running"
 
 
 class SchedulerAPI(ExposedAPI):
@@ -447,7 +431,7 @@ class SchedulerAPI(ExposedAPI):
             job_dict = {
                 "id": job.id,
                 "description": job.description,
-                "status": build_job_status_display(job.state, job.health),
+                "status": job.get_legacy_status_display(),
                 "device": job.actual_device.hostname,
             }
             if not job.can_view(self.user):
@@ -527,7 +511,7 @@ class SchedulerAPI(ExposedAPI):
             job_dict = {
                 "id": job.id,
                 "description": job.description,
-                "status": build_job_status_display(job.state, job.health),
+                "status": job.get_legacy_status_display(),
             }
             if not job.can_view(self.user):
                 job_dict["id"] = None
@@ -812,7 +796,7 @@ class SchedulerAPI(ExposedAPI):
                                   "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
-            job.status = build_job_status_display(job.state, job.health)
+            job.status = job.get_legacy_status_display()
             job.state = job.get_state_display()
             job.health = job.get_health_display()
             job.submitter_username = job.submitter.username
@@ -874,7 +858,7 @@ class SchedulerAPI(ExposedAPI):
 
         if job.is_pipeline:
             job_status.update({
-                'job_status': build_job_status_display(job.state, job.health),
+                'job_status': job.get_legacy_status_display(),
                 'bundle_sha1': ""
             })
             return job_status
@@ -888,7 +872,7 @@ class SchedulerAPI(ExposedAPI):
                 pass
 
         job_status.update({
-            'job_status': build_job_status_display(job.state, job.health),
+            'job_status': job.get_legacy_status_display(),
             'bundle_sha1': bundle_sha1
         })
 
@@ -945,7 +929,7 @@ class SchedulerAPI(ExposedAPI):
                 # do the more expensive check second and only for a hidden device type
                 if not device_type.some_devices_visible_to(self.user):
                     continue
-            job_status[str(job.display_id)] = build_job_status_display(job.state, job.health)
+            job_status[str(job.display_id)] = job.get_legacy_status_display()
         return job_status
 
     def all_jobs(self):
@@ -975,7 +959,7 @@ class SchedulerAPI(ExposedAPI):
         """
 
         jobs = TestJob.objects.exclude(state=TestJob.STATE_FINISHED).order_by('-id')
-        jobs_list = [[job.id, job.description, build_job_status_display(job.state, job.health),
+        jobs_list = [[job.id, job.description, job.get_legacy_status_display().lower(),
                       job.actual_device, job.requested_device_type, job.sub_id] for job in jobs]
 
         return jobs_list
