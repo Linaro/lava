@@ -10,9 +10,7 @@
 
 {% block vland %}
 {{ super() }}
-{% if fit_kernel_load_address %}
   load_address: '{{ fit_kernel_load_address | default('0') }}'
-{% endif %}
 {% endblock vland %}
 
 {% block body %}
