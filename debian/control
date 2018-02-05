@@ -48,7 +48,6 @@ Description: Linaro Automated Validation Architecture dispatcher
 
 Package: lava-lxc-mocker
 Architecture: all
-Section: net
 Depends: ${misc:Depends}
 Conflicts: lxc
 Provides: lxc
@@ -64,3 +63,4 @@ Description: Linaro Automated Validation Architecture LXC Mocker
  This package contains set of mocker scripts that mocks each of
  the lxc commands that LAVA uses. It does not support all commands
  and options that lxc provides, but just the ones that LAVA uses.
+ Test jobs using LXC can then be replicated in Docker.
