@@ -1,0 +1,14 @@
+{% extends "layouts/content.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+
+<h2>Device types</h2>
+
+{% render_table dt_table %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+{% endblock %}
