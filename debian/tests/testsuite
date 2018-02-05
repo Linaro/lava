@@ -9,11 +9,12 @@ lava-server manage createsuperuser --username autopkgtest --noinput --email a@te
 lava-server manage users add nobody --email b@test.com
 lava-server manage users add staffer --email c@test.com --staff
 lava-server manage workers add autopkgtest
+lava-server manage workers add disabled --health MAINTENANCE
 lava-server manage device-types add qemu
 lava-server manage device-types list --all
 lava-server manage devices add --device-type qemu --worker autopkgtest qemu01
 lava-server manage devices list --all
-lava-server manage devices set --private --status RETIRED --health FAIL qemu01
+lava-server manage devices update --private --health RETIRED qemu01
 lava-server manage devices list --all
 
 # test daemon handling
