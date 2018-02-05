@@ -257,9 +257,16 @@ to enable encryption::
  # private keys
  ENCRYPT="--encrypt"
 
+Also edit ``/etc/lava-server/lava-logs`` to enable encryption::
+
+ # Encryption
+ # If set, will activate encryption using the master public and the slave
+ # private keys
+ ENCRYPT="--encrypt"
+
 If you have changed the name or location of the master certificate or the
 location of the slave certificates, specify those locations and names
-explicitly::
+explicitly, in each file::
 
  # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
  # SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d"
@@ -307,36 +314,27 @@ message showing that encryption has been enabled on the master. e.g.
 
 .. code-block:: none
 
- 2016-04-26 10:08:56,303 LAVA Daemon: lava-server manage --instance-template=/etc/lava-server/{{filename}}.conf
-  --instance=playground lava-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
-  --slaves-certs /etc/lava-dispatcher/certificates.d pid: 17387
- 2016-04-26 09:08:58,410 INFO Starting encryption
- 2016-04-26 09:08:58,411 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key_secret
- 2016-04-26 09:08:58,411 DEBUG Using slaves certificates from: /etc/lava-dispatcher/certificates.d
- 2016-04-26 09:08:58,411 INFO [INIT] LAVA master has started.
+ 2018-02-05 11:33:55,933    INFO [INIT] Marking all workers as offline
+ 2018-02-05 11:33:55,983    INFO [INIT] Starting encryption
+ 2018-02-05 11:33:55,984   DEBUG [INIT] Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key_secret
+ 2018-02-05 11:33:55,985   DEBUG [INIT] Using slaves certificates from: /etc/lava-dispatcher/certificates.d/
+ 2018-02-05 11:33:55,986    INFO [INIT] LAVA master has started.
+ 2018-02-05 11:33:55,986    INFO [INIT] Using protocol version 2
 
 Now restart each slave in turn and watch for equivalent messages in the logs:
 
 .. code-block:: none
 
- 2016-04-26 10:11:03,128 LAVA Daemon: lava-dispatcher-slave
-  --master tcp://localhost:5556 --hostname playgroundmaster.lavalab
-  --socket-addr tcp://localhost:5555 --level=DEBUG
-  --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key
-  --slave-cert /etc/lava-dispatcher/certificates.d/slave.key_secret pid: 17464
- 2016-04-26 10:11:03,239 INFO Creating ZMQ context and socket connections
- 2016-04-26 10:11:03,239 INFO Starting encryption
- 2016-04-26 10:11:03,240 DEBUG Opening slave certificate: /etc/lava-dispatcher/certificates.d/slave.key_secret
- 2016-04-26 10:11:03,240 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key
- 2016-04-26 10:11:03,241 INFO Connecting to master as <playgroundmaster.lavalab>
- 2016-04-26 10:11:03,241 INFO Connection is encrypted using /etc/lava-dispatcher/certificates.d/slave.key_secret
- 2016-04-26 10:11:03,241 DEBUG Greeting the master => 'HELLO'
- 2016-04-26 10:11:03,241 INFO Waiting for the master to reply
- 2016-04-26 10:11:03,244 DEBUG The master replied: ['HELLO_OK']
- 2016-04-26 10:11:03,244 INFO Connection with the master established
-
-(This example does use authentication and encryption over localhost, but that
-is why the machine is called *playground*.)
+ 2018-02-05 11:34:42,035    INFO [INIT] LAVA slave has started.
+ 2018-02-05 11:34:42,036    INFO [INIT] Using protocol version 2
+ 2018-02-05 11:34:42,037    INFO [INIT] Starting encryption
+ 2018-02-05 11:34:42,037   DEBUG Opening slave certificate: /etc/lava-dispatcher/certificates.d/codehelp.key_secret
+ 2018-02-05 11:34:42,038   DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key
+ 2018-02-05 11:34:42,038    INFO [INIT] Connecting to master as <codehelp>
+ 2018-02-05 11:34:42,038    INFO [INIT] Greeting the master => 'HELLO'
+ 2018-02-05 11:34:42,050    INFO [INIT] Connection with master established
+ 2018-02-05 11:34:42,050    INFO Master is ONLINE
+ 2018-02-05 11:34:42,053    INFO Waiting for instructions
 
 .. _adding_pipeline_devices_to_worker:
 
