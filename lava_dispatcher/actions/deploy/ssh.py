@@ -80,7 +80,7 @@ class ScpOverlay(DeployAction):
         self.items = [
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
-        if not self.test_has_shell:
+        if not self.test_has_shell(self.parameters):
             self.errors = "Scp overlay needs a test action."
             return
         lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
