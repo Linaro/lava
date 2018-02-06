@@ -244,8 +244,6 @@ class AutoLoginAction(Action):
                     'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
             if kernel_start_message:
                 connection.prompt_str = [kernel_start_message]
-            else:
-                connection.prompt_str = self.parameters.get('prompts', [])
             if self.params and self.params.get('boot_message', None):
                 self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
                 connection.prompt_str = [self.params.get('boot_message')]
