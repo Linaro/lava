@@ -130,11 +130,7 @@
   <ol class="breadcrumb">
     {% block breadcrumbs %}
     {% for bread_crumb in bread_crumb_trail %}
-    {% if forloop.last %}
-    <li class="active">{{ bread_crumb.get_name }}</li>
-    {% else %}
     <li><a href="{{ bread_crumb.get_absolute_url }}">{{ bread_crumb.get_name }}</a></li>
-    {% endif %}
     {% endfor %}
     {% endblock breadcrumbs %}
   </ol>
