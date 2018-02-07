@@ -73,9 +73,9 @@ constants:
       - 'TIMEOUT'
       - 'Retry count exceeded'
       - 'ERROR: The remote end did not respond in time.'
-  {% if uboot_extra_error_message %}
+{% if uboot_extra_error_message %}
       - '{{ uboot_extra_error_message }}'
-  {% endif -%}
+{% endif %}
   grub:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
