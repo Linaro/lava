@@ -723,8 +723,7 @@ class PassingHealthTable(DeviceHealthTable):
 
     def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
         report = record.last_health_report_job
-        base = "<a href='/scheduler/job/%s'>%s</a>" % (report.id, report)
-        return mark_safe(base)
+        return mark_safe('<a href="%s">%s</a>' % (report.get_absolute_url(), report))
 
     device_type = tables.Column()
 

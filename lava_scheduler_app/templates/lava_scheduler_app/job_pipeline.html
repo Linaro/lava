@@ -341,7 +341,7 @@
     {% if not size_warning %}
     <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
     {% if job.state == job.STATE_FINISHED %}
-    <p><a href="/static/docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
+    <p><a href="{{ STATIC_URL }}docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
     {% endif %}
     {% endif %}
   </div>
