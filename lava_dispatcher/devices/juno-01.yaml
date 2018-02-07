@@ -1,0 +1,354 @@
+
+character_delays:
+      boot: 30
+constants:
+  # bootloader specific
+  u-boot:
+    interrupt-prompt: 'Hit any key to stop autoboot'
+    interrupt-character: ' '
+    final-message: 'Starting kernel'
+    error-messages:
+      - 'Resetting CPU'
+      - 'Must RESET board to recover'
+      - 'TIMEOUT'
+      - 'Retry count exceeded'
+      - 'ERROR: The remote end did not respond in time.'
+  grub:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+  grub-efi:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+    error-messages:
+      - 'Undefined OpCode Exception PC at'
+      - 'Synchronous Exception at'
+  ipxe:
+    interrupt-prompt: 'Press Ctrl-B for the iPXE command line'
+    interrupt_ctrl_list: ['b']
+    error-messages:
+      - 'No configuration methods succeeded'
+      - 'Connection timed out'
+
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
+
+  # Kernel starting message
+  kernel-start-message: 'Linux version [0-9]'
+
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
+
+commands:
+    connections:
+        uart0:
+            connect: telnet serial4 7001
+            tags:
+            - primary
+            - telnet
+    hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 5 --delay 10
+    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 5 --sleep_after 10
+    power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 5
+parameters:
+  interfaces:
+    target:
+      ip: 10.7.0.13
+      mac: '00:02:f7:00:58:37'
+  # device_ip or device_mac
+  # interfaces
+  # interfaces or device_ip or device_mac
+
+  media:
+ #  sata_uuid
+ #  sd_uuid
+    usb:
+      SanDiskCruzerBlade:
+        uuid: usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0  # /dev/disk/by-id/
+        device_id: 0  # the bootloader device id for this media on the 'usb' interface
+ # usb_uuid
+ # sata_uuid_sd_uuid_usb_uuid
+  image:
+    kernel: '0x80080000'
+    ramdisk: '0x84000000'
+    dtb: '0x83000000'
+  booti:
+    kernel: '0x80080000'
+    ramdisk: '0x84000000'
+    dtb: '0x83000000'
+  media:
+    usb:
+      SanDiskCruzerBlade:
+        uuid: usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0  # /dev/disk/by-id/
+        device_id: 0  # the bootloader device id for this media on the 'usb' interface
+device_type: juno
+
+usb_filesystem_label: 'SJUNO01'
+
+
+
+actions:
+  deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: arm64 # string to pass to mkimage -A when adding UBoot headers
+      append_dtb: False
+      use_xip: False
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      nfs:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+
+        host: ''
+        port: 22
+        user: root
+        identity_file: dynamic_vm_keys/lava
+      usb:
+      tftp:
+      vemsd:
+        parameters:
+          mcc_prompt: 'Cmd>'
+          msd_mount_cmd: 'usb_on'
+          flash_prompt: 'Flash>'
+          flash_enter_cmd: 'flash'
+          flash_erase_cmd: 'eraseall'
+          flash_erase_msg: 'Erasing Flash'
+          flash_exit_cmd: 'exit'
+          autorun_prompt: 'Press Enter to stop auto boot...'
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      minimal:
+      uefi-menu:
+        parameters:
+          interrupt_prompt: 'The default boot selection will start in'
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9 \s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: 'Linux version'
+        tftp:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:02:f7:00:58:37'
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: 'Has FDT support?'
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: "Arguments to pass to the binary:"
+        - select:
+            enter: "console=ttyAMA0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp"
+            wait: "Description for this new Entry:"
+        - select:
+            enter: LAVA TEST TFTP
+            wait: "Choice:"
+        - select:
+            items:
+              - "Update FDT path"
+            wait: "Select the Boot Device"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:02:f7:00:58:37'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: "y"
+            wait: "Get the TFTP server IP address"
+        - select:
+            enter: "{SERVER_IP}"
+            wait: "File path of the FDT blob :"
+        - select:
+            enter: "{DTB}"
+            wait: "Choice:"
+        - select:
+            items:
+              - "Return to main menu"
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA TEST TFTP
+      uefi:
+        parameters:
+           bootloader_prompt: 'Shell>'
+           shell_interrupt_prompt: 'any other key to continue'
+           shell_interrupt_string: ' '
+           boot_message: 'Linux version'
+           shell_menu: shell
+           # Menu options
+           interrupt_prompt: The default boot selection will start in
+           interrupt_string: ' '
+           menu_boot_message: 'UEFI Interactive Shell'
+           menu_prompt: 'Start:'
+           item_markup:
+           - '['
+           - ']'
+           item_class: '0-9'
+           separator: ' '
+           line_separator: 'dos'
+           label_class: 'a-zA-Z0-9\s\:'
+        shell:
+        - select:
+            items:
+            - 'Shell'
+        nfs:
+          commands:
+          - norkern console=ttyAMA0,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp dtb=board.dtb
+      ssh:
+      u-boot:
+        parameters:
+          mkimage_arch: arm
+          bootloader_prompt: VExpress64
+          interrupt_prompt: Hit any key to stop autoboot
+          interrupt_char: ""
+          boot_message: Booting Linux
+        defaults:
+          commands:
+          - "boot"
+        nfs:
+          commands:
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          - "setenv nfsargs 'setenv bootargs console=ttyAMA0,115200n8 root=/dev/nfs rw
+            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - run bootcmd
+        norflash:
+          commands:
+          - "setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs rw
+            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp'"
+          - "boot"
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          - "setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/ram0 rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+        sata:
+          commands:
+          - scsi scan
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console=ttyAMA0,115200n8 root={ROOT} rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp'"
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+        usb:
+          commands:
+          - usb start
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+
+          - "setenv loadkernel 'load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
+          - "setenv loadinitrd 'load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
+          - "setenv loadfdt 'load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "setenv bootargs 'console=ttyAMA0,115200n8 root={ROOT} rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9 ip=dhcp'"
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - run bootcmd
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 5
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 4
+    uboot-retry:
+      minutes: 4
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 4
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 5
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 120
+    lava-test-shell:
+      seconds: 10

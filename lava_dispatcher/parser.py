@@ -60,7 +60,8 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         parameters['stage'] = test_count - 1
         LavaTest.select(device, parameters)(pipeline, parameters)
     elif name == 'deploy':
-        if parameters['namespace'] in test_info:
+        candidate = Deployment.select(device, parameters)
+        if parameters['namespace'] in test_info and candidate.uses_deployment_data():
             if any([testclass for testclass in test_info[parameters['namespace']] if testclass['class'].needs_deployment_data()]):
                 parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         if 'preseed' in parameters:

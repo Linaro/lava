@@ -69,6 +69,16 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
             job.logger = DummyLogger()
         return job
 
+    def create_juno_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-01.yaml'))
+        juno_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(juno_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+            job.logger = DummyLogger()
+        return job
+
     def create_zcu102_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/xilinx-zcu102.yaml'))
         zcu_yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -181,6 +191,12 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
         self.assertIn('compression', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'gz')
+
+    def test_juno_uboot_nfs(self):
+        job = self.factory.create_juno_job('sample_jobs/juno-uboot-nfs.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('juno-uboot-nfs.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {

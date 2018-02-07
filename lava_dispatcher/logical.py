@@ -187,6 +187,10 @@ class Deployment(object):
             raise ConfigurationError('Device misconfiguration, no "methods" in device configuration deploy actions')
 
     @classmethod
+    def uses_deployment_data(cls):
+        return True
+
+    @classmethod
     def select(cls, device, parameters):
         cls.deploy_check(device, parameters)
         candidates = cls.__subclasses__()  # pylint: disable=no-member
