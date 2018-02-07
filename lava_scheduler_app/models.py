@@ -1680,7 +1680,7 @@ class TestJob(RestrictedResource):
     @property
     def results_link(self):
         if self.is_pipeline:
-            return '/results/%s' % self.id
+            return reverse("lava.results.testjob", args=[self.id])
         else:
             return None
 
