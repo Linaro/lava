@@ -256,7 +256,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Current status', {
             'fields': ('actual_device', 'state', 'health')}),
         ('Results & Failures', {
-            'fields': ('failure_tags', 'failure_comment', '_results_link')}),
+            'fields': ('failure_tags', 'failure_comment')}),
     )
     readonly_fields = ('state', )
     list_display = ('id', 'state', 'health', 'submitter', 'requested_device_type_name',

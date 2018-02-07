@@ -1674,9 +1674,6 @@ class TestJob(RestrictedResource):
         JobFailureTag, blank=True, related_name='failure_tags')
     failure_comment = models.TextField(null=True, blank=True)
 
-    _results_link = models.CharField(
-        max_length=400, default=None, null=True, blank=True, db_column="results_link")
-
     @property
     def results_link(self):
         if self.is_pipeline:

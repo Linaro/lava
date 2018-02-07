@@ -218,7 +218,6 @@ class JobTable(LavaTable):
             'original_definition',
             'multinode_definition',
             'admin_notifications',
-            '_results_link',
             'requested_device_type',
             'start_time',
             'log_file',

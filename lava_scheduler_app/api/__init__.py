@@ -782,7 +782,7 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
 
         The elements available in XML-RPC structure include:
-        _results_link, _state, submitter_id, is_pipeline, id, failure_comment,
+        _state, submitter_id, is_pipeline, id, failure_comment,
         multinode_definition, user_id, priority, _actual_device_cache,
         original_definition, status, health_check, description,
         admin_notifications, start_time, target_group, visibility,
