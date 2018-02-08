@@ -1,7 +1,7 @@
 # Sample job to show uefi behaviour, drop from menu to shell, input shell commands.
 
 device_type: juno
-job_name: juno-uefi-shell-nfs
+job_name: Juno UEFI shell using NFS
 timeouts:
   job:
     minutes: 40
@@ -13,14 +13,13 @@ priority: medium
 visibility: public
 
 actions:
-
 - deploy:
     namespace: recovery
     timeout:
       minutes: 10
     to: vemsd
     recovery_image:
-      url: http://images.validation.linaro.org/releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
+      url: https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
       compression: zip
 
 - deploy:

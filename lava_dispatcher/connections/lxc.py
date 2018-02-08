@@ -28,6 +28,23 @@ from lava_dispatcher.shell import ShellCommand, ShellSession
 # pylint: disable=too-many-public-methods
 
 
+class LxcSession(ShellSession):
+    """Extends a ShellSession to include the ability to disconnect and finalise
+    cleanly.
+    """
+    def __init__(self, job, shell_command):
+        super(LxcSession, self).__init__(job, shell_command)
+        self.name = "LxcSession"
+
+    def finalise(self):
+        self.disconnect("closing")
+        super(LxcSession, self).finalise()
+
+    def disconnect(self, reason=''):
+        self.sendline('exit', disconnecting=True)
+        self.connected = False
+
+
 class ConnectLxc(Action):
     """
     Class to make a lxc shell connection to the container.
@@ -37,7 +54,7 @@ class ConnectLxc(Action):
         self.name = "connect-lxc"
         self.summary = "run connection command"
         self.description = "connect to the lxc container"
-        self.session_class = ShellSession
+        self.session_class = LxcSession
         self.shell_class = ShellCommand
 
     def validate(self):
@@ -69,7 +86,7 @@ class ConnectLxc(Action):
             raise JobError("%s command exited %d: %s" % (cmd,
                                                          shell.exitstatus,
                                                          shell.readlines()))
-        # ShellSession monitors the pexpect
+        # LxcSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectLxc, self).run(connection, max_end_time, args)

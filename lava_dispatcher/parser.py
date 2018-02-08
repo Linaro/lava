@@ -60,7 +60,8 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         parameters['stage'] = test_count - 1
         LavaTest.select(device, parameters)(pipeline, parameters)
     elif name == 'deploy':
-        if parameters['namespace'] in test_info:
+        candidate = Deployment.select(device, parameters)
+        if parameters['namespace'] in test_info and candidate.uses_deployment_data():
             if any([testclass for testclass in test_info[parameters['namespace']] if testclass['class'].needs_deployment_data()]):
                 parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
         if 'preseed' in parameters:
@@ -149,10 +150,13 @@ class JobParser(object):
             test_parameters = test_action['test']
             test_type = LavaTest.select(device, test_parameters)
             namespace = test_parameters.get('namespace', 'common')
+            connection_namespace = test_parameters.get('connection-namespace', namespace)
             if namespace in test_info:
                 test_info[namespace].append({'class': test_type, 'parameters': test_parameters})
             else:
                 test_info.update({namespace: [{'class': test_type, 'parameters': test_parameters}]})
+            if namespace != connection_namespace:
+                test_info.update({connection_namespace: [{'class': test_type, 'parameters': test_parameters}]})
 
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default

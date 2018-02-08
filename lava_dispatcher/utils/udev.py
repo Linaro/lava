@@ -218,6 +218,7 @@ def get_udev_devices(job=None, logger=None, device_info=None):
         board_id = str(usb_device.get('board_id', ''))
         usb_vendor_id = str(usb_device.get('usb_vendor_id', ''))
         usb_product_id = str(usb_device.get('usb_product_id', ''))
+        usb_fs_label = str(usb_device.get('fs_label', ''))
         # check if device is already connected
         # try with all parameters such as board id, usb_vendor_id and
         # usb_product_id
@@ -251,6 +252,15 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                             device_paths.add(child.device_node)
                     for link in device.device_links:
                         device_paths.add(link)
+            elif usb_fs_label:
+                # Just restrict by filesystem label.
+                if device.get('ID_FS_LABEL') == usb_fs_label:
+                    device_paths.add(device.device_node)
+                    for child in device.children:
+                        if child.device_node:
+                            device_paths.add(child.device_node)
+                    for link in device.device_links:
+                        device_paths.add(link)
     if logger and device_paths:
         logger.debug("Adding %s", ', '.join(device_paths))
     return list(device_paths)
@@ -264,6 +274,7 @@ def usb_device_wait(job, device_actions=None):
         board_id = str(usb_device.get('board_id', ''))
         usb_vendor_id = str(usb_device.get('usb_vendor_id', ''))
         usb_product_id = str(usb_device.get('usb_product_id', ''))
+        usb_fs_label = str(usb_device.get('fs_label', ''))
         # monitor for device
         monitor = pyudev.Monitor.from_netlink(context)
         if board_id and usb_vendor_id and usb_product_id:
@@ -287,16 +298,42 @@ def usb_device_wait(job, device_actions=None):
                    and device.action in device_actions:
                     break
             return
+        elif usb_fs_label:
+            for device in iter(monitor.poll, None):
+                if (device.get('ID_FS_LABEL') == usb_fs_label) \
+                        and device.action in device_actions:
+                    break
+            return
+
+
+def allow_fs_label(device):
+    # boot/deploy methods that indicate that the device in question
+    # will require a filesystem label to identify a device.
+    # So far, mps devices are supported, but these don't provide a
+    # unique serial, so fs label must be used.
+    fs_label_methods = ['mps']
+
+    # Don't allow using filesystem labels by default as they are
+    # unreliable, and can be changed via a malicious job.
+    _allow_fs_label = False
+    for method in fs_label_methods:
+        if method in device['actions']['boot']['methods'] \
+                or method in device['actions']['deploy']['methods']:
+            _allow_fs_label = True
+    return _allow_fs_label
 
 
 def lxc_udev_rule(data):
     """Construct the udev rule string."""
     rule = 'ACTION=="add", '
-    rule += 'ATTR{{serial}}=="{serial_number}", '
+    if data['serial_number']:
+        rule += 'ATTR{{serial}}=="{serial_number}", '
     if data["vendor_id"] is not None:
         rule += 'ATTR{{idVendor}}=="{vendor_id}", '
     if data["product_id"] is not None:
         rule += 'ATTR{{idProduct}}=="{product_id}", '
+    if data["fs_label"] is not None:
+        rule += 'ENV{{ID_FS_LABEL}}=="{fs_label}", '
     rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
             '--lxc-name {lxc_name} --device-node $name ' \
             '--job-id {job_id}'
@@ -310,5 +347,7 @@ def lxc_udev_rule(data):
         rule += " --slave-cert %s" % data["slave_cert"]
     if data["ipv6"]:
         rule += " --ipv6"
+    if data["fs_label"] is not None:
+        rule = 'IMPORT{builtin}="blkid"\n' + rule
     rule += '"\n'
     return rule

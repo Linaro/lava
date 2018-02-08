@@ -94,6 +94,8 @@
   pipeline:
   - {class: connections.serial.ConnectShell, name: connect-shell}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

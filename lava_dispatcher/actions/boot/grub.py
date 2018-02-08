@@ -35,6 +35,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderSecondaryMedia,
     BootloaderCommandsAction,
     OverlayUnpack,
+    BootloaderInterruptAction
 )
 from lava_dispatcher.actions.boot.uefi_menu import (
     UEFIMenuInterrupt,
@@ -195,7 +196,7 @@ class GrubMainAction(BootAction):
         if parameters['method'] == 'grub-efi':
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(GrubMenuSelector())
-        self.internal_pipeline.add_action(BootloaderInterrupt())
+        self.internal_pipeline.add_action(BootloaderInterruptAction())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
@@ -213,42 +214,6 @@ class GrubMainAction(BootAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(GrubMainAction, self).run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        return connection
-
-
-class BootloaderInterrupt(Action):
-    """
-    Support for interrupting the bootloader.
-    """
-    def __init__(self):
-        super(BootloaderInterrupt, self).__init__()
-        self.name = "bootloader-interrupt"
-        self.description = "interrupt bootloader"
-        self.summary = "interrupt bootloader to get a prompt"
-        self.type = "grub"
-
-    def validate(self):
-        super(BootloaderInterrupt, self).validate()
-        if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device"
-        device_methods = self.job.device['actions']['boot']['methods']
-        if self.parameters['method'] == 'grub-efi' and 'grub-efi' in device_methods:
-            self.type = 'grub-efi'
-        if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
-            self.errors = "[%s] Missing bootloader prompt for device" % self.name
-
-    def run(self, connection, max_end_time, args=None):
-        if not connection:
-            raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
-        device_methods = self.job.device['actions']['boot']['methods']
-        interrupt_prompt = device_methods[self.type]['parameters'].get('interrupt_prompt', self.job.device.get_constant('grub-autoboot-prompt'))
-        # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
-        interrupt_char = device_methods[self.type]['parameters'].get('interrupt_char', self.job.device.get_constant('grub-interrupt-character'))
-        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = interrupt_prompt
-        self.wait(connection)
-        connection.raw_connection.send(interrupt_char)
         return connection
 
 
@@ -276,8 +241,9 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         super(GrubMenuSelector, self).validate()
 
     def run(self, connection, max_end_time, args=None):
+        # Needs to get the interrupt_prompt from the bootloader device config
         interrupt_prompt = self.params['parameters'].get(
-            'interrupt_prompt', self.job.device.get_constant('grub-autoboot-prompt'))
+            'interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix='grub'))
         self.logger.debug("Adding '%s' to prompt", interrupt_prompt)
         connection.prompt_str = interrupt_prompt
         # override base class behaviour to interact with grub.

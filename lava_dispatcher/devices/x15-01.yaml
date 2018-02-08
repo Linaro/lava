@@ -1,46 +1,55 @@
+
+constants:
+  # bootloader specific
+  u-boot:
+    interrupt-prompt: 'Hit any key to stop autoboot'
+    interrupt-character: ' '
+    final-message: 'Starting kernel'
+    error-messages:
+      - 'Resetting CPU'
+      - 'Must RESET board to recover'
+      - 'TIMEOUT'
+      - 'Retry count exceeded'
+      - 'ERROR: The remote end did not respond in time.'
+  grub:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+  grub-efi:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+    error-messages:
+      - 'Undefined OpCode Exception PC at'
+      - 'Synchronous Exception at'
+  ipxe:
+    interrupt-prompt: 'Press Ctrl-B for the iPXE command line'
+    interrupt_ctrl_list: ['b']
+    error-messages:
+      - 'No configuration methods succeeded'
+      - 'Connection timed out'
+
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
+
+  # Kernel starting message
+  kernel-start-message: 'Linux version [0-9]'
+
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
+
 commands:
     connections:
-      uart0:
-        connect: telnet localhost 7020
-        tags:
-        - primary
-    hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
-    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 5 --delay 20
-    power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 5 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
-device_type: x15
-constants:
-     # OS shutdown message
-     # Override: set as the shutdown-message parameter of an Action.
-     # SHUTDOWN_MESSAGE
-     shutdown-message: 'The system is going down for reboot NOW'
-
-     # Kernel starting message
-     # BOOT_MESSAGE
-     boot-message: 'Booting Linux'
-
-     # CPU reset message
-     # CPU_RESET_MESSAGE
-     cpu-reset-messages:
-       - "Resetting CPU"
-       - "Must RESET board to recover"
-
-     # Default shell prompt for AutoLogin
-     # DEFAULT_SHELL_PROMPT
-     default-shell-prompt: 'lava-test: # '
-
-     # u-boot auto boot prompt
-     # UBOOT_AUTOBOOT_PROMPT
-     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
-
-     # u-boot interrupt character
-     # UBOOT_INTERRUPT_CHARACTER = ' '
-     uboot-interrupt-character: ' '
-
-     # GRUB_BOOT_PROMPT
-     grub-autoboot-prompt: 'Press enter to boot the selected OS'
-     grub-interrupt-character: 'c'
-
-device_info: [{'board_id': 'R32D300FRYP'}]
+        uart0:
+            connect: telnet localhost 7108
+            tags:
+            - primary
+            - telnet
+    hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 9 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+    power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 9
+    power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 9', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
+device_info: [{'board_id': '100040061d1e00e2'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor', 'system', 'cache', 'userdata']
 parameters:
   # interfaces or device_ip or device_mac
@@ -63,9 +72,10 @@ parameters:
     kernel: '0x82000000'
     ramdisk: '0x88080000'
     dtb: '0x88000000'
+device_type: x15
 
-adb_serial_number: R32D300FRYP
-fastboot_serial_number: R32D300FRYP
+adb_serial_number: 100040061d1e00e2
+fastboot_serial_number: 100040061d1e00e2
 fastboot_options: []
 # This attribute identifies whether a device should get into fastboot mode by
 # interrupting uboot and issuing commands at the bootloader prompt.
@@ -119,7 +129,7 @@ actions:
     methods:
       minimal:
       ssh:
-      fastboot: ['reboot', 'auto-login', 'shell-session', 'export-env']
+      fastboot: ['reboot']
       u-boot:
         parameters:
           mkimage_arch: arm
@@ -127,7 +137,7 @@ actions:
           interrupt_prompt: Hit any key to stop autoboot
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: ""
-          boot_message: Booting Linux
+          needs_interrupt: True
 
         # method specific stanza
         mmc:
@@ -144,64 +154,61 @@ actions:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
-          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          - dhcp
+          - setenv serverip {SERVER_IP}
+          - tftp {KERNEL_ADDR} {KERNEL}
+          - tftp {RAMDISK_ADDR} {RAMDISK}
+          - setenv initrd_size ${filesize}
+          - tftp {DTB_ADDR} {DTB}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console=ttyS0,115200n8 root=/dev/nfs rw
-            nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run nfsargs; run loadfdt; {BOOTX}'
-          - run bootcmd
+          - "setenv bootargs 'console=ttyS2,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp'"
+          - '{BOOTX}'
         nbd:
           commands:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
-
-          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+          - dhcp
+          - setenv serverip {SERVER_IP}
+          - tftp {KERNEL_ADDR} {KERNEL}
+          - tftp {RAMDISK_ADDR} {RAMDISK}
+          - setenv initrd_size ${filesize}
+          - tftp {DTB_ADDR} {DTB}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nbdbasekargs 'verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
-          - setenv nbdkbootargs ' ip=dhcp nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp'
-          - setenv bootargs verbose console=ttyS0,115200n8 rw ${nbdbasekargs} ${nbdkbootargs}
-          - setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';
-          - setenv verify no
-          - setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'
-          - run bootcmd
-
+          - "setenv bootargs 'console=ttyS2,115200n8 rw nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - '{BOOTX}'
         ramdisk:
           commands:
           - setenv autoload no
           - setenv initrd_high 0xffffffff
           - setenv fdt_high 0xffffffff
-          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
-          - "setenv bootargs 'console=ttyS0,115200n8 root=/dev/ram0  ip=dhcp'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - run bootcmd
+          - dhcp
+          - setenv serverip {SERVER_IP}
+          - tftp {KERNEL_ADDR} {KERNEL}
+          - tftp {RAMDISK_ADDR} {RAMDISK}
+          - setenv initrd_size ${filesize}
+          - tftp {DTB_ADDR} {DTB}
+          - "setenv bootargs 'console=ttyS2,115200n8 root=/dev/ram0  ip=dhcp'"
+          - '{BOOTX}'
         usb:
           commands:
           - usb start
           - setenv autoload no
-
-          - "setenv loadkernel 'load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}'"
-          - "setenv bootargs 'console=ttyS0,115200n8 root={ROOT}  ip=dhcp'"
-          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - run bootcmd
+          - "load usb 0:{ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}"
+          - "setenv initrd_size ${filesize}"
+          - "load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}"
+          - "console=ttyS2,115200n8 root={ROOT}  ip=dhcp"
+          - '{BOOTX}'
         sata:
           commands:
           - scsi scan
           - setenv autoload no
-          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
-          - "setenv bootargs 'console=ttyS0,115200n8 root={ROOT}  ip=dhcp'"
-          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - run bootcmd
+          - "load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}"
+          - "load scsi {ROOT_PART} {DTB_ADDR} {DTB}"
+          - "setenv bootargs 'console=ttyS2,115200n8 root={ROOT}  ip=dhcp'"
+          - '{BOOTX}'
 timeouts:
   actions:
     apply-overlay-image:

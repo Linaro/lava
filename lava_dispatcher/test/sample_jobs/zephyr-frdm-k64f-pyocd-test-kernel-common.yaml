@@ -18,7 +18,7 @@ actions:
     to: tmpfs
     images:
         zephyr:
-          url: http://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_k64f/latest/tests/kernel/common/test/zephyr.bin
+          url: http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin
 
 - boot:
     method: pyocd

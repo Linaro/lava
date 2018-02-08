@@ -177,7 +177,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         # Remove udev rule which added device to the container and then reload
         # udev rules.
         rules_file = os.path.join(UDEV_RULES_DIR,
-                                  '100-' + self.lxc_name + '.rules')
+                                  '100-lava-' + self.lxc_name + '.rules')
         if os.path.exists(rules_file):
             os.remove(rules_file)
             self.logger.debug("%s protocol: removed udev rules '%s'",

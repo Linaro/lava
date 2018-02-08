@@ -1,5 +1,5 @@
 .. toctree::
     :maxdepth: 2
 
-    lava-dispatch.rst
+    lava-run.rst
     lava-slave.rst

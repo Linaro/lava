@@ -61,7 +61,7 @@ actions:
         reboot: hard-reset
       boot:
         url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img
-        reboot: hard-reset
+        reboot: fastboot-reboot
       system:
         url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz
         compression: gz

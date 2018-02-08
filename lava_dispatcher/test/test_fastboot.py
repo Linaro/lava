@@ -33,6 +33,7 @@ from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
 
 
@@ -60,6 +61,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
     def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -69,6 +71,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
+            job.logger = DummyLogger()
         return job
 
     def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -79,6 +82,16 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
             job = parser.parse(sample_job_data, device, 4212, None, "",
                                output_dir=output_dir)
             job.logger = DummyLogger()
+        return job
+
+    def create_hikey960_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+        job.logger = DummyLogger()
         return job
 
     def create_nexus5x_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
@@ -249,13 +262,35 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_x15_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
+        job.validate()
         description_ref = self.pipeline_reference('x15.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        enter = [action for action in deploy.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertTrue(interrupt.needs_interrupt)
+        self.assertIsInstance(interrupt.params, dict)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertIn('mkimage_arch', interrupt.params)
+        self.assertIn('interrupt_prompt', interrupt.params)
+        boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]
+        enter = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertIsInstance(interrupt.params, dict)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertIn('mkimage_arch', interrupt.params)
+        self.assertIn('interrupt_prompt', interrupt.params)
+        self.assertTrue(interrupt.needs_interrupt)
+        autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        print(autologin.booting)
+        print(autologin.parameters.get('prompts', None))
+        self.assertIsNone(autologin.parameters.get('boot_message', None))
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml',
                                               mkdtemp())
+        # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('nexus5x.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
@@ -263,6 +298,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.factory = FastBootFactory()
         job = self.factory.create_pixel_job('sample_jobs/pixel.yaml',
                                             mkdtemp())
+        # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
@@ -290,4 +326,27 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                                   flash_order.pipeline.actions if
                                   action.name == 'fastboot-flash-action']
         self.assertIsNotNone(flash_order)
+        self.assertIsInstance(flash_order, FastbootFlashOrderAction)
+        self.assertEqual(expected_flash_cmds, flash_cmds)
+
+    def test_hikey960_fastboot(self):
+        job = self.factory.create_hikey960_job('sample_jobs/hikey960-aosp.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('hi960-aosp-efi.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        flash_order = None
+        expected_flash_cmds = ['boot', 'system', 'userdata', 'cache']
+        for action in job.pipeline.actions:
+            self.assertIsNotNone(action.name)
+            if isinstance(action, DeployAction):
+                if action.name == 'fastboot-deploy':
+                    flash_order = [action for action in
+                                   action.pipeline.actions if action.name ==
+                                   'fastboot-flash-order-action'][0]
+                    flash_cmds = [action.command for action in
+                                  flash_order.pipeline.actions if
+                                  action.name == 'fastboot-flash-action']
+        self.assertIsNotNone(flash_order)
+        self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)

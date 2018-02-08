@@ -77,6 +77,9 @@ actions:
     timeout:
       minutes: 5
     method: uefi-menu
+    transfer_overlay:
+      download_command: cd /tmp ; wget
+      unpack_command: tar --warning=no-timestamp -C / -xvzf
     commands: fastboot
     protocols:
       lava-lxc:

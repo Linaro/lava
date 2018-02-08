@@ -69,6 +69,7 @@
   pipeline:
   - {class: actions.boot.fastboot.EnterFastbootAction, name: enter-fastboot-action}
   - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

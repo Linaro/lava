@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'LAVA Dispatcher'
-copyright = u'2011-2013, Linaro Validation Team'
+copyright = u'2011-2018, Linaro Validation Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -225,7 +225,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('lava-dispatch', 'lava-dispatch', u'dispatch jobs to LAVA devices',
+    ('lava-run', 'lava-run', u'run jobs on LAVA devices',
      [u'Linaro Validation Team'], 1),
     ('lava-slave', 'lava-slave', u'manage connections to lava master',
      [u'Linaro Validation Team'], 8)

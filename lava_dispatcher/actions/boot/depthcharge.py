@@ -208,8 +208,8 @@ class DepthchargeStart(Action):
 
     def validate(self):
         super(DepthchargeStart, self).validate()
-        if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device %s"
+        if self.job.device.connect_command == '':
+            self.errors = "Unable to connect to device"
         method = self.job.device['actions']['boot']['methods']['depthcharge']
         self.start_message = method['parameters'].get('start_message')
         if self.start_message is None:

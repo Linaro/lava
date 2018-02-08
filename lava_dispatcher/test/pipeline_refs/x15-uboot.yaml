@@ -47,7 +47,7 @@
       name: reset-device
       pipeline:
       - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: connections.lxc.ConnectLxc, name: connect-lxc}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
@@ -71,7 +71,7 @@
       name: reset-device
       pipeline:
       - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.test.shell.TestShellRetry
