@@ -71,11 +71,10 @@ def _check_for_testset(result_dict, suite):
 
 
 def append_failure_comment(job, msg):
-    logger = logging.getLogger('lava-master')
     if not job.failure_comment:
         job.failure_comment = ''
     job.failure_comment += msg[:256]
-    logger.error(msg)
+    job.save(update_fields=["failure_comment"])
 
 
 def create_metadata_store(results, job):
