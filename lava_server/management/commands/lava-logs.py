@@ -305,31 +305,30 @@ class Command(LAVADaemonCommand):
             meta_filename = create_metadata_store(message_msg, job)
             ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
             if not ret:
-                self.logger.warning(
-                    "[%s] unable to map scanned results: %s",
-                    job_id, message)
-            else:
-                # Look for lava.job result
-                if message_msg["definition"] == "lava" and message_msg["case"] == "job":
-                    if message_msg["result"] == "pass":
-                        health = TestJob.HEALTH_COMPLETE
-                        health_msg = "Complete"
-                    else:
-                        health = TestJob.HEALTH_INCOMPLETE
-                        health_msg = "Incomplete"
-                    self.logger.info("[%s] job status: %s", job_id, health_msg)
+                self.logger.warning("[%s] unable to map scanned results: %s",
+                                    job_id, message)
 
-                    infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
-                    if infrastructure_error:
-                        self.logger.info("[%s] Infrastructure error", job_id)
+            # Look for lava.job result
+            if message_msg.get("definition") == "lava" and message_msg.get("case") == "job":
+                if message_msg.get("result") == "pass":
+                    health = TestJob.HEALTH_COMPLETE
+                    health_msg = "Complete"
+                else:
+                    health = TestJob.HEALTH_INCOMPLETE
+                    health_msg = "Incomplete"
+                self.logger.info("[%s] job status: %s", job_id, health_msg)
 
-                    # Update status.
-                    with transaction.atomic():
-                        # TODO: find a way to lock actual_device
-                        job = TestJob.objects.select_for_update() \
-                                             .get(id=job_id)
-                        job.go_state_finished(health, infrastructure_error)
-                        job.save()
+                infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
+                if infrastructure_error:
+                    self.logger.info("[%s] Infrastructure error", job_id)
+
+                # Update status.
+                with transaction.atomic():
+                    # TODO: find a way to lock actual_device
+                    job = TestJob.objects.select_for_update() \
+                                         .get(id=job_id)
+                    job.go_state_finished(health, infrastructure_error)
+                    job.save()
 
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
