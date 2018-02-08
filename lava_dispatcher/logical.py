@@ -54,6 +54,7 @@ class RetryAction(Action):
     def run(self, connection, max_end_time, args=None):
         retries = 0
         has_failed = False
+        self.call_protocols()
         while retries < self.max_retries:
             try:
                 connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
@@ -184,6 +185,10 @@ class Deployment(object):
             raise ConfigurationError('"deploy" is not in the device configuration actions')
         if 'methods' not in device['actions']['deploy']:
             raise ConfigurationError('Device misconfiguration, no "methods" in device configuration deploy actions')
+
+    @classmethod
+    def uses_deployment_data(cls):
+        return True
 
     @classmethod
     def select(cls, device, parameters):

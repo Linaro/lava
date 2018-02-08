@@ -1,0 +1,31 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2018 Linaro Limited
+#
+# Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#
+# This file is part of LAVA LXC mocker.
+#
+# Released under the MIT License:
+# http://www.opensource.org/licenses/mit-license.php
+#
+# Mocks lxc-destroy command which is used by LAVA.
+
+while getopts "fn:" opt; do
+    case $opt in
+        n)
+            LXC_NAME="$OPTARG"
+            ;;
+        *)
+            ;;
+    esac
+done
+
+if [ "$LXC_NAME" ]; then
+    # Remove lxc rootfs directory if any
+    rm -rf /var/lib/lxc/${LXC_NAME}
+    # echo container destroyed message
+    echo "Destroyed container $LXC_NAME"
+    exit 0
+fi

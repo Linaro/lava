@@ -140,7 +140,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('grub', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['grub']['parameters']
         boot_message = params.get('boot_message',
-                                  job.device.get_constant('boot-message'))
+                                  job.device.get_constant('kernel-start-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
@@ -317,6 +317,14 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertNotEqual(shell.parameters['namespace'], 'isolation')
                 self.assertEqual(shell.parameters['namespace'], 'tlxc')
                 self.assertNotIn('connection-namespace', shell.parameters.keys())
+        menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
+        autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertIsNotNone(autologin.params)
+        self.assertIn('test_info', autologin.parameters)
+        self.assertIn('isolation', autologin.parameters['test_info'])
+        self.assertIn('hikey-oe', autologin.parameters['test_info'])
+        self.assertIn('tlxc', autologin.parameters['test_info'])
+        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
 
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job('sample_jobs/hikey960-oe.yaml')

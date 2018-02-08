@@ -566,7 +566,7 @@ class CompressRamdisk(Action):
 
         full_path = os.path.join(tftp_dir, os.path.basename(final_file))
         shutil.move(final_file, full_path)
-        self.logger.debug("rename {} to {}".format(final_file, full_path))
+        self.logger.debug("rename %s to %s", final_file, full_path)
         self.set_namespace_data(
             action=self.name, label='file', key='full-path', value=full_path)
 

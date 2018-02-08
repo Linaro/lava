@@ -67,6 +67,11 @@ class VExpressMsd(Deployment):
         parent.add_action(self.action, parameters)
 
     @classmethod
+    def uses_deployment_data(cls):
+        # recovery image deployment does not involve an OS
+        return False
+
+    @classmethod
     def accepts(cls, device, parameters):
         if 'to' not in parameters:
             return False, '"to" is not in deploy parameters'

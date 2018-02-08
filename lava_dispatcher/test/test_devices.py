@@ -26,7 +26,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.utils.shell import infrastructure_error
-from lava_dispatcher.actions.boot.u_boot import UBootInterrupt, UBootAction
+from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from lava_dispatcher.test.test_basic import StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -96,7 +96,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
         uboot_action.validate()
         self.assertTrue(uboot_action.valid)
         for action in uboot_action.internal_pipeline.actions:
-            if isinstance(action, UBootInterrupt):
+            if isinstance(action, BootloaderInterruptAction):
                 self.assertIn('power-on', action.job.device['commands'])
                 self.assertIn('hard_reset', action.job.device['commands'])
                 self.assertIn('connect', action.job.device['commands'])
@@ -123,7 +123,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
     def test_device_constants(self):
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         self.assertIn('constants', device)
-        self.assertEqual(device.get_constant('boot-message'), "Booting Linux")
+        self.assertEqual(device.get_constant('kernel-start-message'), "Linux version [0-9]")
         self.assertRaises(ConfigurationError,
                           device.get_constant, ('non-existing-const'))
 

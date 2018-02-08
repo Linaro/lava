@@ -13,6 +13,7 @@ include .gitreview
 include COPYING
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-slave
+include lava/lxc-mocker/*
 recursive-include lava_dispatcher/devices *.yaml
 recursive-include lava_dispatcher/test *.yaml *.txt
 include requirements.txt

@@ -35,6 +35,7 @@ from lava_dispatcher.connections.lxc import (
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.udev import get_udev_devices
+from lava_dispatcher.utils.udev import allow_fs_label
 
 
 class BootLxc(Boot):
@@ -104,7 +105,8 @@ class LxcAddStaticDevices(Action):
         """
         usb_devices = []
         for device in self.job.device.get('static_info', []):
-            if 'board_id' in device:
+            if 'board_id' in device \
+                    or 'fs_label' in device:
                 # This is a USB device
                 usb_devices.append(device)
         return usb_devices
@@ -112,9 +114,14 @@ class LxcAddStaticDevices(Action):
     def validate(self):
         super(LxcAddStaticDevices, self).validate()
         # If there are no USB devices under static_info then this action should be idempotent.
+
+        # If we are allowed to use a filesystem label, we don't require a board_id
+        # By default, we do require a board_id (serial)
+        requires_board_id = not allow_fs_label(self.job.device)
         try:
             for usb_device in self.get_usb_devices():
-                if usb_device.get('board_id', '') in ['', '0000000000']:
+                if usb_device.get('board_id', '') in ['', '0000000000'] and \
+                        requires_board_id:
                     self.errors = "board_id unset"
                 if usb_device.get('usb_vendor_id', '') == '0000':
                     self.errors = 'usb_vendor_id unset'

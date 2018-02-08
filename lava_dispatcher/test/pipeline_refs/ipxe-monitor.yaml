@@ -36,7 +36,7 @@
       name: reset-device
       pipeline:
       - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: actions.boot.ipxe.BootloaderInterrupt, name: bootloader-interrupt}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry

@@ -9,6 +9,14 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - class: actions.deploy.apply_overlay.PrepareOverlayTftp
     name: prepare-tftp-overlay
     pipeline:
@@ -17,14 +25,11 @@
       name: lava-overlay
       pipeline:
       - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
+      - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - class: actions.deploy.testdef.TestDefinitionAction
         name: test-definition
         pipeline:
-        - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
-        - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
-        - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
-        - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
         - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
         - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
         - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
@@ -34,27 +39,29 @@
     - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+    - class: actions.deploy.prepare.PrepareKernelAction
+      name: prepare-kernel
+      pipeline:
+      - {class: actions.deploy.prepare.UBootPrepareKernelAction, name: uboot-prepare-kernel}
     - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
   pipeline:
-  - {class: actions.boot.u_boot.UBootPrepareKernelAction, name: uboot-prepare-kernel}
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
-  - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.u_boot.UBootRetry
     name: uboot-retry
     pipeline:
     - class: power.ResetDevice
-      name: reboot-device
+      name: reset-device
       pipeline:
-      - {class: power.RebootDevice, name: soft-reboot}
-      - {class: power.PDUReboot, name: pdu-reboot}
-      - {class: power.PowerOn, name: power-on}
-    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
-    - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
+      - {class: power.SendRebootCommands, name: send-reboot-commands}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
@@ -66,3 +73,4 @@
   name: finalize
   pipeline:
   - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

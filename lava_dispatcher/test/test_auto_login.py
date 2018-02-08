@@ -14,11 +14,13 @@ class AutoLoginTestCase(StdoutTestCase):
         return pipeline
 
     def _check_errors(self, params, errors):
+        params['method'] = 'u-boot'
         pipeline = self._make_pipeline(params)
         self.assertRaises(JobError, pipeline.validate_actions)
         self.assertEqual(pipeline.errors, errors)
 
     def _check_valid(self, params):
+        params['method'] = 'u-boot'
         pipeline = self._make_pipeline(params)
         try:
             pipeline.validate_actions()

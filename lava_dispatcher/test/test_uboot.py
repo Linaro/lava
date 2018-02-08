@@ -69,6 +69,26 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
             job.logger = DummyLogger()
         return job
 
+    def create_juno_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-01.yaml'))
+        juno_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(juno_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+            job.logger = DummyLogger()
+        return job
+
+    def create_zcu102_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/xilinx-zcu102.yaml'))
+        zcu_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(zcu_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "",
+                               output_dir=output_dir)
+            job.logger = DummyLogger()
+        return job
+
 
 class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -129,7 +149,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         params = job.device['actions']['deploy']['parameters']
         self.assertIn('mkimage_arch', params)
         boot_message = params.get('boot_message',
-                                  job.device.get_constant('boot-message'))
+                                  job.device.get_constant('kernel-start-message'))
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
@@ -154,6 +174,12 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         job.validate()
         description_ref = self.pipeline_reference('x15-uboot.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        enter = [action for action in deploy.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        interrupt = [action for action in enter.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertIsNotNone(interrupt.params)
+        self.assertNotEqual(interrupt.params, {})
+        self.assertEqual('u-boot', interrupt.method)
 
     def test_x15_uboot_nfs(self):  # pylint: disable=too-many-locals
         job = self.factory.create_x15_job('sample_jobs/x15-nfs.yaml')
@@ -165,6 +191,12 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
         self.assertIn('compression', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'gz')
+
+    def test_juno_uboot_nfs(self):
+        job = self.factory.create_juno_job('sample_jobs/juno-uboot-nfs.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('juno-uboot-nfs.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
@@ -344,7 +376,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 uboot_retry = action
         names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
         self.assertIn('reset-device', names)
-        self.assertIn('u-boot-interrupt', names)
+        self.assertIn('bootloader-interrupt', names)
         self.assertIn('expect-shell-connection', names)
         self.assertIn('bootloader-commands', names)
         for action in uboot_retry.internal_pipeline.actions:
@@ -409,6 +441,13 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn('prefix', nfs.parameters['nfsrootfs'])
         self.assertEqual(nfs.parameters['nfsrootfs']['prefix'], 'jessie/')
         self.assertEqual(nfs.param_key, 'nfsrootfs')
+
+    def test_zcu102(self):
+        job = self.factory.create_zcu102_job('sample_jobs/zcu102-ramdisk.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('zcu102-ramdisk.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
 
 
 class TestKernelConversion(StdoutTestCase):

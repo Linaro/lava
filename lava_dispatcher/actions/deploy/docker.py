@@ -54,6 +54,8 @@ class DockerAction(DeployAction):
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:
             raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
+        except OSError:
+            raise InfrastructureError("Command 'docker' does not exist")
 
         # Add the lava_test_results_dir to the right namespace
         if self.test_needs_deployment(self.parameters):

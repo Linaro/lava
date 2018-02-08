@@ -153,6 +153,7 @@ class FastbootFlashOrderAction(DeployAction):
         self.sleep = 10
         self.interrupt_prompt = None
         self.interrupt_string = None
+        self.reboot = None
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -166,19 +167,22 @@ class FastbootFlashOrderAction(DeployAction):
             if flash_cmd not in parameters['images']:
                 continue
             self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
-            reboot = parameters['images'][flash_cmd].get('reboot', None)
-            if reboot == 'fastboot-reboot':
+            self.reboot = parameters['images'][flash_cmd].get('reboot', None)
+            if self.reboot == 'fastboot-reboot':
                 self.internal_pipeline.add_action(FastbootReboot())
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))
-            elif reboot == 'fastboot-reboot-bootloader':
+            elif self.reboot == 'fastboot-reboot-bootloader':
                 self.internal_pipeline.add_action(FastbootRebootBootloader())
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))
-            elif reboot == 'hard-reset':
+            elif self.reboot == 'hard-reset':
                 self.internal_pipeline.add_action(PDUReboot())
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))
 
     def validate(self):
         super(FastbootFlashOrderAction, self).validate()
+        self.set_namespace_data(
+            action=FastbootFlashAction.name, label='interrupt',
+            key='reboot', value=self.reboot)
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
         elif self.job.device['fastboot_serial_number'] == '0000000000':
@@ -236,7 +240,11 @@ class FastbootFlashAction(Action):
         if 'no-flash-boot' in sequence and self.command in ['boot']:
             return connection
 
-        if self.interrupt_prompt:
+        # if a reboot is requested, will need to wait for the prompt
+        # if not, continue in the existing mode.
+        reboot = self.get_namespace_data(
+            action=self.name, label='interrupt', key='reboot')
+        if self.interrupt_prompt and reboot:
             connection.prompt_str = self.interrupt_prompt
             self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
             self.wait(connection)
@@ -256,9 +264,10 @@ class FastbootFlashAction(Action):
         return connection
 
 
-class FastbootReboot(FastbootFlashAction):
+class FastbootReboot(Action):
 
     def __init__(self):
+        super(FastbootReboot, self).__init__()
         self.name = 'fastboot-reboot'
         self.summary = 'execute a reboot using fastboot'
         self.description = 'Reset a device between flash operations using fastboot reboot.'
@@ -285,11 +294,13 @@ class FastbootReboot(FastbootFlashAction):
         if command_output and 'error' in command_output:
             raise InfrastructureError("Unable to reboot: %s"
                                       % (command_output))
+        return connection
 
 
-class FastbootRebootBootloader(FastbootFlashAction):
+class FastbootRebootBootloader(Action):
 
     def __init__(self):
+        super(FastbootRebootBootloader, self).__init__()
         self.name = 'fastboot-reboot-bootloader'
         self.summary = 'execute a reboot to bootloader using fastboot'
         self.description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
@@ -317,3 +328,4 @@ class FastbootRebootBootloader(FastbootFlashAction):
             raise InfrastructureError(
                 "Unable to reboot to bootloader: %s"
                 % (command_output))
+        return connection

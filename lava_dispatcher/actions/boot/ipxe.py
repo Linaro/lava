@@ -33,6 +33,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     OverlayUnpack,
+    BootloaderInterruptAction
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
@@ -105,7 +106,7 @@ class BootloaderRetry(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(BootloaderInterrupt())
+        self.internal_pipeline.add_action(BootloaderInterruptAction())
         # need to look for Hit any key to stop autoboot
         self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
@@ -130,35 +131,4 @@ class BootloaderRetry(BootAction):
     def run(self, connection, max_end_time, args=None):
         connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        return connection
-
-
-class BootloaderInterrupt(Action):
-    """
-    Support for interrupting the bootloader.
-    """
-    def __init__(self):
-        super(BootloaderInterrupt, self).__init__()
-        self.name = "bootloader-interrupt"
-        self.description = "interrupt bootloader"
-        self.summary = "interrupt bootloader to get a prompt"
-        self.type = "ipxe"
-
-    def validate(self):
-        super(BootloaderInterrupt, self).validate()
-        if self.job.device.connect_command is '':
-            self.errors = "Unable to connect to device"
-        device_methods = self.job.device['actions']['boot']['methods']
-        if 'bootloader_prompt' not in device_methods[self.type]['parameters']:
-            self.errors = "Missing bootloader prompt for device"
-
-    def run(self, connection, max_end_time, args=None):
-        if not connection:
-            raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterrupt, self).run(connection, max_end_time, args)
-        self.logger.debug("Changing prompt to '%s'", IPXE_BOOT_PROMPT)
-        # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = IPXE_BOOT_PROMPT
-        self.wait(connection)
-        connection.sendcontrol("b")
         return connection

@@ -43,6 +43,7 @@ from lava_dispatcher.utils.constants import (
     UDEV_RULES_DIR,
 )
 from lava_dispatcher.utils.udev import lxc_udev_rule
+from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher.utils.filesystem import (
     debian_package_version,
     lxc_path,
@@ -233,10 +234,14 @@ class LxcCreateUdevRuleAction(DeployAction):
         if 'device_info' in self.job.device \
            and not isinstance(self.job.device.get('device_info'), list):
             self.errors = "device_info unset"
+        # If we are allowed to use a filesystem label, we don't require a board_id
+        # By default, we do require a board_id (serial)
+        requires_board_id = not allow_fs_label(self.job.device)
         try:
             if 'device_info' in self.job.device:
                 for usb_device in self.job.device['device_info']:
-                    if usb_device.get('board_id', '') in ['', '0000000000']:
+                    if usb_device.get('board_id', '') in ['', '0000000000'] \
+                            and requires_board_id:
                         self.errors = "board_id unset"
                     if usb_device.get('usb_vendor_id', '') == '0000':
                         self.errors = 'usb_vendor_id unset'
@@ -282,6 +287,7 @@ class LxcCreateUdevRuleAction(DeployAction):
             data = {'serial_number': str(device.get('board_id', '')),
                     'vendor_id': device.get('usb_vendor_id', None),
                     'product_id': device.get('usb_product_id', None),
+                    'fs_label': device.get('fs_label', None),
                     'lxc_name': lxc_name,
                     'device_info_file': device_info_file,
                     'logging_url': logging_url,
@@ -289,17 +295,24 @@ class LxcCreateUdevRuleAction(DeployAction):
                     'slave_cert': slave_cert,
                     'ipv6': ipv6,
                     'job_id': job_id}
-            # The rules file will be something like
-            # /etc/udev/rules.d/100-lxc-hikey-2808.rules'
+            # The rules file will be created in job's temporary directory with
+            # the name something like '100-lava-lxc-hikey-2808.rules'
             # where, 100 is just an arbitrary number which specifies loading
             # priority for udevd
-            rules_file = os.path.join(UDEV_RULES_DIR,
-                                      '100-' + lxc_name + '.rules')
+            rules_file_name = '100-lava-' + lxc_name + '.rules'
+            rules_file = os.path.join(self.mkdtemp(), rules_file_name)
             str_lxc_udev_rule = lxc_udev_rule(data)
             with open(rules_file, 'a') as f_obj:
                 f_obj.write(str_lxc_udev_rule)
             self.logger.debug("udev rules file '%s' created with:\n %s",
                               rules_file, str_lxc_udev_rule)
+            # Create symlink to rules file inside UDEV_RULES_DIR
+            # See https://projects.linaro.org/browse/LAVA-1227
+            os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
+                                                rules_file_name))
+            self.logger.debug("'%s' symlinked to '%s'",
+                              os.path.join(UDEV_RULES_DIR, rules_file_name),
+                              rules_file)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
@@ -363,8 +376,8 @@ class LxcAptInstallAction(DeployAction):
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']
-        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y',
-               'install'] + packages
+        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n', lxc_name,
+               '--', 'apt-get', '-y', 'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
         return connection

@@ -11,13 +11,34 @@ messages back to the master. ``lava-slave`` runs as a daemon.
 Usage
 *****
 
-lava-slave [--master tcp://localhost:5556]
-[--socket-addr tcp://localhost:5555] [--level=DEBUG]
+lava-slave [-h] [--hostname HOSTNAME] --master MASTER --socket-addr
+           SOCKET_ADDR [--log-file LOG_FILE]
+           [--level {DEBUG,ERROR,INFO,WARN}] [--timeout TIMEOUT]
+           [--ipv6] [--encrypt] [--master-cert MASTER_CERT]
+           [--slave-cert SLAVE_CERT]
 
 Options
 *******
 
-Options can be passed by editing /etc/lava-dispatcher/lava-slave
+Options can be passed by editing /etc/default/lava-slave or
+/etc/lava-dispatcher/lava-slave
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostname HOSTNAME   Name of the slave
+  --master MASTER       Main master socket
+  --socket-addr SOCKET_ADDR
+                        Log socket
+  --log-file LOG_FILE   Log file for the slave logs
+  --level, -l           Log level (DEBUG, ERROR, INFO, WARN); default to INFO
+  --timeout TIMEOUT, -t TIMEOUT
+                        Socket connection timeout in seconds; default to 5
+  --ipv6                Enable IPv6
+  --encrypt             Encrypt messages
+  --master-cert MASTER_CERT
+                        Master certificate file
+  --slave-cert SLAVE_CERT
+                        Slave certificate file
 
 Encryption
 **********

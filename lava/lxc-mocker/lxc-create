@@ -1,0 +1,47 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2018 Linaro Limited
+#
+# Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#
+# This file is part of LAVA LXC mocker.
+#
+# Released under the MIT License:
+# http://www.opensource.org/licenses/mit-license.php
+#
+# Mocks lxc-create command which is used by LAVA.
+
+# Get the list of requested packages.
+PACKAGES=$(sed 's/,/ /g' <<< $(cut -d' ' -f1 <<< $(awk -F'--packages ' '{print $2}' <<< "$@")))
+
+while getopts "qt:n:" opt; do
+    case $opt in
+        q)
+            QUIET=1
+            ;;
+        n)
+            LXC_NAME="$OPTARG"
+            ;;
+        *)
+            ;;
+    esac
+done
+
+if [ "$PACKAGES" ] && [ "$QUIET" ]; then
+    DEBIAN_FRONTEND=noninteractive apt update > /dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y > /dev/null 2>&1
+    # install the requested packages.
+    DEBIAN_FRONTEND=noninteractive apt install -y $PACKAGES > /dev/null 2>&1
+elif [ "$PACKAGES" ]; then
+    DEBIAN_FRONTEND=noninteractive apt update
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y
+    # install the requested packages.
+    DEBIAN_FRONTEND=noninteractive apt install -y $PACKAGES
+fi
+
+if [ "$LXC_NAME" ]; then
+    # create dummy lxc rootfs.
+    mkdir -p /var/lib/lxc/${LXC_NAME}
+    ln -s / /var/lib/lxc/${LXC_NAME}/rootfs
+fi
