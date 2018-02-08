@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+from __future__ import unicode_literals
+
 import datetime
 import yaml
 
@@ -117,7 +119,16 @@ def schedule_health_checks_for_device_type(logger, dt):
                      device.get_state_display(),
                      device.get_health_display())
         logger.debug("  |--> scheduling health check")
-        schedule_health_check(device, health_check)
+        try:
+            schedule_health_check(device, health_check)
+        except Exception as exc:
+            # If the health check cannot be schedule, set health to BAD to exclude the device
+            logger.error("  |--> Unable to schedule health check")
+            logger.exception(exc)
+            prev_health_display = device.get_health_display()
+            device.health = Device.HEALTH_BAD
+            device.log_admin_entry(None, "%s → %s (Invalid health check)" % (prev_health_display, device.get_health_display()))
+            device.save()
 
     return available_devices
 

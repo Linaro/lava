@@ -1,0 +1,5 @@
+# Common Amlogic Meson GX configuration
+{% extends 'meson-gx-common.jinja2' %}
+
+{% set device_type = "meson-gxbb-p200" %}
+{% set bootloader_prompt = bootloader_prompt|default('gxb_p200_v1#') %}

@@ -38,6 +38,8 @@ if [ -z "$NAME" ]; then
     echo "If architecture is a known Debian architecture, build"
     echo "a binary-only package for this architecture. e.g. armhf or arm64"
     echo "Branch specifies the packaging branch to use from github."
+    echo "By default, the packaging branch supports Python2 and Python3."
+    echo "If building on Jessie, use the backports branch."
     exit 1
 fi
 if [ -x ./version.py ]; then

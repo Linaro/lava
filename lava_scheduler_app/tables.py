@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import django
 import logging
 import random
@@ -90,6 +92,8 @@ class ExpandedStatusColumn(tables.Column):
                 current_job.get_state_display(),
                 current_job.description,
                 current_job.submitter))
+        elif record.state == Device.STATE_IDLE and record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+            return ""
         else:
             return record.get_simple_state_display()
 
@@ -108,8 +112,8 @@ class RestrictedDeviceColumn(tables.Column):
         :return: a text string describing the restrictions on this device.
         """
         label = None
-        if record.health == Device.HEALTH_RETIRED:
-            return "Retired, no submissions possible."
+        if record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+            return "no submissions possible."
         if record.is_public:
             return ""
         if record.user:
@@ -157,8 +161,8 @@ class JobTable(LavaTable):
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
-    submit_time = tables.DateColumn(format=u"Nd, g:ia")
-    end_time = tables.DateColumn(format=u"Nd, g:ia")
+    submit_time = tables.DateColumn(format="Nd, g:ia")
+    end_time = tables.DateColumn(format="Nd, g:ia")
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
@@ -519,6 +523,18 @@ class DeviceTable(LavaTable):
     def render_device_type(self, record):  # pylint: disable=no-self-use
         return pklink(record.device_type)
 
+    def render_health(self, record):
+        if record.health == Device.HEALTH_GOOD:
+            return mark_safe('<strong class="text-success">Good</strong>')
+        elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
+            return mark_safe('<span class="text-info">%s</span>' % record.get_health_display())
+        elif record.health == Device.HEALTH_BAD:
+            return mark_safe('<span class="text-danger">Bad</span>')
+        elif record.health == Device.HEALTH_MAINTENANCE:
+            return mark_safe('<span class="text-warning">Maintenance</span>')
+        else:
+            return mark_safe('<span class="text-muted">Retired</span>')
+
     hostname = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
@@ -552,24 +568,6 @@ class DeviceTable(LavaTable):
             'device_health_query': 'health',
             'restriction_query': 'restrictions',
             'tags_query': 'tags'
-        }
-
-
-class NoDTDeviceTable(DeviceTable):
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        exclude = [
-            'device_type',
-            'user', 'group', 'is_public', 'device_version',
-            'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job'
-        ]
-        searches = {
-            'hostname': 'contains',
-        }
-        queries = {
-            'device_state_query': 'state',
-            'device_health_query': 'health',
         }
 
 
@@ -616,7 +614,7 @@ class LogEntryTable(tables.Table):
         super(LogEntryTable, self).__init__(*args, **kwargs)
         self.length = 10
 
-    action_time = tables.DateColumn(format=u"Nd, g:ia")
+    action_time = tables.DateColumn(format="Nd, g:ia")
     object_id = tables.Column(verbose_name="Name")
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
@@ -712,34 +710,6 @@ class QueueJobsTable(JobTable):
             'submit_time', 'in_queue'
         )
         exclude = ('state', 'health', 'priority', 'end_time', 'duration')
-
-
-class OnlineDeviceTable(DeviceTable):
-
-    def __init__(self, *args, **kwargs):
-        super(OnlineDeviceTable, self).__init__(*args, **kwargs)
-        self.length = 25
-
-    def render_state(self, record):  # pylint: disable=no-self-use
-        return record.get_state_display()
-
-    class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
-        exclude = [
-            'worker_host', 'user', 'group', 'is_public', 'device_version',
-            'physical_owner', 'physical_group', 'description', 'current_job',
-            'last_health_report_job'
-        ]
-        sequence = [
-            'hostname', 'device_type', 'state', 'health', 'owner'
-        ]
-        searches = {
-            'hostname': 'contains',
-        }
-        queries = {
-            'device_type_query': 'device_type',
-            'device_state_query': 'state',
-            'restriction_query': 'restrictions',
-        }
 
 
 class PassingHealthTable(DeviceHealthTable):

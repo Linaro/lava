@@ -71,11 +71,10 @@ def _check_for_testset(result_dict, suite):
 
 
 def append_failure_comment(job, msg):
-    logger = logging.getLogger('lava-master')
     if not job.failure_comment:
         job.failure_comment = ''
     job.failure_comment += msg[:256]
-    logger.error(msg)
+    job.save(update_fields=["failure_comment"])
 
 
 def create_metadata_store(results, job):
@@ -132,12 +131,12 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     if 'extra' in results:
         results['extra'] = meta_filename
 
-    metadata_check = yaml.dump(results)
-    if len(metadata_check) > 4096:  # bug 2471 - test_length unit test
-        msg = "[%d] Result metadata is too long. %s" % (job.id, metadata_check)
+    metadata = yaml.dump(results)
+    if len(metadata) > 4096:  # bug 2471 - test_length unit test
+        msg = "[%d] Result metadata is too long. %s" % (job.id, metadata)
         logger.error(msg)
         append_failure_comment(job, msg)
-        return False
+        metadata = ""
 
     suite, _ = TestSuite.objects.get_or_create(name=results["definition"], job=job)
     testset = _check_for_testset(results, suite)
@@ -159,7 +158,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         TestCase.objects.create(name=name,
                                 suite=suite,
                                 test_set=testset,
-                                metadata=yaml.dump(results),
+                                metadata=metadata,
                                 measurement=measurement,
                                 units=units,
                                 result=result_val)
@@ -186,7 +185,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                 suite=suite,
                 test_set=testset,
                 result=TestCase.RESULT_MAP[result],
-                metadata=yaml.dump(results),
+                metadata=metadata,
                 measurement=measurement,
                 units=units)
         except decimal.InvalidOperation:

@@ -95,16 +95,16 @@ class SchedulerDevicesAPI(ExposedV2API):
                 group = Group.objects.get(name=group_name)
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(
-                400, "DeviceType '%s' was not found." % type_name)
+                404, "DeviceType '%s' was not found." % type_name)
         except Worker.DoesNotExist:
             raise xmlrpclib.Fault(
-                400, "Worker '%s' was not found." % worker_hostname)
+                404, "Worker '%s' was not found." % worker_hostname)
         except User.DoesNotExist:
             raise xmlrpclib.Fault(
-                400, "User '%s' was not found." % user_name)
+                404, "User '%s' was not found." % user_name)
         except Group.DoesNotExist:
             raise xmlrpclib.Fault(
-                400, "Group '%s' was not found." % group_name)
+                404, "Group '%s' was not found." % group_name)
 
         health_val = Device.HEALTH_UNKNOWN
         try:
@@ -352,7 +352,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                         device.worker_host = Worker.objects.get(hostname=worker_hostname)
                     except Worker.DoesNotExist:
                         raise xmlrpclib.Fault(
-                            400, "Unable to find worker '%s'" % worker_hostname)
+                            404, "Unable to find worker '%s'" % worker_hostname)
 
                 user = group = None
                 try:
@@ -362,10 +362,10 @@ class SchedulerDevicesAPI(ExposedV2API):
                         group = Group.objects.get(name=group_name)
                 except User.DoesNotExist:
                     raise xmlrpclib.Fault(
-                        400, "User '%s' was not found." % user_name)
+                        404, "User '%s' was not found." % user_name)
                 except Group.DoesNotExist:
                     raise xmlrpclib.Fault(
-                        400, "Group '%s' was not found." % group_name)
+                        404, "Group '%s' was not found." % group_name)
 
                 if user is not None or group is not None:
                     device.user = user

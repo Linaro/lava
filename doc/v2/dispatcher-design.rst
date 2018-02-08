@@ -430,14 +430,12 @@ was later uploaded.
 
 .. _criteria:
 
-Refactoring review criteria
-***************************
+LAVA review criteria
+********************
 
-The refactored dispatcher has different objectives to the original and any
-assumptions in the old code must be thrown out. It is very easy to fall into
-the old way of writing dispatcher code, so these criteria are to help
-developers control the development of new code. Any of these criteria can be
-cited in a code review as reasons for a review to be improved.
+These criteria are to help developers control the development of new code. Any
+of these criteria can be cited in a code review as reasons for a review to be
+improved.
 
 .. _keep_dispatcher_dumb:
 

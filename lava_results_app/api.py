@@ -83,11 +83,11 @@ class ResultsAPI(ExposedAPI):
         Example
         -------
 
-        # Get all test jobs submitted by the user 'kernel-ci', and which ended as
-        # 'Incomplete':
+        # Get all test jobs submitted by the user 'kernel-ci', and which ended
+        # as 'Incomplete':
         server.results.make_custom_query("testjob",
             "testjob__submitter__exact__kernel-ci,"
-            "testjob__status__exact__Incomplete")
+            "testjob__health__exact__Incomplete")
         [{ jobXX }, { jobXY }, ...]
 
         # Get all test cases in a test suite named 'custom-tests', that failed,

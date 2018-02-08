@@ -5,6 +5,7 @@ $(document).ready(function() {
 
     $(".buglink").on("click", function() {
         object_id = $(this).attr("id").split("_")[1];
+        content_type_id = $(this).attr("data-content-type");
         $.ajax({
             url: bug_links_url,
             type: 'POST',

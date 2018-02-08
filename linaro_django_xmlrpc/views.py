@@ -38,6 +38,12 @@ from linaro_django_xmlrpc.models import (
 )
 from linaro_django_xmlrpc.forms import AuthTokenForm
 
+from lava_server.bread_crumbs import (
+    BreadCrumb,
+    BreadCrumbTrail,
+)
+from lava_server.views import index as lava_index
+
 
 @csrf_exempt
 def handler(request, mapper, help_view):  # pylint: disable=too-many-return-statements
@@ -89,6 +95,7 @@ def handler(request, mapper, help_view):  # pylint: disable=too-many-return-stat
         return redirect(help_view)
 
 
+@BreadCrumb("API help", parent=lava_index)
 def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pylint: disable=redefined-builtin
     context = CallContext(
         user=None, mapper=mapper, dispatcher=None)
@@ -147,12 +154,14 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pyl
     return render(request, template_name,
                   {'methods': methods,
                    'context_help': ['data-export'],
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(help),
                    'site_scheme': scheme,
                    'site_domain': domain,
                    'site_url': "{scheme}://{domain}".format(scheme=scheme,
                                                             domain=domain)})
 
 
+@BreadCrumb("API tokens", parent=lava_index)
 @login_required
 def tokens(request):
     """
@@ -164,6 +173,7 @@ def tokens(request):
     return render(request, "linaro_django_xmlrpc/tokens.html",
                   {"token_list": token_list,
                    "unused": unused,
+                   'bread_crumb_trail': BreadCrumbTrail.leading_to(tokens),
                    "context_help": ["first_steps"]})
 
 

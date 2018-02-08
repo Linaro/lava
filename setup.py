@@ -1,22 +1,22 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of LAVA Server.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# LAVA Server is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License version 3
-# as published by the Free Software Foundation
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-# LAVA Server is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import glob
@@ -54,7 +54,7 @@ DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 setup(
     name='lava-server',
     version=version_tag(),
-    author="Zygmunt Krynicki",
+    author="Neil Williams",
     author_email="lava-team@linaro.org",
     namespace_packages=['lava', ],
     packages=find_packages(),
@@ -62,24 +62,14 @@ setup(
     license="AGPL",
     description="LAVA Server",
     long_description="""
-    LAVA Server is an application container for various server side
-    applications of the LAVA stack. It has an extensible architecture that
-    allows to add extra features that live in their own Python packages.  The
-    standard LAVA extensions (dashboard and scheduler) are already contained in
-    this package.
+     LAVA is a continuous integration system for deploying operating
+     systems onto physical and virtual hardware for running tests.
+     Tests can be simple boot testing, bootloader testing and system
+     level testing. Extra hardware may be required for some
+     system tests. Results are tracked over time and data can be
+    exported for further analysis.
     """,
-    url='http://www.linaro.org/engineering/engineering-groups/validation',
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Affero General Public License v3",
-        ("License :: OSI Approved :: GNU Library or Lesser General Public"
-         " License (LGPL)"),
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Topic :: Software Development :: Testing",
-    ],
+    url='https://www.linaro.org/initiatives/lava/',
     install_requires=[
         'django >= 1.8',
         'django-restricted-resource >= 2015.09',

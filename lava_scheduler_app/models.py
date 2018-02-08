@@ -37,6 +37,7 @@ from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
@@ -82,6 +83,7 @@ class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
 
+@python_2_unicode_compatible
 class ExtendedUser(models.Model):
 
     user = models.OneToOneField(User)
@@ -102,7 +104,11 @@ class ExtendedUser(models.Model):
         verbose_name='IRC server'
     )
 
+    def __str__(self):
+        return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
 
+
+@python_2_unicode_compatible
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -181,11 +187,12 @@ def validate_yaml(yaml_data):
                     raise SubmissionException(e)
 
 
+@python_2_unicode_compatible
 class Architecture(models.Model):
     name = models.CharField(
         primary_key=True,
-        verbose_name=u'Architecture version',
-        help_text=u'e.g. ARMv7',
+        verbose_name='Architecture version',
+        help_text='e.g. ARMv7',
         max_length=100,
         editable=True,
     )
@@ -194,11 +201,12 @@ class Architecture(models.Model):
         return self.pk
 
 
+@python_2_unicode_compatible
 class ProcessorFamily(models.Model):
     name = models.CharField(
         primary_key=True,
-        verbose_name=u'Processor Family',
-        help_text=u'e.g. OMAP4, Exynos',
+        verbose_name='Processor Family',
+        help_text='e.g. OMAP4, Exynos',
         max_length=100,
         editable=True,
     )
@@ -207,11 +215,12 @@ class ProcessorFamily(models.Model):
         return self.pk
 
 
+@python_2_unicode_compatible
 class Alias(models.Model):
     name = models.CharField(
         primary_key=True,
-        verbose_name=u'Alias for this device-type',
-        help_text=u'e.g. the device tree name(s)',
+        verbose_name='Alias for this device-type',
+        help_text='e.g. the device tree name(s)',
         max_length=200,
         editable=True,
     )
@@ -220,11 +229,12 @@ class Alias(models.Model):
         return self.pk
 
 
+@python_2_unicode_compatible
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
         primary_key=True,
-        verbose_name=u'Processor bit width',
-        help_text=u'integer: e.g. 32 or 64',
+        verbose_name='Processor bit width',
+        help_text='integer: e.g. 32 or 64',
         editable=True,
     )
 
@@ -232,11 +242,12 @@ class BitWidth(models.Model):
         return "%d" % self.pk
 
 
+@python_2_unicode_compatible
 class Core(models.Model):
     name = models.CharField(
         primary_key=True,
-        verbose_name=u'CPU core',
-        help_text=u'Name of a specific CPU core, e.g. Cortex-A9',
+        verbose_name='CPU core',
+        help_text='Name of a specific CPU core, e.g. Cortex-A9',
         editable=True,
         max_length=100,
     )
@@ -245,6 +256,7 @@ class Core(models.Model):
         return self.pk
 
 
+@python_2_unicode_compatible
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -269,8 +281,8 @@ class DeviceType(models.Model):
     )
 
     cpu_model = models.CharField(
-        verbose_name=u'CPU model',
-        help_text=u'e.g. a list of CPU model descriptive strings: OMAP4430 / OMAP4460',
+        verbose_name='CPU model',
+        help_text='e.g. a list of CPU model descriptive strings: OMAP4430 / OMAP4460',
         max_length=100,
         blank=True,
         null=True,
@@ -298,8 +310,8 @@ class DeviceType(models.Model):
     )
 
     core_count = models.PositiveSmallIntegerField(
-        verbose_name=u'Total number of cores',
-        help_text=u'Must be an equal number of each type(s) of core(s).',
+        verbose_name='Total number of cores',
+        help_text='Must be an equal number of each type(s) of core(s).',
         blank=True,
         null=True,
     )
@@ -308,7 +320,7 @@ class DeviceType(models.Model):
         return self.name
 
     description = models.TextField(
-        verbose_name=_(u"Device Type Description"),
+        verbose_name=_("Device Type Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -398,6 +410,7 @@ class DeviceType(models.Model):
         return result
 
 
+@python_2_unicode_compatible
 class DefaultDeviceOwner(models.Model):
     """
     Used to override the django User model to allow one individual
@@ -416,13 +429,14 @@ class DefaultDeviceOwner(models.Model):
         return ''
 
 
+@python_2_unicode_compatible
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
     """
 
     hostname = models.CharField(
-        verbose_name=_(u"Hostname"),
+        verbose_name=_("Hostname"),
         max_length=200,
         primary_key=True,
         default=None,
@@ -448,7 +462,7 @@ class Worker(models.Model):
                                  default=HEALTH_ACTIVE)
 
     description = models.TextField(
-        verbose_name=_(u"Worker Description"),
+        verbose_name=_("Worker Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -456,7 +470,7 @@ class Worker(models.Model):
         editable=True
     )
 
-    last_ping = models.DateTimeField(verbose_name=_(u"Last ping"),
+    last_ping = models.DateTimeField(verbose_name=_("Last ping"),
                                      default=timezone.now)
 
     def __str__(self):
@@ -537,6 +551,7 @@ class Worker(models.Model):
         )
 
 
+@python_2_unicode_compatible
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -546,16 +561,16 @@ class Device(RestrictedResource):
     HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
 
     hostname = models.CharField(
-        verbose_name=_(u"Hostname"),
+        verbose_name=_("Hostname"),
         max_length=200,
         primary_key=True,
     )
 
     device_type = models.ForeignKey(
-        DeviceType, verbose_name=_(u"Device type"))
+        DeviceType, verbose_name=_("Device type"))
 
     device_version = models.CharField(
-        verbose_name=_(u"Device Version"),
+        verbose_name=_("Device Version"),
         max_length=200,
         null=True,
         default=None,
@@ -567,7 +582,7 @@ class Device(RestrictedResource):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_(u"User with physical access"),
+        verbose_name=_("User with physical access"),
         on_delete=models.SET_NULL,
     )
 
@@ -576,11 +591,11 @@ class Device(RestrictedResource):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_(u"Group with physical access")
+        verbose_name=_("Group with physical access")
     )
 
     description = models.TextField(
-        verbose_name=_(u"Device Description"),
+        verbose_name=_("Device Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -627,7 +642,7 @@ class Device(RestrictedResource):
     # TODO: make this mandatory
     worker_host = models.ForeignKey(
         Worker,
-        verbose_name=_(u"Worker Host"),
+        verbose_name=_("Worker Host"),
         null=True,
         blank=True,
         default=None,
@@ -676,10 +691,8 @@ class Device(RestrictedResource):
                 'Cannot be owned by a user and a group at the same time')
 
     def __str__(self):
-        r = self.hostname
-        r += " (%s, health %s)" % (self.get_state_display(),
-                                   self.get_health_display())
-        return r
+        return "%s (%s, health %s)" % (self.hostname, self.get_state_display(),
+                                       self.get_health_display())
 
     def current_job(self):
         try:
@@ -759,7 +772,7 @@ class Device(RestrictedResource):
             change_message=reason
         )
 
-    def testjob_signal(self, signal, job):
+    def testjob_signal(self, signal, job, infrastructure_error=False):
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
 
@@ -775,18 +788,22 @@ class Device(RestrictedResource):
         elif signal == "go_state_finished":
             self.state = Device.STATE_IDLE
 
-            if job.health_check and self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+            prev_health_display = self.get_health_display()
+            if job.health_check:
                 self.last_health_report_job = job
-                prev_health_display = self.get_health_display()
-                if job.health == TestJob.HEALTH_COMPLETE:
-                    self.health = Device.HEALTH_GOOD
-                elif job.health == TestJob.HEALTH_INCOMPLETE:
-                    self.health = Device.HEALTH_BAD
-                elif job.health == TestJob.HEALTH_CANCELED:
-                    self.health = Device.HEALTH_UNKNOWN
-                else:
-                    raise NotImplementedError("Unexpected TestJob health")
-                self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+                if self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+                    if job.health == TestJob.HEALTH_COMPLETE:
+                        self.health = Device.HEALTH_GOOD
+                    elif job.health == TestJob.HEALTH_INCOMPLETE:
+                        self.health = Device.HEALTH_BAD
+                    elif job.health == TestJob.HEALTH_CANCELED:
+                        self.health = Device.HEALTH_UNKNOWN
+                    else:
+                        raise NotImplementedError("Unexpected TestJob health")
+                    self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+            elif infrastructure_error:
+                self.health = Device.HEALTH_UNKNOWN
+                self.log_admin_entry(None, "%s → %s (Infrastructure error)" % (prev_health_display, self.get_health_display()))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -863,6 +880,7 @@ class Device(RestrictedResource):
         Principally drop top level parameters and commands
         like power.
         """
+        data['constants']['kernel-start-message'] = ''
         device_configuration = {
             'hostname': self.hostname,
             'constants': data['constants'],
@@ -941,6 +959,7 @@ class Device(RestrictedResource):
             return None
 
 
+@python_2_unicode_compatible
 class JobFailureTag(models.Model):
     """
     Allows us to maintain a set of common ways jobs fail. These can then be
@@ -1271,6 +1290,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return job_object_list
 
 
+@python_2_unicode_compatible
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
@@ -1298,13 +1318,13 @@ class TestJob(RestrictedResource):
     id = models.AutoField(primary_key=True)
 
     sub_id = models.CharField(
-        verbose_name=_(u"Sub ID"),
+        verbose_name=_("Sub ID"),
         blank=True,
         max_length=200
     )
 
     target_group = models.CharField(
-        verbose_name=_(u"Target Group"),
+        verbose_name=_("Target Group"),
         blank=True,
         max_length=64,
         null=True,
@@ -1313,14 +1333,14 @@ class TestJob(RestrictedResource):
 
     submitter = models.ForeignKey(
         User,
-        verbose_name=_(u"Submitter"),
+        verbose_name=_("Submitter"),
         related_name='+',
     )
 
     visibility = models.IntegerField(
-        verbose_name=_(u'Visibility type'),
-        help_text=_(u'Visibility affects the TestJob and all results arising from that job, '
-                    u'including Queries and Reports.'),
+        verbose_name=_('Visibility type'),
+        help_text=_('Visibility affects the TestJob and all results arising from that job, '
+                    'including Queries and Reports.'),
         choices=VISIBLE_CHOICES,
         default=VISIBLE_PUBLIC,
         editable=True
@@ -1330,9 +1350,9 @@ class TestJob(RestrictedResource):
         # functionally, may be restricted to only one group at a time
         # depending on implementation complexity
         Group,
-        verbose_name=_(u'Viewing groups'),
-        help_text=_(u'Adding groups to an intersection of groups reduces visibility.'
-                    u'Adding groups to a union of groups expands visibility.'),
+        verbose_name=_('Viewing groups'),
+        help_text=_('Adding groups to an intersection of groups reduces visibility.'
+                    'Adding groups to a union of groups expands visibility.'),
         related_name='viewing_groups',
         blank=True,
         default=None,
@@ -1340,7 +1360,7 @@ class TestJob(RestrictedResource):
     )
 
     description = models.CharField(
-        verbose_name=_(u"Description"),
+        verbose_name=_("Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -1373,13 +1393,13 @@ class TestJob(RestrictedResource):
         Device, null=True, default=None, related_name='testjobs', blank=True)
 
     submit_time = models.DateTimeField(
-        verbose_name=_(u"Submit time"),
+        verbose_name=_("Submit time"),
         auto_now=False,
         auto_now_add=True,
         db_index=True
     )
     start_time = models.DateTimeField(
-        verbose_name=_(u"Start time"),
+        verbose_name=_("Start time"),
         auto_now=False,
         auto_now_add=False,
         null=True,
@@ -1387,7 +1407,7 @@ class TestJob(RestrictedResource):
         editable=False
     )
     end_time = models.DateTimeField(
-        verbose_name=_(u"End time"),
+        verbose_name=_("End time"),
         auto_now=False,
         auto_now_add=False,
         null=True,
@@ -1505,7 +1525,7 @@ class TestJob(RestrictedResource):
                     sub_job.go_state_canceling(sub_cancel=True)
                     sub_job.save()
 
-    def go_state_finished(self, health):
+    def go_state_finished(self, health, infrastructure_error=False):
         """
         The job has been terminated by either lava-master or lava-logs. The
         job health can be set.
@@ -1527,7 +1547,7 @@ class TestJob(RestrictedResource):
         # select_for_update on the TestJob
         # Skip non-scheduled jobs and dynamic_connections
         if self.actual_device is not None:
-            self.actual_device.testjob_signal("go_state_finished", self)
+            self.actual_device.testjob_signal("go_state_finished", self, infrastructure_error)
             self.actual_device.save()
 
         # For multinode, cancel all sub jobs if the current job is essential
@@ -1575,7 +1595,7 @@ class TestJob(RestrictedResource):
     priority = models.IntegerField(
         choices=PRIORITY_CHOICES,
         default=MEDIUM,
-        verbose_name=_(u"Priority"),
+        verbose_name=_("Priority"),
     )
 
     definition = models.TextField(
@@ -1660,7 +1680,7 @@ class TestJob(RestrictedResource):
     @property
     def results_link(self):
         if self.is_pipeline:
-            return u'/results/%s' % self.id
+            return reverse("lava.results.testjob", args=[self.id])
         else:
             return None
 
@@ -1846,7 +1866,9 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.state == TestJob.STATE_FINISHED
 
     def can_cancel(self, user):
-        states = [TestJob.STATE_SUBMITTED, TestJob.STATE_RUNNING]
+        states = [
+            TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING,
+            TestJob.STATE_SCHEDULED, TestJob.STATE_RUNNING]
         return self._can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
@@ -2367,7 +2389,6 @@ class TestJob(RestrictedResource):
         return user_data
 
     def create_notification_body(self, template_name, **kwargs):
-        txt_body = u""
         txt_body = Notification.TEMPLATES_ENV.get_template(
             template_name).render(**kwargs)
         return txt_body
@@ -2430,6 +2451,7 @@ class TestJob(RestrictedResource):
         return callback_url
 
 
+@python_2_unicode_compatible
 class Notification(models.Model):
 
     TEMPLATES_DIR = os.path.join(
@@ -2467,7 +2489,7 @@ class Notification(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_(u"Type"),
+        verbose_name=_("Type"),
     )
 
     VERBOSE = 0
@@ -2521,7 +2543,7 @@ class Notification(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_(u"Callback method"),
+        verbose_name=_("Callback method"),
     )
 
     callback_token = models.CharField(
@@ -2554,7 +2576,7 @@ class Notification(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_(u"Callback dataset"),
+        verbose_name=_("Callback dataset"),
     )
 
     URLENCODED = 0
@@ -2573,7 +2595,7 @@ class Notification(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_(u"Callback content-type"),
+        verbose_name=_("Callback content-type"),
     )
 
     blacklist = ArrayField(
@@ -2583,7 +2605,7 @@ class Notification(models.Model):
     )
 
     time_sent = models.DateTimeField(
-        verbose_name=_(u"Time sent"),
+        verbose_name=_("Time sent"),
         auto_now=False,
         auto_now_add=True,
         editable=False
@@ -2618,6 +2640,9 @@ class Notification(models.Model):
         blank=True,
         verbose_name='Conditions'
     )
+
+    def __str__(self):
+        return str(self.test_job)
 
     def get_query_results(self):
         from lava_results_app.models import Query
@@ -2719,6 +2744,7 @@ class Notification(models.Model):
             return data
 
 
+@python_2_unicode_compatible
 class NotificationRecipient(models.Model):
 
     class Meta:
@@ -2778,7 +2804,7 @@ class NotificationRecipient(models.Model):
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=NOT_SENT,
-        verbose_name=_(u"Status"),
+        verbose_name=_("Status"),
     )
 
     EMAIL = 0
@@ -2798,8 +2824,15 @@ class NotificationRecipient(models.Model):
     method = models.IntegerField(
         choices=METHOD_CHOICES,
         default=EMAIL,
-        verbose_name=_(u"Method"),
+        verbose_name=_("Method"),
     )
+
+    def __str__(self):
+        if self.method == self.EMAIL:
+            return "[email] %s (%s)" % (self.email_address, self.get_status_display())
+        else:
+            return "[irc] %s@%s (%s)" % (self.irc_handle_name, self.irc_server_name,
+                                         self.get_status_display())
 
     @property
     def email_address(self):
@@ -2851,6 +2884,7 @@ def process_notifications(sender, **kwargs):
                     new_job.send_notifications()
 
 
+@python_2_unicode_compatible
 class TestJobUser(models.Model):
 
     class Meta:

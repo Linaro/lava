@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines,invalid-namlog_e
+
+from __future__ import unicode_literals
+
 from collections import OrderedDict
 import yaml
 import jinja2
@@ -89,7 +92,6 @@ from lava_scheduler_app.tables import (
     LogEntryTable,
     LongestJobTable,
     DeviceTable,
-    NoDTDeviceTable,
     RecentJobsTable,
     DeviceHealthTable,
     DeviceTypeTable,
@@ -98,7 +100,6 @@ from lava_scheduler_app.tables import (
     OverviewJobsTable,
     NoWorkerDeviceTable,
     QueueJobsTable,
-    OnlineDeviceTable,
     PassingHealthTable,
     RunningTable,
 )
@@ -512,13 +513,14 @@ class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
         q = super(OnlineDeviceView, self).get_queryset()
-        return q.exclude(health__in=[Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED])
+        return q.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
+                        worker_host__state=Worker.STATE_ONLINE)
 
 
 @BreadCrumb("Online Devices", parent=index)
 def online_device_list(request):
-    data = OnlineDeviceView(request, model=Device, table_class=OnlineDeviceTable)
-    ptable = OnlineDeviceTable(data.get_table_data())
+    data = OnlineDeviceView(request, model=Device, table_class=DeviceTable)
+    ptable = DeviceTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     template = loader.get_template("lava_scheduler_app/onlinedevices.html")
     return HttpResponse(template.render(
@@ -723,8 +725,8 @@ def device_type_detail(request, pk):
         "Failed": monthly_failed, }]
 
     prefix = 'no_dt_'
-    no_dt_data = NoDTDeviceView(request, model=Device, table_class=NoDTDeviceTable)
-    no_dt_ptable = NoDTDeviceTable(
+    no_dt_data = NoDTDeviceView(request, model=Device, table_class=DeviceTable)
+    no_dt_ptable = DeviceTable(
         no_dt_data.get_table_data(prefix).
         filter(device_type=dt),
         prefix=prefix,
@@ -811,7 +813,7 @@ def device_type_detail(request, pk):
             'retired_num': Device.objects.filter(device_type=dt, health=Device.HEALTH_RETIRED).count(),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
-            'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
+            'devices_table_no_dt': no_dt_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
             'health_freq': health_freq_str,
@@ -1959,9 +1961,9 @@ def device_health(request, pk):
             device.health = Device.HEALTH_REVERSE[health]
             device.save()
             if reason:
-                device.log_admin_entry(request.user, u"%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
+                device.log_admin_entry(request.user, "%s → %s (%s)" % (old_health_display, device.get_health_display(), reason))
             else:
-                device.log_admin_entry(request.user, u"%s → %s" % (old_health_display, device.get_health_display()))
+                device.log_admin_entry(request.user, "%s → %s" % (old_health_display, device.get_health_display()))
         return HttpResponseRedirect(reverse("lava.scheduler.device.detail", args=[pk]))
     except Device.DoesNotExist:
         raise Http404("Device %s not found" % pk)

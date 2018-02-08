@@ -39,7 +39,7 @@ from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
 # Constants
-FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
+FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 TIMEOUT = 10
 FD_TIMEOUT = 60
 
@@ -113,9 +113,15 @@ class Command(LAVADaemonCommand):
         # Create the sockets
         context = zmq.Context()
         self.log_socket = context.socket(zmq.PULL)
-        # TODO: use a ROUTER socket
-        self.controler = context.socket(zmq.DEALER)
+        self.controler = context.socket(zmq.ROUTER)
         self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
+        # Limit the number of messages in the queue
+        self.controler.setsockopt(zmq.SNDHWM, 2)
+        # TODO: remove when Jessie is not supported
+        if hasattr(zmq, "CONNECT_RID"):
+            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
+            # "Immediately readies that connection for data transfer with the master"
+            self.controler.setsockopt(zmq.CONNECT_RID, b"master")
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")
@@ -158,7 +164,7 @@ class Command(LAVADaemonCommand):
         self.logger.info("[INIT] listening for logs")
         # PING right now: the master is waiting for this message to start
         # scheduling.
-        self.controler.send_multipart([b"PING"])
+        self.controler.send_multipart([b"master", b"PING"])
 
         try:
             self.main_loop()
@@ -207,7 +213,7 @@ class Command(LAVADaemonCommand):
             if now - self.last_ping > self.ping_interval:
                 self.logger.debug("PING => master")
                 self.last_ping = now
-                self.controler.send_multipart([b"PING"])
+                self.controler.send_multipart([b"master", b"PING"])
 
     def wait_for_messages(self, leaving):
         try:
@@ -299,27 +305,30 @@ class Command(LAVADaemonCommand):
             meta_filename = create_metadata_store(message_msg, job)
             ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
             if not ret:
-                self.logger.warning(
-                    "[%s] unable to map scanned results: %s",
-                    job_id, message)
-            else:
-                # Look for lava.job result
-                if message_msg["definition"] == "lava" and message_msg["case"] == "job":
-                    if message_msg["result"] == "pass":
-                        health = TestJob.HEALTH_COMPLETE
-                        health_msg = "Complete"
-                    else:
-                        health = TestJob.HEALTH_INCOMPLETE
-                        health_msg = "Incomplete"
+                self.logger.warning("[%s] unable to map scanned results: %s",
+                                    job_id, message)
 
-                    self.logger.info("[%s] job status: %s", job_id, health_msg)
-                    # Update status.
-                    with transaction.atomic():
-                        # TODO: find a way to lock actual_device
-                        job = TestJob.objects.select_for_update() \
-                                             .get(id=job_id)
-                        job.go_state_finished(health)
-                        job.save()
+            # Look for lava.job result
+            if message_msg.get("definition") == "lava" and message_msg.get("case") == "job":
+                if message_msg.get("result") == "pass":
+                    health = TestJob.HEALTH_COMPLETE
+                    health_msg = "Complete"
+                else:
+                    health = TestJob.HEALTH_INCOMPLETE
+                    health_msg = "Incomplete"
+                self.logger.info("[%s] job status: %s", job_id, health_msg)
+
+                infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
+                if infrastructure_error:
+                    self.logger.info("[%s] Infrastructure error", job_id)
+
+                # Update status.
+                with transaction.atomic():
+                    # TODO: find a way to lock actual_device
+                    job = TestJob.objects.select_for_update() \
+                                         .get(id=job_id)
+                    job.go_state_finished(health, infrastructure_error)
+                    job.save()
 
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
@@ -334,7 +343,18 @@ class Command(LAVADaemonCommand):
     def controler_socket(self):
         msg = self.controler.recv_multipart()
         try:
-            ping_interval = int(msg[1])
+            master_id = u(msg[0])
+            action = u(msg[1])
+            ping_interval = int(msg[2])
+
+            if master_id != "master":
+                self.logger.error("Invalid master id '%s'. Should be 'master'",
+                                  master_id)
+                return
+            if action != "PONG":
+                self.logger.error("Invalid answer '%s'. Should be 'PONG'",
+                                  action)
+                return
         except (IndexError, ValueError):
             self.logger.error("Invalid message '%s'", msg)
             return

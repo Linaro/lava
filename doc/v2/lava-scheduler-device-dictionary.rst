@@ -147,7 +147,7 @@ dictionary. The information will then be populated into the
 
   .. code-block:: jinja
 
-   {% set storage_info = [{'SATA: '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
+   {% set storage_info = [{'SATA': '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
 
 .. _device_dictionary_other_parameters:
 
