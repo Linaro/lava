@@ -1,3 +1,93 @@
+lava-server (2018.2-1) unstable; urgency=medium
+
+  * New production release
+    9ef41db7 Fix missing failure comment
+    206e5c65 manage jobs: allow to force fail a job
+    42a3bc31 Save TestCases even when metadata is too large
+    5efb92c7 lava-logs: look for lava.job results in all cases
+    19937074 Use the named urls instead of static urls
+    e60afcbc Ensure uboot_extra_error_message is usable
+    843a49ed Use reverse() instead of a static url
+    7583bb09 device-types: add meson-gxbb-p200
+    40cbffc8 breadcrumb: keep the last element clickable
+    2d5f34d8 Update docs examples metadata
+    5a5548ad device-types: fix broken conditional in base-depthcharge
+    d663a9dc device-types: add rk3399-gru-kevin
+    21ac9eb2 LAVA-1230 include lava-logs in encryption docs
+    d57e9131 device-types: rpi3 32-bit: allow custom kernel cmdline
+    32312dc7 device-types: rpi3 32-bit: allow extra_kernel_args append
+    afa28d5a device-types: rpi-3 32-bit: fixup DT load address
+    0c9e227b Add missing change to the X15 template
+    968a00dd Fix fdt load command wrapping.
+    156f1e7b fix quoting of serial numbers
+    57610c06 lava-logs: simplify log format
+    5301ef66 breadcrumb: the last element should not be a link
+    08547de9 Fix api pages titles and breadcrumb
+    fc03f62b LAVA-1083 - Bug links can be managed only on list pages
+    35146e4c Remove distinct ON because it can't be used correctly with order by.
+    85f6bd67 Test shell helper support with base-fastboot
+    b86981ad master: do not send START to offline workers
+    b6cf83f8 admin: fix group cancelation
+    8890d270 Drop auto-login from hikey 620 template
+    5642e8cd Allow cancelation in Scheduling and Scheduled too.
+    bbf6c5bb LAVA-1220 - Update API calls and docs for scheduler changes.
+    742433b0 Drop invalid boot_message for hikey 6220
+    441919d7 Skip kernel-start-message for dynamic connections
+    8f4ecdcb Add a parameter to u-boot to override interrupting
+    8c093e7f Reorganise fastboot for multiple OS support
+    abb9fa5d Adding device-type config for MPS devices
+    240ffeda Add rk3399-puma-haikou device type and health check
+    bd0c7da7 TestCase: fix crash when accessing old test cases
+    4e22927e Set Unknown as the default option for changing health
+    078b6499 api: return the right http error code
+    e6b3ffdd Fix doc Unexpected indentation error.
+    b523e20f Fix the filename in header to the actual filename.
+    acf537fb Improve device tables
+    a0a87385 LAVA-1225 catch errors when creating health checks
+    ea8d5a72 Do not show Idle state when device is unavailable
+    dd4f25bd Allow custom tftp commands for loadfdt in U-Boot
+    a074403a LAVA-1219 allow unicode for job.original metadata
+    58d23f23 Python3 branch now merged into master
+    717c177c fix missing quote mark in docs
+    dcb8bd5a LAVA-1224 support for Xilinx-ZCU102 ZYNQ
+    fec11287 Improve python2 and 3 support
+    756d2e6a migrate-job-output: fix inverted logic for dry-run
+    fbeaa57f Add NotificationRecipient in the admin site
+    135654d6 Fix online devices listing
+    7007fda8 Fix change in 70cb792c7 to show extra_source
+    025bab80 LAVA-1221 change mouse pointer whenever needed
+    b28e4c7b LAVA-1222 use verbose names instead of constants
+    a281a6a7 Extend timeout to cover when dispatcher is busy
+    3985a0e1 Update development docs for Python3 plans
+    71374e3a migrate-job-output add --slow and --dry-run
+    9ce62f2d LAVA-1213 - move developer builds to Python3
+    81fbb4c4 Charts x-axis attribute should refer to job metadata
+    7af37d79 LAVA-1164 relicence some lava-server files
+    14604fb5 LAVA-1211 Document appending to kernel command line
+    e8eb6ec0 Add admin actions to update device health
+    b16e197b LAVA-1107 fix "device-types add" documentation
+    18be0e5b Set device health to unknown after an infra error
+    54ae8263 LAVA-950 use a ROUTER socket to connect to master
+    54ed49c2 Fix crash in lava.scheduler.jobs.logs
+    7a2b3a68 Change the flow of bootloader commands so they are executed individually
+  * Remove echo operations from postrm until debhelper support is removed.
+    (Closes: #887622)
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 08 Feb 2018 15:25:01 +0000
+
+lava-server (2018.1.post1-1) unstable; urgency=medium
+
+  * API hot fix
+    b5502a4a API: restore legacy behavior
+    6320f017 API: fix old behavior for device status
+    688d9a9e Notification: allow to replace "state" in the url
+    fef5fcb1 Fixup 0e671139. The field is called "status"
+    19a8db1d Fix up unit test for changes since 6114d0f9b
+  * Remove echo statements which interfere with debconf.
+    (Closes: #887622)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 05 Feb 2018 09:42:00 +0000
+
 lava-server (2018.1-1) unstable; urgency=medium
 
   * New production release
