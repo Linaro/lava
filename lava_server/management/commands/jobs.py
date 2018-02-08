@@ -60,6 +60,11 @@ class Command(BaseCommand):
                                     parser_class=SubParser)
         sub.required = True
 
+        fail = sub.add_parser("fail", help="Force the job status in the database. Keep "
+                                           "in mind that any corresponding lava-run "
+                                           "process will NOT be stopped by this operation.")
+        fail.add_argument("job_id", help="job id", type=int)
+
         rm = sub.add_parser("rm", help="Remove selected jobs. Keep in mind "
                                        "that v1 bundles won't be removed, "
                                        "leading to strange behavior when "
@@ -88,6 +93,17 @@ class Command(BaseCommand):
             self.handle_rm(options["older_than"], options["submitter"],
                            options["state"], options["v1"],
                            options["dry_run"], options["slow"])
+        elif options["sub_command"] == "fail":
+            self.handle_fail(options["job_id"])
+
+    def handle_fail(self, job_id):
+        try:
+            with transaction.atomic():
+                job = TestJob.objects.select_for_update().get(pk=job_id)
+                job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                job.save()
+        except TestJob.DoesNotExist:
+            raise CommandError("TestJob '%d' does not exists" % job_id)
 
     def handle_rm(self, older_than, submitter, state, v1_only, simulate, slow):
         if not older_than and not submitter and not state and not v1_only:
