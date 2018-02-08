@@ -290,6 +290,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.factory = FastBootFactory()
         job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml',
                                               mkdtemp())
+        # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('nexus5x.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
@@ -297,6 +298,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.factory = FastBootFactory()
         job = self.factory.create_pixel_job('sample_jobs/pixel.yaml',
                                             mkdtemp())
+        # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 

@@ -48,16 +48,16 @@ actions:
     namespace: droid
     images:
       boot:
-        url: http://snapshots.linaro.org/android/pmwg/android-hikey960-linaro-4.9-pmwg/36/boot.img.xz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/android/pmwg/android-hikey960-linaro-4.9-pmwg/36/boot.img.xz
         compression: xz
       cache:
-        url: http://testdata.validation.linaro.org/hikey960-pmwg/cache.img.xz
+        url: http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/cache.img.xz
         compression: xz
       userdata:
-        url: http://testdata.validation.linaro.org/hikey960-pmwg/userdata.img.xz
+        url: http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/userdata.img.xz
         compression: xz
       system:
-        url: http://testdata.validation.linaro.org/hikey960-pmwg/system.img.xz
+        url: http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/system.img.xz
         compression: xz
     os: debian
     protocols:
