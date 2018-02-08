@@ -1,3 +1,44 @@
+lava-dispatcher (2018.2-1) unstable; urgency=medium
+
+  * New production release
+    196029a2 Use a permanent image for unit tests
+    7b9c3e84 Allow some deployments to not use deployment_data
+    d5dc6418 ssh: fix comparison
+    ebbd717b Remove spurious conditional in autologin
+    b3e4d794 LAVA-1232 - LAVA LXC Mocker
+    4d445841 Fixes for X15 fastboot_uboot
+    fd6dbec5 actions/deploy/lxc: lxc-apt-install action add non-interactive mode
+    1621ea5b LAVA-1202 - multiple boot + test section using transfer_overlay fails
+    84d78a08 LAVA-1229 - read-feedback: failed on DUTs without telnet or ssh
+    0ae6815e Ensure RetryAction has protocol support.
+    6b96c961 LAVA-1227 - Handle cancellation within LXC
+    ce1421a3 Update ZCU102 device file for bootloader changes
+    d53e452c Fix login support for second UART
+    a0104eb9 Remove unused pipeline reference file.
+    a9f22a9c Allow for empty values in boot methods
+    00addc73 Fix lookup for grubmenuselector interrupt prompt
+    782e69d4 Allow skipping of kernel_start_message
+    52ac66fa Make waiting for a bootloader prompt optional
+    41f7d58d Not all boot methods have parameters
+    8b0d03cd Remove deprecated actions in boot sequence.
+    a3fb0095 Reorganize for hikey 960 AOSP support
+    7d78da6e Fix usage of FastbootReboot
+    161c1660 LAVA-1167 - Improve disk usage of test overlay tarball creation
+    7306a5c6 download: record the http error code when failing
+    fd1f7013 Pass USB devices to LXC via ID_FS_LABEL
+    8bae0785 raise an infra error when docker is not installed
+    414861e1 LAVA-1138 - panic not recorded by auto-login-action
+    548a6bb1 LAVA-1224 - support for Xilinx ZCU102
+    abb9869f Unit tests for 960 AOSP support
+    0a2f84ce Fix man pages
+    b15eb55e LAVA-950 use a ROUTER socket to connect to master
+    7a936509 Fix logrotation by using WatchedFileHandler
+    8f23430b Fix prospector warnings
+    25859894 Better detect errors in the bootloader
+    324615d7 LAVA-1165 - skip reading feedback on closed connection
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 08 Feb 2018 15:26:17 +0000
+
 lava-dispatcher (2018.1-1) unstable; urgency=medium
 
   * New production release
