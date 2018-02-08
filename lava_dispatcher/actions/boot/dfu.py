@@ -59,11 +59,9 @@ class DFU(Boot):
 
 class BootDFU(BootAction):
 
-    def __init__(self):
-        super(BootDFU, self).__init__()
-        self.name = 'boot-dfu-image'
-        self.description = "boot dfu image with retry"
-        self.summary = "boot dfu image with retry"
+    name = 'boot-dfu-image'
+    description = "boot dfu image with retry"
+    summary = "boot dfu image with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -72,11 +70,9 @@ class BootDFU(BootAction):
 
 class BootDFURetry(RetryAction):
 
-    def __init__(self):
-        super(BootDFURetry, self).__init__()
-        self.name = 'boot-dfu-retry'
-        self.description = "boot dfu image using the command line interface"
-        self.summary = "boot dfu image"
+    name = 'boot-dfu-retry'
+    description = "boot dfu image using the command line interface"
+    summary = "boot dfu image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -88,11 +84,12 @@ class BootDFURetry(RetryAction):
 
 class FlashDFUAction(Action):
 
+    name = "flash-dfu"
+    description = "use dfu to flash the images"
+    summary = "use dfu to flash the images"
+
     def __init__(self):
         super(FlashDFUAction, self).__init__()
-        self.name = "flash-dfu"
-        self.description = "use dfu to flash the images"
-        self.summary = "use dfu to flash the images"
         self.base_command = []
         self.exec_list = []
         self.board_id = '0000000000'

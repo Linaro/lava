@@ -42,15 +42,17 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
     out of the iso using loopback and then start QEMU with the
     ISO as a cdrom and empty image as the destination.
     """
+
+    name = 'deploy-iso-installer'
+    description = 'setup deployment for emulated installer'
+    summary = 'pull kernel and initrd out of iso'
+
     def __init__(self):
         """
         Uses the tftp directory for easier cleanup and for parity
         with the non-QEMU Debian Installer support.
         """
         super(DeployIsoAction, self).__init__()
-        self.name = 'deploy-iso-installer'
-        self.description = 'setup deployment for emulated installer'
-        self.summary = 'pull kernel and initrd out of iso'
         self.preseed_path = None
 
     def validate(self):
@@ -102,11 +104,12 @@ class DeployIso(Deployment):
 
 class IsoEmptyImage(Action):
 
+    name = 'prepare-empty-image'
+    description = 'create empty image of specified size'
+    summary = 'create destination image'
+
     def __init__(self):
         super(IsoEmptyImage, self).__init__()
-        self.name = 'prepare-empty-image'
-        self.description = 'create empty image of specified size'
-        self.summary = 'create destination image'
         self.size = 0
 
     def validate(self):
@@ -146,13 +149,14 @@ class IsoPullInstaller(Action):
     can be added to the default ISO boot commands.
     """
 
+    name = 'pull-installer-files'
+    description = 'pull kernel and initrd out of iso'
+    summary = 'copy files out of installer iso'
+
     FILE_KEYS = ['kernel', 'initrd']
 
     def __init__(self):
         super(IsoPullInstaller, self).__init__()
-        self.name = 'pull-installer-files'
-        self.description = 'pull kernel and initrd out of iso'
-        self.summary = 'copy files out of installer iso'
         self.files = {}
 
     def validate(self):
@@ -197,11 +201,12 @@ class IsoPullInstaller(Action):
 
 class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
 
+    name = 'prepare-qemu-commands'
+    description = 'prepare qemu command and options to append to kernel command line'
+    summary = 'build qemu command line with kernel command string'
+
     def __init__(self):
         super(QemuCommandLine, self).__init__()
-        self.name = 'prepare-qemu-commands'
-        self.summary = 'build qemu command line with kernel command string'
-        self.description = 'prepare qemu command and options to append to kernel command line'
         self.sub_command = []
         self.command_line = ''
         self.console = None

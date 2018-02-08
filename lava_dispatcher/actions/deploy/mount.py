@@ -42,11 +42,12 @@ class OffsetAction(DeployAction):
     The calculated offset is dynamic data, stored in the context.
     """
 
+    name = "offset-action"
+    description = "calculate offset of the image"
+    summary = "offset calculation"
+
     def __init__(self, key):
         super(OffsetAction, self).__init__()
-        self.name = "offset-action"
-        self.description = "calculate offset of the image"
-        self.summary = "offset calculation"
         self.key = key
 
     def validate(self):
@@ -90,11 +91,12 @@ class OffsetAction(DeployAction):
 
 class LoopCheckAction(DeployAction):
 
+    name = "loop-check"
+    description = "ensure a loop back mount operation is possible"
+    summary = "check available loop back support"
+
     def __init__(self, key):
         super(LoopCheckAction, self).__init__()
-        self.name = "loop-check"
-        self.description = "ensure a loop back mount operation is possible"
-        self.summary = "check available loop back support"
         self.key = key
 
     def validate(self):
@@ -130,11 +132,12 @@ class LoopMountAction(RetryAction):
     again in the test shell.
     """
 
+    name = "loop-mount"
+    description = "Mount using a loopback device and offset"
+    summary = "loopback mount"
+
     def __init__(self, key):
         super(LoopMountAction, self).__init__()
-        self.name = "loop-mount"
-        self.description = "Mount using a loopback device and offset"
-        self.summary = "loopback mount"
         self.retries = 10
         self.sleep = 10
         self.mntdir = None
@@ -185,11 +188,12 @@ class MountAction(DeployAction):
     an OffsetAction, LoopCheckAction, LoopMountAction
     """
 
+    name = "mount-action"
+    description = "mount with offset"
+    summary = "mount loop"
+
     def __init__(self, key):
         super(MountAction, self).__init__()
-        self.name = "mount-action"
-        self.description = "mount with offset"
-        self.summary = "mount loop"
         self.key = key
 
     def populate(self, parameters):
@@ -210,11 +214,9 @@ class MountAction(DeployAction):
 
 class UnmountAction(RetryAction):
 
-    def __init__(self):
-        super(UnmountAction, self).__init__()
-        self.name = "umount-retry"
-        self.description = "retry support for umount"
-        self.summary = "retry umount"
+    name = "umount-retry"
+    description = "retry support for umount"
+    summary = "retry umount"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -223,11 +225,9 @@ class UnmountAction(RetryAction):
 
 class Unmount(Action):
 
-    def __init__(self):
-        super(Unmount, self).__init__()
-        self.name = "umount"
-        self.description = "unmount the test image at end of deployment"
-        self.summary = "unmount image"
+    name = "umount"
+    description = "unmount the test image at end of deployment"
+    summary = "unmount image"
 
     def run(self, connection, max_end_time, args=None):
         """

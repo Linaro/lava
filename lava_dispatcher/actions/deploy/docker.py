@@ -31,11 +31,9 @@ from lava_dispatcher.utils.shell import infrastructure_error
 
 class DockerAction(DeployAction):
 
-    def __init__(self):
-        super(DockerAction, self).__init__()
-        self.name = "deploy-docker"
-        self.description = "deploy docker images"
-        self.summary = "deploy docker"
+    name = "deploy-docker"
+    description = "deploy docker images"
+    summary = "deploy docker"
 
     def validate(self):
         super(DockerAction, self).validate()

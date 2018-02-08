@@ -60,11 +60,12 @@ from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 
 class ApplyOverlayGuest(Action):
 
+    name = "apply-overlay-guest"
+    description = "prepare a qcow2 drive containing the overlay"
+    summary = "build a guest filesystem with the overlay"
+
     def __init__(self):
         super(ApplyOverlayGuest, self).__init__()
-        self.name = "apply-overlay-guest"
-        self.summary = "build a guest filesystem with the overlay"
-        self.description = "prepare a qcow2 drive containing the overlay"
         self.guest_filename = 'lava-guest.qcow2'
 
     def validate(self):
@@ -91,11 +92,12 @@ class ApplyOverlayGuest(Action):
 
 class ApplyOverlayImage(Action):
 
+    name = "apply-overlay-image"
+    description = "apply overlay via guestfs to the test image"
+    summary = "apply overlay to test image"
+
     def __init__(self, image_key='image', use_root_partition=True):
         super(ApplyOverlayImage, self).__init__()
-        self.name = "apply-overlay-image"
-        self.summary = "apply overlay to test image"
-        self.description = "apply overlay via guestfs to the test image"
         self.image_key = image_key
         self.use_root_partition = use_root_partition
 
@@ -122,11 +124,12 @@ class ApplyOverlayImage(Action):
 
 class ApplyOverlaySparseImage(Action):
 
+    name = "apply-overlay-sparse-image"
+    description = "apply overlay to sparse image"
+    summary = "apply overlay to sparse image"
+
     def __init__(self, image_key):
         super(ApplyOverlaySparseImage, self).__init__()
-        self.name = "apply-overlay-sparse-image"
-        self.summary = "apply overlay to sparse image"
-        self.description = "apply overlay to sparse image"
         self.image_key = image_key  # the sparse image key in the parameters
 
     def validate(self):
@@ -154,11 +157,10 @@ class PrepareOverlayTftp(Action):
     """
     Extracts the ramdisk or nfsrootfs in preparation for the lava overlay
     """
-    def __init__(self):
-        super(PrepareOverlayTftp, self).__init__()
-        self.name = "prepare-tftp-overlay"
-        self.summary = "extract ramdisk or nfsrootfs"
-        self.description = "extract ramdisk or nfsrootfs in preparation for lava overlay"
+
+    name = "prepare-tftp-overlay"
+    description = "extract ramdisk or nfsrootfs in preparation for lava overlay"
+    summary = "extract ramdisk or nfsrootfs"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -194,11 +196,10 @@ class ApplyOverlayTftp(Action):
     Other actions applying overlays for other deployments need their
     own logic.
     """
-    def __init__(self):
-        super(ApplyOverlayTftp, self).__init__()
-        self.name = "apply-overlay-tftp"
-        self.summary = "apply lava overlay test files"
-        self.description = "unpack the overlay into the nfsrootfs or ramdisk"
+
+    name = "apply-overlay-tftp"
+    description = "unpack the overlay into the nfsrootfs or ramdisk"
+    summary = "apply lava overlay test files"
 
     def validate(self):
         super(ApplyOverlayTftp, self).validate()
@@ -285,11 +286,13 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
     """
     Unpacks the rootfs and applies the overlay to it
     """
+
+    name = "extract-rootfs"
+    description = "unpack rootfs"
+    summary = "unpack rootfs, ready to apply lava overlay"
+
     def __init__(self):
         super(ExtractRootfs, self).__init__()
-        self.name = "extract-rootfs"
-        self.description = "unpack rootfs"
-        self.summary = "unpack rootfs, ready to apply lava overlay"
         self.param_key = 'rootfs'
         self.file_key = "root"
         self.extra_compression = ['xz']
@@ -312,11 +315,13 @@ class ExtractNfsRootfs(ExtractRootfs):
     """
     Unpacks the nfsrootfs and applies the overlay to it
     """
+
+    name = "extract-nfsrootfs"
+    description = "unpack nfsrootfs"
+    summary = "unpack nfsrootfs, ready to apply lava overlay"
+
     def __init__(self):
         super(ExtractNfsRootfs, self).__init__()
-        self.name = "extract-nfsrootfs"
-        self.description = "unpack nfsrootfs"
-        self.summary = "unpack nfsrootfs, ready to apply lava overlay"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
 
@@ -364,11 +369,10 @@ class ExtractModules(Action):
     If modules are specified in the deploy parameters, unpack the modules
     whilst the nfsrootfs or ramdisk are unpacked.
     """
-    def __init__(self):
-        super(ExtractModules, self).__init__()
-        self.name = "extract-modules"
-        self.summary = "extract kernel modules"
-        self.description = "extract supplied kernel modules"
+
+    name = "extract-modules"
+    description = "extract supplied kernel modules"
+    summary = "extract kernel modules"
 
     def run(self, connection, max_end_time, args=None):
         if not self.parameters.get('modules', None):  # idempotency
@@ -415,11 +419,13 @@ class ExtractRamdisk(Action):
     for other actions to modify. Needs CompressRamdisk to
     recreate the ramdisk with modifications.
     """
+
+    name = "extract-overlay-ramdisk"
+    description = "extract ramdisk to a temporary directory"
+    summary = "extract the ramdisk"
+
     def __init__(self):
         super(ExtractRamdisk, self).__init__()
-        self.name = "extract-overlay-ramdisk"
-        self.summary = "extract the ramdisk"
-        self.description = "extract ramdisk to a temporary directory"
         self.skip = False
 
     def validate(self):
@@ -478,11 +484,13 @@ class CompressRamdisk(Action):
     """
      recreate ramdisk, with overlay in place
     """
+
+    name = "compress-ramdisk"
+    description = "recreate a ramdisk with the overlay applied."
+    summary = "compress ramdisk with overlay"
+
     def __init__(self):
         super(CompressRamdisk, self).__init__()
-        self.name = "compress-ramdisk"
-        self.summary = "compress ramdisk with overlay"
-        self.description = "recreate a ramdisk with the overlay applied."
         self.mkimage_arch = None
         self.add_header = None
         self.skip = False
@@ -583,11 +591,12 @@ class CompressRamdisk(Action):
 
 class ApplyLxcOverlay(Action):
 
+    name = "apply-lxc-overlay"
+    description = "apply the overlay to the container by copying"
+    summary = "apply overlay on the container"
+
     def __init__(self):
         super(ApplyLxcOverlay, self).__init__()
-        self.name = "apply-lxc-overlay"
-        self.summary = "apply overlay on the container"
-        self.description = "apply the overlay to the container by copying"
         self.lava_test_dir = os.path.realpath(
             '%s/../../lava_test_shell' % os.path.dirname(__file__))
         self.scripts_to_copy = ['lava-test-runner']
@@ -634,11 +643,10 @@ class ApplyLxcOverlay(Action):
 
 
 class ConfigurePreseedFile(Action):
-    def __init__(self):
-        super(ConfigurePreseedFile, self).__init__()
-        self.name = "configure-preseed-file"
-        self.summary = "add commands to installer config"
-        self.description = "add commands to automated installers, to copy the lava test overlay to the installed system"
+
+    name = "configure-preseed-file"
+    description = "add commands to automated installers, to copy the lava test overlay to the installed system"
+    summary = "add commands to installer config"
 
     def run(self, connection, max_end_time, args=None):
         if 'deployment_data' not in self.parameters:

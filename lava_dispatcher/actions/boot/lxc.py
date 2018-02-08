@@ -64,11 +64,9 @@ class BootLxcAction(BootAction):
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
     """
-    def __init__(self):
-        super(BootLxcAction, self).__init__()
-        self.name = "lxc-boot"
-        self.summary = "lxc boot"
-        self.description = "lxc boot into the system"
+    name = "lxc-boot"
+    description = "lxc boot into the system"
+    summary = "lxc boot"
 
     def validate(self):
         super(BootLxcAction, self).validate()
@@ -92,11 +90,9 @@ class LxcAddStaticDevices(Action):
     worker.
     """
 
-    def __init__(self):
-        super(LxcAddStaticDevices, self).__init__()
-        self.name = 'lxc-add-static'
-        self.description = 'Add devices which are permanently powered by the worker to the LXC'
-        self.summary = 'Add static devices to the LXC'
+    name = 'lxc-add-static'
+    description = 'Add devices which are permanently powered by the worker to the LXC'
+    summary = 'Add static devices to the LXC'
 
     def get_usb_devices(self):
         """
@@ -152,11 +148,12 @@ class LxcStartAction(Action):
     This action calls lxc-start to get into the system.
     """
 
+    name = "boot-lxc"
+    description = "boot into lxc container"
+    summary = "attempt to boot"
+
     def __init__(self):
         super(LxcStartAction, self).__init__()
-        self.name = "boot-lxc"
-        self.summary = "attempt to boot"
-        self.description = "boot into lxc container"
         self.sleep = 10
 
     def validate(self):
@@ -198,11 +195,9 @@ class LxcStopAction(Action):
     This action calls lxc-stop to stop the container.
     """
 
-    def __init__(self):
-        super(LxcStopAction, self).__init__()
-        self.name = "lxc-stop"
-        self.summary = "stop lxc"
-        self.description = "stop the lxc container"
+    name = "lxc-stop"
+    description = "stop the lxc container"
+    summary = "stop lxc"
 
     def validate(self):
         super(LxcStopAction, self).validate()

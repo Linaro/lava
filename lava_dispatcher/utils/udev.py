@@ -25,11 +25,12 @@ from lava_dispatcher.action import Action, LAVABug
 
 class WaitUSBSerialDeviceAction(Action):
 
+    name = "wait-usb-serial"
+    description = "wait for USB serial device"
+    summary = "wait for USB serial device"
+
     def __init__(self):
         super(WaitUSBSerialDeviceAction, self).__init__()
-        self.name = "wait-usb-serial"
-        self.description = "wait for USB serial device"
-        self.summary = self.description
         self.serial_device = {}
 
     def validate(self):
@@ -58,11 +59,12 @@ class WaitUSBSerialDeviceAction(Action):
 
 class WaitDFUDeviceAction(Action):
 
+    name = "wait-dfu-device"
+    description = "wait for DFU device"
+    summary = "wait for DFU device"
+
     def __init__(self):
         super(WaitDFUDeviceAction, self).__init__()
-        self.name = "wait-dfu-device"
-        self.description = "wait for DFU device"
-        self.summary = self.description
         self.dfu_device = {}
 
     def validate(self):
@@ -89,11 +91,12 @@ class WaitDFUDeviceAction(Action):
 
 class WaitUSBMassStorageDeviceAction(Action):
 
+    name = "wait-usb-mass-storage-device"
+    description = "wait for USB mass storage device"
+    summary = "wait for USB mass storage device"
+
     def __init__(self):
         super(WaitUSBMassStorageDeviceAction, self).__init__()
-        self.name = "wait-usb-mass-storage-device"
-        self.description = "wait for USB mass storage device"
-        self.summary = self.description
         self.ms_device = {}
 
     def validate(self):
@@ -112,11 +115,12 @@ class WaitUSBMassStorageDeviceAction(Action):
 
 class WaitDevicePathAction(Action):
 
+    name = "wait-device-path"
+    description = "wait for udev device path"
+    summary = "wait for udev device path"
+
     def __init__(self, path=None):
         super(WaitDevicePathAction, self).__init__()
-        self.name = "wait-device-path"
-        self.description = "wait for udev device path"
-        self.summary = self.description
         self.devicepath = path
 
     def validate(self):
@@ -133,11 +137,12 @@ class WaitDevicePathAction(Action):
 
 class WaitDeviceBoardID(Action):
 
+    name = "wait-device-boardid"
+    description = "wait for udev device with board ID"
+    summary = "wait for udev device with board ID"
+
     def __init__(self, board_id=None):
         super(WaitDeviceBoardID, self).__init__()
-        self.name = "wait-device-boardid"
-        self.description = "wait for udev device with board ID"
-        self.summary = self.description
         if not board_id:
             self.board_id = self.job.device.get('board_id', None)
         else:

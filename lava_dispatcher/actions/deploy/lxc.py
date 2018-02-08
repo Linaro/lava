@@ -82,11 +82,12 @@ class Lxc(Deployment):
 
 class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
+    name = "lxc-deploy"
+    description = "download files and deploy using lxc"
+    summary = "lxc deployment"
+
     def __init__(self):
         super(LxcAction, self).__init__()
-        self.name = "lxc-deploy"
-        self.description = "download files and deploy using lxc"
-        self.summary = "lxc deployment"
         self.lxc_data = {}
 
     def validate(self):
@@ -122,11 +123,12 @@ class LxcCreateAction(DeployAction):
     Creates Lxc container.
     """
 
+    name = "lxc-create-action"
+    description = "create lxc action"
+    summary = "create lxc"
+
     def __init__(self):
         super(LxcCreateAction, self).__init__()
-        self.name = "lxc-create-action"
-        self.description = "create lxc action"
-        self.summary = "create lxc"
         self.retries = 10
         self.sleep = 10
         self.lxc_data = {}
@@ -208,11 +210,12 @@ class LxcCreateUdevRuleAction(DeployAction):
     Creates Lxc related udev rules for this container.
     """
 
+    name = "lxc-create-udev-rule-action"
+    description = "create lxc udev rule action"
+    summary = "create lxc udev rule"
+
     def __init__(self):
         super(LxcCreateUdevRuleAction, self).__init__()
-        self.name = "lxc-create-udev-rule-action"
-        self.description = "create lxc udev rule action"
-        self.summary = "create lxc udev rule"
         self.retries = 10
         self.sleep = 10
 
@@ -318,11 +321,12 @@ class LxcAptUpdateAction(DeployAction):
     apt-get update the lxc container.
     """
 
+    name = "lxc-apt-update"
+    description = "lxc apt update action"
+    summary = "lxc apt update"
+
     def __init__(self):
         super(LxcAptUpdateAction, self).__init__()
-        self.name = "lxc-apt-update"
-        self.description = "lxc apt update action"
-        self.summary = "lxc apt update"
         self.retries = 10
         self.sleep = 10
 
@@ -345,11 +349,12 @@ class LxcAptInstallAction(DeployAction):
     apt-get install packages to the lxc container.
     """
 
+    name = "lxc-apt-install"
+    description = "lxc apt install packages action"
+    summary = "lxc apt install"
+
     def __init__(self):
         super(LxcAptInstallAction, self).__init__()
-        self.name = "lxc-apt-install"
-        self.description = "lxc apt install packages action"
-        self.summary = "lxc apt install"
         self.retries = 10
         self.sleep = 10
 

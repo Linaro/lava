@@ -75,11 +75,9 @@ class TestMonitor(LavaTest):
 
 class TestMonitorRetry(RetryAction):
 
-    def __init__(self):
-        super(TestMonitorRetry, self).__init__()
-        self.description = "Retry wrapper for lava-test-monitor"
-        self.summary = "Retry support for Lava Test Monitoring"
-        self.name = "lava-test-monitor-retry"
+    name = "lava-test-monitor-retry"
+    description = "Retry wrapper for lava-test-monitor"
+    summary = "Retry support for Lava Test Monitoring"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -93,11 +91,12 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
     booted image before the test shell can be started.
     """
 
+    name = "lava-test-monitor"
+    description = "Executing lava-test-monitor"
+    summary = "Lava Test Monitor"
+
     def __init__(self):
         super(TestMonitorAction, self).__init__()
-        self.description = "Executing lava-test-monitor"
-        self.summary = "Lava Test Monitor"
-        self.name = "lava-test-monitor"
         self.test_suite_name = None
         self.report = {}
         self.fixupdict = {}

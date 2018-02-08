@@ -68,11 +68,12 @@ class Nbd(Deployment):
 
 class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
+    name = "nbd-deploy"
+    description = "download files and deploy for using tftp+initrd+nbd"
+    summary = "nbd deployment"
+
     def __init__(self):
         super(NbdAction, self).__init__()
-        self.name = "nbd-deploy"
-        self.description = "download files and deploy for using tftp+initrd+nbd"
-        self.summary = "nbd deployment"
         self.tftp_dir = None
         self.nbd_ip = None
         self.nbd_port = None
@@ -144,11 +145,12 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
 class XnbdAction(DeployAction):
 
+    name = "xnbd-server-deploy"
+    description = "xnbd daemon"
+    summary = "xnbd daemon"
+
     def __init__(self):
         super(XnbdAction, self).__init__()
-        self.name = "xnbd-server-deploy"
-        self.description = "xnbd daemon"
-        self.summary = "xnbd daemon"
         self.protocol = XnbdProtocol.name
         self.nbd_server_port = None
         self.nbd_server_ip = None

@@ -65,11 +65,9 @@ class Nfs(Deployment):
 
 class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
-    def __init__(self):
-        super(NfsAction, self).__init__()
-        self.name = "nfs-deploy"
-        self.description = "deploy nfsrootfs"
-        self.summary = "NFS deployment"
+    name = "nfs-deploy"
+    description = "deploy nfsrootfs"
+    summary = "NFS deployment"
 
     def validate(self):
         super(NfsAction, self).validate()

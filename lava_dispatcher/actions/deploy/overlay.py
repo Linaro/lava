@@ -64,11 +64,12 @@ class OverlayAction(DeployAction):
     overlays are handled by TestDefinitionAction.
     """
 
+    name = "lava-overlay"
+    description = "add lava scripts during deployment for test shell use"
+    summary = "overlay the lava support scripts"
+
     def __init__(self):
         super(OverlayAction, self).__init__()
-        self.name = "lava-overlay"
-        self.description = "add lava scripts during deployment for test shell use"
-        self.summary = "overlay the lava support scripts"
         self.lava_test_dir = os.path.realpath(
             '%s/../../lava_test_shell' % os.path.dirname(__file__))
         self.scripts_to_copy = []
@@ -195,12 +196,12 @@ class OverlayAction(DeployAction):
 
 class MultinodeOverlayAction(OverlayAction):
 
+    name = "lava-multinode-overlay"
+    description = "add lava scripts during deployment for multinode test shell use"
+    summary = "overlay the lava multinode scripts"
+
     def __init__(self):
         super(MultinodeOverlayAction, self).__init__()
-        self.name = "lava-multinode-overlay"
-        self.description = "add lava scripts during deployment for multinode test shell use"
-        self.summary = "overlay the lava multinode scripts"
-
         # Multinode-only
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__))
@@ -287,12 +288,13 @@ class VlandOverlayAction(OverlayAction):
     """
     Adds data for vland interface locations, MAC addresses and vlan names
     """
+
+    name = "lava-vland-overlay"
+    description = "Populate specific vland scripts for tests to lookup vlan data."
+    summary = "Add files detailing vlan configuration."
+
     def __init__(self):
         super(VlandOverlayAction, self).__init__()
-        self.name = "lava-vland-overlay"
-        self.summary = "Add files detailing vlan configuration."
-        self.description = "Populate specific vland scripts for tests to lookup vlan data."
-
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/vland' % os.path.dirname(__file__))
@@ -408,11 +410,9 @@ class CompressOverlay(Action):
     """
     Makes a tarball of the finished overlay and declares filename of the tarball
     """
-    def __init__(self):
-        super(CompressOverlay, self).__init__()
-        self.name = "compress-overlay"
-        self.summary = "Compress the lava overlay files"
-        self.description = "Create a lava overlay tarball and store alongside the job"
+    name = "compress-overlay"
+    description = "Create a lava overlay tarball and store alongside the job"
+    summary = "Compress the lava overlay files"
 
     def run(self, connection, max_end_time, args=None):
         output = os.path.join(self.job.parameters['output_dir'],
@@ -455,11 +455,13 @@ class SshAuthorize(Action):
     Used by secondary connections only.
     Primary connections need the keys set up by admins.
     """
+
+    name = "ssh-authorize"
+    description = 'include public key in overlay and authorize root user'
+    summary = 'add public key to authorized_keys'
+
     def __init__(self):
         super(SshAuthorize, self).__init__()
-        self.name = "ssh-authorize"
-        self.summary = 'add public key to authorized_keys'
-        self.description = 'include public key in overlay and authorize root user'
         self.active = False
         self.identity_file = None
 
@@ -525,12 +527,10 @@ class PersistentNFSOverlay(Action):
     so that it can be mounted later when the overlay is applied.
     """
 
-    def __init__(self):
-        super(PersistentNFSOverlay, self).__init__()
-        self.name = "persistent-nfs-overlay"
-        self.section = 'deploy'
-        self.summary = "add test overlay to NFS"
-        self.description = "unpack overlay into persistent NFS"
+    section = "deploy"
+    name = "persistent-nfs-overlay"
+    description = "unpack overlay into persistent NFS"
+    summary = "add test overlay to NFS"
 
     def validate(self):
         super(PersistentNFSOverlay, self).validate()

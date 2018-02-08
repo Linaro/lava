@@ -93,11 +93,13 @@ class DDAction(Action):
     (e.g. usb-SanDisk_Ultra_20060775320F43006019-0:0) in /dev/disk/by-id/ of
     the initial deployment, on device.
     """
+
+    name = "dd-image"
+    description = "deploy image to drive"
+    summary = "write image to drive"
+
     def __init__(self):
         super(DDAction, self).__init__()
-        self.name = "dd-image"
-        self.summary = "write image to drive"
-        self.description = "deploy image to drive"
         self.timeout = Timeout(self.name, 600)
         self.boot_params = None
         self.tool_prompts = None
@@ -261,11 +263,12 @@ class DDAction(Action):
 
 class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
 
+    name = "storage-deploy"
+    description = "Deploy image to mass storage"
+    summary = "write image to storage"
+
     def __init__(self):
         super(MassStorage, self).__init__()
-        self.name = "storage-deploy"
-        self.description = "Deploy image to mass storage"
-        self.summary = "write image to storage"
         self.suffix = None
         self.image_path = None
 

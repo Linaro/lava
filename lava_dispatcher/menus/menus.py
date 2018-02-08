@@ -37,11 +37,12 @@ class MovementMenu(object):
 
 class MenuInterrupt(Action):
 
+    name = "menu-interrupt"
+    description = "interrupt the bootloader to start the menu handling"
+    summary = "base menu interrupt action"
+
     def __init__(self):
         super(MenuInterrupt, self).__init__()
-        self.name = "menu-interrupt"
-        self.summary = "base menu interrupt action"
-        self.description = "interrupt the bootloader to start the menu handling"
         self.interrupt_prompt = None
         self.interrupt_string = None
 
@@ -106,12 +107,13 @@ class MenuConnect(ConnectDevice):
     connection and the device could be powered off when Connect is called.
     """
 
+    name = "menu-connect"
+    description = "change into a menu session"
+    summary = "Customise connection for menu operations"
+
     def __init__(self):
         super(MenuConnect, self).__init__()
         self.session_class = MenuSession
-        self.name = "menu-connect"
-        self.summary = "Customise connection for menu operations"
-        self.description = "change into a menu session"
 
     def validate(self):
         if self.job.device.connect_command is '':
@@ -131,12 +133,13 @@ class MenuConnect(ConnectDevice):
 
 class MenuReset(ConnectDevice):
 
+    name = "menu-reset"
+    description = "change out of menu session to a shell session"
+    summary = "reset to shell connection"
+
     def __init__(self):
         super(MenuReset, self).__init__()
         self.session_class = ShellSession
-        self.name = "menu-reset"
-        self.summary = "reset to shell connection"
-        self.description = "change out of menu session to a shell session"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(MenuReset, self).run(connection, max_end_time, args)
@@ -150,11 +153,12 @@ class MenuReset(ConnectDevice):
 
 class SelectorMenuAction(Action):
 
+    name = 'menu-selector'
+    description = 'select specified menu items'
+    summary = 'select options in a menu'
+
     def __init__(self):
         super(SelectorMenuAction, self).__init__()
-        self.name = 'menu-selector'
-        self.summary = 'select options in a menu'
-        self.description = 'select specified menu items'
         self.selector = SelectorMenu()
         self.items = []
         self.line_sep = None

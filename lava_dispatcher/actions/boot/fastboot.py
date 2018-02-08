@@ -80,11 +80,9 @@ class BootFastbootAction(BootAction):
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
     """
-    def __init__(self):
-        super(BootFastbootAction, self).__init__()
-        self.name = "fastboot-boot"
-        self.summary = "fastboot boot"
-        self.description = "fastboot boot into the system"
+    name = "fastboot-boot"
+    description = "fastboot boot into the system"
+    summary = "fastboot boot"
 
     def validate(self):
         super(BootFastbootAction, self).validate()
@@ -137,11 +135,12 @@ class WaitFastBootInterrupt(Action):
     from the deployment parameters.
     """
 
+    name = 'wait-fastboot-interrupt'
+    description = "Check for prompt and pass the interrupt string to exit fastboot."
+    summary = "watch output and try to interrupt fastboot"
+
     def __init__(self, type):
         super(WaitFastBootInterrupt, self).__init__()
-        self.name = 'wait-fastboot-interrupt'
-        self.summary = "watch output and try to interrupt fastboot"
-        self.description = "Check for prompt and pass the interrupt string to exit fastboot."
         self.type = type
         self.prompt = None
         self.string = None
@@ -181,11 +180,9 @@ class FastbootBootAction(Action):
     This action calls fastboot to boot into the system.
     """
 
-    def __init__(self):
-        super(FastbootBootAction, self).__init__()
-        self.name = "boot-fastboot"
-        self.summary = "attempt to fastboot boot"
-        self.description = "fastboot boot into system"
+    name = "boot-fastboot"
+    description = "fastboot boot into system"
+    summary = "attempt to fastboot boot"
 
     def validate(self):
         super(FastbootBootAction, self).validate()
@@ -241,11 +238,9 @@ class FastbootRebootAction(Action):
     This action calls fastboot to reboot into the system.
     """
 
-    def __init__(self):
-        super(FastbootRebootAction, self).__init__()
-        self.name = "fastboot-reboot"
-        self.summary = "attempt to fastboot reboot"
-        self.description = "fastboot reboot into system"
+    name = "fastboot-reboot"
+    description = "fastboot reboot into system"
+    summary = "attempt to fastboot reboot"
 
     def validate(self):
         super(FastbootRebootAction, self).validate()
@@ -289,11 +284,9 @@ class EnterFastbootAction(Action):
     Enters fastboot bootloader.
     """
 
-    def __init__(self):
-        super(EnterFastbootAction, self).__init__()
-        self.name = "enter-fastboot-action"
-        self.description = "enter fastboot bootloader"
-        self.summary = "enter fastboot"
+    name = "enter-fastboot-action"
+    description = "enter fastboot bootloader"
+    summary = "enter fastboot"
 
     def validate(self):
         super(EnterFastbootAction, self).validate()

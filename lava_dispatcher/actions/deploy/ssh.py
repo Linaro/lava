@@ -67,12 +67,14 @@ class ScpOverlay(DeployAction):
     """
     Prepares the overlay and copies it to the target
     """
+
+    section = 'deploy'
+    name = "scp-overlay"
+    description = "prepare overlay and scp to device"
+    summary = "copy overlay to device"
+
     def __init__(self):
         super(ScpOverlay, self).__init__()
-        self.name = "scp-overlay"
-        self.summary = "copy overlay to device"
-        self.description = "prepare overlay and scp to device"
-        self.section = 'deploy'
         self.items = []
 
     def validate(self):
@@ -106,11 +108,12 @@ class PrepareOverlayScp(Action):
     Needs the device to be ready for SSH connection.
     """
 
+    name = "prepare-scp-overlay"
+    description = "copy the overlay over an existing ssh connection"
+    summary = "scp the overlay to the remote device"
+
     def __init__(self):
         super(PrepareOverlayScp, self).__init__()
-        self.name = "prepare-scp-overlay"
-        self.summary = "scp the overlay to the remote device"
-        self.description = "copy the overlay over an existing ssh connection"
         self.host_keys = []
 
     def validate(self):

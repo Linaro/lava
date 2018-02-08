@@ -288,13 +288,14 @@ class ExpectShellSession(Action):
     The shell connection can be over any particular connection,
     all that is needed is a prompt.
     """
+
     compatibility = 2
+    name = "expect-shell-connection"
+    description = "Wait for a shell"
+    summary = "Expect a shell prompt"
 
     def __init__(self):
         super(ExpectShellSession, self).__init__()
-        self.name = "expect-shell-connection"
-        self.summary = "Expect a shell prompt"
-        self.description = "Wait for a shell"
         self.force_prompt = True
 
     def validate(self):

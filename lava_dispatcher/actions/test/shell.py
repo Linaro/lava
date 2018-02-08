@@ -90,11 +90,9 @@ class TestShell(LavaTest):
 
 class TestShellRetry(RetryAction):
 
-    def __init__(self):
-        super(TestShellRetry, self).__init__()
-        self.description = "Retry wrapper for lava-test-shell"
-        self.summary = "Retry support for Lava Test Shell"
-        self.name = "lava-test-retry"
+    name = "lava-test-retry"
+    description = "Retry wrapper for lava-test-shell"
+    summary = "Retry support for Lava Test Shell"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -156,11 +154,12 @@ class TestShellAction(TestAction):
     booted image before the test shell can be started.
     """
 
+    name = "lava-test-shell"
+    description = "Executing lava-test-runner"
+    summary = "Lava Test Shell"
+
     def __init__(self):
         super(TestShellAction, self).__init__()
-        self.description = "Executing lava-test-runner"
-        self.summary = "Lava Test Shell"
-        self.name = "lava-test-shell"
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.signal_match = SignalMatch()

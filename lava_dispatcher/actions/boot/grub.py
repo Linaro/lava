@@ -129,11 +129,12 @@ def _grub_sequence_map(sequence):
 
 class GrubSequenceAction(BootAction):
 
+    name = "grub-sequence-action"
+    description = "grub boot sequence"
+    summary = "run grub boot using specified sequence of actions"
+
     def __init__(self):
         super(GrubSequenceAction, self).__init__()
-        self.name = "grub-sequence-action"
-        self.description = "grub boot sequence"
-        self.summary = "run grub boot using specified sequence of actions"
         self.expect_shell = False
 
     def validate(self):
@@ -172,11 +173,13 @@ class GrubSequenceAction(BootAction):
 
 
 class GrubMainAction(BootAction):
+
+    name = "grub-main-action"
+    description = "main grub boot action"
+    summary = "run grub boot from power to system"
+
     def __init__(self):
         super(GrubMainAction, self).__init__()
-        self.name = "grub-main-action"
-        self.description = "main grub boot action"
-        self.summary = "run grub boot from power to system"
         self.expect_shell = True
 
     def populate(self, parameters):
@@ -219,11 +222,12 @@ class GrubMainAction(BootAction):
 
 class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-attributes
 
+    name = 'grub-efi-menu-selector'
+    description = 'select specified grub-efi menu items'
+    summary = 'select grub options in the efi menu'
+
     def __init__(self):
         super(GrubMenuSelector, self).__init__()
-        self.name = 'grub-efi-menu-selector'
-        self.summary = 'select grub options in the efi menu'
-        self.description = 'select specified grub-efi menu items'
         self.selector.prompt = "Start:"
         self.commands = []
         self.boot_message = None
@@ -256,11 +260,13 @@ class InstallerWait(Action):
     """
     Wait for the non-interactive installer to finished
     """
+
+    name = "installer-wait"
+    description = "installer wait"
+    summary = "wait for task to finish match arbitrary string"
+
     def __init__(self):
         super(InstallerWait, self).__init__()
-        self.name = "installer-wait"
-        self.description = "installer wait"
-        self.summary = "wait for task to finish match arbitrary string"
         self.type = "grub"
 
     def validate(self):

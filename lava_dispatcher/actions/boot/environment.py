@@ -26,11 +26,12 @@ class ExportDeviceEnvironment(Action):
     Exports environment variables found in common data on to the device.
     """
 
+    name = "export-device-env"
+    description = "Exports environment variables to the device"
+    summary = "Exports environment variables action"
+
     def __init__(self):
         super(ExportDeviceEnvironment, self).__init__()
-        self.name = "export-device-env"
-        self.summary = "Exports environment variables action"
-        self.description = "Exports environment variables to the device"
         self.env = []
 
     def validate(self):

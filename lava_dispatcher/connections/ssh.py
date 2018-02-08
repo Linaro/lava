@@ -33,9 +33,8 @@ class SShSession(ShellSession):
     """ Extends a ShellSession to include the ability to copy files using scp
     without duplicating the SSH setup, keys etc.
     """
-    def __init__(self, job, shell_command):
-        super(SShSession, self).__init__(job, shell_command)
-        self.name = "SshSession"
+
+    name = "SshSession"
 
     def finalise(self):
         self.disconnect("closing")
@@ -63,11 +62,12 @@ class ConnectSsh(Action):
     This allows ssh to be a dict, image to be a string (or a dict) and methods to be a list.
     """
 
+    name = "ssh-connection"
+    description = "login to a known device using ssh"
+    summary = "make an ssh connection to a device"
+
     def __init__(self):
         super(ConnectSsh, self).__init__()
-        self.name = "ssh-connection"
-        self.summary = "make an ssh connection to a device"
-        self.description = "login to a known device using ssh"
         self.command = None
         self.host = None
         self.ssh_port = ["-p", "22"]

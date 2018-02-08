@@ -113,11 +113,9 @@ class SecondaryShell(Boot):
 
 class SecondaryShellAction(BootAction):
 
-    def __init__(self):
-        super(SecondaryShellAction, self).__init__()
-        self.name = "secondary-shell-action"
-        self.description = "Connect to a secondary shell on specified hardware"
-        self.summary = "connect to a specified second shell"
+    name = "secondary-shell-action"
+    description = "Connect to a secondary shell on specified hardware"
+    summary = "connect to a specified second shell"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -140,11 +138,13 @@ class AutoLoginAction(Action):
 
     This Action expect POSIX-compatible support of PS1 from shell
     """
+
+    name = 'auto-login-action'
+    description = "automatically login after boot using job parameters and checking for messages."
+    summary = "Auto-login after boot with support for kernel messages."
+
     def __init__(self):
         super(AutoLoginAction, self).__init__()
-        self.name = 'auto-login-action'
-        self.description = "automatically login after boot using job parameters and checking for messages."
-        self.summary = "Auto-login after boot with support for kernel messages."
         self.check_prompt_characters_warning = (
             "The string '%s' does not look like a typical prompt and"
             " could match status messages instead. Please check the"
@@ -368,11 +368,12 @@ class BootloaderCommandOverlay(Action):
     server_ip is calculated at runtime
     filenames are determined from the download Action.
     """
+    name = "bootloader-overlay"
+    description = "substitute job data into bootloader command list"
+    summary = "replace placeholders with job data"
+
     def __init__(self):
         super(BootloaderCommandOverlay, self).__init__()
-        self.name = "bootloader-overlay"
-        self.summary = "replace placeholders with job data"
-        self.description = "substitute job data into bootloader command list"
         self.commands = None
         self.method = ""
         self.use_bootscript = False
@@ -513,11 +514,10 @@ class BootloaderSecondaryMedia(Action):
     """
     Generic class for secondary media substitutions
     """
-    def __init__(self):
-        super(BootloaderSecondaryMedia, self).__init__()
-        self.name = "bootloader-from-media"
-        self.summary = "set bootloader strings for deployed media"
-        self.description = "let bootloader know where to find the kernel in the image on secondary media"
+
+    name = "bootloader-from-media"
+    description = "let bootloader know where to find the kernel in the image on secondary media"
+    summary = "set bootloader strings for deployed media"
 
     def validate(self):
         super(BootloaderSecondaryMedia, self).validate()
@@ -551,11 +551,13 @@ class OverlayUnpack(Action):
     not matter for this action - the file will be downloaded from the
     worker tmp dir using the default apache config.
     """
+
+    name = 'overlay-unpack'
+    description = 'transfer and unpack overlay to persistent rootfs after login'
+    summary = 'transfer and unpack overlay'
+
     def __init__(self):
         super(OverlayUnpack, self).__init__()
-        self.name = 'overlay-unpack'
-        self.description = 'transfer and unpack overlay to persistent rootfs after login'
-        self.summary = 'transfer and unpack overlay'
         self.url = None
 
     def cleanup(self, connection):
@@ -597,11 +599,13 @@ class BootloaderInterruptAction(Action):
     """
     Support for interrupting the bootloader.
     """
+
+    name = "bootloader-interrupt"
+    description = "interrupt bootloader"
+    summary = "interrupt bootloader to get an interactive shell"
+
     def __init__(self):
         super(BootloaderInterruptAction, self).__init__()
-        self.name = "bootloader-interrupt"
-        self.description = "interrupt bootloader"
-        self.summary = "interrupt bootloader to get an interactive shell"
         self.params = {}
         self.method = None
         self.needs_interrupt = False
@@ -657,11 +661,13 @@ class BootloaderCommandsAction(Action):
     """
     Send the boot commands to the bootloader
     """
+
+    name = "bootloader-commands"
+    description = "send commands to bootloader"
+    summary = "interactive bootloader"
+
     def __init__(self):
         super(BootloaderCommandsAction, self).__init__()
-        self.name = "bootloader-commands"
-        self.description = "send commands to bootloader"
-        self.summary = "interactive bootloader"
         self.params = None
         self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
         self.method = ""

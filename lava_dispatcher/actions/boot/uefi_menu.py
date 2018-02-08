@@ -73,11 +73,12 @@ class UefiMenu(Boot):
 
 class UEFIMenuInterrupt(MenuInterrupt):
 
+    name = 'uefi-menu-interrupt'
+    description = 'interrupt for uefi menu'
+    summary = 'interrupt for uefi menu'
+
     def __init__(self):
         super(UEFIMenuInterrupt, self).__init__()
-        self.name = 'uefi-menu-interrupt'
-        self.summary = 'interrupt for uefi menu'
-        self.description = 'interrupt for uefi menu'
         self.params = None
         self.method = 'uefi-menu'
 
@@ -102,11 +103,12 @@ class UEFIMenuInterrupt(MenuInterrupt):
 
 class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance-attributes
 
+    name = 'uefi-menu-selector'
+    description = 'select specified uefi menu items'
+    summary = 'select options in the uefi menu'
+
     def __init__(self):
         super(UefiMenuSelector, self).__init__()
-        self.name = 'uefi-menu-selector'
-        self.summary = 'select options in the uefi menu'
-        self.description = 'select specified uefi menu items'
         self.selector.prompt = "Start:"
         self.method_name = 'uefi-menu'
         self.commands = []
@@ -195,11 +197,12 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
 
 class UefiSubstituteCommands(Action):
 
+    name = 'uefi-commands'
+    description = 'set job-specific variables into the uefi menu commands'
+    summary = 'substitute job values into uefi commands'
+
     def __init__(self):
         super(UefiSubstituteCommands, self).__init__()
-        self.name = 'uefi-commands'
-        self.summary = 'substitute job values into uefi commands'
-        self.description = 'set job-specific variables into the uefi menu commands'
         self.items = None
 
     def validate(self):
@@ -241,11 +244,12 @@ class UefiSubstituteCommands(Action):
 
 class UefiMenuAction(BootAction):
 
+    name = 'uefi-menu-action'
+    description = 'interrupt and select uefi menu items'
+    summary = 'interact with uefi menu'
+
     def __init__(self):
         super(UefiMenuAction, self).__init__()
-        self.name = 'uefi-menu-action'
-        self.summary = 'interact with uefi menu'
-        self.description = 'interrupt and select uefi menu items'
         self.method = 'uefi-menu'
 
     def validate(self):

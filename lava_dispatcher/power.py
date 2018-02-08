@@ -39,11 +39,10 @@ class ResetDevice(Action):
     Used within a RetryAction - first tries 'reboot' then
     tries PDU.
     """
-    def __init__(self):
-        super(ResetDevice, self).__init__()
-        self.name = "reset-device"
-        self.description = "reboot or power-cycle the device"
-        self.summary = "reboot the device"
+
+    name = "reset-device"
+    description = "reboot or power-cycle the device"
+    summary = "reboot the device"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -58,11 +57,9 @@ class SendRebootCommands(Action):
     Send reboot commands to the device
     """
 
-    def __init__(self):
-        super(SendRebootCommands, self).__init__()
-        self.name = "send-reboot-commands"
-        self.summary = 'Issue a reboot command on the device'
-        self.description = 'Issue a reboot command on the device'
+    name = "send-reboot-commands"
+    description = 'Issue a reboot command on the device'
+    summary = 'Issue a reboot command on the device'
 
     def run(self, connection, max_end_time, args=None):
         connection = super(SendRebootCommands, self).run(connection, max_end_time, args)
@@ -92,11 +89,13 @@ class PDUReboot(Action):
     It is an error for a device to fail to reboot after a
     soft reboot and a failed hard reset.
     """
+
+    name = "pdu-reboot"
+    description = "issue commands to a PDU to power cycle a device"
+    summary = "hard reboot using PDU"
+
     def __init__(self):
         super(PDUReboot, self).__init__()
-        self.name = "pdu-reboot"
-        self.summary = "hard reboot using PDU"
-        self.description = "issue commands to a PDU to power cycle a device"
         self.command = None
 
     def run(self, connection, max_end_time, args=None):
@@ -117,11 +116,10 @@ class PowerOn(Action):
     """
     Issues the power on command via the PDU
     """
-    def __init__(self):
-        super(PowerOn, self).__init__()
-        self.name = "power-on"
-        self.summary = "send power_on command"
-        self.description = "supply power to device"
+
+    name = "power-on"
+    description = "supply power to device"
+    summary = "send power_on command"
 
     def run(self, connection, max_end_time, args=None):
         # to enable power to a device, either power_on or hard_reset are needed.
@@ -153,11 +151,10 @@ class PowerOff(Action):
     """
     Turns power off at the end of a job
     """
-    def __init__(self):
-        super(PowerOff, self).__init__()
-        self.name = "power-off"
-        self.summary = "send power_off command"
-        self.description = "discontinue power to device"
+
+    name = "power-off"
+    description = "discontinue power to device"
+    summary = "send power_off command"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PowerOff, self).run(connection, max_end_time, args)
@@ -178,11 +175,13 @@ class ReadFeedback(Action):
     Generalise the feedback support so that it can be added
     to any pipeline.
     """
+
+    name = 'read-feedback'
+    description = 'Check for messages on all other namespaces'
+    summary = 'Read from other namespaces'
+
     def __init__(self, finalize=False, repeat=False):
         super(ReadFeedback, self).__init__()
-        self.name = 'read-feedback'
-        self.summary = 'Read from other namespaces'
-        self.description = 'Check for messages on all other namespaces'
         self.finalize = finalize
         self.parameters['namespace'] = 'common'
         self.duration = 1  # FIXME: needs to be a constant set in the base template.
@@ -217,6 +216,11 @@ class ReadFeedback(Action):
 
 class FinalizeAction(Action):
 
+    section = "finalize"
+    name = "finalize"
+    description = "finish the process and cleanup"
+    summary = "finalize the job"
+
     def __init__(self):
         """
         The FinalizeAction is always added as the last Action in the top level pipeline by the parser.
@@ -224,10 +228,6 @@ class FinalizeAction(Action):
         and writing out the final pipeline structure containing the results as a logfile.
         """
         super(FinalizeAction, self).__init__()
-        self.name = "finalize"
-        self.section = 'finalize'
-        self.summary = "finalize the job"
-        self.description = "finish the process and cleanup"
         self.ran = False
 
     def populate(self, parameters):

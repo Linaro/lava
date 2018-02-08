@@ -78,12 +78,13 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Isolated Action which can be used to generate artificial exceptions.
         """
 
+        name = "fake-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake action for unit tests"
+
         def __init__(self):
             super(TestAction.FakeAction, self).__init__()
             self.count = 1
-            self.name = "fake-action"
-            self.summary = "fake action for unit tests"
-            self.description = "fake, do not use outside unit tests"
 
         def run(self, connection, max_end_time, args=None):
             self.count += 1
@@ -94,13 +95,14 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Always fails, always triggers a diagnostic
         """
 
+        section = 'internal'
+        name = "trigger-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake trigger action for unit tests"
+
         def __init__(self):
             super(TestAction.FakeTriggerAction, self).__init__()
             self.count = 1
-            self.name = "trigger-action"
-            self.section = 'internal'
-            self.summary = "fake trigger action for unit tests"
-            self.description = "fake, do not use outside unit tests"
             self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
@@ -110,20 +112,16 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeRetryAction(RetryAction):
 
-        def __init__(self):
-            super(TestAction.FakeRetryAction, self).__init__()
-            self.name = "fake-retry-action"
-            self.summary = "fake retry action for unit tests"
-            self.description = "fake, do not use outside unit tests"
+        name = "fake-retry-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake retry action for unit tests"
 
     class InternalRetryAction(RetryAction):
 
-        def __init__(self):
-            super(TestAction.InternalRetryAction, self).__init__()
-            self.name = "internal-retry-action"
-            self.section = 'internal'
-            self.summary = "internal retry action for unit tests"
-            self.description = "internal, do not use outside unit tests"
+        section = 'internal'
+        name = "internal-retry-action"
+        description = "internal, do not use outside unit tests"
+        summary = "internal retry action for unit tests"
 
         def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
@@ -131,12 +129,10 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class CleanupRetryAction(RetryAction):
 
-        def __init__(self):
-            super(TestAction.CleanupRetryAction, self).__init__()
-            self.name = "internal-retry-action"
-            self.section = 'internal'
-            self.summary = "internal retry action for unit tests"
-            self.description = "internal, do not use outside unit tests"
+        section = 'internal'
+        name = "internal-retry-action"
+        description = "internal, do not use outside unit tests"
+        summary = "internal retry action for unit tests"
 
         def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
@@ -316,11 +312,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Isolated Action which can be used to generate artificial exceptions.
         """
 
-        def __init__(self):
-            super(TestTimeout.FakeAction, self).__init__()
-            self.name = "fake-action"
-            self.summary = "fake action for unit tests"
-            self.description = "fake, do not use outside unit tests"
+        name = "fake-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake action for unit tests"
 
         def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -337,11 +331,13 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Isolated test action which passes
         """
+
+        name = "passing-action"
+        description = "fake action runs without calling adjuvant"
+        summary = "fake action without adjuvant"
+
         def __init__(self):
             super(TestTimeout.SafeAction, self).__init__()
-            self.name = "passing-action"
-            self.summary = "fake action without adjuvant"
-            self.description = "fake action runs without calling adjuvant"
             self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
@@ -354,11 +350,13 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Isolated test action which times out the job itself
         """
+
+        name = "long-action"
+        description = "fake action"
+        summary = "fake action with overly long sleep"
+
         def __init__(self):
             super(TestTimeout.LongAction, self).__init__()
-            self.name = "long-action"
-            self.summary = "fake action with overly long sleep"
-            self.description = "fake action"
             self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
@@ -372,11 +370,10 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Isolated test action which must not be run
         """
-        def __init__(self):
-            super(TestTimeout.SkippedAction, self).__init__()
-            self.name = "passing-action"
-            self.summary = "fake action without adjuvant"
-            self.description = "fake action runs without calling adjuvant"
+
+        name = "passing-action"
+        description = "fake action runs without calling adjuvant"
+        summary = "fake action without adjuvant"
 
         def run(self, connection, max_end_time, args=None):
             raise LAVABug("Fake action not meant to actually run - should have timed out")
@@ -386,11 +383,12 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Isolated Action which can be used to generate artificial exceptions.
         """
 
+        name = "fake-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake action for unit tests"
+
         def __init__(self):
             super(TestTimeout.FakeSafeAction, self).__init__()
-            self.name = "fake-action"
-            self.summary = "fake action for unit tests"
-            self.description = "fake, do not use outside unit tests"
             self.timeout.duration = 4
 
         def populate(self, parameters):
