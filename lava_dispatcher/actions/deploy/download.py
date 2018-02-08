@@ -82,11 +82,13 @@ class DownloaderAction(RetryAction):
     The retry pipeline for downloads.
     To allow any deploy action to work with multinode, each call *must* set a unique path.
     """
+
+    name = "download-retry"
+    description = "download with retry"
+    summary = "download-retry"
+
     def __init__(self, key, path, uniquify=True):
         super(DownloaderAction, self).__init__()
-        self.name = "download-retry"
-        self.description = "download with retry"
-        self.summary = "download-retry"
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
@@ -124,12 +126,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     as possible.
     """
 
+    name = "download-action"
+    description = "download action"
+    summary = "download-action"
+
     def __init__(self, key, path, url, uniquify=True):
         super(DownloadHandler, self).__init__()
-        self.name = "download-action"
-        self.description = "download action"
-        self.summary = "download-action"
-
         self.url = url
         self.key = key
         # If uniquify is True, store the files in a sub-directory to keep the
@@ -403,11 +405,9 @@ class FileDownloadAction(DownloadHandler):
     Download a resource from file (copy)
     """
 
-    def __init__(self, *args, **kwargs):
-        super(FileDownloadAction, self).__init__(*args, **kwargs)
-        self.name = "file-download"
-        self.description = "copy a local file"
-        self.summary = "local file copy"
+    name = "file-download"
+    description = "copy a local file"
+    summary = "local file copy"
 
     def validate(self):
         super(FileDownloadAction, self).validate()
@@ -436,11 +436,9 @@ class HttpDownloadAction(DownloadHandler):
     Download a resource over http or https using requests module
     """
 
-    def __init__(self, *args, **kwargs):
-        super(HttpDownloadAction, self).__init__(*args, **kwargs)
-        self.name = "http-download"
-        self.description = "use http to download the file"
-        self.summary = "http download"
+    name = "http-download"
+    description = "use http to download the file"
+    summary = "http download"
 
     def validate(self):
         super(HttpDownloadAction, self).validate()
@@ -491,11 +489,9 @@ class ScpDownloadAction(DownloadHandler):
     Download a resource over scp
     """
 
-    def __init__(self, *args, **kwargs):
-        super(ScpDownloadAction, self).__init__(*args, **kwargs)
-        self.name = "scp-download"
-        self.description = "Use scp to copy the file"
-        self.summary = "scp download"
+    name = "scp-download"
+    description = "Use scp to copy the file"
+    summary = "scp download"
 
     def validate(self):
         super(ScpDownloadAction, self).validate()
@@ -536,11 +532,12 @@ class LxcDownloadAction(Action):
     Map an already downloaded resource to the correct path.
     """
 
+    name = "lxc-download"
+    description = "Map to the correct lxc path"
+    summary = "lxc download"
+
     def __init__(self, key, path, url):
         super(LxcDownloadAction, self).__init__()
-        self.name = "lxc-download"
-        self.description = "Map to the correct lxc path"
-        self.summary = "lxc download"
         self.key = key
         self.path = path
         self.url = url
@@ -582,11 +579,12 @@ class QCowConversionAction(Action):
     on filename suffix
     """
 
+    name = "qcow2-convert"
+    description = "convert qcow image using qemu-img"
+    summary = "qcow conversion"
+
     def __init__(self, key):
         super(QCowConversionAction, self).__init__()
-        self.name = "qcow2-convert"
-        self.description = "convert qcow image using qemu-img"
-        self.summary = "qcow conversion"
         self.key = key
 
     def run(self, connection, max_end_time, args=None):
@@ -644,11 +642,12 @@ class Download(Deployment):
 
 class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
+    name = "download-deploy"
+    description = "download files and copy to LXC if available"
+    summary = "download deployment"
+
     def __init__(self):
         super(DownloadAction, self).__init__()
-        self.name = "download-deploy"
-        self.description = "download files and copy to LXC if available"
-        self.summary = "download deployment"
         self.download_dir = None
 
     def validate(self):
@@ -693,11 +692,12 @@ class CopyToLxcAction(DeployAction):
     Copy downloaded files to LXC within LAVA_LXC_HOME.
     """
 
+    name = "copy-to-lxc"
+    description = "copy files to lxc"
+    summary = "copy to lxc"
+
     def __init__(self):
         super(CopyToLxcAction, self).__init__()
-        self.name = "copy-to-lxc"
-        self.description = "copy files to lxc"
-        self.summary = "copy to lxc"
         self.retries = 3
         self.sleep = 10
 

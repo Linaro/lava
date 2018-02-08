@@ -37,11 +37,9 @@ from lava_dispatcher.utils.compression import untar_file
 
 class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
 
-    def __init__(self):
-        super(DeployImagesAction, self).__init__()
-        self.name = 'deployimages'
-        self.description = "deploy images using guestfs"
-        self.summary = "deploy images"
+    name = 'deployimages'
+    description = "deploy images using guestfs"
+    summary = "deploy images"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -101,11 +99,9 @@ class DeployQemuNfs(Deployment):
 
 class DeployQemuNfsAction(DeployAction):
 
-    def __init__(self):
-        super(DeployQemuNfsAction, self).__init__()
-        self.name = 'deploy-qemu-nfs'
-        self.description = "deploy qemu with NFS"
-        self.summary = "deploy NFS for QEMU"
+    name = 'deploy-qemu-nfs'
+    description = "deploy qemu with NFS"
+    summary = "deploy NFS for QEMU"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -129,11 +125,12 @@ class DeployQemuNfsAction(DeployAction):
 
 class ExtractNfsAction(Action):
 
+    name = "qemu-nfs-deploy"
+    description = "deploy nfsrootfs for QEMU"
+    summary = "NFS deployment for QEMU"
+
     def __init__(self):
         super(ExtractNfsAction, self).__init__()
-        self.name = "qemu-nfs-deploy"
-        self.description = "deploy nfsrootfs for QEMU"
-        self.summary = "NFS deployment for QEMU"
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
         self.extra_compression = ['xz']

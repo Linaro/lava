@@ -81,11 +81,10 @@ class UBootAction(BootAction):
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
     """
-    def __init__(self):
-        super(UBootAction, self).__init__()
-        self.name = "uboot-action"
-        self.description = "interactive uboot action"
-        self.summary = "pass uboot commands"
+
+    name = "uboot-action"
+    description = "interactive uboot action"
+    summary = "pass uboot commands"
 
     def validate(self):
         super(UBootAction, self).validate()
@@ -104,11 +103,9 @@ class UBootAction(BootAction):
 
 class UBootRetry(BootAction):
 
-    def __init__(self):
-        super(UBootRetry, self).__init__()
-        self.name = "uboot-retry"
-        self.description = "interactive uboot retry action"
-        self.summary = "uboot commands with retry"
+    name = "uboot-retry"
+    description = "interactive uboot retry action"
+    summary = "uboot commands with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -144,11 +141,10 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
     Idempotent action which sets the static data only used when this is a boot of secondary media
     already deployed.
     """
-    def __init__(self):
-        super(UBootSecondaryMedia, self).__init__()
-        self.name = "uboot-from-media"
-        self.summary = "set uboot strings for deployed media"
-        self.description = "let uboot know where to find the kernel in the image on secondary media"
+
+    name = "uboot-from-media"
+    description = "let uboot know where to find the kernel in the image on secondary media"
+    summary = "set uboot strings for deployed media"
 
     def validate(self):
         if 'media' not in self.job.device.get('parameters', []):
@@ -189,11 +185,12 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
 
 class UBootEnterFastbootAction(BootAction):
 
+    name = "uboot-enter-fastboot"
+    description = "interactive uboot enter fastboot action"
+    summary = "uboot commands to enter fastboot mode"
+
     def __init__(self):
         super(UBootEnterFastbootAction, self).__init__()
-        self.name = "uboot-enter-fastboot"
-        self.description = "interactive uboot enter fastboot action"
-        self.summary = "uboot commands to enter fastboot mode"
         self.params = {}
 
     def populate(self, parameters):

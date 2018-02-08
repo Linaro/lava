@@ -83,11 +83,12 @@ class Fastboot(Deployment):
 
 class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
+    name = "fastboot-deploy"
+    description = "download files and deploy using fastboot"
+    summary = "fastboot deployment"
+
     def __init__(self):
         super(FastbootAction, self).__init__()
-        self.name = "fastboot-deploy"
-        self.description = "download files and deploy using fastboot"
-        self.summary = "fastboot deployment"
         self.force_prompt = False
 
     def validate(self):
@@ -144,11 +145,12 @@ class FastbootFlashOrderAction(DeployAction):
     Fastboot flash image.
     """
 
+    name = "fastboot-flash-order-action"
+    description = "Determine support for each flash operation"
+    summary = "Handle reset and options for each flash url."
+
     def __init__(self):
         super(FastbootFlashOrderAction, self).__init__()
-        self.name = "fastboot-flash-order-action"
-        self.description = "Determine support for each flash operation"
-        self.summary = "Handle reset and options for each flash url."
         self.retries = 3
         self.sleep = 10
         self.interrupt_prompt = None
@@ -201,11 +203,12 @@ class FastbootFlashAction(Action):
     Fastboot flash image.
     """
 
+    name = "fastboot-flash-action"
+    description = "Run a specified flash command"
+    summary = "Execute fastboot flash command"
+
     def __init__(self, cmd=None):
         super(FastbootFlashAction, self).__init__()
-        self.name = "fastboot-flash-action"
-        self.description = "Run a specified flash command"
-        self.summary = "Execute fastboot flash command"
         self.retries = 3
         self.sleep = 10
         self.command = cmd
@@ -266,11 +269,9 @@ class FastbootFlashAction(Action):
 
 class FastbootReboot(Action):
 
-    def __init__(self):
-        super(FastbootReboot, self).__init__()
-        self.name = 'fastboot-reboot'
-        self.summary = 'execute a reboot using fastboot'
-        self.description = 'Reset a device between flash operations using fastboot reboot.'
+    name = 'fastboot-reboot'
+    description = 'Reset a device between flash operations using fastboot reboot.'
+    summary = 'execute a reboot using fastboot'
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
 
@@ -299,11 +300,9 @@ class FastbootReboot(Action):
 
 class FastbootRebootBootloader(Action):
 
-    def __init__(self):
-        super(FastbootRebootBootloader, self).__init__()
-        self.name = 'fastboot-reboot-bootloader'
-        self.summary = 'execute a reboot to bootloader using fastboot'
-        self.description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
+    name = 'fastboot-reboot-bootloader'
+    description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
+    summary = 'execute a reboot to bootloader using fastboot'
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
 

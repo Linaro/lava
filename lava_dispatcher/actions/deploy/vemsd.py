@@ -87,11 +87,10 @@ class VExpressMsdAction(DeployAction):
     Action for deploying firmware to a Versatile Express board
     in the form of a board recovery image.
     """
-    def __init__(self):
-        super(VExpressMsdAction, self).__init__()
-        self.name = "vexpress-fw-deploy"
-        self.description = "deploy vexpress board recovery image"
-        self.summary = "VExpress FW deployment"
+
+    name = "vexpress-fw-deploy"
+    description = "deploy vexpress board recovery image"
+    summary = "VExpress FW deployment"
 
     def validate(self):
         super(VExpressMsdAction, self).validate()
@@ -123,11 +122,13 @@ class ExtractVExpressRecoveryImage(Action):
     """
     Unpacks the Versatile Express Board Recovery Image
     """
+
+    name = "extract-vexpress-recovery-image"
+    description = "unpack versatile express recovery image"
+    summary = "unpack versatile express recovery image ready for deployment"
+
     def __init__(self):
         super(ExtractVExpressRecoveryImage, self).__init__()
-        self.name = "extract-vexpress-recovery-image"
-        self.description = "unpack versatile express recovery image"
-        self.summary = "unpack versatile express recovery image ready for deployment"
         self.param_key = 'recovery_image'
         self.file_key = "recovery_image"
         self.compression = None
@@ -172,11 +173,13 @@ class EnterVExpressMCC(Action):
     Interrupts autorun if necessary and enters Versatile Express MCC.
     From here commands can be issued for enabling USB and erasing flash
     """
+
+    name = "enter-vexpress-mcc"
+    description = "enter Versatile Express MCC"
+    summary = "enter Versatile Express MCC, interrupting autorun if needed"
+
     def __init__(self):
         super(EnterVExpressMCC, self).__init__()
-        self.name = "enter-vexpress-mcc"
-        self.description = "enter Versatile Express MCC"
-        self.summary = "enter Versatile Express MCC, interrupting autorun if needed"
         self.device_params = None
         self.interrupt_char = None
         self.mcc_prompt = None
@@ -219,11 +222,13 @@ class EnableVExpressMassStorage(Action):
     """
     Enable Versatile Express USB mass storage device from the MCC prompt
     """
+
+    name = "enable-vexpress-usbmsd"
+    description = "enable vexpress usb msd"
+    summary = "enable vexpress usb mass storage device"
+
     def __init__(self):
         super(EnableVExpressMassStorage, self).__init__()
-        self.name = "enable-vexpress-usbmsd"
-        self.description = "enable vexpress usb msd"
-        self.summary = "enable vexpress usb mass storage device"
         self.mcc_prompt = None
         self.mcc_cmd = None
 
@@ -256,11 +261,13 @@ class MountVExpressMassStorageDevice(Action):
     The device is identified by the filesystem label given when running the
     format command on the Versatile Express board.
     """
+
+    name = "mount-vexpress-usbmsd"
+    description = "mount vexpress usb msd"
+    summary = "mount vexpress usb mass storage device on the dispatcher"
+
     def __init__(self):
         super(MountVExpressMassStorageDevice, self).__init__()
-        self.name = "mount-vexpress-usbmsd"
-        self.description = "mount vexpress usb msd"
-        self.summary = "mount vexpress usb mass storage device on the dispatcher"
         self.microsd_fs_label = None
 
     def validate(self):
@@ -298,11 +305,10 @@ class DeployVExpressRecoveryImage(Action):
     Removes the current recovery image from the mounted Versatile Express
     USB mass storage device, and copies over the new one
     """
-    def __init__(self):
-        super(DeployVExpressRecoveryImage, self).__init__()
-        self.name = "deploy-vexpress-recovery-image"
-        self.description = "deploy vexpress recovery image to usb msd"
-        self.summary = "copy recovery image contents to vexpress usb mass storage device"
+
+    name = "deploy-vexpress-recovery-image"
+    description = "deploy vexpress recovery image to usb msd"
+    summary = "copy recovery image contents to vexpress usb mass storage device"
 
     def validate(self):
         super(DeployVExpressRecoveryImage, self).validate()
@@ -341,11 +347,10 @@ class UnmountVExpressMassStorageDevice(Action):
     """
     Unmount Versatile Express USB mass storage device on the dispatcher
     """
-    def __init__(self):
-        super(UnmountVExpressMassStorageDevice, self).__init__()
-        self.name = "unmount-vexpress-usbmsd"
-        self.description = "unmount vexpress usb msd"
-        self.summary = "unmount vexpress usb mass storage device"
+
+    name = "unmount-vexpress-usbmsd"
+    description = "unmount vexpress usb msd"
+    summary = "unmount vexpress usb mass storage device"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(UnmountVExpressMassStorageDevice, self).run(connection, max_end_time, args)
@@ -361,11 +366,13 @@ class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attribute
     Enter Versatile Express Flash menu and erase NOR Flash.
     The job writer can define whether this should be a range or all.
     """
+
+    name = "erase-vexpress-flash"
+    description = "erase vexpress flash"
+    summary = "erase vexpress flash using the commands set by the user"
+
     def __init__(self):
         super(VExpressFlashErase, self).__init__()
-        self.name = "erase-vexpress-flash"
-        self.description = "erase vexpress flash"
-        self.summary = "erase vexpress flash using the commands set by the user"
         self.mcc_prompt = None
         self.flash_prompt = None
         self.flash_enter_cmd = None

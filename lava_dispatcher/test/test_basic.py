@@ -186,10 +186,11 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeAction(Action):
 
+        name = "fake-action"
+
         def __init__(self):
             self.ran = False
             super(TestPipeline.FakeAction, self).__init__()
-            self.name = "fake-action"
 
         def run(self, connection, max_end_time, args=None):
             time.sleep(1)
@@ -398,9 +399,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class KeepConnection(Action):
-        def __init__(self):
-            super(TestFakeActions.KeepConnection, self).__init__()
-            self.name = "keep-connection"
+        name = "keep-connection"
 
         def run(self, connection, max_end_time, args=None):
             pass
@@ -409,9 +408,7 @@ class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-method
             raise NotImplementedError("invalid")
 
     class MakeNewConnection(Action):
-        def __init__(self):
-            super(TestFakeActions.MakeNewConnection, self).__init__()
-            self.name = "make-new-connection"
+        name = "make-new-connection"
 
         def run(self, connection, max_end_time, args=None):
             new_connection = object()

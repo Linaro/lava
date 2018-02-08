@@ -33,11 +33,10 @@ class PrepareKernelAction(Action):
     """
     Populate the pipeline with a kernel conversion action, if needed
     """
-    def __init__(self):
-        super(PrepareKernelAction, self).__init__()
-        self.name = "prepare-kernel"
-        self.summary = "add a kernel conversion"
-        self.description = "populates the pipeline with a kernel conversion action"
+
+    name = "prepare-kernel"
+    description = "populates the pipeline with a kernel conversion action"
+    summary = "add a kernel conversion"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -53,11 +52,13 @@ class UBootPrepareKernelAction(Action):
     """
     Convert kernels to uImage
     """
+
+    name = "uboot-prepare-kernel"
+    description = "convert kernel to uimage"
+    summary = "prepare/convert kernel"
+
     def __init__(self):
         super(UBootPrepareKernelAction, self).__init__()
-        self.name = "uboot-prepare-kernel"
-        self.description = "convert kernel to uimage"
-        self.summary = "prepare/convert kernel"
         self.bootcommand = None
         self.params = None
         self.kernel_type = None
@@ -165,11 +166,13 @@ class PrepareFITAction(Action):
     """
     Package kernel, dtb and ramdisk into an FIT image
     """
+
+    name = "prepare-fit"
+    description = "package kernel, dtb and ramdisk into an FIT image"
+    summary = "generate depthcharge FIT image"
+
     def __init__(self):
         super(PrepareFITAction, self).__init__()
-        self.name = "prepare-fit"
-        self.description = "package kernel, dtb and ramdisk into an FIT image"
-        self.summary = "generate depthcharge FIT image"
         self.deploy_params = None
         self.device_params = None
 

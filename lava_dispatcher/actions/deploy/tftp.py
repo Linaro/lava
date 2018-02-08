@@ -70,11 +70,12 @@ class Tftp(Deployment):
 
 class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
+    name = "tftp-deploy"
+    description = "download files and deploy using tftp"
+    summary = "tftp deployment"
+
     def __init__(self):
         super(TftpAction, self).__init__()
-        self.name = "tftp-deploy"
-        self.description = "download files and deploy using tftp"
-        self.summary = "tftp deployment"
         self.tftp_dir = None
 
     def validate(self):

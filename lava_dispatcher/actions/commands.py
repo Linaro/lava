@@ -27,12 +27,12 @@ from lava_dispatcher.action import (
 class CommandAction(Action):
 
     compatibility = 1
+    name = 'user-command'
+    description = "execute one of the commands listed by the admin"
+    summary = "execute commands"
 
     def __init__(self):
         super(CommandAction, self).__init__()
-        self.name = 'user-command'
-        self.description = "execute one of the commands listed by the admin"
-        self.summary = "execute commands"
         self.section = "command"
         self.cmd = None
         self.ran = False

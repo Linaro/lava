@@ -70,11 +70,12 @@ class MultinodeTestShell(LavaTest):
 
 class MultinodeTestAction(TestShellAction):
 
+    name = "multinode-test"
+    description = "Executing lava-test-runner"
+    summary = "Multinode Lava Test Shell"
+
     def __init__(self):
         super(MultinodeTestAction, self).__init__()
-        self.name = "multinode-test"
-        self.description = "Executing lava-test-runner"
-        self.summary = "Multinode Lava Test Shell"
         self.multinode_dict = {
             'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
         }

@@ -76,11 +76,9 @@ class BootQEMU(Boot):
 
 class BootQEMUImageAction(BootAction):
 
-    def __init__(self):
-        super(BootQEMUImageAction, self).__init__()
-        self.name = 'boot-image-retry'
-        self.description = "boot image with retry"
-        self.summary = "boot with retry"
+    name = 'boot-image-retry'
+    description = "boot image with retry"
+    summary = "boot with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -96,11 +94,9 @@ class BootQEMUImageAction(BootAction):
 
 class BootQemuRetry(RetryAction):
 
-    def __init__(self):
-        super(BootQemuRetry, self).__init__()
-        self.name = 'boot-qemu-image'
-        self.description = "boot image using QEMU command line"
-        self.summary = "boot QEMU image"
+    name = 'boot-qemu-image'
+    description = "boot image using QEMU command line"
+    summary = "boot QEMU image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -109,11 +105,12 @@ class BootQemuRetry(RetryAction):
 
 class CallQemuAction(Action):
 
+    name = "execute-qemu"
+    description = "call qemu to boot the image"
+    summary = "execute qemu to boot the image"
+
     def __init__(self):
         super(CallQemuAction, self).__init__()
-        self.name = "execute-qemu"
-        self.description = "call qemu to boot the image"
-        self.summary = "execute qemu to boot the image"
         self.sub_command = []
         self.substitutions = {}
         self.commands = []

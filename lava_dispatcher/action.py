@@ -358,20 +358,21 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
-        self.section = None
         self.connection_timeout = Timeout(self.name)
         self.character_delay = 0
         self.force_prompt = False
 
+    # Section
+    section = None
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
     name = None
+    # Used in the pipeline to explain what the commands will attempt to do.
+    description = None
     # A short summary of this instance of a class inheriting from Action.  May
     # be None.
     summary = None
-    # Used in the pipeline to explain what the commands will attempt to do.
-    description = None
 
     @property
     def data(self):
@@ -435,8 +436,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         except ValueError:
             raise LAVABug("Action parameters need to be a dictionary")
 
-        # Set the timeout name now
-        self.timeout.name = self.name
         # Overide the duration if needed
         if 'timeout' in self.parameters:
             # preserve existing overrides

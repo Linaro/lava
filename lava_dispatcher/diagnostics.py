@@ -26,11 +26,10 @@ class DiagnoseNetwork(DiagnosticAction):
     """
     Reports network information on the dispatcher
     """
-    def __init__(self):
-        super(DiagnoseNetwork, self).__init__()
-        self.name = "dispatcher-network-issues"
-        self.summary = "output IP data on dispatcher"
-        self.description = "add information to the job output about the dispatcher network"
+
+    name = "dispatcher-network-issues"
+    description = "add information to the job output about the dispatcher network"
+    summary = "output IP data on dispatcher"
 
     @classmethod
     def trigger(cls):
@@ -45,11 +44,10 @@ class DiagnoseTargetNetwork(DiagnosticAction):
     """
     Runs network checks on the target device using the current connection
     """
-    def __init__(self):
-        super(DiagnoseTargetNetwork, self).__init__()
-        self.name = "target-network-issues"
-        self.summary = "output IP data on device"
-        self.description = "add information to the job output about the device network"
+
+    name = "target-network-issues"
+    description = "add information to the job output about the device network"
+    summary = "output IP data on device"
 
     @classmethod
     def trigger(cls):
@@ -64,11 +62,9 @@ class DiagnoseUBoot(DiagnosticAction):
     """
     Report the UBoot environment
     """
-    def __init__(self):
-        super(DiagnoseUBoot, self).__init__()
-        self.name = "uboot-environment"
-        self.summary = "run printenv"
-        self.description = "report the uboot environment"
+    name = "uboot-environment"
+    description = "report the uboot environment"
+    summary = "run printenv"
 
     @classmethod
     def trigger(cls):

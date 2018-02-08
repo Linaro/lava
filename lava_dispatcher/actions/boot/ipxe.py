@@ -78,11 +78,10 @@ class BootloaderAction(BootAction):
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
     """
-    def __init__(self):
-        super(BootloaderAction, self).__init__()
-        self.name = "bootloader-action"
-        self.description = "interactive bootloader action"
-        self.summary = "pass boot commands"
+
+    name = "bootloader-action"
+    description = "interactive bootloader action"
+    summary = "pass boot commands"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -94,11 +93,12 @@ class BootloaderAction(BootAction):
 
 class BootloaderRetry(BootAction):
 
+    name = "bootloader-retry"
+    description = "interactive uboot retry action"
+    summary = "uboot commands with retry"
+
     def __init__(self):
         super(BootloaderRetry, self).__init__()
-        self.name = "bootloader-retry"
-        self.description = "interactive uboot retry action"
-        self.summary = "uboot commands with retry"
         self.type = "ipxe"
         self.force_prompt = False
 

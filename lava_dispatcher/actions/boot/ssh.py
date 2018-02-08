@@ -59,12 +59,11 @@ class SshAction(RetryAction):
     """
     Simple action to wrap AutoLoginAction and ExpectShellSession
     """
-    def __init__(self):
-        super(SshAction, self).__init__()
-        self.name = "login-ssh"
-        self.summary = "login over ssh"
-        self.description = "connect over ssh and ensure a shell is found"
-        self.section = 'boot'
+
+    section = 'boot'
+    name = "login-ssh"
+    description = "connect over ssh and ensure a shell is found"
+    summary = "login over ssh"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -86,11 +85,13 @@ class Scp(ConnectSsh):
     This is a Deploy action. lava-start is managed by the protocol,
     when this action starts, the device is in the "receiving" state.
     """
+
+    name = "scp-deploy"
+    description = "copy a file to a known device using scp"
+    summary = "scp over the ssh connection"
+
     def __init__(self, key):
         super(Scp, self).__init__()
-        self.name = "scp-deploy"
-        self.summary = "scp over the ssh connection"
-        self.description = "copy a file to a known device using scp"
         self.key = key
         self.scp = []
 
@@ -169,11 +170,13 @@ class PrepareSsh(Action):
     """
     Sets the host for the ConnectSsh
     """
+
+    name = "prepare-ssh"
+    description = "determine which address to use for primary or secondary connections"
+    summary = "set the host address of the ssh connection"
+
     def __init__(self):
         super(PrepareSsh, self).__init__()
-        self.name = "prepare-ssh"
-        self.summary = "set the host address of the ssh connection"
-        self.description = "determine which address to use for primary or secondary connections"
         self.primary = False
 
     def validate(self):
@@ -203,11 +206,9 @@ class PrepareSsh(Action):
 
 class ScpOverlayUnpack(Action):
 
-    def __init__(self):
-        super(ScpOverlayUnpack, self).__init__()
-        self.name = "scp-overlay-unpack"
-        self.summary = "unpack the overlay on the remote device"
-        self.description = "unpack the overlay over an existing ssh connection"
+    name = "scp-overlay-unpack"
+    description = "unpack the overlay over an existing ssh connection"
+    summary = "unpack the overlay on the remote device"
 
     def run(self, connection, max_end_time, args=None):
         connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
@@ -251,11 +252,13 @@ class SchrootAction(Action):
     using the current connection.
     Does not rely on ssh
     """
+
+    name = "schroot-login"
+    description = "enter schroot using existing connection"
+    summary = "enter specified schroot"
+
     def __init__(self):
         super(SchrootAction, self).__init__()
-        self.name = "schroot-login"
-        self.summary = "enter specified schroot"
-        self.description = "enter schroot using existing connection"
         self.section = 'boot'
         self.schroot = None
         self.command = None

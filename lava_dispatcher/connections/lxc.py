@@ -32,9 +32,8 @@ class LxcSession(ShellSession):
     """Extends a ShellSession to include the ability to disconnect and finalise
     cleanly.
     """
-    def __init__(self, job, shell_command):
-        super(LxcSession, self).__init__(job, shell_command)
-        self.name = "LxcSession"
+
+    name = "LxcSession"
 
     def finalise(self):
         self.disconnect("closing")
@@ -49,11 +48,13 @@ class ConnectLxc(Action):
     """
     Class to make a lxc shell connection to the container.
     """
+
+    name = "connect-lxc"
+    description = "connect to the lxc container"
+    summary = "run connection command"
+
     def __init__(self):
         super(ConnectLxc, self).__init__()
-        self.name = "connect-lxc"
-        self.summary = "run connection command"
-        self.description = "connect to the lxc container"
         self.session_class = LxcSession
         self.shell_class = ShellCommand
 
