@@ -6,3 +6,4 @@ etc/logrotate.d/* ./etc/logrotate.d/
 etc/env.yaml ./etc/lava-server/
 etc/lava-publisher.service ./usr/share/lava-server/
 etc/lava-master ./etc/lava-server/
+etc/lava-logs ./etc/lava-server/
