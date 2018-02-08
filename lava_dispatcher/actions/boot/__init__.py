@@ -594,6 +594,7 @@ class BootloaderInterruptAction(Action):
     name = "bootloader-interrupt"
     description = "interrupt bootloader"
     summary = "interrupt bootloader to get an interactive shell"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super(BootloaderInterruptAction, self).__init__()
@@ -656,6 +657,7 @@ class BootloaderCommandsAction(Action):
     name = "bootloader-commands"
     description = "send commands to bootloader"
     summary = "interactive bootloader"
+    timeout_exception = InfrastructureError
 
     def __init__(self, expect_final=True):
         super(BootloaderCommandsAction, self).__init__()

@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from lava_dispatcher.action import JobError
+from lava_dispatcher.action import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.action import Action
@@ -65,6 +65,7 @@ class ConnectSsh(Action):
     name = "ssh-connection"
     description = "login to a known device using ssh"
     summary = "make an ssh connection to a device"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super(ConnectSsh, self).__init__()

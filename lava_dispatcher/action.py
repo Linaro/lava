@@ -354,11 +354,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.job = None
         self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
-        self.timeout = Timeout(self.name)
+        self.timeout = Timeout(self.name, exception=self.timeout_exception)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
-        self.connection_timeout = Timeout(self.name)
+        self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
         self.character_delay = 0
         self.force_prompt = False
 
@@ -373,6 +373,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
     # A short summary of this instance of a class inheriting from Action.  May
     # be None.
     summary = None
+    # Exception to raise when this action is timing out
+    timeout_exception = JobError
 
     @property
     def data(self):
@@ -780,7 +782,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             return
         if not isinstance(timeout, dict):
             raise JobError("Invalid timeout %s" % str(timeout))
-        self.timeout = Timeout(self.name, Timeout.parse(timeout))
+        self.timeout.duration = Timeout.parse(timeout)
 
     def _override_connection_timeout(self, timeout):
         """
@@ -790,7 +792,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             return
         if not isinstance(timeout, dict):
             raise JobError("Invalid connection timeout %s" % str(timeout))
-        self.connection_timeout = Timeout(self.name, Timeout.parse(timeout))
+        self.connection_timeout.duration = Timeout.parse(timeout)
 
     def log_action_results(self, fail=False):
         if self.results and isinstance(self.logger, YAMLLogger):
@@ -856,12 +858,12 @@ class Timeout(object):
     If a connection is set, this timeout is used per pexpect operation on that connection.
     If a connection is not set, this timeout applies for the entire run function of the action.
     """
-    def __init__(self, name, duration=ACTION_TIMEOUT, protected=False):
+    def __init__(self, name, duration=ACTION_TIMEOUT, exception=JobError):
         self.name = name
         self.start = 0
         self.elapsed_time = -1
         self.duration = duration  # Actions can set timeouts higher than the clamp.
-        self.protected = protected
+        self.exception = exception
 
     @classmethod
     def default_duration(cls):
@@ -885,7 +887,7 @@ class Timeout(object):
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
         duration = int(time.time() - self.start)
-        raise JobError("%s timed out after %s seconds" % (self.name, duration))
+        raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
     def __call__(self, action_max_end_time=None):
@@ -917,12 +919,3 @@ class Timeout(object):
             # clear the timeout alarm, the action has returned
             signal.alarm(0)
             self.elapsed_time = time.time() - self.start
-
-    def modify(self, duration):
-        """
-        Called from the parser if the job YAML wants to set an override on a per-action
-        timeout. Complete job timeouts can be larger than the clamp.
-        """
-        if self.protected:
-            raise JobError("Trying to modify a protected timeout: %s.", self.name)
-        self.duration = max(min(OVERRIDE_CLAMP_DURATION, duration), 1)  # FIXME: needs support in /etc/

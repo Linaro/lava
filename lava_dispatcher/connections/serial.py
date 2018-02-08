@@ -22,6 +22,7 @@ from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.action import (
     Action,
     JobError,
+    InfrastructureError
 )
 from lava_dispatcher.shell import (
     ShellCommand,
@@ -42,6 +43,7 @@ class ConnectDevice(Action):
     name = "connect-device"
     description = "use the configured command to connect serial to the device"
     summary = "run connection command"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super(ConnectDevice, self).__init__()

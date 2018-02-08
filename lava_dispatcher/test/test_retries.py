@@ -25,6 +25,7 @@ from lava_dispatcher.action import (
     Timeout,
     JobError,
     LAVABug,
+    InfrastructureError,
 )
 from lava_dispatcher.logical import (
     RetryAction,
@@ -447,6 +448,18 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
+            self.fakejob.run()
+
+    def test_action_timout_custom_exception(self):
+        """ Test custom timeout exception """
+        seconds = 2
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = TestTimeout.FakeAction()
+        action.timeout = Timeout(action.name, duration=seconds, exception=InfrastructureError)
+        pipeline.add_action(action)
+        self.fakejob.pipeline = pipeline
+        self.fakejob.device = TestTimeout.FakeDevice()
+        with self.assertRaises(InfrastructureError):
             self.fakejob.run()
 
     def test_action_complete(self):

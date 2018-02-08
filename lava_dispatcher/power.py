@@ -93,6 +93,7 @@ class PDUReboot(Action):
     name = "pdu-reboot"
     description = "issue commands to a PDU to power cycle a device"
     summary = "hard reboot using PDU"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super(PDUReboot, self).__init__()
@@ -120,6 +121,7 @@ class PowerOn(Action):
     name = "power-on"
     description = "supply power to device"
     summary = "send power_on command"
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time, args=None):
         # to enable power to a device, either power_on or hard_reset are needed.
@@ -155,6 +157,7 @@ class PowerOff(Action):
     name = "power-off"
     description = "discontinue power to device"
     summary = "send power_off command"
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time, args=None):
         connection = super(PowerOff, self).run(connection, max_end_time, args)
