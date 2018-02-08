@@ -310,15 +310,15 @@ class Command(LAVADaemonCommand):
             else:
                 self.logger.info("[%d] %s => END (lava-run crashed, mark job as INCOMPLETE)",
                                  job_id, hostname)
-                if error_msg:
-                    self.logger.error("[%d] Error: %s", job_id, error_msg)
-
                 with transaction.atomic():
                     # TODO: find a way to lock actual_device
                     job = TestJob.objects.select_for_update() \
                                          .get(id=job_id)
-                    # TODO: use the failure message
+
                     job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                    if error_msg:
+                        self.logger.error("[%d] Error: %s", job_id, error_msg)
+                        job.failure_comment = error_msg
                     job.save()
 
             # Create description.yaml even if it's empty
