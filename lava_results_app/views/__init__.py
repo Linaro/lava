@@ -168,7 +168,6 @@ def testjob(request, job):
             'job_link': pklink(job),
             'suite_table': suite_table,
             'metadata': yaml_dict,
-            'content_type_id': ContentType.objects.get_for_model(TestSuite).id,
             'failed_definitions': failed_definitions,
             'condition_choices': simplejson.dumps(
                 QueryCondition.get_condition_choices(job)
@@ -250,8 +249,10 @@ def suite(request, job, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(suite, pk=pk, job=job.id),
             'job': job,
             'job_link': pklink(job),
-            'content_type_id': ContentType.objects.get_for_model(TestCase).id,
+            'testsuite_content_type_id': ContentType.objects.get_for_model(
+                TestSuite).id,
             'suite_name': pk,
+            'suite_id': test_suite.id,
             'suite_table': suite_table,
             'bug_links': BugLink.objects.filter(
                 object_id=test_suite.id,
@@ -428,13 +429,18 @@ def testcase(request, case_id, job=None, pk=None):
             logger.info("Unable to load extra case metadata for %s", extra_case)
             f_metadata = {}
         extra_data = f_metadata.get('extra', None)
-        if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
-            with open(f_metadata['extra'], 'r') as extra_file:
-                items = yaml.load(extra_file, Loader=yaml.CLoader)
-            # hide the !!python OrderedDict prefix from the output.
-            for key, value in items.items():
-                extra_source.setdefault(extra_case.id, '')
-                extra_source[extra_case.id] += "%s: %s\n" % (key, value)
+        try:
+            if extra_data and os.path.exists(extra_data):
+                with open(f_metadata['extra'], 'r') as extra_file:
+                    items = yaml.load(extra_file, Loader=yaml.CLoader)
+                # hide the !!python OrderedDict prefix from the output.
+                for key, value in items.items():
+                    extra_source.setdefault(extra_case.id, '')
+                    extra_source[extra_case.id] += "%s: %s\n" % (key, value)
+        except TypeError:
+            # In some old version of LAVA, extra_data is not a string but an OrderedDict
+            # In this case, just skip it.
+            pass
     template = loader.get_template("lava_results_app/case.html")
     trail_id = case.id if case else test_sets.first().name
     return HttpResponse(template.render(

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  download-test-suites.py
+#  download-test-suites-api.py
 #
 #  Copyright 2018 Linaro Limited
 #  Author: Stevan Radakovic <stevan.radakovic@linaro.org>

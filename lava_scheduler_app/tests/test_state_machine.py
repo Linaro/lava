@@ -320,18 +320,58 @@ class TestTestJobStateMachine(TestCase):
 
         # 1.2/ Failure
         self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_GOOD
         self.device.save()
         self.job.state = TestJob.STATE_RUNNING
         self.job.actual_device = self.device
         self.job.save()
         self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
         self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_GOOD)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
+
+        # 1.3/ Infrastructure error
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_GOOD
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_COMPLETE, True)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_COMPLETE)
+
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_GOOD
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE, True)
+        self.job.save()
         self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
         self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
+
+        # For health check, an Infrastructure error will not change the device health
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_GOOD
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.health_check = True
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE, True)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
+        self.job.health_check = False
+        self.job.save()
 
         # 2/ STATE_CANCELING => STATE_FINISHED
         # 1.1/ Success
         self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_UNKNOWN
         self.device.save()
         self.job.state = TestJob.STATE_CANCELING
         self.job.actual_device = self.device

@@ -190,6 +190,8 @@ strings. Useful bootargs can be set as the default value of
 for test writers to supply via the :term:`job context` and then added
 to the bootargs using ``{{extra_kernel_args}}``.
 
+.. seealso:: :ref:`appending_kernel_command_line`
+
 .. _uboot_mkimage:
 
 Using mkimage

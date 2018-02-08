@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 # ZMQ events
 EVENT_NOTIFICATION = False
 INTERNAL_EVENT_SOCKET = "ipc:///tmp/lava.events"

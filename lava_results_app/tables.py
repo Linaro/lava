@@ -133,8 +133,9 @@ class ResultsTable(LavaTable):
         user = table.context.get('request').user
         if not user.is_anonymous():
             return mark_safe(
-                '<a href="#" class="buglink" id="buglink_%s">[%s]</a> (%s)' % (
+                '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a> (%s)' % (
                     record.id,
+                    ContentType.objects.get_for_model(TestSuite).id,
                     suite_links_count,
                     case_links_count
                 )
@@ -254,8 +255,9 @@ class SuiteTable(LavaTable):
         user = table.context.get('request').user
         if not user.is_anonymous():
             return mark_safe(
-                '<a href="#" class="buglink" id="buglink_%s">[%s]</a>' % (
+                '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a>' % (
                     record.id,
+                    ContentType.objects.get_for_model(TestCase).id,
                     case_links_count
                 ))
         else:

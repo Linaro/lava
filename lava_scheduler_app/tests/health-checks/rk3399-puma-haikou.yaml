@@ -1,0 +1,36 @@
+device_type: rk3399-puma-haikou
+job_name: Health check (known-good kernel)
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+   minutes: 5
+  actions:
+    power-off:
+      seconds: 30
+
+actions:
+- deploy:
+    timeout:
+      minutes: 2
+    to: tftp
+    kernel:
+      url: https://www.theobroma-systems.com/static/puma/lava-health-check/current/Image
+      type: image
+    ramdisk:
+      url: https://www.theobroma-systems.com/static/puma/lava-health-check/current/rootfs.cpio.gz
+      compression: gz
+    dtb:
+      url: https://www.theobroma-systems.com/static/puma/lava-health-check/current/rk3399-puma-haikou.dtb
+    os: oe
+
+- boot:
+    timeout:
+      minutes: 5
+    method: u-boot
+    commands: ramdisk
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
+      - '/ #'

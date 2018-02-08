@@ -59,7 +59,7 @@ actions:
 
 - test:
     timeout:
-      minutes: 5
+      minutes: 10
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git

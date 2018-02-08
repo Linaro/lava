@@ -1,13 +1,18 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import Q
+from django.db import transaction
 
 from lava_scheduler_app.models import (
     Device, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
-    Architecture, ProcessorFamily, Alias, BitWidth, Core
+    Architecture, ProcessorFamily, Alias, BitWidth, Core,
+    NotificationRecipient
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -54,9 +59,11 @@ admin.site.register(User, UserAdmin)
 
 
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
-    for testjob in queryset:
-        if testjob.can_cancel(request.user):
-            testjob.cancel(request.user)
+    with transaction.atomic():
+        for testjob in queryset.select_for_update():
+            if testjob.can_cancel(request.user):
+                testjob.go_state_canceling()
+                testjob.save()
 
 
 cancel_action.short_description = 'cancel selected jobs'
@@ -136,6 +143,37 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
         return queryset.order_by('requested_device_type__name')
 
 
+def _update_devices_health(request, queryset, health):
+    with transaction.atomic():
+        for device in queryset.select_for_update():
+            old_health_display = device.get_health_display()
+            device.health = health
+            device.save()
+            device.log_admin_entry(request.user, "%s → %s" % (old_health_display, device.get_health_display()))
+
+
+def device_health_good(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_GOOD)
+
+
+def device_health_unknown(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_UNKNOWN)
+
+
+def device_health_maintenance(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_MAINTENANCE)
+
+
+def device_health_retired(modeladmin, request, queryset):
+    _update_devices_health(request, queryset, Device.HEALTH_RETIRED)
+
+
+device_health_good.short_description = "Update health of selected devices to Good"
+device_health_unknown.short_description = "Update health of selected devices to Unknown"
+device_health_maintenance.short_description = "Update health of selected devices to Maintenance"
+device_health_retired.short_description = "Update health of selected devices to Retired"
+
+
 class DeviceAdmin(admin.ModelAdmin):
     list_filter = (DeviceTypeFilter, 'state', ActiveDevicesFilter,
                    'health', 'worker_host')
@@ -183,6 +221,8 @@ class DeviceAdmin(admin.ModelAdmin):
                     'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
+    actions = [device_health_good, device_health_unknown,
+               device_health_maintenance, device_health_retired]
 
 
 class VisibilityForm(forms.ModelForm):
@@ -304,6 +344,16 @@ class TagAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
+class NotificationRecipientAdmin(admin.ModelAdmin):
+    def handle(self, obj):
+        if obj.method == NotificationRecipient.EMAIL:
+            return obj.email_address
+        else:
+            return "%s@%s" % (obj.irc_handle, obj.irc_server_name)
+    list_display = ('method', 'handle', 'status')
+    list_filter = ('method', 'status')
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
@@ -315,3 +365,4 @@ admin.site.register(BitWidth)
 admin.site.register(Core)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
+admin.site.register(NotificationRecipient, NotificationRecipientAdmin)

@@ -1,0 +1,14 @@
+{% extends 'base-uboot.jinja2' %}
+{% set device_type = "xilinx-zcu102" %}
+{% set bootloader_prompt = bootloader_prompt|default('ZynqMP>') %}
+{% set booti_kernel_addr = '0x80000' %}
+{% set booti_ramdisk_addr = '0x10000000' %}
+{% set booti_dtb_addr = '0x14000000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set uboot_bootx_cmd = "booti {KERNEL_ADDR} {RAMDISK_ADDR} {DTB_ADDR}" %}
+{% set uboot_load_fdt = "          - setenv loadfdt 'tftpb {DTB_ADDR} {DTB}'" %}
+{% set uboot_tftp_commands =
+"          - setenv loadkernel 'tftpb {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftpb {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+" + uboot_load_fdt -%}

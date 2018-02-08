@@ -14,7 +14,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
+  source: https://git.linaro.org/lava/lava-server.git
   path: doc/v2/examples/test-jobs/standard-armmp-nfs-bbb.yaml
   build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
   build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/4/console
@@ -56,7 +56,7 @@ actions:
 
 - test:
     timeout:
-      minutes: 5
+      minutes: 10
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git

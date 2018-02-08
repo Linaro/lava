@@ -1,0 +1,18 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+device_type: {{ device_type|default('mps') }}
+usb_filesystem_label: '{{ usb_filesystem_label|default('V2M_MPS') }}'
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      mps:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      minimal:
+{% endblock body -%}

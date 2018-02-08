@@ -272,6 +272,10 @@ e.g.:
  serverip 10.3.1.1; run loadkernel; run loadinitrd; run loadfdt; bootz
  0x82000000 0x83000000 0x88000000'; boot
 
+.. index:: boot commands - full
+
+.. _full_boot_commands:
+
 Specifying commands in full
 ===========================
 
@@ -303,6 +307,49 @@ by test writers from a hacking session.)
    that a label is created in the templates for this set of commands.
    Alternatively, you can request a new override to make the existing labels
    more flexible.
+
+.. index:: kernel command line, extra kernel arguments, boot commands - kernel
+
+.. _appending_kernel_command_line:
+
+Appending to the kernel command line
+====================================
+
+A test job may require extra kernel command line options to enable or disable
+particular functionality. The :term:`job context` can be used to append
+strings to the kernel command line:
+
+.. code-block:: jinja
+
+  context:
+      extra_kernel_args: vsyscall=native
+
+Values need to be separated by whitespace and will be added to the command
+line with a prefix of a single space and a suffix of a single space.
+
+The possible values which can be used are determined solely by the support
+available within the kernel provided to the :term:`DUT`.
+
+Depending on the boot method, it may also be possible to add specific options,
+for example to append values to the NFS options using ``extra_nfsroot_args``:
+
+.. code-block:: jinja
+
+  context:
+      extra_nfsroot_args: ,rsize=4096 nfsrootdebug
+
+.. note:: ``extra_nfsroot_args`` are appended directly to the existing NFS
+   flags ``nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr`` so if the
+   appended string contains an extra flag, this must be put first and the
+   string must start with a comma. Other options can then be separated by a
+   space or can use ``extra_kernel_args``. The example above would result in
+   the string ``nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,rsize=4096
+   nfsrootdebug``. (Whether that makes sense to any particular test job is out
+   of scope for this documentation.)
+
+.. seealso:: `Kernel documentation for NFSROOT
+   <https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt>`_ ,
+   :ref:`override_variables_context` and :ref:`override_support`
 
 .. index:: boot method
 

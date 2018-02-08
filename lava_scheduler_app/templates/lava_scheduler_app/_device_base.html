@@ -68,6 +68,8 @@
         {% if device.health == device.HEALTH_GOOD %}
         <span class="label label-success">
         {% elif device.health == device.HEALTH_UNKNOWN or device.health == device.HEALTH_LOOPING %}
+        <span class="label label-info">
+        {% elif device.health == device.HEALTH_MAINTENANCE %}
         <span class="label label-warning">
         {% else %}
         <span class="label label-danger">
@@ -75,7 +77,7 @@
           {{ device.get_health_display }}
         </span>
         {% if can_admin %}
-        &nbsp;<span class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#healthModal"></span>
+        &nbsp;<a href="#healthModal" data-toggle="modal" data-target="#healthModal"><span class="glyphicon glyphicon-pencil"></span></a>
         <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -89,10 +91,10 @@
                   <div class="form-group">
                     <label for="health" class="control-label">Health:</label>
                     <select name="health" class="form-control" id="health">
-                      {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
                       {% if device.health != device.HEALTH_UNKNOWN %}<option>Unknown</option>{% endif %}
-                      {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
                       {% if device.health != device.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
+                      {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
+                      {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
                       {% if device.health != device.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
                     </select>
                   </div>

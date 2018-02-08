@@ -79,7 +79,7 @@ test cases in which particular field satisfies a condition. List of supported
 fields which can be used as condition field is available as autocomplete list
 in the condition 'Field name' field. You can also add conditions with fields in
 the object set which is queried (i.e. if test jobs are query object set user
-can add conditions such as submitter, device, priority, status...).
+can add conditions such as submitter, health, device, priority, state...).
 
 It is also possible to add conditions using custom metadata. Since metadata can
 contain custom field names, keep in mind that the query might not return
@@ -239,7 +239,7 @@ LAVA Query use cases
    * Condition 1:
 
      * Condition model: test job
-     * Field name: status
+     * Field name: health
      * Operator: Exact match
      * Field value: Incomplete
 
@@ -255,7 +255,7 @@ LAVA Query use cases
    * Condition 1:
 
      * Condition model: test job
-     * Field name: status
+     * Field name: health
      * Operator: Exact match
      * Field value: Complete
 
@@ -295,6 +295,15 @@ LAVA Query use cases
      * Field name: measurement
      * Operator: Greater than
      * Field value: 40
+
+#. List of jobs stuck in 'Canceling' state:
+
+   * Condition 1:
+
+     * Condition model: testjob
+     * Field name: state
+     * Operator: Exact match
+     * Field value: Canceling
 
 
 .. _lava_charts:

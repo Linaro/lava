@@ -35,7 +35,7 @@ of each type are available for tests and currently running jobs.</p>
     </li>
     <li>
         <span class="glyphicon glyphicon-flash"></span>
-        <b><a href="/api/help">API</a></b> - information on how to interact
+        <b><a href="{% url 'lava.api_help' %}">API</a></b> - information on how to interact
         with LAVA and export data from LAVA using XMLRPC.</li>
     <li>
         <span class="glyphicon glyphicon-question-sign"></span>
@@ -45,7 +45,7 @@ of each type are available for tests and currently running jobs.</p>
     {% if user.is_authenticated %}
     <li>
         <span class="glyphicon glyphicon-user"></span>
-        <b><a href="/me">Profile</a></b> - you are logged in as
+        <b><a href="{% url 'lava.me' %}">Profile</a></b> - you are logged in as
     <b>{{ user.get_full_name|default:user.username }}</b>. Your profile
     provides access to jobs you have submitted or marked as favourites,
     your bundle streams and your filter or image report subscriptions.
@@ -53,7 +53,7 @@ of each type are available for tests and currently running jobs.</p>
     {% else %}
     <li>
         <span class="glyphicon glyphicon-user"></span>
-        <b><a href="/accounts/login/?next=/">Sign In</a></b> - once you
+        <b><a href="{% url 'login' %}?next={{ request.get_full_path }}">Sign In</a></b> - once you
     are logged in, LAVA will build a profile for you which provides access
     to jobs you submit or mark as favourites, your bundle streams containing
     results of those tests and your filter or image report subscriptions

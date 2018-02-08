@@ -125,15 +125,20 @@
   {% spaceless %}
     <div id="buglinks_collapse" class="panel-collapse collapse">
       <div class="panel-body">
-        <dl class="dl-horizontal">
+        <div>
+          Bug(s) linked:
+        </div>
+        <div>
           {% for bug_link in bug_links %}
-          <dt>URL</dt>
-          <dd><a href="{{ bug_link.url }}" target="_blank">{{ bug_link.url }}</a></dd>
-          <br/>
+          <div class="row">
+            <div class="col-lg-12">
+              <a href="{{ bug_link.url }}" target="_blank">{{ bug_link.url }}</a>
+            </div>
+          </div>
           {% empty %}
-          No bug links for this test case.
+          No bug links for this test suite.
           {% endfor %}
-        </dl>
+        </div>
       </div>
     </div>
   {% endspaceless %}

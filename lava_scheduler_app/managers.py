@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from django.db import models
 from django.db.models import Q
 
@@ -27,22 +29,10 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
     def visible_by_user(self, user):
 
         from lava_scheduler_app.models import TestJob
-        # Legacy jobs.
-        conditions_legacy = Q(is_pipeline=False)
-        if not user or user.is_anonymous():
-            conditions_legacy &= Q(is_public=True)
-        elif not user.is_superuser and not user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'):
-            # continue adding conditions only if user is not superuser and
-            # does not have admin permission for jobs.
-            conditions_legacy &= (Q(is_public=True) |
-                                  Q(user=user) |
-                                  Q(submitter=user) |
-                                  Q(group__in=user.groups.all()))
-
         # Pipeline jobs.
         conditions = Q(is_pipeline=True)
         if not user or user.is_anonymous():
-            conditions_legacy &= Q(is_public=True)
+            conditions &= Q(is_public=True)
         elif not user.is_superuser and not user.has_perm('lava_scheduler_app.cancel_resubmit_testjob') and not user.has_perm('lava_scheduler_app.change_device'):
             # continue adding conditions only if user is not superuser and
             # does not have admin permission for jobs or devices.
@@ -59,7 +49,6 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
                   viewing_groups__in=user.groups.all())
             )
 
-        conditions |= conditions_legacy
         queryset = self.filter(conditions)
 
         return queryset

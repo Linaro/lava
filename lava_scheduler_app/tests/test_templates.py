@@ -159,6 +159,34 @@ class TestTemplates(unittest.TestCase):
             template_dict['actions']['boot']['methods']['fastboot']
         )
 
+    def test_console_baud(self):
+        data = """{% extends 'beaglebone-black.jinja2' %}"""
+        test_template = prepare_jinja_template('bbb-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
+        for command in commands:
+            if not command.startswith('setenv nfsargs'):
+                continue
+            self.assertIn('console=ttyO0,115200n8', command)
+        data = """{% extends 'base-uboot.jinja2' %}"""
+        test_template = prepare_jinja_template('base-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
+        for command in commands:
+            if not command.startswith('setenv nfsargs'):
+                continue
+            self.assertNotIn('console=ttyO0,115200n8', command)
+            self.assertNotIn('console=', command)
+            self.assertNotIn('console=ttyO0', command)
+            self.assertNotIn('115200n8', command)
+            self.assertNotIn('n8', command)
+
     def test_primary_connection_power_commands_fail(self):
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
@@ -731,6 +759,60 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('options', params)
         self.assertIn('identity_file', params)
 
+        # test support for retreiving MAC from device using base-fastboot.
+        data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('parameters', template_dict)
+        self.assertIn('interfaces', template_dict['parameters'])
+        self.assertIn('target', template_dict['parameters']['interfaces'])
+        self.assertIn('mac', template_dict['parameters']['interfaces']['target'])
+        self.assertIn('ip', template_dict['parameters']['interfaces']['target'])
+        self.assertIsNotNone(template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertNotEqual('', template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertEqual('00:E0:4C:53:44:58', template_dict['parameters']['interfaces']['target']['mac'])
+        self.assertIsNone(template_dict['parameters']['interfaces']['target']['ip'])
+
+    def test_rpi3_32_template(self):
+        checked = False
+        data = """{% extends 'bcm2837-rpi-3-b-32.jinja2' %}"""
+        self.assertTrue(self.validate_data('staging-rpi3-01', data))
+
+        # test appending to kernel args
+        context = {'extra_kernel_args': 'extra_arg=extra_val'}
+        test_template = prepare_jinja_template('staging-rpi3-01', data)
+        rendered = test_template.render(**context)
+        template_dict = yaml.load(rendered)
+        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertIn("earlycon=", line)
+                self.assertIn("extra_arg=extra_val", line)
+                checked = True
+        self.assertTrue(checked)
+
+        # test overwriting kernel args
+        checked = False
+        context = {'custom_kernel_args': 'custom_arg=custom_val'}
+        test_template = prepare_jinja_template('staging-rpi3-01', data)
+        rendered = test_template.render(**context)
+        template_dict = yaml.load(rendered)
+        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertNotIn("earlycon=", line)
+                self.assertIn("custom_arg=custom_val", line)
+                checked = True
+        self.assertTrue(checked)
+
     def test_panda_template(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -1223,7 +1305,7 @@ class TestTemplates(unittest.TestCase):
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
-        self.assertIn('cpu-reset-messages', template_dict['constants'])
+        self.assertIn('error-messages', template_dict['constants']['u-boot'])
 
     def test_db820c_template(self):
         data = """{% extends 'dragonboard-820c.jinja2' %}
@@ -1285,3 +1367,28 @@ class TestTemplates(unittest.TestCase):
                          depthcharge['parameters']['start_message'])
         self.assertEqual('earlyprintk=ttyS2,115200n8 console=tty1 console=ttyS2,115200n8 root=/dev/ram0 ip=dhcp',
                          depthcharge['ramdisk']['cmdline'])
+
+    def test_xilinx_zcu102(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'zcu102.jinja2')) as zcu:
+            data = zcu.read()
+        self.assertTrue(self.validate_data('zcu-01', data))
+        test_template = prepare_jinja_template('zcu-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['u-boot'])
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        for command in commands:
+            if not command.startswith('setenv loadkernel'):
+                continue
+            self.assertNotIn('tftp ', command)
+            self.assertIn('tftpb', command)
+
+        for command in commands:
+            if not command.startswith('setenv bootargs'):
+                continue
+            self.assertNotIn('console=ttyS0,115200n8', command)
+            self.assertNotIn('console=', command)
+            self.assertNotIn('console=ttyO0', command)
+            self.assertNotIn('115200n8', command)
+            self.assertNotIn('n8', command)
