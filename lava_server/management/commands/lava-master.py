@@ -211,7 +211,6 @@ class Command(LAVADaemonCommand):
         The master crashed, send a STATUS message to get the current state of jobs
         """
         jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
-                                      is_pipeline=True,
                                       state=TestJob.STATE_RUNNING)
         for job in jobs:
             self.logger.info("[%d] STATUS => %s (%s)", job.id, hostname,

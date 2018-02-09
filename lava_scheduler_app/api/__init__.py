@@ -310,7 +310,7 @@ class SchedulerAPI(ExposedAPI):
                 continue
             devices_list.append(dev)
 
-        return [[dev.hostname, dev.device_type.name, build_device_status_display(dev.state, dev.health), dev.current_job().pk if dev.current_job() else None, dev.is_pipeline]
+        return [[dev.hostname, dev.device_type.name, build_device_status_display(dev.state, dev.health), dev.current_job().pk if dev.current_job() else None, True]
                 for dev in devices_list]
 
     def all_device_types(self):
@@ -605,7 +605,7 @@ class SchedulerAPI(ExposedAPI):
             device_dict["job"] = None
             device_dict["offline_since"] = None
             device_dict["offline_by"] = None
-            device_dict["is_pipeline"] = device.is_pipeline
+            device_dict["is_pipeline"] = True
 
             current_job = device.current_job()
             if current_job is not None:
@@ -801,6 +801,7 @@ class SchedulerAPI(ExposedAPI):
             job.health = job.get_health_display()
             job.submitter_username = job.submitter.username
             job.absolute_url = job.get_absolute_url()
+            job.is_pipeline = True
         except PermissionDenied:
             raise xmlrpclib.Fault(
                 401, "Permission denied for user to job %s" % job_id)
@@ -858,26 +859,10 @@ class SchedulerAPI(ExposedAPI):
                 'sub_id': job.sub_id
             })
 
-        if job.is_pipeline:
-            job_status.update({
-                'job_status': job.get_legacy_status_display(),
-                'bundle_sha1': ""
-            })
-            return job_status
-
-        # DEPRECATED
-        bundle_sha1 = ""
-        if job.results_link:
-            try:
-                bundle_sha1 = job.results_link.split('/')[-2]
-            except IndexError:
-                pass
-
         job_status.update({
             'job_status': job.get_legacy_status_display(),
-            'bundle_sha1': bundle_sha1
+            'bundle_sha1': ""
         })
-
         return job_status
 
     def job_list_status(self, job_id_list):
@@ -1213,11 +1198,6 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 404, "Device '%s' was not found." % hostname
             )
-        if not device.is_pipeline:
-            raise xmlrpclib.Fault(
-                400, "Device '%s' is not a pipeline device" % hostname
-            )
-
         device_dict = device.load_configuration(output_format="raw")
         if not device_dict:
             raise xmlrpclib.Fault(
@@ -1263,11 +1243,11 @@ class SchedulerAPI(ExposedAPI):
 
         """
         if not name:
-            devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED)
+            devices = Device.objects.exclude(health=Device.HEALTH_RETIRED)
         else:
-            devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED).filter(device_type__name=name)
+            devices = Device.objects.exclude(health=Device.HEALTH_RETIRED).filter(device_type__name=name)
             if not devices:
-                devices = Device.objects.filter(is_pipeline=True).exclude(health=Device.HEALTH_RETIRED).filter(hostname=name)
+                devices = Device.objects.exclude(health=Device.HEALTH_RETIRED).filter(hostname=name)
         if not devices and name:
             raise xmlrpclib.Fault(
                 404,

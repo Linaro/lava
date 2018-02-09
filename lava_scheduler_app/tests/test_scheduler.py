@@ -73,7 +73,7 @@ class TestHealthCheckScheduling(TestCase):
         self.user = User.objects.create(username="user-01")
         self.last_hc03 = TestJob.objects.create(health_check=True, actual_device=self.device03,
                                                 user=self.user, submitter=self.user,
-                                                start_time=timezone.now(),
+                                                start_time=timezone.now(), is_public=True,
                                                 state=TestJob.STATE_FINISHED, health=TestJob.HEALTH_COMPLETE)
         self.device03.last_health_report_job = self.last_hc03
         self.device03.save()
@@ -209,7 +209,7 @@ class TestHealthCheckScheduling(TestCase):
 
         # Create a job that should be scheduled now
         j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                   user=self.user, submitter=self.user,
+                                   user=self.user, submitter=self.user, is_public=True,
                                    definition=_minimal_valid_job(None))
         schedule(DummyLogger())
         self.device01.refresh_from_db()
@@ -221,7 +221,7 @@ class TestHealthCheckScheduling(TestCase):
 
         # Create a job that should be scheduled after the health check
         j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                   user=self.user, submitter=self.user,
+                                   user=self.user, submitter=self.user, is_public=True,
                                    definition=_minimal_valid_job(None))
         self.device03.refresh_from_db()
         self.last_hc03.submit_time = timezone.now() - timedelta(hours=25)
@@ -253,13 +253,13 @@ class TestHealthCheckScheduling(TestCase):
 
         # Create a job that should be scheduled now
         j01 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user,
+                                     user=self.user, submitter=self.user, is_public=True,
                                      definition=_minimal_valid_job(None))
         j02 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user,
+                                     user=self.user, submitter=self.user, is_public=True,
                                      definition=_minimal_valid_job(None))
         j03 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user,
+                                     user=self.user, submitter=self.user, is_public=True,
                                      definition=_minimal_valid_job(None))
 
         schedule(DummyLogger())
@@ -314,7 +314,7 @@ class TestPriorities(TestCase):
         jobs = []
         for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW]:
             j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                       user=self.user, submitter=self.user,
+                                       user=self.user, submitter=self.user, is_public=True,
                                        definition=_minimal_valid_job(None), priority=p)
             jobs.append(j)
 
@@ -391,7 +391,7 @@ class TestPriorities(TestCase):
         jobs = []
         for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW]:
             j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                       user=self.user, submitter=self.user,
+                                       user=self.user, submitter=self.user, is_public=True,
                                        definition=_minimal_valid_job(None), priority=p)
             jobs.append(j)
 

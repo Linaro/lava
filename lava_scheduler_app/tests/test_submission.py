@@ -179,15 +179,12 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.factory.cleanup()
         dt = self.factory.make_device_type(name='name')
         device = self.factory.make_device(device_type=dt, hostname='name-1')
-        device.is_pipeline = True
         device.save()
         definition = self.factory.make_job_data()
         definition['visibility'] = {'group': ['newgroup']}
         definition['job_name'] = 'unittest_visibility'
         self.assertIsNotNone(yaml.dump(definition))
         self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
-        self.assertIsNotNone(list(Device.objects.filter(
-            device_type=dt, is_pipeline=True)))
         user = self.factory.make_user()
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))

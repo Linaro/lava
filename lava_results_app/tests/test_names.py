@@ -70,7 +70,7 @@ class ModelFactory(object):
             hostname = self.getUniqueString()
         if tags and type(tags) != list:
             tags = []
-        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
+        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
         if tags:
             device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'"

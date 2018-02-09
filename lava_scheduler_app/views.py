@@ -313,8 +313,7 @@ class DeviceTableView(JobTableView):
         return Device.objects.select_related("device_type", "worker_host",
                                              "user", "group") \
                              .prefetch_related("tags") \
-                             .filter(device_type__in=visible,
-                                     is_pipeline=True) \
+                             .filter(device_type__in=visible) \
                              .order_by("hostname")
 
 
@@ -919,7 +918,7 @@ def health_job_list(request, pk):
 class MyJobsView(JobTableView):
 
     def get_queryset(self):
-        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        query = all_jobs_with_custom_sort()
         return query.filter(submitter=self.request.user)
 
 
@@ -940,14 +939,14 @@ class FavoriteJobsView(JobTableView):
     def get_queryset(self):
         user = self.user if self.user else self.request.user
 
-        query = all_jobs_with_custom_sort().filter(is_pipeline=True)
+        query = all_jobs_with_custom_sort()
         return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
 
 
 class AllJobsView(JobTableView):
 
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(is_pipeline=True)
+        return all_jobs_with_custom_sort()
 
 
 @BreadCrumb("Jobs", parent=index)
@@ -1053,10 +1052,6 @@ def job_submit(request):
 @BreadCrumb("{pk}", parent=job_list, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-
-    # Refuse non-pipeline jobs
-    if not job.is_pipeline:
-        raise Http404()
 
     # Is the job favorite?
     is_favorite = False
@@ -1792,7 +1787,6 @@ def device_detail(request, pk):
             "device_log_table": device_log_ptable,
             'can_admin': device_can_admin,
             'exclusive': device.is_exclusive,
-            'pipeline': device.is_pipeline,
             'edit_description': device_can_admin,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
@@ -1817,9 +1811,6 @@ def device_dictionary(request, pk):
     if device.device_type.owners_only:
         if not device.device_type.some_devices_visible_to(request.user):
             raise Http404('No device matches the given query.')
-
-    if not device.is_pipeline:
-        raise Http404
 
     raw_device_dict = device.load_configuration(output_format="raw")
     if not raw_device_dict:

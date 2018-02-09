@@ -30,13 +30,12 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
 
         from lava_scheduler_app.models import TestJob
         # Pipeline jobs.
-        conditions = Q(is_pipeline=True)
         if not user or user.is_anonymous():
-            conditions &= Q(is_public=True)
+            conditions = Q(is_public=True)
         elif not user.is_superuser and not user.has_perm('lava_scheduler_app.cancel_resubmit_testjob') and not user.has_perm('lava_scheduler_app.change_device'):
             # continue adding conditions only if user is not superuser and
             # does not have admin permission for jobs or devices.
-            conditions &= (
+            conditions = (
                 Q(is_public=True) |
                 Q(submitter=user) |
                 (~Q(actual_device=None) & Q(actual_device__user=user)) |

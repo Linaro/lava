@@ -70,7 +70,6 @@ def device_post_handler(sender, **kwargs):
             "state": instance.get_state_display(),
             "device": instance.hostname,
             "device_type": instance.device_type.name,
-            "pipeline": instance.is_pipeline,
         }
         current_job = instance.current_job()
         if current_job is not None:
@@ -110,7 +109,6 @@ def testjob_post_handler(sender, **kwargs):
             "submit_time": instance.submit_time.isoformat(),
             "submitter": str(instance.submitter),
             "visibility": instance.get_visibility_display(),
-            "pipeline": instance.is_pipeline,
         }
         if instance.is_multinode:
             data['sub_id'] = instance.sub_id

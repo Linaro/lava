@@ -32,7 +32,7 @@ from lava_scheduler_app.schema import SubmissionException
 def check_health_checks(app_configs, **kwargs):
     errors = []
 
-    for device in Device.objects.filter(is_pipeline=True):
+    for device in Device.objects.all():
         ht = device.get_health_check()
         ht_disabled = device.device_type.disable_health_check
 
@@ -65,7 +65,7 @@ def check_health_checks(app_configs, **kwargs):
 def check_device_configuration(app_configs, **kwargs):
     errors = []
 
-    for device in Device.objects.filter(Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED)):
+    for device in Device.objects.exclude(health=Device.HEALTH_RETIRED):
         if not device.is_valid():
             errors.append(Error('Invalid configuration', obj=device.hostname))
 

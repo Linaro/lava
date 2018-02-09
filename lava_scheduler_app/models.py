@@ -649,12 +649,6 @@ class Device(RestrictedResource):
         on_delete=models.SET_NULL,
     )
 
-    is_pipeline = models.BooleanField(
-        verbose_name="Pipeline device?",
-        default=False,
-        editable=True
-    )
-
     def clean(self):
         """
         Complies with the RestrictedResource constraints
@@ -750,8 +744,6 @@ class Device(RestrictedResource):
         return self.is_owned_by(user)
 
     def is_valid(self, system=True):
-        if not self.is_pipeline:
-            return False  # V1 config cannot be checked
         rendered = self.load_configuration()
         try:
             validate_device(rendered)
@@ -938,10 +930,6 @@ class Device(RestrictedResource):
         return False
 
     def get_health_check(self):
-        # Do not submit any new v1 job
-        if not self.is_pipeline:
-            return None
-
         # Get the device dictionary
         extends = self.get_extends()
         if not extends:
@@ -1158,8 +1146,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   health_check=False,
                   user=user, is_public=public_state,
                   visibility=visibility,
-                  priority=priority,
-                  is_pipeline=True)
+                  priority=priority)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.
     for tag in Tag.objects.filter(name__in=taglist):
@@ -1238,7 +1225,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
 
                 allowed_devices = []
                 device_list = Device.objects.filter(
-                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
+                    Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED))
                 allowed_devices.extend(_check_submit_to_device(list(device_list), user))
 
                 if len(allowed_devices) < params['count']:
@@ -1381,7 +1368,7 @@ class TestJob(RestrictedResource):
         (Enhanced version of vmgroups.)
         A Primary connection needs a real device (persistence).
         """
-        if not self.is_pipeline or not self.is_multinode or not self.definition:
+        if not self.is_multinode or not self.definition:
             return False
         job_data = yaml.load(self.definition)
         return 'connection' in job_data
@@ -1626,12 +1613,6 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
-    is_pipeline = models.BooleanField(
-        verbose_name="Pipeline job?",
-        default=False,
-        editable=False
-    )
-
     # calculated by the master validation process.
     pipeline_compatibility = models.IntegerField(
         default=0,
@@ -1663,8 +1644,7 @@ class TestJob(RestrictedResource):
                             str(self.id))
 
     def output_file(self):
-        filename = 'output.yaml' if self.is_pipeline else 'output.txt'
-        output_path = os.path.join(self.output_dir, filename)
+        output_path = os.path.join(self.output_dir, "output.yaml")
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
         else:
@@ -1690,10 +1670,7 @@ class TestJob(RestrictedResource):
 
     @property
     def results_link(self):
-        if self.is_pipeline:
-            return reverse("lava.results.testjob", args=[self.id])
-        else:
-            return None
+        return reverse("lava.results.testjob", args=[self.id])
 
     @property
     def essential_role(self):  # pylint: disable=too-many-return-statements
@@ -1770,14 +1747,14 @@ class TestJob(RestrictedResource):
         # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
-            device_type=device_type, is_pipeline=True)), user)
+            device_type=device_type)), user)
         if not allow:
             raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
         taglist = _get_tag_list(job_data.get('tags', []), True)
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
-        if original_job and original_job.is_pipeline:
+        if original_job:
             # Add old job absolute url to metadata for pipeline jobs.
             job_url = str(original_job.get_absolute_url())
             try:
@@ -1796,16 +1773,11 @@ class TestJob(RestrictedResource):
         Implement the schema constraints for visibility for pipeline jobs so that
         admins cannot set a job into a logically inconsistent state.
         """
-        if self.is_pipeline:
-            # public settings must match
-            if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("is_public is set but visibility is not public.")
-            elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("is_public is not set but visibility is public.")
-        else:
-            if self.visibility != TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("Only pipeline jobs support any value of visibility except the default "
-                                      "PUBLIC, even if the job and bundle are private.")
+        # public settings must match
+        if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("is_public is set but visibility is not public.")
+        elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("is_public is not set but visibility is public.")
         return super(TestJob, self).clean()
 
     def can_view(self, user):
@@ -1826,9 +1798,6 @@ class TestJob(RestrictedResource):
                 return False
         if self.is_public:
             return True
-        if not self.is_pipeline:
-            # old jobs will be private, only pipeline extends beyond this level
-            return self.is_accessible_by(user)
         logger = logging.getLogger('lava_scheduler_app')
         if self.visibility == self.VISIBLE_PUBLIC:
             # logical error
@@ -1883,9 +1852,8 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
-        return self.is_pipeline and \
-            (user.is_superuser or
-             user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+        return (user.is_superuser or
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def _generate_summary_mail(self):
         domain = '???'
@@ -2718,7 +2686,6 @@ class Notification(models.Model):
                 "start_time": str(self.test_job.start_time),
                 "end_time": str(self.test_job.end_time),
                 "submitter_username": self.test_job.submitter.username,
-                "is_pipeline": self.test_job.is_pipeline,
                 "failure_comment": self.test_job.failure_comment,
                 "priority": self.test_job.priority,
                 "description": self.test_job.description,
@@ -2872,7 +2839,7 @@ def process_notifications(sender, **kwargs):
     notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
     # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
-    if new_job.is_pipeline and new_job.id:
+    if new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)
         if new_job.state in notification_state and \
            old_job.state != new_job.state:

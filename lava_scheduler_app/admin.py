@@ -206,7 +206,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Properties', {
             'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public', 'is_pipeline')}),
+            'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public')}),
         ('Status', {
             'fields': (('state', 'health'), ('last_health_report_job', 'current_job'))}),
         ('Advanced properties', {
@@ -217,7 +217,7 @@ class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ('device_dictionary_jinja', 'state', 'current_job')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'state', 'health', 'has_health_check',
-                    'health_check_enabled', 'is_public', 'is_pipeline',
+                    'health_check_enabled', 'is_public',
                     'valid_device', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']

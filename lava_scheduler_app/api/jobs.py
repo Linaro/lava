@@ -235,7 +235,6 @@ class SchedulerJobsAPI(ExposedV2API):
                 "device": device_hostname,
                 "device_type": device_type,
                 "health_check": job.health_check,
-                "pipeline": job.is_pipeline,
                 "health": job.get_health_display(),
                 "state": job.get_state_display(),
                 "submitter": job.submitter.username,

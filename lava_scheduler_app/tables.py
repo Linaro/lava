@@ -552,7 +552,7 @@ class DeviceTable(LavaTable):
         exclude = [
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job', 'is_pipeline'
+            'current_job', 'last_health_report_job'
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'state',

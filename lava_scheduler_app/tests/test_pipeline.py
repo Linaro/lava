@@ -74,7 +74,7 @@ class YamlFactory(ModelFactory):
         if tags and not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
-        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
+        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
         if tags:
             device.tags = tags
         if DEBUG:
@@ -253,10 +253,8 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
-        self.assertTrue(device.is_pipeline)
         self.assertFalse(device.is_exclusive)
         device = Device.objects.get(hostname="fakeqemu3")
-        self.assertTrue(device.is_pipeline)
         self.assertTrue(device.is_exclusive)
 
     def test_context(self):
@@ -293,7 +291,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.factory.make_device(device_type=mustang_type, hostname=hostname)
         device = Device.objects.get(hostname="fakemustang1")
         self.assertEqual('mustang-uefi', device.device_type.name)
-        self.assertTrue(device.is_pipeline)
         job_ctx = {
             'tftp_mac': 'FF:01:00:69:AA:CC',
             'extra_nfsroot_args': ',nolock',
@@ -943,37 +940,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
 
-    def test_mixed_multinode(self):
-        user = self.factory.make_user()
-        device_type = self.factory.make_device_type()
-        self.factory.make_device(device_type, 'fakeqemu1')
-        self.factory.make_device(device_type, 'fakeqemu2')
-        self.factory.make_device(device_type, 'fakeqemu3')
-        self.factory.make_device(device_type, 'fakeqemu4')
-        submission = yaml.load(open(
-            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
-        role_list = submission['protocols'][MultinodeProtocol.name]['roles']
-        for role in role_list:
-            if 'tags' in role_list[role]:
-                del role_list[role]['tags']
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
-        self.assertEqual(len(job_list), 2)
-        # make the list mixed
-        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
-        fakeqemu1.is_pipeline = False
-        fakeqemu1.save(update_fields=['is_pipeline'])
-        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
-        fakeqemu3.is_pipeline = False
-        fakeqemu3.save(update_fields=['is_pipeline'])
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-        self.assertEqual(len(device_list), 2)
-        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
-        self.assertIsInstance(list(device_list), list)
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
-        self.assertEqual(len(job_list), 2)
-        for job in job_list:
-            self.assertEqual(job.requested_device_type, device_type)
-
     def test_multinode_with_retired(self):  # pylint: disable=too-many-statements
         """
         check handling with retired devices in device_list
@@ -992,64 +958,6 @@ class TestYamlMultinode(TestCaseWithFactory):
                 del role_list[role]['tags']
         job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
         self.assertEqual(len(job_list), 2)
-        # make the list mixed
-        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
-        fakeqemu1.is_pipeline = False
-        fakeqemu1.save(update_fields=['is_pipeline'])
-        fakeqemu2 = Device.objects.get(hostname='fakeqemu2')
-        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
-        fakeqemu4 = Device.objects.get(hostname='fakeqemu4')
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-        self.assertEqual(len(device_list), 3)
-        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
-        self.assertIsInstance(list(device_list), list)
-        allowed_devices = []
-        for device in list(device_list):
-            if _check_submit_to_device([device], user):
-                allowed_devices.append(device)
-        self.assertEqual(len(allowed_devices), 3)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu4, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
-
-        # set one candidate device to RETIRED to force the bug
-        fakeqemu4.health = Device.HEALTH_RETIRED
-        fakeqemu4.save(update_fields=['health'])
-        # refresh the device_list
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True).order_by('hostname')
-        allowed_devices = []
-        # test the old code to force the exception
-        try:
-            # by looping through in the test *and* in _check_submit_to_device
-            # the retired device in device_list triggers the exception.
-            for device in list(device_list):
-                if _check_submit_to_device([device], user):
-                    allowed_devices.append(device)
-        except DevicesUnavailableException:
-            self.assertEqual(len(allowed_devices), 2)
-            self.assertIn(fakeqemu4, device_list)
-            self.assertEqual(fakeqemu4.health, Device.HEALTH_RETIRED)
-        else:
-            self.fail("Missed DevicesUnavailableException")
-        allowed_devices = []
-        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
-        self.assertEqual(len(allowed_devices), 2)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
-        allowed_devices = []
-
-        # test improvement as there is no point wasting memory with a Query containing Retired.
-        device_list = Device.objects.filter(
-            Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
-        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
-        self.assertEqual(len(allowed_devices), 2)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
 
     def test_multinode_v2_metadata(self):
         device_type = self.factory.make_device_type()

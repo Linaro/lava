@@ -1181,7 +1181,7 @@ class QueryCondition(models.Model):
         TestJob: [
             "submitter", "start_time", "end_time", "state", "health", "actual_device",
             "requested_device_type", "health_check", "user", "group",
-            "priority", "is_pipeline", "description"],
+            "priority", "description"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
         NamedTestAttribute: []
