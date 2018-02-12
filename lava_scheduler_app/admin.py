@@ -323,10 +323,38 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
+def worker_health_active(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_active(request.user)
+            worker.save()
+
+
+def worker_health_maintenance(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_maintenance(request.user)
+            worker.save()
+
+
+def worker_health_retired(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_retired(request.user)
+            worker.save()
+
+
+worker_health_active.short_description = "Update health of selected workers to Active"
+worker_health_maintenance.short_description = "Update health of selected workers to Maintenance"
+worker_health_retired.short_description = "Update health of selected workers to Retired"
+
+
 class WorkerAdmin(admin.ModelAdmin):
     list_display = ('hostname', 'state', 'health')
     readonly_fields = ('state', )
     ordering = ['hostname']
+    actions = [worker_health_active, worker_health_maintenance,
+               worker_health_retired]
 
 
 class TagLowerForm(forms.ModelForm):
