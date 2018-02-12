@@ -249,17 +249,17 @@ class Command(LAVADaemonCommand):
 
         # Handle the actions
         if action == 'HELLO' or action == 'HELLO_RETRY':
-            return self._handle_hello(hostname, action, msg)
+            self._handle_hello(hostname, action, msg)
         elif action == 'PING':
-            return self._handle_ping(hostname, action, msg)
+            self._handle_ping(hostname, action, msg)
         elif action == 'END':
-            return self._handle_end(hostname, action, msg)
+            self._handle_end(hostname, action, msg)
         elif action == 'START_OK':
-            return self._handle_start_ok(hostname, action, msg)
+            self._handle_start_ok(hostname, action, msg)
         else:
             self.logger.error("<%s> sent unknown action=%s, args=(%s)",
                               hostname, action, msg[1:])
-            return True
+        return True
 
     def read_event_socket(self):
         try:
@@ -280,6 +280,7 @@ class Command(LAVADaemonCommand):
                     self.events["canceling"].add(int(data["job"]))
             except ValueError:
                 self.logger.error("Invalid event data: %s", msg)
+        return True
 
     def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
         try:
@@ -288,7 +289,7 @@ class Command(LAVADaemonCommand):
             compressed_description = msg[4]
         except (IndexError, ValueError):
             self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-            return True
+            return
 
         try:
             job = TestJob.objects.get(id=job_id)
@@ -297,7 +298,7 @@ class Command(LAVADaemonCommand):
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
             send_multipart_u(self.controler, [hostname, 'END_OK', str(job_id)])
-            return True
+            return
 
         filename = os.path.join(job.output_dir, 'description.yaml')
         # If description.yaml already exists: a END was already received
@@ -339,7 +340,6 @@ class Command(LAVADaemonCommand):
         # ACK the job and mark the dispatcher as alive
         send_multipart_u(self.controler, [hostname, 'END_OK', str(job_id)])
         self.dispatcher_alive(hostname)
-        return True
 
     def _handle_hello(self, hostname, action, msg):
         # Check the protocol version
@@ -347,13 +347,13 @@ class Command(LAVADaemonCommand):
             slave_version = int(msg[2])
         except (IndexError, ValueError):
             self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-            return True
+            return
 
         self.logger.info("%s => %s", hostname, action)
         if slave_version != PROTOCOL_VERSION:
             self.logger.error("<%s> using protocol v%d while master is using v%d",
                               hostname, slave_version, PROTOCOL_VERSION)
-            return True
+            return
 
         send_multipart_u(self.controler, [hostname, 'HELLO_OK'])
         # If the dispatcher is known and sent an HELLO, means that
@@ -387,14 +387,13 @@ class Command(LAVADaemonCommand):
         # Send back a signal
         send_multipart_u(self.controler, [hostname, 'PONG', str(PING_INTERVAL)])
         self.dispatcher_alive(hostname)
-        return True
 
     def _handle_start_ok(self, hostname, action, msg):  # pylint: disable=unused-argument
         try:
             job_id = int(msg[2])
         except (IndexError, ValueError):
             self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
-            return True
+            return
         self.logger.info("[%d] %s => START_OK", job_id, hostname)
         try:
             with transaction.atomic():
